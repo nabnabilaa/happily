@@ -1,0 +1,132 @@
+"use client";
+
+import React from "react";
+import Modal from "@/components/ui/Modal";
+import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
+import { useHP } from "@/lib/HPContext";
+
+interface SystemGuideModalProps {
+  onClose: () => void;
+}
+
+export default function SystemGuideModal({ onClose }: SystemGuideModalProps) {
+  const { updateState } = useHP();
+  return (
+    <Modal onClose={onClose} title="Sistem Guide & Rank Milestones 📖">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: '4px 0 12px' }}>
+        
+        {/* Point Guide */}
+        <section>
+          <div style={{ ...HP_TEXT.h, fontSize: 16, marginBottom: 12, color: HP_TOKENS.sage }}>Cara Mendapatkan Poin</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            {[
+              { label: 'Daily Quest', pts: '+50', icon: '🎯' },
+              { label: 'Training Quest', pts: '+20', icon: '🌿' },
+              { label: 'Learning Module', pts: '+100', icon: '📚' },
+              { label: 'Tutup Hari', pts: '+100', icon: '🌙' },
+            ].map(item => (
+              <div key={item.label} style={{ 
+                padding: 12, borderRadius: 16, background: HP_TOKENS.card, 
+                border: `1px solid ${HP_TOKENS.line}`, textAlign: 'center' 
+              }}>
+                <div style={{ fontSize: 20, marginBottom: 4 }}>{item.icon}</div>
+                <div style={{ ...HP_TEXT.h, fontSize: 12 }}>{item.label}</div>
+                <div style={{ ...HP_TEXT.small, color: HP_TOKENS.sage, fontWeight: 900, fontSize: 14 }}>{item.pts} Pts</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Level Guide */}
+        <section>
+          <div style={{ ...HP_TEXT.h, fontSize: 16, marginBottom: 12, color: HP_TOKENS.blue }}>Threshold Level Up</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={milestoneStyle}>
+              <span>Level 1 - 10</span>
+              <span style={{ fontWeight: 800 }}>100 Poin / Level</span>
+            </div>
+            <div style={milestoneStyle}>
+              <span>Level 11 - 20</span>
+              <span style={{ fontWeight: 800 }}>300 Poin / Level</span>
+            </div>
+            <div style={milestoneStyle}>
+              <span>Level 21+</span>
+              <span style={{ fontWeight: 800 }}>1,000 Poin / Level</span>
+            </div>
+          </div>
+        </section>
+
+        {/* Rank Guide */}
+        <section>
+          <div style={{ ...HP_TEXT.h, fontSize: 16, marginBottom: 12, color: HP_TOKENS.yellow }}>Rank Milestones</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+            {[
+              { rank: 'E', lv: 'Lv. 1-10', color: '#888' },
+              { rank: 'D', lv: 'Lv. 11-20', color: '#4A7C59' },
+              { rank: 'C', lv: 'Lv. 21-35', color: '#234A72' },
+              { rank: 'B', lv: 'Lv. 36-50', color: '#7A5F10' },
+              { rank: 'A', lv: 'Lv. 51-70', color: '#8B3A2F' },
+              { rank: 'S', lv: 'Lv. 71+', color: '#4A3A6E' },
+            ].map(r => (
+              <div key={r.rank} style={{ 
+                padding: '12px 8px', borderRadius: 14, background: '#fff', 
+                border: `1.5px solid ${HP_TOKENS.line}`, textAlign: 'center' 
+              }}>
+                <div style={{ 
+                  fontSize: 18, fontWeight: 900, color: r.color, fontFamily: HP_FONT,
+                  background: `${r.color}15`, width: 36, height: 36, borderRadius: 18,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px'
+                }}>
+                  {r.rank}
+                </div>
+                <div style={{ ...HP_TEXT.small, fontWeight: 800, fontSize: 10 }}>{r.lv}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Skill Guide */}
+        <section style={{ 
+          marginTop: 8, padding: 16, borderRadius: 20, 
+          background: `linear-gradient(135deg, ${HP_TOKENS.sageWash}, #fff)`,
+          border: `1.5px solid ${HP_TOKENS.sageSoft}`
+        }}>
+          <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.sage }}>Otomatisasi Skill</div>
+          <div style={{ ...HP_TEXT.body, fontSize: 12, marginTop: 4 }}>
+            Sistem kami (AI) menganalisis aktivitas harian dan pembelajaranmu.
+            <ul style={{ paddingLeft: 16, marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <li>Selesaikan Quest: <b>+2% Skill Progres</b></li>
+              <li>Selesaikan Belajar: <b>+10% Skill Progres</b></li>
+            </ul>
+          </div>
+        </section>
+        
+        {/* Re-play Onboarding */}
+        <div style={{ marginTop: 8 }}>
+           <button 
+             onClick={() => {
+               updateState({ onboarded: false });
+               onClose();
+             }}
+             style={{
+               width: '100%', padding: '14px', borderRadius: 16,
+               background: HP_TOKENS.ink, color: '#fff', border: 'none',
+               fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',
+               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+               boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+             }}
+           >
+             <span style={{ fontSize: 18 }}>🐝</span>
+             Lihat Onboarding Lagi
+           </button>
+        </div>
+
+      </div>
+    </Modal>
+  );
+}
+
+const milestoneStyle: React.CSSProperties = {
+  display: 'flex', justifyContent: 'space-between', padding: '10px 14px',
+  background: HP_TOKENS.lineSoft, borderRadius: 12, fontFamily: HP_FONT, fontSize: 13
+};

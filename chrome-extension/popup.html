@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bee Flow</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <img src="icon.png" alt="Icon" class="logo">
+      <h1>Bee Flow</h1>
+    </header>
+    
+    <main>
+      <p id="status">Status: <span>Active</span></p>
+      <div class="controls">
+        <label for="goal">Target/OKR Hari Ini:</label>
+        <input type="text" id="goal" placeholder="Contoh: Selesaikan fitur login" maxlength="50">
+      </div>
+      <div class="controls">
+        <label for="progress">Progres Saat Ini:</label>
+        <select id="progress">
+          <option value="0">0%</option>
+          <option value="10">10%</option>
+          <option value="20">20%</option>
+          <option value="30">30%</option>
+          <option value="40">40%</option>
+          <option value="50">50%</option>
+          <option value="60">60%</option>
+          <option value="70">70%</option>
+          <option value="80">80%</option>
+          <option value="90">90%</option>
+          <option value="100">100%</option>
+        </select>
+      </div>
+      <div class="controls">
+        <label for="interval">Ingatkan setiap (menit):</label>
+        <input type="number" id="interval" value="10" min="1">
+      </div>
+      <button id="toggleBtn" class="btn-primary pulse">Mulai Pengingat</button>
+      <button id="testBtn" class="btn-secondary" style="margin-top: 10px; width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #f59e0b; background: transparent; color: #f59e0b; cursor: pointer; font-size: 0.75rem;">Cek Notifikasi Sekarang 🐝</button>
+    </main>
+    
+    <footer>
+      <p>Keep shining! ✨</p>
+    </footer>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
