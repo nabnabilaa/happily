@@ -56,9 +56,20 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
 
   useEffect(() => {
     fetchPresence();
-    // Auto-refresh every 60 seconds
+
+    // Listen to real-time database updates from SSE
+    const handleRealtimeUpdate = () => {
+      fetchPresence();
+    };
+    window.addEventListener('hp_db_update', handleRealtimeUpdate);
+
+    // Auto-refresh every 60 seconds (fallback)
     const interval = setInterval(fetchPresence, 60000);
-    return () => clearInterval(interval);
+    
+    return () => {
+      window.removeEventListener('hp_db_update', handleRealtimeUpdate);
+      clearInterval(interval);
+    };
   }, []);
 
   const fetchPresence = async () => {

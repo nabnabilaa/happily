@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useHP, calculateLevelProgress } from "@/lib/HPContext";
 import { 
   HP_TOKENS, 
@@ -53,6 +53,8 @@ export default function HomeScreen({ openModal }: any) {
   const [midDayCheckInShown, setMidDayCheckInShown] = useState(false);
   const [completingTask, setCompletingTask] = useState<any>(null);
 
+  const notifiedBreakDay = useRef<string>("");
+  const notifiedClockoutDay = useRef<string>("");
 
   useEffect(() => {
     const h = new Date().getHours();
@@ -61,11 +63,51 @@ export default function HomeScreen({ openModal }: any) {
     else if (h < 19) setGreeting('Selamat sore');
     else setGreeting('Selamat malam');
 
+    // Helper: Trigger browser and DB notifications
+    const triggerNotification = async (title: string, message: string, type: string) => {
+      // 1. Browser Native HTML5 Notification
+      if (typeof window !== "undefined" && "Notification" in window) {
+        if (Notification.permission === "default") {
+          await Notification.requestPermission();
+        }
+        if (Notification.permission === "granted") {
+          new Notification(title, {
+            body: message,
+            icon: "/icon-192.png"
+          });
+        }
+      }
+
+      // 2. Database persistent Notification
+      if (rawUser?.id) {
+        try {
+          await fetch("/api/ext/notifications", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: rawUser.id,
+              title,
+              message,
+              type
+            })
+          });
+          
+          updateState((s: any) => ({
+            ...s,
+            notifications: (s.notifications || 0) + 1
+          }));
+        } catch (e) {
+          console.error("Failed to persist time reminder:", e);
+        }
+      }
+    };
+
     // Time Check for Reminders
     const checkTime = () => {
       if (!rawState?.workSchedule) return;
       const now = new Date();
       const currentMins = now.getHours() * 60 + now.getMinutes();
+      const todayStr = now.toDateString();
 
       const parseTime = (t: string) => {
         const [hh, mm] = t.split(':').map(Number);
@@ -79,8 +121,26 @@ export default function HomeScreen({ openModal }: any) {
       // Check break reminder (15 mins before)
       if (currentMins >= breakStart - 15 && currentMins < breakStart) {
         setReminder({ type: 'break', mins: breakStart - currentMins });
+        
+        if (notifiedBreakDay.current !== todayStr) {
+          notifiedBreakDay.current = todayStr;
+          triggerNotification(
+            "🥪 Bentar Lagi Istirahat!",
+            `Kurang dari ${breakStart - currentMins} menit lagi waktu istirahat siangmu tiba. Yuk, bersiap-siap untuk rehat sejenak! 🌿`,
+            "reminder"
+          );
+        }
       } else if (currentMins >= workEnd - 15 && currentMins < workEnd) {
         setReminder({ type: 'clockout', mins: workEnd - currentMins });
+
+        if (notifiedClockoutDay.current !== todayStr) {
+          notifiedClockoutDay.current = todayStr;
+          triggerNotification(
+            "🌙 Bentar Lagi Pulang!",
+            `Kurang dari ${workEnd - currentMins} menit lagi jam kerjamu selesai. Yuk, persiapkan refleksi Tutup Hari kamu! ✨`,
+            "reminder"
+          );
+        }
       } else if (currentMins >= midDayTime && currentMins < midDayTime + 15 && !midDayCheckInShown) {
         // Trigger Mid-day Check-in at the scheduled time
         openModal('work_checkin');

@@ -14,6 +14,26 @@ export default function PriorityCard({ p, onToggle }: PriorityCardProps) {
   const { state, updateState } = useHP();
   const [showPoints, setShowPoints] = useState(false);
   const [showFocusToast, setShowFocusToast] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+
+  React.useEffect(() => {
+    if (!p.timer_started_at) {
+      setElapsed(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const startTime = new Date(p.timer_started_at).getTime();
+      const diffSeconds = Math.max(0, Math.floor((Date.now() - startTime) / 1000));
+      setElapsed(diffSeconds);
+    }, 1000);
+
+    // Initial run
+    const startTime = new Date(p.timer_started_at).getTime();
+    setElapsed(Math.max(0, Math.floor((Date.now() - startTime) / 1000)));
+
+    return () => clearInterval(interval);
+  }, [p.timer_started_at]);
 
   const toneMap: Record<string, any> = {
     sage: { bg: HP_TOKENS.yellowSoft, fg: HP_TOKENS.ink, wash: HP_TOKENS.yellowWash },
@@ -26,11 +46,82 @@ export default function PriorityCard({ p, onToggle }: PriorityCardProps) {
 
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    let updatedPriorities = [...(state?.priorities || [])];
     if (!p.done) {
       setShowPoints(true);
       setTimeout(() => setShowPoints(false), 1200);
+      
+      // Auto-pause timer if running when task is marked complete
+      updatedPriorities = (state?.priorities || []).map((item: any) => {
+        if (item.id === p.id && item.timer_started_at) {
+          const startTime = new Date(item.timer_started_at).getTime();
+          const sessionSeconds = Math.max(0, Math.floor((Date.now() - startTime) / 1000));
+          return {
+            ...item,
+            time_tracked: (item.time_tracked || 0) + sessionSeconds,
+            timer_started_at: null
+          };
+        }
+        return item;
+      });
+      updateState({ priorities: updatedPriorities });
     }
     onToggle();
+  };
+
+  const toggleTimer = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!state) return;
+    
+    const updatedPriorities = state.priorities.map((item: any) => {
+      if (item.id === p.id) {
+        if (item.timer_started_at) {
+          // Pause timer
+          const startTime = new Date(item.timer_started_at).getTime();
+          const sessionSeconds = Math.max(0, Math.floor((Date.now() - startTime) / 1000));
+          return {
+            ...item,
+            time_tracked: (item.time_tracked || 0) + sessionSeconds,
+            timer_started_at: null
+          };
+        } else {
+          // Start timer
+          return {
+            ...item,
+            timer_started_at: new Date().toISOString()
+          };
+        }
+      } else {
+        // Pause any other active timer
+        if (item.timer_started_at) {
+          const startTime = new Date(item.timer_started_at).getTime();
+          const sessionSeconds = Math.max(0, Math.floor((Date.now() - startTime) / 1000));
+          return {
+            ...item,
+            time_tracked: (item.time_tracked || 0) + sessionSeconds,
+            timer_started_at: null
+          };
+        }
+        return item;
+      }
+    });
+
+    updateState({ priorities: updatedPriorities });
+  };
+
+  const formatTrackedTime = (seconds: number, timerStartedAt?: string) => {
+    const totalSeconds = seconds + (timerStartedAt ? elapsed : 0);
+    if (totalSeconds <= 0) return "0d";
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    
+    const parts = [];
+    if (h > 0) parts.push(`${h}j`);
+    if (m > 0 || h > 0) parts.push(`${m}m`);
+    if (s > 0 || parts.length === 0) parts.push(`${s}d`);
+    return parts.join(" ");
   };
 
   const setAsFocus = (e: React.MouseEvent) => {
@@ -208,7 +299,7 @@ export default function PriorityCard({ p, onToggle }: PriorityCardProps) {
              </div>
            )}
           
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
              <HPGlyph name={energyIcon} size={11} color={HP_TOKENS.inkMute} />
              <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>
                {p.est}
@@ -220,6 +311,26 @@ export default function PriorityCard({ p, onToggle }: PriorityCardProps) {
                  <HPGlyph name="calendar" size={11} color={HP_TOKENS.inkMute} />
                  <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>
                    {p.targetDate}
+                 </span>
+               </>
+             )}
+
+             {/* Timesheet Tracked Badge */}
+             {(p.time_tracked > 0 || p.timer_started_at) && (
+               <>
+                 <span style={{ color: HP_TOKENS.line, fontSize: 10 }}>•</span>
+                 <span style={{ fontSize: 11, cursor: 'default' }}>⏱️</span>
+                 <span style={{ 
+                   ...HP_TEXT.tiny, 
+                   color: p.timer_started_at ? HP_TOKENS.sage : HP_TOKENS.inkMute, 
+                   fontWeight: 800,
+                   background: p.timer_started_at ? `${HP_TOKENS.sageSoft}50` : 'transparent',
+                   padding: p.timer_started_at ? '2px 6px' : '0',
+                   borderRadius: 6,
+                   animation: p.timer_started_at ? 'hpPulse 1.5s infinite' : 'none'
+                 }}>
+                   {p.timer_started_at ? 'Sedang kerja: ' : 'Durasi: '}
+                   {formatTrackedTime(p.time_tracked || 0, p.timer_started_at)}
                  </span>
                </>
              )}
@@ -240,20 +351,42 @@ export default function PriorityCard({ p, onToggle }: PriorityCardProps) {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
         {!p.done && (
-          <button 
-            onClick={setAsFocus}
-            className="hp-tap"
-            title="Set as Focus Today"
-            style={{ 
-              width: 32, height: 32, borderRadius: 16, background: HP_TOKENS.yellowSoft,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none',
-              cursor: 'pointer'
-            }}
-          >
-             <HPGlyph name="sparkle" size={14} color={HP_TOKENS.yellow} />
-          </button>
+          <>
+            {/* Play/Pause Timer Button */}
+            <button 
+              onClick={toggleTimer}
+              className="hp-tap"
+              title={p.timer_started_at ? "Jeda Pekerjaan" : "Mulai Pekerjaan"}
+              style={{ 
+                width: 32, height: 32, borderRadius: 16, 
+                background: p.timer_started_at ? HP_TOKENS.sageSoft : HP_TOKENS.lineSoft,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none',
+                cursor: 'pointer',
+                boxShadow: p.timer_started_at ? `0 0 8px ${HP_TOKENS.sage}50` : 'none',
+              }}
+            >
+               {p.timer_started_at ? (
+                 <span style={{ fontSize: 11, animation: 'hpPulse 1s infinite' }}>⏸️</span>
+               ) : (
+                 <span style={{ fontSize: 11 }}>▶️</span>
+               )}
+            </button>
+
+            <button 
+              onClick={setAsFocus}
+              className="hp-tap"
+              title="Set as Focus Today"
+              style={{ 
+                width: 32, height: 32, borderRadius: 16, background: HP_TOKENS.yellowSoft,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none',
+                cursor: 'pointer'
+              }}
+            >
+               <HPGlyph name="sparkle" size={14} color={HP_TOKENS.yellow} />
+            </button>
+          </>
         )}
         
         <div style={{ 

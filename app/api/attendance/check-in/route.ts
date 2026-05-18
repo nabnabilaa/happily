@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/turso";
+import { hpEventEmitter } from "@/lib/events";
 
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371e3; // metres
@@ -190,6 +191,14 @@ export async function POST(request: Request) {
     }
 
     console.log(`[Attendance] Check-in successful for user ${userId}, streak: ${streak}`);
+    
+    // Emit db_update to trigger real-time SSE refresh for all active clients
+    try {
+      hpEventEmitter.emit("db_update", { type: "refresh", timestamp: Date.now() });
+    } catch (sseErr) {
+      console.warn("Failed to emit checkin SSE event:", sseErr);
+    }
+
     return NextResponse.json({ success: true, streak });
   } catch (error) {
     console.error("Check-in Error:", error);

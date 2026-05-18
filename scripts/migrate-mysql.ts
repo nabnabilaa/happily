@@ -28,6 +28,8 @@ async function migrate() {
       "ALTER TABLE users ADD COLUMN is_onboarded BOOLEAN DEFAULT 0",
       "ALTER TABLE daily_priorities ADD COLUMN is_verified BOOLEAN DEFAULT 0",
       "ALTER TABLE daily_priorities ADD COLUMN goal_id VARCHAR(255)",
+      "ALTER TABLE daily_priorities ADD COLUMN time_tracked INT DEFAULT 0",
+      "ALTER TABLE daily_priorities ADD COLUMN timer_started_at VARCHAR(100) DEFAULT NULL",
 
       // NEW: KPI & Extension columns for daily_priorities
       "ALTER TABLE daily_priorities ADD COLUMN kpi_id VARCHAR(255)",

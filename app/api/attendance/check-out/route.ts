@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/turso";
+import { hpEventEmitter } from "@/lib/events";
 
 export async function POST(request: Request) {
   try {
@@ -107,6 +108,13 @@ export async function POST(request: Request) {
       }
     } catch (e) {
       console.warn("Auto-logbook error:", e);
+    }
+
+    // Emit db_update to trigger real-time SSE refresh for all active clients
+    try {
+      hpEventEmitter.emit("db_update", { type: "refresh", timestamp: Date.now() });
+    } catch (sseErr) {
+      console.warn("Failed to emit checkout SSE event:", sseErr);
     }
 
     return NextResponse.json({ 

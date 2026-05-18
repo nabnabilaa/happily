@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/turso";
+import { seedNotificationTemplates } from "@/lib/notificationService";
 
 export async function POST() {
   const results: string[] = [];
@@ -204,6 +205,18 @@ export async function POST() {
         FOREIGN KEY (user_id) REFERENCES users(id),
         UNIQUE(survey_id, user_id)
       )`
+    },
+    {
+      desc: "Create notification_templates table",
+      sql: `CREATE TABLE IF NOT EXISTS notification_templates (
+        trigger_key VARCHAR(255) PRIMARY KEY,
+        title_template VARCHAR(255) NOT NULL,
+        message_template TEXT NOT NULL,
+        type VARCHAR(50) DEFAULT 'info',
+        category VARCHAR(50) DEFAULT 'general',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )`
     }
   ];
 
@@ -254,6 +267,8 @@ export async function POST() {
     { desc: "daily_priorities.is_verified", sql: "ALTER TABLE daily_priorities ADD COLUMN is_verified INTEGER DEFAULT 0" },
     { desc: "daily_priorities.target_date", sql: "ALTER TABLE daily_priorities ADD COLUMN target_date TEXT" },
     { desc: "daily_priorities.description", sql: "ALTER TABLE daily_priorities ADD COLUMN description TEXT" },
+    { desc: "daily_priorities.time_tracked", sql: "ALTER TABLE daily_priorities ADD COLUMN time_tracked INTEGER DEFAULT 0" },
+    { desc: "daily_priorities.timer_started_at", sql: "ALTER TABLE daily_priorities ADD COLUMN timer_started_at TEXT" },
   ];
 
   for (const c of columns) {
@@ -344,6 +359,16 @@ export async function POST() {
     results.push("✅ Cleaned up legacy tables");
   } catch (e: any) {
     results.push(`❌ Cleanup: ${e.message}`);
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // PHASE 6.5: Seed Notification Templates
+  // ═══════════════════════════════════════════════════════
+  try {
+    const templatesCount = await seedNotificationTemplates();
+    results.push(`✅ Seeded ${templatesCount} notification templates`);
+  } catch (e: any) {
+    results.push(`❌ Seed notification templates: ${e.message}`);
   }
 
   // ═══════════════════════════════════════════════════════

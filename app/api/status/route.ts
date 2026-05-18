@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/turso";
+import { hpEventEmitter } from "@/lib/events";
 
 // ══════════════════════════════════════════════════════════════
 // User Status / Presence API — Spec v2
@@ -152,6 +153,13 @@ export async function POST(request: Request) {
           args: [userId, status.toUpperCase(), reason || `${STATUS_META[status as UserStatusType].label}`]
         });
       }
+    }
+
+    // Emit db_update to trigger real-time SSE refresh for all active clients
+    try {
+      hpEventEmitter.emit("db_update", { type: "refresh", timestamp: Date.now() });
+    } catch (sseErr) {
+      console.warn("Failed to emit status update SSE event:", sseErr);
     }
 
     return NextResponse.json({ 

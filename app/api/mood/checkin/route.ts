@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/turso";
+import { calculateTriggerKey, dispatchNotification } from "@/lib/notificationService";
 
 export async function POST(request: Request) {
   try {
@@ -19,6 +20,16 @@ export async function POST(request: Request) {
     await db.execute({
       sql: "UPDATE users SET mood_key = ? WHERE id = ?",
       args: [mood, userId]
+    });
+
+    // Calculate trigger key based on Mood, Energy and Tag using the priority weighting system
+    const triggerKey = calculateTriggerKey(mood, energy || null, tag || null);
+    
+    // Dispatch template notification (Zero LLM cost!)
+    await dispatchNotification(userId, triggerKey, {
+      mood: mood,
+      energy: energy || "sedang",
+      tag: tag || "biasa"
     });
 
     return NextResponse.json({ success: true });
