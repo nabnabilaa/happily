@@ -12,7 +12,7 @@ interface AttendanceScannerModalProps {
 }
 
 export default function AttendanceScannerModal({ onClose }: AttendanceScannerModalProps) {
-  const { user, updateUser, updateState } = useHP();
+  const { state, user, updateUser, updateState } = useHP();
   const [status, setStatus] = useState<'loading' | 'idle' | 'verifying' | 'success' | 'error'>('loading');
   const [errorMsg, setErrorMsg] = useState("");
   const [location, setLocation] = useState<{lat: number, lng: number} | null>(null);
@@ -296,7 +296,7 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
                       Bagaimana perasaanmu hari ini?
                     </label>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      {HP_MOODS.map(m => (
+                      {(state?.moods || HP_MOODS).map(m => (
                         <button 
                           key={m.key}
                           onClick={() => setSelectedMood(m.key)}

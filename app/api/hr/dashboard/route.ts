@@ -143,6 +143,13 @@ export async function GET() {
       };
     } catch (e) { /* table may be empty */ }
 
+    const members = users.map(u => ({
+      id: u.id,
+      name: u.name,
+      role: u.job_title || 'Employee',
+      team: u.team_name || 'Unassigned'
+    }));
+
     return NextResponse.json({
       metrics: {
         totalEmployees,
@@ -156,7 +163,8 @@ export async function GET() {
       },
       atRiskEmployees: atRiskEmployees.slice(0, 5),
       deptPulse,
-      programs
+      programs,
+      members
     });
   } catch (error) {
     console.error("HR Dashboard Error:", error);

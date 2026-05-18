@@ -165,7 +165,31 @@ export default function HomeScreen({ openModal }: any) {
         const newPriorities = s.priorities.map((p: any) => 
           p.id === id ? { ...p, done: false } : p
         );
-        return { ...s, priorities: newPriorities };
+
+        const task = s.priorities.find((p: any) => p.id === id);
+        const targetId = task?.goal_id || task?.kpi_id;
+        const updatedGoals = s.goals.map((goal: any) => {
+          if (targetId && String(goal.id) === String(targetId)) {
+            let total = 0;
+            let completed = 0;
+            const match = String(goal.metric || '').match(/^(\d+)\/(\d+)\s+task/);
+            if (match) {
+              completed = parseInt(match[1]);
+              total = parseInt(match[2]);
+            } else {
+              const todayTasks = newPriorities.filter((p: any) => (p.goal_id && String(p.goal_id) === String(goal.id)) || (p.kpi_id && String(p.kpi_id) === String(goal.id)));
+              total = todayTasks.length;
+              completed = todayTasks.filter((p: any) => p.done).length;
+            }
+
+            const newCompleted = Math.max(0, completed - 1);
+            const newProgress = total > 0 ? Math.round((newCompleted / total) * 100) : goal.progress;
+            return { ...goal, progress: newProgress, metric: total > 0 ? `${newCompleted}/${total} task selesai` : goal.metric };
+          }
+          return goal;
+        });
+
+        return { ...s, priorities: newPriorities, goals: updatedGoals };
       });
     }
   }, [rawState, updateState]);
@@ -226,9 +250,34 @@ export default function HomeScreen({ openModal }: any) {
 
       syncSkillProgress(newPriorities[pIndex].title + " " + (newPriorities[pIndex].kpi_title || ""), 2);
 
+      // Recalculate goal progress for linked goals
+      const task = newPriorities[pIndex];
+      const targetId = task.goal_id || task.kpi_id;
+      const updatedGoals = s.goals.map((goal: any) => {
+        if (targetId && String(goal.id) === String(targetId)) {
+          let total = 0;
+          let completed = 0;
+          const match = String(goal.metric || '').match(/^(\d+)\/(\d+)\s+task/);
+          if (match) {
+            completed = parseInt(match[1]);
+            total = parseInt(match[2]);
+          } else {
+            const todayTasks = newPriorities.filter((p: any) => (p.goal_id && String(p.goal_id) === String(goal.id)) || (p.kpi_id && String(p.kpi_id) === String(goal.id)));
+            total = todayTasks.length;
+            completed = todayTasks.filter((p: any) => p.done).length;
+          }
+
+          const newCompleted = Math.max(0, Math.min(total, completed + 1));
+          const newProgress = total > 0 ? Math.round((newCompleted / total) * 100) : goal.progress;
+          return { ...goal, progress: newProgress, metric: total > 0 ? `${newCompleted}/${total} task selesai` : goal.metric };
+        }
+        return goal;
+      });
+
       return { 
         ...s, 
         priorities: newPriorities,
+        goals: updatedGoals,
         logbook: [newLog, ...(s.logbook || [])],
         lastActivityDate: now.toISOString(),
         penaltyActive: false,
@@ -287,9 +336,13 @@ export default function HomeScreen({ openModal }: any) {
   const user = rawUser;
   if (!state || !user) return null;
 
-  const { mood, energy, priorities } = state;
-  const moodObj = HP_MOODS.find(m => m.key === mood);
-  const energyObj = HP_ENERGY.find(e => e.key === energy);
+  const priorities = state.priorities || [];
+  const moodsList = state.moods || HP_MOODS;
+  const energyList = state.energyOpts || HP_ENERGY;
+  const currentMood = state.mood ?? null;
+  const currentEnergy = state.energy ?? null;
+  const moodObj = moodsList.find((m: any) => m.key === currentMood);
+  const energyObj = energyList.find((e: any) => e.key === currentEnergy);
   const done = priorities.filter((p: any) => p.done).length;
   const total = priorities.length;
 

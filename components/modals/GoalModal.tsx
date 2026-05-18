@@ -89,6 +89,8 @@ export default function GoalModal({ onClose, goal }: { onClose: () => void; goal
               ? Math.round((doneCount / tasksForGoal.length) * 100) 
               : progress;
 
+            const nextStatus = (g.status === 'revision' || g.status === 'rejected') ? 'pending' : status;
+
             return {
               ...g,
               title,
@@ -97,7 +99,7 @@ export default function GoalModal({ onClose, goal }: { onClose: () => void; goal
               scope: scope === 'employee' ? 'assigned' : scope,
               parent_id: parentId || null,
               progress: newProgress,
-              status: status,
+              status: nextStatus,
               is_kpi: isKpi || g.is_kpi,
               metric: tasksForGoal.length > 0 ? `${doneCount}/${tasksForGoal.length} task selesai` : g.metric,
             };
@@ -217,6 +219,18 @@ export default function GoalModal({ onClose, goal }: { onClose: () => void; goal
               <HPGlyph name="info" size={12} color={HP_TOKENS.yellow} />
               <div style={{ ...HP_TEXT.tiny, color: '#8A6814', fontWeight: 700, fontSize: 10 }}>
                 Progress akan otomatis terupdate berdasarkan task yang terhubung.
+              </div>
+            </div>
+          )}
+          {(goal?.status === 'revision' || goal?.status === 'rejected') && (
+            <div style={{ 
+              marginTop: 12, padding: '12px 14px', background: HP_TOKENS.yellowWash, 
+              borderRadius: 14, border: `1px solid ${HP_TOKENS.yellow}40`,
+              display: 'flex', alignItems: 'flex-start', gap: 10
+            }}>
+              <div style={{ marginTop: 2 }}><HPGlyph name="info" size={16} color={HP_TOKENS.yellow} /></div>
+              <div style={{ ...HP_TEXT.tiny, color: '#8A6814', fontWeight: 700, fontSize: 11, lineHeight: 1.4 }}>
+                <strong>Butuh Perbaikan:</strong> OKR ini sebelumnya ditandai sebagai {goal.status === 'revision' ? 'Revisi' : 'Ditolak'}. Menyimpan perubahan akan otomatis mengirimkan kembali OKR ini sebagai <strong>Pending Review</strong> ke Manager Anda untuk dinilai ulang.
               </div>
             </div>
           )}

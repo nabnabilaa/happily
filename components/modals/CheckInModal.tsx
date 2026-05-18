@@ -78,7 +78,7 @@ export default function CheckInModal({ onClose }: CheckInModalProps) {
 
         {step === 1 && (
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6, marginTop: 26 }}>
-            {HP_MOODS.map(m => (
+            {(state?.moods || HP_MOODS).map(m => (
               <button key={m.key} onClick={() => setMood(m.key)} style={{
                 flex: 1, padding: '16px 4px', borderRadius: 18,
                 background: mood === m.key ? HP_TOKENS.sage : HP_TOKENS.card,
@@ -97,7 +97,7 @@ export default function CheckInModal({ onClose }: CheckInModalProps) {
 
         {step === 2 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 26 }}>
-            {HP_ENERGY.map(e => (
+            {(state?.energyOpts || HP_ENERGY).map(e => (
               <button key={e.key} onClick={() => setEnergy(e.key)} style={{
                 padding: 16, borderRadius: 16, background: HP_TOKENS.card,
                 border: `1.5px solid ${energy === e.key ? HP_TOKENS.sage : HP_TOKENS.line}`,

@@ -10,34 +10,75 @@ import {
 import HPGlyph from "@/components/ui/HPGlyph";
 import Modal from "@/components/ui/Modal";
 
-export default function ManagePrioritiesModal({ onClose, initialGoal }: { onClose: () => void; initialGoal?: string }) {
-  const { state, updateState, user } = useHP();
+export default function ManagePrioritiesModal({ onClose, initialGoalId }: { onClose: () => void; initialGoalId?: string }) {
+  const { state, updateState, user, notify } = useHP();
   const [newTitle, setNewTitle] = useState("");
-  const [selectedKpiId, setSelectedKpiId] = useState<string>("");
-  const [myKpis, setMyKpis] = useState<any[]>([]);
+  const [newDescription, setNewDescription] = useState("");
+  const [targetDate, setTargetDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
+  const [selectedKpiId, setSelectedKpiId] = useState<string>(initialGoalId || "");
 
-  // Fetch active KPIs assigned to this employee (manager + personal)
+  // Fetch KPIs from API (manager monthly_kpis + personal_kpis tables) — only once
+  const [apiKpis, setApiKpis] = useState<any[]>([]);
   useEffect(() => {
-    async function fetchKPIs() {
+    async function fetchApiKPIs() {
       try {
         const m = new Date().getMonth() + 1;
         const y = new Date().getFullYear();
         
-        // Fetch manager-assigned KPIs
         const managerRes = await fetch(`/api/kpi?userId=${user?.id}&role=employee&month=${m}&year=${y}`);
         const managerData = await managerRes.json();
-        const managerKpis = (managerData.kpis || []).map((k: any) => ({ ...k, source: 'manager' }));
+        const managerKpisApi = (managerData.kpis || []).map((k: any) => ({ ...k, source: 'manager' }));
         
-        // Fetch personal KPIs
         const personalRes = await fetch(`/api/kpi/personal?userId=${user?.id}&month=${m}&year=${y}`);
         const personalData = await personalRes.json();
-        const personalKpis = (personalData.kpis || []).map((k: any) => ({ ...k, weight: 0, source: 'personal' }));
+        const personalKpisApi = (personalData.kpis || []).map((k: any) => ({ ...k, weight: 0, source: 'personal' }));
         
-        setMyKpis([...managerKpis, ...personalKpis]);
+        setApiKpis([...managerKpisApi, ...personalKpisApi]);
       } catch (e) { console.error(e); }
     }
-    if (user?.id) fetchKPIs();
+    if (user?.id) fetchApiKPIs();
   }, [user?.id]);
+
+  // Derive the full KPI list by merging API KPIs with state.goals (always live/current)
+  const myKpis = React.useMemo(() => {
+    const goals = state?.goals || [];
+    const uid = String(user?.id || '');
+    
+    // Goals from state that this user owns
+    const managerGoals = goals
+      .filter((g: any) => g.scope === 'assigned' && String(g.ownerId) === uid)
+      .map((g: any) => ({
+        id: g.id, title: g.title, weight: g.alignment || 0,
+        metricUnit: g.metricUnit || '', source: 'manager', isGoal: true
+      }));
+
+    const personalGoals = goals
+      .filter((g: any) => g.scope === 'personal' && String(g.ownerId) === uid)
+      .map((g: any) => ({
+        id: g.id, title: g.title, weight: 0,
+        metricUnit: g.metricUnit || '', source: 'personal', isGoal: true
+      }));
+
+    // Merge API KPIs with state.goals, deduplicating by id or title
+    const apiManager = apiKpis.filter((k: any) => k.source === 'manager');
+    const apiPersonal = apiKpis.filter((k: any) => k.source === 'personal');
+
+    const combinedManager = [...apiManager];
+    managerGoals.forEach((mg: any) => {
+      if (!combinedManager.some((k: any) => String(k.id) === String(mg.id) || k.title.toLowerCase() === mg.title.toLowerCase())) {
+        combinedManager.push(mg);
+      }
+    });
+
+    const combinedPersonal = [...apiPersonal];
+    personalGoals.forEach((pg: any) => {
+      if (!combinedPersonal.some((k: any) => String(k.id) === String(pg.id) || k.title.toLowerCase() === pg.title.toLowerCase())) {
+        combinedPersonal.push(pg);
+      }
+    });
+
+    return [...combinedManager, ...combinedPersonal];
+  }, [apiKpis, state?.goals, user?.id]);
 
   if (!state) return null;
 
@@ -50,10 +91,14 @@ export default function ManagePrioritiesModal({ onClose, initialGoal }: { onClos
     if (!canAdd) return;
     const selectedKpi = myKpis.find((k: any) => String(k.id) === String(selectedKpiId));
     const newP = {
-      id: Date.now(),
+      id: Math.floor(Math.random() * 2000000000),
       title: newTitle,
+      description: newDescription,
+      targetDate: targetDate,
       kpi_id: selectedKpiId || null,
       kpi_title: selectedKpi?.title || null,
+      goal_id: selectedKpiId || null,
+      goal: selectedKpi?.title || null,
       energy: 'mid',
       est: "30m",
       done: false,
@@ -72,19 +117,84 @@ export default function ManagePrioritiesModal({ onClose, initialGoal }: { onClos
       }).catch(e => console.error('Failed to create KPI link:', e));
     }
 
-    updateState((s: any) => ({
-      ...s,
-      priorities: [...s.priorities, newP],
-    }));
+    updateState((s: any) => {
+      const newPriorities = [...s.priorities, newP];
+      
+      // Recalculate goal progress for linked goals
+      const updatedGoals = s.goals.map((goal: any) => {
+        if (newP.goal_id && String(goal.id) === String(newP.goal_id)) {
+          let total = 0;
+          let completed = 0;
+          const match = String(goal.metric || '').match(/^(\d+)\/(\d+)\s+task/);
+          if (match) {
+            completed = parseInt(match[1]);
+            total = parseInt(match[2]);
+          } else {
+            const todayTasks = newPriorities.filter((p: any) => (p.goal_id && String(p.goal_id) === String(goal.id)) || (p.kpi_id && String(p.kpi_id) === String(goal.id)));
+            total = todayTasks.length;
+            completed = todayTasks.filter((p: any) => p.done).length;
+          }
+
+          // A new task is added, so increment total by 1
+          total += 1;
+          const newProgress = total > 0 ? Math.round((completed / total) * 100) : goal.progress;
+          return { ...goal, progress: newProgress, metric: `${completed}/${total} task selesai` };
+        }
+        return goal;
+      });
+
+      return {
+        ...s,
+        priorities: newPriorities,
+        goals: updatedGoals
+      };
+    });
+    
+    notify("Task Berhasil Ditambahkan", `${newTitle} dijadwalkan pada ${targetDate}`, "success");
+    
     setNewTitle("");
+    setNewDescription("");
     setSelectedKpiId("");
   };
 
   const deletePriority = (id: number) => {
-    updateState((s: any) => ({
-      ...s,
-      priorities: s.priorities.filter((p: any) => String(p.id) !== String(id)),
-    }));
+    updateState((s: any) => {
+      const taskToDelete = s.priorities.find((p: any) => String(p.id) === String(id));
+      const newPriorities = s.priorities.filter((p: any) => String(p.id) !== String(id));
+      
+      // Recalculate goal progress for linked goals
+      const updatedGoals = s.goals.map((goal: any) => {
+        const targetId = taskToDelete?.goal_id || taskToDelete?.kpi_id;
+        if (targetId && String(goal.id) === String(targetId)) {
+          let total = 0;
+          let completed = 0;
+          const match = String(goal.metric || '').match(/^(\d+)\/(\d+)\s+task/);
+          if (match) {
+            completed = parseInt(match[1]);
+            total = parseInt(match[2]);
+          } else {
+            const todayTasks = newPriorities.filter((p: any) => (p.goal_id && String(p.goal_id) === String(goal.id)) || (p.kpi_id && String(p.kpi_id) === String(goal.id)));
+            total = todayTasks.length;
+            completed = todayTasks.filter((p: any) => p.done).length;
+          }
+
+          // A task is deleted, so decrement total by 1, and if it was done, decrement completed
+          total = Math.max(0, total - 1);
+          if (taskToDelete?.done) {
+            completed = Math.max(0, completed - 1);
+          }
+          const newProgress = total > 0 ? Math.round((completed / total) * 100) : 0;
+          return { ...goal, progress: newProgress, metric: total > 0 ? `${completed}/${total} task selesai` : '0/0 task selesai' };
+        }
+        return goal;
+      });
+
+      return {
+        ...s,
+        priorities: newPriorities,
+        goals: updatedGoals
+      };
+    });
   };
 
   const inputStyle: React.CSSProperties = {
@@ -132,19 +242,46 @@ export default function ManagePrioritiesModal({ onClose, initialGoal }: { onClos
                   }}>
                     {p.title}
                   </div>
-                  {/* KPI tag */}
-                  {(p.kpi_title || p.kpi_id) && (
-                    <div style={{ 
-                      display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4,
-                      padding: '2px 8px', borderRadius: 6, 
-                      background: HP_TOKENS.blueSoft, 
-                    }}>
-                      <span style={{ fontSize: 10 }}>🎯</span>
-                      <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 800, fontSize: 9 }}>
-                        {p.kpi_title || 'KPI'}
-                      </span>
+                  {p.description && (
+                    <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontSize: 11, marginTop: 2 }}>
+                      {p.description}
                     </div>
                   )}
+                  {/* KPI tag */}
+                  {(() => {
+                    const goalId = p.goal_id || p.kpi_id;
+                    const fallbackTitle = p.kpi_title || p.goal || 'KPI';
+                    if (!goalId) return null;
+                    const goal = state.goals?.find((g: any) => String(g.id) === String(goalId));
+                    if (!goal) {
+                      return (
+                        <div style={{ 
+                          display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4,
+                          padding: '2px 8px', borderRadius: 6, 
+                          background: HP_TOKENS.blueSoft, 
+                        }}>
+                          <span style={{ fontSize: 10 }}>🎯</span>
+                          <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 800, fontSize: 9 }}>
+                            {fallbackTitle}
+                          </span>
+                        </div>
+                      );
+                    }
+                    const parent = goal.parent_id ? state.goals?.find((g: any) => String(g.id) === String(goal.parent_id)) : null;
+                    const displayTag = parent ? `${goal.title} (Aligned to: ${parent.title})` : goal.title;
+                    return (
+                      <div style={{ 
+                        display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4,
+                        padding: '2px 8px', borderRadius: 6, 
+                        background: HP_TOKENS.blueSoft, 
+                      }}>
+                        <span style={{ fontSize: 10 }}>🎯</span>
+                        <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 800, fontSize: 9 }}>
+                          {displayTag}
+                        </span>
+                      </div>
+                    );
+                  })()}
                   {/* Proof links indicator */}
                   {p.proof_links && p.proof_links.length > 0 && (
                     <div style={{ 
@@ -218,34 +355,52 @@ export default function ManagePrioritiesModal({ onClose, initialGoal }: { onClos
             </div>
           </div>
           
-          {/* KPI Dropdown — UTAMA */}
-          <div>
-            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 4 }}>
-              🎯 TERKAIT KPI MANA?
-            </div>
-            {myKpis.length > 0 ? (
-              <select 
-                value={selectedKpiId}
-                onChange={(e) => setSelectedKpiId(e.target.value)}
+          <textarea 
+            value={newDescription}
+            onChange={(e) => setNewDescription(e.target.value)}
+            placeholder="Detail task (opsional)..."
+            style={{
+              ...inputStyle,
+              minHeight: 60, resize: 'vertical'
+            }}
+          />
+
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 4 }}>
+                TANGGAL PELAKSANAAN
+              </div>
+              <input 
+                type="date" 
+                value={targetDate}
+                onChange={(e) => setTargetDate(e.target.value)}
                 style={inputStyle}
-              >
+              />
+            </div>
+            
+            <div style={{ flex: 2 }}>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 4 }}>
+                TERKAIT KPI MANA?
+              </div>
+              {myKpis.length > 0 ? (
+                <select 
+                  value={selectedKpiId}
+                  onChange={(e) => setSelectedKpiId(e.target.value)}
+                  style={inputStyle}
+                >
                 <option value="">Umum (tidak terkait KPI spesifik)</option>
-                {myKpis.filter((k: any) => k.source === 'manager').length > 0 && (
-                  <optgroup label="📊 KPI dari Manager">
-                    {myKpis.filter((k: any) => k.source === 'manager').map((k: any) => (
-                      <option key={k.id} value={k.id}>
-                        🎯 {k.title} — Bobot {k.weight}%{k.metricUnit ? ` (${k.metricUnit})` : ''}
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
                 {myKpis.filter((k: any) => k.source === 'personal').length > 0 && (
-                  <optgroup label="🌱 KPI Mandiri">
-                    {myKpis.filter((k: any) => k.source === 'personal').map((k: any) => (
-                      <option key={k.id} value={k.id}>
-                        🌱 {k.title}{k.metricUnit ? ` (${k.metricUnit})` : ''}
-                      </option>
-                    ))}
+                  <optgroup label="KPI Mandiri">
+                    {myKpis.filter((k: any) => k.source === 'personal').map((k: any) => {
+                      const goal = state.goals?.find((g: any) => String(g.id) === String(k.id));
+                      const parent = goal?.parent_id ? state.goals?.find((g: any) => String(g.id) === String(goal.parent_id)) : null;
+                      const alignmentText = parent ? ` (Aligned: ${parent.title})` : '';
+                      return (
+                        <option key={k.id} value={k.id}>
+                          {k.title}{alignmentText}{k.metricUnit ? ` (${k.metricUnit})` : ''}
+                        </option>
+                      );
+                    })}
                   </optgroup>
                 )}
               </select>
@@ -255,9 +410,10 @@ export default function ManagePrioritiesModal({ onClose, initialGoal }: { onClos
                 background: HP_TOKENS.blueWash, border: `1px solid ${HP_TOKENS.blue}20`,
                 ...HP_TEXT.small, fontSize: 12, color: HP_TOKENS.inkMute
               }}>
-                💡 Belum ada KPI. Hubungi manager untuk KPI bulanan, atau buat KPI Mandiri di Goals.
+                💡 Belum ada KPI. Hubungi manager untuk KPI bulanan.
               </div>
             )}
+          </div>
           </div>
 
           {/* Info */}

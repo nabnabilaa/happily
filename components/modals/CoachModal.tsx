@@ -19,11 +19,45 @@ interface CoachModalProps {
 }
 
 export default function CoachModal({ onClose }: CoachModalProps) {
-  const { state } = useHP();
-  const [messages, setMessages] = useState(HP_COACH_MESSAGES);
+  const { state, user } = useHP();
+  const [messages, setMessages] = useState<Array<{ from: 'ai' | 'user'; text: string }>>([]);
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const userName = user?.name || "Rekan Kerja";
+    const moodKey = state?.mood;
+    const energyKey = state?.energy;
+
+    let moodDescription = "Tenang";
+    if (moodKey) {
+      if (moodKey === 'joy') moodDescription = "Senang";
+      else if (moodKey === 'calm') moodDescription = "Tenang";
+      else if (moodKey === 'neutral') moodDescription = "Biasa Saja";
+      else if (moodKey === 'tired') moodDescription = "Lelah";
+      else if (moodKey === 'stress') moodDescription = "Stres";
+      else moodDescription = moodKey;
+    }
+
+    let energyDescription = "sedang";
+    if (energyKey) {
+      if (energyKey === 'low') energyDescription = "rendah";
+      else if (energyKey === 'mid') energyDescription = "sedang";
+      else if (energyKey === 'high') energyDescription = "tinggi";
+      else energyDescription = energyKey;
+    }
+
+    const moodStatus = moodKey 
+      ? `mood kamu "${moodDescription}" dan energi ${energyDescription}`
+      : `kamu belum melakukan check-in mood hari ini`;
+
+    const greeting = `Hai ${userName} 🌱 — selamat pagi. Aku lihat ${moodStatus}. Mau aku bantu susun prioritas hari ini?`;
+    
+    setMessages([
+      { from: 'ai', text: greeting }
+    ]);
+  }, [user, state?.mood, state?.energy]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -160,7 +194,7 @@ Please refer to these commitments if the user asks for updates or needs accounta
 
         {messages.length < 3 && (
           <div style={{ padding: '0 20px 10px', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {HP_COACH_SUGGESTIONS.map(s => (
+            {(state?.coachSuggestions || HP_COACH_SUGGESTIONS).map(s => (
               <button 
                 key={s} 
                 onClick={() => send(s)} 

@@ -44,6 +44,10 @@ interface HPState {
   onboarded?: boolean;
   focusTaskId?: number | null;
   focusProgress?: number;
+  moods?: any[];
+  energyOpts?: any[];
+  companyValues?: string[];
+  coachSuggestions?: string[];
 }
 
 export type UserRole = 'hr' | 'manager' | 'employee';
@@ -192,7 +196,11 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
           contacts: [],
           onboarded: false,
           focusTaskId: null,
-          focusProgress: 0
+          focusProgress: 0,
+          moods: data.state?.moods || [],
+          energyOpts: data.state?.energyOpts || [],
+          companyValues: data.state?.companyValues || [],
+          coachSuggestions: data.state?.coachSuggestions || [],
         });
       }
       if (data.user) setUser(data.user);

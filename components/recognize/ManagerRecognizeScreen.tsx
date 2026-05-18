@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useHP } from "@/lib/HPContext";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
-import { MANAGER_TEAM_FEED, MANAGER_TEAM_MEMBERS, HP_VALUES, HP_REWARDS } from "@/lib/mockData";
+import { MANAGER_TEAM_FEED, MANAGER_TEAM_MEMBERS, HP_REWARDS } from "@/lib/mockData";
 import HPGlyph from "@/components/ui/HPGlyph";
 import HPCard from "@/components/ui/HPCard";
 import HPAvatar from "@/components/ui/HPAvatar";

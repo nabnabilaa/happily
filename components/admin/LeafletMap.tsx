@@ -79,7 +79,7 @@ export default function LeafletMap({ offices, onAddOffice, onDeleteOffice, onUpd
     const fullCodeMatch = query.match(/^[2-9C-FGHJ-MP-R-VWX]{8}\+[2-9C-FGHJ-MP-R-VWX]{2,3}$/i);
     if (fullCodeMatch) {
       try {
-        const decoded = OpenLocationCode.decode(query.toUpperCase());
+        const decoded = OLCClass.decode(query.toUpperCase());
         setSearchResults([{
           lat: decoded.latitudeCenter,
           lon: decoded.longitudeCenter,
@@ -111,8 +111,8 @@ export default function LeafletMap({ offices, onAddOffice, onDeleteOffice, onUpd
          try {
            const refLat = parseFloat(data[0].lat);
            const refLon = parseFloat(data[0].lon);
-           const fullCode = OpenLocationCode.recoverNearest(shortCode, refLat, refLon);
-           const decoded = OpenLocationCode.decode(fullCode);
+           const fullCode = OLCClass.recoverNearest(shortCode, refLat, refLon);
+           const decoded = OLCClass.decode(fullCode);
            setSearchResults([{
              lat: decoded.latitudeCenter,
              lon: decoded.longitudeCenter,

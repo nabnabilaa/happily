@@ -26,8 +26,8 @@ export async function POST(request: Request) {
       const newProgress = totalTasks > 0 ? Math.round((verifiedTasks / totalTasks) * 100) : 0;
       
       await db.execute({
-        sql: "UPDATE goals SET progress = ?, metric = ? WHERE id = ?",
-        args: [newProgress, `${verifiedTasks}/${totalTasks} verified`, goalId]
+        sql: "UPDATE goals SET metric = ? WHERE id = ?",
+        args: [`${verifiedTasks}/${totalTasks} verified`, goalId]
       });
     }
 

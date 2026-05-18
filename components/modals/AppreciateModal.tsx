@@ -178,7 +178,7 @@ export default function AppreciateModal({ onClose }: AppreciateModalProps) {
 
         <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 700, marginTop: 22 }}>NILAI PERUSAHAAN</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
-          {HP_VALUES.map((v: string) => (
+          {(state?.companyValues || HP_VALUES).map((v: string) => (
             <button 
               key={v} 
               onClick={() => setValue(v)} 

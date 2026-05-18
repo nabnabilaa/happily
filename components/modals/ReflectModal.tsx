@@ -39,7 +39,8 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
   const handleFinish = async () => {
     const prodLabel = PRODUCTIVITY_OPTS.find(p => p.key === productivity)?.label;
     const wlLabel = WORKLIFE_OPTS.find(w => w.key === workLife)?.label;
-    const moodLabel = HP_MOODS.find(m => m.key === mood)?.label;
+    const moodsList = state?.moods || HP_MOODS;
+    const moodLabel = moodsList.find(m => m.key === mood)?.label;
     
     const summary = `Mood: ${moodLabel}\nProduktivitas: ${prodLabel}\nWork-Life Balance: ${wlLabel}`;
 
@@ -164,7 +165,7 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
         </HPCard>
       </div>
 
-      {renderSelector("Bagaimana perasaanmu saat ini?", HP_MOODS, mood, setMood)}
+      {renderSelector("Bagaimana perasaanmu saat ini?", state?.moods || HP_MOODS, mood, setMood)}
       {renderSelector("Seberapa produktif kamu hari ini?", PRODUCTIVITY_OPTS, productivity, setProductivity)}
       {renderSelector("Bagaimana keseimbangan kerjamu?", WORKLIFE_OPTS, workLife, setWorkLife)}
       

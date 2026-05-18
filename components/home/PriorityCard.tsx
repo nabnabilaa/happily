@@ -125,25 +125,64 @@ export default function PriorityCard({ p, onToggle }: PriorityCardProps) {
           {p.title}
         </div>
         
+        {p.description && (
+          <div style={{ 
+            ...HP_TEXT.small, 
+            color: p.done ? HP_TOKENS.inkFade : HP_TOKENS.inkMute, 
+            fontSize: 12, 
+            marginTop: 4,
+            lineHeight: 1.4
+          }}>
+            {p.description}
+          </div>
+        )}
+        
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
            {/* KPI Tag */}
-           {(p.kpi_title || p.kpi_id) && (
-             <div style={{ 
-               display: 'flex', alignItems: 'center', gap: 4, 
-               background: p.done ? HP_TOKENS.lineSoft : `${HP_TOKENS.blueWash}80`, 
-               padding: '2px 8px', borderRadius: 6 
-             }}>
-               <span style={{ fontSize: 10 }}>🎯</span>
-               <span style={{ 
-                 ...HP_TEXT.tiny, 
-                 color: p.done ? HP_TOKENS.inkMute : HP_TOKENS.blue, 
-                 fontWeight: 800,
-                 fontSize: 10
+           {(() => {
+             const goalId = p.goal_id || p.kpi_id;
+             const fallbackTitle = p.kpi_title || p.goal;
+             if (!goalId && !fallbackTitle) return null;
+             const goal = state?.goals?.find((g: any) => String(g.id) === String(goalId));
+             if (!goal) {
+               return (
+                 <div style={{ 
+                   display: 'flex', alignItems: 'center', gap: 4, 
+                   background: p.done ? HP_TOKENS.lineSoft : `${HP_TOKENS.blueWash}80`, 
+                   padding: '2px 8px', borderRadius: 6 
+                 }}>
+                   <span style={{ fontSize: 10 }}>🎯</span>
+                   <span style={{ 
+                     ...HP_TEXT.tiny, 
+                     color: p.done ? HP_TOKENS.inkMute : HP_TOKENS.blue, 
+                     fontWeight: 800,
+                     fontSize: 10
+                   }}>
+                     {fallbackTitle || 'KPI'}
+                   </span>
+                 </div>
+               );
+             }
+             const parent = goal.parent_id ? state?.goals?.find((g: any) => String(g.id) === String(goal.parent_id)) : null;
+             const displayTag = parent ? `${goal.title} (Aligned to: ${parent.title})` : goal.title;
+             return (
+               <div style={{ 
+                 display: 'flex', alignItems: 'center', gap: 4, 
+                 background: p.done ? HP_TOKENS.lineSoft : `${HP_TOKENS.blueWash}80`, 
+                 padding: '2px 8px', borderRadius: 6 
                }}>
-                 {p.kpi_title || 'KPI'}
-               </span>
-             </div>
-           )}
+                 <span style={{ fontSize: 10 }}>🎯</span>
+                 <span style={{ 
+                   ...HP_TEXT.tiny, 
+                   color: p.done ? HP_TOKENS.inkMute : HP_TOKENS.blue, 
+                   fontWeight: 800,
+                   fontSize: 10
+                 }}>
+                   {displayTag}
+                 </span>
+               </div>
+             );
+           })()}
            
            {/* Proof links badge */}
            {p.proof_links && p.proof_links.length > 0 && (
@@ -174,6 +213,16 @@ export default function PriorityCard({ p, onToggle }: PriorityCardProps) {
              <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>
                {p.est}
              </span>
+             
+             {p.targetDate && (
+               <>
+                 <span style={{ color: HP_TOKENS.line, fontSize: 10 }}>•</span>
+                 <HPGlyph name="calendar" size={11} color={HP_TOKENS.inkMute} />
+                 <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>
+                   {p.targetDate}
+                 </span>
+               </>
+             )}
           </div>
           
           {/* Progress Bar for all tasks that have progress or are focused */}

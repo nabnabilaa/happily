@@ -68,7 +68,7 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
 
         const newGoals = s.goals.map((g: any) => 
           String(g.id) === String(goalId) 
-            ? { ...g, progress: newProgress, metric: `${verifiedCount}/${tasksForGoal.length} verified` } 
+            ? { ...g, metric: `${verifiedCount}/${tasksForGoal.length} verified` } 
             : g
         );
 
@@ -162,6 +162,23 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
     } catch (e) { console.error('Failed to reject:', e); }
   };
 
+  const handleRevisionGoal = async (goalId: string) => {
+    updateState((s: any) => ({
+      ...s,
+      goals: s.goals.map((goal: any) =>
+        String(goal.id) === String(goalId) ? { ...goal, status: 'revision' } : goal
+      )
+    }));
+    try {
+      await fetch('/api/goals/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ goalId, updates: { status: 'revision' } })
+      });
+      notify('KPI Revision', `Goal membutuhkan perbaikan (revisi).`, 'warning');
+    } catch (e) { console.error('Failed to request revision:', e); }
+  };
+
   return (
     <div style={{ padding: '0 16px 120px', fontFamily: HP_FONT }}>
       <ScreenHeader title="Tim & KPI" subtitle="Pantau goal tim dan performa anggota" />
@@ -244,10 +261,10 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <div style={{ 
                           fontSize: 9, fontWeight: 900, padding: '4px 10px', borderRadius: 99,
-                          background: g.status === 'pending' ? HP_TOKENS.yellow : g.status === 'approved' ? HP_TOKENS.sage : HP_TOKENS.coral,
+                          background: g.status === 'approved' ? HP_TOKENS.sage : g.status === 'rejected' ? HP_TOKENS.coral : g.status === 'revision' ? HP_TOKENS.yellow : HP_TOKENS.yellow,
                           color: '#fff'
                         }}>
-                          {g.status === 'pending' ? 'ON PROGRESS' : (g.status || 'ON PROGRESS').toUpperCase()}
+                          {g.status === 'approved' ? 'ACCEPT' : g.status === 'rejected' ? 'REJECT' : g.status === 'revision' ? 'REVISI' : 'ON PROGRESS'}
                         </div>
                         <button 
                           onClick={(e) => handleDeleteGoal(g.id, e)}
@@ -311,9 +328,11 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
                                       )}
                                       <div style={{
                                         padding: '2px 7px', borderRadius: 5, fontSize: 8, fontWeight: 900,
-                                        background: child.status === 'approved' ? HP_TOKENS.sageSoft : child.status === 'rejected' ? HP_TOKENS.coralSoft : HP_TOKENS.yellowSoft,
-                                        color: child.status === 'approved' ? HP_TOKENS.sage : child.status === 'rejected' ? HP_TOKENS.coral : '#8A6814',
-                                      }}>{(child.status || 'pending').toUpperCase()}</div>
+                                        background: child.status === 'approved' ? HP_TOKENS.sageSoft : child.status === 'rejected' ? HP_TOKENS.coralSoft : child.status === 'revision' ? HP_TOKENS.yellowSoft : HP_TOKENS.yellowSoft,
+                                        color: child.status === 'approved' ? HP_TOKENS.sage : child.status === 'rejected' ? HP_TOKENS.coral : child.status === 'revision' ? '#8A6814' : '#8A6814',
+                                      }}>
+                                        {child.status === 'approved' ? 'ACCEPT' : child.status === 'revision' ? 'REVISI' : child.status === 'rejected' ? 'REJECT' : 'PENDING'}
+                                      </div>
                                     </div>
                                     <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 4, marginLeft: 30, fontSize: 10 }}>
                                       Due: {child.due}
@@ -326,7 +345,7 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
                                 <div style={{ marginTop: 10 }}>
                                   <HPBar value={child.progress || 0} tone={child.tone} height={5} />
                                 </div>
-                                {/* Approve / Reject for child goal */}
+                                {/* Approve / Reject / Revisi for child goal */}
                                 {child.status === 'pending' && (
                                   <div style={{ display: 'flex', gap: 8, marginTop: 12 }} onClick={(e) => e.stopPropagation()}>
                                     <button
@@ -339,6 +358,16 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
                                         boxShadow: `0 2px 8px ${HP_TOKENS.sage}40`
                                       }}
                                     >Approve</button>
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); handleRevisionGoal(String(child.id)); }}
+                                      className="hp-tap"
+                                      style={{
+                                        flex: 1, padding: '8px', borderRadius: 10,
+                                        border: `1.5px solid ${HP_TOKENS.yellow}`,
+                                        background: '#fff', color: '#8A6814', fontFamily: HP_FONT,
+                                        fontWeight: 900, fontSize: 11, cursor: 'pointer'
+                                      }}
+                                    >Revisi</button>
                                     <button
                                       onClick={(e) => { e.stopPropagation(); handleRejectGoal(String(child.id)); }}
                                       className="hp-tap"
@@ -441,18 +470,7 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
                            <button 
                             onClick={async (e) => {
                               e.stopPropagation();
-                              updateState((s: any) => ({
-                                ...s,
-                                goals: s.goals.map((item: any) => item.id === g.id ? { ...item, status: 'approved' } : item)
-                              }));
-                              try {
-                                await fetch('/api/goals/update', {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ goalId: g.id, updates: { status: 'approved' } })
-                                });
-                                notify('KPI Approved', `KPI ${g.title} telah disetujui.`, 'success');
-                              } catch (err) { console.error(err); }
+                              handleApproveGoal(String(g.id));
                             }}
                             className="hp-tap"
                             style={{
@@ -465,18 +483,20 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
                           <button 
                             onClick={async (e) => {
                               e.stopPropagation();
-                              updateState((s: any) => ({
-                                ...s,
-                                goals: s.goals.map((item: any) => item.id === g.id ? { ...item, status: 'rejected' } : item)
-                              }));
-                              try {
-                                await fetch('/api/goals/update', {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ goalId: g.id, updates: { status: 'rejected' } })
-                                });
-                                notify('KPI Rejected', `KPI ${g.title} telah ditolak.`, 'error');
-                              } catch (err) { console.error(err); }
+                              handleRevisionGoal(String(g.id));
+                            }}
+                            className="hp-tap"
+                            style={{
+                              flex: 1, padding: '14px', borderRadius: 14, border: `1.5px solid ${HP_TOKENS.yellow}`,
+                              background: '#fff', color: '#8A6814', fontFamily: HP_FONT, fontWeight: 900, fontSize: 13, cursor: 'pointer'
+                            }}
+                          >
+                            Revisi
+                          </button>
+                          <button 
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              handleRejectGoal(String(g.id));
                             }}
                             className="hp-tap"
                             style={{

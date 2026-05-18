@@ -57,10 +57,30 @@ Jawab dengan tone yang asik dan menyemangati.`,
   };
 
   const toggleTask = (id: number) => {
-    updateState((s: any) => ({
-      ...s,
-      priorities: s.priorities.map((p: any) => p.id === id ? { ...p, done: !p.done } : p)
-    }));
+    updateState((s: any) => {
+      const newPriorities = s.priorities.map((p: any) => p.id === id ? { ...p, done: !p.done } : p);
+      
+      // Recalculate goal progress for linked goals
+      const task = s.priorities.find((p: any) => p.id === id);
+      const targetId = task?.goal_id || task?.kpi_id;
+      const updatedGoals = s.goals.map((goal: any) => {
+        if (targetId && String(goal.id) === String(targetId)) {
+          const tasksForGoal = newPriorities.filter((p: any) => (p.goal_id && String(p.goal_id) === String(goal.id)) || (p.kpi_id && String(p.kpi_id) === String(goal.id)));
+          const doneCount = tasksForGoal.filter((p: any) => p.done).length;
+          const newProgress = tasksForGoal.length > 0 
+            ? Math.round((doneCount / tasksForGoal.length) * 100) 
+            : goal.progress;
+          return { ...goal, progress: newProgress, metric: `${doneCount}/${tasksForGoal.length} task selesai` };
+        }
+        return goal;
+      });
+
+      return {
+        ...s,
+        priorities: newPriorities,
+        goals: updatedGoals
+      };
+    });
   };
 
   const updateFocusProgress = (val: number) => {
@@ -320,11 +340,20 @@ Jawab dengan tone yang asik dan menyemangati.`,
                 }}>
                   {p.title}
                 </div>
-                {p.goal && (
-                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2, fontWeight: 600 }}>
-                    Linked to: <span style={{ color: HP_TOKENS.blue }}>{p.goal}</span>
-                  </div>
-                )}
+                {(() => {
+                  const goalId = p.goal_id || p.kpi_id;
+                  const fallbackTitle = p.kpi_title || p.goal;
+                  if (!goalId && !fallbackTitle) return null;
+                  const goal = state?.goals?.find((g: any) => String(g.id) === String(goalId));
+                  const displayGoal = goal ? goal.title : fallbackTitle;
+                  const parent = goal?.parent_id ? state?.goals?.find((g: any) => String(g.id) === String(goal.parent_id)) : null;
+                  const displayTag = parent ? `${displayGoal} (Aligned to: ${parent.title})` : displayGoal;
+                  return (
+                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2, fontWeight: 600 }}>
+                      Linked to: <span style={{ color: HP_TOKENS.blue }}>{displayTag}</span>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </HPCard>

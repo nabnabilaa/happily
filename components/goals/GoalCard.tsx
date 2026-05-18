@@ -31,9 +31,10 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
   const prioritiesToUse = tasks || state?.priorities || [];
   // For `tasks` from manager, they might use `goalId` instead of `goal_id`.
   const linkedTasks = prioritiesToUse.filter((p: any) => (p.goal_id && String(p.goal_id) === String(g.id)) || (p.goalId && String(p.goalId) === String(g.id)));
-  const hasTasks = linkedTasks.length > 0;
+  const hasTodayTasks = linkedTasks.length > 0;
+  const hasTasks = hasTodayTasks || (g.metric && String(g.metric).includes('task selesai'));
   const doneTaskCount = linkedTasks.filter((p: any) => p.done).length;
-  const taskProgress = hasTasks ? Math.round((doneTaskCount / linkedTasks.length) * 100) : null;
+  const taskProgress = hasTodayTasks ? Math.round((doneTaskCount / linkedTasks.length) * 100) : null;
   
   // Progress from child goals (aligned to this goal)
   const childGoals = state?.goals?.filter((item: any) => String(item.parent_id) === String(g.id)) || [];
@@ -44,13 +45,6 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
 
   // Final display progress
   let displayProgress = g.progress || 0;
-  if (hasChildren && hasTasks) {
-    displayProgress = Math.round((childrenProgress! + taskProgress!) / 2);
-  } else if (hasChildren) {
-    displayProgress = childrenProgress!;
-  } else if (hasTasks) {
-    displayProgress = taskProgress!;
-  }
 
   const deleteGoal = () => {
     if (isReadOnly) return;
@@ -84,12 +78,24 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
       // Recalculate goal progress
       const updatedGoals = s.goals.map((goal: any) => {
         if (String(goal.id) === String(g.id)) {
+          let total = 0;
+          let completed = 0;
+          const match = String(goal.metric || '').match(/^(\d+)\/(\d+)\s+task/);
+          if (match) {
+            completed = parseInt(match[1]);
+            total = parseInt(match[2]);
+          } else {
             const tasksForGoal = newPriorities.filter((p: any) => p.goal_id && String(p.goal_id) === String(goal.id));
-          const doneCount = tasksForGoal.filter((p: any) => p.done).length;
-          const newProgress = tasksForGoal.length > 0 
-            ? Math.round((doneCount / tasksForGoal.length) * 100) 
-            : goal.progress;
-          return { ...goal, progress: newProgress, metric: `${doneCount}/${tasksForGoal.length} task selesai` };
+            total = tasksForGoal.length;
+            completed = tasksForGoal.filter((p: any) => p.done).length;
+          }
+
+          // Apply completion state change
+          const diff = !wasDone ? 1 : -1;
+          const newCompleted = Math.max(0, Math.min(total, completed + diff));
+          const newProgress = total > 0 ? Math.round((newCompleted / total) * 100) : goal.progress;
+
+          return { ...goal, progress: newProgress, metric: total > 0 ? `${newCompleted}/${total} task selesai` : goal.metric };
         }
         return goal;
       });
@@ -126,6 +132,16 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
               <HPGlyph name="target" size={14} color={toneColor} />
             </div>
             <div style={{ ...HP_TEXT.h, fontSize: 16 }}>{g.title}</div>
+            {g.status && (
+              <div style={{ 
+                padding: '2px 8px', borderRadius: 6, 
+                background: g.status === 'approved' ? HP_TOKENS.sageSoft : g.status === 'rejected' ? HP_TOKENS.coralSoft : g.status === 'revision' ? HP_TOKENS.yellowSoft : HP_TOKENS.yellowSoft, 
+                color: g.status === 'approved' ? HP_TOKENS.sage : g.status === 'rejected' ? HP_TOKENS.coral : '#8A6814',
+                fontSize: 9, fontWeight: 900, letterSpacing: 0.5
+              }}>
+                {g.status === 'approved' ? 'ACCEPT' : g.status === 'revision' ? 'REVISI' : g.status === 'rejected' ? 'REJECT' : 'PENDING'}
+              </div>
+            )}
             {displayProgress >= 100 && (
               <div style={{ 
                 padding: '2px 8px', borderRadius: 6, 
@@ -153,7 +169,7 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
             </div>
           )}
           <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, marginTop: 6, marginLeft: 32, fontSize: 12 }}>
-             {hasChildren ? `${childGoals.length} Sub-KPI` : hasTasks ? `${doneTaskCount}/${linkedTasks.length} task selesai` : (displayProgress >= 100 ? 'Target Tercapai ✨' : (g.metric || 'Progress'))} · <span style={{ fontWeight: 700 }}>Due:</span> {g.due}
+             {hasChildren ? `${childGoals.length} Sub-KPI` : hasTodayTasks ? `${doneTaskCount}/${linkedTasks.length} task selesai` : (g.metric && String(g.metric).includes('task selesai')) ? g.metric : (displayProgress >= 100 ? 'Target Tercapai ✨' : (g.metric || 'Progress'))} · <span style={{ fontWeight: 700 }}>Due:</span> {g.due}
           </div>
         </div>
         <HPChip tone={g.tone} size="sm">{g.alignment}% align</HPChip>
@@ -251,7 +267,7 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
             </div>
             {!isReadOnly && (
               <button 
-                onClick={(e) => { e.stopPropagation(); updateState((s: any) => ({ ...s, modal: { name: 'manage_priorities', props: { initialGoal: g.title } } })); }}
+                onClick={(e) => { e.stopPropagation(); updateState((s: any) => ({ ...s, modal: { name: 'manage_priorities', props: { initialGoalId: String(g.id) } } })); }}
                 style={{ background: HP_TOKENS.sageSoft, border: 'none', borderRadius: 4, padding: '2px 6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
               >
                 <HPGlyph name="target" size={8} color={HP_TOKENS.sage} />
@@ -275,17 +291,30 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
               }}>
                 {sg.done && <HPGlyph name="check" size={8} color="#fff" stroke={4}/>}
               </div>
-              <div style={{ 
-                ...HP_TEXT.small, 
-                fontSize: 12, 
-                color: sg.done ? HP_TOKENS.inkFade : HP_TOKENS.ink,
-                textDecoration: sg.done ? 'line-through' : 'none',
-                fontWeight: 600,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis'
-              }}>
-                {sg.title}
+              <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+                <div style={{ 
+                  ...HP_TEXT.small, 
+                  fontSize: 12, 
+                  color: sg.done ? HP_TOKENS.inkFade : HP_TOKENS.ink,
+                  textDecoration: sg.done ? 'line-through' : 'none',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}>
+                  {sg.title}
+                </div>
+                {sg.description && (
+                  <div style={{ 
+                    ...HP_TEXT.small, 
+                    fontSize: 10, 
+                    color: HP_TOKENS.inkMute,
+                    marginTop: 2,
+                    lineHeight: 1.3
+                  }}>
+                    {sg.description}
+                  </div>
+                )}
               </div>
             </div>
           ))}

@@ -40,6 +40,7 @@ export async function POST() {
         id INT PRIMARY KEY AUTO_INCREMENT,
         user_id VARCHAR(100) NOT NULL,
         check_in_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        check_out_at DATETIME,
         check_in_type VARCHAR(20) DEFAULT 'WFO',
         office_id VARCHAR(100),
         notes TEXT,
@@ -251,6 +252,8 @@ export async function POST() {
     // ── Daily Priorities table ──
     { desc: "daily_priorities.goal_id", sql: "ALTER TABLE daily_priorities ADD COLUMN goal_id TEXT" },
     { desc: "daily_priorities.is_verified", sql: "ALTER TABLE daily_priorities ADD COLUMN is_verified INTEGER DEFAULT 0" },
+    { desc: "daily_priorities.target_date", sql: "ALTER TABLE daily_priorities ADD COLUMN target_date TEXT" },
+    { desc: "daily_priorities.description", sql: "ALTER TABLE daily_priorities ADD COLUMN description TEXT" },
   ];
 
   for (const c of columns) {
@@ -348,22 +351,22 @@ export async function POST() {
   // ═══════════════════════════════════════════════════════
   const verification: string[] = [];
   try {
-    const usersSchema = await db.execute("PRAGMA table_info(users)");
-    const userCols = usersSchema.rows.map(r => String(r.name));
+    const usersSchema = await db.execute("SHOW COLUMNS FROM users");
+    const userCols = usersSchema.rows.map(r => String(r.Field || r.field));
     const requiredUserCols = ["manager_id", "department", "coins", "user_role_context", "is_onboarded"];
     for (const col of requiredUserCols) {
       verification.push(userCols.includes(col) ? `✅ users.${col}` : `❌ users.${col} MISSING`);
     }
 
-    const goalsSchema = await db.execute("PRAGMA table_info(goals)");
-    const goalCols = goalsSchema.rows.map(r => String(r.name));
+    const goalsSchema = await db.execute("SHOW COLUMNS FROM goals");
+    const goalCols = goalsSchema.rows.map(r => String(r.Field || r.field));
     const requiredGoalCols = ["parent_id", "assigned_by_id", "status", "is_kpi"];
     for (const col of requiredGoalCols) {
       verification.push(goalCols.includes(col) ? `✅ goals.${col}` : `❌ goals.${col} MISSING`);
     }
 
-    const dpSchema = await db.execute("PRAGMA table_info(daily_priorities)");
-    const dpCols = dpSchema.rows.map(r => String(r.name));
+    const dpSchema = await db.execute("SHOW COLUMNS FROM daily_priorities");
+    const dpCols = dpSchema.rows.map(r => String(r.Field || r.field));
     const requiredDpCols = ["goal_id", "is_verified"];
     for (const col of requiredDpCols) {
       verification.push(dpCols.includes(col) ? `✅ daily_priorities.${col}` : `❌ daily_priorities.${col} MISSING`);

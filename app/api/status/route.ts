@@ -131,7 +131,7 @@ export async function POST(request: Request) {
     await db.execute({
       sql: `INSERT INTO user_status (user_id, status, reason, attachment_url, updated_at)
             VALUES (?, ?, ?, ?, NOW())
-            ON DUPLICATE KEY UPDATE status = VALUES(status), reason = VALUES(reason), 
+            ON DUPLICATE KEY UPDATE status = VALUES(status), reason = VALUES(reason),
             attachment_url = VALUES(attachment_url), updated_at = NOW()`,
       args: [userId, status, reason || null, attachmentUrl || null]
     });
