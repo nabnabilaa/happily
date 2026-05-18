@@ -8,7 +8,6 @@ import HPCard from "@/components/ui/HPCard";
 import ScreenHeader from "@/components/ui/ScreenHeader";
 import SectionHeader from "@/components/home/SectionHeader";
 import StatBlock from "@/components/recognize/StatBlock";
-import AppreciationCard from "@/components/recognize/AppreciationCard";
 import RewardCard from "@/components/recognize/RewardCard";
 import { ORG_REWARDS_CATALOG } from "@/lib/mockData";
 

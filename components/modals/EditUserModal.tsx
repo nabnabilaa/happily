@@ -33,7 +33,6 @@ export default function EditUserModal({ onClose, user, managers, onSave, onDelet
 
   const handleSave = () => {
     onSave({
-      newRole: form.role,
       managerId: form.managerId,
       jobTitle: form.jobTitle,
       department: form.department
@@ -66,32 +65,18 @@ export default function EditUserModal({ onClose, user, managers, onSave, onDelet
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          <div>
-            <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 8, display: 'block' }}>ROLE</label>
-            <select 
-              value={form.role} 
-              onChange={e => setForm({...form, role: e.target.value})} 
-              style={selectStyle}
-            >
-              <option value="employee">Employee</option>
-              <option value="manager">Manager</option>
-              <option value="hr">HR Admin</option>
-            </select>
-          </div>
-          <div>
-            <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 8, display: 'block' }}>MANAGER</label>
-            <select 
-              value={form.managerId} 
-              onChange={e => setForm({...form, managerId: e.target.value})} 
-              style={selectStyle}
-            >
-              <option value="">No Manager</option>
-              {managers.filter(m => m.id !== user.id).map(m => (
-                <option key={m.id} value={m.id}>{m.name}</option>
-              ))}
-            </select>
-          </div>
+        <div>
+          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 8, display: 'block' }}>MANAGER</label>
+          <select 
+            value={form.managerId} 
+            onChange={e => setForm({...form, managerId: e.target.value})} 
+            style={selectStyle}
+          >
+            <option value="">No Manager</option>
+            {managers.filter(m => m.id !== user.id).map(m => (
+              <option key={m.id} value={m.id}>{m.name}</option>
+            ))}
+          </select>
         </div>
 
         <div>

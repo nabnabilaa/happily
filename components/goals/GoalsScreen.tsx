@@ -25,7 +25,6 @@ export default function GoalsScreen({ openModal }: GoalsScreenProps) {
     if (tab === 'personal') return g.scope === 'personal' && String(g.ownerId) === String(user.id);
     if (tab === 'assigned') return g.scope === 'assigned' && String(g.ownerId) === String(user.id);
     if (tab === 'team') return false;
-    if (tab === 'company') return false;
     return false;
   });
 

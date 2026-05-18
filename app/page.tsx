@@ -22,7 +22,6 @@ import NotesScreen from "@/components/notes/NotesScreen";
 import HomeScreen from "@/components/home/HomeScreen";
 import GoalsScreen from "@/components/goals/GoalsScreen";
 import RecognizeScreen from "@/components/recognize/RecognizeScreen";
-import WellbeingScreen from "@/components/wellbeing/WellbeingScreen";
 
 // ── Manager Screens ──
 import ManagerHomeScreen from "@/components/home/ManagerHomeScreen";
@@ -54,14 +53,12 @@ import ManagePrioritiesModal from "@/components/modals/ManagePrioritiesModal";
 import ManageHabitsModal from "@/components/modals/ManageHabitsModal";
 import ManageLearningModal from "@/components/modals/ManageLearningModal";
 import ScheduleCoachingModal from "@/components/modals/ScheduleCoachingModal";
-import GROWCoachingModal from "@/components/modals/GROWCoachingModal";
 import LearningDetailModal from "@/components/modals/LearningDetailModal";
 import ManageProgramsModal from "@/components/modals/ManageProgramsModal";
 import AllRewardsModal from "@/components/modals/AllRewardsModal";
 import LogbookModal from "@/components/modals/LogbookModal";
 import CalendarModal from "@/components/modals/CalendarModal";
 import SystemGuideModal from "@/components/modals/SystemGuideModal";
-import SkillAssessmentModal from "@/components/modals/SkillAssessmentModal";
 import ProfileEditorModal from "@/components/modals/ProfileEditorModal";
 import ManageSurveysModal from "@/components/modals/ManageSurveysModal";
 import TakeSurveyModal from "@/components/modals/TakeSurveyModal";
@@ -347,14 +344,12 @@ function AppContent() {
       {modal?.name === 'learning_detail'  && <LearningDetailModal onClose={closeModal} />}
       {modal?.name === 'manage_programs'  && <ManageProgramsModal onClose={closeModal} />}
       {modal?.name === 'all_rewards'      && <AllRewardsModal onClose={closeModal} />}
-      {modal?.name === 'grow_coaching'    && <GROWCoachingModal onClose={closeModal} roleContext={modal.props?.role} topic={modal.props?.topic} />}
       {modal?.name === 'logbook'          && <LogbookModal onClose={closeModal} />}
       {modal?.name === 'system_guide'     && <SystemGuideModal onClose={closeModal} />}
       {modal?.name === 'profile_editor'   && <ProfileEditorModal onClose={closeModal} />}
       {modal?.name === 'manage_surveys'   && <ManageSurveysModal onClose={closeModal} openModal={openModal} {...modal.props} />}
       {modal?.name === 'take_survey'     && <TakeSurveyModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'survey_results'   && <SurveyResultsModal onClose={closeModal} {...modal.props} />}
-      {modal?.name === 'skill_assessment' && <SkillAssessmentModal onClose={closeModal} skillName={modal.props?.skill} />}
       {modal?.name === 'attendance_scanner' && <AttendanceScannerModal onClose={closeModal} />}
       {modal?.name === 'attendance_history' && <AttendanceHistoryModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'calendar'         && <CalendarModal onClose={closeModal} />}

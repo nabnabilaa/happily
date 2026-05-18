@@ -9,7 +9,6 @@ import HPCard from "@/components/ui/HPCard";
 import HPAvatar from "@/components/ui/HPAvatar";
 import ScreenHeader from "@/components/ui/ScreenHeader";
 import SectionHeader from "@/components/home/SectionHeader";
-import AppreciationCard from "@/components/recognize/AppreciationCard";
 import RewardCard from "@/components/recognize/RewardCard";
 import StatBlock from "@/components/recognize/StatBlock";
 
