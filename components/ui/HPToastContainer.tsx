@@ -20,13 +20,13 @@ export default function HPToastContainer() {
       pointerEvents: 'none'
     }}>
       {toasts.map((toast) => (
-        <ToastItem key={toast.id} toast={toast} onDismiss={() => dismissToast(toast.id)} />
+        <ToastItem key={toast.id} toast={toast} onDismiss={dismissToast} />
       ))}
     </div>
   );
 }
 
-function ToastItem({ toast, onDismiss }: { toast: any, onDismiss: () => void }) {
+function ToastItem({ toast, onDismiss }: { toast: any, onDismiss: (id: string) => void }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -36,11 +36,11 @@ function ToastItem({ toast, onDismiss }: { toast: any, onDismiss: () => void }) 
     // Auto dismiss after 4 seconds
     const timer = setTimeout(() => {
       setVisible(false);
-      setTimeout(onDismiss, 300); // Wait for fade out animation
+      setTimeout(() => onDismiss(toast.id), 300); // Wait for fade out animation
     }, 4000);
     
     return () => clearTimeout(timer);
-  }, [onDismiss]);
+  }, [toast.id, onDismiss]);
 
   const config = {
     success: { color: HP_TOKENS.sage, bg: HP_TOKENS.sageWash, icon: 'check' },

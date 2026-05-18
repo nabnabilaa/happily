@@ -288,21 +288,25 @@ export default function HomeScreen({ openModal }: any) {
   }, [completingTask, updateState, awardXP, syncSkillProgress, rawUser]);
 
   const toggleHabit = useCallback((name: string) => {
+    const habit = rawState?.habits?.find((h: any) => h.name === name);
+    if (!habit) return;
+    const wasDone = habit.done;
+    
+    if (!wasDone) { 
+      setConfetti(true); 
+      setCelebrate(true);
+      setTimeout(() => setConfetti(false), 1200); 
+      awardXP('habit_complete', `Latihan: ${name}`);
+    }
+
     updateState((s: any) => {
       const hIndex = s.habits.findIndex((h: any) => h.name === name);
       if (hIndex === -1) return s;
-      const habit = s.habits[hIndex];
-      const wasDone = habit.done;
       
       const newHabits = [...s.habits];
       newHabits[hIndex] = { ...newHabits[hIndex], done: !wasDone };
 
       if (!wasDone) { 
-        setConfetti(true); 
-        setCelebrate(true);
-        setTimeout(() => setConfetti(false), 1200); 
-        awardXP('habit_complete', `Latihan: ${name}`);
-
         const now = new Date();
         const newLog = {
           id: Date.now(),
@@ -320,7 +324,7 @@ export default function HomeScreen({ openModal }: any) {
         return { ...s, habits: newHabits };
       }
     });
-  }, [updateState, awardXP]);
+  }, [rawState, updateState, awardXP]);
 
   const aiInsights = useMemo(() => generateAIInsights(rawState, rawUser), [rawState, rawUser]);
 

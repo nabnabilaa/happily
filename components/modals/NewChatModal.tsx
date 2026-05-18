@@ -42,7 +42,7 @@ export default function NewChatModal({ onClose, onChannelCreated }: NewChatModal
   const [broadcastContent, setBroadcastContent] = useState('');
   const [selectedDepts, setSelectedDepts] = useState<string[]>([]);
 
-  const isHRorManager = user?.role === 'hr' || user?.role === 'admin' || user?.role === 'manager';
+  const isHRorManager = user?.role === 'hr' || user?.role === 'manager';
 
   useEffect(() => { fetchUsers(); }, []);
 
@@ -309,7 +309,7 @@ export default function NewChatModal({ onClose, onChannelCreated }: NewChatModal
           padding: 4,
         }}>
           {filteredDepts.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 16, color: HP_TOKENS.inkMute, ...HP_TEXT.small }}>
+            <div style={{ textAlign: 'center', padding: 16, ...HP_TEXT.small, color: HP_TOKENS.inkMute }}>
               Divisi tidak ditemukan
             </div>
           ) : (
@@ -489,8 +489,9 @@ export default function NewChatModal({ onClose, onChannelCreated }: NewChatModal
                     transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0)',
                     transition: 'transform 0.2s',
                   }}>
-                    <HPGlyph name="chevronLeft" size={12} color={HP_TOKENS.inkMute}
-                      style={{ transform: 'rotate(-90deg)' }} />
+                    <span style={{ display: 'inline-flex', transform: 'rotate(-90deg)' }}>
+                      <HPGlyph name="chevronLeft" size={12} color={HP_TOKENS.inkMute} />
+                    </span>
                   </button>
                   <div style={{ flex: 1, ...HP_TEXT.h, fontSize: 12, color: HP_TOKENS.inkMute, letterSpacing: 0.5 }}>
                     {dept} ({deptUsers.length})

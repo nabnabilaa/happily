@@ -443,7 +443,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
           delete finalSyncState.rewards;
           
           const finalPayload = JSON.stringify({ state: finalSyncState, user: data.user, userId: data.user.id });
-          lastSyncedPayloadRef.current = finalPayload; // Update ref immediately to prevent subsequent identical triggers
+          lastSyncedPayloadRef.current = JSON.stringify({ state: finalSyncState, user: data.user }); // Update ref immediately with consistent structure (no userId)
 
           const response = await fetch("/api/storage", {
             method: "POST",

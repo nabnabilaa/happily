@@ -59,18 +59,20 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
 
   const toggleTask = (taskId: number) => {
     if (isReadOnly) return;
+    const task = state?.priorities?.find((p: any) => String(p.id) === String(taskId));
+    if (!task) return;
+    
+    const wasDone = task.done;
+    
+    // Award XP and show confetti if completing
+    if (!wasDone) {
+      awardXP('priority_complete', `Selesaikan: ${task.title}`);
+      notify('Task Selesai! 🎉', `${task.title} berhasil diselesaikan.`, 'success');
+    }
+
     updateState((s: any) => {
       const taskIndex = s.priorities.findIndex((p: any) => String(p.id) === String(taskId));
       if (taskIndex === -1) return s;
-      
-      const task = s.priorities[taskIndex];
-      const wasDone = task.done;
-      
-      // Award XP and show confetti if completing
-      if (!wasDone) {
-        awardXP('priority_complete', `Selesaikan: ${task.title}`);
-        notify('Task Selesai! 🎉', `${task.title} berhasil diselesaikan.`, 'success');
-      }
 
       const newPriorities = [...s.priorities];
       newPriorities[taskIndex] = { ...newPriorities[taskIndex], done: !wasDone };
