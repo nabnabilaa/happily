@@ -54,16 +54,19 @@ export default function HRRecognizeScreen({ openModal }: Props) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <div style={{
                 width: 48, height: 48, borderRadius: 14,
-                background: HP_TOKENS[r.tone as keyof typeof HP_TOKENS] + '15' || HP_TOKENS.lineSoft,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24,
+                background: (HP_TOKENS[r.tone as keyof typeof HP_TOKENS] || HP_TOKENS.blue) + '22',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
                 opacity: r.stock === 0 ? 0.5 : 1
               }}>
-                {r.title.toLowerCase().includes('cuti') ? '🏖️' : r.title.toLowerCase().includes('lunch') ? '🍱' : r.title.toLowerCase().includes('workshop') ? '🎨' : '🎁'}
+                <HPGlyph name={r.glyph || "gift"} size={24} color={HP_TOKENS[r.tone as keyof typeof HP_TOKENS] || HP_TOKENS.ink} />
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ ...HP_TEXT.h, fontSize: 14, color: r.stock === 0 ? HP_TOKENS.inkMute : HP_TOKENS.ink }}>{r.title}</div>
+                {r.description && (
+                  <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontSize: 11, marginTop: 2 }}>{r.description}</div>
+                )}
                 <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginTop: 4 }}>
-                  <span style={{ color: HP_TOKENS.blue }}>{r.points} KOIN</span>
+                  <span style={{ color: HP_TOKENS.blue }}>{r.points} POIN</span>
                   <span style={{ margin: '0 8px', opacity: 0.3 }}>|</span>
                   STOK: <span style={{ color: r.stock < 5 ? HP_TOKENS.coral : HP_TOKENS.sage, fontWeight: 900 }}>{r.stock}</span>
                 </div>

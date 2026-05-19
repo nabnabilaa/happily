@@ -102,7 +102,7 @@ export default function HPAvatar({
           zIndex: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
           animation: 'hpPop 0.3s ease-out'
         }}>
-          {rank}
+          {rank.substring(0, 1).toUpperCase()}
         </div>
       )}
     </div>

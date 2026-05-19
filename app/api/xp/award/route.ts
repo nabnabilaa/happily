@@ -9,12 +9,12 @@ const XP_VALUES: Record<string, number> = {
   check_in_ontime: 10,        // Clock-in sebelum 08:00
   check_in_late_minor: 5,     // Terlambat 1–15 menit
   check_in_late: 0,           // Terlambat > 15 menit
-  check_out: 5,               // Clock-out (hadir penuh)
+  check_out: 100,             // Clock-out (Tutup Hari) -> Match Guide
 
   // Tasks
-  task_approved: 15,           // Task disetujui Manager
-  task_revised_approved: 8,    // Task direvisi lalu disetujui
-  priority_complete: 15,       // Legacy alias → same as task_approved
+  task_approved: 50,           // Task disetujui Manager -> Match Guide
+  task_revised_approved: 25,   // Task direvisi lalu disetujui
+  priority_complete: 50,       // Legacy alias -> Match Guide
 
   // Wellbeing
   mood_checkin: 5,             // Isi Mood & Energy (1x per hari)
@@ -36,15 +36,17 @@ const XP_VALUES: Record<string, number> = {
   survey_complete: 5,          // Per survey diisi
 
   // Other (legacy)
-  habit_complete: 5,
-  daily_reflection: 5,
+  habit_complete: 20,          // Match Guide
+  daily_reflection: 100,       // Match Guide
   focus_session: 5,
   check_in: 10,                // Legacy fallback
   goal_complete: 150,          // Legacy fallback → maps to kpi_achieved
+  learning_complete: 100,      // Match Guide
 };
 
-// Daily cap for task-related XP (anti-abuse)
-const DAILY_TASK_XP_CAP = 75;
+// Daily cap for task-related XP (anti-abuse: max 3 tasks completed per day)
+const DAILY_TASK_XP_CAP = 150;
+const DAILY_GLOBAL_XP_CAP = 300; // Global limit: max 300 points per day
 const TASK_ACTION_TYPES = ['task_approved', 'task_revised_approved', 'priority_complete'];
 
 export async function POST(request: Request) {
@@ -59,10 +61,40 @@ export async function POST(request: Request) {
     const recipientId = targetUserId || userId;
 
     const amount = XP_VALUES[actionType] || 5;
-    
-    // ── Anti-Abuse: Daily Task XP Cap ──────────────────────────────
-    if (TASK_ACTION_TYPES.includes(actionType)) {
-      try {
+
+    // ── Anti-Abuse: Global Daily XP/Point Cap ───────────────────────
+    try {
+      const todayGlobalXP = await db.execute({
+        sql: `SELECT COALESCE(SUM(amount), 0) as total 
+              FROM xp_transactions 
+              WHERE user_id = ? 
+                AND DATE(created_at) = CURDATE()`,
+        args: [recipientId]
+      });
+      const currentGlobalTotal = Number(todayGlobalXP.rows[0]?.total) || 0;
+
+      if (currentGlobalTotal >= DAILY_GLOBAL_XP_CAP) {
+        return NextResponse.json({ 
+          success: true, 
+          awarded: 0, 
+          awardedCoins: 0,
+          capped: true,
+          message: `Batas poin harian tercapai (${DAILY_GLOBAL_XP_CAP} Poin). Aktivitas tetap tercatat tapi Poin tidak bertambah.`,
+          newTotal: 0,
+          newCoins: 0,
+          recipientId
+        });
+      }
+
+      // Check remaining global cap
+      let finalAmount = amount;
+      const remainingGlobalCap = DAILY_GLOBAL_XP_CAP - currentGlobalTotal;
+      if (finalAmount > remainingGlobalCap) {
+        finalAmount = remainingGlobalCap;
+      }
+
+      // ── Anti-Abuse: Daily Task XP Cap ──────────────────────────────
+      if (TASK_ACTION_TYPES.includes(actionType)) {
         const todayTaskXP = await db.execute({
           sql: `SELECT COALESCE(SUM(amount), 0) as total 
                 FROM xp_transactions 
@@ -79,26 +111,34 @@ export async function POST(request: Request) {
             awarded: 0, 
             awardedCoins: 0,
             capped: true,
-            message: `Batas XP harian dari task tercapai (${DAILY_TASK_XP_CAP} XP). Task tetap tercatat tapi XP tidak bertambah.`,
+            message: `Batas Poin harian dari task tercapai (${DAILY_TASK_XP_CAP} Poin). Task tetap tercatat tapi Poin tidak bertambah.`,
             newTotal: 0,
             newCoins: 0,
             recipientId
           });
         }
         
-        // Reduce amount if it would exceed cap
-        const remainingCap = DAILY_TASK_XP_CAP - currentDailyTotal;
-        if (amount > remainingCap) {
-          // Award only remaining cap, logged below
-          const cappedAmount = remainingCap;
-          return await awardXPInternal(recipientId, cappedAmount, actionType, description, request);
+        // Reduce amount if it would exceed task cap
+        const remainingTaskCap = DAILY_TASK_XP_CAP - currentDailyTotal;
+        if (finalAmount > remainingTaskCap) {
+          finalAmount = remainingTaskCap;
         }
-      } catch (e) {
-        console.warn("Daily cap check failed, awarding normally:", e);
       }
-    }
 
-    return await awardXPInternal(recipientId, amount, actionType, description, request);
+      if (finalAmount <= 0) {
+        return NextResponse.json({ 
+          success: true, 
+          awarded: 0, 
+          awardedCoins: 0,
+          recipientId 
+        });
+      }
+
+      return await awardXPInternal(recipientId, finalAmount, actionType, description, request);
+    } catch (e) {
+      console.warn("Daily cap check failed, awarding normally:", e);
+      return await awardXPInternal(recipientId, amount, actionType, description, request);
+    }
   } catch (error) {
     console.error("XP Award Error:", error);
     return NextResponse.json({ error: "Failed to award XP & Coins" }, { status: 500 });
@@ -116,7 +156,7 @@ async function awardXPInternal(
     return NextResponse.json({ success: true, awarded: 0, awardedCoins: 0, recipientId });
   }
 
-  const coinsAmount = Math.floor(amount / 4); // 4:1 Ratio
+  const coinsAmount = amount; // 1:1 Ratio (Koin and Poin are the same)
   const txId = "tx_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
 
   // 1. Log Transaction
@@ -251,11 +291,26 @@ const LOGBOOK_META: Record<string, { title: string; type: string; emoji: string 
 
 // ── Spec v2 Level System ──────────────────────────────────────
 function calculateLevelAndRank(points: number): { level: number; rank: string } {
-  if (points < 500)    return { level: 1, rank: 'Rookie' };
-  if (points < 1500)   return { level: 2, rank: 'Contributor' };
-  if (points < 3500)   return { level: 3, rank: 'Performer' };
-  if (points < 7000)   return { level: 4, rank: 'Achiever' };
-  if (points < 12500)  return { level: 5, rank: 'Leader' };
-  if (points < 20000)  return { level: 6, rank: 'Champion' };
-  return { level: 7, rank: 'Legend' };
+  let level = 1;
+  if (points < 0) {
+    level = 1;
+  } else if (points < 1000) {
+    level = Math.floor(points / 100) + 1;
+  } else if (points < 4000) {
+    const diff = points - 1000;
+    level = 11 + Math.floor(diff / 300);
+  } else {
+    const diff = points - 4000;
+    level = 21 + Math.floor(diff / 1000);
+  }
+
+  let rank = 'E';
+  if (level <= 10) rank = 'E';
+  else if (level <= 20) rank = 'D';
+  else if (level <= 35) rank = 'C';
+  else if (level <= 50) rank = 'B';
+  else if (level <= 70) rank = 'A';
+  else rank = 'S';
+
+  return { level, rank };
 }

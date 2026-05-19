@@ -15,11 +15,11 @@ interface LearningDetailModalProps {
 }
 
 export default function LearningDetailModal({ onClose }: LearningDetailModalProps) {
-  const { updateUser, syncSkillProgress } = useHP();
+  const { awardXP, syncSkillProgress } = useHP();
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     // Award Points
-    updateUser((u: any) => ({ ...u, points: u.points + 100 }));
+    await awardXP('learning_complete', 'Belajar: Mastering Influence without Authority');
     // Sync Skill (Simulating AI analysis of the 'Leadership' tag)
     syncSkillProgress("Leadership", 10);
     onClose();

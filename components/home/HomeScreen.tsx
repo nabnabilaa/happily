@@ -469,7 +469,7 @@ export default function HomeScreen({ openModal }: any) {
                   </div>
                 </div>
                 <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 700, fontSize: 12, marginTop: 2 }}>
-                  {user.rank}
+                  Rank {user.rank}
                 </div>
               </div>
             </div>
@@ -553,6 +553,51 @@ export default function HomeScreen({ openModal }: any) {
             energyObj={energyObj} 
             onOpenCheckIn={() => openModal('checkin')}
           />
+        </div>
+
+        {/* Mindful Breathing Reset Card */}
+        <div style={{ marginTop: 16 }}>
+          <HPCard 
+            padding={16} 
+            style={{ 
+              background: `linear-gradient(135deg, ${HP_TOKENS.sageWash} 0%, ${HP_TOKENS.blueWash} 100%)`, 
+              border: `1.5px solid ${HP_TOKENS.sage}20`,
+              boxShadow: '0 8px 24px rgba(74, 124, 89, 0.04)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ 
+                width: 44, height: 44, borderRadius: 14, 
+                background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.02)', fontSize: 20
+              }}>
+                🧘‍♂️
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.ink }}>
+                  Butuh Jeda Sejenak?
+                </div>
+                <div style={{ ...HP_TEXT.body, fontSize: 12, color: HP_TOKENS.inkSoft, marginTop: 2, lineHeight: 1.4 }}>
+                  Latihan bernapas Box Breathing 1 menit untuk menurunkan stress dan mengembalikan fokusmu.
+                </div>
+              </div>
+              <button 
+                onClick={() => openModal('pause')}
+                className="hp-tap"
+                style={{
+                  padding: '10px 16px', borderRadius: 12, border: 'none',
+                  background: HP_TOKENS.sage, color: '#fff',
+                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
+                  boxShadow: `0 4px 12px ${HP_TOKENS.sage}30`,
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                Mulai Reset
+              </button>
+            </div>
+          </HPCard>
         </div>
 
         {/* Smart Reminders */}

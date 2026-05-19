@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useHP } from "@/lib/HPContext";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
 import HPGlyph from "@/components/ui/HPGlyph";
@@ -15,19 +15,84 @@ interface GoalsScreenProps {
 }
 
 export default function GoalsScreen({ openModal }: GoalsScreenProps) {
-  const { state, updateState, user } = useHP();
+  const { state, user } = useHP();
   const [tab, setTab] = useState('personal');
-  
+  const [apiKpis, setApiKpis] = useState<any[]>([]);
+  const [loadingKpis, setLoadingKpis] = useState(true);
+
+  // Fetch both Manager-assigned KPIs and Personal KPIs
+  useEffect(() => {
+    async function fetchKPIs() {
+      if (!user?.id) return;
+      try {
+        setLoadingKpis(true);
+        const m = new Date().getMonth() + 1;
+        const y = new Date().getFullYear();
+
+        const managerRes = await fetch(`/api/kpi?userId=${user.id}&role=employee&month=${m}&year=${y}`);
+        const managerData = await managerRes.json();
+        const managerKpis = (managerData.kpis || []).map((k: any) => ({
+          id: String(k.id),
+          title: k.title,
+          progress: k.finalScore !== null && k.finalScore !== undefined ? Number(k.finalScore) : 0,
+          alignment: k.weight || 0,
+          due: `${m}/${y}`,
+          tone: 'lavender',
+          metric: k.targetDescription || 'KPI Bulanan (Manager)',
+          scope: 'assigned',
+          owner: k.assigneeName || user.name || 'You',
+          ownerId: String(k.assignedTo),
+          status: k.status === 'active' ? 'approved' : k.status,
+          is_kpi: true,
+          isApiKpi: true,
+          subGoals: []
+        }));
+
+        const personalRes = await fetch(`/api/kpi/personal?userId=${user.id}&month=${m}&year=${y}`);
+        const personalData = await personalRes.json();
+        const personalKpis = (personalData.kpis || []).map((k: any) => ({
+          id: String(k.id),
+          title: k.title,
+          progress: k.progress || 0,
+          alignment: 0,
+          due: `${m}/${y}`,
+          tone: 'sage',
+          metric: k.targetDescription || `${k.currentValue || 0}/${k.targetValue || 0} ${k.metricUnit || ''}`,
+          scope: 'personal',
+          owner: user.name || 'You',
+          ownerId: String(user.id),
+          status: k.status || 'active',
+          is_kpi: true,
+          isApiKpi: true,
+          subGoals: []
+        }));
+
+        setApiKpis([...managerKpis, ...personalKpis]);
+      } catch (e) {
+        console.error("Failed to load KPIs in GoalsScreen:", e);
+      } finally {
+        setLoadingKpis(false);
+      }
+    }
+    fetchKPIs();
+  }, [user?.id]);
+
   if (!state || !user) return null;
 
-  // Filter goals by scope and visibility rules
+  // Filter goals and merge with fetched KPIs
   const filteredGoals = state.goals.filter((g: any) => {
     if (tab === 'personal') return g.scope === 'personal' && String(g.ownerId) === String(user.id);
     if (tab === 'assigned') return g.scope === 'assigned' && String(g.ownerId) === String(user.id);
-    if (tab === 'team') return false;
     return false;
   });
 
+  // Merge with API KPIs to prevent duplication
+  const combinedGoals = [...filteredGoals];
+  apiKpis.filter((k: any) => k.scope === tab).forEach((k: any) => {
+    if (!combinedGoals.some((g: any) => String(g.id) === String(k.id) || g.title.toLowerCase() === k.title.toLowerCase())) {
+      combinedGoals.push(k);
+    }
+  });
 
   return (
     <div style={{ padding: '0 16px 120px', fontFamily: HP_FONT }}>
@@ -78,18 +143,25 @@ export default function GoalsScreen({ openModal }: GoalsScreenProps) {
       <SectionHeader 
         icon="target" 
         label={`${tab.toUpperCase()} KPI`}
-        count={String(filteredGoals.length)} 
+        count={String(combinedGoals.length)} 
         action={tab === 'personal' ? "+ Baru" : undefined}
         onAction={tab === 'personal' ? () => openModal('new_goal') : undefined}
       />
       
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {filteredGoals.map((g: any) => (
-          <div key={g.id} onClick={() => openModal('new_goal', { goal: g })} className="hp-tap">
-            <GoalCard g={g}/>
+        {combinedGoals.map((g: any) => (
+          <div 
+            key={g.id} 
+            onClick={() => {
+              if (g.isApiKpi) return;
+              openModal('new_goal', { goal: g });
+            }} 
+            className={g.isApiKpi ? "" : "hp-tap"}
+          >
+            <GoalCard g={g} isReadOnly={g.isApiKpi} />
           </div>
         ))}
-        {filteredGoals.length === 0 && (
+        {combinedGoals.length === 0 && !loadingKpis && (
           <div style={{ 
             textAlign: 'center', padding: '60px 20px', color: HP_TOKENS.inkMute, 
             background: HP_TOKENS.card, borderRadius: 24, border: `1.5px solid ${HP_TOKENS.lineSoft}`
@@ -99,10 +171,13 @@ export default function GoalsScreen({ openModal }: GoalsScreenProps) {
             <div style={{ ...HP_TEXT.small, marginTop: 4 }}>Semangat! Teruslah tumbuh dan berkembang.</div>
           </div>
         )}
+        {loadingKpis && combinedGoals.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '40px 20px', color: HP_TOKENS.inkMute }}>
+            Memuat KPI...
+          </div>
+        )}
       </div>
 
     </div>
   );
 }
-
-

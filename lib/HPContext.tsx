@@ -88,37 +88,38 @@ interface HPContextType {
 const HPContext = createContext<HPContextType | undefined>(undefined);
 
 // ── Helpers (Moved outside to keep hooks order stable) ───────────────────────
-// Spec v2 Level System: 7 levels with named ranks
-const LEVEL_THRESHOLDS = [
-  { min: 0,     level: 1, rank: 'Rookie' },
-  { min: 500,   level: 2, rank: 'Contributor' },
-  { min: 1500,  level: 3, rank: 'Performer' },
-  { min: 3500,  level: 4, rank: 'Achiever' },
-  { min: 7000,  level: 5, rank: 'Leader' },
-  { min: 12500, level: 6, rank: 'Champion' },
-  { min: 20000, level: 7, rank: 'Legend' },
-];
-
 const calculateLevel = (points: number) => {
-  for (let i = LEVEL_THRESHOLDS.length - 1; i >= 0; i--) {
-    if (points >= LEVEL_THRESHOLDS[i].min) return LEVEL_THRESHOLDS[i].level;
+  if (points < 0) return 1;
+  if (points < 1000) {
+    return Math.floor(points / 100) + 1;
   }
-  return 1;
+  if (points < 4000) {
+    const diff = points - 1000;
+    return 11 + Math.floor(diff / 300);
+  }
+  const diff = points - 4000;
+  return 21 + Math.floor(diff / 1000);
 };
 
 const calculateRank = (level: number) => {
-  const entry = LEVEL_THRESHOLDS.find(t => t.level === level);
-  return entry?.rank || 'Rookie';
+  if (level <= 10) return 'E';
+  if (level <= 20) return 'D';
+  if (level <= 35) return 'C';
+  if (level <= 50) return 'B';
+  if (level <= 70) return 'A';
+  return 'S';
 };
 
 // Calculate progress within current level (0.0 - 1.0)
 export const calculateLevelProgress = (points: number) => {
-  const currentIdx = LEVEL_THRESHOLDS.reduce((idx, t, i) => points >= t.min ? i : idx, 0);
-  const currentMin = LEVEL_THRESHOLDS[currentIdx].min;
-  const nextMin = currentIdx < LEVEL_THRESHOLDS.length - 1 
-    ? LEVEL_THRESHOLDS[currentIdx + 1].min 
-    : currentMin + 10000; // Legend: progress within 10k increments
-  return (points - currentMin) / (nextMin - currentMin);
+  if (points < 0) return 0;
+  if (points < 1000) {
+    return (points % 100) / 100;
+  }
+  if (points < 4000) {
+    return ((points - 1000) % 300) / 300;
+  }
+  return ((points - 4000) % 1000) / 1000;
 };
 
 export function HPProvider({ children }: { children: React.ReactNode }) {
@@ -180,7 +181,10 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         delete syncState.managerData;
         delete syncState.surveys;
         delete syncState.feed;
-        delete syncState.rewards;
+        const isHRUser = (data.user || user)?.role === 'hr' || (data.user || user)?.userRole === 'hr';
+        if (!isHRUser) {
+          delete syncState.rewards;
+        }
         lastSyncedPayloadRef.current = JSON.stringify({ state: syncState, user: data.user || user });
       }
       else {
@@ -418,7 +422,10 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
       delete syncState.managerData;
       delete syncState.surveys;
       delete syncState.feed;
-      delete syncState.rewards;
+      const isHRUser = user?.role === 'hr' || user?.userRole === 'hr';
+      if (!isHRUser) {
+        delete syncState.rewards;
+      }
 
       const currentPayloadStr = JSON.stringify({ state: syncState, user });
       
@@ -440,7 +447,10 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
           delete finalSyncState.managerData;
           delete finalSyncState.surveys;
           delete finalSyncState.feed;
-          delete finalSyncState.rewards;
+          const isHRUserFinal = data.user?.role === 'hr' || data.user?.userRole === 'hr';
+          if (!isHRUserFinal) {
+            delete finalSyncState.rewards;
+          }
           
           const finalPayload = JSON.stringify({ state: finalSyncState, user: data.user, userId: data.user.id });
           lastSyncedPayloadRef.current = JSON.stringify({ state: finalSyncState, user: data.user }); // Update ref immediately with consistent structure (no userId)
@@ -478,7 +488,10 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
           delete syncState.managerData;
           delete syncState.surveys;
           delete syncState.feed;
-          delete syncState.rewards;
+          const isHRUserUnload = data.user?.role === 'hr' || data.user?.userRole === 'hr';
+          if (!isHRUserUnload) {
+            delete syncState.rewards;
+          }
 
           const payload = JSON.stringify({ state: syncState, user: data.user, userId: data.user.id });
           // Only send if within beacon limits (usually 64KB)

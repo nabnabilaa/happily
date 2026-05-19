@@ -18,6 +18,8 @@ export default function RewardEditorModal({ onClose, reward, onSave }: RewardEdi
     stock: reward?.stock || "",
     category: reward?.category || "General",
     tone: reward?.tone || "blue",
+    description: reward?.description || "",
+    glyph: reward?.glyph || "gift",
   });
 
   const handleSave = () => {
@@ -29,6 +31,8 @@ export default function RewardEditorModal({ onClose, reward, onSave }: RewardEdi
       stock: parseInt(form.stock as string),
       category: form.category,
       tone: form.tone,
+      description: form.description,
+      glyph: form.glyph,
       id: reward?.id || Date.now()
     });
     onClose();
@@ -54,7 +58,7 @@ export default function RewardEditorModal({ onClose, reward, onSave }: RewardEdi
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <div>
-            <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 8, display: 'block' }}>HARGA (KOIN)</label>
+            <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 8, display: 'block' }}>HARGA (POIN)</label>
             <input 
               type="number"
               placeholder="0" 
@@ -76,7 +80,56 @@ export default function RewardEditorModal({ onClose, reward, onSave }: RewardEdi
         </div>
 
         <div>
-          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 8, display: 'block' }}>WARNA TEMA</label>
+          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 8, display: 'block' }}>KATEGORI</label>
+          <input 
+            placeholder="e.g. Wellness, Lifestyle, Growth" 
+            value={form.category} 
+            onChange={e => setForm({...form, category: e.target.value})} 
+            style={inputStyle} 
+          />
+        </div>
+
+        <div>
+          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 8, display: 'block' }}>DESKRIPSI REWARD</label>
+          <textarea 
+            placeholder="Tulis penjelasan singkat tentang reward ini..." 
+            value={form.description} 
+            onChange={e => setForm({...form, description: e.target.value})} 
+            style={{ ...inputStyle, minHeight: 80, resize: 'vertical' }} 
+          />
+        </div>
+
+        <div>
+          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 8, display: 'block' }}>IKON REWARD</label>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {[
+              { key: 'gift', label: '🎁' },
+              { key: 'trophy', label: '🏆' },
+              { key: 'star', label: '⭐' },
+              { key: 'heart', label: '❤️' },
+              { key: 'zap', label: '⚡' },
+              { key: 'tree', label: '🌳' },
+              { key: 'book', label: '📚' },
+              { key: 'leaf', label: '🌿' },
+            ].map(item => (
+              <button 
+                key={item.key}
+                type="button"
+                onClick={() => setForm({...form, glyph: item.key})}
+                style={{
+                  width: 40, height: 40, borderRadius: 12, border: form.glyph === item.key ? `2.5px solid ${HP_TOKENS.ink}` : `1px solid ${HP_TOKENS.line}`,
+                  background: form.glyph === item.key ? HP_TOKENS.yellowSoft : '#fff', cursor: 'pointer',
+                  fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 8, display: 'block' }}>WARNA TEMA TAMPILAN</label>
           <div style={{ display: 'flex', gap: 10 }}>
             {['blue', 'sage', 'yellow', 'coral', 'lavender'].map(t => (
               <button 

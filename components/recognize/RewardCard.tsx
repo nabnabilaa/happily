@@ -43,7 +43,7 @@ export default function RewardCard({ title, points, tone, glyph, onRedeem }: Rew
 
   const handleRedeem = () => {
     if (isLocked) {
-      notify('Koin Tidak Cukup', `Kamu butuh ${points - userCoins} koin lagi untuk menukar reward ini.`, 'warning');
+      notify('Poin Tidak Cukup', `Kamu butuh ${points - userCoins} poin lagi untuk menukar reward ini.`, 'warning');
       return;
     }
 
@@ -54,7 +54,7 @@ export default function RewardCard({ title, points, tone, glyph, onRedeem }: Rew
 
     if (!state) return;
 
-    if (confirm(`Tukar ${points} koin dengan "${title}"?`)) {
+    if (confirm(`Tukar ${points} poin dengan "${title}"?`)) {
       updateState((s: any) => ({
         ...s,
         coins: s.coins - points,
@@ -110,7 +110,7 @@ export default function RewardCard({ title, points, tone, glyph, onRedeem }: Rew
           fontFamily: HP_FONT, fontWeight: 900, fontSize: 11,
           letterSpacing: 0.5
         }}>
-          {points} koin
+          {points} poin
         </div>
       </div>
 

@@ -41,10 +41,10 @@ export default function AllRewardsModal({ onClose }: AllRewardsModalProps) {
       return;
     }
     if (state.coins < reward.points) {
-      alert(`Koin tidak cukup! Kamu butuh ${reward.points} koin, tapi baru punya ${state.coins} koin. 🌱`);
+      alert(`Poin tidak cukup! Kamu butuh ${reward.points} poin, tapi baru punya ${state.coins} poin. 🌱`);
       return;
     }
-    if (confirm(`Tukar ${reward.points} koin dengan "${reward.title}"?`)) {
+    if (confirm(`Tukar ${reward.points} poin dengan "${reward.title}"?`)) {
       updateState((s: any) => ({
         ...s,
         coins: s.coins - reward.points,
@@ -101,8 +101,8 @@ export default function AllRewardsModal({ onClose }: AllRewardsModalProps) {
             }}>
               <span style={{ fontSize: 24 }}>🏆</span>
               <div>
-                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>KOIN KAMU</div>
-                <div style={{ ...HP_TEXT.h, fontSize: 22, color: HP_TOKENS.ink }}>{userCoins.toLocaleString()} koin</div>
+                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>POIN BELANJA</div>
+                <div style={{ ...HP_TEXT.h, fontSize: 22, color: HP_TOKENS.ink }}>{userCoins.toLocaleString()} poin</div>
               </div>
             </div>
 
@@ -159,7 +159,7 @@ export default function AllRewardsModal({ onClose }: AllRewardsModalProps) {
                           padding: '3px 10px', borderRadius: 99, fontSize: 10, fontWeight: 800,
                           background: cfg.bg, color: '#fff', fontFamily: HP_FONT,
                         }}>
-                          {reward.points} KOIN
+                          {reward.points} POIN
                         </span>
                         <span style={{ 
                           fontSize: 10, fontWeight: 900, 
@@ -196,7 +196,7 @@ export default function AllRewardsModal({ onClose }: AllRewardsModalProps) {
               <div style={{ textAlign: 'center', padding: '40px 20px', color: HP_TOKENS.inkMute }}>
                 <div style={{ fontSize: 40, marginBottom: 12 }}>🏜️</div>
                 <div style={{ ...HP_TEXT.h, fontSize: 15 }}>Belum ada reward yang ditukar.</div>
-                <div style={{ ...HP_TEXT.body, fontSize: 13, marginTop: 4 }}>Ayo kumpulkan koin dengan memberi apresiasi!</div>
+                <div style={{ ...HP_TEXT.body, fontSize: 13, marginTop: 4 }}>Ayo kumpulkan poin dengan memberi apresiasi!</div>
               </div>
             ) : (
               [...history].reverse().map((h: any, idx) => (

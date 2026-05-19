@@ -20,18 +20,23 @@ export default function SystemGuideModal({ onClose }: SystemGuideModalProps) {
           <div style={{ ...HP_TEXT.h, fontSize: 16, marginBottom: 12, color: HP_TOKENS.sage }}>Cara Mendapatkan Poin</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             {[
-              { label: 'Daily Quest', pts: '+50', icon: '🎯' },
-              { label: 'Training Quest', pts: '+20', icon: '🌿' },
-              { label: 'Learning Module', pts: '+100', icon: '📚' },
-              { label: 'Tutup Hari', pts: '+100', icon: '🌙' },
+              { label: 'Daily Quest', pts: '+50', icon: '🎯', desc: 'Selesaikan prioritas harian' },
+              { label: 'Tutup Hari', pts: '+100', icon: '🌙', desc: 'Refleksi & Clock Out' },
+              { label: 'Training Quest', pts: '+20', icon: '🌿', desc: 'Selesaikan latihan habit' },
+              { label: 'Apresiasi', pts: '+20', icon: '👏', desc: 'Dapat kudos dari tim' },
+              { label: 'Box Breathing', pts: '+5', icon: '🧘‍♂️', desc: 'Latihan jeda tenang 1m' },
+              { label: 'Isi Mood', pts: '+5', icon: '😊', desc: 'Check-in mood harian' },
+              { label: 'Isi Survey', pts: '+5', icon: '📋', desc: 'Isi survei berkala HR' },
             ].map(item => (
               <div key={item.label} style={{ 
                 padding: 12, borderRadius: 16, background: HP_TOKENS.card, 
-                border: `1px solid ${HP_TOKENS.line}`, textAlign: 'center' 
+                border: `1px solid ${HP_TOKENS.line}`, textAlign: 'center',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
               }}>
-                <div style={{ fontSize: 20, marginBottom: 4 }}>{item.icon}</div>
-                <div style={{ ...HP_TEXT.h, fontSize: 12 }}>{item.label}</div>
-                <div style={{ ...HP_TEXT.small, color: HP_TOKENS.sage, fontWeight: 900, fontSize: 14 }}>{item.pts} Pts</div>
+                <div style={{ fontSize: 22, marginBottom: 4 }}>{item.icon}</div>
+                <div style={{ ...HP_TEXT.h, fontSize: 12, color: HP_TOKENS.ink }}>{item.label}</div>
+                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontSize: 9, marginTop: 2, marginBottom: 6 }}>{item.desc}</div>
+                <div style={{ ...HP_TEXT.small, color: HP_TOKENS.sage, fontWeight: 900, fontSize: 13, marginTop: 'auto' }}>{item.pts} Poin</div>
               </div>
             ))}
           </div>
@@ -91,12 +96,12 @@ export default function SystemGuideModal({ onClose }: SystemGuideModalProps) {
           background: `linear-gradient(135deg, ${HP_TOKENS.sageWash}, #fff)`,
           border: `1.5px solid ${HP_TOKENS.sageSoft}`
         }}>
-          <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.sage }}>Otomatisasi Skill</div>
+          <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.sage }}>Otomatisasi Progress Skill</div>
           <div style={{ ...HP_TEXT.body, fontSize: 12, marginTop: 4 }}>
-            Sistem kami (AI) menganalisis aktivitas harian dan pembelajaranmu.
+            Sistem kami menganalisis aktivitas penyelesaian prioritas kerjamu.
             <ul style={{ paddingLeft: 16, marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <li>Selesaikan Quest: <b>+2% Skill Progres</b></li>
-              <li>Selesaikan Belajar: <b>+10% Skill Progres</b></li>
+              <li>Selesaikan Daily Quest (Task): <b>+2% Progress Skill</b></li>
+              <li>Apresiasi & Evaluasi Kerja: <b>Mendorong perkembangan soft-skill</b></li>
             </ul>
           </div>
         </section>
