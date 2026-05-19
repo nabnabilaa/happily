@@ -109,12 +109,16 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId }: { onCl
     };
 
     // Create task_kpi_links if KPI is selected
+    // We wrap this in a timeout to prevent the immediate DB insert from triggering an SSE refresh
+    // which would overwrite our optimistic state before the auto-sync has a chance to POST to /api/storage.
     if (selectedKpiId) {
-      fetch('/api/kpi/link', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ taskId: String(newP.id), kpiId: selectedKpiId })
-      }).catch(e => console.error('Failed to create KPI link:', e));
+      setTimeout(() => {
+        fetch('/api/kpi/link', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ taskId: String(newP.id), kpiId: selectedKpiId })
+        }).catch(e => console.error('Failed to create KPI link:', e));
+      }, 1500);
     }
 
     updateState((s: any) => {
@@ -388,22 +392,36 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId }: { onCl
                   onChange={(e) => setSelectedKpiId(e.target.value)}
                   style={inputStyle}
                 >
-                <option value="">Umum (tidak terkait KPI spesifik)</option>
-                {myKpis.filter((k: any) => k.source === 'personal').length > 0 && (
-                  <optgroup label="KPI Mandiri">
-                    {myKpis.filter((k: any) => k.source === 'personal').map((k: any) => {
-                      const goal = state.goals?.find((g: any) => String(g.id) === String(k.id));
-                      const parent = goal?.parent_id ? state.goals?.find((g: any) => String(g.id) === String(goal.parent_id)) : null;
-                      const alignmentText = parent ? ` (Aligned: ${parent.title})` : '';
-                      return (
-                        <option key={k.id} value={k.id}>
-                          {k.title}{alignmentText}{k.metricUnit ? ` (${k.metricUnit})` : ''}
-                        </option>
-                      );
-                    })}
-                  </optgroup>
-                )}
-              </select>
+                  <option value="">Umum (tidak terkait KPI spesifik)</option>
+                  {myKpis.filter((k: any) => k.source === 'manager').length > 0 && (
+                    <optgroup label="KPI Bulanan (Manager)">
+                      {myKpis.filter((k: any) => k.source === 'manager').map((k: any) => {
+                        const goal = state.goals?.find((g: any) => String(g.id) === String(k.id));
+                        const parent = goal?.parent_id ? state.goals?.find((g: any) => String(g.id) === String(goal.parent_id)) : null;
+                        const alignmentText = parent ? ` (Aligned: ${parent.title})` : '';
+                        return (
+                          <option key={k.id} value={k.id}>
+                            {k.title}{alignmentText}{k.metricUnit ? ` (${k.metricUnit})` : ''}
+                          </option>
+                        );
+                      })}
+                    </optgroup>
+                  )}
+                  {myKpis.filter((k: any) => k.source === 'personal').length > 0 && (
+                    <optgroup label="KPI Mandiri">
+                      {myKpis.filter((k: any) => k.source === 'personal').map((k: any) => {
+                        const goal = state.goals?.find((g: any) => String(g.id) === String(k.id));
+                        const parent = goal?.parent_id ? state.goals?.find((g: any) => String(g.id) === String(goal.parent_id)) : null;
+                        const alignmentText = parent ? ` (Aligned: ${parent.title})` : '';
+                        return (
+                          <option key={k.id} value={k.id}>
+                            {k.title}{alignmentText}{k.metricUnit ? ` (${k.metricUnit})` : ''}
+                          </option>
+                        );
+                      })}
+                    </optgroup>
+                  )}
+                </select>
             ) : (
               <div style={{ 
                 padding: 12, borderRadius: 10, 

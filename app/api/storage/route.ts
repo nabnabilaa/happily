@@ -38,7 +38,7 @@ export async function GET(request: Request) {
       args: [userId]
     });
     const priorities = prioritiesRes.rows.map(r => ({
-      id: r.id, title: r.title, description: r.description, targetDate: r.target_date, goal: r.goal_title, goal_id: r.goal_id, energy: r.energy_level, est: r.est_time, done: !!r.is_done, verified: !!r.is_verified, tone: r.tone, time_tracked: Number(r.time_tracked) || 0, timer_started_at: r.timer_started_at || null
+      id: r.id, title: r.title, description: r.description, targetDate: r.target_date, goal: r.goal_title, goal_id: r.goal_id, kpi_id: r.kpi_id || null, kpi_title: r.goal_title || null, energy: r.energy_level, est: r.est_time, done: !!r.is_done, verified: !!r.is_verified, tone: r.tone, time_tracked: Number(r.time_tracked) || 0, timer_started_at: r.timer_started_at || null
     }));
 
 
@@ -391,15 +391,16 @@ export async function POST(request: Request) {
         // 3. Upsert current tasks
         for (const p of state.priorities) {
           await db.execute({
-            sql: `INSERT INTO daily_priorities (id, user_id, title, description, target_date, goal_title, goal_id, energy_level, est_time, is_done, is_verified, tone, proof_link, proof_notes, metric_value, time_tracked, timer_started_at, created_at) 
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            sql: `INSERT INTO daily_priorities (id, user_id, title, description, target_date, goal_title, goal_id, kpi_id, energy_level, est_time, is_done, is_verified, tone, proof_link, proof_notes, metric_value, time_tracked, timer_started_at, created_at) 
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                   ON DUPLICATE KEY UPDATE 
                   title=VALUES(title), description=VALUES(description), target_date=VALUES(target_date), goal_title=VALUES(goal_title), goal_id=VALUES(goal_id), 
+                  kpi_id=VALUES(kpi_id), 
                   energy_level=VALUES(energy_level), est_time=VALUES(est_time), 
                   is_done=VALUES(is_done), is_verified=VALUES(is_verified), tone=VALUES(tone),
                   proof_link=VALUES(proof_link), proof_notes=VALUES(proof_notes), metric_value=VALUES(metric_value),
                   time_tracked=VALUES(time_tracked), timer_started_at=VALUES(timer_started_at)`,
-            args: [p.id, userId, p.title, p.description || null, p.targetDate || null, p.goal || null, p.goal_id || null, p.energy, p.est, p.done ? 1 : 0, p.verified ? 1 : 0, p.tone, p.proof_link || null, p.proof_notes || null, p.metric_value || null, p.time_tracked || 0, p.timer_started_at || null]
+            args: [p.id, userId, p.title, p.description || null, p.targetDate || null, p.goal || null, p.goal_id || null, p.kpi_id || null, p.energy, p.est, p.done ? 1 : 0, p.verified ? 1 : 0, p.tone, p.proof_link || null, p.proof_notes || null, p.metric_value || null, p.time_tracked || 0, p.timer_started_at || null]
           });
         }
       } catch (e) {

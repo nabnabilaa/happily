@@ -25,6 +25,29 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
     coral: HP_TOKENS.coral,
   };
 
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyTasks, setHistoryTasks] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  const fetchHistory = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (showHistory) {
+      setShowHistory(false);
+      return;
+    }
+    setLoadingHistory(true);
+    setShowHistory(true);
+    try {
+      const res = await fetch(`/api/kpi/tasks?goalId=${g.id}`);
+      const data = await res.json();
+      if (data.tasks) setHistoryTasks(data.tasks);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
   const parentGoal = g.parent_id ? state?.goals.find((item: any) => String(item.id) === String(g.parent_id)) : null;
 
   // Link to actual priorities (tasks) in state that are connected to this goal
@@ -253,7 +276,7 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
         </div>
       </div>
 
-      {linkedTasks.length > 0 && (
+      {(linkedTasks.length > 0 || hasTasks) && (
         <div style={{ 
           marginTop: 16, 
           padding: '12px', 
@@ -264,8 +287,19 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
           gap: 8
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 900, fontSize: 9, letterSpacing: 1 }}>
-              LINKED QUESTS ({doneTaskCount}/{linkedTasks.length})
+            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 900, fontSize: 9, letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
+              LINKED QUESTS {g.metric ? `(${g.metric.split(' ')[0]})` : ''}
+              <button
+                onClick={fetchHistory}
+                style={{ 
+                  background: 'none', border: 'none', padding: '2px 6px', borderRadius: 4,
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
+                  color: HP_TOKENS.blue, fontSize: 9, fontWeight: 900, letterSpacing: 0.5,
+                  backgroundColor: HP_TOKENS.blueWash
+                }}
+              >
+                {showHistory ? 'SEMBUNYIKAN' : 'LIHAT SEMUA'}
+              </button>
             </div>
             {!isReadOnly && (
               <button 
@@ -277,12 +311,22 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
               </button>
             )}
           </div>
-          {linkedTasks.map((sg: any) => (
+          
+          {loadingHistory && (
+            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, textAlign: 'center', padding: '10px 0' }}>
+              Memuat task...
+            </div>
+          )}
+
+          {(showHistory ? historyTasks : linkedTasks).map((sg: any) => (
             <div 
               key={sg.id} 
-              onClick={(e) => { e.stopPropagation(); toggleTask(sg.id); }}
-              className="hp-tap"
-              style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                if (!showHistory) toggleTask(sg.id); 
+              }}
+              className={showHistory ? "" : "hp-tap"}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: showHistory ? 'default' : 'pointer', opacity: showHistory ? 0.8 : 1 }}
             >
               <div style={{ 
                 width: 14, height: 14, borderRadius: 4, 
@@ -302,9 +346,17 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
                   fontWeight: 600,
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
-                  textOverflow: 'ellipsis'
+                  textOverflow: 'ellipsis',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6
                 }}>
                   {sg.title}
+                  {showHistory && sg.targetDate && (
+                    <span style={{ fontSize: 9, fontWeight: 700, color: HP_TOKENS.inkMute, background: HP_TOKENS.lineSoft, padding: '2px 4px', borderRadius: 4, textDecoration: 'none' }}>
+                      {sg.targetDate.slice(0, 10)}
+                    </span>
+                  )}
                 </div>
                 {sg.description && (
                   <div style={{ 
@@ -320,6 +372,12 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
               </div>
             </div>
           ))}
+
+          {showHistory && historyTasks.length === 0 && !loadingHistory && (
+            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, textAlign: 'center', padding: '10px 0' }}>
+              Belum ada riwayat task.
+            </div>
+          )}
         </div>
       )}
 
