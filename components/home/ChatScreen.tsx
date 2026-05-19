@@ -180,50 +180,71 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
   };
 
   // ── Channel List View ──────────────────────────────────────────────────────
-  if (!activeChannel) {
-    return (
-      <div style={{ position: 'relative', minHeight: '100%', paddingBottom: 100, fontFamily: HP_FONT }}>
-        <BlobBackground colors={[HP_TOKENS.blueWash, HP_TOKENS.yellowWash, '#F0E6FF']} />
-        <div style={{ position: 'relative', zIndex: 1, padding: '0 16px' }} className="hp-stagger">
-          {/* Header */}
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '16px 0 12px',
-          }}>
-            <div style={{ ...HP_TEXT.h, fontSize: 22 }}>💬 Chat</div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={handleCreateDM} className="hp-tap" style={{
-                padding: '8px 14px', borderRadius: 12,
-                background: HP_TOKENS.blue, color: '#fff', border: 'none',
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: 6,
-              }}>
-                <HPGlyph name="plus" size={14} color="#fff" />
-                Chat Baru
-              </button>
-            </div>
-          </div>
+  return (
+    <div style={{ 
+      display: 'flex', 
+      height: 'calc(100vh - 120px)', // Force height to fill available space and not grow
+      width: '100%',
+      background: '#fff',
+      fontFamily: HP_FONT,
+      borderRadius: 24,
+      overflow: 'hidden',
+      boxShadow: '0 10px 30px rgba(0,0,0,0.03)',
+      border: '1px solid rgba(0,0,0,0.05)',
+    }}>
+      <style>{`
+        @media (max-width: 767px) {
+          .chat-sidebar { width: 100% !important; display: ${activeChannel ? 'none' : 'flex'} !important; }
+          .chat-main { display: ${activeChannel ? 'flex' : 'none'} !important; }
+        }
+        @media (min-width: 768px) {
+          .chat-sidebar { width: 320px !important; border-right: 1px solid rgba(0,0,0,0.05) !important; }
+          .chat-main { display: flex !important; }
+        }
+      `}</style>
 
+      {/* SIDEBAR: CHANNEL LIST */}
+      <div className="chat-sidebar" style={{
+        display: 'flex',
+        flexDirection: 'column',
+        background: '#fff',
+        height: '100%',
+      }}>
+        {/* Header */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '20px 16px 16px',
+          borderBottom: '1px solid rgba(0,0,0,0.05)',
+        }}>
+          <div>
+            <div style={{ ...HP_TEXT.h, fontSize: 20, fontWeight: 900 }}>💬 Chat</div>
+            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>Kolaborasi tim</div>
+          </div>
+          <button onClick={handleCreateDM} className="hp-tap" style={{
+            padding: '8px 14px', borderRadius: 12,
+            background: `linear-gradient(135deg, ${HP_TOKENS.blue}, #2B5F9E)`,
+            color: '#fff', border: 'none',
+            fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 6,
+            boxShadow: `0 4px 12px ${HP_TOKENS.blue}30`,
+          }}>
+            <HPGlyph name="plus" size={12} color="#fff" />
+            Baru
+          </button>
+        </div>
+
+        {/* List */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '12px 8px' }}>
           {loading ? (
-            <HPCard padding={40} style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 28, marginBottom: 8 }}>💬</div>
-              <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute }}>Memuat chat...</div>
-            </HPCard>
+            <div style={{ textAlign: 'center', padding: 20, color: HP_TOKENS.inkMute }}>
+              <div className="hp-spin" style={{ display: 'inline-block', marginBottom: 8 }}>🌀</div>
+              <div style={{ ...HP_TEXT.small }}>Memuat...</div>
+            </div>
           ) : channels.length === 0 ? (
-            <HPCard padding={40} style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>🗨️</div>
-              <div style={{ ...HP_TEXT.h, fontSize: 16, marginBottom: 6 }}>Belum ada chat</div>
-              <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute }}>
-                Mulai percakapan dengan rekan kerja kamu
-              </div>
-              <button onClick={handleCreateDM} className="hp-tap" style={{
-                marginTop: 16, padding: '12px 24px', borderRadius: 14,
-                background: HP_TOKENS.blue, color: '#fff', border: 'none',
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',
-              }}>
-                Mulai Chat Pertama
-              </button>
-            </HPCard>
+            <div style={{ textAlign: 'center', padding: 20, color: HP_TOKENS.inkMute }}>
+              <div style={{ fontSize: 32, marginBottom: 8 }}>🗨️</div>
+              <div style={{ ...HP_TEXT.small }}>Belum ada chat</div>
+            </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {channels.map(ch => (
@@ -232,81 +253,73 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
                   onClick={() => openChannel(ch)}
                   className="hp-tap"
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 12,
-                    padding: '14px 16px', borderRadius: 16,
-                    background: ch.type === 'broadcast'
-                      ? (ch.unreadCount > 0 ? '#FFF7ED' : '#FFFBEB')
-                      : (ch.unreadCount > 0 ? HP_TOKENS.blueWash : HP_TOKENS.card),
-                    border: `1.5px solid ${ch.type === 'broadcast'
-                      ? '#F59E0B30'
-                      : (ch.unreadCount > 0 ? `${HP_TOKENS.blue}30` : HP_TOKENS.line)}`,
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '10px 12px', borderRadius: 14,
+                    background: activeChannel?.id === ch.id
+                      ? '#EFF6FF'
+                      : (ch.unreadCount > 0 ? '#F8FAFC' : 'transparent'),
+                    border: 'none',
                     cursor: 'pointer', width: '100%', textAlign: 'left',
-                    transition: 'all 0.15s',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (activeChannel?.id !== ch.id) e.currentTarget.style.background = '#F8FAFC';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (activeChannel?.id !== ch.id) e.currentTarget.style.background = ch.unreadCount > 0 ? '#F8FAFC' : 'transparent';
                   }}
                 >
-                  {/* Avatar */}
                   <div style={{
-                    width: 48, height: 48, borderRadius: 16,
+                    width: 40, height: 40, borderRadius: 12,
                     background: ch.type === 'broadcast'
                       ? 'linear-gradient(135deg, #F59E0B, #D97706)'
                       : (ch.type === 'dm' ? HP_TOKENS.yellowSoft : HP_TOKENS.blueSoft),
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 22, flexShrink: 0,
+                    fontSize: 20, flexShrink: 0,
                   }}>
-                    {ch.type === 'dm' ? <HPAvatar name={ch.name} size={42} /> : ch.emoji}
+                    {ch.type === 'dm' ? <HPAvatar name={ch.name} size={36} /> : ch.emoji}
                   </div>
-
-                  {/* Info */}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div style={{
-                        ...HP_TEXT.h, fontSize: 14,
+                        ...HP_TEXT.h, fontSize: 13,
                         fontWeight: ch.unreadCount > 0 ? 900 : 700,
+                        color: '#1E293B',
                         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                       }}>
                         {ch.name}
                       </div>
-                      {ch.type !== 'dm' && (
-                        <span style={{
-                          padding: '1px 6px', borderRadius: 4, fontSize: 8, fontWeight: 800,
-                          background: ch.type === 'broadcast' ? '#FEF3C7' : HP_TOKENS.blueSoft,
-                          color: ch.type === 'broadcast' ? '#D97706' : HP_TOKENS.blue,
-                          fontFamily: HP_FONT,
-                        }}>
-                          {ch.type === 'broadcast' ? '📢 Siaran' : ch.type === 'group' ? 'Grup' : 'Tim'}
-                        </span>
+                      {ch.lastMessageAt && (
+                        <div style={{ ...HP_TEXT.tiny, fontSize: 9, color: '#94A3B8', fontWeight: 600 }}>
+                          {formatTime(ch.lastMessageAt)}
+                        </div>
                       )}
                     </div>
-                    {ch.lastMessage && (
-                      <div style={{
-                        ...HP_TEXT.small, fontSize: 12, color: HP_TOKENS.inkMute, marginTop: 2,
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                        fontWeight: ch.unreadCount > 0 ? 700 : 400,
-                      }}>
-                        {ch.lastSenderName && <span style={{ fontWeight: 700 }}>{ch.lastSenderName.split(' ')[0]}: </span>}
-                        {ch.lastMessage}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Meta */}
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-                    {ch.lastMessageAt && (
-                      <div style={{ ...HP_TEXT.tiny, fontSize: 10, color: HP_TOKENS.inkFade }}>
-                        {formatTime(ch.lastMessageAt)}
-                      </div>
-                    )}
-                    {ch.unreadCount > 0 && (
-                      <div style={{
-                        width: 22, height: 22, borderRadius: 11,
-                        background: ch.type === 'broadcast' ? '#F59E0B' : HP_TOKENS.blue,
-                        color: '#fff',
-                        fontFamily: HP_FONT, fontWeight: 900, fontSize: 10,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}>
-                        {ch.unreadCount > 99 ? '99+' : ch.unreadCount}
-                      </div>
-                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }}>
+                      {ch.lastMessage && (
+                        <div style={{
+                          ...HP_TEXT.small, fontSize: 11, color: ch.unreadCount > 0 ? '#475569' : '#94A3B8',
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                          fontWeight: ch.unreadCount > 0 ? 700 : 400,
+                          flex: 1,
+                        }}>
+                          {ch.lastSenderName && <span>{ch.lastSenderName.split(' ')[0]}: </span>}
+                          {ch.lastMessage}
+                        </div>
+                      )}
+                      {ch.unreadCount > 0 && (
+                        <div style={{
+                          width: 16, height: 16, borderRadius: 8,
+                          background: ch.type === 'broadcast' ? '#F59E0B' : '#3B82F6',
+                          color: '#fff',
+                          fontFamily: HP_FONT, fontWeight: 900, fontSize: 9,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          marginLeft: 4, flexShrink: 0,
+                        }}>
+                          {ch.unreadCount > 99 ? '99+' : ch.unreadCount}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </button>
               ))}
@@ -314,158 +327,209 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
           )}
         </div>
       </div>
-    );
-  }
 
-  // ── Chat View (Active Channel) ─────────────────────────────────────────────
-  return (
-    <div style={{
-      position: 'relative', height: '100%', display: 'flex', flexDirection: 'column',
-      fontFamily: HP_FONT,
-    }}>
-      {/* Chat Header */}
-      <div style={{
-        padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12,
-        background: HP_TOKENS.card, borderBottom: `1px solid ${HP_TOKENS.line}`,
-        position: 'sticky', top: 0, zIndex: 10,
+      {/* MAIN CONTENT: CHAT VIEW */}
+      <div className="chat-main" style={{
+        flex: 1,
+        flexDirection: 'column',
+        background: '#FDFBF7', // Warm cream background to match app theme
+        height: '100%',
       }}>
-        <button
-          onClick={() => { setActiveChannel(null); if (pollRef.current) clearInterval(pollRef.current); fetchChannels(); }}
-          className="hp-tap"
-          style={{
-            background: HP_TOKENS.lineSoft, border: 'none', borderRadius: 10,
-            width: 34, height: 34, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}
-        >
-          <HPGlyph name="chevronLeft" size={16} color={HP_TOKENS.ink} />
-        </button>
-        <div style={{
-          width: 36, height: 36, borderRadius: 12,
-          background: activeChannel.type === 'broadcast'
-            ? 'linear-gradient(135deg, #F59E0B, #D97706)'
-            : (activeChannel.type === 'dm' ? HP_TOKENS.yellowSoft : HP_TOKENS.blueSoft),
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 18, flexShrink: 0,
-        }}>
-          {activeChannel.type === 'dm' ? <HPAvatar name={activeChannel.name} size={32} /> : activeChannel.emoji}
-        </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ ...HP_TEXT.h, fontSize: 15 }}>{activeChannel.name}</div>
-          <div style={{ ...HP_TEXT.tiny, color: activeChannel.type === 'broadcast' ? '#D97706' : HP_TOKENS.inkMute }}>
-            {activeChannel.type === 'dm' ? 'Direct Message' : activeChannel.type === 'broadcast' ? '📢 Pesan Siaran' : activeChannel.type === 'group' ? 'Grup Chat' : 'Team Channel'}
-          </div>
-        </div>
-      </div>
-
-      {/* Messages */}
-      <div style={{
-        flex: 1, overflowY: 'auto', padding: '12px 16px',
-        display: 'flex', flexDirection: 'column', gap: 4,
-        background: HP_TOKENS.paper,
-      }}>
-        {msgLoading ? (
-          <div style={{ textAlign: 'center', padding: 40, color: HP_TOKENS.inkMute }}>Memuat pesan...</div>
-        ) : messages.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 40, color: HP_TOKENS.inkMute }}>
-            <div style={{ fontSize: 32, marginBottom: 8 }}>👋</div>
-            <div style={{ ...HP_TEXT.small }}>Mulai percakapan!</div>
-          </div>
-        ) : (
+        {activeChannel ? (
           <>
-            {messages.map((msg, i) => {
-              const isMe = msg.sender_id === user?.id;
-              const showName = !isMe && (i === 0 || messages[i - 1]?.sender_id !== msg.sender_id);
-              const showTime = i === messages.length - 1 ||
-                messages[i + 1]?.sender_id !== msg.sender_id ||
-                new Date(messages[i + 1]?.created_at).getTime() - new Date(msg.created_at).getTime() > 300000;
-
-              return (
-                <div key={msg.id} style={{
-                  display: 'flex', flexDirection: 'column',
-                  alignItems: isMe ? 'flex-end' : 'flex-start',
-                  marginTop: showName ? 10 : 1,
-                }}>
-                  {showName && (
-                    <div style={{
-                      ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 3,
-                      marginLeft: isMe ? 0 : 4, marginRight: isMe ? 4 : 0,
-                      fontWeight: 700, fontSize: 10,
-                    }}>
-                      {msg.sender_name.split(' ')[0]}
-                    </div>
-                  )}
-                  <div style={{
-                    maxWidth: '78%', padding: '10px 14px',
-                    borderRadius: isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                    background: isMe
-                      ? `linear-gradient(135deg, ${HP_TOKENS.blue}, #2B5F9E)`
-                      : HP_TOKENS.card,
-                    color: isMe ? '#fff' : HP_TOKENS.ink,
-                    border: isMe ? 'none' : `1px solid ${HP_TOKENS.line}`,
-                    boxShadow: isMe
-                      ? `0 2px 8px ${HP_TOKENS.blue}25`
-                      : '0 1px 3px rgba(0,0,0,0.04)',
-                  }}>
-                    <div style={{
-                      fontFamily: HP_FONT, fontSize: 14, lineHeight: 1.5,
-                      fontWeight: 500, wordBreak: 'break-word',
-                    }}>
-                      {msg.content}
-                    </div>
-                  </div>
-                  {showTime && (
-                    <div style={{
-                      ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontSize: 9,
-                      marginTop: 3, marginLeft: isMe ? 0 : 4, marginRight: isMe ? 4 : 0,
-                    }}>
-                      {new Date(msg.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                    </div>
-                  )}
+            {/* Chat Header */}
+            <div style={{
+              padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 14,
+              background: 'rgba(255, 255, 255, 0.85)',
+              backdropFilter: 'blur(12px)',
+              borderBottom: `1px solid rgba(0, 0, 0, 0.05)`,
+              position: 'sticky', top: 0, zIndex: 10,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
+            }}>
+              <button
+                onClick={() => { setActiveChannel(null); if (pollRef.current) clearInterval(pollRef.current); fetchChannels(); }}
+                className="hp-tap"
+                style={{
+                  background: 'rgba(0, 0, 0, 0.04)', border: 'none', borderRadius: 12,
+                  width: 36, height: 36, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'background 0.2s',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0, 0, 0, 0.08)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(0, 0, 0, 0.04)')}
+              >
+                <HPGlyph name="chevronLeft" size={16} color={HP_TOKENS.ink} />
+              </button>
+              <div style={{
+                width: 42, height: 42, borderRadius: 14,
+                background: activeChannel.type === 'broadcast'
+                  ? 'linear-gradient(135deg, #F59E0B, #D97706)'
+                  : (activeChannel.type === 'dm' ? HP_TOKENS.yellowSoft : HP_TOKENS.blueSoft),
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 20, flexShrink: 0,
+                boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
+              }}>
+                {activeChannel.type === 'dm' ? <HPAvatar name={activeChannel.name} size={38} /> : activeChannel.emoji}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ ...HP_TEXT.h, fontSize: 16, fontWeight: 800, color: '#1E293B' }}>{activeChannel.name}</div>
+                <div style={{ ...HP_TEXT.tiny, color: activeChannel.type === 'broadcast' ? '#D97706' : '#64748B', fontWeight: 600 }}>
+                  {activeChannel.type === 'dm' ? 'Direct Message' : activeChannel.type === 'broadcast' ? '📢 Pesan Siaran' : activeChannel.type === 'group' ? 'Grup Chat' : 'Team Channel'}
                 </div>
-              );
-            })}
-            <div ref={messagesEndRef} />
-          </>
-        )}
-      </div>
+              </div>
+            </div>
 
-      {/* Message Input */}
-      <div style={{
-        padding: '10px 16px 16px', background: HP_TOKENS.card,
-        borderTop: `1px solid ${HP_TOKENS.line}`,
-        display: 'flex', gap: 8, alignItems: 'flex-end',
-      }}>
-        <input
-          value={newMessage}
-          onChange={e => setNewMessage(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } }}
-          placeholder="Ketik pesan..."
-          style={{
-            flex: 1, padding: '12px 16px', borderRadius: 16,
-            border: `1.5px solid ${HP_TOKENS.line}`,
-            fontFamily: HP_FONT, fontSize: 14, outline: 'none',
-            background: HP_TOKENS.paper,
-            transition: 'border-color 0.2s',
-          }}
-          onFocus={e => (e.target.style.borderColor = HP_TOKENS.blue)}
-          onBlur={e => (e.target.style.borderColor = HP_TOKENS.line)}
-        />
-        <button
-          onClick={sendMsg}
-          disabled={!newMessage.trim() || sending}
-          className="hp-tap"
-          style={{
-            width: 44, height: 44, borderRadius: 14,
-            background: newMessage.trim() ? HP_TOKENS.blue : HP_TOKENS.lineSoft,
-            border: 'none', cursor: newMessage.trim() ? 'pointer' : 'default',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'all 0.2s',
-            boxShadow: newMessage.trim() ? `0 4px 12px ${HP_TOKENS.blue}30` : 'none',
-          }}
-        >
-          <HPGlyph name="arrow" size={18} color={newMessage.trim() ? '#fff' : HP_TOKENS.inkMute} />
-        </button>
+            {/* Messages */}
+            <div style={{
+              flex: 1, overflowY: 'auto', padding: '20px',
+              display: 'flex', flexDirection: 'column', gap: 12,
+              background: '#FDFBF7', // Warm cream background
+            }}>
+              {msgLoading ? (
+                <div style={{ textAlign: 'center', padding: 40, color: HP_TOKENS.inkMute }}>
+                  <div className="hp-spin" style={{ display: 'inline-block', marginBottom: 12 }}>🌀</div>
+                  <div style={{ ...HP_TEXT.small }}>Memuat pesan...</div>
+                </div>
+              ) : messages.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: 60, color: HP_TOKENS.inkMute }}>
+                  <div style={{ fontSize: 48, marginBottom: 16 }}>👋</div>
+                  <div style={{ ...HP_TEXT.h, fontSize: 16, marginBottom: 4, color: '#1E293B' }}>Mulai percakapan!</div>
+                  <div style={{ ...HP_TEXT.small, color: '#94A3B8' }}>Kirim pesan pertama Anda di sini.</div>
+                </div>
+              ) : (
+                <>
+                  {messages.map((msg, i) => {
+                    const isMe = msg.sender_id === user?.id;
+                    const showName = !isMe && (i === 0 || messages[i - 1]?.sender_id !== msg.sender_id);
+                    const showTime = i === messages.length - 1 ||
+                      messages[i + 1]?.sender_id !== msg.sender_id ||
+                      new Date(messages[i + 1]?.created_at).getTime() - new Date(msg.created_at).getTime() > 300000;
+
+                    return (
+                      <div key={msg.id} style={{
+                        display: 'flex', flexDirection: 'column',
+                        alignItems: isMe ? 'flex-end' : 'flex-start',
+                        marginTop: showName ? 16 : 2,
+                      }}>
+                        {showName && (
+                          <div style={{
+                            ...HP_TEXT.tiny, color: '#64748B', marginBottom: 4,
+                            marginLeft: isMe ? 0 : 8, marginRight: isMe ? 8 : 0,
+                            fontWeight: 700, fontSize: 11,
+                          }}>
+                            {msg.sender_name.split(' ')[0]}
+                          </div>
+                        )}
+                        <div style={{
+                          maxWidth: '75%', padding: '12px 16px',
+                          borderRadius: isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                          background: isMe
+                            ? `linear-gradient(135deg, #4F46E5 0%, #3B82F6 100%)`
+                            : '#FFFFFF',
+                          color: isMe ? '#fff' : '#1E293B',
+                          border: 'none',
+                          boxShadow: isMe
+                            ? `0 4px 12px rgba(59, 130, 246, 0.2)`
+                            : '0 2px 6px rgba(0,0,0,0.02)',
+                          transition: 'all 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'scale(1.01)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'none';
+                        }}
+                        >
+                          <div style={{
+                            fontFamily: HP_FONT, fontSize: 14, lineHeight: 1.6,
+                            fontWeight: 500, wordBreak: 'break-word',
+                          }}>
+                            {msg.content}
+                          </div>
+                        </div>
+                        {showTime && (
+                          <div style={{
+                            ...HP_TEXT.tiny, color: '#94A3B8', fontSize: 10,
+                            marginTop: 4, marginLeft: isMe ? 0 : 8, marginRight: isMe ? 8 : 0,
+                            fontWeight: 600,
+                          }}>
+                            {new Date(msg.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  <div ref={messagesEndRef} />
+                </>
+              )}
+            </div>
+
+            {/* Message Input */}
+            <div style={{
+              padding: '16px 20px 20px', 
+              background: 'rgba(255, 255, 255, 0.85)',
+              backdropFilter: 'blur(12px)',
+              borderTop: `1px solid rgba(0, 0, 0, 0.05)`,
+              display: 'flex', gap: 12, alignItems: 'flex-end',
+            }}>
+              <div style={{ flex: 1, position: 'relative' }}>
+                <input
+                  value={newMessage}
+                  onChange={e => setNewMessage(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } }}
+                  placeholder="Ketik pesan..."
+                  style={{
+                    width: '100%', padding: '14px 16px', borderRadius: 16,
+                    border: `1.5px solid rgba(0, 0, 0, 0.05)`,
+                    fontFamily: HP_FONT, fontSize: 14, outline: 'none',
+                    background: '#F1F5F9',
+                    boxSizing: 'border-box',
+                    transition: 'all 0.2s',
+                  }}
+                  onFocus={e => {
+                    e.target.style.borderColor = '#3B82F6';
+                    e.target.style.background = '#FFFFFF';
+                    e.target.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.1)';
+                  }}
+                  onBlur={e => {
+                    e.target.style.borderColor = 'rgba(0, 0, 0, 0.05)';
+                    e.target.style.background = '#F1F5F9';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                />
+              </div>
+              <button
+                onClick={sendMsg}
+                disabled={!newMessage.trim() || sending}
+                className="hp-tap"
+                style={{
+                  width: 48, height: 48, borderRadius: 16,
+                  background: newMessage.trim() ? 'linear-gradient(135deg, #4F46E5 0%, #3B82F6 100%)' : 'rgba(0, 0, 0, 0.05)',
+                  border: 'none', cursor: newMessage.trim() ? 'pointer' : 'default',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'all 0.2s',
+                  boxShadow: newMessage.trim() ? `0 4px 12px rgba(59, 130, 246, 0.3)` : 'none',
+                }}
+              >
+                <HPGlyph name="arrow" size={20} color={newMessage.trim() ? '#fff' : '#94A3B8'} />
+              </button>
+            </div>
+          </>
+        ) : (
+          /* Placeholder */
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            height: '100%', 
+            color: HP_TOKENS.inkMute 
+          }}>
+            <div style={{ fontSize: 64, marginBottom: 16 }}>💬</div>
+            <div style={{ ...HP_TEXT.h, fontSize: 18, marginBottom: 4, color: '#1E293B' }}>Pilih Chat</div>
+            <div style={{ ...HP_TEXT.small, color: '#94A3B8' }}>Pilih percakapan untuk mulai mengobrol.</div>
+          </div>
+        )}
       </div>
     </div>
   );
