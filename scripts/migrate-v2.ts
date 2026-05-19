@@ -1,19 +1,10 @@
-import mysql from 'mysql2/promise';
+import { db } from '../lib/turso';
 import dotenv from 'dotenv';
 
 dotenv.config({ path: '.env.local' });
 
 async function migrateV2() {
-  const pool = mysql.createPool({
-    host: process.env.MYSQL_HOST || 'localhost',
-    user: process.env.MYSQL_USER || 'root',
-    password: process.env.MYSQL_PASSWORD || '',
-    database: process.env.MYSQL_DATABASE || 'happily_productive',
-    waitForConnections: true,
-  });
-
   try {
-    const connection = await pool.getConnection();
     console.log("🐝 Flowbee v2.0 Migration — Phase ALL...\n");
 
     const migrations = [
@@ -82,12 +73,12 @@ async function migrateV2() {
 
     for (const sql of migrations) {
       try {
-        await connection.query(sql);
+        await db.execute(sql);
         const label = sql.trim().substring(0, 70).replace(/\s+/g, ' ');
         console.log(`  ✅ ${label}...`);
         success++;
       } catch (e: any) {
-        if (e.code === 'ER_DUP_FIELDNAME' || e.code === 'ER_TABLE_EXISTS_ERROR' || e.code === 'ER_DUP_ENTRY') {
+        if (e.message?.includes('duplicate column') || e.message?.includes('already exists') || e.code === 'ER_DUP_FIELDNAME' || e.code === 'ER_TABLE_EXISTS_ERROR' || e.code === 'ER_DUP_ENTRY') {
           skipped++;
         } else {
           const label = sql.trim().substring(0, 70).replace(/\s+/g, ' ');
@@ -98,8 +89,6 @@ async function migrateV2() {
     }
 
     console.log(`\n🐝 V2 Migration selesai! ✅ ${success} berhasil, ⏭️ ${skipped} sudah ada, ❌ ${failed} gagal`);
-    connection.release();
-    await pool.end();
     process.exit(0);
   } catch (error) {
     console.error("Gagal terkoneksi:", error);

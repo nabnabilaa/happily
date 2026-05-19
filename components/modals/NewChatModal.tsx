@@ -42,7 +42,7 @@ export default function NewChatModal({ onClose, onChannelCreated }: NewChatModal
   const [broadcastContent, setBroadcastContent] = useState('');
   const [selectedDepts, setSelectedDepts] = useState<string[]>([]);
 
-  const isHRorManager = user?.role === 'hr' || user?.role === 'manager';
+  const isHRorManager = (user?.role as string) === 'hr' || (user?.role as string) === 'admin' || user?.role === 'manager';
 
   useEffect(() => { fetchUsers(); }, []);
 
@@ -486,12 +486,10 @@ export default function NewChatModal({ onClose, onChannelCreated }: NewChatModal
                   <button onClick={() => toggleDeptCollapse(dept)} className="hp-tap" style={{
                     background: 'none', border: 'none', cursor: 'pointer', padding: 0,
                     display: 'flex', alignItems: 'center',
-                    transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0)',
+                    transform: isCollapsed ? 'rotate(0)' : 'rotate(90deg)',
                     transition: 'transform 0.2s',
                   }}>
-                    <span style={{ display: 'inline-flex', transform: 'rotate(-90deg)' }}>
-                      <HPGlyph name="chevronLeft" size={12} color={HP_TOKENS.inkMute} />
-                    </span>
+                    <HPGlyph name="chevronRight" size={12} color={HP_TOKENS.inkMute} />
                   </button>
                   <div style={{ flex: 1, ...HP_TEXT.h, fontSize: 12, color: HP_TOKENS.inkMute, letterSpacing: 0.5 }}>
                     {dept} ({deptUsers.length})

@@ -20,14 +20,28 @@ export default function HPToastContainer() {
       pointerEvents: 'none'
     }}>
       {toasts.map((toast) => (
-        <ToastItem key={toast.id} toast={toast} onDismiss={dismissToast} />
+        <ToastItem key={toast.id} toast={toast} onDismiss={() => dismissToast(toast.id)} />
       ))}
     </div>
   );
 }
 
-function ToastItem({ toast, onDismiss }: { toast: any, onDismiss: (id: string) => void }) {
+function ToastItem({ toast, onDismiss }: { toast: any, onDismiss: () => void }) {
   const [visible, setVisible] = useState(false);
+
+  // Store the latest onDismiss in a ref so we can use it in setTimeout without adding it to dependencies
+  const onDismissRef = React.useRef(onDismiss);
+  useEffect(() => {
+    onDismissRef.current = onDismiss;
+  }, [onDismiss]);
+
+  const handleClose = React.useCallback((e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setVisible(false);
+    setTimeout(() => {
+      if (onDismissRef.current) onDismissRef.current();
+    }, 300);
+  }, []);
 
   useEffect(() => {
     // Trigger animation in
@@ -35,12 +49,11 @@ function ToastItem({ toast, onDismiss }: { toast: any, onDismiss: (id: string) =
     
     // Auto dismiss after 4 seconds
     const timer = setTimeout(() => {
-      setVisible(false);
-      setTimeout(() => onDismiss(toast.id), 300); // Wait for fade out animation
+      handleClose();
     }, 4000);
     
     return () => clearTimeout(timer);
-  }, [toast.id, onDismiss]);
+  }, [handleClose]);
 
   const config = {
     success: { color: HP_TOKENS.sage, bg: HP_TOKENS.sageWash, icon: 'check' },
@@ -68,7 +81,7 @@ function ToastItem({ toast, onDismiss }: { toast: any, onDismiss: (id: string) =
       opacity: visible ? 1 : 0,
       transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
       cursor: 'pointer'
-    }} onClick={() => setVisible(false)}>
+    }} onClick={() => handleClose()}>
       <div style={{ 
         width: 28, height: 28, borderRadius: 10, background: config.bg,
         display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
@@ -84,7 +97,7 @@ function ToastItem({ toast, onDismiss }: { toast: any, onDismiss: (id: string) =
         )}
       </div>
       <button 
-        onClick={(e) => { e.stopPropagation(); setVisible(false); }}
+        onClick={handleClose}
         style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', opacity: 0.5 }}
       >
         <span style={{ fontSize: 14, color: HP_TOKENS.inkFade, fontWeight: 900 }}>×</span>

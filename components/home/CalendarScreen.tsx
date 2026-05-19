@@ -74,6 +74,8 @@ export default function CalendarScreen({ openModal }: Props) {
   const [location, setLocation] = useState('');
   const [visibility, setVisibility] = useState('private');
   const [sharedUsers, setSharedUsers] = useState<string[]>([]);
+  const [search, setSearch] = useState('');
+  const [collapsedDepts, setCollapsedDepts] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
 
   useEffect(() => { fetchData(); }, []);
@@ -113,12 +115,12 @@ export default function CalendarScreen({ openModal }: Props) {
   const eventsOnDate = useMemo(() => {
     const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
     return events.filter(ev => {
-      const evDate = new Date(ev.startTime);
+      const evDate = new Date(ev.startTime.replace(' ', 'T'));
       const evDateStr = `${evDate.getFullYear()}-${String(evDate.getMonth() + 1).padStart(2, '0')}-${String(evDate.getDate()).padStart(2, '0')}`;
       if (evDateStr === dateStr) return true;
       // Check recurring
       if (ev.recurrence && ev.recurrence !== '') {
-        const start = new Date(ev.startTime);
+        const start = new Date(ev.startTime.replace(' ', 'T'));
         const sel = new Date(dateStr);
         if (sel < start) return false;
         const diffDays = Math.floor((sel.getTime() - start.getTime()) / 86400000);
@@ -135,7 +137,7 @@ export default function CalendarScreen({ openModal }: Props) {
   const eventDays = useMemo(() => {
     const days = new Set<number>();
     events.forEach(ev => {
-      const d = new Date(ev.startTime);
+      const d = new Date(ev.startTime.replace(' ', 'T'));
       if (d.getMonth() === viewMonth && d.getFullYear() === viewYear) {
         days.add(d.getDate());
       }
@@ -169,7 +171,7 @@ export default function CalendarScreen({ openModal }: Props) {
       let attendeesToSave: string[] = [];
       if (visibility === 'company') {
         attendeesToSave = users.map(u => String(u.id));
-      } else if (visibility.startsWith('div_')) {
+      } else if (visibility === 'custom') {
         attendeesToSave = sharedUsers;
       }
 
@@ -180,8 +182,8 @@ export default function CalendarScreen({ openModal }: Props) {
           userId: user?.id,
           title,
           description: desc,
-          startTime: startDT.toISOString().slice(0, 19).replace('T', ' '),
-          endTime: endDT.toISOString().slice(0, 19).replace('T', ' '),
+          startTime: `${date} ${timeStart}:00`,
+          endTime: `${endDT.getFullYear()}-${String(endDT.getMonth()+1).padStart(2,'0')}-${String(endDT.getDate()).padStart(2,'0')} ${String(endDT.getHours()).padStart(2,'0')}:${String(endDT.getMinutes()).padStart(2,'0')}:00`,
           notificationOffsetMinutes: offset,
           attendees: attendeesToSave,
           recurrence: recurrence || null,
@@ -218,7 +220,7 @@ export default function CalendarScreen({ openModal }: Props) {
 
   const resetForm = () => {
     setTitle(''); setDesc(''); setDate(''); setTimeStart('09:00'); setTimeEnd('10:00');
-    setOffset(15); setRecurrence(''); setLocation(''); setVisibility('private'); setSharedUsers([]);
+    setOffset(15); setRecurrence(''); setLocation(''); setVisibility('private'); setSharedUsers([]); setSearch(''); setCollapsedDepts(new Set());
   };
 
   const prevMonth = () => {
@@ -242,17 +244,42 @@ export default function CalendarScreen({ openModal }: Props) {
     outline: 'none', background: '#fff', color: HP_TOKENS.ink, boxSizing: 'border-box',
   };
 
-  const selectedDept = visibility.startsWith('div_') ? visibility.replace('div_', '') : null;
-  const deptUsers = selectedDept ? users.filter(u => u.department === selectedDept) : [];
-  const isAllDeptSelected = deptUsers.length > 0 && sharedUsers.length === deptUsers.length;
-
   const toggleUser = (uid: string) => {
     setSharedUsers(prev => prev.includes(uid) ? prev.filter(id => id !== uid) : [...prev, uid]);
   };
 
-  const toggleDeptAll = () => {
-    if (isAllDeptSelected) setSharedUsers([]);
-    else setSharedUsers(deptUsers.map(u => String(u.id)));
+  const usersByDept = useMemo(() => {
+    const map: Record<string, any[]> = {};
+    const filtered = users.filter(u =>
+      u.name.toLowerCase().includes(search.toLowerCase()) ||
+      u.department?.toLowerCase().includes(search.toLowerCase())
+    );
+    filtered.forEach(u => {
+      const dept = u.department || 'Lainnya';
+      if (!map[dept]) map[dept] = [];
+      map[dept].push(u);
+    });
+    return map;
+  }, [users, search]);
+
+  const deptNames = Object.keys(usersByDept).sort();
+
+  const toggleDeptCollapse = (dept: string) => {
+    setCollapsedDepts(prev => {
+      const n = new Set(prev);
+      n.has(dept) ? n.delete(dept) : n.add(dept);
+      return n;
+    });
+  };
+
+  const selectAllInDept = (dept: string) => {
+    const deptUserIds = (usersByDept[dept] || []).map(u => String(u.id));
+    const allSelected = deptUserIds.every(id => sharedUsers.includes(id));
+    if (allSelected) {
+      setSharedUsers(prev => prev.filter(id => !deptUserIds.includes(id)));
+    } else {
+      setSharedUsers(prev => [...new Set([...prev, ...deptUserIds])]);
+    }
   };
 
   return (
@@ -407,50 +434,113 @@ export default function CalendarScreen({ openModal }: Props) {
               >
                 <option value="private">🔒 Tidak Ada (Agenda Pribadi)</option>
                 <option value="company">🏢 Seluruh Perusahaan</option>
-                <optgroup label="Pilih Divisi Spesifik...">
-                  {allDivisions.map(d => (
-                    <option key={d} value={`div_${d}`}>👥 Divisi {d}</option>
-                  ))}
-                </optgroup>
+                <option value="custom">👥 Pilih Anggota Spesifik...</option>
               </select>
 
-              {visibility.startsWith('div_') && (
+              {visibility === 'custom' && (
                 <div style={{ 
                   marginTop: 12, padding: 16, background: '#fff', 
                   border: `1px solid ${HP_TOKENS.line}`, borderRadius: 12 
                 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkSoft, fontWeight: 800 }}>PILIH ANGGOTA DIVISI {selectedDept}</div>
-                    {deptUsers.length > 0 && (
-                      <button 
-                        onClick={toggleDeptAll}
-                        style={{
-                          background: 'none', border: 'none', color: HP_TOKENS.blue, 
-                          fontFamily: HP_FONT, fontSize: 11, fontWeight: 800, cursor: 'pointer'
-                        }}
-                      >
-                        {isAllDeptSelected ? 'Batal Pilih Semua' : 'Pilih Semua'}
-                      </button>
+                  {/* Selected users chips */}
+                  {sharedUsers.length > 0 && (
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', padding: '8px 10px',
+                      borderRadius: 10, background: HP_TOKENS.blueWash, marginBottom: 12 }}>
+                      {sharedUsers.map(uid => {
+                        const u = users.find(x => String(x.id) === uid);
+                        return u ? (
+                          <span key={uid} onClick={() => toggleUser(uid)} style={{
+                            padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700,
+                            cursor: 'pointer', fontFamily: HP_FONT, border: 'none',
+                            background: HP_TOKENS.blue, color: '#fff',
+                          }}>{u.name.split(' ')[0]} ✕</span>
+                        ) : null;
+                      })}
+                    </div>
+                  )}
+
+                  {/* Search */}
+                  <input value={search} onChange={e => setSearch(e.target.value)}
+                    placeholder="🔍 Cari nama atau departemen..."
+                    style={{ width: '100%', padding: '12px 14px', borderRadius: 12,
+                      border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT,
+                      fontSize: 13, outline: 'none', boxSizing: 'border-box', marginBottom: 12 }} />
+
+                  {/* Department-grouped user list */}
+                  <div style={{ maxHeight: 240, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {deptNames.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: 20, color: HP_TOKENS.inkMute }}>Tidak ditemukan</div>
+                    ) : (
+                      deptNames.map(dept => {
+                        const deptUsers = usersByDept[dept];
+                        const isCollapsed = collapsedDepts.has(dept);
+                        const allInDeptSelected = deptUsers.every(u => sharedUsers.includes(String(u.id)));
+                        const someInDeptSelected = deptUsers.some(u => sharedUsers.includes(String(u.id)));
+
+                        return (
+                          <div key={dept} style={{ marginBottom: 4 }}>
+                            {/* Department header */}
+                            <div style={{
+                              display: 'flex', alignItems: 'center', gap: 8,
+                              padding: '8px 10px', borderRadius: 10,
+                              background: HP_TOKENS.lineSoft,
+                            }}>
+                              <button onClick={(e) => { e.preventDefault(); toggleDeptCollapse(dept); }} className="hp-tap" style={{
+                                background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                                display: 'flex', alignItems: 'center',
+                                transform: isCollapsed ? 'rotate(0)' : 'rotate(90deg)',
+                                transition: 'transform 0.2s',
+                              }}>
+                                <HPGlyph name="chevronRight" size={12} color={HP_TOKENS.inkMute} />
+                              </button>
+                              <div style={{ flex: 1, ...HP_TEXT.h, fontSize: 12, color: HP_TOKENS.inkMute, letterSpacing: 0.5 }}>
+                                {dept} ({deptUsers.length})
+                              </div>
+                              <button onClick={(e) => { e.preventDefault(); selectAllInDept(dept); }} className="hp-tap" style={{
+                                padding: '3px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700,
+                                cursor: 'pointer', fontFamily: HP_FONT,
+                                background: allInDeptSelected ? HP_TOKENS.blue : someInDeptSelected ? `${HP_TOKENS.blue}30` : HP_TOKENS.card,
+                                color: allInDeptSelected ? '#fff' : HP_TOKENS.blue,
+                                border: `1.5px solid ${HP_TOKENS.blue}40`,
+                              }}>
+                                {allInDeptSelected ? '✓ Semua' : 'Pilih Semua'}
+                              </button>
+                            </div>
+
+                            {/* Users in this department */}
+                            {!isCollapsed && deptUsers.map(u => {
+                              const isSelected = sharedUsers.includes(String(u.id));
+                              return (
+                                <button key={u.id} onClick={(e) => { e.preventDefault(); toggleUser(String(u.id)); }} disabled={saving}
+                                  className="hp-tap" style={{
+                                    display: 'flex', alignItems: 'center', gap: 12,
+                                    padding: '8px 12px 8px 28px', borderRadius: 10,
+                                    background: isSelected ? HP_TOKENS.blueWash : 'transparent',
+                                    border: isSelected ? `1.5px solid ${HP_TOKENS.blue}30` : '1.5px solid transparent',
+                                    cursor: 'pointer', width: '100%', textAlign: 'left',
+                                  }}>
+                                  <HPAvatar name={u.name} size={32} />
+                                  <div style={{ flex: 1 }}>
+                                    <div style={{ ...HP_TEXT.h, fontSize: 13 }}>{u.name}</div>
+                                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontSize: 10 }}>
+                                      {u.jobTitle || u.role}
+                                    </div>
+                                  </div>
+                                  <div style={{
+                                    width: 20, height: 20, borderRadius: 6,
+                                    border: `2px solid ${isSelected ? HP_TOKENS.blue : HP_TOKENS.line}`,
+                                    background: isSelected ? HP_TOKENS.blue : 'transparent',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  }}>
+                                    {isSelected && <HPGlyph name="check" size={11} color="#fff" />}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        );
+                      })
                     )}
-                  </div>
-                  
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {deptUsers.map(u => (
-                      <button
-                        key={u.id}
-                        onClick={() => toggleUser(String(u.id))}
-                        style={{
-                          padding: '4px 10px', borderRadius: 12, 
-                          border: `1.5px solid ${sharedUsers.includes(String(u.id)) ? HP_TOKENS.blue : HP_TOKENS.line}`,
-                          background: sharedUsers.includes(String(u.id)) ? HP_TOKENS.blue : '#fff',
-                          color: sharedUsers.includes(String(u.id)) ? '#fff' : HP_TOKENS.inkSoft,
-                          fontFamily: HP_FONT, fontSize: 11, fontWeight: 700, cursor: 'pointer', transition: '0.2s'
-                        }}
-                      >
-                        {u.name}
-                      </button>
-                    ))}
-                    {deptUsers.length === 0 && <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade }}>Tidak ada anggota lain di divisi ini.</span>}
                   </div>
                 </div>
               )}
@@ -482,8 +572,8 @@ export default function CalendarScreen({ openModal }: Props) {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {eventsOnDate.map(ev => {
-            const start = new Date(ev.startTime);
-            const end = new Date(ev.endTime);
+            const start = new Date(ev.startTime.replace(' ', 'T'));
+            const end = new Date(ev.endTime.replace(' ', 'T'));
             const isOwner = String(ev.creatorId) === String(user?.id);
             return (
               <HPCard key={ev.id} padding={0} style={{ overflow: 'hidden', border: `1.5px solid ${ev.color || HP_TOKENS.blue}20` }}>

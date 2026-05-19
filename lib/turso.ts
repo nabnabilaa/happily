@@ -7,15 +7,19 @@ const globalForDb = globalThis as unknown as {
   mysqlPool: mysql.Pool | undefined;
 };
 
-const pool = globalForDb.mysqlPool ?? mysql.createPool({
-  host: process.env.MYSQL_HOST || 'localhost',
-  user: process.env.MYSQL_USER || 'root',
-  password: process.env.MYSQL_PASSWORD || '',
-  database: process.env.MYSQL_DATABASE || 'happily_productive',
-  waitForConnections: true,
-  connectionLimit: 50,
-  queueLimit: 0
-});
+const poolOptions: mysql.PoolOptions = process.env.MYSQL_URI 
+  ? { uri: process.env.MYSQL_URI, waitForConnections: true, connectionLimit: 50, queueLimit: 0 }
+  : {
+      host: process.env.MYSQL_HOST || 'localhost',
+      user: process.env.MYSQL_USER || 'root',
+      password: process.env.MYSQL_PASSWORD || '',
+      database: process.env.MYSQL_DATABASE || 'happily_productive',
+      waitForConnections: true,
+      connectionLimit: 50,
+      queueLimit: 0
+    };
+
+const pool = globalForDb.mysqlPool ?? mysql.createPool(poolOptions);
 
 if (process.env.NODE_ENV !== 'production') {
   globalForDb.mysqlPool = pool;
