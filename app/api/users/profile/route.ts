@@ -37,16 +37,14 @@ export async function GET(request: Request) {
       if (mgrRes.rows.length > 0) managerName = (mgrRes.rows[0] as any).name;
     }
 
-    // 3. Attendance summary for the month (SQLite compatible)
+    // 3. Attendance summary for the month (MySQL compatible)
     const attRes = await db.execute({
       sql: `SELECT COUNT(*) as total_days,
                    SUM(CASE WHEN check_out_at IS NOT NULL THEN duration_minutes ELSE 0 END) as total_minutes,
                    SUM(CASE WHEN status = 'late' THEN 1 ELSE 0 END) as late_days,
                    SUM(CASE WHEN status = 'early_leave' THEN 1 ELSE 0 END) as early_leave_days
             FROM attendance 
-            WHERE user_id = ? 
-              AND CAST(strftime('%m', check_in_at) AS INTEGER) = ? 
-              AND CAST(strftime('%Y', check_in_at) AS INTEGER) = ?`,
+            WHERE user_id = ? AND MONTH(check_in_at) = ? AND YEAR(check_in_at) = ?`,
       args: [userId, Number(month), Number(year)]
     });
     const att = attRes.rows[0] as any;
@@ -68,23 +66,19 @@ export async function GET(request: Request) {
       args: [userId]
     });
 
-    // 6. Logbook entries count this month (SQLite compatible)
+    // 6. Logbook entries count this month (MySQL compatible)
     const logRes = await db.execute({
       sql: `SELECT COUNT(*) as cnt FROM logbook_entries 
-            WHERE user_id = ? 
-              AND CAST(strftime('%m', created_at) AS INTEGER) = ? 
-              AND CAST(strftime('%Y', created_at) AS INTEGER) = ?`,
+            WHERE user_id = ? AND MONTH(created_at) = ? AND YEAR(created_at) = ?`,
       args: [userId, Number(month), Number(year)]
     });
 
-    // 6b. Task summary (completed / total priorities) for the month (SQLite compatible)
+    // 6b. Task summary (completed / total priorities) for the month (MySQL compatible)
     const tasksRes = await db.execute({
       sql: `SELECT COUNT(*) as total, 
                    SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as completed
             FROM daily_priorities 
-            WHERE user_id = ? 
-              AND CAST(strftime('%m', created_at) AS INTEGER) = ? 
-              AND CAST(strftime('%Y', created_at) AS INTEGER) = ?`,
+            WHERE user_id = ? AND MONTH(created_at) = ? AND YEAR(created_at) = ?`,
       args: [userId, Number(month), Number(year)]
     });
     const taskData = tasksRes.rows[0] as any;

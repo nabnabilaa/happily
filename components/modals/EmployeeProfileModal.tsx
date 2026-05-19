@@ -62,7 +62,7 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
       // 2. Fetch employee's goals from storage API (which contains manager-assigned goals/KPIs in 'goals' table)
       const storageRes = await fetch(`/api/storage?userId=${employeeId}`);
       const storageData = await storageRes.json();
-      const storageKpis = (storageData.goals || [])
+      const storageKpis = (storageData.state?.goals || [])
         .filter((g: any) => g.is_kpi || g.scope === 'assigned')
         .map((g: any) => ({
           id: String(g.id),
