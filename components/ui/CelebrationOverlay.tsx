@@ -27,13 +27,36 @@ export default function CelebrationOverlay({ show, onComplete, message = "Hebat!
 
   if (!visible) return null;
 
+  const handleClose = () => {
+    setVisible(false);
+    onComplete();
+  };
+
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 2000,
-      background: 'rgba(255,255,255,0.9)',
-      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      animation: 'hpFadeIn 0.3s ease-out'
-    }}>
+    <div 
+      onClick={handleClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 2000,
+        background: 'rgba(255,255,255,0.9)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        animation: 'hpFadeIn 0.3s ease-out',
+        cursor: 'pointer'
+      }}
+    >
+      <button 
+        onClick={(e) => { e.stopPropagation(); handleClose(); }}
+        style={{
+          position: 'absolute', top: 24, right: 24,
+          background: HP_TOKENS.lineSoft, border: 'none',
+          width: 40, height: 40, borderRadius: 20,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', color: HP_TOKENS.inkFade,
+          fontSize: 20, fontWeight: 900
+        }}
+      >
+        ×
+      </button>
+
       <div style={{ transform: 'scale(1.2)', marginBottom: 32 }}>
         <BeeMascot mood="happy" size={100} showSpeech="Yeeay! 🎉" />
       </div>
@@ -44,6 +67,9 @@ export default function CelebrationOverlay({ show, onComplete, message = "Hebat!
         animation: 'hpBounce 0.5s ease-out'
       }}>
         +{points} XP
+      </div>
+      <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, marginTop: 32, opacity: 0.6 }}>
+        Klik di mana saja untuk menutup
       </div>
     </div>
   );
