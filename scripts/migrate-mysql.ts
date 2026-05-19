@@ -60,6 +60,7 @@ async function migrate() {
       "ALTER TABLE daily_priorities ADD COLUMN metric_value DECIMAL(15,2)",
       "ALTER TABLE monthly_kpis ADD COLUMN metric_target DECIMAL(15,2)",
       "ALTER TABLE monthly_kpis ADD COLUMN metric_current DECIMAL(15,2)",
+      "ALTER TABLE rewards ADD COLUMN stock INT DEFAULT 999",
 
       // ===== EXISTING TABLE CREATES =====
       `CREATE TABLE IF NOT EXISTS global_settings (
@@ -170,7 +171,7 @@ async function migrate() {
 
       // ===== NEW TABLES (Phase 2 — KPI) =====
 
-      // Monthly KPIs
+       // Monthly KPIs
       `CREATE TABLE IF NOT EXISTS monthly_kpis (
          id VARCHAR(255) PRIMARY KEY,
          title TEXT NOT NULL,
@@ -186,6 +187,23 @@ async function migrate() {
          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
          INDEX idx_kpi_assignee (assigned_to),
          INDEX idx_kpi_period (month, year)
+      )`,
+
+      // Personal KPIs (KPI Mandiri)
+      `CREATE TABLE IF NOT EXISTS personal_kpis (
+         id VARCHAR(255) PRIMARY KEY,
+         user_id VARCHAR(255) NOT NULL,
+         title VARCHAR(255) NOT NULL,
+         target_description TEXT,
+         target_value DOUBLE,
+         current_value DOUBLE DEFAULT 0,
+         metric_unit VARCHAR(50),
+         month INT,
+         year INT,
+         status VARCHAR(50) DEFAULT 'active',
+         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+         INDEX idx_pkpi_user (user_id),
+         INDEX idx_pkpi_period (month, year)
       )`,
 
       // Task ↔ KPI Links

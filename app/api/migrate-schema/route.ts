@@ -269,6 +269,9 @@ export async function POST() {
     { desc: "daily_priorities.description", sql: "ALTER TABLE daily_priorities ADD COLUMN description TEXT" },
     { desc: "daily_priorities.time_tracked", sql: "ALTER TABLE daily_priorities ADD COLUMN time_tracked INTEGER DEFAULT 0" },
     { desc: "daily_priorities.timer_started_at", sql: "ALTER TABLE daily_priorities ADD COLUMN timer_started_at TEXT" },
+
+    // ── Rewards table ──
+    { desc: "rewards.stock", sql: "ALTER TABLE rewards ADD COLUMN stock INTEGER DEFAULT 999" },
   ];
 
   for (const c of columns) {
