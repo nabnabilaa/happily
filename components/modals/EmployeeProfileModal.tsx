@@ -54,10 +54,66 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
   const fetchKPIs = async () => {
     try {
       const m = new Date().getMonth() + 1, y = new Date().getFullYear();
+      
+      // 1. Fetch manager-assigned monthly_kpis (from monthly_kpis table)
       const res = await fetch(`/api/kpi?userId=${employeeId}&role=employee&month=${m}&year=${y}`);
       const data = await res.json();
-      setKpis(data.kpis || []);
-    } catch (e) { console.error(e); }
+      
+      // 2. Fetch employee's goals from storage API (which contains manager-assigned goals/KPIs in 'goals' table)
+      const storageRes = await fetch(`/api/storage?userId=${employeeId}`);
+      const storageData = await storageRes.json();
+      const storageKpis = (storageData.goals || [])
+        .filter((g: any) => g.is_kpi || g.scope === 'assigned')
+        .map((g: any) => ({
+          id: String(g.id),
+          title: g.title,
+          progress: g.progress || 0,
+          targetValue: 100,
+          metricUnit: '%',
+          status: g.status === 'active' ? 'approved' : (g.status || 'pending'),
+          weight: g.alignment || 0,
+        }));
+
+      // 3. Fetch personal KPIs (from personal_kpis table)
+      const personalRes = await fetch(`/api/kpi/personal?userId=${employeeId}&month=${m}&year=${y}`);
+      const personalData = await personalRes.json();
+      const personalKpis = (personalData.kpis || []).map((k: any) => ({
+        id: String(k.id),
+        title: k.title,
+        progress: k.progress || 0,
+        targetValue: k.targetValue || 100,
+        metricUnit: k.metricUnit || '%',
+        status: k.status || 'active',
+        weight: 0
+      }));
+
+      // Combine all KPIs without duplication
+      const combined = [...storageKpis];
+      
+      (data.kpis || []).forEach((k: any) => {
+        if (!combined.some(c => c.title.toLowerCase() === k.title.toLowerCase())) {
+          combined.push({
+            id: String(k.id),
+            title: k.title,
+            progress: k.finalScore !== null && k.finalScore !== undefined ? Number(k.finalScore) : 0,
+            targetValue: 100,
+            metricUnit: '%',
+            status: k.status === 'active' ? 'approved' : k.status,
+            weight: k.weight || 0
+          });
+        }
+      });
+
+      personalKpis.forEach((k: any) => {
+        if (!combined.some(c => c.title.toLowerCase() === k.title.toLowerCase())) {
+          combined.push(k);
+        }
+      });
+
+      setKpis(combined);
+    } catch (e) { 
+      console.error("Failed to fetch KPIs for employee:", e); 
+    }
   };
 
   const fetchAttendance = async () => {

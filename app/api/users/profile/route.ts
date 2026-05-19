@@ -37,14 +37,16 @@ export async function GET(request: Request) {
       if (mgrRes.rows.length > 0) managerName = (mgrRes.rows[0] as any).name;
     }
 
-    // 3. Attendance summary for the month
+    // 3. Attendance summary for the month (SQLite compatible)
     const attRes = await db.execute({
       sql: `SELECT COUNT(*) as total_days,
                    SUM(CASE WHEN check_out_at IS NOT NULL THEN duration_minutes ELSE 0 END) as total_minutes,
                    SUM(CASE WHEN status = 'late' THEN 1 ELSE 0 END) as late_days,
                    SUM(CASE WHEN status = 'early_leave' THEN 1 ELSE 0 END) as early_leave_days
             FROM attendance 
-            WHERE user_id = ? AND MONTH(check_in_at) = ? AND YEAR(check_in_at) = ?`,
+            WHERE user_id = ? 
+              AND CAST(strftime('%m', check_in_at) AS INTEGER) = ? 
+              AND CAST(strftime('%Y', check_in_at) AS INTEGER) = ?`,
       args: [userId, Number(month), Number(year)]
     });
     const att = attRes.rows[0] as any;
@@ -66,12 +68,29 @@ export async function GET(request: Request) {
       args: [userId]
     });
 
-    // 6. Logbook entries count this month
+    // 6. Logbook entries count this month (SQLite compatible)
     const logRes = await db.execute({
       sql: `SELECT COUNT(*) as cnt FROM logbook_entries 
-            WHERE user_id = ? AND MONTH(created_at) = ? AND YEAR(created_at) = ?`,
+            WHERE user_id = ? 
+              AND CAST(strftime('%m', created_at) AS INTEGER) = ? 
+              AND CAST(strftime('%Y', created_at) AS INTEGER) = ?`,
       args: [userId, Number(month), Number(year)]
     });
+
+    // 6b. Task summary (completed / total priorities) for the month (SQLite compatible)
+    const tasksRes = await db.execute({
+      sql: `SELECT COUNT(*) as total, 
+                   SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as completed
+            FROM daily_priorities 
+            WHERE user_id = ? 
+              AND CAST(strftime('%m', created_at) AS INTEGER) = ? 
+              AND CAST(strftime('%Y', created_at) AS INTEGER) = ?`,
+      args: [userId, Number(month), Number(year)]
+    });
+    const taskData = tasksRes.rows[0] as any;
+    const taskTotal = Number(taskData?.total) || 0;
+    const taskCompleted = Number(taskData?.completed) || 0;
+    const taskCompletionRate = taskTotal > 0 ? Math.round((taskCompleted / taskTotal) * 100) : 0;
 
     // 7. AI Weekly Summary (latest)
     const aiRes = await db.execute({
@@ -101,6 +120,11 @@ export async function GET(request: Request) {
       kpi: {
         total: Number(kpi.total) || 0,
         avgScore: kpi.avg_score ? Math.round(Number(kpi.avg_score)) : null,
+      },
+      taskSummary: {
+        completed: taskCompleted,
+        total: taskTotal,
+        completionRate: taskCompletionRate,
       },
       recentMoods: moodRes.rows,
       logbookCount: Number((logRes.rows[0] as any).cnt) || 0,
