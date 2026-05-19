@@ -4,13 +4,17 @@ import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 
 async function initBase() {
-  const pool = mysql.createPool({
-    host: process.env.MYSQL_HOST || 'localhost',
-    user: process.env.MYSQL_USER || 'root',
-    password: process.env.MYSQL_PASSWORD || '',
-    database: process.env.MYSQL_DATABASE || 'happily_productive',
-    waitForConnections: true,
-  });
+  const poolOptions: mysql.PoolOptions = process.env.MYSQL_URI 
+    ? { uri: process.env.MYSQL_URI, waitForConnections: true }
+    : {
+        host: process.env.MYSQL_HOST || 'localhost',
+        user: process.env.MYSQL_USER || 'root',
+        password: process.env.MYSQL_PASSWORD || '',
+        database: process.env.MYSQL_DATABASE || 'happily_productive',
+        waitForConnections: true,
+      };
+
+  const pool = mysql.createPool(poolOptions);
 
   try {
     const connection = await pool.getConnection();
@@ -44,7 +48,7 @@ async function initBase() {
           points INT DEFAULT 0,
           coins INT DEFAULT 0,
           level INT DEFAULT 1,
-          rank VARCHAR(10) DEFAULT 'E',
+          \`rank\` VARCHAR(10) DEFAULT 'E',
           avatar_image LONGTEXT,
           avatar_config_json TEXT,
           user_role_context TEXT,

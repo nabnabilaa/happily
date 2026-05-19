@@ -1,4 +1,4 @@
-import mysql from 'mysql2/promise';
+import { db } from '../lib/turso';
 import dotenv from 'dotenv';
 
 dotenv.config({ path: '.env.local' });
@@ -14,16 +14,7 @@ dotenv.config({ path: '.env.local' });
  * 5. Create attendance yearly retention index
  */
 async function migrate() {
-  const pool = mysql.createPool({
-    host: process.env.MYSQL_HOST || 'localhost',
-    user: process.env.MYSQL_USER || 'root',
-    password: process.env.MYSQL_PASSWORD || '',
-    database: process.env.MYSQL_DATABASE || 'happily_productive',
-    waitForConnections: true,
-  });
-
   try {
-    const connection = await pool.getConnection();
     console.log("🐝 HR Overhaul Migration — Phase 1\n");
 
     const migrations: { desc: string; sql: string }[] = [
@@ -115,11 +106,11 @@ async function migrate() {
 
     for (const m of migrations) {
       try {
-        await connection.query(m.sql);
+        await db.execute(m.sql);
         console.log(`  ✅ ${m.desc}`);
         success++;
       } catch (e: any) {
-        if (e.code === 'ER_DUP_FIELDNAME' || e.code === 'ER_TABLE_EXISTS_ERROR' || e.code === 'ER_DUP_KEYNAME') {
+        if (e.message?.includes('duplicate column') || e.message?.includes('already exists') || e.code === 'ER_DUP_FIELDNAME' || e.code === 'ER_TABLE_EXISTS_ERROR' || e.code === 'ER_DUP_KEYNAME') {
           console.log(`  ⏭️ ${m.desc} (already exists)`);
           skipped++;
         } else {
@@ -130,8 +121,6 @@ async function migrate() {
     }
 
     console.log(`\n🐝 Phase 1 complete! ✅ ${success} new, ⏭️ ${skipped} existed, ❌ ${failed} failed`);
-    connection.release();
-    await pool.end();
     process.exit(0);
   } catch (error) {
     console.error("Connection failed:", error);
