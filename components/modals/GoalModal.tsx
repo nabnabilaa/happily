@@ -82,13 +82,6 @@ export default function GoalModal({ onClose, goal }: { onClose: () => void; goal
         ...s,
         goals: s.goals.map((g: any) => {
           if (String(g.id) === String(goal.id)) {
-            // Recalculate progress from linked tasks
-            const tasksForGoal = s.priorities?.filter((p: any) => p.goal_id && String(p.goal_id) === String(goal.id)) || [];
-            const doneCount = tasksForGoal.filter((p: any) => p.done).length;
-            const newProgress = tasksForGoal.length > 0 
-              ? Math.round((doneCount / tasksForGoal.length) * 100) 
-              : progress;
-
             const nextStatus = (g.status === 'revision' || g.status === 'rejected') ? 'pending' : status;
 
             return {
@@ -98,10 +91,9 @@ export default function GoalModal({ onClose, goal }: { onClose: () => void; goal
               dueISO: due,
               scope: scope === 'employee' ? 'assigned' : scope,
               parent_id: parentId || null,
-              progress: newProgress,
+              progress: progress,
               status: nextStatus,
               is_kpi: isKpi || g.is_kpi,
-              metric: tasksForGoal.length > 0 ? `${doneCount}/${tasksForGoal.length} task selesai` : g.metric,
             };
           }
           return g;
@@ -196,50 +188,20 @@ export default function GoalModal({ onClose, goal }: { onClose: () => void; goal
         </div>
 
         <div style={{ marginTop: 20 }}>
-          {(() => {
-            const hasLinkedTasks = goal && (state?.priorities?.some((p: any) => 
-              (p.goal_id && String(p.goal_id) === String(goal.id)) || 
-              (p.goal && p.goal === goal.title)
-            ) || false);
-
-            return (
-              <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 700 }}>
-                    {hasLinkedTasks ? "PROGRESS OTOMATIS (TERKUNCI)" : "PROGRESS MANUAL (%)"}
-                  </div>
-                  <div style={{ ...HP_TEXT.h, fontSize: 16, color: hasLinkedTasks ? HP_TOKENS.inkMute : HP_TOKENS.sage }}>{progress}%</div>
-                </div>
-                <input 
-                  type="range" 
-                  min="0" 
-                  max="100" 
-                  value={progress} 
-                  disabled={hasLinkedTasks}
-                  onChange={e => setProgress(parseInt(e.target.value))}
-                  style={{
-                    width: '100%', 
-                    marginTop: 12, 
-                    accentColor: hasLinkedTasks ? HP_TOKENS.inkMute : HP_TOKENS.sage, 
-                    cursor: hasLinkedTasks ? 'not-allowed' : 'pointer',
-                    opacity: hasLinkedTasks ? 0.5 : 1
-                  }}
-                />
-                {hasLinkedTasks && (
-                  <div style={{ 
-                    marginTop: 8, padding: '8px 12px', background: HP_TOKENS.yellowWash, 
-                    borderRadius: 10, border: `1px solid ${HP_TOKENS.yellow}40`,
-                    display: 'flex', alignItems: 'center', gap: 8
-                  }}>
-                    <HPGlyph name="info" size={12} color={HP_TOKENS.yellow} />
-                    <div style={{ ...HP_TEXT.tiny, color: '#8A6814', fontWeight: 700, fontSize: 10 }}>
-                      Progress otomatis terhitung dari Task terkait agar adil & tidak disalahgunakan.
-                    </div>
-                  </div>
-                )}
-              </>
-            );
-          })()}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 700 }}>PROGRESS (%)</div>
+            <div style={{ ...HP_TEXT.h, fontSize: 16, color: HP_TOKENS.sage }}>{progress}%</div>
+          </div>
+          <input 
+            type="range" 
+            min="0" 
+            max="100" 
+            value={progress} 
+            onChange={e => setProgress(parseInt(e.target.value))}
+            style={{
+              width: '100%', marginTop: 12, accentColor: HP_TOKENS.sage, cursor: 'pointer'
+            }}
+          />
         </div>
 
         {(goal?.status === 'revision' || goal?.status === 'rejected') && (

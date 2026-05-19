@@ -47,17 +47,12 @@ export async function GET(request: Request) {
     });
 
     const goals = await Promise.all(goalsRes.rows.map(async g => {
-      // Roll-up progress from child goals
+      // Roll-up progress from child goals (keep query for metric labeling, but do not override rollupProgress)
       const childRes = await db.execute({
         sql: `SELECT progress FROM goals WHERE parent_id = ?`,
         args: [String(g.id)]
       });
       let rollupProgress = Number(g.progress) || 0;
-      if (childRes.rows.length > 0) {
-        rollupProgress = Math.round(
-          childRes.rows.reduce((acc: number, r: any) => acc + (Number(r.progress) || 0), 0) / childRes.rows.length
-        );
-      }
 
       // Parse due_date for display
       const rawDue = (g.due_date as string) || '';

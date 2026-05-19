@@ -77,12 +77,9 @@ export async function GET(request: Request) {
       let effectiveProgress = Number(r.progress) || 0;
 
       if (childGoalsRes.rows.length > 0) {
-        effectiveProgress = Math.round(
-          childGoalsRes.rows.reduce((sum: number, cr: any) => sum + (Number(cr.progress) || 0), 0) / childGoalsRes.rows.length
-        );
         dynamicMetric = `${childGoalsRes.rows.length} aligned OKR`;
       } else {
-        // Self-healing: accurately count actual tasks in database
+        // Self-healing: accurately count actual tasks in database for metric labeling
         const tasksRes = await db.execute({
           sql: "SELECT COUNT(*) as total, SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as done FROM daily_priorities WHERE goal_id = ? OR kpi_id = ?",
           args: [String(r.id), String(r.id)]
@@ -91,7 +88,6 @@ export async function GET(request: Request) {
         if (total > 0) {
           const done = Number(tasksRes.rows[0]?.done || 0);
           dynamicMetric = `${done}/${total} task selesai`;
-          effectiveProgress = Math.round((done / total) * 100);
         }
       }
 

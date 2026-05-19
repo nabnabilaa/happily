@@ -67,7 +67,7 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
     : null;
 
   // Final display progress
-  let displayProgress = g.progress || 0;
+  const displayProgress = g.progress || 0;
 
   const deleteGoal = () => {
     if (isReadOnly) return;
@@ -205,72 +205,62 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
              <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800 }}>PROGRESS</span>
              {editingProgress ? (
-               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }} onClick={(e) => e.stopPropagation()}>
-                 <input
-                   type="number" min="0" max="100"
-                   value={tempProgress}
-                   onChange={(e) => setTempProgress(e.target.value)}
-                   onKeyDown={(e) => {
-                     if (e.key === 'Enter') {
-                       const val = Math.max(0, Math.min(100, Number(tempProgress)));
-                       onEditProgress?.(val);
-                       setEditingProgress(false);
-                     }
-                     if (e.key === 'Escape') setEditingProgress(false);
-                   }}
-                   autoFocus
-                   style={{
-                     width: 52, padding: '4px 8px', borderRadius: 8,
-                     border: `2px solid ${toneColor}`, outline: 'none',
-                     fontSize: 14, fontWeight: 900, textAlign: 'right',
-                     color: toneColor, background: `${toneColor}08`
-                   }}
-                 />
-                 <span style={{ fontSize: 13, fontWeight: 900, color: toneColor }}>%</span>
-                 <button
-                   onClick={(e) => {
-                     e.stopPropagation();
-                     const val = Math.max(0, Math.min(100, Number(tempProgress)));
-                     onEditProgress?.(val);
-                     setEditingProgress(false);
-                   }}
-                   style={{
-                     padding: '5px 10px', borderRadius: 8, border: 'none',
-                     background: HP_TOKENS.sage, color: '#fff', fontSize: 11,
-                     fontWeight: 900, cursor: 'pointer',
-                     boxShadow: `0 2px 8px ${HP_TOKENS.sage}40`
-                   }}
-                 >✓</button>
-                 <button
-                   onClick={(e) => { e.stopPropagation(); setEditingProgress(false); }}
-                   style={{
-                     padding: '5px 8px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
-                     background: '#fff', color: HP_TOKENS.inkFade, fontSize: 11,
-                     fontWeight: 900, cursor: 'pointer'
-                   }}
-                 >✕</button>
-               </div>
-             ) : (
-               <div
-                 style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: onEditProgress ? 'pointer' : 'default' }}
-                 onClick={(e) => {
-                   if (onEditProgress) {
-                     e.stopPropagation();
-                     setTempProgress(String(displayProgress));
-                     setEditingProgress(true);
-                   }
-                 }}
-               >
-                 <span style={{ ...HP_TEXT.h, fontSize: 13, color: toneColor }}>{displayProgress}%</span>
-                 {onEditProgress && (
-                   <span style={{
-                     fontSize: 10, color: toneColor, opacity: 0.6,
-                     padding: '2px 6px', borderRadius: 6, background: `${toneColor}10`,
-                     fontWeight: 800
-                   }}>✏️ edit</span>
-                 )}
-               </div>
-             )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }} onClick={(e) => e.stopPropagation()}>
+                  <input
+                    type="range" min="0" max="100"
+                    value={tempProgress}
+                    onChange={(e) => setTempProgress(e.target.value)}
+                    style={{
+                      flex: 1, accentColor: toneColor, cursor: 'pointer', height: 6
+                    }}
+                  />
+                  <span style={{ fontSize: 13, fontWeight: 900, color: toneColor, minWidth: 35, textAlign: 'right' }}>
+                    {tempProgress}%
+                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const val = Math.max(0, Math.min(100, Number(tempProgress)));
+                      onEditProgress?.(val);
+                      setEditingProgress(false);
+                    }}
+                    style={{
+                      padding: '5px 12px', borderRadius: 8, border: 'none',
+                      background: HP_TOKENS.sage, color: '#fff', fontSize: 11,
+                      fontWeight: 900, cursor: 'pointer',
+                      boxShadow: `0 2px 8px ${HP_TOKENS.sage}40`
+                    }}
+                  >✓ Simpan</button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setEditingProgress(false); }}
+                    style={{
+                      padding: '5px 8px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                      background: '#fff', color: HP_TOKENS.inkFade, fontSize: 11,
+                      fontWeight: 900, cursor: 'pointer'
+                    }}
+                  >✕ Batal</button>
+                </div>
+              ) : (
+                <div
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: onEditProgress ? 'pointer' : 'default' }}
+                  onClick={(e) => {
+                    if (onEditProgress) {
+                      e.stopPropagation();
+                      setTempProgress(String(displayProgress));
+                      setEditingProgress(true);
+                    }
+                  }}
+                >
+                  <span style={{ ...HP_TEXT.h, fontSize: 13, color: toneColor }}>{displayProgress}%</span>
+                  {onEditProgress && (
+                    <span style={{
+                      fontSize: 10, color: toneColor, opacity: 0.6,
+                      padding: '2px 6px', borderRadius: 6, background: `${toneColor}10`,
+                      fontWeight: 800
+                    }}>✏️ edit</span>
+                  )}
+                </div>
+              )}
           </div>
           <HPBar value={displayProgress} tone={g.tone} height={8}/>
         </div>
