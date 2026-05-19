@@ -1,6 +1,10 @@
 import { db } from '../lib/turso';
 async function run() {
-  const schema = await db.execute("PRAGMA table_info(logbook_entries)");
-  console.log('Logbook Schema:', schema.rows);
+  try {
+    const schema = await db.execute("DESCRIBE daily_priorities");
+    console.log('daily_priorities Schema:', schema.rows);
+  } catch (error) {
+    console.error(error);
+  }
 }
 run();

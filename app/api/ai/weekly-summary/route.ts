@@ -86,11 +86,31 @@ export async function POST(request: Request) {
 
       let aiSummary = '';
       try {
-        const apiKey = process.env.OPENAI_API_KEY;
-        if (apiKey) {
+        const geminiApiKey = process.env.GEMINI_API_KEY;
+        const openAiApiKey = process.env.OPENAI_API_KEY;
+        if (geminiApiKey) {
+          const aiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              systemInstruction: {
+                parts: [{ text: 'Kamu adalah AI HR analyst. Buat rangkuman kinerja mingguan karyawan dalam bahasa Indonesia, singkat, 3-4 kalimat. Berikan penilaian objektif dan saran actionable.' }]
+              },
+              contents: [{
+                role: 'user',
+                parts: [{ text: prompt }]
+              }],
+              generationConfig: {
+                temperature: 0.7,
+              }
+            })
+          });
+          const aiData = await aiRes.json();
+          aiSummary = aiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        } else if (openAiApiKey) {
           const aiRes = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openAiApiKey}` },
             body: JSON.stringify({
               model: 'gpt-4o',
               messages: [

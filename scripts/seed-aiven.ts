@@ -26,6 +26,7 @@ async function seedAiven() {
 
     // 0. Hapus Data Lama
     console.log("- Menghapus data lama...");
+    await connection.query("SET FOREIGN_KEY_CHECKS = 0;");
     const tablesToClear = [
       "ext_sync_log", "calendar_attendees", "calendar_events",
       "ai_monthly_analyses", "ai_weekly_summaries", "monthly_reports",
@@ -43,6 +44,8 @@ async function seedAiven() {
         // Abaikan jika tabel tidak ada
       }
     }
+    await connection.query("SET FOREIGN_KEY_CHECKS = 1;");
+
 
     // 1. Teams
     console.log("- Membuat 8 Tim (Departments)...");
@@ -243,10 +246,11 @@ async function seedAiven() {
           // Create 3 Tasks for each KPI
           for (let t = 1; t <= 3; t++) {
             const isDone = Math.random() > 0.4 ? 1 : 0;
+            const priorityId = `priority_${uuidv4().substring(0, 8)}`;
             await connection.query(
-              `INSERT INTO daily_priorities (user_id, kpi_id, title, energy_level, est_time, is_done, is_verified, source)
-               VALUES (?, ?, ?, ?, ?, ?, ?, 'website')`,
-              [emp.id, kpiId, `Task ${t} untuk KPI ${k}`, 'mid', '2h', isDone, isDone ? (Math.random() > 0.5 ? 1 : 0) : 0]
+              `INSERT INTO daily_priorities (id, user_id, kpi_id, title, energy_level, est_time, is_done, is_verified, source)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'website')`,
+              [priorityId, emp.id, kpiId, `Task ${t} untuk KPI ${k}`, 'mid', '2h', isDone, isDone ? (Math.random() > 0.5 ? 1 : 0) : 0]
             );
           }
         }
