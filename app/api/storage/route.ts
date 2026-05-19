@@ -34,7 +34,7 @@ export async function GET(request: Request) {
 
     // 2. Fetch State components
     const prioritiesRes = await db.execute({
-      sql: "SELECT * FROM daily_priorities WHERE user_id = ? AND (is_done = 0 OR COALESCE(DATE(target_date), DATE(created_at)) = DATE('now', 'localtime')) ORDER BY COALESCE(target_date, created_at) ASC",
+      sql: "SELECT * FROM daily_priorities WHERE user_id = ? AND (is_done = 0 OR COALESCE(DATE(target_date), DATE(created_at)) = CURDATE()) ORDER BY COALESCE(target_date, created_at) ASC",
       args: [userId]
     });
     const priorities = prioritiesRes.rows.map(r => ({
@@ -182,13 +182,13 @@ export async function GET(request: Request) {
 
     // Fetch Today's Attendance
     const todayAttRes = await db.execute({
-      sql: "SELECT check_in_at as created_at FROM attendance WHERE user_id = ? AND DATE(check_in_at) = DATE('now', 'localtime') ORDER BY check_in_at ASC LIMIT 1",
+      sql: "SELECT check_in_at as created_at FROM attendance WHERE user_id = ? AND DATE(check_in_at) = CURDATE() ORDER BY check_in_at ASC LIMIT 1",
       args: [userId]
     });
     const checkIn = todayAttRes.rows[0]?.created_at as string;
 
     const todayReflectRes = await db.execute({
-      sql: "SELECT created_at FROM logbook_entries WHERE user_id = ? AND type = 'daily_reflection' AND DATE(created_at) = DATE('now', 'localtime') ORDER BY created_at DESC LIMIT 1",
+      sql: "SELECT created_at FROM logbook_entries WHERE user_id = ? AND type = 'daily_reflection' AND DATE(created_at) = CURDATE() ORDER BY created_at DESC LIMIT 1",
       args: [userId]
     });
     const checkOut = todayReflectRes.rows[0]?.created_at as string;
@@ -397,7 +397,7 @@ export async function POST(request: Request) {
           await db.execute({ 
             sql: `DELETE FROM daily_priorities 
                   WHERE user_id = ? 
-                  AND (is_done = 0 OR COALESCE(DATE(target_date), DATE(created_at)) = DATE('now', 'localtime'))
+                  AND (is_done = 0 OR COALESCE(DATE(target_date), DATE(created_at)) = CURDATE())
                   AND id NOT IN (${stateTaskIds.map(() => '?').join(',')})`, 
             args: [userId, ...stateTaskIds] 
           });
@@ -408,13 +408,13 @@ export async function POST(request: Request) {
           await db.execute({
             sql: `INSERT INTO daily_priorities (id, user_id, title, description, target_date, goal_title, goal_id, kpi_id, energy_level, est_time, is_done, is_verified, tone, proof_link, proof_notes, metric_value, time_tracked, timer_started_at, created_at) 
                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                  ON CONFLICT(id) DO UPDATE SET 
-                  title=excluded.title, description=excluded.description, target_date=excluded.target_date, goal_title=excluded.goal_title, goal_id=excluded.goal_id, 
-                  kpi_id=excluded.kpi_id, 
-                  energy_level=excluded.energy_level, est_time=excluded.est_time, 
-                  is_done=excluded.is_done, is_verified=excluded.is_verified, tone=excluded.tone,
-                  proof_link=excluded.proof_link, proof_notes=excluded.proof_notes, metric_value=excluded.metric_value,
-                  time_tracked=excluded.time_tracked, timer_started_at=excluded.timer_started_at`,
+                  ON DUPLICATE KEY UPDATE 
+                  title=VALUES(title), description=VALUES(description), target_date=VALUES(target_date), goal_title=VALUES(goal_title), goal_id=VALUES(goal_id), 
+                  kpi_id=VALUES(kpi_id), 
+                  energy_level=VALUES(energy_level), est_time=VALUES(est_time), 
+                  is_done=VALUES(is_done), is_verified=VALUES(is_verified), tone=VALUES(tone),
+                  proof_link=VALUES(proof_link), proof_notes=VALUES(proof_notes), metric_value=VALUES(metric_value),
+                  time_tracked=VALUES(time_tracked), timer_started_at=VALUES(timer_started_at)`,
             args: [p.id, userId, p.title, p.description || null, p.targetDate || null, p.goal || null, p.goal_id || null, p.kpi_id || null, p.energy, p.est, p.done ? 1 : 0, p.verified ? 1 : 0, p.tone, p.proof_link || null, p.proof_notes || null, p.metric_value || null, p.time_tracked || 0, p.timer_started_at || null]
           });
         }
