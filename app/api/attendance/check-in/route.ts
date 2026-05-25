@@ -149,9 +149,10 @@ export async function POST(request: Request) {
 
       if (xpAmount > 0) {
         const coinsAmount = Math.floor(xpAmount / 4);
+        const txId = "tx_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
         await db.execute({
-          sql: "INSERT INTO xp_transactions (user_id, amount, activity_type, reference_id) VALUES (?, ?, ?, ?)",
-          args: [userId, xpAmount, actionType, `Check-in ${checkInType}`]
+          sql: "INSERT INTO xp_transactions (id, user_id, amount, action_type, description) VALUES (?, ?, ?, ?, ?)",
+          args: [txId, userId, xpAmount, actionType, `Check-in ${checkInType} — ${xpLabel}`]
         });
         await db.execute({
           sql: "UPDATE users SET points = points + ?, coins = coins + ? WHERE id = ?",
@@ -175,9 +176,10 @@ export async function POST(request: Request) {
     if (streakMilestones[streak]) {
       const { bonus, emoji } = streakMilestones[streak];
       try {
+        const txId = "tx_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
         await db.execute({
-          sql: "INSERT INTO xp_transactions (user_id, amount, activity_type, reference_id) VALUES (?, ?, ?, ?)",
-          args: [userId, bonus, `streak_${streak}`, `${emoji} Streak ${streak} hari`]
+          sql: "INSERT INTO xp_transactions (id, user_id, amount, action_type, description) VALUES (?, ?, ?, ?, ?)",
+          args: [txId, userId, bonus, `streak_${streak}`, `${emoji} Streak ${streak} hari`]
         });
         await db.execute({
           sql: "UPDATE users SET points = points + ? WHERE id = ?",

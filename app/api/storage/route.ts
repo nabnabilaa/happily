@@ -305,9 +305,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ state, user });
   } catch (error: any) {
-    console.error("Turso Fetch Error:", error);
+    console.error("Database Fetch Error:", error);
     return NextResponse.json({
-      error: 'Failed to read data from Turso',
+      error: 'Failed to read data from database',
       details: error.message,
       stack: error.stack
     }, { status: 500 });
@@ -535,11 +535,11 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, message: 'Updated Turso successfully' });
+    return NextResponse.json({ success: true, message: 'Updated database successfully' });
   } catch (error: any) {
-    console.error("Turso Sync Error:", error);
+    console.error("Database Sync Error:", error);
     return NextResponse.json({
-      error: 'Failed to sync data to Turso',
+      error: 'Failed to sync data to database',
       details: error.message,
       stack: error.stack
     }, { status: 500 });

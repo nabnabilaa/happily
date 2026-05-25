@@ -1,12 +1,34 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/turso";
 
+function getCorsHeaders(request: Request) {
+  const origin = request.headers.get("origin") || "*";
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Credentials": "true",
+  };
+}
+
+export async function OPTIONS(request: Request) {
+  return new NextResponse(null, {
+    status: 204,
+    headers: getCorsHeaders(request),
+  });
+}
+
 // GET: Fetch unread notifications for extension
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
-    if (!userId) return NextResponse.json({ error: "userId required" }, { status: 400 });
+    if (!userId) {
+      return NextResponse.json(
+        { error: "userId required" },
+        { status: 400, headers: getCorsHeaders(request) }
+      );
+    }
 
     const res = await db.execute({
       sql: `SELECT id, title, message, type, created_at 
@@ -21,10 +43,15 @@ export async function GET(request: Request) {
         type: r.type, createdAt: r.created_at,
       })),
       unreadCount: res.rows.length
+    }, {
+      headers: getCorsHeaders(request)
     });
   } catch (error: any) {
     console.error("Ext Notifications Error:", error);
-    return NextResponse.json({ error: "Failed", details: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed", details: error.message },
+      { status: 500, headers: getCorsHeaders(request) }
+    );
   }
 }
 
@@ -32,7 +59,12 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const { userId, notificationIds } = await request.json();
-    if (!userId) return NextResponse.json({ error: "userId required" }, { status: 400 });
+    if (!userId) {
+      return NextResponse.json(
+        { error: "userId required" },
+        { status: 400, headers: getCorsHeaders(request) }
+      );
+    }
 
     if (notificationIds && Array.isArray(notificationIds) && notificationIds.length > 0) {
       const placeholders = notificationIds.map(() => '?').join(',');
@@ -48,10 +80,13 @@ export async function POST(request: Request) {
       });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, { headers: getCorsHeaders(request) });
   } catch (error: any) {
     console.error("Mark Read Error:", error);
-    return NextResponse.json({ error: "Failed", details: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed", details: error.message },
+      { status: 500, headers: getCorsHeaders(request) }
+    );
   }
 }
 
@@ -59,7 +94,12 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const { userId, title, message, type, referenceId, referenceType } = await request.json();
-    if (!userId || !title) return NextResponse.json({ error: "userId and title required" }, { status: 400 });
+    if (!userId || !title) {
+      return NextResponse.json(
+        { error: "userId and title required" },
+        { status: 400, headers: getCorsHeaders(request) }
+      );
+    }
 
     await db.execute({
       sql: `INSERT INTO notifications (user_id, title, message, type, reference_id, reference_type, is_read, created_at) 
@@ -75,9 +115,12 @@ export async function PUT(request: Request) {
       ]
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, { headers: getCorsHeaders(request) });
   } catch (error: any) {
     console.error("Create Notification Error:", error);
-    return NextResponse.json({ error: "Failed", details: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed", details: error.message },
+      { status: 500, headers: getCorsHeaders(request) }
+    );
   }
 }

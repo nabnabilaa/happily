@@ -217,6 +217,50 @@ export async function POST() {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )`
+    },
+    {
+      desc: "Create notes table",
+      sql: `CREATE TABLE IF NOT EXISTS notes (
+        id VARCHAR(255) PRIMARY KEY,
+        user_id VARCHAR(255) NOT NULL,
+        title VARCHAR(500),
+        content TEXT NOT NULL,
+        visibility VARCHAR(20) DEFAULT 'private',
+        shared_with_divisions TEXT,
+        shared_with_users TEXT,
+        source VARCHAR(20) DEFAULT 'web',
+        related_event_id VARCHAR(255),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_notes_user (user_id),
+        INDEX idx_notes_vis (visibility)
+      )`
+    },
+    {
+      desc: "Create kpi_daily_inputs table",
+      sql: `CREATE TABLE IF NOT EXISTS kpi_daily_inputs (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        kpi_id VARCHAR(255) NOT NULL,
+        user_id VARCHAR(255) NOT NULL,
+        date DATE NOT NULL,
+        value DECIMAL(15,2) NOT NULL,
+        notes TEXT,
+        proof_link TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_kdi_kpi (kpi_id),
+        INDEX idx_kdi_user (user_id),
+        UNIQUE KEY uk_kpi_user_date (kpi_id, user_id, date)
+      )`
+    },
+    {
+      desc: "Create ext_sync_log table",
+      sql: `CREATE TABLE IF NOT EXISTS ext_sync_log (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id VARCHAR(100),
+        tasks_synced INT,
+        direction VARCHAR(50),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`
     }
   ];
 
@@ -263,12 +307,34 @@ export async function POST() {
     { desc: "goals.owner_name", sql: "ALTER TABLE goals ADD COLUMN owner_name TEXT" },
 
     // ── Daily Priorities table ──
+    { desc: "daily_priorities.id_to_varchar", sql: "ALTER TABLE daily_priorities MODIFY COLUMN id VARCHAR(100)" },
     { desc: "daily_priorities.goal_id", sql: "ALTER TABLE daily_priorities ADD COLUMN goal_id TEXT" },
     { desc: "daily_priorities.is_verified", sql: "ALTER TABLE daily_priorities ADD COLUMN is_verified INTEGER DEFAULT 0" },
     { desc: "daily_priorities.target_date", sql: "ALTER TABLE daily_priorities ADD COLUMN target_date TEXT" },
     { desc: "daily_priorities.description", sql: "ALTER TABLE daily_priorities ADD COLUMN description TEXT" },
     { desc: "daily_priorities.time_tracked", sql: "ALTER TABLE daily_priorities ADD COLUMN time_tracked INTEGER DEFAULT 0" },
     { desc: "daily_priorities.timer_started_at", sql: "ALTER TABLE daily_priorities ADD COLUMN timer_started_at TEXT" },
+    { desc: "daily_priorities.proof_link", sql: "ALTER TABLE daily_priorities ADD COLUMN proof_link TEXT" },
+    { desc: "daily_priorities.proof_notes", sql: "ALTER TABLE daily_priorities ADD COLUMN proof_notes TEXT" },
+    { desc: "daily_priorities.metric_value", sql: "ALTER TABLE daily_priorities ADD COLUMN metric_value DECIMAL(15,2)" },
+    { desc: "daily_priorities.progress", sql: "ALTER TABLE daily_priorities ADD COLUMN progress INTEGER DEFAULT 0" },
+    { desc: "daily_priorities.is_project", sql: "ALTER TABLE daily_priorities ADD COLUMN is_project BOOLEAN DEFAULT 0" },
+    { desc: "daily_priorities.project_duration_days", sql: "ALTER TABLE daily_priorities ADD COLUMN project_duration_days INTEGER" },
+    { desc: "daily_priorities.project_description", sql: "ALTER TABLE daily_priorities ADD COLUMN project_description TEXT" },
+    { desc: "daily_priorities.source", sql: "ALTER TABLE daily_priorities ADD COLUMN source VARCHAR(50) DEFAULT 'website'" },
+    { desc: "daily_priorities.kpi_id", sql: "ALTER TABLE daily_priorities ADD COLUMN kpi_id VARCHAR(100)" },
+    { desc: "daily_priorities.department", sql: "ALTER TABLE daily_priorities ADD COLUMN department VARCHAR(100)" },
+    { desc: "daily_priorities.submitted_at", sql: "ALTER TABLE daily_priorities ADD COLUMN submitted_at DATETIME" },
+
+    // ── Notes table ──
+    { desc: "notes.id_to_varchar", sql: "ALTER TABLE notes MODIFY COLUMN id VARCHAR(255)" },
+    { desc: "notes.related_event_id", sql: "ALTER TABLE notes ADD COLUMN related_event_id VARCHAR(255)" },
+    { desc: "notes.source", sql: "ALTER TABLE notes ADD COLUMN source VARCHAR(50) DEFAULT 'web'" },
+
+    // ── XP Transactions table ──
+    { desc: "xp_transactions.id_to_varchar", sql: "ALTER TABLE xp_transactions MODIFY COLUMN id VARCHAR(255)" },
+    { desc: "xp_transactions.action_type", sql: "ALTER TABLE xp_transactions ADD COLUMN action_type VARCHAR(100)" },
+    { desc: "xp_transactions.description", sql: "ALTER TABLE xp_transactions ADD COLUMN description TEXT" },
 
     // ── Rewards table ──
     { desc: "rewards.stock", sql: "ALTER TABLE rewards ADD COLUMN stock INTEGER DEFAULT 999" },
@@ -277,10 +343,10 @@ export async function POST() {
   for (const c of columns) {
     try {
       await db.execute(c.sql);
-      results.push(`✅ Added ${c.desc}`);
+      results.push(`✅ Added/Modified ${c.desc}`);
     } catch (e: any) {
-      if (e.message?.includes("duplicate column") || e.message?.includes("already exists")) {
-        results.push(`⏭️ ${c.desc} (already exists)`);
+      if (e.message?.includes("duplicate column") || e.message?.includes("already exists") || e.message?.includes("Duplicate column") || e.message?.includes("Multiple primary key defined")) {
+        results.push(`⏭️ ${c.desc} (already exists/applied)`);
       } else {
         results.push(`❌ ${c.desc}: ${e.message}`);
       }

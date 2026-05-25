@@ -8,6 +8,9 @@ async function seed() {
   try {
     const passwordHash = await bcrypt.hash("password123", 10);
 
+    // Disable foreign key checks
+    await db.execute("SET FOREIGN_KEY_CHECKS = 0");
+
     // 0. Clear existing data
     console.log("- Menghapus data lama...");
     const tables = [
@@ -66,7 +69,7 @@ async function seed() {
     for (const u of users) {
       const passHash = await bcrypt.hash(u.pass, 10);
       await db.execute({
-        sql: `REPLACE INTO users (id, email, name, role, password_hash, job_title, team_id, manager_id, points, level, rank) 
+        sql: `REPLACE INTO users (id, email, name, role, password_hash, job_title, team_id, manager_id, points, level, \`rank\`) 
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         args: [u.id, u.email, u.name, u.role, passHash, u.title, u.teamId, u.managerId, u.points, Math.floor(u.points/100)+1, 'D'],
       });
@@ -177,9 +180,13 @@ async function seed() {
     }
     console.log("  📚 Modul pembelajaran berhasil ditambahkan.");
 
+    await db.execute("SET FOREIGN_KEY_CHECKS = 1");
     console.log("\n✅ DATABASE SEEDING BERHASIL SELESAI!");
     process.exit(0);
   } catch (error) {
+    try {
+      await db.execute("SET FOREIGN_KEY_CHECKS = 1");
+    } catch (_) {}
     console.error("❌ Seeding failed:", error);
     process.exit(1);
   }

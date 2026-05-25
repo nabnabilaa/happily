@@ -1,11 +1,33 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/turso";
 
+function getCorsHeaders(request: Request) {
+  const origin = request.headers.get("origin") || "*";
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Credentials": "true",
+  };
+}
+
+export async function OPTIONS(request: Request) {
+  return new NextResponse(null, {
+    status: 204,
+    headers: getCorsHeaders(request),
+  });
+}
+
 // POST: Record a completed focus session from extension
 export async function POST(request: Request) {
   try {
     const { userId, durationMinutes, label } = await request.json();
-    if (!userId) return NextResponse.json({ error: "userId required" }, { status: 400 });
+    if (!userId) {
+      return NextResponse.json(
+        { error: "userId required" },
+        { status: 400, headers: getCorsHeaders(request) }
+      );
+    }
 
     const mins = Number(durationMinutes) || 25;
 
@@ -21,9 +43,12 @@ export async function POST(request: Request) {
       args: [userId]
     });
 
-    return NextResponse.json({ success: true, xpAwarded: 20 });
+    return NextResponse.json({ success: true, xpAwarded: 20 }, { headers: getCorsHeaders(request) });
   } catch (error: any) {
     console.error("Timer Complete Error:", error);
-    return NextResponse.json({ error: "Failed", details: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed", details: error.message },
+      { status: 500, headers: getCorsHeaders(request) }
+    );
   }
 }

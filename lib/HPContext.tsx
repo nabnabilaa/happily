@@ -508,6 +508,72 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, []);
 
+  // Listen to messages from extension companion
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.source !== window) return;
+      
+      if (event.data?.type === "FLOWBEE_REQ_USER") {
+        if (user) {
+          window.postMessage({
+            type: "FLOWBEE_WEBSITE_USER",
+            userId: user.id,
+            user: {
+              id: user.id,
+              name: user.name,
+              role: user.userRole || user.role,
+              points: user.points,
+              coins: user.coins,
+              level: user.level,
+              rank: user.rank,
+              streak: user.streak,
+              avatarImage: user.avatarImage,
+            }
+          }, "*");
+        } else {
+          window.postMessage({
+            type: "FLOWBEE_WEBSITE_USER",
+            userId: null,
+            user: null
+          }, "*");
+        }
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [user]);
+
+  // Broadcast user info on changes
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (user) {
+      window.postMessage({
+        type: "FLOWBEE_WEBSITE_USER",
+        userId: user.id,
+        user: {
+          id: user.id,
+          name: user.name,
+          role: user.userRole || user.role,
+          points: user.points,
+          coins: user.coins,
+          level: user.level,
+          rank: user.rank,
+          streak: user.streak,
+          avatarImage: user.avatarImage,
+        }
+      }, "*");
+    } else {
+      window.postMessage({
+        type: "FLOWBEE_WEBSITE_USER",
+        userId: null,
+        user: null
+      }, "*");
+    }
+  }, [user]);
+
   return (
     <HPContext.Provider value={{ 
       state, user, updateState, updateUser, setUserRole, login, logout, awardXP,
