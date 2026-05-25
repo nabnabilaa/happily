@@ -423,23 +423,6 @@ export default function HomeScreen({ openModal }: any) {
           boxShadow: '0 8px 24px rgba(0,0,0,0.02)',
           position: 'relative',
         }}>
-          <div style={{ position: 'absolute', top: 18, right: 18 }}>
-             <button 
-               onClick={(e) => {
-                 e.stopPropagation();
-                 openModal('system_guide');
-               }}
-               style={{
-                 width: 34, height: 34, borderRadius: 10, border: `1px solid ${HP_TOKENS.line}`,
-                 background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                 cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
-               }}
-               className="hp-tap"
-             >
-               <HPGlyph name="book" size={16} color={HP_TOKENS.blue} />
-             </button>
-          </div>
-
           <div 
             onClick={() => openModal('profile_editor')}
             className="hp-tap"
@@ -470,6 +453,20 @@ export default function HomeScreen({ openModal }: any) {
               </div>
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openModal('system_guide');
+                }}
+                style={{
+                  width: 36, height: 36, borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
+                  background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                }}
+                className="hp-tap"
+              >
+                <HPGlyph name="book" size={16} color={HP_TOKENS.blue} />
+              </button>
               <div className="hp-tap" style={{
                 display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 12,
                 background: HP_TOKENS.yellowSoft, fontFamily: HP_FONT, fontWeight: 900, fontSize: 14, color: HP_TOKENS.ink,
