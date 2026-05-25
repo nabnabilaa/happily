@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useHP } from "@/lib/HPContext";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
 import HPCard from "@/components/ui/HPCard";
@@ -54,6 +54,24 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
 
+  const fetchPresence = useCallback(async () => {
+    if (typeof window !== "undefined" && !navigator.onLine) return;
+    try {
+      const params = new URLSearchParams();
+      if (user?.role === 'manager') params.set('managerId', user.id);
+      const res = await fetch(`/api/status?${params.toString()}`);
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      const data = await res.json();
+      setUsers(data.users || []);
+      setSummary(data.summary || null);
+    } catch (e) {
+      console.error("Failed to fetch presence:", e);
+    }
+    setLoading(false);
+  }, [user]);
+
   useEffect(() => {
     fetchPresence();
 
@@ -70,21 +88,7 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
       window.removeEventListener('hp_db_update', handleRealtimeUpdate);
       clearInterval(interval);
     };
-  }, []);
-
-  const fetchPresence = async () => {
-    try {
-      const params = new URLSearchParams();
-      if (user?.role === 'manager') params.set('managerId', user.id);
-      const res = await fetch(`/api/status?${params.toString()}`);
-      const data = await res.json();
-      setUsers(data.users || []);
-      setSummary(data.summary || null);
-    } catch (e) {
-      console.error("Failed to fetch presence:", e);
-    }
-    setLoading(false);
-  };
+  }, [fetchPresence]);
 
   const filteredUsers = users.filter(u => {
     if (filter === 'all') return true;
