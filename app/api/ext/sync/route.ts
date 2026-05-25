@@ -163,6 +163,171 @@ export async function POST(request: Request) {
       args: [userId]
     });
 
+    const userRole = (userRow ? (userRow.user_role_context || userRow.role) : 'employee').toLowerCase();
+    
+    let members: any[] = [];
+    let teamTasks: any[] = [];
+    let hrMetrics: any = null;
+    let atRiskEmployees: any[] = [];
+    let deptPulse: any[] = [];
+
+    if (userRole === 'manager') {
+      const membersRes = await db.execute({
+        sql: `SELECT u.*, 
+              (SELECT mood_key FROM mood_checkins WHERE user_id = u.id ORDER BY created_at DESC LIMIT 1) as mood,
+              (SELECT COUNT(*) FROM daily_priorities WHERE user_id = u.id AND is_done = 1 AND DATE(created_at) = CURDATE()) as tasks_done,
+              (SELECT COUNT(*) FROM daily_priorities WHERE user_id = u.id AND DATE(created_at) = CURDATE()) as tasks_total
+              FROM users u WHERE u.manager_id = ?`,
+        args: [userId]
+      });
+
+      members = membersRes.rows.map(m => ({
+        id: m.id,
+        name: m.name,
+        role: m.job_title || 'Team Member',
+        mood: m.mood || 'neutral',
+        wellbeing: m.mood === 'joy' ? 90 : m.mood === 'stress' ? 30 : m.mood === 'tired' ? 50 : 70,
+        tasks: { done: Number(m.tasks_done), total: Number(m.tasks_total) }
+      }));
+
+      const memberIdsOnly = members.map(m => String(m.id));
+      if (memberIdsOnly.length > 0) {
+        const placeholders = memberIdsOnly.map(() => '?').join(',');
+        const tasksRes = await db.execute({
+          sql: `SELECT dp.*, u.name as user_name FROM daily_priorities dp 
+                JOIN users u ON dp.user_id = u.id
+                WHERE dp.user_id IN (${placeholders}) AND (dp.is_done = 0 OR DATE(dp.created_at) = CURDATE())`,
+          args: memberIdsOnly
+        });
+        teamTasks = tasksRes.rows.map(r => ({
+          id: r.id,
+          userId: r.user_id,
+          userName: r.user_name,
+          title: r.title,
+          goalId: r.goal_id,
+          done: !!r.is_done,
+          verified: !!r.is_verified,
+          energy: r.energy_level,
+          est: r.est_time,
+          tone: r.tone,
+          createdAt: r.created_at
+        }));
+      }
+    } else if (userRole === 'hr') {
+      const MOOD_VALUES: Record<string, number> = { joy: 100, calm: 85, neutral: 65, tired: 40, stress: 20 };
+      
+      const usersRes = await db.execute("SELECT u.*, u.department as team_name FROM users u");
+      const users = usersRes.rows;
+      const totalEmployees = users.length;
+
+      const taskStatsRes = await db.execute(
+        `SELECT 
+          COUNT(*) as total,
+          SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as done
+         FROM daily_priorities 
+         WHERE MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())`
+      );
+      const totalTasks = Number(taskStatsRes.rows[0]?.total) || 1;
+      const doneTasks = Number(taskStatsRes.rows[0]?.done) || 0;
+      const engagementScore = Math.min(100, Math.round((doneTasks / totalTasks) * 100));
+
+      const moodsRes = await db.execute("SELECT mood_key FROM mood_checkins WHERE created_at > DATE_SUB(CURDATE(), INTERVAL 7 DAY)");
+      const wellbeingAvg = moodsRes.rows.length > 0 
+        ? Math.round(moodsRes.rows.reduce((acc, m) => acc + (MOOD_VALUES[String(m.mood_key)] || 50), 0) / moodsRes.rows.length)
+        : 0;
+
+      const lastMonthTasksRes = await db.execute(
+        `SELECT COUNT(*) as total, SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as done
+         FROM daily_priorities 
+         WHERE MONTH(created_at) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) 
+         AND YEAR(created_at) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))`
+      );
+      const lastTotal = Number(lastMonthTasksRes.rows[0]?.total) || 1;
+      const lastDone = Number(lastMonthTasksRes.rows[0]?.done) || 0;
+      const lastEngagement = Math.round((lastDone / lastTotal) * 100);
+      const engagementTrend = engagementScore - lastEngagement;
+
+      const lastMoodsRes = await db.execute(
+        "SELECT mood_key FROM mood_checkins WHERE created_at BETWEEN DATE_SUB(CURDATE(), INTERVAL 14 DAY) AND DATE_SUB(CURDATE(), INTERVAL 7 DAY)"
+      );
+      const lastWellbeing = lastMoodsRes.rows.length > 0
+        ? Math.round(lastMoodsRes.rows.reduce((acc, m) => acc + (MOOD_VALUES[String(m.mood_key)] || 50), 0) / lastMoodsRes.rows.length)
+        : 0;
+      const wellbeingTrend = wellbeingAvg - lastWellbeing;
+
+      for (const u of users) {
+        const latestMoodRes = await db.execute({
+          sql: "SELECT mood_key FROM mood_checkins WHERE user_id = ? ORDER BY created_at DESC LIMIT 1",
+          args: [String(u.id)]
+        });
+        const mood = String(latestMoodRes.rows[0]?.mood_key || 'neutral');
+
+        const userTasksRes = await db.execute({
+          sql: `SELECT COUNT(*) as total, SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as done
+                FROM daily_priorities WHERE user_id = ? AND created_at > DATE_SUB(CURDATE(), INTERVAL 7 DAY)`,
+          args: [String(u.id)]
+        });
+        const uTotal = Number(userTasksRes.rows[0]?.total) || 0;
+        const uDone = Number(userTasksRes.rows[0]?.done) || 0;
+        const completionRate = uTotal > 0 ? Math.round((uDone / uTotal) * 100) : 0;
+
+        if (mood === 'stress' || mood === 'tired' || (uTotal > 0 && completionRate < 30)) {
+          atRiskEmployees.push({
+            id: u.id, name: u.name, role: u.job_title,
+            dept: u.team_name || 'Unassigned',
+            wellbeing: MOOD_VALUES[mood] || 50, mood,
+            completionRate,
+            risk: mood === 'stress' ? 'high' : 'medium'
+          });
+        }
+      }
+
+      const teamsRes = await db.execute("SELECT * FROM departments");
+      deptPulse = await Promise.all(teamsRes.rows.map(async (t) => {
+        const teamUserIds = await db.execute({ sql: "SELECT id FROM users WHERE department_id = ?", args: [String(t.id)] });
+        const headcount = teamUserIds.rows.length;
+        if (headcount === 0) return { dept: t.name, wellbeing: 0, engagement: 0, headcount: 0, atRisk: 0, tone: 'sage' };
+
+        const ids = teamUserIds.rows.map(r => String(r.id));
+        const placeholders = ids.map(() => '?').join(',');
+
+        const deptTasksRes = await db.execute({
+          sql: `SELECT COUNT(*) as total, SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as done
+                FROM daily_priorities WHERE user_id IN (${placeholders}) AND MONTH(created_at) = MONTH(CURDATE())`,
+          args: ids
+        });
+        const dTotal = Number(deptTasksRes.rows[0]?.total) || 1;
+        const dDone = Number(deptTasksRes.rows[0]?.done) || 0;
+        const deptEngagement = Math.round((dDone / dTotal) * 100);
+
+        const deptMoodsRes = await db.execute({
+          sql: `SELECT mood_key FROM mood_checkins WHERE user_id IN (${placeholders}) AND created_at > DATE_SUB(CURDATE(), INTERVAL 7 DAY)`,
+          args: ids
+        });
+        const deptWellbeing = deptMoodsRes.rows.length > 0
+          ? Math.round(deptMoodsRes.rows.reduce((acc, m) => acc + (MOOD_VALUES[String(m.mood_key)] || 50), 0) / deptMoodsRes.rows.length)
+          : 0;
+
+        const deptAtRisk = atRiskEmployees.filter(e => ids.includes(String(e.id))).length;
+
+        return {
+          dept: t.name, wellbeing: deptWellbeing, engagement: deptEngagement,
+          headcount, atRisk: deptAtRisk,
+          tone: deptWellbeing > 70 ? 'sage' : deptWellbeing > 40 ? 'yellow' : 'coral'
+        };
+      }));
+
+      hrMetrics = {
+        totalEmployees,
+        engagementScore,
+        engagementTrend: (engagementTrend >= 0 ? '+' : '') + engagementTrend,
+        wellbeingAvg,
+        wellbeingTrend: (wellbeingTrend >= 0 ? '+' : '') + wellbeingTrend,
+        atRisk: atRiskEmployees.length,
+      };
+    }
+
+
     return NextResponse.json({ 
       success: true, 
       tasksSynced, notesSynced,
@@ -201,6 +366,11 @@ export async function POST(request: Request) {
       notifications: notifsRes.rows.map(r => ({
         id: r.id, title: r.title, message: r.message, type: r.type,
       })),
+      members: userRole === 'manager' ? members : undefined,
+      teamTasks: userRole === 'manager' ? teamTasks : undefined,
+      metrics: (userRole === 'hr') ? hrMetrics : undefined,
+      atRiskEmployees: (userRole === 'hr') ? atRiskEmployees.slice(0, 5) : undefined,
+      deptPulse: (userRole === 'hr') ? deptPulse : undefined,
     }, {
       headers: getCorsHeaders(request)
     });

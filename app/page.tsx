@@ -90,7 +90,6 @@ const ROLE_META: Record<UserRole, { label: string; color: string; bg: string; gl
   employee: { label: 'Employee', color: HP_TOKENS.yellow, bg: HP_TOKENS.yellowSoft, glyph: 'target' },
   manager:  { label: 'Manager',  color: HP_TOKENS.blue, bg: HP_TOKENS.blueSoft,  glyph: 'people' },
   hr:       { label: 'HR',       color: '#7B6BB5',       bg: '#EDE8F5',           glyph: 'medal' },
-  admin:    { label: 'HR',       color: '#7B6BB5',       bg: '#EDE8F5',           glyph: 'medal' },
 };
 
 function AppContent() {
@@ -192,9 +191,8 @@ function AppContent() {
     );
   }
 
-  // ── Determine Role (legacy 'admin' maps to 'hr') ─────────────────────────
-  const rawRole = (user?.role || 'employee') as string;
-  const currentRole: UserRole = rawRole === 'admin' ? 'hr' : rawRole as UserRole;
+  // ── Determine Role ────────────────────────────────────────────────────────
+  const currentRole = (user?.role || 'employee') as UserRole;
   const isManager = currentRole === 'manager';
   const isHR = currentRole === 'hr';
 

@@ -65,12 +65,12 @@ async function seedAiven() {
     }
 
     // 2. Users (50+ users)
-    console.log("- Membuat 50+ User (Admin, HR, Manager, Employees)...");
+    console.log("- Membuat 50+ User (HR, Manager, Employees)...");
     
     const users: any[] = [];
     
     // Core users
-    users.push({ id: "user_admin", name: "Super Admin", email: "admin@gmail.com", role: "admin", teamId: "team_eng", title: "System Administrator", points: 15000, pass: adminHash, managerId: null });
+    users.push({ id: "user_admin", name: "Super HR", email: "admin@gmail.com", role: "hr", teamId: "team_eng", title: "System Administrator", points: 15000, pass: adminHash, managerId: null });
     users.push({ id: "user_hr", name: "Maya Sari (HR)", email: "hr@gmail.com", role: "hr", teamId: "team_hr", title: "HR Business Partner", points: 8200, pass: hrHash, managerId: null });
     users.push({ id: "user_manager", name: "Budi Santoso (Manager)", email: "manager@gmail.com", role: "manager", teamId: "team_dx", title: "Product Manager", points: 12150, pass: passwordHash, managerId: null });
     users.push({ id: "user_employee", name: "Sari Wijaya (Emp)", email: "employee@gmail.com", role: "employee", teamId: "team_dx", title: "Product Designer", points: 6340, pass: passwordHash, managerId: "user_manager" });
@@ -151,7 +151,7 @@ async function seedAiven() {
     // 4. Attendance
     console.log("- Generate Data Absensi (Attendance) 30 hari terakhir...");
     for (const u of users) {
-      if (u.role === 'admin') continue;
+      if (u.role === 'hr') continue;
       for (let i = 0; i < 30; i++) {
         const date = new Date(Date.now() - i * 86400000);
         // Skip weekends roughly

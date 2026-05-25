@@ -26,7 +26,7 @@ export default function EditUserModal({ onClose, user, managers, onSave, onDelet
   const [departments, setDepartments] = useState<any[]>([]);
 
   useEffect(() => {
-    fetch("/api/admin/departments").then(r => r.json()).then(data => {
+    fetch("/api/hr/departments").then(r => r.json()).then(data => {
       if (data.departments) setDepartments(data.departments);
     });
   }, []);

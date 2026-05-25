@@ -18,6 +18,9 @@
         "<all_urls>"
       ],
       "js": [
+        "modules/rbac.js",
+        "modules/pane-team.js",
+        "modules/pane-people.js",
         "content.js"
       ],
       "run_at": "document_idle",

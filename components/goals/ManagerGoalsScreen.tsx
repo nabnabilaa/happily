@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useHP } from "@/lib/HPContext";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
 import HPGlyph from "@/components/ui/HPGlyph";
@@ -21,6 +21,64 @@ const TONE_SOFT: Record<string, string> = { sage: HP_TOKENS.sageSoft, blue: HP_T
 export default function ManagerGoalsScreen({ openModal }: Props) {
   const { state, user, updateState, notify } = useHP();
   const [activeTab, setActiveTab] = useState<'kpi' | 'members' | 'attendance' | 'personal'>('kpi');
+  const [apiKpis, setApiKpis] = useState<any[]>([]);
+  const [loadingKpis, setLoadingKpis] = useState(true);
+
+  useEffect(() => {
+    async function fetchKPIs() {
+      if (!user?.id) return;
+      try {
+        setLoadingKpis(true);
+        const m = new Date().getMonth() + 1;
+        const y = new Date().getFullYear();
+
+        const managerRes = await fetch(`/api/kpi?userId=${user.id}&role=employee&month=${m}&year=${y}`);
+        const managerData = await managerRes.json();
+        const managerKpis = (managerData.kpis || []).map((k: any) => ({
+          id: String(k.id),
+          title: k.title,
+          progress: k.finalScore !== null && k.finalScore !== undefined ? Number(k.finalScore) : 0,
+          alignment: k.weight || 0,
+          due: `${m}/${y}`,
+          tone: 'lavender',
+          metric: k.targetDescription || 'KPI Bulanan (Manager)',
+          scope: 'assigned',
+          owner: k.assigneeName || user.name || 'You',
+          ownerId: String(k.assignedTo),
+          status: k.status === 'active' ? 'approved' : k.status,
+          is_kpi: true,
+          isApiKpi: true,
+          subGoals: []
+        }));
+
+        const personalRes = await fetch(`/api/kpi/personal?userId=${user.id}&month=${m}&year=${y}`);
+        const personalData = await personalRes.json();
+        const personalKpis = (personalData.kpis || []).map((k: any) => ({
+          id: String(k.id),
+          title: k.title,
+          progress: k.progress || 0,
+          alignment: 0,
+          due: `${m}/${y}`,
+          tone: 'sage',
+          metric: k.targetDescription || `${k.currentValue || 0}/${k.targetValue || 0} ${k.metricUnit || ''}`,
+          scope: 'personal',
+          owner: user.name || 'You',
+          ownerId: String(user.id),
+          status: k.status || 'active',
+          is_kpi: true,
+          isApiKpi: true,
+          subGoals: []
+        }));
+
+        setApiKpis([...managerKpis, ...personalKpis]);
+      } catch (e) {
+        console.error("Failed to load KPIs in ManagerGoalsScreen:", e);
+      } finally {
+        setLoadingKpis(false);
+      }
+    }
+    fetchKPIs();
+  }, [user?.id]);
 
   if (!state || !user) return null;
 
@@ -31,6 +89,19 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
   );
   const teamTasks = state.managerData?.teamTasks || [];
   const personalTasks = state.priorities || [];
+
+  const myAssignedGoals = state.goals.filter((g: any) => g.scope === 'assigned' && String(g.ownerId) === String(user.id));
+  const myPersonalGoals = state.goals.filter((g: any) => g.scope === 'personal' && String(g.ownerId) === String(user.id));
+
+  const combinedMyGoals = useMemo(() => {
+    const combined = [...myAssignedGoals, ...myPersonalGoals];
+    apiKpis.forEach((k: any) => {
+      if (!combined.some((g: any) => String(g.id) === String(k.id) || g.title.toLowerCase() === k.title.toLowerCase())) {
+        combined.push(k);
+      }
+    });
+    return combined;
+  }, [apiKpis, myAssignedGoals, myPersonalGoals]);
 
   // Only show top-level goals — hide children whose parent is already in the list
   const topLevelGoals = assignedGoals.filter((g: any) => {
@@ -513,7 +584,7 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
         </>
       )}
 
-      {/* ── Personal Tasks ── */}
+      {/* ── Personal Tasks & KPIs ── */}
       {activeTab === 'personal' && (
         <>
           <SectionHeader 
@@ -550,7 +621,47 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
                 </div>
               </HPCard>
             ))}
-            {personalTasks.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: HP_TOKENS.inkMute }}>Belum ada task harian. Mulai harimu dengan fokus!</div>}
+            {personalTasks.length === 0 && <div style={{ textAlign: 'center', padding: 20, color: HP_TOKENS.inkMute, background: HP_TOKENS.card, borderRadius: 20, border: `1.5px dashed ${HP_TOKENS.lineSoft}` }}>Belum ada task harian. Mulai harimu dengan fokus!</div>}
+          </div>
+
+          <div style={{ marginTop: 24 }}>
+            <SectionHeader 
+              icon="target" 
+              label="KPI Saya"
+              count={String(combinedMyGoals.length)} 
+              action="+ KPI Mandiri"
+              onAction={() => openModal('new_goal', { scope: 'personal' })}
+            />
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
+              {combinedMyGoals.map((g: any) => (
+                <div 
+                  key={g.id} 
+                  onClick={() => {
+                    if (g.isApiKpi) return;
+                    openModal('new_goal', { goal: g });
+                  }} 
+                  className={g.isApiKpi ? "" : "hp-tap"}
+                >
+                  <GoalCard g={g} isReadOnly={g.isApiKpi} />
+                </div>
+              ))}
+              {combinedMyGoals.length === 0 && !loadingKpis && (
+                <div style={{ 
+                  textAlign: 'center', padding: '40px 20px', color: HP_TOKENS.inkMute, 
+                  background: HP_TOKENS.card, borderRadius: 24, border: `1.5px solid ${HP_TOKENS.lineSoft}`
+                }}>
+                  <div style={{ fontSize: 32, marginBottom: 12 }}>🌱</div>
+                  <div style={{ ...HP_TEXT.h, fontSize: 14 }}>Belum ada KPI personal.</div>
+                  <div style={{ ...HP_TEXT.small, marginTop: 4 }}>Tambahkan KPI Mandiri baru untuk melacak target kerjamu.</div>
+                </div>
+              )}
+              {loadingKpis && combinedMyGoals.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '40px 20px', color: HP_TOKENS.inkMute }}>
+                  Memuat KPI...
+                </div>
+              )}
+            </div>
           </div>
         </>
       )}

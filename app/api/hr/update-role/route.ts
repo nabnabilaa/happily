@@ -9,7 +9,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
     }
 
-    // Verify if requester is admin or hr
+    // Verify if requester is hr
     const requesterCheck = await db.execute({
       sql: "SELECT role FROM users WHERE id = ?",
       args: [requesterId]
@@ -62,4 +62,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Gagal update data user" }, { status: 500 });
   }
 }
-

@@ -45,10 +45,12 @@ export const db = {
       const [rows] = await pool.execute(sqlString, sqlArgs);
       
       // AUTO-EVENT TRIGGER
-      const isMutation = /^(INSERT|UPDATE|DELETE|REPLACE)\b/i.test(sqlString.trim());
-      if (isMutation) {
-         import('@/lib/events').then(m => m.hpEventEmitter.emit('db_update', { type: 'refresh', timestamp: Date.now() })).catch(e => console.error("Event emit failed", e));
-      }
+      // REMOVED: Auto-emitting on every query causes infinite broadcast loops.
+      // Use manual hpEventEmitter.emit in specific route handlers instead.
+      // const isMutation = /^(INSERT|UPDATE|DELETE|REPLACE)\b/i.test(sqlString.trim());
+      // if (isMutation) {
+      //    import('@/lib/events').then(m => m.hpEventEmitter.emit('db_update', { type: 'refresh', timestamp: Date.now() })).catch(e => console.error("Event emit failed", e));
+      // }
 
       return {
         rows: Array.isArray(rows) ? rows : []

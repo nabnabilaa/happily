@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
 import HPGlyph from "@/components/ui/HPGlyph";
 import HPCard from "@/components/ui/HPCard";
@@ -10,7 +10,8 @@ import SectionHeader from "@/components/home/SectionHeader";
 import { useHP } from "@/lib/HPContext";
 import HRAttendanceView from "@/components/goals/HRAttendanceView";
 import DivisionTargetsView from "@/components/goals/DivisionTargetsView";
-import OfficeSettingsMap from "@/components/admin/OfficeSettingsMap";
+import OfficeSettingsMap from "@/components/hr/OfficeSettingsMap";
+import GoalCard from "@/components/goals/GoalCard";
 
 interface Props { openModal: (name: string, props?: any) => void; }
 
@@ -23,7 +24,80 @@ const DEPT_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444', '#06
 export default function HRPeopleScreen({ openModal }: Props) {
   const { state, user: currentUser, updateState, refreshSurveys } = useHP();
   const isHR = currentUser?.role === 'hr';
-  const [activeTab, setActiveTab] = useState<'users' | 'attendance' | 'targets' | 'office' | 'schedule' | 'contacts' | 'surveys'>(isHR ? 'users' : 'attendance');
+  const [activeTab, setActiveTab] = useState<'users' | 'attendance' | 'targets' | 'office' | 'schedule' | 'contacts' | 'surveys' | 'personal'>(isHR ? 'users' : 'attendance');
+  const [apiKpis, setApiKpis] = useState<any[]>([]);
+  const [loadingKpis, setLoadingKpis] = useState(true);
+
+  useEffect(() => {
+    async function fetchKPIs() {
+      if (!currentUser?.id) return;
+      try {
+        setLoadingKpis(true);
+        const m = new Date().getMonth() + 1;
+        const y = new Date().getFullYear();
+
+        const managerRes = await fetch(`/api/kpi?userId=${currentUser.id}&role=employee&month=${m}&year=${y}`);
+        const managerData = await managerRes.json();
+        const managerKpis = (managerData.kpis || []).map((k: any) => ({
+          id: String(k.id),
+          title: k.title,
+          progress: k.finalScore !== null && k.finalScore !== undefined ? Number(k.finalScore) : 0,
+          alignment: k.weight || 0,
+          due: `${m}/${y}`,
+          tone: 'lavender',
+          metric: k.targetDescription || 'KPI Bulanan (Manager)',
+          scope: 'assigned',
+          owner: k.assigneeName || currentUser.name || 'You',
+          ownerId: String(k.assignedTo),
+          status: k.status === 'active' ? 'approved' : k.status,
+          is_kpi: true,
+          isApiKpi: true,
+          subGoals: []
+        }));
+
+        const personalRes = await fetch(`/api/kpi/personal?userId=${currentUser.id}&month=${m}&year=${y}`);
+        const personalData = await personalRes.json();
+        const personalKpis = (personalData.kpis || []).map((k: any) => ({
+          id: String(k.id),
+          title: k.title,
+          progress: k.progress || 0,
+          alignment: 0,
+          due: `${m}/${y}`,
+          tone: 'sage',
+          metric: k.targetDescription || `${k.currentValue || 0}/${k.targetValue || 0} ${k.metricUnit || ''}`,
+          scope: 'personal',
+          owner: currentUser.name || 'You',
+          ownerId: String(currentUser.id),
+          status: k.status || 'active',
+          is_kpi: true,
+          isApiKpi: true,
+          subGoals: []
+        }));
+
+        setApiKpis([...managerKpis, ...personalKpis]);
+      } catch (e) {
+        console.error("Failed to load KPIs in HRPeopleScreen:", e);
+      } finally {
+        setLoadingKpis(false);
+      }
+    }
+    fetchKPIs();
+  }, [currentUser?.id]);
+
+  const personalTasks = state?.priorities || [];
+  const myAssignedGoals = state?.goals?.filter((g: any) => g.scope === 'assigned' && String(g.ownerId) === String(currentUser?.id)) || [];
+  const myPersonalGoals = state?.goals?.filter((g: any) => g.scope === 'personal' && String(g.ownerId) === String(currentUser?.id)) || [];
+
+  const combinedMyGoals = useMemo(() => {
+    const combined = [...myAssignedGoals, ...myPersonalGoals];
+    apiKpis.forEach((k: any) => {
+      if (!combined.some((g: any) => String(g.id) === String(k.id) || g.title.toLowerCase() === k.title.toLowerCase())) {
+        combined.push(k);
+      }
+    });
+    return combined;
+  }, [apiKpis, myAssignedGoals, myPersonalGoals]);
+
   const [search, setSearch] = useState('');
   const [dbUsers, setDbUsers] = useState<any[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -52,7 +126,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
   const fetchUsers = async () => {
     setLoadingUsers(true);
     try {
-      const res = await fetch(`/api/admin/users?adminId=${currentUser?.id}`);
+      const res = await fetch(`/api/hr/users?adminId=${currentUser?.id}`);
       const data = await res.json();
       if (data.users) setDbUsers(data.users);
     } catch (e) { console.error(e); }
@@ -61,7 +135,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
 
   const fetchDepartments = async () => {
     try {
-      const res = await fetch('/api/admin/departments');
+      const res = await fetch('/api/hr/departments');
       const data = await res.json();
       if (data.departments) setDepartments(data.departments);
     } catch (e) { console.error(e); }
@@ -69,7 +143,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
 
   const handleUpdateUser = async (targetUserId: string, updates: any) => {
     try {
-      const res = await fetch("/api/admin/update-role", {
+      const res = await fetch("/api/hr/update-role", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ requesterId: currentUser?.id, targetUserId, ...updates }),
       });
@@ -80,7 +154,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
   const handleDeleteUser = async (targetUserId: string) => {
     if (!confirm("Apakah Anda yakin ingin menghapus user ini?")) return;
     try {
-      const res = await fetch("/api/admin/delete-user", {
+      const res = await fetch("/api/hr/delete-user", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ requesterId: currentUser?.id, targetUserId }),
       });
@@ -89,7 +163,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
   };
 
   const handleCreateUser = async (formData: any) => {
-    const res = await fetch("/api/admin/create-user", {
+    const res = await fetch("/api/hr/create-user", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ requesterId: currentUser?.id, ...formData }),
     });
@@ -131,6 +205,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
       {/* Tab switcher */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 16, overflowX: 'auto', paddingBottom: 4 }}>
         {[
+          { key: 'personal', label: 'KPI Saya' },
           isHR && { key: 'users', label: 'People' },
           { key: 'attendance', label: 'Attendance' },
           { key: 'targets', label: 'Targets' },
@@ -337,6 +412,88 @@ export default function HRPeopleScreen({ openModal }: Props) {
               </div>
             </>
           )}
+        </>
+      )}
+
+      {/* ── Personal Tasks & KPIs ── */}
+      {activeTab === 'personal' && (
+        <>
+          <SectionHeader 
+            icon="sparkle" 
+            label="Daily Tasks Saya" 
+            count={String(personalTasks.length)} 
+            action="+ Tambah Task"
+            onAction={() => openModal('manage_priorities')}
+          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {personalTasks.map((t: any) => (
+              <HPCard key={t.id} padding={14}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <button 
+                    onClick={() => updateState((s: any) => ({
+                      ...s,
+                      priorities: s.priorities.map((p: any) => p.id === t.id ? { ...p, done: !p.done } : p)
+                    }))}
+                    style={{ 
+                      width: 24, height: 24, borderRadius: 8, border: `2px solid ${t.done ? HP_TOKENS.sage : HP_TOKENS.line}`,
+                      background: t.done ? HP_TOKENS.sage : 'none', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}
+                  >
+                    {t.done && <HPGlyph name="check" size={14} color="#fff" />}
+                  </button>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ ...HP_TEXT.h, fontSize: 14, textDecoration: t.done ? 'line-through' : 'none', color: t.done ? HP_TOKENS.inkMute : HP_TOKENS.ink }}>{t.title}</div>
+                    <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                      <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>{t.goal || 'General'}</div>
+                      <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue }}>{t.est || '15m'}</div>
+                    </div>
+                  </div>
+                </div>
+              </HPCard>
+            ))}
+            {personalTasks.length === 0 && <div style={{ textAlign: 'center', padding: 20, color: HP_TOKENS.inkMute, background: HP_TOKENS.card, borderRadius: 20, border: `1.5px dashed ${HP_TOKENS.lineSoft}` }}>Belum ada task harian. Mulai harimu dengan fokus!</div>}
+          </div>
+
+          <div style={{ marginTop: 24 }}>
+            <SectionHeader 
+              icon="target" 
+              label="KPI Saya"
+              count={String(combinedMyGoals.length)} 
+              action="+ KPI Mandiri"
+              onAction={() => openModal('new_goal', { scope: 'personal' })}
+            />
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
+              {combinedMyGoals.map((g: any) => (
+                <div 
+                  key={g.id} 
+                  onClick={() => {
+                    if (g.isApiKpi) return;
+                    openModal('new_goal', { goal: g });
+                  }} 
+                  className={g.isApiKpi ? "" : "hp-tap"}
+                >
+                  <GoalCard g={g} isReadOnly={g.isApiKpi} />
+                </div>
+              ))}
+              {combinedMyGoals.length === 0 && !loadingKpis && (
+                <div style={{ 
+                  textAlign: 'center', padding: '40px 20px', color: HP_TOKENS.inkMute, 
+                  background: HP_TOKENS.card, borderRadius: 24, border: `1.5px solid ${HP_TOKENS.lineSoft}`
+                }}>
+                  <div style={{ fontSize: 32, marginBottom: 12 }}>🌱</div>
+                  <div style={{ ...HP_TEXT.h, fontSize: 14 }}>Belum ada KPI personal.</div>
+                  <div style={{ ...HP_TEXT.small, marginTop: 4 }}>Tambahkan KPI Mandiri baru untuk melacak target kerjamu.</div>
+                </div>
+              )}
+              {loadingKpis && combinedMyGoals.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '40px 20px', color: HP_TOKENS.inkMute }}>
+                  Memuat KPI...
+                </div>
+              )}
+            </div>
+          </div>
         </>
       )}
 

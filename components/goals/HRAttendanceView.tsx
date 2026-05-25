@@ -5,7 +5,7 @@ import HPCard from "@/components/ui/HPCard";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
 import HPGlyph from "@/components/ui/HPGlyph";
 import HPAvatar from "@/components/ui/HPAvatar";
-import AttendanceDashboard from "@/components/admin/AttendanceDashboard";
+import AttendanceDashboard from "@/components/hr/AttendanceDashboard";
 
 const MONTHS = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 
@@ -49,7 +49,7 @@ export default function HRAttendanceView({ currentUser, openModal }: HRAttendanc
 
       // Fetch users if HR/Manager
       if (['hr', 'manager'].includes(currentUser?.role)) {
-        const uRes = await fetch(`/api/admin/users?adminId=${currentUser?.id}`);
+        const uRes = await fetch(`/api/hr/users?adminId=${currentUser?.id}`);
         const uData = await uRes.json();
         if (uData.users) {
           setUsers(uData.users);

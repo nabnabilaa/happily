@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useHP } from "@/lib/HPContext";
+import { useHP, calculateLevelProgress } from "@/lib/HPContext";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
 import HPGlyph from "@/components/ui/HPGlyph";
 import HPCard from "@/components/ui/HPCard";
@@ -9,6 +9,7 @@ import HPAvatar from "@/components/ui/HPAvatar";
 import SectionHeader from "@/components/home/SectionHeader";
 import BlobBackground from "@/components/home/BlobBackground";
 import SurveySection from "@/components/home/SurveySection";
+import TaskHarianWidget from "@/components/home/TaskHarianWidget";
 
 
 interface Props { openModal: (name: string, props?: any) => void; }
@@ -56,6 +57,7 @@ export default function HRHomeScreen({ openModal }: Props) {
   );
 
   const { metrics: m, atRiskEmployees, deptPulse } = state.hrData;
+  const levelProgress = calculateLevelProgress(user.points || 0);
 
   return (
     <div style={{ position: 'relative', minHeight: '100%', paddingBottom: 120, fontFamily: HP_FONT }}>
@@ -101,6 +103,23 @@ export default function HRHomeScreen({ openModal }: Props) {
               </div>
             </div>
 
+            {/* Level progress & Total points */}
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 20, marginTop: 16 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 4 }}>Level Progress</div>
+                <div style={{ width: '100%', height: 6, background: HP_TOKENS.lineSoft, borderRadius: 3, overflow: 'hidden' }}>
+                  <div style={{ 
+                    width: `${levelProgress * 100}%`, height: '100%', 
+                    background: HP_TOKENS.lavender, 
+                    transition: '1s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                  }} />
+                </div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 4 }}>Total Point</div>
+                <div style={{ ...HP_TEXT.h, fontSize: 24 }}>{user.points.toLocaleString()}</div>
+              </div>
+            </div>
 
           </div>
         </div>
@@ -120,12 +139,8 @@ export default function HRHomeScreen({ openModal }: Props) {
           Check-in Office
         </button>
 
-
-
-
-
-
-
+        {/* Task Harian Widget for HR (as an employee) */}
+        <TaskHarianWidget openModal={openModal} />
 
         {/* Survey Section — for HR too (they are employees) */}
         <SurveySection openModal={openModal} />

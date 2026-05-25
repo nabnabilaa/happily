@@ -50,7 +50,7 @@ interface HPState {
   coachSuggestions?: string[];
 }
 
-export type UserRole = 'hr' | 'manager' | 'employee' | 'admin';
+export type UserRole = 'hr' | 'manager' | 'employee';
 
 interface HPUser {
   id: string;
@@ -181,7 +181,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         delete syncState.managerData;
         delete syncState.surveys;
         delete syncState.feed;
-        const isHRUser = (data.user || user)?.role === 'hr' || (data.user || user)?.role === 'admin' || (data.user || user)?.userRole === 'hr';
+        const isHRUser = (data.user || user)?.role === 'hr' || (data.user || user)?.userRole === 'hr';
         if (!isHRUser) {
           delete syncState.rewards;
         }
@@ -232,14 +232,13 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
 
   const fetchDashboards = useCallback(async (userId: string, role: string) => {
     try {
-      const activeRole = role === 'admin' ? 'hr' : role;
-      if (activeRole === 'hr') {
+      if (role === 'hr') {
         const res = await fetch('/api/hr/dashboard');
         const data = await res.json();
         if (data && data.metrics) {
           setState(prev => prev ? { ...prev, hrData: data } : null);
         }
-      } else if (activeRole === 'manager') {
+      } else if (role === 'manager') {
         const res = await fetch(`/api/manager/dashboard?userId=${userId}`);
         const data = await res.json();
         setState(prev => prev ? { ...prev, managerData: data } : null);
@@ -335,8 +334,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
           if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
             fetchData(user.id);
             refreshSurveys();
-            const rawRole = user.userRole || user.role;
-            const activeRole = rawRole === 'admin' ? 'hr' : rawRole;
+            const activeRole = user.userRole || user.role;
             if (activeRole === 'hr' || activeRole === 'manager') {
               fetchDashboards(user.id, activeRole);
             }
@@ -390,8 +388,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (user) {
-      const rawRole = user.userRole || user.role;
-      const activeRole = rawRole === 'admin' ? 'hr' : rawRole;
+      const activeRole = user.userRole || user.role;
       if (activeRole === 'hr' || activeRole === 'manager') {
         fetchDashboards(user.id, activeRole);
       }
@@ -429,7 +426,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
       delete syncState.managerData;
       delete syncState.surveys;
       delete syncState.feed;
-      const isHRUser = user?.role === 'hr' || user?.role === 'admin' || user?.userRole === 'hr';
+      const isHRUser = user?.role === 'hr' || user?.userRole === 'hr';
       if (!isHRUser) {
         delete syncState.rewards;
       }
@@ -454,7 +451,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
           delete finalSyncState.managerData;
           delete finalSyncState.surveys;
           delete finalSyncState.feed;
-          const isHRUserFinal = data.user?.role === 'hr' || data.user?.role === 'admin' || data.user?.userRole === 'hr';
+          const isHRUserFinal = data.user?.role === 'hr' || data.user?.userRole === 'hr';
           if (!isHRUserFinal) {
             delete finalSyncState.rewards;
           }
@@ -495,7 +492,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
           delete syncState.managerData;
           delete syncState.surveys;
           delete syncState.feed;
-          const isHRUserUnload = data.user?.role === 'hr' || data.user?.role === 'admin' || data.user?.userRole === 'hr';
+          const isHRUserUnload = data.user?.role === 'hr' || data.user?.userRole === 'hr';
           if (!isHRUserUnload) {
             delete syncState.rewards;
           }

@@ -42,7 +42,7 @@ export default function NewChatModal({ onClose, onChannelCreated }: NewChatModal
   const [broadcastContent, setBroadcastContent] = useState('');
   const [selectedDepts, setSelectedDepts] = useState<string[]>([]);
 
-  const isHRorManager = (user?.role as string) === 'hr' || (user?.role as string) === 'admin' || user?.role === 'manager';
+  const isHRorManager = (user?.role as string) === 'hr' || user?.role === 'manager';
 
   useEffect(() => { fetchUsers(); }, []);
 
@@ -50,7 +50,7 @@ export default function NewChatModal({ onClose, onChannelCreated }: NewChatModal
     try {
       const [uRes, dRes] = await Promise.all([
         fetch('/api/users'),
-        fetch('/api/admin/departments'),
+        fetch('/api/hr/departments'),
       ]);
       const uData = await uRes.json();
       const dData = await dRes.json();

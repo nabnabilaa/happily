@@ -201,7 +201,7 @@ async function awardXPInternal(
         });
         await db.execute({
           sql: "INSERT INTO notifications (id, user_id, title, message, type) VALUES (?, ?, ?, ?, ?)",
-          args: ["n_s5_" + Date.now().toString(36), recipientId, '🔥 Streak 5 Hari!', 'Bonus +25 XP! Konsistensi hebat!', 'success']
+          args: ["n_s5_" + Date.now().toString(36), recipientId, '🔥 Streak 5 Hari!', 'Bonus +25 Point! Konsistensi hebat!', 'success']
         });
       } catch (e) { console.warn("Streak 5 bonus error:", e); }
     }
@@ -219,7 +219,7 @@ async function awardXPInternal(
         });
         await db.execute({
           sql: "INSERT INTO notifications (id, user_id, title, message, type) VALUES (?, ?, ?, ?, ?)",
-          args: ["n_s7_" + Date.now().toString(36), recipientId, '🔥 Streak 7 Hari!', 'Bonus +25 XP! Kamu luar biasa!', 'success']
+          args: ["n_s7_" + Date.now().toString(36), recipientId, '🔥 Streak 7 Hari!', 'Bonus +25 Point! Kamu luar biasa!', 'success']
         });
       } catch (e) { console.warn("Streak 7 bonus error:", e); }
     }
