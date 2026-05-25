@@ -225,6 +225,9 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setState(null);
     localStorage.removeItem("hp_user_id");
+    if (typeof window !== "undefined") {
+      window.location.href = "/";
+    }
   }, []);
 
   const fetchDashboards = useCallback(async (userId: string, role: string) => {

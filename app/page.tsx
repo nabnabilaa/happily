@@ -82,6 +82,7 @@ import StatusInputModal from "@/components/modals/StatusInputModal";
 import NewChatModal from "@/components/modals/NewChatModal";
 import ChatScreen from "@/components/home/ChatScreen";
 import HPToastContainer from "@/components/ui/HPToastContainer";
+import ConfirmLogoutModal from "@/components/modals/ConfirmLogoutModal";
 
 
 // ─── Role pill badge colors ──────────────────────────────────────────────────
@@ -293,28 +294,26 @@ function AppContent() {
           </div>
 
           <button
-            onClick={() => {
-              if (window.confirm("Apakah Anda yakin ingin keluar dari akun?")) {
-                logout();
-              }
-            }}
+            onClick={() => openModal('confirm_logout')}
             className="hp-tap"
             style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: 30, height: 30, borderRadius: 10,
-              background: '#fff',
-              border: `1.5px solid ${HP_TOKENS.line}`,
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '6px 14px', borderRadius: 99,
+              background: HP_TOKENS.coralSoft,
+              border: `1.5px solid ${HP_TOKENS.coral}30`,
+              fontFamily: HP_FONT, fontWeight: 800, fontSize: 11,
+              color: HP_TOKENS.coral,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
               cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-              transition: 'all 0.2s',
             }}
             title="Keluar (Logout)"
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={HP_TOKENS.coral} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
               <polyline points="16 17 21 12 16 7" />
               <line x1="21" y1="12" x2="9" y2="12" />
             </svg>
+            <span>Keluar</span>
           </button>
         </div>
 
@@ -400,6 +399,7 @@ function AppContent() {
         // Also call the prop-based callback if passed from ChatScreen
         modal.props?.onChannelCreated?.(channelId);
       }} />}
+      {modal?.name === 'confirm_logout'   && <ConfirmLogoutModal onClose={closeModal} onConfirm={logout} />}
 
       <HPToastContainer />
     </div>
