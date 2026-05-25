@@ -80,6 +80,23 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
     fetchKPIs();
   }, [user?.id]);
 
+  // Memoize derived arrays so useMemo below has stable dependencies
+  const goals = state?.goals || [];
+  const userId = user?.id ? String(user.id) : '';
+
+  const combinedMyGoals = useMemo(() => {
+    const myAssigned = goals.filter((g: any) => g.scope === 'assigned' && String(g.ownerId) === userId);
+    const myPersonal = goals.filter((g: any) => g.scope === 'personal' && String(g.ownerId) === userId);
+    const combined = [...myAssigned, ...myPersonal];
+    apiKpis.forEach((k: any) => {
+      if (!combined.some((g: any) => String(g.id) === String(k.id) || g.title.toLowerCase() === k.title.toLowerCase())) {
+        combined.push(k);
+      }
+    });
+    return combined;
+  }, [apiKpis, goals, userId]);
+
+  // Guard: all hooks are called above, safe to return early here
   if (!state || !user) return null;
 
   // Filter for goals relevant to the manager: goals assigned by manager OR goals owned by team members
@@ -89,19 +106,6 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
   );
   const teamTasks = state.managerData?.teamTasks || [];
   const personalTasks = state.priorities || [];
-
-  const myAssignedGoals = state.goals.filter((g: any) => g.scope === 'assigned' && String(g.ownerId) === String(user.id));
-  const myPersonalGoals = state.goals.filter((g: any) => g.scope === 'personal' && String(g.ownerId) === String(user.id));
-
-  const combinedMyGoals = useMemo(() => {
-    const combined = [...myAssignedGoals, ...myPersonalGoals];
-    apiKpis.forEach((k: any) => {
-      if (!combined.some((g: any) => String(g.id) === String(k.id) || g.title.toLowerCase() === k.title.toLowerCase())) {
-        combined.push(k);
-      }
-    });
-    return combined;
-  }, [apiKpis, myAssignedGoals, myPersonalGoals]);
 
   // Only show top-level goals — hide children whose parent is already in the list
   const topLevelGoals = assignedGoals.filter((g: any) => {

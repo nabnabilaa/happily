@@ -167,6 +167,8 @@ export async function POST(request: Request) {
     
     let members: any[] = [];
     let teamTasks: any[] = [];
+    let teamGoals: any[] = [];
+    let teamApprovals: any[] = [];
     let hrMetrics: any = null;
     let atRiskEmployees: any[] = [];
     let deptPulse: any[] = [];
@@ -211,6 +213,72 @@ export async function POST(request: Request) {
           est: r.est_time,
           tone: r.tone,
           createdAt: r.created_at
+        }));
+      }
+
+      // Fetch team goals and pending approvals
+      const memberIds = members.map(m => String(m.id)).concat([userId]);
+      const placeholders = memberIds.map(() => '?').join(',');
+      const goalsRes = await db.execute({
+        sql: `SELECT g.*, u.name as joined_owner_name FROM goals g
+              LEFT JOIN users u ON g.owner_id = u.id
+              WHERE (g.scope = 'team' AND g.owner_id IN (${placeholders}))
+              OR (g.scope = 'assigned' AND g.assigned_by_id = ?)`,
+        args: [...memberIds, userId]
+      });
+
+      teamGoals = await Promise.all(goalsRes.rows.map(async g => {
+        const childRes = await db.execute({
+          sql: `SELECT progress FROM goals WHERE parent_id = ?`,
+          args: [String(g.id)]
+        });
+        let rollupProgress = Number(g.progress) || 0;
+        const rawDue = (g.due_date as string) || '';
+        let dueDisplay = rawDue;
+        if (rawDue.includes('T')) {
+          try {
+            const d = new Date(rawDue);
+            if (!isNaN(d.getTime())) {
+              dueDisplay = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) + ' ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            }
+          } catch (e) {}
+        }
+
+        return {
+          id: g.id,
+          title: g.title,
+          progress: rollupProgress,
+          due: dueDisplay,
+          tone: g.tone || 'blue',
+          scope: g.scope,
+          assignedById: g.assigned_by_id,
+          ownerId: g.owner_id,
+          owner: (g.joined_owner_name as string) || (g.owner_name as string) || 'Team Member',
+          status: g.status || 'pending',
+          is_kpi: !!g.is_kpi,
+          parent_id: g.parent_id,
+          alignment: g.alignment || 100,
+          metric: childRes.rows.length > 0 ? `${childRes.rows.length} aligned OKR` : g.metric
+        };
+      }));
+
+      if (memberIdsOnly.length > 0) {
+        const memberPlaceholders = memberIdsOnly.map(() => '?').join(',');
+        const pendingRes = await db.execute({
+          sql: `SELECT g.*, u.name as owner_name 
+                FROM goals g 
+                JOIN users u ON g.owner_id = u.id
+                WHERE g.owner_id IN (${memberPlaceholders}) AND g.status = 'pending'`,
+          args: memberIdsOnly
+        });
+        teamApprovals = pendingRes.rows.map(a => ({
+          id: a.id,
+          type: a.is_kpi ? 'KPI GOAL' : 'GOAL',
+          from: a.owner_name,
+          desc: a.title,
+          urgent: a.is_kpi === 1,
+          progress: a.progress || 0,
+          due: a.due_date ? String(a.due_date).split(' ')[0] : ''
         }));
       }
     } else if (userRole === 'hr') {
@@ -284,7 +352,7 @@ export async function POST(request: Request) {
 
       const teamsRes = await db.execute("SELECT * FROM departments");
       deptPulse = await Promise.all(teamsRes.rows.map(async (t) => {
-        const teamUserIds = await db.execute({ sql: "SELECT id FROM users WHERE department_id = ?", args: [String(t.id)] });
+        const teamUserIds = await db.execute({ sql: "SELECT id FROM users WHERE department = ?", args: [String(t.name)] });
         const headcount = teamUserIds.rows.length;
         if (headcount === 0) return { dept: t.name, wellbeing: 0, engagement: 0, headcount: 0, atRisk: 0, tone: 'sage' };
 
@@ -368,6 +436,8 @@ export async function POST(request: Request) {
       })),
       members: userRole === 'manager' ? members : undefined,
       teamTasks: userRole === 'manager' ? teamTasks : undefined,
+      teamGoals: userRole === 'manager' ? teamGoals : undefined,
+      teamApprovals: userRole === 'manager' ? teamApprovals : undefined,
       metrics: (userRole === 'hr') ? hrMetrics : undefined,
       atRiskEmployees: (userRole === 'hr') ? atRiskEmployees.slice(0, 5) : undefined,
       deptPulse: (userRole === 'hr') ? deptPulse : undefined,
