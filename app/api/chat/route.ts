@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 
 // ══════════════════════════════════════════════════════════════
 // Chat API — Spec v2 Phase 7
@@ -323,3 +323,4 @@ async function sendBroadcast(body: any) {
     }
   });
 }
+

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/turso';
+import { db } from '@/lib/db';
 
 const MOOD_VALUES: Record<string, number> = { joy: 100, calm: 85, neutral: 65, tired: 40, stress: 20 };
 
@@ -171,3 +171,4 @@ export async function GET() {
     return NextResponse.json({ error: 'Failed to fetch HR data' }, { status: 500 });
   }
 }
+

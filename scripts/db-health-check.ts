@@ -1,4 +1,4 @@
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 
 async function check() {
   const userId = "user_admin"; // We just migrated this to HR, let's use it as test
@@ -44,3 +44,4 @@ async function check() {
 }
 
 check().catch(console.error);
+

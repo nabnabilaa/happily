@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 import { v4 as uuidv4 } from "uuid";
 
 // POST: Generate AI monthly analysis comparing results vs KPIs
@@ -214,3 +214,4 @@ function buildMonthlyPrompt(data: any): string {
   prompt += `\nBerikan analisa komprehensif: ringkasan, per-KPI review, kekuatan, area improvement, rekomendasi.`;
   return prompt;
 }
+

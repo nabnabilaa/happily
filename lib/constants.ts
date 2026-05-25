@@ -45,3 +45,29 @@ export const HP_TEXT = {
   small: { fontFamily: HP_FONT, fontWeight: 600, fontSize: 13, lineHeight: 1.4, color: HP_TOKENS.inkMute },
   tiny: { fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, lineHeight: 1.2, color: HP_TOKENS.inkMute, letterSpacing: 0.3, textTransform: 'uppercase' },
 };
+
+export const HP_MOODS = [
+  { key: 'joy', label: 'Bahagia', glyph: 'sparkle', emoji: '😊', tone: 'yellow', value: 5 },
+  { key: 'calm', label: 'Tenang', glyph: 'check', emoji: '😌', tone: 'sage', value: 4 },
+  { key: 'neutral', label: 'Biasa', glyph: 'activity', emoji: '😐', tone: 'neutral', value: 3 },
+  { key: 'tired', label: 'Lelah', glyph: 'moon', emoji: '😫', tone: 'blue', value: 2 },
+  { key: 'stress', label: 'Stress', glyph: 'zap', emoji: '🤯', tone: 'coral', value: 1 },
+];
+
+export const HP_ENERGY = [
+  { key: 'low', label: 'Rendah', hint: 'Cocok untuk admin, review, tugas ringan' },
+  { key: 'mid', label: 'Sedang', hint: 'Kolaborasi, meeting, eksekusi rutin' },
+  { key: 'high', label: 'Tinggi', hint: 'Deep work, keputusan penting, kreativitas' },
+];
+
+export const HP_QUICK_TAGS = ['Semangat', 'Fokus', 'Lelah', 'Cemas', 'Bersyukur', 'Overwhelmed'];
+
+export const HP_VALUES = ['Collaboration', 'Innovation', 'Respect', 'Ownership', 'Growth'];
+
+export const HP_COACH_SUGGESTIONS = [
+  'Bantu susun prioritas',
+  'Aku lagi overwhelmed',
+  'Kasih ide untuk 1-on-1 besok',
+  'Refleksikan minggu ini',
+];
+

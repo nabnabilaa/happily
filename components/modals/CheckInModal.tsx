@@ -5,13 +5,11 @@ import { useHP } from "@/lib/HPContext";
 import { 
   HP_TOKENS, 
   HP_FONT, 
-  HP_TEXT 
+  HP_TEXT,
+  HP_MOODS,
+  HP_ENERGY,
+  HP_QUICK_TAGS
 } from "@/lib/constants";
-import { 
-  HP_MOODS, 
-  HP_ENERGY, 
-  HP_QUICK_TAGS 
-} from "@/lib/mockData";
 import HPGlyph from "@/components/ui/HPGlyph";
 import Modal from "@/components/ui/Modal";
 import BeeMascot from "@/components/ui/BeeMascot";

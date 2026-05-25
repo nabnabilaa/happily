@@ -2,8 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Modal from "@/components/ui/Modal";
-import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
-import { HP_MOODS } from "@/lib/mockData";
+import { HP_TOKENS, HP_FONT, HP_TEXT, HP_MOODS } from "@/lib/constants";
 import { useHP } from "@/lib/HPContext";
 import HPGlyph from "@/components/ui/HPGlyph";
 

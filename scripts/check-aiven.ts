@@ -1,4 +1,4 @@
-import { db } from '../lib/turso';
+import { db } from '../lib/db';
 
 async function check() {
   try {
@@ -12,3 +12,4 @@ async function check() {
   process.exit(0);
 }
 check();
+

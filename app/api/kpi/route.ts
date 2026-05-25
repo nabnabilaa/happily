@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 
 // GET: Fetch KPIs (for manager or employee)
 export async function GET(request: Request) {
@@ -143,3 +143,4 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Gagal hapus KPI", details: error.message }, { status: 500 });
   }
 }
+

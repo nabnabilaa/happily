@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 
 // GET: Cron endpoint — check for inactive users and apply XP penalty
 // Spec v2: −15 XP/day starting from day 4 of inactivity (3 consecutive work days without activity)
@@ -99,3 +99,4 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Cron failed", details: error.message }, { status: 500 });
   }
 }
+

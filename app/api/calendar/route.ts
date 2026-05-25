@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 import { v4 as uuidv4 } from "uuid";
 
 // GET: Fetch calendar events for a user
@@ -111,3 +111,4 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Failed to delete event", details: error.message }, { status: 500 });
   }
 }
+

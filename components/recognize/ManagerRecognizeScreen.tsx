@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { useHP } from "@/lib/HPContext";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
-import { MANAGER_TEAM_FEED, MANAGER_TEAM_MEMBERS, HP_REWARDS } from "@/lib/mockData";
 import HPGlyph from "@/components/ui/HPGlyph";
 import HPCard from "@/components/ui/HPCard";
 import HPAvatar from "@/components/ui/HPAvatar";
@@ -25,7 +24,7 @@ export default function ManagerRecognizeScreen({ openModal }: Props) {
       {/* Stats */}
       <HPCard style={{ background: `linear-gradient(135deg, ${HP_TOKENS.yellowWash}, ${HP_TOKENS.blueWash})`, border: 'none', marginBottom: 20 }} padding={16}>
         <div style={{ display: 'flex', gap: 20 }}>
-          <StatBlock label="Poin kamu" value={state.coins.toLocaleString()} icon="trophy" tone="yellow" />
+          <StatBlock label="Poin kamu" value={state.points.toLocaleString()} icon="trophy" tone="yellow" />
         </div>
       </HPCard>
 

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 import { hpEventEmitter } from "@/lib/events";
 
 // ══════════════════════════════════════════════════════════════
@@ -172,3 +172,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Gagal update status", details: error.message }, { status: 500 });
   }
 }
+

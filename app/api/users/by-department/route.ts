@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 
 // GET: Group all users by their department
 export async function GET(request: Request) {
@@ -60,3 +60,4 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Failed", details: error.message }, { status: 500 });
   }
 }
+

@@ -150,7 +150,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
       if (next.points !== prev.points) {
         const newLevel = calculateLevel(next.points);
         const newRank = calculateRank(newLevel);
-        next = { ...next, level: newLevel, rank: newRank };
+        next = { ...next, level: newLevel, rank: newRank, coins: next.points };
       }
       return next;
     });
@@ -192,7 +192,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
           mood: null, energy: null, tag: null, intention: "",
           priorities: [], feed: [], goals: [], habits: [],
           surveys: [], skills: [], learning: [], coaching: null, wellbeing: { dims: [], programs: [] },
-          points: data.user?.points || 0, coins: data.user?.coins || 0, notifications: 0, 
+          points: data.user?.points || 0, coins: data.user?.points || 0, notifications: 0, 
           rewards: [], rewardHistory: [],
           logbook: [], lastActivityDate: new Date().toISOString(),
           penaltyActive: false, penaltyThresholdDays: 3,
@@ -359,8 +359,8 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
       });
       const data = await res.json();
       if (data.success) {
-        updateUser({ points: data.newTotal, coins: data.newCoins });
-        updateState((s: any) => ({ ...s, points: data.newTotal, coins: data.newCoins }));
+        updateUser({ points: data.newTotal, coins: data.newTotal });
+        updateState((s: any) => ({ ...s, points: data.newTotal, coins: data.newTotal }));
       }
     } catch (e) {
       console.error("Failed to award XP:", e);

@@ -1,4 +1,4 @@
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 
 // Define the structure of a notification template
 export interface NotificationTemplate {
@@ -315,3 +315,4 @@ export async function seedNotificationTemplates(): Promise<number> {
   }
   return seededCount;
 }
+

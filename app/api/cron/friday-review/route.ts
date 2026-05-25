@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 
 // GET: Cron endpoint — Friday weekly review
 // 1. Remind managers to do weekly review
@@ -75,3 +75,4 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Cron failed", details: error.message }, { status: 500 });
   }
 }
+

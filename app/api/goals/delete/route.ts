@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/turso';
+import { db } from '@/lib/db';
 
 export async function POST(request: Request) {
   try {
@@ -23,3 +23,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed', details: error.message }, { status: 500 });
   }
 }
+

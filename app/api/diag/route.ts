@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 
 export async function GET() {
   const userId = "user_admin";
@@ -33,7 +33,7 @@ export async function GET() {
 
   // Get all tables
   try {
-    const res = await db.execute("SELECT name FROM sqlite_master WHERE type='table'");
+    const res = await db.execute("SELECT table_name AS name FROM information_schema.tables WHERE table_schema = DATABASE()");
     report.push({ name: "All Tables", status: "OK", tables: res.rows.map(r => r.name) });
   } catch (e: any) {
     report.push({ name: "All Tables", status: "ERROR", message: e.message });
@@ -41,3 +41,4 @@ export async function GET() {
 
   return NextResponse.json({ report });
 }
+

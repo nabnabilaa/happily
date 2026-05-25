@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 
 export async function POST(request: Request) {
@@ -46,3 +46,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Gagal membuat user baru" }, { status: 500 });
   }
 }
+

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 import { v4 as uuidv4 } from "uuid";
 
 // POST: Generate AI weekly summary for a team
@@ -184,3 +184,4 @@ function buildWeeklyPrompt(data: any): string {
   prompt += `\nBerikan rangkuman 3-4 kalimat, penilaian, dan 1 saran spesifik.`;
   return prompt;
 }
+

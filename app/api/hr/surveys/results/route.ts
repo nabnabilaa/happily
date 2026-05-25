@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/turso';
+import { db } from '@/lib/db';
 
 // GET: Get all responses for a survey (HR only)
 export async function GET(request: Request) {
@@ -111,3 +111,4 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Gagal mengambil hasil survey' }, { status: 500 });
   }
 }
+

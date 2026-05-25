@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 import { v4 as uuidv4 } from "uuid";
 
 export async function GET() {
@@ -74,3 +74,4 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Gagal menghapus lokasi kantor" }, { status: 500 });
   }
 }
+

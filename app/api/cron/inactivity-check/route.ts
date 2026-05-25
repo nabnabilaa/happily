@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 
 // GET: Cron endpoint — check for users who haven't completed any task in 3+ hours
 // Spec v2: Nudge notification if no task activity after 3 hours since check-in
@@ -111,3 +111,4 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Cron failed", details: error.message }, { status: 500 });
   }
 }
+

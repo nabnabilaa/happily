@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 
 // GET: Mood history for a user (from mood_checkins + attendance mood)
 export async function GET(request: Request) {
@@ -98,3 +98,4 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Failed", details: error.message }, { status: 500 });
   }
 }
+

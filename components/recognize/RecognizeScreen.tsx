@@ -9,7 +9,6 @@ import ScreenHeader from "@/components/ui/ScreenHeader";
 import SectionHeader from "@/components/home/SectionHeader";
 import StatBlock from "@/components/recognize/StatBlock";
 import RewardCard from "@/components/recognize/RewardCard";
-import { ORG_REWARDS_CATALOG } from "@/lib/mockData";
 
 interface RecognizeScreenProps {
   openModal: (name: string, props?: any) => void;
@@ -28,7 +27,7 @@ export default function RecognizeScreen({ openModal }: RecognizeScreenProps) {
 
       <HPCard style={{ background: `linear-gradient(135deg, ${HP_TOKENS.yellowWash}, ${HP_TOKENS.sageWash})`, border: 'none', marginBottom: 20 }} padding={16}>
         <div style={{ display: 'flex', gap: 20 }}>
-          <StatBlock label="Poin kamu" value={state.coins.toLocaleString()} icon="trophy" tone="yellow"/>
+          <StatBlock label="Poin kamu" value={state.points.toLocaleString()} icon="trophy" tone="yellow"/>
         </div>
       </HPCard>
 

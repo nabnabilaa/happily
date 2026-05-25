@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 
 export async function POST(request: Request) {
   try {
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
         args: ["tx_" + Date.now().toString(36), receiverId, 20, "apresiasi_received", `Apresiasi dari ${senderName || 'rekan'}`]
       });
       await db.execute({
-        sql: "UPDATE users SET points = points + 20, coins = coins + 5 WHERE id = ?",
+        sql: "UPDATE users SET points = points + 20, coins = points + 20 WHERE id = ?",
         args: [receiverId]
       });
     } catch (e) {
@@ -125,3 +125,4 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Gagal memuat feed", details: error.message }, { status: 500 });
   }
 }
+

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 
 // GET: Aggregate daily data for logbook calendar
 // Params: userId (required), month (1-12), year (2024+)
@@ -195,3 +195,4 @@ async function getDayDetail(userId: string, date: string) {
     logbookEntries: logRes.rows,
   });
 }
+

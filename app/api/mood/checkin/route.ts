@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 import { calculateTriggerKey, dispatchNotification } from "@/lib/notificationService";
 
 export async function POST(request: Request) {
@@ -38,3 +38,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Gagal menyimpan mood", details: error.message }, { status: 500 });
   }
 }
+

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 
 // ══════════════════════════════════════════════════════════════
 // XP Values — Spec v2 (Flowbee Feature Spec Revisi 2)
@@ -171,8 +171,8 @@ async function awardXPInternal(
 
   // 2. Update User Points & Coins
   await db.execute({
-    sql: "UPDATE users SET points = points + ?, coins = coins + ? WHERE id = ?",
-    args: [amount, coinsAmount, recipientId]
+    sql: "UPDATE users SET points = points + ?, coins = points + ? WHERE id = ?",
+    args: [amount, amount, recipientId]
   });
 
   // 3. Fetch new totals
@@ -196,7 +196,7 @@ async function awardXPInternal(
           args: [bonusTxId, recipientId, 25, 'streak_5', '🔥 Streak 5 hari kerja!']
         });
         await db.execute({
-          sql: "UPDATE users SET points = points + 25 WHERE id = ?",
+          sql: "UPDATE users SET points = points + 25, coins = points + 25 WHERE id = ?",
           args: [recipientId]
         });
         await db.execute({
@@ -214,7 +214,7 @@ async function awardXPInternal(
           args: [bonusTxId, recipientId, 25, 'streak_7', '🔥 Streak 7 hari!']
         });
         await db.execute({
-          sql: "UPDATE users SET points = points + 25 WHERE id = ?",
+          sql: "UPDATE users SET points = points + 25, coins = points + 25 WHERE id = ?",
           args: [recipientId]
         });
         await db.execute({
@@ -314,3 +314,4 @@ function calculateLevelAndRank(points: number): { level: number; rank: string } 
 
   return { level, rank };
 }
+

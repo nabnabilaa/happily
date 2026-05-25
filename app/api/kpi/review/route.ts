@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 
 // GET: Fetch task-KPI links for review (Manager sees all pending links from team)
 export async function GET(request: Request) {
@@ -92,3 +92,4 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Gagal update review", details: error.message }, { status: 500 });
   }
 }
+

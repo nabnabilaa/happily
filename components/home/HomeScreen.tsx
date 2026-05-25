@@ -5,14 +5,10 @@ import { useHP, calculateLevelProgress } from "@/lib/HPContext";
 import { 
   HP_TOKENS, 
   HP_FONT, 
-  HP_TEXT 
+  HP_TEXT,
+  HP_MOODS,
+  HP_ENERGY
 } from "@/lib/constants";
-import { 
-  HP_MOODS, 
-  HP_ENERGY, 
-  HP_AI_INSIGHTS, 
-  HP_HABITS, 
-} from "@/lib/mockData";
 import { generateAIInsights } from "@/lib/aiInsights";
 import HPGlyph from "@/components/ui/HPGlyph";
 import HPAvatar from "@/components/ui/HPAvatar";

@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { useHP } from "@/lib/HPContext";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
-import { HP_REWARDS } from "@/lib/mockData";
 import Modal from "@/components/ui/Modal";
 import HPGlyph from "@/components/ui/HPGlyph";
 
@@ -22,13 +21,13 @@ const toneConfig: Record<string, { bg: string; soft: string; text: string }> = {
 };
 
 export default function AllRewardsModal({ onClose }: AllRewardsModalProps) {
-  const { state, updateState } = useHP();
+  const { state, updateState, updateUser, user } = useHP();
   const [view, setView] = useState<"available" | "history">("available");
   const [activeCategory, setActiveCategory] = useState("Semua");
 
   const rewards = state?.rewards || [];
   const history = state?.rewardHistory || [];
-  const userCoins = state?.coins ?? 0;
+  const userCoins = state?.points ?? 0;
 
   const filtered = activeCategory === "Semua"
     ? rewards
@@ -40,20 +39,22 @@ export default function AllRewardsModal({ onClose }: AllRewardsModalProps) {
       alert(`Maaf, stok "${reward.title}" sedang habis. 🌱`);
       return;
     }
-    if (state.coins < reward.points) {
-      alert(`Poin tidak cukup! Kamu butuh ${reward.points} poin, tapi baru punya ${state.coins} poin. 🌱`);
+    if (state.points < reward.points) {
+      alert(`Poin tidak cukup! Kamu butuh ${reward.points} poin, tapi baru punya ${state.points} poin. 🌱`);
       return;
     }
     if (confirm(`Tukar ${reward.points} poin dengan "${reward.title}"?`)) {
       updateState((s: any) => ({
         ...s,
-        coins: s.coins - reward.points,
+        points: s.points - reward.points,
+        coins: s.points - reward.points,
         rewards: s.rewards.map((r: any) => r.id === reward.id ? { ...r, stock: r.stock - 1 } : r),
         rewardHistory: [
           ...history,
           { id: Date.now(), title: reward.title, points: reward.points, date: new Date().toLocaleDateString('id-ID'), glyph: reward.glyph || 'trophy' }
         ]
       }));
+      updateUser({ points: (user?.points || 0) - reward.points, coins: (user?.points || 0) - reward.points });
       
       alert(`Berhasil! "${reward.title}" telah ditambahkan ke riwayat reward kamu. 🎉`);
     }

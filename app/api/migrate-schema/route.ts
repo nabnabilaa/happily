@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 import { seedNotificationTemplates } from "@/lib/notificationService";
 
 export async function POST() {
@@ -493,3 +493,4 @@ export async function POST() {
 export async function GET() {
   return POST();
 }
+

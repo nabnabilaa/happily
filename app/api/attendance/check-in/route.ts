@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 import { hpEventEmitter } from "@/lib/events";
 
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -148,15 +148,14 @@ export async function POST(request: Request) {
       }
 
       if (xpAmount > 0) {
-        const coinsAmount = Math.floor(xpAmount / 4);
         const txId = "tx_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
         await db.execute({
           sql: "INSERT INTO xp_transactions (id, user_id, amount, action_type, description) VALUES (?, ?, ?, ?, ?)",
           args: [txId, userId, xpAmount, actionType, `Check-in ${checkInType} — ${xpLabel}`]
         });
         await db.execute({
-          sql: "UPDATE users SET points = points + ?, coins = coins + ? WHERE id = ?",
-          args: [xpAmount, coinsAmount, userId]
+          sql: "UPDATE users SET points = points + ?, coins = points + ? WHERE id = ?",
+          args: [xpAmount, xpAmount, userId]
         });
       }
     } catch (e) {
@@ -207,3 +206,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Gagal check-in" }, { status: 500 });
   }
 }
+

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 
 // GET: Fetch all notification templates from the database
 export async function GET() {
@@ -38,3 +38,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Failed to upsert template", details: error.message }, { status: 500 });
   }
 }
+

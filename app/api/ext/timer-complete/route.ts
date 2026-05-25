@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 
 function getCorsHeaders(request: Request) {
   const origin = request.headers.get("origin") || "*";
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     });
 
     await db.execute({
-      sql: "UPDATE users SET points = points + 20, coins = coins + 5 WHERE id = ?",
+      sql: "UPDATE users SET points = points + 20, coins = points + 20 WHERE id = ?",
       args: [userId]
     });
 
@@ -52,3 +52,4 @@ export async function POST(request: Request) {
     );
   }
 }
+

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 
 // POST: Send push notification to a specific user (server-to-server)
 // Uses Web Push protocol via fetch (no external lib needed for basic implementation)
@@ -43,3 +43,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Failed", details: error.message }, { status: 500 });
   }
 }
+

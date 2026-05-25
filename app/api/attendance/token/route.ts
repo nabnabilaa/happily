@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 import { v4 as uuidv4 } from "uuid";
 
 export async function GET() {
@@ -18,3 +18,4 @@ export async function GET() {
     return NextResponse.json({ error: "Failed to generate token" }, { status: 500 });
   }
 }
+

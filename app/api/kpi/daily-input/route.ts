@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 
 // GET: Fetch KPI daily inputs for a user
 export async function GET(request: Request) {
@@ -87,3 +87,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Failed to submit input", details: error.message }, { status: 500 });
   }
 }
+

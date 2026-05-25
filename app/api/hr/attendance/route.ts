@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 
 // GET: HR views attendance data for all employees
 export async function GET(request: Request) {
@@ -59,3 +59,4 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Gagal memuat data absensi", details: error.message }, { status: 500 });
   }
 }
+

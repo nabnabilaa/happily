@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 
 // POST: Create a task-KPI link (employee self-tags)
 export async function POST(request: Request) {
@@ -21,3 +21,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Gagal membuat link", details: error.message }, { status: 500 });
   }
 }
+

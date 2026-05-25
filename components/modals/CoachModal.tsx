@@ -5,12 +5,9 @@ import { useHP } from "@/lib/HPContext";
 import { 
   HP_TOKENS, 
   HP_FONT, 
-  HP_TEXT 
+  HP_TEXT,
+  HP_COACH_SUGGESTIONS
 } from "@/lib/constants";
-import { 
-  HP_COACH_MESSAGES, 
-  HP_COACH_SUGGESTIONS 
-} from "@/lib/mockData";
 import HPGlyph from "@/components/ui/HPGlyph";
 import Modal from "@/components/ui/Modal";
 

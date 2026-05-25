@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 
 // GET: Fetch or auto-generate monthly report for a user
 export async function GET(request: Request) {
@@ -66,10 +66,92 @@ export async function POST(request: Request) {
           sql: "UPDATE monthly_kpis SET final_score = ?, status = 'completed' WHERE id = ?",
           args: [ks.score, ks.kpiId]
         });
+
+        // Award XP if Quality Score is >= 70%
+        if (report.qualityScore >= 70) {
+          let xpAmount = 0;
+          let actionType = '';
+          let desc = '';
+
+          // Fetch KPI details to get the title
+          const kpiQuery = await db.execute({
+            sql: "SELECT title FROM monthly_kpis WHERE id = ?",
+            args: [ks.kpiId]
+          });
+          const kpiTitle = kpiQuery.rows[0]?.title || ks.kpiId;
+
+          if (ks.score >= 100) {
+            xpAmount = 250;
+            actionType = 'kpi_exceeded';
+            desc = `KPI Bulanan melampaui target: ${kpiTitle} (${ks.score}/100)`;
+          } else if (ks.score >= 70) {
+            xpAmount = 150;
+            actionType = 'kpi_achieved';
+            desc = `KPI Bulanan tercapai: ${kpiTitle} (${ks.score}/100)`;
+          }
+
+          if (xpAmount > 0) {
+            // Check if already awarded to prevent double awards
+            const checkAward = await db.execute({
+              sql: "SELECT id FROM xp_transactions WHERE user_id = ? AND action_type = ? AND description LIKE ?",
+              args: [userId, actionType, `%${ks.kpiId}%`]
+            });
+
+            if (checkAward.rows.length === 0) {
+              const txId = "tx_kpi_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+              await db.execute({
+                sql: "INSERT INTO xp_transactions (id, user_id, amount, action_type, description) VALUES (?, ?, ?, ?, ?)",
+                args: [txId, userId, xpAmount, actionType, desc]
+              });
+              await db.execute({
+                sql: "UPDATE users SET points = points + ?, coins = points + ? WHERE id = ?",
+                args: [xpAmount, xpAmount, userId]
+              });
+              
+              // Notify employee
+              const kpNotifId = "n_kpi_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+              await db.execute({
+                sql: "INSERT INTO notifications (id, user_id, title, message, type) VALUES (?, ?, ?, ?, ?)",
+                args: [kpNotifId, userId, `🏆 Bonus XP KPI: +${xpAmount}!`, desc, 'success']
+              });
+            }
+          }
+        }
+
         kpiScore += (ks.score * ks.weight) / 100;
         totalWeight += ks.weight;
       }
       if (totalWeight > 0) kpiScore = Math.round(kpiScore);
+    }
+
+    // Award Monthly Streak Bonus (+200 XP) if user has completed all working days in that month
+    if (report.activeDays >= report.totalWorkingDays) {
+      try {
+        const checkStreak = await db.execute({
+          sql: "SELECT id FROM xp_transactions WHERE user_id = ? AND action_type = 'streak_monthly' AND description LIKE ?",
+          args: [userId, `%${month}/${year}%`]
+        });
+
+        if (checkStreak.rows.length === 0) {
+          const txId = "tx_sm_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+          await db.execute({
+            sql: "INSERT INTO xp_transactions (id, user_id, amount, action_type, description) VALUES (?, ?, ?, ?, ?)",
+            args: [txId, userId, 200, 'streak_monthly', `🔥 Streak sebulan penuh: ${month}/${year}`]
+          });
+          await db.execute({
+            sql: "UPDATE users SET points = points + 200, coins = points + 200 WHERE id = ?",
+            args: [userId]
+          });
+          
+          const notifStreakId = "n_sm_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+          await db.execute({
+            sql: "INSERT INTO notifications (id, user_id, title, message, type) VALUES (?, ?, ?, ?, ?)",
+            args: [notifStreakId, userId, "💎 Streak Sebulan Penuh!", `Selamat! Kamu aktif di semua hari kerja di bulan ${month}/${year}. Bonus +200 XP!`, 'success']
+          });
+        }
+      } catch (e) {
+        console.warn("Monthly streak award error:", e);
+      }
     }
 
     const reportId = "rpt_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
@@ -99,6 +181,20 @@ export async function POST(request: Request) {
     console.error("Report POST Error:", error);
     return NextResponse.json({ error: "Gagal finalize laporan", details: error.message }, { status: 500 });
   }
+}
+
+// Helper: Get exact working days in a month (excluding weekends)
+function getWorkingDaysInMonth(month: number, year: number): number {
+  let count = 0;
+  const date = new Date(year, month - 1, 1);
+  while (date.getMonth() === month - 1) {
+    const day = date.getDay();
+    if (day !== 0 && day !== 6) {
+      count++;
+    }
+    date.setDate(date.getDate() + 1);
+  }
+  return count || 22;
 }
 
 // Helper: Generate report data from DB
@@ -146,17 +242,19 @@ async function generateReport(userId: string, month: number, year: number) {
   const totalXP = Number(xpRes.rows[0]?.total) || 0;
   const completionRate = totalTasks > 0 ? Math.round((tasksCompleted / totalTasks) * 100) : 0;
 
+  const totalWorkingDays = getWorkingDaysInMonth(month, year);
+
   // Quality Score: weighted composite (attendance 30%, task completion 40%, consistency 30%)
-  const attendanceScore = Math.min(100, Math.round((attendanceDays / 22) * 100));
+  const attendanceScore = Math.min(100, Math.round((attendanceDays / totalWorkingDays) * 100));
   const taskScore = completionRate;
-  const consistencyScore = Math.min(100, Math.round((activeDays / 22) * 100));
+  const consistencyScore = Math.min(100, Math.round((activeDays / totalWorkingDays) * 100));
   const qualityScore = Math.round(attendanceScore * 0.3 + taskScore * 0.4 + consistencyScore * 0.3);
 
   return {
     userId, month, year,
     totalTasks, tasksCompleted,
     activeDays: Math.max(activeDays, attendanceDays),
-    totalWorkingDays: 22,
+    totalWorkingDays,
     completionRate,
     avgTasksPerDay: activeDays > 0 ? Math.round((totalTasks / activeDays) * 10) / 10 : 0,
     totalXP,
@@ -200,3 +298,4 @@ async function getKPIData(userId: string, month: number, year: number) {
     };
   }));
 }
+

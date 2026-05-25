@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/turso';
+import { db } from '@/lib/db';
 import { dispatchNotification } from '@/lib/notificationService';
 
 export async function POST(request: Request) {
@@ -67,3 +67,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to verify task', details: error.message }, { status: 500 });
   }
 }
+

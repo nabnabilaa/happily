@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/turso';
+import { db } from '@/lib/db';
 
 // POST: Submit survey response
 export async function POST(request: Request) {
@@ -41,3 +41,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Gagal menyimpan jawaban' }, { status: 500 });
   }
 }
+

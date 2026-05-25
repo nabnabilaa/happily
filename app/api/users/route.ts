@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 
 export async function GET() {
   try {
@@ -10,3 +10,4 @@ export async function GET() {
     return NextResponse.json({ error: "Gagal memuat users", details: error.message }, { status: 500 });
   }
 }
+

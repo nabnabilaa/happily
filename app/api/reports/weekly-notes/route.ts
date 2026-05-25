@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 
 // ══════════════════════════════════════════════════════════════
 // Manager Weekly Notes API — Spec v2
@@ -91,3 +91,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Gagal menyimpan catatan", details: error.message }, { status: 500 });
   }
 }
+

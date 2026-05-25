@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/turso";
+import { db } from "@/lib/db";
 
 // GET: Cron endpoint — check who hasn't checked in, send reminders
 // Call this at 08:15, 09:00, 10:00 via external cron/Vercel cron
@@ -69,3 +69,4 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Cron failed", details: error.message }, { status: 500 });
   }
 }
+

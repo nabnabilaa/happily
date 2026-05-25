@@ -4,9 +4,9 @@ import React, { useState } from "react";
 import { 
   HP_TOKENS, 
   HP_FONT, 
-  HP_TEXT 
+  HP_TEXT,
+  HP_MOODS
 } from "@/lib/constants";
-import { HP_MOODS } from "@/lib/mockData";
 import { useHP } from "@/lib/HPContext";
 import Modal from "@/components/ui/Modal";
 import HPGlyph from "@/components/ui/HPGlyph";
