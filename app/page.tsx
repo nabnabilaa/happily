@@ -92,7 +92,7 @@ const ROLE_META: Record<UserRole, { label: string; color: string; bg: string; gl
 };
 
 function AppContent() {
-  const { state, loading, user, login, setUserRole, updateState } = useHP();
+  const { state, loading, user, login, logout, setUserRole, updateState } = useHP();
   const [tab, setTab] = useState('home');
   const [modal, setModal] = useState<{ name: string; props?: any } | null>(null);
   const [coachPos, setCoachPos] = useState({ x: 0, y: 0 });
@@ -271,10 +271,10 @@ function AppContent() {
 
       {/* Main content */}
       <div className="hp-app-content">
-        {/* Role pill — top right */}
+        {/* Role pill & Logout — top right */}
         <div style={{
           position: 'absolute', top: 16, right: 16, zIndex: 40,
-          display: 'flex', alignItems: 'center', gap: 6,
+          display: 'flex', alignItems: 'center', gap: 8,
         }}>
           <div
             style={{
@@ -290,6 +290,31 @@ function AppContent() {
             <HPGlyph name={meta.glyph} size={11} color={meta.color} />
             <span>{meta.label}</span>
           </div>
+
+          <button
+            onClick={() => {
+              if (window.confirm("Apakah Anda yakin ingin keluar dari akun?")) {
+                logout();
+              }
+            }}
+            className="hp-tap"
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 30, height: 30, borderRadius: 10,
+              background: '#fff',
+              border: `1.5px solid ${HP_TOKENS.line}`,
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+              transition: 'all 0.2s',
+            }}
+            title="Keluar (Logout)"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={HP_TOKENS.coral} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+          </button>
         </div>
 
         <div className="hp-screen-container">
