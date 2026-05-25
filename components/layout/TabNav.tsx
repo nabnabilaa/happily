@@ -37,6 +37,14 @@ const TAB_CONFIG: Record<UserRole, Array<{ key: string; label: string; icon: str
     { key: 'chat',      label: 'Chat',       icon: 'activity' },
     { key: 'notes',     label: 'Catatan',    icon: 'book' },
   ],
+  admin: [
+    { key: 'home',      label: 'Dashboard',  icon: 'home' },
+    { key: 'calendar',  label: 'Calendar',   icon: 'calendar' },
+    { key: 'goals',     label: 'People',     icon: 'people' },
+    { key: 'recognize', label: 'Rewards',    icon: 'trophy' },
+    { key: 'chat',      label: 'Chat',       icon: 'activity' },
+    { key: 'notes',     label: 'Catatan',    icon: 'book' },
+  ],
 };
 
 export default function TabNav({ tab, setTab, userRole }: TabNavProps) {
