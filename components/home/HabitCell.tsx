@@ -152,7 +152,7 @@ export default function HabitCell({ h, onToggle, onQuickComplete, onFinish }: Ha
           className="hp-tap"
           style={{
             background: HP_TOKENS.lineSoft, border: 'none', padding: '6px 10px', margin: 0,
-            color: HP_TOKENS.brand, fontFamily: HP_FONT, fontWeight: 800, fontSize: 11,
+            color: HP_TOKENS.blue, fontFamily: HP_FONT, fontWeight: 800, fontSize: 11,
             cursor: 'pointer', borderRadius: 8, flexShrink: 0,
             display: 'flex', alignItems: 'center', gap: 4
           }}
