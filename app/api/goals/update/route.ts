@@ -2,10 +2,27 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { dispatchNotification } from '@/lib/notificationService';
 
+function getCorsHeaders(request: Request) {
+  const origin = request.headers.get("origin") || "*";
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Credentials": "true",
+  };
+}
+
+export async function OPTIONS(request: Request) {
+  return new NextResponse(null, {
+    status: 204,
+    headers: getCorsHeaders(request),
+  });
+}
+
 export async function POST(request: Request) {
   try {
     const { goalId, updates } = await request.json();
-    if (!goalId) return NextResponse.json({ error: 'goalId missing' }, { status: 400 });
+    if (!goalId) return NextResponse.json({ error: 'goalId missing' }, { status: 400, headers: getCorsHeaders(request) });
 
     // 0. Fetch Goal info before update for notification dispatching
     const goalRes = await db.execute({
@@ -26,7 +43,7 @@ export async function POST(request: Request) {
       args.push(updates.status);
     }
 
-    if (fields.length === 0) return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
+    if (fields.length === 0) return NextResponse.json({ error: 'No fields to update' }, { status: 400, headers: getCorsHeaders(request) });
 
     args.push(String(goalId));
 
@@ -88,10 +105,10 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, { headers: getCorsHeaders(request) });
   } catch (error: any) {
     console.error('Goal update error:', error);
-    return NextResponse.json({ error: 'Failed', details: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Failed', details: error.message }, { status: 500, headers: getCorsHeaders(request) });
   }
 }
 

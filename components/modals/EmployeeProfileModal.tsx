@@ -181,7 +181,7 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
                   padding: '3px 10px', borderRadius: 8, fontSize: 10, fontWeight: 800,
                   background: HP_TOKENS.sageWash, color: HP_TOKENS.sage, fontFamily: HP_FONT,
                 }}>
-                  Lvl {u.level || 1} · {u.points || 0} XP
+                  Lvl {u.level || 1} · {u.points || 0} Point
                 </div>
               </div>
             </div>
@@ -455,7 +455,7 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
                     </div>
                     {entry.xp_earned && (
                       <div style={{ padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 800, background: HP_TOKENS.yellowSoft, color: '#8A6814', fontFamily: HP_FONT }}>
-                        +{entry.xp_earned} XP
+                        +{entry.xp_earned} Point
                       </div>
                     )}
                   </div>

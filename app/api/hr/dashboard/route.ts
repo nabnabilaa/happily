@@ -6,7 +6,7 @@ const MOOD_VALUES: Record<string, number> = { joy: 100, calm: 85, neutral: 65, t
 export async function GET() {
   try {
     // 1. Fetch all users
-    const usersRes = await db.execute("SELECT u.*, t.name as team_name FROM users u LEFT JOIN teams t ON u.team_id = t.id");
+    const usersRes = await db.execute("SELECT u.*, u.department as team_name FROM users u");
     const users = usersRes.rows;
     const totalEmployees = users.length;
 
@@ -78,9 +78,9 @@ export async function GET() {
     }
 
     // 6. Dept Pulse — REAL data per department
-    const teamsRes = await db.execute("SELECT * FROM teams");
+    const teamsRes = await db.execute("SELECT * FROM departments");
     const deptPulse = await Promise.all(teamsRes.rows.map(async (t) => {
-      const teamUserIds = await db.execute({ sql: "SELECT id FROM users WHERE team_id = ?", args: [String(t.id)] });
+      const teamUserIds = await db.execute({ sql: "SELECT id FROM users WHERE department = ?", args: [t.name] });
       const headcount = teamUserIds.rows.length;
       if (headcount === 0) return { dept: t.name, wellbeing: 0, engagement: 0, headcount: 0, atRisk: 0, tone: 'sage' };
 

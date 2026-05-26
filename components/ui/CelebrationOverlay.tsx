@@ -66,7 +66,7 @@ export default function CelebrationOverlay({ show, onComplete, message = "Hebat!
         fontFamily: HP_FONT, fontWeight: 900, fontSize: 18,
         animation: 'hpBounce 0.5s ease-out'
       }}>
-        +{points} XP
+        +{points} Point
       </div>
       <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, marginTop: 32, opacity: 0.6 }}>
         Klik di mana saja untuk menutup

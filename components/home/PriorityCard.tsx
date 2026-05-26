@@ -165,7 +165,7 @@ export default function PriorityCard({ p, onToggle, openModal }: PriorityCardPro
           pointerEvents: 'none', zIndex: 10,
           boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
         }}>
-          +{p.points || 50} EXP
+          +{p.points || 50} Point
         </div>
       )}
 

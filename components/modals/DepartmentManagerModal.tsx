@@ -19,7 +19,7 @@ export default function DepartmentManagerModal({ onClose }: DepartmentManagerMod
   const [editName, setEditName] = useState("");
 
   const fetchDepts = async () => {
-    const res = await fetch("/api/admin/departments");
+    const res = await fetch("/api/hr/departments");
     const data = await res.json();
     if (data.departments) setDepartments(data.departments);
   };
@@ -30,7 +30,7 @@ export default function DepartmentManagerModal({ onClose }: DepartmentManagerMod
     if (!newName.trim()) return;
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/departments", {
+      const res = await fetch("/api/hr/departments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: newName.trim(), requesterId: user?.id })
@@ -44,7 +44,7 @@ export default function DepartmentManagerModal({ onClose }: DepartmentManagerMod
     if (!editName.trim()) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/departments`, {
+      const res = await fetch(`/api/hr/departments`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, name: editName.trim(), requesterId: user?.id })
@@ -57,7 +57,7 @@ export default function DepartmentManagerModal({ onClose }: DepartmentManagerMod
   const handleDelete = async (id: number) => {
     if (!confirm("Hapus departemen ini? Karyawan di departemen ini tidak akan terhapus.")) return;
     try {
-      const res = await fetch(`/api/admin/departments`, {
+      const res = await fetch(`/api/hr/departments`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, requesterId: user?.id })

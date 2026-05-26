@@ -255,7 +255,7 @@ async function sendBroadcast(body: any) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
   const senderRole = String(senderRes.rows[0].role);
-  if (!['hr', 'admin', 'manager'].includes(senderRole)) {
+  if (!['hr', 'manager'].includes(senderRole)) {
     return NextResponse.json({ error: "Hanya HR dan Manager yang bisa mengirim siaran" }, { status: 403 });
   }
 

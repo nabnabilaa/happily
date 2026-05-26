@@ -7,6 +7,8 @@ import HPGlyph from "@/components/ui/HPGlyph";
 import HPCard from "@/components/ui/HPCard";
 import ScreenHeader from "@/components/ui/ScreenHeader";
 import SectionHeader from "@/components/home/SectionHeader";
+import RewardCard from "@/components/recognize/RewardCard";
+import StatBlock from "@/components/recognize/StatBlock";
 
 interface Props { openModal: (name: string, props?: any) => void; }
 
@@ -44,7 +46,39 @@ export default function HRRecognizeScreen({ openModal }: Props) {
 
   return (
     <div style={{ padding: '0 16px 120px', fontFamily: HP_FONT }}>
-      <ScreenHeader title="Rewards" subtitle="Kelola inventory reward organisasi" />
+      <ScreenHeader title="Rewards" subtitle="Kelola inventory atau tukarkan poin kamu" />
+
+      {/* Stats */}
+      <HPCard style={{ background: `linear-gradient(135deg, ${HP_TOKENS.yellowWash}, ${HP_TOKENS.lavenderSoft})`, border: 'none', marginBottom: 20 }} padding={16}>
+        <div style={{ display: 'flex', gap: 20 }}>
+          <StatBlock label="Poin kamu" value={state.points.toLocaleString()} icon="trophy" tone="yellow" />
+        </div>
+      </HPCard>
+
+      {/* Tukar Poin Section */}
+      <SectionHeader icon="trophy" label="Tukar Poin" action="Semua" onAction={() => openModal('all_rewards')} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 24 }}>
+        {rewards.slice(0, 4).map((r: any) => (
+          <div 
+            key={r.id} 
+            onClick={() => openModal('all_rewards', { selected: r.id })} 
+            className="hp-tap"
+            style={{ opacity: r.stock === 0 ? 0.6 : 1 }}
+          >
+            <RewardCard 
+              title={r.title} 
+              points={r.points} 
+              tone={r.tone as any} 
+              glyph={r.glyph}
+            />
+          </div>
+        ))}
+        {rewards.length === 0 && (
+          <div style={{ gridColumn: 'span 2', textAlign: 'center', padding: 20, color: HP_TOKENS.inkMute, border: `1.5px dashed ${HP_TOKENS.line}`, borderRadius: 20 }}>
+            Belum ada reward tersedia.
+          </div>
+        )}
+      </div>
 
       {/* Reward management */}
       <SectionHeader icon="trophy" label="Kelola Inventory Reward" action="+ Add Reward" onAction={handleAddReward} />

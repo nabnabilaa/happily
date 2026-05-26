@@ -64,4 +64,3 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Gagal menghapus departemen" }, { status: 500 });
   }
 }
-

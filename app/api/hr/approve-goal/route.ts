@@ -3,16 +3,16 @@ import { db } from "@/lib/db";
 
 export async function POST(req: Request) {
   try {
-    const { goalId, status, adminId } = await req.json();
+    const { goalId, status, requesterId } = await req.json();
 
-    if (!goalId || !status || !adminId) {
+    if (!goalId || !status || !requesterId) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     // Check if requester is manager or hr
     const roleCheck = await db.execute({
       sql: "SELECT role FROM users WHERE id = ?",
-      args: [adminId]
+      args: [requesterId]
     });
     const role = (roleCheck.rows[0] as any)?.role;
     if (role !== 'hr' && role !== 'manager') {
@@ -31,4 +31,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Failed to update goal" }, { status: 500 });
   }
 }
-

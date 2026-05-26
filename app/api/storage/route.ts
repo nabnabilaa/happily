@@ -365,7 +365,7 @@ export async function POST(request: Request) {
     // Sync Rewards (Only HR can manage global rewards)
     // Check role or userRole context
     const activeRole = user.userRole || user.role;
-    if (activeRole === 'hr' && state.rewards) {
+    if ((activeRole === 'hr') && state.rewards) {
       try {
         // Use a more robust sync: Delete and re-insert
         await db.execute("DELETE FROM rewards");
@@ -529,7 +529,7 @@ export async function POST(request: Request) {
     }
 
     // Sync Global Settings (Contacts, Work Schedule) - HR/Manager only
-    if (user.role === 'hr') {
+    if (user.role === 'hr' || user.userRole === 'hr') {
       if (state.contacts) {
         await db.execute({
           sql: `INSERT INTO global_settings (\`key\`, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = VALUES(value)`,

@@ -4,7 +4,7 @@ import { HP_TOKENS, HP_FONT } from "@/lib/constants";
 import { useHP } from "@/lib/HPContext";
 
 interface HPAvatarProps {
-  name: string;
+  name?: string | null;
   size?: number;
   color?: string;
   levelProgress?: number; // 0 to 1
@@ -22,9 +22,10 @@ export default function HPAvatar({
 }: HPAvatarProps) {
   const { user: currentUser } = useHP();
   
+  const safeName = name || "User";
+  
   // Use provided image, or if none, only use currentUser's image if this avatar is for the currentUser
   // But wait, it's safer to just use the 'image' prop if provided.
-  const safeName = name || '?';
   const avatarToDisplay = image || (safeName === currentUser?.name ? currentUser?.avatarImage : null);
 
   const initials = safeName.split(' ').filter(Boolean).map(n => n[0]).slice(0,2).join('').toUpperCase() || '?';
@@ -88,7 +89,7 @@ export default function HPAvatar({
         {avatarToDisplay ? (
           <img 
             src={avatarToDisplay} 
-            alt={name} 
+            alt={safeName} 
             style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
           />
         ) : (

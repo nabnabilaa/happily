@@ -112,7 +112,7 @@ export async function POST(request: Request) {
               const kpNotifId = "n_kpi_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
               await db.execute({
                 sql: "INSERT INTO notifications (id, user_id, title, message, type) VALUES (?, ?, ?, ?, ?)",
-                args: [kpNotifId, userId, `🏆 Bonus XP KPI: +${xpAmount}!`, desc, 'success']
+                args: [kpNotifId, userId, `🏆 Bonus Point KPI: +${xpAmount}!`, desc, 'success']
               });
             }
           }
@@ -146,7 +146,7 @@ export async function POST(request: Request) {
           const notifStreakId = "n_sm_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
           await db.execute({
             sql: "INSERT INTO notifications (id, user_id, title, message, type) VALUES (?, ?, ?, ?, ?)",
-            args: [notifStreakId, userId, "💎 Streak Sebulan Penuh!", `Selamat! Kamu aktif di semua hari kerja di bulan ${month}/${year}. Bonus +200 XP!`, 'success']
+            args: [notifStreakId, userId, "💎 Streak Sebulan Penuh!", `Selamat! Kamu aktif di semua hari kerja di bulan ${month}/${year}. Bonus +200 Point!`, 'success']
           });
         }
       } catch (e) {

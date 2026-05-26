@@ -9,15 +9,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
     }
 
-    // 1. Verify requester is an HR/Admin
-    const adminResult = await db.execute({
+    // 1. Verify requester is HR
+    const hrResult = await db.execute({
       sql: "SELECT role FROM users WHERE id = ?",
       args: [requesterId]
     });
     
-    const adminUser = adminResult.rows[0];
+    const hrUser = hrResult.rows[0];
     
-    if (!adminUser || adminUser.role !== 'hr') {
+    if (!hrUser || hrUser.role !== 'hr') {
       return NextResponse.json({ error: 'Unauthorized. HR access required.' }, { status: 403 });
     }
 
@@ -33,4 +33,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
-

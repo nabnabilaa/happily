@@ -85,6 +85,7 @@ import AppreciateModal from "@/components/modals/AppreciateModal";
 import AnnouncementModal from "@/components/modals/AnnouncementModal";
 import ChatScreen from "@/components/home/ChatScreen";
 import HPToastContainer from "@/components/ui/HPToastContainer";
+import ConfirmLogoutModal from "@/components/modals/ConfirmLogoutModal";
 
 
 // ─── Role pill badge colors ──────────────────────────────────────────────────
@@ -95,7 +96,7 @@ const ROLE_META: Record<UserRole, { label: string; color: string; bg: string; gl
 };
 
 function AppContent() {
-  const { state, loading, user, login, setUserRole, updateState } = useHP();
+  const { state, loading, user, login, logout, setUserRole, updateState } = useHP();
   const [tab, setTab] = useState('home');
   const [modal, setModal] = useState<{ name: string; props?: any } | null>(null);
   const [coachPos, setCoachPos] = useState({ x: 0, y: 0 });
@@ -200,9 +201,8 @@ function AppContent() {
     );
   }
 
-  // ── Determine Role (legacy 'admin' maps to 'hr') ─────────────────────────
-  const rawRole = (user?.role || 'employee') as string;
-  const currentRole: UserRole = rawRole === 'admin' ? 'hr' : rawRole as UserRole;
+  // ── Determine Role ────────────────────────────────────────────────────────
+  const currentRole = (user?.role || 'employee') as UserRole;
   const isManager = currentRole === 'manager';
   const isHR = currentRole === 'hr';
 
@@ -281,10 +281,10 @@ function AppContent() {
 
       {/* Main content */}
       <div className="hp-app-content">
-        {/* Role pill — top right */}
+        {/* Role pill & Logout — top right */}
         <div style={{
           position: 'absolute', top: 16, right: 16, zIndex: 40,
-          display: 'flex', alignItems: 'center', gap: 6,
+          display: 'flex', alignItems: 'center', gap: 8,
         }}>
           <div
             style={{
@@ -300,6 +300,29 @@ function AppContent() {
             <HPGlyph name={meta.glyph} size={11} color={meta.color} />
             <span>{meta.label}</span>
           </div>
+
+          <button
+            onClick={() => openModal('confirm_logout')}
+            className="hp-tap"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '6px 14px', borderRadius: 99,
+              background: HP_TOKENS.coralSoft,
+              border: `1.5px solid ${HP_TOKENS.coral}30`,
+              fontFamily: HP_FONT, fontWeight: 800, fontSize: 11,
+              color: HP_TOKENS.coral,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+              cursor: 'pointer',
+            }}
+            title="Keluar (Logout)"
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            <span>Keluar</span>
+          </button>
         </div>
 
         <div className="hp-screen-container">
@@ -387,7 +410,7 @@ function AppContent() {
       }} />}
       {modal?.name === 'appreciate'       && <AppreciateModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'announcement'     && <AnnouncementModal onClose={closeModal} />}
-
+      {modal?.name === 'confirm_logout'   && <ConfirmLogoutModal onClose={closeModal} onConfirm={logout} />}
 
       <HPToastContainer />
     </div>

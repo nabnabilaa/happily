@@ -236,7 +236,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
               transition: 'all 0.3s ease',
             }}
           >
-            {cycle >= 1 ? 'Selesai & Ambil +5 XP 🎉' : 'Selesaikan 1 Siklus Lengkap'}
+            {cycle >= 1 ? 'Selesai & Ambil +5 Point 🎉' : 'Selesaikan 1 Siklus Lengkap'}
           </button>
         </div>
       </div>

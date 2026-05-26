@@ -21,7 +21,7 @@ export async function GET(request: Request) {
       `SELECT u.id, u.name FROM users u 
        WHERE u.id NOT IN (
          SELECT a.user_id FROM attendance a WHERE DATE(a.check_in_at) = CURDATE()
-       ) AND u.role != 'admin'`
+       )`
     );
 
     if (absentRes.rows.length === 0) {

@@ -11,7 +11,7 @@ interface ProfileEditorModalProps {
 }
 
 export default function ProfileEditorModal({ onClose }: ProfileEditorModalProps) {
-  const { user, updateUser, logout, state, updateState } = useHP();
+  const { user, updateUser, state, updateState } = useHP();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(user?.avatarImage || null);
   const [name, setName] = useState(user?.name || "");
@@ -87,10 +87,6 @@ export default function ProfileEditorModal({ onClose }: ProfileEditorModalProps)
     onClose();
   };
 
-  const handleLogout = () => {
-    logout();
-    onClose();
-  };
 
   return (
     <Modal onClose={onClose} title="Profil & Pengaturan ⚙️">
@@ -206,20 +202,7 @@ export default function ProfileEditorModal({ onClose }: ProfileEditorModalProps)
           Foto profil dan nama akan muncul di Dashboard, Goals, dan leaderboard tim.
         </div>
 
-        <button 
-          onClick={handleLogout}
-          style={{
-            width: '100%', padding: '16px', borderRadius: 16, marginTop: 12,
-            background: HP_TOKENS.coralSoft, color: HP_TOKENS.coral,
-            border: `1.5px solid ${HP_TOKENS.coral}40`, 
-            fontFamily: HP_FONT, fontWeight: 800, fontSize: 15,
-            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10
-          }}
-          className="hp-tap"
-        >
-          <HPGlyph name="refresh" size={18} color={HP_TOKENS.coral} />
-          Keluar (Logout)
-        </button>
+
       </div>
     </Modal>
   );

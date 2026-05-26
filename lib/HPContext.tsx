@@ -231,6 +231,9 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setState(null);
     localStorage.removeItem("hp_user_id");
+    if (typeof window !== "undefined") {
+      window.location.href = "/";
+    }
   }, []);
 
   const fetchDashboards = useCallback(async (userId: string, role: string) => {
@@ -337,8 +340,9 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
           if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
             fetchData(user.id);
             refreshSurveys();
-            if (user.role === 'hr' || user.role === 'manager') {
-              fetchDashboards(user.id, user.role);
+            const activeRole = user.userRole || user.role;
+            if (activeRole === 'hr' || activeRole === 'manager') {
+              fetchDashboards(user.id, activeRole);
             }
             // Kirim event ke komponen lain (HRPeopleScreen, dll)
             window.dispatchEvent(new Event('hp_db_update'));

@@ -175,6 +175,19 @@
   }
 
   function updateIdentityUI() {
+    if (window.__FB) {
+      window.__FB.currentUser = flowbeeUser;
+      window.__FB.FLOWBEE_API = FLOWBEE_API;
+      window.__FB.flowbeeSyncAll = flowbeeSyncAll;
+      
+      const newRole = window.__FB.getActiveRole();
+      if (window.__FB.lastKnownRole !== newRole) {
+        if (typeof buildTabs === 'function') buildTabs();
+        if (typeof applyRoleTheme === 'function') applyRoleTheme();
+      }
+      window.__FB.lastKnownRole = newRole;
+    }
+
     const nameEl = root.querySelector('#fb-user-name');
     const roleEl = root.querySelector('#fb-user-role');
     const levelEl = root.querySelector('#fb-user-level');
@@ -190,21 +203,21 @@
       if (nameEl) nameEl.textContent = flowbeeUser.name || 'User';
       if (roleEl) {
         const role = (flowbeeUser.role || 'employee').toLowerCase();
-        const roleLabels = { employee: 'Employee', manager: 'Manager', hr: 'HR', admin: 'HR' };
-        const roleColors = { employee: '#4A90E2', manager: '#3B6FA0', hr: '#7B6BB5', admin: '#7B6BB5' };
+        const roleLabels = { employee: 'Employee', manager: 'Manager', hr: 'HR' };
+        const roleColors = { employee: '#4A90E2', manager: '#3B6FA0', hr: '#7B6BB5' };
         roleEl.textContent = roleLabels[role] || 'Employee';
         roleEl.style.background = (roleColors[role] || '#4A90E2') + '18';
         roleEl.style.color = roleColors[role] || '#4A90E2';
       }
       if (levelEl) levelEl.textContent = 'Lv.' + (flowbeeUser.level || 1) + ' • ' + (flowbeeUser.points || 0) + ' XP';
-      if (idRow) idRow.style.display = 'flex';
+      if (idRow) idRow.style.setProperty('display', 'flex', 'important');
       if (loginMsg) loginMsg.style.display = 'none';
 
       if (settingsUserCard) settingsUserCard.style.display = 'flex';
       if (settingsName) settingsName.textContent = flowbeeUser.name || 'User';
       if (settingsMeta) {
         const role = (flowbeeUser.role || 'employee').toLowerCase();
-        const roleLabels = { employee: 'Employee', manager: 'Manager', hr: 'HR', admin: 'HR' };
+        const roleLabels = { employee: 'Employee', manager: 'Manager', hr: 'HR' };
         const displayRole = roleLabels[role] || 'Employee';
         settingsMeta.textContent = displayRole + ' • Lv.' + (flowbeeUser.level || 1) + ' (' + (flowbeeUser.points || 0) + ' XP)';
       }
@@ -212,8 +225,13 @@
         const initials = flowbeeUser.name ? flowbeeUser.name.charAt(0).toUpperCase() : '👤';
         settingsAvatar.textContent = initials;
       }
+      
+      // Auto-load KPIs if not yet loaded
+      if (typeof loadKPIs === 'function' && (!availableKPIs || availableKPIs.length === 0)) {
+        loadKPIs();
+      }
     } else {
-      if (idRow) idRow.style.display = 'none';
+      if (idRow) idRow.style.setProperty('display', 'none', 'important');
       if (loginMsg) loginMsg.style.display = flowbeeUserId ? 'none' : 'block';
 
       if (settingsUserCard) settingsUserCard.style.display = 'none';
@@ -221,13 +239,15 @@
   }
 
   function applyExtensionEnabled() {
-    const buddy = root.querySelector('#fb-buddy');
-    const panel = root.querySelector('#fb-panel');
+    // Safety: skip if root or DOM not ready yet
+    if (!root || !root.querySelector) return;
+    const buddyEl = root.querySelector('#fb-buddy');
+    const panelEl = root.querySelector('#fb-panel');
     if (!extensionEnabled) {
-      if (buddy) buddy.style.display = 'none';
-      if (panel) { panel.classList.remove('open'); panelOpen = false; }
+      if (buddyEl) { buddyEl.style.display = 'none'; buddyEl.style.visibility = 'hidden'; }
+      if (panelEl) { panelEl.classList.remove('open'); panelOpen = false; }
     } else {
-      if (buddy) buddy.style.display = '';
+      if (buddyEl) { buddyEl.style.display = ''; buddyEl.style.visibility = 'visible'; buddyEl.style.opacity = '1'; }
     }
     // Update toggle UI
     const toggle = root.querySelector('#fb-settings-toggle');
@@ -277,6 +297,9 @@
       if (data.success) {
         ctx.deletedTaskIds = []
         ctx.deletedNoteIds = []
+        if (window.__FB) {
+          window.__FB.roleData = data;
+        }
       }
 
       // Update user identity from server
@@ -284,6 +307,15 @@
         flowbeeUser = data.user;
         try { chrome.storage.local.set({ flowbee_user: data.user }); } catch(e) {}
         updateIdentityUI();
+      }
+
+      // Re-render role-specific panels if active
+      if (window.__FB) {
+        if (activeTab === 'team' && typeof window.__FB.renderTeamPane === 'function') {
+          window.__FB.renderTeamPane();
+        } else if (activeTab === 'people' && typeof window.__FB.renderPeoplePane === 'function') {
+          window.__FB.renderPeoplePane();
+        }
       }
 
       // Merge: web tasks not in local get added
@@ -434,14 +466,8 @@
     } catch (e) { /* offline or server down — silent fail */ }
   }
 
-  // Auto-sync every 30 seconds
-  detectFlowbeeUser()
+  // Auto-sync every 30 seconds (detect & sync deferred until after DOM ready)
   loadKPIs()
-  setInterval(() => {
-    detectFlowbeeUser()
-    if (!availableKPIs || !availableKPIs.length) loadKPIs()
-    flowbeeSyncAll()
-  }, 30000)
 
   // ═══════════════════════════════════════════════════════════════
   // DOM ROOT
@@ -888,11 +914,11 @@
   display:flex !important; flex-direction:column !important; align-items:center !important; gap:4px !important;
   transition:all .2s cubic-bezier(.34,1.56,.64,1) !important; border-radius:0 !important;
 }
-.fb-tab svg { transition:transform .2s !important; color:#A8A096 !important; }
+.fb-tab .ti { font-size:17px !important; line-height:1 !important; transition:transform .2s !important; display:inline-block !important; }
 .fb-tab:hover { color:#1F1D1B !important; }
-.fb-tab:hover svg { transform:scale(1.1) !important; color:#86C0A9 !important; }
+.fb-tab:hover .ti { transform:scale(1.15) !important; }
 .fb-tab.act { color:#4A90E2 !important; background:#fff !important; font-weight:800 !important; box-shadow:0 2px 10px rgba(0,0,0,.05) !important; }
-.fb-tab.act svg { color:#4A90E2 !important; transform:scale(1.15) !important; }
+.fb-tab.act .ti { transform:scale(1.2) !important; }
 
 #fb-body { overflow-y:auto !important; overflow-x:hidden !important; max-height:min(520px,64vh) !important; scrollbar-width:thin; scrollbar-color:rgba(31,29,27,.15) transparent; margin-right:4px !important; padding-right:2px !important; }
 #fb-body::-webkit-scrollbar { width: 6px !important; }
@@ -2190,11 +2216,11 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
     <div id="fb-login-msg">Login di website untuk sinkronisasi data</div>
   </div>
   <div id="fb-tabs">
-    <button class="fb-tab act" data-tab="tasks"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Tugas</button>
-    <button class="fb-tab" data-tab="notes"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>Catatan</button>
-    <button class="fb-tab" data-tab="timer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Timer</button>
-    <button class="fb-tab" data-tab="alarm"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Kalender</button>
-    <button class="fb-tab" data-tab="chat"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Chat</button>
+    <button class="fb-tab act" data-tab="tasks"><span class="ti">✅</span>Tugas</button>
+    <button class="fb-tab"     data-tab="notes"><span class="ti">📝</span>Catatan</button>
+    <button class="fb-tab"     data-tab="timer"><span class="ti">⏱</span>Timer</button>
+    <button class="fb-tab"     data-tab="alarm"><span class="ti">🗓️</span>Kalender</button>
+    <button class="fb-tab"     data-tab="chat"><span class="ti">💬</span>Chat</button>
   </div>
   <div id="fb-body">
 
@@ -2492,6 +2518,27 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
         </div>
       </div>
     </div>
+
+    <!-- TEAM PANE (Manager only) -->
+    <div class="fb-pane" id="pane-team">
+      <div class="fb-note-section-lbl" style="margin-top:0">Ringkasan Tim</div>
+      <div id="fb-team-list" class="fb-list"></div>
+      <div class="fb-empty" id="fb-team-empty" style="display:flex">
+        <span class="fb-empty-ico">👥</span>
+        Belum terhubung dengan anggota tim
+      </div>
+    </div>
+
+    <!-- PEOPLE PANE (HR only) -->
+    <div class="fb-pane" id="pane-people">
+      <div class="fb-note-section-lbl" style="margin-top:0">Nadi Perusahaan</div>
+      <div id="fb-people-list" class="fb-list"></div>
+      <div class="fb-empty" id="fb-people-empty" style="display:flex">
+        <span class="fb-empty-ico">🏢</span>
+        Data karyawan belum tersedia
+      </div>
+    </div>
+
 
 
     <!-- KALENDER -->
@@ -3009,6 +3056,21 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   const toast = $('fb-toast')
   const svgWrap = $('fb-svg-wrap')
 
+  // ── Ensure buddy is visible immediately after DOM creation ──
+  if (buddy) {
+    buddy.style.display = '';
+    buddy.style.visibility = 'visible';
+    buddy.style.opacity = '1';
+  }
+
+  // ── Start user detection & sync AFTER DOM is ready ──
+  detectFlowbeeUser()
+  setInterval(() => {
+    detectFlowbeeUser()
+    if (!availableKPIs || !availableKPIs.length) loadKPIs()
+    flowbeeSyncAll()
+  }, 30000)
+
   $('fb-date').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })
 
   const da = new Date(Date.now() + 3600000); da.setSeconds(0, 0)
@@ -3280,15 +3342,82 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
     });
   }
 
-  root.querySelectorAll('.fb-tab').forEach(btn => {
-    btn.addEventListener('click', () => {
-      root.querySelectorAll('.fb-tab').forEach(b => b.classList.remove('act'))
-      root.querySelectorAll('.fb-pane').forEach(p => p.classList.remove('show'))
-      btn.classList.add('act'); activeTab = btn.dataset.tab
-      root.querySelector('#pane-' + activeTab).classList.add('show')
-      renderTab(activeTab)
-    })
-  })
+  function buildTabs() {
+    const tabsEl = root.querySelector('#fb-tabs');
+    if (!tabsEl) return;
+    
+    const config = window.__FB ? window.__FB.getRoleConfig() : {
+      tabs: [
+        { key: 'tasks', icon: '✅', label: 'Tugas' },
+        { key: 'notes', icon: '📝', label: 'Catatan' },
+        { key: 'timer', icon: '⏱',  label: 'Timer' },
+        { key: 'alarm', icon: '🗓️', label: 'Kalender' },
+        { key: 'chat',  icon: '💬', label: 'Chat' },
+      ],
+      accent: '#4A90E2',
+    };
+    
+    const availableTabKeys = config.tabs.map(t => t.key);
+    if (!availableTabKeys.includes(activeTab)) {
+      activeTab = availableTabKeys[0] || 'tasks';
+    }
+    
+    tabsEl.innerHTML = config.tabs.map(t =>
+      `<button class="fb-tab${t.key === activeTab ? ' act' : ''}" data-tab="${t.key}">` +
+        `<span class="ti">${t.icon}</span>${t.label}` +
+      `</button>`
+    ).join('');
+    
+    tabsEl.querySelectorAll('.fb-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabsEl.querySelectorAll('.fb-tab').forEach(b => b.classList.remove('act'));
+        root.querySelectorAll('.fb-pane').forEach(p => p.classList.remove('show'));
+        btn.classList.add('act');
+        activeTab = btn.dataset.tab;
+        const targetPane = root.querySelector('#pane-' + activeTab);
+        if (targetPane) targetPane.classList.add('show');
+        applyRoleTheme();
+        renderTab(activeTab);
+        if (activeTab === 'team' || activeTab === 'people') {
+          flowbeeSyncAll();
+        }
+      });
+    });
+    
+    root.querySelectorAll('.fb-pane').forEach(p => p.classList.remove('show'));
+    const activePane = root.querySelector('#pane-' + activeTab);
+    if (activePane) activePane.classList.add('show');
+  }
+
+  function applyRoleTheme() {
+    if (!window.__FB) return;
+    const activeRole = window.__FB.getActiveRole();
+    const config = window.__FB.getRoleConfig();
+    
+    const accent = root.querySelector('#fb-hdr-accent');
+    if (accent) {
+      const gradients = {
+        employee: 'linear-gradient(90deg, #4A90E2 0%, #86C0A9 55%, #ffd43b 100%)',
+        manager:  'linear-gradient(90deg, #3B6FA0 0%, #5ea8e8 50%, #86C0A9 100%)',
+        hr:       'linear-gradient(90deg, #7B6BB5 0%, #9B8FCC 50%, #C3B1E1 100%)',
+      };
+      accent.style.background = gradients[activeRole] || gradients.employee;
+    }
+    
+    root.querySelectorAll('.fb-tab.act').forEach(tab => {
+      tab.style.setProperty('color', config.accent, 'important');
+    });
+  }
+
+  // Initial build of tabs
+  buildTabs();
+  applyRoleTheme();
+
+  // Expose buildTabs and applyRoleTheme to the global namespace so they can be triggered from modules or sync updates
+  if (window.__FB) {
+    window.__FB.buildTabs = buildTabs;
+    window.__FB.applyRoleTheme = applyRoleTheme;
+  }
 
   chrome.runtime.onMessage.addListener(msg => {
     if (msg.type === 'FB_ALARM' || msg.type === 'FB_ALARM_FIRED') {
@@ -3311,7 +3440,10 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
     }
     if (msg.type === 'FB_TOGGLE') {
       panelOpen = !panelOpen; panel.classList.toggle('open', panelOpen)
-      if (panelOpen) renderAll()
+      if (panelOpen) {
+        renderAll();
+        flowbeeSyncAll();
+      }
     }
   })
 
@@ -4920,12 +5052,22 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   // ═══════════════════════════════════════════════════════════════
   // RENDER HELPERS
   // ═══════════════════════════════════════════════════════════════
-  function renderAll() { renderTasks(); renderNotes(); renderAlarms(); if (activeTab === 'chat') renderChat(); }
+  function renderAll() { 
+    renderTasks(); 
+    renderNotes(); 
+    renderAlarms(); 
+    if (activeTab === 'chat') renderChat(); 
+    if (activeTab === 'team' && typeof window.__FB?.renderTeamPane === 'function') window.__FB.renderTeamPane();
+    if (activeTab === 'people' && typeof window.__FB?.renderPeoplePane === 'function') window.__FB.renderPeoplePane();
+  }
+  
   function renderTab(t) {
     if (t === 'tasks') renderTasks()
     if (t === 'notes') renderNotes()
     if (t === 'alarm') { renderAlarms(); renderMiniCalendar() }
     if (t === 'chat') renderChat()
+    if (t === 'team' && typeof window.__FB?.renderTeamPane === 'function') window.__FB.renderTeamPane()
+    if (t === 'people' && typeof window.__FB?.renderPeoplePane === 'function') window.__FB.renderPeoplePane()
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -4940,10 +5082,24 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
     if (dateInp) dateInp.value = today();
 
     // Restore saved position or default bottom-right
-    chrome.storage.local.get('fb3', r => {
+    chrome.storage.local.get(['fb3', 'fb_ext_enabled'], r => {
       if (r.fb3?.pos) applyPos(r.fb3.pos.ax, r.fb3.pos.ay)
       else applyPos(window.innerWidth - 28, window.innerHeight - 28)
+
+      // Ensure extension is enabled by default if never set
+      if (typeof r.fb_ext_enabled === 'boolean') {
+        extensionEnabled = r.fb_ext_enabled;
+      } else {
+        extensionEnabled = true;
+      }
       applyExtensionEnabled()
+
+      // Final safety: ensure buddy is visible if enabled
+      if (extensionEnabled && buddy) {
+        buddy.style.display = '';
+        buddy.style.visibility = 'visible';
+        buddy.style.opacity = '1';
+      }
     })
 
     // State eval loop — 4s interval for responsive state transitions
