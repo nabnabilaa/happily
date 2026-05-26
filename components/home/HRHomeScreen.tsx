@@ -9,12 +9,9 @@ import HPAvatar from "@/components/ui/HPAvatar";
 import SectionHeader from "@/components/home/SectionHeader";
 import BlobBackground from "@/components/home/BlobBackground";
 import SurveySection from "@/components/home/SurveySection";
-<<<<<<< HEAD
 import BurnoutAlertCard from "@/components/home/BurnoutAlertCard";
 import HRWellbeingDashboard from "@/components/home/HRWellbeingDashboard";
-=======
 import TaskHarianWidget from "@/components/home/TaskHarianWidget";
->>>>>>> 6d8a3b10a70148a8a1e3a62c8393ef5779417076
 
 
 interface Props { openModal: (name: string, props?: any) => void; }

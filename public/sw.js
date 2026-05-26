@@ -34,8 +34,10 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request);
+    fetch(event.request).catch(async () => {
+      const match = await caches.match(event.request);
+      if (match) return match;
+      return new Response("Network error", { status: 503, statusText: "Service Unavailable" });
     })
   );
 });

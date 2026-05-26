@@ -17,6 +17,7 @@ import ErrorBoundary from "@/components/ui/ErrorBoundary";
 // ── Shared Screens ──
 import CalendarScreen from "@/components/home/CalendarScreen";
 import NotesScreen from "@/components/notes/NotesScreen";
+import ChatScreen from "@/components/home/ChatScreen";
 
 // ── Employee Screens ──
 import HomeScreen from "@/components/home/HomeScreen";
@@ -83,7 +84,6 @@ import StatusInputModal from "@/components/modals/StatusInputModal";
 import NewChatModal from "@/components/modals/NewChatModal";
 import AppreciateModal from "@/components/modals/AppreciateModal";
 import AnnouncementModal from "@/components/modals/AnnouncementModal";
-import ChatScreen from "@/components/home/ChatScreen";
 import HPToastContainer from "@/components/ui/HPToastContainer";
 import ConfirmLogoutModal from "@/components/modals/ConfirmLogoutModal";
 

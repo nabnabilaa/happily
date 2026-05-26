@@ -394,8 +394,16 @@ export async function POST(request: Request) {
     // Sync Daily Priorities — Use UPSERT to avoid duplicates
     if (state.priorities) {
       try {
+        // Filter out junk/invalid entries before syncing
+        const BLOCKED_TITLES = ['hai ndbdlijd n debuj', 'jecn wejencj qndjkdn'];
+        const cleanPriorities = state.priorities.filter((p: any) => {
+          if (!p.title || p.title.trim().length < 2) return false;
+          if (BLOCKED_TITLES.includes(p.title.toLowerCase().trim())) return false;
+          return true;
+        });
+
         // 1. Get IDs of tasks in current state for today
-        const stateTaskIds = state.priorities.map((p: any) => String(p.id));
+        const stateTaskIds = cleanPriorities.map((p: any) => String(p.id));
         
         // 2. Delete tasks from DB that are for today or active but NOT in current state
         if (stateTaskIds.length > 0) {
@@ -408,8 +416,14 @@ export async function POST(request: Request) {
           });
         }
 
+        // Also always purge blocked titles regardless
+        await db.execute({
+          sql: `DELETE FROM daily_priorities WHERE user_id = ? AND LOWER(TRIM(title)) IN (${BLOCKED_TITLES.map(() => '?').join(',')})`,
+          args: [userId, ...BLOCKED_TITLES]
+        });
+
         // 3. Upsert current tasks
-        for (const p of state.priorities) {
+        for (const p of cleanPriorities) {
           await db.execute({
             sql: `INSERT INTO daily_priorities (id, user_id, title, description, target_date, goal_title, goal_id, kpi_id, energy_level, est_time, is_done, is_verified, tone, proof_link, proof_notes, metric_value, time_tracked, timer_started_at, created_at) 
                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
