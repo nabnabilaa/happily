@@ -571,6 +571,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
               rank: user.rank,
               streak: user.streak,
               avatarImage: user.avatarImage,
+              department: user.department,
             }
           }, "*");
         } else {
@@ -604,6 +605,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
           rank: user.rank,
           streak: user.streak,
           avatarImage: user.avatarImage,
+          department: user.department,
         }
       }, "*");
     } else {
