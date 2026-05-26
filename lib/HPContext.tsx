@@ -48,6 +48,7 @@ interface HPState {
   energyOpts?: any[];
   companyValues?: string[];
   coachSuggestions?: string[];
+  overtimeStatus?: string;
 }
 
 export type UserRole = 'hr' | 'manager' | 'employee';
