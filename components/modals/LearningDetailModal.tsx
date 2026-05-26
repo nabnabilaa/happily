@@ -126,7 +126,7 @@ export default function LearningDetailModal({ onClose }: LearningDetailModalProp
     if (isQuizScreen) {
       return (
         <div style={{ marginTop: 12 }}>
-          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.purple, fontWeight: 800 }}>KUIS PEMAHAMAN</div>
+          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 800 }}>KUIS PEMAHAMAN</div>
           <div style={{ ...HP_TEXT.h, fontSize: 20, marginTop: 8 }}>{moduleData.quiz.question}</div>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 24 }}>
@@ -136,8 +136,8 @@ export default function LearningDetailModal({ onClose }: LearningDetailModalProp
                 onClick={() => setSelectedAnswer(idx)}
                 style={{
                   padding: 16, borderRadius: 12, textAlign: 'left',
-                  border: selectedAnswer === idx ? `2px solid ${HP_TOKENS.purple}` : `1.5px solid ${HP_TOKENS.line}`,
-                  background: selectedAnswer === idx ? `${HP_TOKENS.purple}10` : '#fff',
+                  border: selectedAnswer === idx ? `2px solid ${HP_TOKENS.blue}` : `1.5px solid ${HP_TOKENS.line}`,
+                  background: selectedAnswer === idx ? `${HP_TOKENS.blue}10` : '#fff',
                   cursor: 'pointer', fontFamily: HP_FONT, fontSize: 15, color: HP_TOKENS.ink,
                   transition: 'all 0.2s'
                 }}
@@ -149,7 +149,7 @@ export default function LearningDetailModal({ onClose }: LearningDetailModalProp
 
           <button onClick={handleQuizSubmit} disabled={selectedAnswer === null} style={{
             width: '100%', marginTop: 32, padding: '16px', borderRadius: 99,
-            background: selectedAnswer !== null ? HP_TOKENS.purple : HP_TOKENS.line, 
+            background: selectedAnswer !== null ? HP_TOKENS.blue : HP_TOKENS.line, 
             color: selectedAnswer !== null ? '#fff' : HP_TOKENS.inkMute, border: 'none',
             fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, 
             cursor: selectedAnswer !== null ? 'pointer' : 'not-allowed',

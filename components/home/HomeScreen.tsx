@@ -330,7 +330,7 @@ export default function HomeScreen({ openModal }: any) {
     setConfetti(true);
     setCelebrate(true);
     setTimeout(() => setConfetti(false), 2000);
-    awardXP('training_graduated', `Tamat Training: ${name}`, 500); // 500 XP for finishing a long training!
+    awardXP('training_graduated', `Tamat Training: ${name}`);
 
     updateState((s: any) => {
       const hIndex = s.habits.findIndex((h: any) => h.name === name);

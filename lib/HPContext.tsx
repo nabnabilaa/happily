@@ -65,6 +65,7 @@ interface HPUser {
   rank: string;
   userRole?: UserRole | null;
   avatarImage?: string;
+  department?: string;
 }
 
 interface HPContextType {
