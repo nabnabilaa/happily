@@ -133,6 +133,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
   const userRef = useRef<HPUser | null>(null);
   const skipNextSyncRef = useRef(false);
   const lastSyncedPayloadRef = useRef<string | null>(null);
+  const loginInProgressRef = useRef(false); // blocks sync during user transitions
 
   // 3. CALLBACKS
   const updateState = useCallback((update: Partial<HPState> | ((prev: HPState) => HPState)) => {
@@ -212,10 +213,15 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
       console.error("Failed to fetch state:", error);
     } finally {
       setLoading(false);
+      loginInProgressRef.current = false; // login transition complete, safe to sync again
     }
   }, []);
 
   const login = useCallback((userData: any) => {
+    // Block auto-sync during the transition to prevent stale data overwriting the new user's DB
+    loginInProgressRef.current = true;
+    if (syncTimerRef.current) clearTimeout(syncTimerRef.current); // cancel any pending sync from old user
+    skipNextSyncRef.current = true;
     setUser(userData);
     localStorage.setItem("hp_user_id", userData.id);
     fetchData(userData.id);
@@ -321,7 +327,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!user?.id) return;
     
-    const eventSource = new EventSource('/api/events');
+    const eventSource = new EventSource(`/api/events?userId=${user.id}`);
     
     eventSource.onmessage = (event) => {
       try {
@@ -337,6 +343,27 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
             // Kirim event ke komponen lain (HRPeopleScreen, dll)
             window.dispatchEvent(new Event('hp_db_update'));
           }
+        } else if (data.type === 'new_message') {
+          // If targeted to a specific user, ignore if not us
+          if (data.targetUserId && data.targetUserId !== user.id) return;
+
+          // Cross-platform notification trigger
+          if (typeof window !== "undefined" && "Notification" in window) {
+            if (Notification.permission === "granted") {
+              new Notification(data.title || "Pesan Baru", {
+                body: data.text || "Kamu mendapat pesan baru.",
+                icon: "/icon-192.png"
+              });
+            } else if (Notification.permission !== "denied") {
+              Notification.requestPermission().then(permission => {
+                if (permission === "granted") {
+                  new Notification(data.title || "Pesan Baru", { body: data.text });
+                }
+              });
+            }
+          }
+          // Internal UI Notification
+          notify(data.title || "Pesan Baru", data.text, "info");
         }
       } catch (e) {
         console.error("SSE parse error", e);
@@ -408,9 +435,14 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!loading && user && state) {
+      // CRITICAL: Never sync during a login transition — state belongs to old user!
+      if (loginInProgressRef.current) {
+        return;
+      }
+
       if (skipNextSyncRef.current) {
         skipNextSyncRef.current = false;
-        // Don't return! Just because we skip this particular trigger doesn't mean we shouldn't save it as the last seen payload if it came from the server, but let's let the payload check handle the real skipping.
+        return; // Actually skip this sync cycle (data just came from server)
       }
       
       // Store latest data for sync
@@ -434,9 +466,12 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       
-      // Debounce: wait 500ms after last state change before syncing
+      // Debounce: wait 1500ms after last state change before syncing (longer to avoid rapid login transitions)
       if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
       syncTimerRef.current = setTimeout(async () => {
+        // Double-check: still not in a login transition when the timer fires
+        if (loginInProgressRef.current) return;
+
         const data = latestSyncRef.current;
         if (!data) return;
         
@@ -470,7 +505,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         } finally {
           setSyncing(false);
         }
-      }, 500);
+      }, 1500);
     }
     return () => {
       if (syncTimerRef.current) clearTimeout(syncTimerRef.current);

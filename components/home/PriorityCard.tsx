@@ -8,9 +8,10 @@ import HPGlyph from "@/components/ui/HPGlyph";
 interface PriorityCardProps {
   p: any;
   onToggle: () => void;
+  openModal?: (name: string, props?: any) => void;
 }
 
-export default function PriorityCard({ p, onToggle }: PriorityCardProps) {
+export default function PriorityCard({ p, onToggle, openModal }: PriorityCardProps) {
   const { state, updateState } = useHP();
   const [showPoints, setShowPoints] = useState(false);
   const [showFocusToast, setShowFocusToast] = useState(false);
@@ -354,8 +355,7 @@ export default function PriorityCard({ p, onToggle }: PriorityCardProps) {
       <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
         {!p.done && (
           <>
-            {/* Play/Pause Timer Button */}
-            <button 
+             <button 
               onClick={toggleTimer}
               className="hp-tap"
               title={p.timer_started_at ? "Jeda Pekerjaan" : "Mulai Pekerjaan"}

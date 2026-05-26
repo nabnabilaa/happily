@@ -27,14 +27,16 @@ export default function AllRewardsModal({ onClose }: AllRewardsModalProps) {
 
   const rewards = state?.rewards || [];
   const history = state?.rewardHistory || [];
-  const userCoins = state?.points ?? 0;
+  const userCoins = state?.coins ?? state?.points ?? 0;
 
   const filtered = activeCategory === "Semua"
     ? rewards
     : rewards.filter(r => r.category === activeCategory);
 
-  const handleRedeem = (reward: any) => {
-    if (!state) return;
+  const [redeeming, setRedeeming] = useState(false);
+
+  const handleRedeem = async (reward: any) => {
+    if (!state || !user) return;
     if (reward.stock <= 0) {
       alert(`Maaf, stok "${reward.title}" sedang habis. 🌱`);
       return;
@@ -43,20 +45,50 @@ export default function AllRewardsModal({ onClose }: AllRewardsModalProps) {
       alert(`Poin tidak cukup! Kamu butuh ${reward.points} poin, tapi baru punya ${state.points} poin. 🌱`);
       return;
     }
+    
     if (confirm(`Tukar ${reward.points} poin dengan "${reward.title}"?`)) {
-      updateState((s: any) => ({
-        ...s,
-        points: s.points - reward.points,
-        coins: s.points - reward.points,
-        rewards: s.rewards.map((r: any) => r.id === reward.id ? { ...r, stock: r.stock - 1 } : r),
-        rewardHistory: [
-          ...history,
-          { id: Date.now(), title: reward.title, points: reward.points, date: new Date().toLocaleDateString('id-ID'), glyph: reward.glyph || 'trophy' }
-        ]
-      }));
-      updateUser({ points: (user?.points || 0) - reward.points, coins: (user?.points || 0) - reward.points });
-      
-      alert(`Berhasil! "${reward.title}" telah ditambahkan ke riwayat reward kamu. 🎉`);
+      setRedeeming(true);
+      try {
+        const res = await fetch('/api/rewards/redeem', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            userName: user.name,
+            rewardId: reward.id,
+            rewardTitle: reward.title,
+            rewardPoints: reward.points,
+            rewardType: reward.category
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.error || 'Gagal menukar reward');
+          setRedeeming(false);
+          return;
+        }
+
+        // Update local state to reflect the change
+        updateState((s: any) => ({
+          ...s,
+          points: data.pointsRemaining,
+          coins: data.pointsRemaining,
+          rewards: s.rewards.map((r: any) => r.id === reward.id ? { ...r, stock: r.stock - 1 } : r),
+          rewardHistory: [
+            ...history,
+            { id: Date.now(), title: reward.title, points: reward.points, date: new Date().toLocaleDateString('id-ID'), glyph: reward.glyph || 'trophy' }
+          ]
+        }));
+        updateUser({ points: data.pointsRemaining, coins: data.pointsRemaining });
+        
+        alert(`Berhasil! "${reward.title}" telah ditambahkan ke riwayat reward kamu. HR akan segera memprosesnya. 🎉`);
+      } catch (e) {
+        console.error(e);
+        alert('Gagal menghubungi server.');
+      } finally {
+        setRedeeming(false);
+      }
     }
   };
 
@@ -173,18 +205,18 @@ export default function AllRewardsModal({ onClose }: AllRewardsModalProps) {
 
                     <button
                       onClick={() => handleRedeem(reward)}
-                      disabled={!canAfford || reward.stock <= 0}
+                      disabled={!canAfford || reward.stock <= 0 || redeeming}
                       style={{
                         padding: '10px 14px', borderRadius: 14, border: 'none',
                         background: (canAfford && reward.stock > 0) ? cfg.bg : HP_TOKENS.lineSoft,
                         color: (canAfford && reward.stock > 0) ? '#fff' : HP_TOKENS.inkFade,
                         fontFamily: HP_FONT, fontWeight: 800, fontSize: 12,
-                        cursor: (!canAfford || reward.stock <= 0) ? 'default' : 'pointer',
+                        cursor: (!canAfford || reward.stock <= 0 || redeeming) ? 'default' : 'pointer',
                         transition: 'all 0.2s',
                         whiteSpace: 'nowrap'
                       }}
                     >
-                      {reward.stock <= 0 ? 'Stok Habis' : 'Tukar'}
+                      {reward.stock <= 0 ? 'Stok Habis' : redeeming ? 'Memproses...' : 'Tukar'}
                     </button>
                   </div>
                 );

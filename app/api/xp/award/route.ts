@@ -42,6 +42,7 @@ const XP_VALUES: Record<string, number> = {
   check_in: 10,                // Legacy fallback
   goal_complete: 150,          // Legacy fallback → maps to kpi_achieved
   learning_complete: 100,      // Match Guide
+  training_graduated: 500,     // For fully completing a long term daily training habit
 };
 
 // Daily cap for task-related XP (anti-abuse: max 3 tasks completed per day)
@@ -169,9 +170,9 @@ async function awardXPInternal(
     console.warn("Failed to log XP transaction:", e);
   }
 
-  // 2. Update User Points & Coins
+  // 2. Update User Points & Coins (coins=coins+amount, points=points+amount)
   await db.execute({
-    sql: "UPDATE users SET points = points + ?, coins = points + ? WHERE id = ?",
+    sql: "UPDATE users SET points = points + ?, coins = coins + ? WHERE id = ?",
     args: [amount, amount, recipientId]
   });
 
@@ -230,6 +231,12 @@ async function awardXPInternal(
   const { level: newLevel, rank: newRank } = calculateLevelAndRank(newPoints);
   if (newLevel > oldLevel) {
     try {
+      // FIX GHOST BUG: Save new level and rank to the database
+      await db.execute({
+        sql: "UPDATE users SET level = ?, `rank` = ? WHERE id = ?",
+        args: [newLevel, newRank, recipientId]
+      });
+
       await db.execute({
         sql: "INSERT INTO notifications (id, user_id, title, message, type) VALUES (?, ?, ?, ?, ?)",
         args: [
@@ -287,6 +294,7 @@ const LOGBOOK_META: Record<string, { title: string; type: string; emoji: string 
   habit_complete: { title: 'Kebiasaan selesai', type: 'activity', emoji: '🌱' },
   daily_reflection: { title: 'Refleksi harian', type: 'mood', emoji: '📝' },
   focus_session: { title: 'Sesi fokus selesai', type: 'activity', emoji: '⏱️' },
+  training_graduated: { title: 'Lulus Training', type: 'activity', emoji: '🎓' },
 };
 
 // ── Spec v2 Level System ──────────────────────────────────────

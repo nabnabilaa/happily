@@ -82,6 +82,37 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
     }
   };
 
+  const handleRejectTask = async (taskId: string, goalId: string, action: 'reject' | 'revision') => {
+    try {
+      const res = await fetch("/api/manager/reject-task", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId, managerId: user.id, action })
+      });
+
+      if (!res.ok) throw new Error("Failed to process");
+
+      // Update local state: remove from pending verification or mark as rejected/revision
+      updateState((s: any) => {
+        const newTeamTasks = s.managerData?.teamTasks?.map((t: any) => 
+          t.id === taskId ? { ...t, verified: false, done: false, status: action } : t
+        ) || [];
+        
+        return {
+          ...s,
+          managerData: {
+            ...s.managerData,
+            teamTasks: newTeamTasks
+          }
+        };
+      });
+      notify('Berhasil', action === 'reject' ? 'Task ditolak' : 'Task dikembalikan untuk direvisi', 'info');
+    } catch (e) {
+      console.error(e);
+      alert("Gagal memproses tugas.");
+    }
+  };
+
   const handleDeleteGoal = async (goalId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!confirm("Hapus KPI ini?")) return;
@@ -410,17 +441,39 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
                                     <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.yellow, fontWeight: 900, fontSize: 8 }}>WAITING ACC</div>
                                   </div>
                                 </div>
-                                <button 
-                                  onClick={(e) => { e.stopPropagation(); handleVerifyTask(t.id, g.id); }}
-                                  className="hp-tap"
-                                  style={{
-                                    padding: '8px 16px', borderRadius: 10, border: 'none',
-                                    background: HP_TOKENS.sage, color: '#fff', fontSize: 11, fontWeight: 900, cursor: 'pointer',
-                                    boxShadow: `0 4px 12px ${HP_TOKENS.sage}40`
-                                  }}
-                                >
-                                  ACC
-                                </button>
+                                <div style={{ display: 'flex', gap: 6 }}>
+                                  <button 
+                                    onClick={(e) => { e.stopPropagation(); handleVerifyTask(t.id, g.id); }}
+                                    className="hp-tap"
+                                    style={{
+                                      padding: '8px 16px', borderRadius: 10, border: 'none',
+                                      background: HP_TOKENS.sage, color: '#fff', fontSize: 11, fontWeight: 900, cursor: 'pointer',
+                                      boxShadow: `0 4px 12px ${HP_TOKENS.sage}40`
+                                    }}
+                                  >
+                                    ACC
+                                  </button>
+                                  <button 
+                                    onClick={(e) => { e.stopPropagation(); handleRejectTask(t.id, g.id, 'revision'); }}
+                                    className="hp-tap"
+                                    style={{
+                                      padding: '8px 12px', borderRadius: 10, border: `1px solid ${HP_TOKENS.yellow}`,
+                                      background: '#fff', color: '#8A6814', fontSize: 11, fontWeight: 900, cursor: 'pointer',
+                                    }}
+                                  >
+                                    Revisi
+                                  </button>
+                                  <button 
+                                    onClick={(e) => { e.stopPropagation(); handleRejectTask(t.id, g.id, 'reject'); }}
+                                    className="hp-tap"
+                                    style={{
+                                      padding: '8px 12px', borderRadius: 10, border: `1px solid ${HP_TOKENS.coral}`,
+                                      background: '#fff', color: HP_TOKENS.coral, fontSize: 11, fontWeight: 900, cursor: 'pointer',
+                                    }}
+                                  >
+                                    Tolak
+                                  </button>
+                                </div>
                               </div>
                             ))}
                           </div>

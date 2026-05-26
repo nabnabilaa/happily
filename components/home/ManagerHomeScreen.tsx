@@ -146,12 +146,12 @@ export default function ManagerHomeScreen({ openModal }: Props) {
           🎯 Kelola KPI Bulanan
         </button>
 
-        {/* Action Row: Weekly Review + Monthly Report */}
-        <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+        {/* Action Row: Management & Communication */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 10 }}>
           <button
             onClick={() => openModal('weekly_review')}
             style={{
-              flex: 1, padding: '12px', borderRadius: 16,
+              padding: '12px', borderRadius: 16,
               background: HP_TOKENS.card, border: `1.5px solid ${HP_TOKENS.line}`,
               fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
               color: HP_TOKENS.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
@@ -162,13 +162,35 @@ export default function ManagerHomeScreen({ openModal }: Props) {
           <button
             onClick={() => openModal('monthly_report')}
             style={{
-              flex: 1, padding: '12px', borderRadius: 16,
+              padding: '12px', borderRadius: 16,
               background: HP_TOKENS.card, border: `1.5px solid ${HP_TOKENS.line}`,
               fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
               color: HP_TOKENS.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             }} className="hp-tap"
           >
             📊 Laporan Bulanan
+          </button>
+          <button
+            onClick={() => openModal('appreciate')}
+            style={{
+              padding: '12px', borderRadius: 16,
+              background: HP_TOKENS.blueWash, border: `1.5px solid ${HP_TOKENS.blueSoft}`,
+              fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
+              color: HP_TOKENS.blue, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            }} className="hp-tap"
+          >
+            🌟 Beri Kudos
+          </button>
+          <button
+            onClick={() => openModal('announcement')}
+            style={{
+              padding: '12px', borderRadius: 16,
+              background: HP_TOKENS.sageWash, border: `1.5px solid ${HP_TOKENS.sageSoft}`,
+              fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
+              color: HP_TOKENS.sage, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            }} className="hp-tap"
+          >
+            📢 Pengumuman
           </button>
         </div>
 

@@ -24,11 +24,12 @@ export default function HPAvatar({
   
   // Use provided image, or if none, only use currentUser's image if this avatar is for the currentUser
   // But wait, it's safer to just use the 'image' prop if provided.
-  const avatarToDisplay = image || (name === currentUser?.name ? currentUser?.avatarImage : null);
+  const safeName = name || '?';
+  const avatarToDisplay = image || (safeName === currentUser?.name ? currentUser?.avatarImage : null);
 
-  const initials = name.split(' ').map(n => n[0]).slice(0,2).join('').toUpperCase();
+  const initials = safeName.split(' ').filter(Boolean).map(n => n[0]).slice(0,2).join('').toUpperCase() || '?';
   const palette = [HP_TOKENS.sage, HP_TOKENS.blue, HP_TOKENS.coral, HP_TOKENS.lavender, '#B5884A'];
-  const bg = color || palette[name.charCodeAt(0) % palette.length];
+  const bg = color || palette[safeName.charCodeAt(0) % palette.length];
   
   const ringSize = size + 8;
   const stroke = 3;

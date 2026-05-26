@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { sendEmail } from "@/lib/emailService";
 
 function getCorsHeaders(request: Request) {
   const origin = request.headers.get("origin") || "*";
@@ -114,6 +115,26 @@ export async function PUT(request: Request) {
         new Date().toISOString()
       ]
     });
+
+    // ── TRIGGER MOCK EMAIL ──
+    try {
+      // Get user email
+      const userRes = await db.execute({
+        sql: "SELECT email, name FROM users WHERE id = ?",
+        args: [userId]
+      });
+      if (userRes.rows.length > 0) {
+        const user = userRes.rows[0];
+        // Don't await sendEmail so it doesn't block the API response
+        sendEmail({
+          to: user.email as string,
+          subject: title,
+          html: `<p>Halo ${user.name},</p><p>Kamu mendapat notifikasi baru di Flowbee:</p><h3>${title}</h3><p>${message || ''}</p>`
+        });
+      }
+    } catch (e) {
+      console.warn("Mock email failed to trigger:", e);
+    }
 
     return NextResponse.json({ success: true }, { headers: getCorsHeaders(request) });
   } catch (error: any) {

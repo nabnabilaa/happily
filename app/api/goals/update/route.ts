@@ -9,7 +9,7 @@ export async function POST(request: Request) {
 
     // 0. Fetch Goal info before update for notification dispatching
     const goalRes = await db.execute({
-      sql: "SELECT owner_id, title, assigned_by_id FROM goals WHERE id = ?",
+      sql: "SELECT owner_id, title, assigned_by_id, progress, is_kpi FROM goals WHERE id = ?",
       args: [String(goalId)]
     });
     const goalRow = goalRes.rows[0];
@@ -35,11 +35,12 @@ export async function POST(request: Request) {
       args
     });
 
-    // 1. Dispatch Notification on status changes
+    // 1. Dispatch Notification & Award XP on status changes
     if (updates.status !== undefined && goalRow) {
       const employeeId = goalRow.owner_id;
       const goalTitle = goalRow.title;
       const managerId = goalRow.assigned_by_id;
+      const currentProgress = updates.progress !== undefined ? updates.progress : goalRow.progress;
       
       let managerName = "Manager";
       if (managerId) {
@@ -53,7 +54,29 @@ export async function POST(request: Request) {
       }
 
       let triggerKey = "";
-      if (updates.status === 'approved') triggerKey = 'task_approved';
+      if (updates.status === 'approved') {
+        triggerKey = 'task_approved';
+        
+        // Award XP if it's a KPI and progress is >= 100
+        if (goalRow.is_kpi && currentProgress >= 100) {
+          try {
+            const origin = new URL(request.url).origin;
+            const actionType = currentProgress > 100 ? 'kpi_exceeded' : 'kpi_achieved';
+            await fetch(`${origin}/api/xp/award`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: managerId,
+                targetUserId: employeeId,
+                actionType: actionType,
+                description: `KPI Approved: ${goalTitle}`
+              })
+            });
+          } catch (e) {
+            console.warn("Failed to award KPI XP:", e);
+          }
+        }
+      }
       else if (updates.status === 'revision') triggerKey = 'task_revision';
       else if (updates.status === 'rejected') triggerKey = 'task_rejected';
 

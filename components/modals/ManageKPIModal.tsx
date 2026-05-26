@@ -56,7 +56,7 @@ export default function ManageKPIModal({ onClose }: ManageKPIModalProps) {
 
   const fetchKPIs = async () => {
     try {
-      const res = await fetch(`/api/kpi?userId=${user?.id}&role=manager&month=${month}&year=${year}`);
+      const res = await fetch(`/api/kpi?userId=${user?.id}&role=${user?.role}&month=${month}&year=${year}`);
       const data = await res.json();
       setKpis(data.kpis || []);
     } catch (e) { console.error(e); }

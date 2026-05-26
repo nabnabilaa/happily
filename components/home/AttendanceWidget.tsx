@@ -17,6 +17,9 @@ export default function AttendanceWidget({ openModal }: AttendanceWidgetProps) {
 
   useEffect(() => {
     fetchStatus();
+    const handleUpdate = () => fetchStatus();
+    window.addEventListener('hp_db_update', handleUpdate);
+    return () => window.removeEventListener('hp_db_update', handleUpdate);
   }, []);
 
   const fetchStatus = async () => {
@@ -95,7 +98,7 @@ export default function AttendanceWidget({ openModal }: AttendanceWidgetProps) {
           
           {/* Clock-out button */}
           <button 
-            onClick={() => openModal('attendance_scanner')}
+            onClick={() => openModal('reflect')}
             className="hp-tap"
             style={{
               padding: '14px 20px', border: 'none', cursor: 'pointer',

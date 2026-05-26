@@ -82,6 +82,8 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
 
       updateState((s: any) => ({
         ...s,
+        mood: mood,
+        moods: [...(s.moods || []), { time: new Date().toISOString(), mood: mood }],
         logbook: [
           {
             id: Date.now(),
@@ -95,6 +97,8 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
           ...(s.logbook || [])
         ]
       }));
+      
+      window.dispatchEvent(new Event('hp_db_update'));
     } catch (e) {
       console.error(e);
     }

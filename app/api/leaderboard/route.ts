@@ -4,8 +4,16 @@ import { db } from "@/lib/db";
 export async function GET() {
   try {
     const res = await db.execute(`
-      SELECT id, name, points, level, rank, avatar_image, avatar_config_json 
-      FROM users 
+      SELECT u.id, u.name, 
+             COALESCE(SUM(x.amount), 0) as points, 
+             u.level, u.rank, u.avatar_image, u.avatar_config_json 
+      FROM users u
+      LEFT JOIN xp_transactions x 
+        ON u.id = x.user_id 
+        AND x.action_type != 'reward_redeem' 
+        AND MONTH(x.created_at) = MONTH(CURRENT_DATE())
+        AND YEAR(x.created_at) = YEAR(CURRENT_DATE())
+      GROUP BY u.id, u.name, u.level, u.rank, u.avatar_image, u.avatar_config_json
       ORDER BY points DESC 
       LIMIT 10
     `);

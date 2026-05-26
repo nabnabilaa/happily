@@ -41,15 +41,18 @@ export async function POST(request: Request) {
       args: [kudosId, senderId, receiverId, valueTag || null, message]
     });
 
-    // Award XP to RECEIVER only (pengirim 0 XP = anti-spam)
+    // Award XP to RECEIVER only using absolute URL fetch to trigger the central xp/award endpoint logic
     try {
-      await db.execute({
-        sql: "INSERT INTO xp_transactions (id, user_id, amount, action_type, description) VALUES (?, ?, ?, ?, ?)",
-        args: ["tx_" + Date.now().toString(36), receiverId, 20, "apresiasi_received", `Apresiasi dari ${senderName || 'rekan'}`]
-      });
-      await db.execute({
-        sql: "UPDATE users SET points = points + 20, coins = points + 20 WHERE id = ?",
-        args: [receiverId]
+      const proto = request.headers.get('x-forwarded-proto') || 'http';
+      const host = request.headers.get('host') || 'localhost:3000';
+      
+      await fetch(`${proto}://${host}/api/xp/award`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: receiverId,
+          action: 'apresiasi_received'
+        })
       });
     } catch (e) {
       console.warn("Failed to award apresiasi XP:", e);

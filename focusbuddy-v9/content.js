@@ -4969,7 +4969,8 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       if (event.data?.type === 'FLOWBEE_SET_FOCUS') {
         const { goal } = event.data;
         timerLabel = goal;
-        $('fb-tm-lbl').value = goal;
+        const lblInput = $('fb-t-label-val') || $('fb-tm-lbl');
+        if (lblInput) lblInput.value = goal;
         forceState('FOCUS', 5000);
       }
       if (event.data?.type === 'FLOWBEE_WEBSITE_USER') {

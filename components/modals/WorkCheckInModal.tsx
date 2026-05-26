@@ -22,6 +22,7 @@ export default function WorkCheckInModal({ onClose }: WorkCheckInModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [notes, setNotes] = useState("");
   const [showNotes, setShowNotes] = useState(false);
+  const [selectedMood, setSelectedMood] = useState(state?.mood || 'neutral');
 
   if (!state) return null;
 
@@ -170,12 +171,30 @@ Jawab dengan tone yang asik dan menyemangati.`,
     };
     updateState((s: any) => ({
       ...s,
+      mood: selectedMood,
+      moods: [...(s.moods || []), { time: new Date().toISOString(), mood: selectedMood }],
       logbook: [log, ...(s.logbook || [])]
     }));
     
     setShowNotes(false);
     setNotes("");
-    alert("Realisasi berhasil disimpan ke Logbook! ✨");
+    alert("Realisasi & Mood berhasil disimpan! ✨");
+  };
+
+  const getMoodColor = (mood: string) => {
+    if (mood === 'joy') return HP_TOKENS.sage;
+    if (mood === 'calm') return HP_TOKENS.blue;
+    if (mood === 'tired') return HP_TOKENS.coral;
+    if (mood === 'stress') return HP_TOKENS.yellow;
+    return HP_TOKENS.lineSoft;
+  };
+
+  const getMoodEmoji = (mood: string) => {
+    if (mood === 'joy') return '😊';
+    if (mood === 'calm') return '😌';
+    if (mood === 'tired') return '😩';
+    if (mood === 'stress') return '🤯';
+    return '😐';
   };
 
   return (
@@ -285,6 +304,23 @@ Jawab dengan tone yang asik dan menyemangati.`,
                 lineHeight: 1.5
               }}
             />
+
+            <div style={{ marginTop: 12 }}>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 8 }}>MOOD SIANG INI:</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {['joy', 'calm', 'tired', 'stress'].map(m => (
+                  <button key={m} onClick={() => setSelectedMood(m)} style={{
+                    flex: 1, padding: '8px 0', borderRadius: 12,
+                    background: selectedMood === m ? `${getMoodColor(m)}20` : '#fff',
+                    border: selectedMood === m ? `1.5px solid ${getMoodColor(m)}` : `1.5px solid ${HP_TOKENS.lineSoft}`,
+                    fontSize: 20, cursor: 'pointer', transition: '0.2s'
+                  }}>
+                    {getMoodEmoji(m)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <button 
               onClick={saveRealisasi}
               disabled={!notes.trim()}

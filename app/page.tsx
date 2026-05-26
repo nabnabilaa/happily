@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { HPProvider, useHP, UserRole } from "@/lib/HPContext";
 import { HP_TOKENS, HP_FONT } from "@/lib/constants";
 
@@ -41,6 +41,7 @@ import HRRecognizeScreen from "@/components/recognize/HRRecognizeScreen";
 // Modals
 import CheckInModal from "@/components/modals/CheckInModal";
 import FocusModal from "@/components/modals/FocusModal";
+import OvertimePromptModal from "@/components/modals/OvertimePromptModal";
 
 import PauseModal from "@/components/modals/PauseModal";
 import ReflectModal from "@/components/modals/ReflectModal";
@@ -80,6 +81,8 @@ import AIAuditModal from "@/components/modals/AIAuditModal";
 import EmployeeProfileModal from "@/components/modals/EmployeeProfileModal";
 import StatusInputModal from "@/components/modals/StatusInputModal";
 import NewChatModal from "@/components/modals/NewChatModal";
+import AppreciateModal from "@/components/modals/AppreciateModal";
+import AnnouncementModal from "@/components/modals/AnnouncementModal";
 import ChatScreen from "@/components/home/ChatScreen";
 import HPToastContainer from "@/components/ui/HPToastContainer";
 
@@ -101,6 +104,13 @@ function AppContent() {
 
   const openModal  = useCallback((name: string, props?: any) => setModal({ name, props }), []);
   const closeModal = useCallback(() => setModal(null), []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleOpenReflect = () => openModal('reflect');
+    window.addEventListener('hp_open_reflect', handleOpenReflect);
+    return () => window.removeEventListener('hp_open_reflect', handleOpenReflect);
+  }, [openModal]);
 
   // ── Loading splash ─────────────────────────────────────────────────────────
   const [quote, setQuote] = useState("Mempersiapkan hari yang produktif... ✨");
@@ -329,6 +339,7 @@ function AppContent() {
       {/* Modal Renderer */}
       {modal?.name === 'checkin'          && <CheckInModal onClose={closeModal} />}
       {modal?.name === 'focus'            && <FocusModal onClose={closeModal} />}
+      {modal?.name === 'overtime_prompt'  && <OvertimePromptModal onClose={closeModal} />}
 
       {modal?.name === 'pause'            && <PauseModal onClose={closeModal} />}
       {modal?.name === 'reflect'          && <ReflectModal onClose={closeModal} />}
@@ -374,6 +385,9 @@ function AppContent() {
         // Also call the prop-based callback if passed from ChatScreen
         modal.props?.onChannelCreated?.(channelId);
       }} />}
+      {modal?.name === 'appreciate'       && <AppreciateModal onClose={closeModal} {...modal.props} />}
+      {modal?.name === 'announcement'     && <AnnouncementModal onClose={closeModal} />}
+
 
       <HPToastContainer />
     </div>

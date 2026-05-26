@@ -27,7 +27,7 @@ export default function RecognizeScreen({ openModal }: RecognizeScreenProps) {
 
       <HPCard style={{ background: `linear-gradient(135deg, ${HP_TOKENS.yellowWash}, ${HP_TOKENS.sageWash})`, border: 'none', marginBottom: 20 }} padding={16}>
         <div style={{ display: 'flex', gap: 20 }}>
-          <StatBlock label="Poin kamu" value={state.points.toLocaleString()} icon="trophy" tone="yellow"/>
+          <StatBlock label="Koin kamu" value={(state.coins ?? state.points).toLocaleString()} icon="trophy" tone="yellow"/>
         </div>
       </HPCard>
 

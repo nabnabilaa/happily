@@ -82,6 +82,32 @@ export default function HRAttendanceView({ currentUser, openModal }: HRAttendanc
     }
   };
 
+  const handleExportCSV = () => {
+    if (!logs || logs.length === 0) return;
+    
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Nama,Waktu Masuk,Waktu Keluar,Tipe Absen,Durasi (Menit),Lokasi\n";
+    
+    logs.forEach(row => {
+      const name = `"${row.user_name}"`;
+      const inTime = `"${new Date(row.check_in_at).toLocaleString('id-ID')}"`;
+      const outTime = row.check_out_at ? `"${new Date(row.check_out_at).toLocaleString('id-ID')}"` : '""';
+      const type = `"${row.check_in_type || ''}"`;
+      const duration = row.duration_minutes || '';
+      const location = `"${row.check_in_location_name || ''}"`;
+      
+      csvContent += `${name},${inTime},${outTime},${type},${duration},${location}\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `absensi_${MONTHS[month-1]}_${year}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // Aggregate stats
   const totalLogs = logs.length;
   const uniqueUsers = new Set(logs.map(l => l.user_id)).size;
@@ -126,6 +152,16 @@ export default function HRAttendanceView({ currentUser, openModal }: HRAttendanc
         }}>
           <HPGlyph name="refresh" size={14} color="#fff" />
         </button>
+        {['hr', 'manager'].includes(currentUser?.role) && (
+          <button onClick={handleExportCSV} style={{ 
+            background: HP_TOKENS.sage, border: 'none', cursor: 'pointer', 
+            padding: '10px 14px', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 6,
+            color: '#fff', fontFamily: HP_FONT, fontWeight: 700, fontSize: 13
+          }}>
+            <HPGlyph name="sparkle" size={14} color="#fff" />
+            CSV
+          </button>
+        )}
       </div>
 
       {/* Summary Stats */}

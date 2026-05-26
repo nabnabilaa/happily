@@ -5,6 +5,9 @@ import { hpEventEmitter } from '@/lib/events';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const userId = searchParams.get('userId');
+
   const encoder = new TextEncoder();
   
   const stream = new ReadableStream({
@@ -14,6 +17,9 @@ export async function GET(request: Request) {
 
       const sendEvent = (data: any) => {
         try {
+          if (data.targetUserId && data.targetUserId !== userId) {
+            return; // Skip if this event is targeted to a different user
+          }
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
         } catch (err) {
           console.error("SSE stream error", err);

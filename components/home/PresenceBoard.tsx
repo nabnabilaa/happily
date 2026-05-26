@@ -53,6 +53,7 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
   const [summary, setSummary] = useState<StatusSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     fetchPresence();
@@ -180,7 +181,7 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
             <div style={{ ...HP_TEXT.h, fontSize: 14 }}>Tidak ada anggota tim dengan status ini</div>
           </HPCard>
         ) : (
-          filteredUsers.map(u => (
+          (showAll ? filteredUsers : filteredUsers.slice(0, 4)).map(u => (
             <HPCard key={u.id} padding={12} style={{
               border: `1.5px solid ${u.id === user?.id ? `${HP_TOKENS.yellow}40` : HP_TOKENS.line}`,
               background: u.id === user?.id ? HP_TOKENS.yellowSoft + '20' : HP_TOKENS.card,
@@ -254,6 +255,36 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
               </div>
             </HPCard>
           ))
+        )}
+
+        {!showAll && filteredUsers.length > 4 && (
+          <button 
+            onClick={() => setShowAll(true)}
+            className="hp-tap"
+            style={{
+              width: '100%', padding: '12px', borderRadius: 14,
+              background: HP_TOKENS.lineSoft, color: HP_TOKENS.inkSoft,
+              border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 13,
+              cursor: 'pointer', marginTop: 4
+            }}
+          >
+            Tampilkan {filteredUsers.length - 4} anggota lainnya
+          </button>
+        )}
+
+        {showAll && filteredUsers.length > 4 && (
+          <button 
+            onClick={() => setShowAll(false)}
+            className="hp-tap"
+            style={{
+              width: '100%', padding: '12px', borderRadius: 14,
+              background: 'transparent', color: HP_TOKENS.inkMute,
+              border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 13,
+              cursor: 'pointer', marginTop: 4
+            }}
+          >
+            Sembunyikan
+          </button>
         )}
       </div>
     </div>

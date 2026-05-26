@@ -9,6 +9,8 @@ import HPAvatar from "@/components/ui/HPAvatar";
 import SectionHeader from "@/components/home/SectionHeader";
 import BlobBackground from "@/components/home/BlobBackground";
 import SurveySection from "@/components/home/SurveySection";
+import BurnoutAlertCard from "@/components/home/BurnoutAlertCard";
+import HRWellbeingDashboard from "@/components/home/HRWellbeingDashboard";
 
 
 interface Props { openModal: (name: string, props?: any) => void; }
@@ -100,10 +102,14 @@ export default function HRHomeScreen({ openModal }: Props) {
                 🔥 <span>{user.streak}</span>
               </div>
             </div>
-
-
           </div>
         </div>
+
+        {/* Burnout Early Warning */}
+        <BurnoutAlertCard />
+        
+        {/* Wellbeing Radar */}
+        <HRWellbeingDashboard state={state} />
 
         {/* Attendance Check-in Button */}
         <button 
@@ -119,6 +125,32 @@ export default function HRHomeScreen({ openModal }: Props) {
           <HPGlyph name="target" size={18} color="#fff" />
           Check-in Office
         </button>
+
+        {/* Action Row */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 10 }}>
+          <button
+            onClick={() => openModal('announcement')}
+            style={{
+              padding: '12px', borderRadius: 16,
+              background: HP_TOKENS.sageWash, border: `1.5px solid ${HP_TOKENS.sageSoft}`,
+              fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',
+              color: HP_TOKENS.sage, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            }} className="hp-tap"
+          >
+            📢 Pengumuman
+          </button>
+          <button
+            onClick={() => openModal('manage_kpi')}
+            style={{
+              padding: '12px', borderRadius: 16,
+              background: HP_TOKENS.blueWash, border: `1.5px solid ${HP_TOKENS.blueSoft}`,
+              fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',
+              color: HP_TOKENS.blue, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            }} className="hp-tap"
+          >
+            🎯 Kelola KPI
+          </button>
+        </div>
 
 
 

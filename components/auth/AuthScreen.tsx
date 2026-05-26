@@ -140,6 +140,26 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
           </button>
         </form>
 
+        <button 
+          onClick={() => {
+            setIsLogin(!isLogin);
+            setError("");
+          }}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: HP_TOKENS.ink,
+            fontFamily: HP_FONT,
+            fontWeight: 700,
+            fontSize: 14,
+            cursor: 'pointer',
+            marginTop: 24,
+            textDecoration: 'underline'
+          }}
+        >
+          {isLogin ? "Belum punya akun? Daftar di sini" : "Sudah punya akun? Masuk di sini"}
+        </button>
+
         <div style={{ marginTop: 24, ...HP_TEXT.small, color: HP_TOKENS.inkMute }}>
           Butuh akses? Hubungi tim HR untuk pembuatan akun.
         </div>

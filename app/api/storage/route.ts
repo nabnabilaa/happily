@@ -46,9 +46,18 @@ export async function GET(request: Request) {
       sql: "SELECT * FROM habits WHERE user_id = ?",
       args: [userId]
     });
-    const habits = habitsRes.rows.map(r => ({
-      name: r.name, streak: r.streak, target: r.target_days, done: !!r.is_done_today, glyph: r.glyph
-    }));
+    const habits = habitsRes.rows.map(r => {
+      let completedDates = null;
+      try {
+        if (r.completed_dates) {
+          completedDates = typeof r.completed_dates === 'string' ? JSON.parse(r.completed_dates) : r.completed_dates;
+        }
+      } catch (e) { console.error("Failed to parse habit completed_dates", e); }
+      
+      return {
+        name: r.name, streak: r.streak, target: r.target_days, done: !!r.is_done_today, glyph: r.glyph, completedDates
+      };
+    });
 
     // Fetch Goals with Owner Names and Sub-goals
     const goalsRes = await db.execute({
@@ -322,9 +331,9 @@ export async function POST(request: Request) {
     // Update User
     try {
       await db.execute({
-        sql: `UPDATE users SET name = ?, streak = ?, points = ?, coins = ?, level = ?, \`rank\` = ?, avatar_image = ?, user_role_context = ?, last_activity_at = ?, personal_wellbeing_goal = ?, wellbeing_routine = ?, is_onboarded = ? WHERE id = ?`,
+        sql: `UPDATE users SET name = ?, streak = ?, avatar_image = ?, user_role_context = ?, last_activity_at = ?, personal_wellbeing_goal = ?, wellbeing_routine = ?, is_onboarded = ? WHERE id = ?`,
         args: [
-          user.name, user.streak, user.points, user.coins, user.level, user.rank,
+          user.name, user.streak,
           user.avatarImage || null,
           user.userRole || user.role || 'employee', 
           state.lastActivityDate ? new Date(state.lastActivityDate).toISOString().slice(0, 19).replace('T', ' ') : new Date().toISOString().slice(0, 19).replace('T', ' '),
@@ -339,9 +348,9 @@ export async function POST(request: Request) {
       // Fallback if column truly doesn't exist despite migration attempt
       if (e.message?.includes('is_onboarded')) {
         await db.execute({
-          sql: `UPDATE users SET name = ?, streak = ?, points = ?, coins = ?, level = ?, \`rank\` = ?, avatar_image = ?, user_role_context = ?, last_activity_at = ?, personal_wellbeing_goal = ?, wellbeing_routine = ? WHERE id = ?`,
+          sql: `UPDATE users SET name = ?, streak = ?, avatar_image = ?, user_role_context = ?, last_activity_at = ?, personal_wellbeing_goal = ?, wellbeing_routine = ? WHERE id = ?`,
           args: [
-            user.name, user.streak, user.points, user.coins, user.level, user.rank,
+            user.name, user.streak,
             user.avatarImage || null,
             user.userRole || user.role, 
             state.lastActivityDate ? new Date(state.lastActivityDate).toISOString().slice(0, 19).replace('T', ' ') : new Date().toISOString().slice(0, 19).replace('T', ' '),
@@ -425,8 +434,8 @@ export async function POST(request: Request) {
       await db.execute({ sql: "DELETE FROM habits WHERE user_id = ?", args: [userId] });
       for (const h of state.habits) {
         await db.execute({
-          sql: `INSERT INTO habits (user_id, name, streak, target_days, is_done_today, glyph) VALUES (?, ?, ?, ?, ?, ?)`,
-          args: [userId, h.name, h.streak, h.target, h.done ? 1 : 0, h.glyph]
+          sql: `INSERT INTO habits (user_id, name, streak, target_days, is_done_today, glyph, completed_dates) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          args: [userId, h.name, h.streak, h.target, h.done ? 1 : 0, h.glyph, h.completedDates ? JSON.stringify(h.completedDates) : null]
         });
       }
     }

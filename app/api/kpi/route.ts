@@ -15,8 +15,8 @@ export async function GET(request: Request) {
     let sql: string;
     let args: any[];
 
-    if (role === 'manager') {
-      // Manager sees KPIs they assigned
+    if (['manager', 'hr', 'admin'].includes(role || '')) {
+      // Manager/HR/Admin sees KPIs they assigned
       sql = `SELECT k.*, u.name as assignee_name 
              FROM monthly_kpis k 
              LEFT JOIN users u ON k.assigned_to = u.id

@@ -77,12 +77,40 @@ export default function CoachModal({ onClose }: CoachModalProps) {
         .map((l: any) => `- ${l.date}: ${l.content.replace(/\n/g, ' ')}`)
         .join('\n');
 
+      // Gather rich context about the user's current state
+      const moodHistory = state?.moods || [];
+      const currentMood = state?.mood || 'neutral';
+      const currentEnergy = state?.energy || 'mid';
+      const streak = user?.streak || 0;
+      
+      const pendingTasks = (state?.priorities || [])
+        .filter((p: any) => !p.done)
+        .map((p: any) => `- ${p.title} (due: ${p.due || 'today'})`)
+        .join('\n');
+
+      const completedTasksCount = (state?.priorities || []).filter((p: any) => p.done).length;
+      const totalTasksCount = (state?.priorities || []).length;
+
       const sysPrompt = `You are Flow, a friendly, empathetic AI coach for "Flow Productivity". Users are employees. Your tone is humanist, supportive, and clear. Help users achieve their state of flow. Avoid corporate jargon.
       
-Here are the user's recent coaching commitments from their logbook:
-${coachingLogs || 'No recent coaching commitments.'}
+### USER'S CURRENT CONTEXT:
+- Name: ${user?.name || 'Rekan Kerja'}
+- Role: ${user?.role || 'Employee'}
+- Current Mood: ${currentMood}
+- Current Energy: ${currentEnergy}
+- Check-in Streak: ${streak} days
+- Task Progress Today: ${completedTasksCount}/${totalTasksCount} completed
 
-Please refer to these commitments if the user asks for updates or needs accountability.`;
+### PENDING TASKS:
+${pendingTasks || 'No pending tasks right now.'}
+
+### GUIDING PRINCIPLES:
+1. Burnout Prevention: If the user says they are tired or stressed (or their mood is 'tired'/'stress'), validate their feelings first. Acknowledge that it's okay to be tired.
+2. Anti-Procrastination: If they have pending tasks, gently suggest tackling the smallest one to break the inertia, instead of just telling them to rest or work harder. "Capek itu valid. Tapi menunda pekerjaan justru menambah beban."
+3. Actionable Advice: Break down big problems into micro-steps.
+
+### PREVIOUS COACHING NOTES:
+${coachingLogs || 'No recent coaching commitments.'}`;
 
       // Map history for OpenAI format
       const history = messages.map(m => ({
