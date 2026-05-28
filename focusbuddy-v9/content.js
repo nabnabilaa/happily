@@ -763,10 +763,11 @@
 ══════════════════════════════════════════════ */
 #fb-panel {
   position:absolute !important; bottom:142px; right:0; width:380px !important; min-width:320px !important; max-width:calc(100vw - 48px) !important;
-  background:#FFFBF5 !important;
-  border:1.5px solid rgba(31,29,27,.10) !important;
-  border-radius:0 !important; overflow:hidden !important;
-  box-shadow:0 28px 72px rgba(0,0,0,.18), 0 8px 28px rgba(0,0,0,.08), 0 0 0 1px rgba(31,29,27,.07);
+  background:rgba(255, 251, 245, 0.92) !important;
+  backdrop-filter:blur(24px) !important; -webkit-backdrop-filter:blur(24px) !important;
+  border:1px solid rgba(255,255,255,0.4) !important;
+  border-radius:20px !important; overflow:hidden !important;
+  box-shadow:0 16px 48px rgba(0,0,0,.12), 0 4px 16px rgba(0,0,0,.06), 0 0 0 1px rgba(31,29,27,.05);
   transform:scale(.88) translateY(16px); transform-origin:bottom right;
   opacity:0 !important; pointer-events:none !important;
   transition:transform .35s cubic-bezier(.34,1.56,.64,1),opacity .25s ease;
@@ -775,14 +776,14 @@
 
 #fb-hdr {
   display:flex !important; flex-direction:column !important;
-  padding:16px 18px 0 !important; border-bottom:1.5px solid rgba(31,29,27,.06) !important;
-  background:linear-gradient(160deg,#ffffff 0%,#F8FBFF 100%) !important;
+  padding:16px 18px 0 !important; border-bottom:1px solid rgba(31,29,27,.06) !important;
+  background:linear-gradient(160deg,rgba(255,255,255,0.8) 0%,rgba(248,251,255,0.6) 100%) !important;
   position:relative !important;
 }
 #fb-hdr-accent {
-  position:absolute !important; top:0; left:0; right:0; height:3px !important;
-  background:linear-gradient(90deg, #4A90E2 0%, #86C0A9 55%, #ffd43b 100%) !important;
-  border-radius:0 !important; z-index:1 !important;
+  position:absolute !important; top:0; left:0; right:0; height:4px !important;
+  background:linear-gradient(90deg, #4A90E2 0%, #8FB39B 55%, #FDB913 100%) !important;
+  border-radius:20px 20px 0 0 !important; z-index:1 !important;
 }
 #fb-hdr-top {
   display:flex !important; align-items:center !important; justify-content:space-between !important;
@@ -793,16 +794,16 @@
 .fb-logo   { font-size:16px !important; font-weight:800 !important; letter-spacing:-.5px !important;
   background:linear-gradient(90deg,#4A90E2,#86C0A9) !important; -webkit-background-clip:text !important; -webkit-text-fill-color:transparent !important; background-clip:text !important; }
 .fb-date-s { font-size:12px !important; color:#8A837C !important; font-weight:600 !important; flex-shrink:0 !important }
-.fb-pill   { font-size:9px !important; font-weight:800 !important; letter-spacing:1px !important; padding:4px 10px !important; border-radius:0 !important; text-transform:uppercase !important; flex-shrink:0 !important }
+.fb-pill   { font-size:9px !important; font-weight:800 !important; letter-spacing:1px !important; padding:4px 10px !important; border-radius:12px !important; text-transform:uppercase !important; flex-shrink:0 !important }
 #fb-x {
-  width:32px !important; height:32px !important; border-radius:0 !important; flex-shrink:0 !important;
+  width:32px !important; height:32px !important; border-radius:10px !important; flex-shrink:0 !important;
   background:rgba(31,29,27,.05) !important; color:#8A837C !important;
   cursor:pointer !important; font-size:12px !important;
   display:flex !important; align-items:center !important; justify-content:center !important;
   transition:background .2s,color .2s; border:none !important;
 }
 #fb-settings-btn {
-  width:32px !important; height:32px !important; border-radius:0 !important; flex-shrink:0 !important;
+  width:32px !important; height:32px !important; border-radius:10px !important; flex-shrink:0 !important;
   background:rgba(31,29,27,.05) !important; color:#8A837C !important;
   cursor:pointer !important; font-size:14px !important;
   display:flex !important; align-items:center !important; justify-content:center !important;
@@ -820,7 +821,7 @@
 }
 #fb-user-role {
   font-size:9px !important; font-weight:800 !important; letter-spacing:.5px !important;
-  padding:3px 8px !important; border-radius:0 !important;
+  padding:3px 8px !important; border-radius:6px !important;
   text-transform:uppercase !important; flex-shrink:0 !important;
 }
 #fb-user-level {
@@ -903,27 +904,27 @@
 #fb-x:hover { background:rgba(31,29,27,.10) !important; color:#1F1D1B !important }
 
 #fb-tabs {
-  display:flex !important; padding:4px !important;
-  background:rgba(31,29,27,.04) !important; border-radius:0 !important;
-  margin:0 14px 14px !important; gap:4px !important;
+  display:flex !important; padding:6px !important;
+  background:rgba(31,29,27,.04) !important; border-radius:12px !important;
+  margin:0 14px 14px !important; gap:6px !important;
 }
 .fb-tab {
   flex:1 !important; padding:8px 4px !important; border:none !important; background:transparent !important;
   color:#8A837C !important; font-size:9.5px !important; font-weight:700 !important;
   text-transform:uppercase !important; letter-spacing:.2px !important; cursor:pointer !important;
   display:flex !important; flex-direction:column !important; align-items:center !important; gap:4px !important;
-  transition:all .2s cubic-bezier(.34,1.56,.64,1) !important; border-radius:0 !important;
+  transition:all .2s cubic-bezier(.34,1.56,.64,1) !important; border-radius:8px !important;
 }
 .fb-tab .ti { font-size:17px !important; line-height:1 !important; transition:transform .2s !important; display:inline-block !important; }
 .fb-tab:hover { color:#1F1D1B !important; }
 .fb-tab:hover .ti { transform:scale(1.15) !important; }
-.fb-tab.act { color:#4A90E2 !important; background:#fff !important; font-weight:800 !important; box-shadow:0 2px 10px rgba(0,0,0,.05) !important; }
+.fb-tab.act { color:#4A90E2 !important; background:#fff !important; font-weight:800 !important; box-shadow:0 2px 8px rgba(0,0,0,.06) !important; }
 .fb-tab.act .ti { transform:scale(1.2) !important; }
 
 #fb-body { overflow-y:auto !important; overflow-x:hidden !important; max-height:min(520px,64vh) !important; scrollbar-width:thin; scrollbar-color:rgba(31,29,27,.15) transparent; margin-right:4px !important; padding-right:2px !important; }
 #fb-body::-webkit-scrollbar { width: 6px !important; }
 #fb-body::-webkit-scrollbar-track { background: transparent !important; margin: 12px 0 !important; }
-#fb-body::-webkit-scrollbar-thumb { background: rgba(31,29,27,.15) !important; border-radius: 0 !important; }
+#fb-body::-webkit-scrollbar-thumb { background: rgba(31,29,27,.15) !important; border-radius: 4px !important; }
 #fb-body::-webkit-scrollbar-thumb:hover { background: rgba(31,29,27,.25) !important; }
 .fb-pane { padding:20px 24px 24px !important; display:none !important }
 .fb-pane.show { display:block !important }
@@ -941,23 +942,23 @@
 .fb-in {
   width:100% !important; display:block !important;
   background:#fff !important; border:1.5px solid rgba(31,29,27,.10) !important;
-  color:#1F1D1B !important; padding:12px 14px !important; border-radius:0 !important;
-  font-size:13px !important; outline:none !important; transition:border-color .2s,background .2s;
+  color:#1F1D1B !important; padding:12px 14px !important; border-radius:12px !important;
+  font-size:13px !important; outline:none !important; transition:all .2s;
 }
 .fb-in::placeholder { color:#BDB6AE !important }
-.fb-in:focus { border-color:#4A90E2 !important; background:#fff !important }
+.fb-in:focus { border-color:#4A90E2 !important; background:#fff !important; box-shadow:0 0 0 3px rgba(74,144,226,0.15) !important; }
 textarea.fb-in { resize:none; min-height:88px !important; line-height:1.6 !important }
 input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !important; cursor:pointer !important }
 
 .fb-row { display:flex !important; gap:9px !important; align-items:stretch !important; margin-bottom:12px !important }
 .fb-btn {
   display:block !important; cursor:pointer !important; border:none !important; flex-shrink:0 !important;
-  padding:12px 18px !important; border-radius:0 !important;
+  padding:12px 18px !important; border-radius:10px !important;
   background:#4A7C59 !important; color:#fff !important;
   font-size:13px !important; font-weight:800 !important; white-space:nowrap !important;
-  transition:all .2s cubic-bezier(.34,1.56,.64,1) !important; box-shadow:none !important;
+  transition:all .2s cubic-bezier(.34,1.56,.64,1) !important; box-shadow:0 2px 6px rgba(74,124,89,.2) !important;
 }
-.fb-btn:hover { transform:translateY(-1.5px) !important; filter:brightness(1.05) !important; box-shadow:none !important; }
+.fb-btn:hover { transform:translateY(-1.5px) !important; filter:brightness(1.05) !important; box-shadow:0 4px 12px rgba(74,124,89,.3) !important; }
 .fb-btn:active { transform:translateY(0) scale(.98) !important; box-shadow:none !important; }
 .fb-btn.sec  { background:rgba(31,29,27,.04) !important; color:#524E49 !important; border:1.5px solid rgba(31,29,27,.08) !important; box-shadow:none !important; }
 .fb-btn.sec:hover { background:rgba(31,29,27,.08) !important; box-shadow:none !important; }
@@ -1004,18 +1005,19 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   background: #FAF8F5 !important;
   border: 1px solid rgba(31,29,27,.06) !important;
   border-top: none !important;
+  border-radius: 0 0 16px 16px !important;
 }
 .fb-prog {
-  height: 4px !important;
+  height: 6px !important;
   background: rgba(31,29,27,.05) !important;
-  border-radius: 0 !important;
+  border-radius: 3px !important;
   overflow: hidden !important;
   position: relative !important;
 }
 .fb-prog-fill {
   height: 100% !important;
-  border-radius: 0 !important;
-  background: #4A7C59 !important;
+  border-radius: 3px !important;
+  background: linear-gradient(90deg, #4A7C59, #69DB7C) !important;
   transition: width .7s cubic-bezier(.4,0,.2,1);
   position: relative !important;
 }
@@ -1050,16 +1052,16 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   flex: 1 !important;
   min-width: 0 !important;
   background: #fff !important;
-  border: 1px solid rgba(31,29,27,.10) !important;
-  border-radius: 0 !important;
+  border: 1.5px solid rgba(31,29,27,.10) !important;
+  border-radius: 14px !important;
   overflow: visible !important;
   transition: border-color .2s, box-shadow .2s;
   display: flex !important;
   align-items: stretch !important;
 }
 .fb-task-composer:focus-within {
-  border-color: #4A7C59 !important;
-  box-shadow: none !important;
+  border-color: #4A90E2 !important;
+  box-shadow: 0 0 0 3px rgba(74,144,226,.15) !important;
 }
 .fb-task-input-row {
   display: flex !important;
@@ -1105,7 +1107,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   left: 0 !important;
   background: #fff !important;
   border: 1px solid rgba(31,29,27,.10) !important;
-  border-radius: 0 !important;
+  border-radius: 12px !important;
   padding: 5px !important;
   z-index: 9999 !important;
   min-width: 120px !important;
@@ -1122,7 +1124,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   color: #524E49 !important;
   font-size: 13px !important;
   font-weight: 500 !important;
-  border-radius: 0 !important;
+  border-radius: 8px !important;
   cursor: pointer !important;
   text-align: left !important;
   font-family: inherit !important;
@@ -1154,8 +1156,8 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   width: 42px !important;
   height: 42px !important;
   margin: auto 6px auto 0 !important;
-  border-radius: 0 !important;
-  background: #4A7C59 !important;
+  border-radius: 10px !important;
+  background: #4A90E2 !important;
   color: #fff !important;
   border: none !important;
   cursor: pointer !important;
@@ -1173,41 +1175,41 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
 .fb-task-card {
   display: flex !important;
   align-items: center !important;
-  gap: 12px !important;
-  padding: 14px 16px !important;
-  border-radius: 0 !important;
+  gap: 14px !important;
+  padding: 16px 18px !important;
+  border-radius: 16px !important;
   background: #fff !important;
-  border: 1px solid rgba(31,29,27,.08) !important;
-  border-left: 3.5px solid var(--task-color,rgba(31,29,27,.15)) !important;
-  animation: taskSlideIn .22s ease;
-  transition: all .2s ease-in-out;
+  border: 1.5px solid rgba(31,29,27,.05) !important;
+  border-left: 4px solid var(--task-color,rgba(31,29,27,.15)) !important;
+  animation: taskSlideIn .25s ease-out;
+  transition: all .3s cubic-bezier(.34,1.56,.64,1);
   position: relative !important;
   cursor: default !important;
-  box-shadow: none !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.03) !important;
 }
-.fb-task-card.done { border-left-color: rgba(31,29,27,.10) !important; }
-.fb-task-card:hover { background: #FAFAF8 !important; border-color: rgba(31,29,27,.14) !important; }
-.fb-task-card.done { opacity: .50 !important }
-.fb-task-card.done .fb-task-card-txt { text-decoration: line-through !important; color: #BDB6AE !important }
-.fb-task-card.removing { opacity: 0 !important; transform: translateX(10px) scale(.97) !important }
+.fb-task-card.done { border-left-color: rgba(31,29,27,.08) !important; }
+.fb-task-card:hover { transform: translateY(-3px) !important; box-shadow: 0 12px 28px rgba(0,0,0,.06) !important; border-color: rgba(31,29,27,.09) !important; }
+.fb-task-card.done { opacity: .60 !important }
+.fb-task-card.done .fb-task-card-txt { text-decoration: line-through !important; color: #9E9892 !important }
+.fb-task-card.removing { opacity: 0 !important; transform: translateX(12px) scale(.95) !important }
 
 /* Checkbox */
 .fb-task-chk2 {
-  width: 18px !important;
-  height: 18px !important;
-  border-radius: 0 !important;
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 8px !important;
   flex-shrink: 0 !important;
-  border: 1.5px solid rgba(31,29,27,.22) !important;
-  background: none !important;
+  border: 2px solid rgba(31,29,27,.15) !important;
+  background: #FAFAFA !important;
   cursor: pointer !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  font-size: 8px !important;
+  font-size: 12px !important;
   color: transparent !important;
-  transition: all .15s ease-in-out;
+  transition: all .25s cubic-bezier(.34,1.56,.64,1);
 }
-.fb-task-chk2:hover { border-color: var(--task-color, #4A7C59) !important; background: rgba(31,29,27,.02) !important; }
+.fb-task-chk2:hover { border-color: var(--task-color, #4A7C59) !important; background: rgba(31,29,27,.02) !important; transform: scale(1.15) !important; }
 .fb-task-card.done .fb-task-chk2 {
   background: var(--task-color, #4A7C59) !important;
   color: #fff !important;
@@ -1215,45 +1217,46 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
 }
 .fb-task-card.done .fb-task-chk2 { animation: none }
 
-.fb-task-card-body { flex: 1 !important; min-width: 0 !important }
+.fb-task-card-body { flex: 1 !important; min-width: 0 !important; display: flex !important; flex-direction: column !important; gap: 4px !important; }
 .fb-task-card-txt {
-  font-size: 13px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
   color: #1F1D1B !important;
-  line-height: 1.45 !important;
+  line-height: 1.5 !important;
   word-break: break-word;
   transition: color .2s, text-decoration .2s;
 }
 .fb-task-card-meta {
   display: flex !important;
   align-items: center !important;
-  gap: 6px !important;
-  margin-top: 6px !important;
+  gap: 8px !important;
+  margin-top: 2px !important;
 }
 .fb-task-pri-tag {
-  font-size: 9.5px !important;
+  font-size: 9px !important;
   font-weight: 800 !important;
-  letter-spacing: .5px !important;
+  letter-spacing: .6px !important;
   text-transform: uppercase !important;
-  padding: 2px 6px 3px !important;
-  border-radius: 0 !important;
+  padding: 3px 8px 3px !important;
+  border-radius: 8px !important;
   display: inline-block !important;
 }
 .fb-task-pri-tag.fb-pri-high {
-  background: rgba(255, 107, 107, 0.08) !important;
-  color: #FF6B6B !important;
-  border: 1px solid rgba(255, 107, 107, 0.15) !important;
+  background: rgba(255, 107, 107, 0.1) !important;
+  color: #FF5252 !important;
+  border: 1px solid rgba(255, 107, 107, 0.2) !important;
 }
 .fb-task-pri-tag.fb-pri-med {
-  background: rgba(253, 185, 19, 0.08) !important;
+  background: rgba(253, 185, 19, 0.1) !important;
   color: #D4980A !important;
-  border: 1px solid rgba(253, 185, 19, 0.15) !important;
+  border: 1px solid rgba(253, 185, 19, 0.2) !important;
 }
 .fb-task-pri-tag.fb-pri-low {
-  background: rgba(64, 192, 87, 0.08) !important;
-  color: #40C057 !important;
-  border: 1px solid rgba(64, 192, 87, 0.15) !important;
+  background: rgba(64, 192, 87, 0.1) !important;
+  color: #2F9E44 !important;
+  border: 1px solid rgba(64, 192, 87, 0.2) !important;
 }
-.fb-task-time-tag { font-size: 9.5px !important; color: #BDB6AE !important }
+.fb-task-time-tag { font-size: 10px !important; font-weight: 600 !important; color: #9E9892 !important }
 
 .fb-task-del2 {
   flex-shrink: 0 !important;
@@ -1262,19 +1265,19 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   border: none !important;
   color: #BDB6AE !important;
   cursor: pointer !important;
-  font-size: 13px !important;
-  padding: 5px 7px !important;
-  border-radius: 0 !important;
-  transition: all .15s;
+  font-size: 14px !important;
+  padding: 6px 8px !important;
+  border-radius: 8px !important;
+  transition: all .2s ease;
 }
 .fb-task-card:hover .fb-task-del2 { opacity: 1 !important }
-.fb-task-del2:hover { color: #E88B7D !important; background: rgba(232,139,125,.1) !important }
+.fb-task-del2:hover { color: #E88B7D !important; background: rgba(232,139,125,.1) !important; transform: scale(1.1) !important; }
 
 /* All-done celebration banner */
 .fb-task-celebrate {
   text-align: center !important;
   padding: 20px 14px 16px !important;
-  border-radius: 0 !important;
+  border-radius: 14px !important;
   background: rgba(74, 124, 89, 0.04) !important;
   border: 1px solid rgba(74, 124, 89, 0.12) !important;
   animation: taskSlideIn .3s ease;
@@ -1292,18 +1295,19 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   align-items: center !important;
   gap: 12px !important;
   padding: 13px 14px !important;
-  border-radius: 0 !important;
+  border-radius: 12px !important;
   background: #fff !important;
-  border: 1.5px solid rgba(31,29,27,.07) !important;
+  border: 1px solid rgba(31,29,27,.07) !important;
   animation: fb-in .2s ease;
-  transition: background .2s, border-color .2s;
+  transition: all .25s cubic-bezier(.34,1.56,.64,1);
+  box-shadow: 0 2px 6px rgba(0,0,0,.03) !important;
 }
-.fb-task:hover { background: #FFFBF5 !important; border-color: rgba(31,29,27,.12) !important }
+.fb-task:hover { transform: translateY(-1.5px) !important; box-shadow: 0 6px 12px rgba(0,0,0,.06) !important; border-color: rgba(31,29,27,.12) !important }
 .fb-task.done { opacity: .45 !important }
 .fb-chk {
   width: 22px !important;
   height: 22px !important;
-  border-radius: 0 !important;
+  border-radius: 6px !important;
   flex-shrink: 0 !important;
   border: 2px solid #4A90E2 !important;
   background: none !important;
@@ -1313,8 +1317,9 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  transition: all .2s;
+  transition: all .2s cubic-bezier(.34,1.56,.64,1);
 }
+.fb-chk:hover { transform: scale(1.1) !important; background: rgba(74,144,226,.08) !important; }
 .fb-task.done .fb-chk { background: #4A90E2 !important; color: #fff !important; border-color: #4A90E2 !important }
 .fb-task-txt { flex: 1 !important; font-size: 13.5px !important; color: #1F1D1B !important; line-height: 1.35 !important }
 .fb-task.done .fb-task-txt { text-decoration: line-through !important; color: #BDB6AE !important }
@@ -1339,16 +1344,17 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   margin-bottom: 16px !important;
   background: #fff !important;
   border: 1px solid rgba(31,29,27,.08) !important;
-  border-left: 3px solid var(--nc,rgba(31,29,27,.10)) !important;
-  border-radius: 0 !important;
+  border-left: 4px solid var(--nc,rgba(31,29,27,.10)) !important;
+  border-radius: 14px !important;
   transition: border-color .25s, box-shadow .25s, border-left-color .25s;
   overflow: hidden !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04) !important;
 }
 .fb-note-composer:focus-within {
   border-color: var(--nc,#4A90E2) !important;
   border-left-color: var(--nc,#4A90E2) !important;
   background: #fff !important;
-  box-shadow: none !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.08) !important;
 }
 .fb-note-composer textarea {
   width: 100% !important;
@@ -1422,18 +1428,18 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
 .fb-note-cc2 { font-size: 11.5px !important; color: #BDB6AE !important }
 .fb-note-save-btn {
   padding: 9px 20px !important;
-  border-radius: 0 !important;
+  border-radius: 10px !important;
   font-size: 13px !important;
   font-weight: 700 !important;
   background: var(--nc,#4A90E2) !important;
   color: #fff !important;
   border: none !important;
   cursor: pointer !important;
-  transition: opacity .15s, transform .1s, background .25s;
+  transition: all .2s cubic-bezier(.34,1.56,.64,1);
   letter-spacing: .2px !important;
-  box-shadow: none !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,.1) !important;
 }
-.fb-note-save-btn:hover { opacity: .85 !important }
+.fb-note-save-btn:hover { transform: translateY(-1.5px) !important; box-shadow: 0 4px 12px rgba(0,0,0,.15) !important; filter: brightness(1.05) !important; }
 .fb-note-save-btn:active { transform: scale(.96) }
 
 .fb-note-search-wrap { position: relative !important; margin-bottom: 14px !important }
@@ -1478,14 +1484,15 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   padding: 16px 18px !important;
   background: var(--note-bg, #fff) !important;
   border: 1px solid var(--note-border, rgba(31,29,27,.06)) !important;
-  border-radius: 0 !important;
+  border-radius: 14px !important;
   animation: fb-in .2s ease;
-  transition: all .2s ease-in-out;
+  transition: all .25s cubic-bezier(.34,1.56,.64,1);
   cursor: default !important;
-  box-shadow: none !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.03) !important;
 }
 .fb-note:hover {
-  transform: translateY(-1px) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,.08) !important;
   border-color: var(--note-border-hover, rgba(31,29,27,.12)) !important;
 }
 .fb-note.pinned {
@@ -1546,11 +1553,11 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   color: #8A837C !important;
   font-size: 12px !important;
   font-weight: 600 !important;
-  padding: 4px 8px !important;
+  padding: 6px 12px !important;
   cursor: pointer !important;
   transition: all .2s ease !important;
   position: relative !important;
-  border-radius: 0 !important;
+  border-radius: 8px !important;
 }
 .fb-task-filter-btn:hover {
   color: #1F1D1B !important;
@@ -1590,7 +1597,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
 .fb-drum-wrap {
   position:relative !important; display:flex !important; align-items:stretch !important;
   justify-content:center !important; gap:0 !important; height:152px !important;
-  margin:0 0 20px !important; overflow:hidden !important; border-radius:0 !important;
+  margin:0 0 20px !important; overflow:hidden !important; border-radius:14px !important;
   background:#fff !important;
   border:1.5px solid rgba(31,29,27,.08) !important;
   user-select:none; -webkit-user-select:none;
@@ -1665,7 +1672,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   margin:14px 4px 10px !important;
 }
 .fb-drum-btn {
-  width:62px !important; height:62px !important; border-radius:0 !important; border:none !important;
+  width:62px !important; height:62px !important; border-radius:16px !important; border:none !important;
   font-size:14px !important; font-weight:600 !important; cursor:pointer !important;
   transition:transform .12s, opacity .15s;
   display:flex !important; align-items:center !important; justify-content:center !important;
@@ -1686,7 +1693,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
 
 /* Meta row (Label) */
 .fb-drum-meta {
-  border-radius:0 !important; overflow:hidden !important;
+  border-radius:14px !important; overflow:hidden !important;
   background:#fff !important; border:1.5px solid rgba(31,29,27,.08) !important;
   margin-bottom:16px !important;
 }
@@ -1713,7 +1720,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
 .fb-drum-recent-time { font-size:28px !important; font-weight:300 !important; color:#1F1D1B !important; letter-spacing:-1px !important }
 .fb-drum-recent-sub { font-size:11px !important; color:#BDB6AE !important; margin-top:2px !important }
 .fb-drum-recent-play {
-  width:38px !important; height:38px !important; border-radius:0 !important; border:none !important;
+  width:38px !important; height:38px !important; border-radius:10px !important; border:none !important;
   background:#4A90E2 !important; color:#fff !important;
   font-size:14px !important; cursor:pointer !important; display:flex !important;
   align-items:center !important; justify-content:center !important;
@@ -1761,7 +1768,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   display:flex !important; gap:16px !important; justify-content:center !important; margin-bottom:18px !important;
 }
 .fb-run-btn {
-  height:52px !important; min-width:52px !important; padding:0 20px !important; border-radius:0 !important; border:none !important;
+  height:52px !important; min-width:52px !important; padding:0 20px !important; border-radius:14px !important; border:none !important;
   font-size:15px !important; cursor:pointer !important; transition:transform .12s, background .15s;
   display:flex !important; align-items:center !important; justify-content:center !important; font-weight:700 !important;
 }
@@ -1777,7 +1784,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
 /* Stats bar */
 .fb-timer-stats {
   display:flex !important; justify-content:space-between !important; align-items:center !important;
-  padding:14px 18px !important; border-radius:0 !important;
+  padding:14px 18px !important; border-radius:14px !important;
   background:#fff !important; border:1.5px solid rgba(31,29,27,.08) !important;
   margin-top:4px !important;
 }
@@ -2205,13 +2212,13 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
         <button id="fb-x"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
     </div>
-    <div id="fb-identity-row" style="display:none !important; align-items:center !important; gap:10px !important; padding:10px 12px !important; margin:14px 14px 0 !important; background:rgba(74,144,226,.05) !important; border-radius:0 !important; border:1px solid rgba(74,144,226,.1) !important;">
-      <div style="width:32px !important; height:32px !important; border-radius:0 !important; background:linear-gradient(135deg,#4A90E2,#86C0A9) !important; color:white !important; display:flex !important; align-items:center !important; justify-content:center !important; font-weight:800 !important; font-size:14px !important; flex-shrink:0 !important;">:)</div>
+    <div id="fb-identity-row" style="display:none !important; align-items:center !important; gap:10px !important; padding:10px 12px !important; margin:14px 14px 0 !important; background:rgba(74,144,226,.05) !important; border-radius:12px !important; border:1px solid rgba(74,144,226,.1) !important;">
+      <div style="width:32px !important; height:32px !important; border-radius:8px !important; background:linear-gradient(135deg,#4A90E2,#86C0A9) !important; color:white !important; display:flex !important; align-items:center !important; justify-content:center !important; font-weight:800 !important; font-size:14px !important; flex-shrink:0 !important;">:)</div>
       <div style="display:flex !important; flex-direction:column !important; flex:1 !important; min-width:0 !important; gap:2px !important;">
         <span id="fb-user-name" style="font-size:13px !important; font-weight:700 !important; color:#1F1D1B !important; overflow:hidden !important; text-overflow:ellipsis !important; white-space:nowrap !important;"></span>
         <span id="fb-user-role" style="font-size:10px !important; font-weight:700 !important; color:#4A90E2 !important; text-transform:uppercase !important; letter-spacing:.5px !important;"></span>
       </div>
-      <span id="fb-user-level" style="font-size:10.5px !important; font-weight:800 !important; color:#fff !important; background:#86C0A9 !important; padding:4px 8px !important; border-radius:0 !important; flex-shrink:0 !important; box-shadow:0 2px 6px rgba(134,192,169,.4) !important;"></span>
+      <span id="fb-user-level" style="font-size:10.5px !important; font-weight:800 !important; color:#fff !important; background:#86C0A9 !important; padding:4px 8px !important; border-radius:6px !important; flex-shrink:0 !important; box-shadow:0 2px 6px rgba(134,192,169,.4) !important;"></span>
     </div>
     <div id="fb-login-msg">Login di website untuk sinkronisasi data</div>
   </div>
@@ -2248,16 +2255,16 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
         <div class="fb-prog-marks" id="fb-prog-marks"></div>
       </div>
 
-      <!-- Task Add Form — clean card design -->
-      <div style="margin-bottom:18px;">
-        <div style="border-radius:0; background:#fff; border:1px solid rgba(31,29,27,.08); overflow:visible;">
+      <!-- Task Add Form — premium modern design -->
+      <div style="margin-bottom:20px;">
+        <div style="border-radius:16px; background:#fff; border:1px solid rgba(31,29,27,.06); overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,.03); transition:box-shadow .3s ease;" onmouseover="this.style.boxShadow='0 12px 32px rgba(0,0,0,.06)'" onmouseout="this.style.boxShadow='0 8px 24px rgba(0,0,0,.03)'">
 
           <!-- Priority dot + main input -->
-          <div style="display:flex; align-items:stretch; border-bottom:1px solid rgba(31,29,27,.07);">
-            <div class="fb-pri-dd" id="fb-pri-dd" style="flex-shrink:0; border-right:1px solid rgba(31,29,27,.07); display:flex;">
-              <button class="fb-pri-sel" id="fb-pri-sel" data-p="med" title="Pilih prioritas" style="height:48px; min-width:44px; border-radius:0; border:none; padding:0 10px 0 14px; display:flex; align-items:center; gap:5px;">
+          <div style="display:flex; align-items:stretch; border-bottom:1px solid rgba(31,29,27,.05);">
+            <div class="fb-pri-dd" id="fb-pri-dd" style="flex-shrink:0; border-right:1px solid rgba(31,29,27,.05); display:flex;">
+              <button class="fb-pri-sel" id="fb-pri-sel" data-p="med" title="Pilih prioritas" style="height:52px; min-width:48px; border-radius:16px 0 0 0; border:none; padding:0 12px 0 16px; display:flex; align-items:center; gap:6px; cursor:pointer; background:transparent;">
                 <span class="fb-pri-dot-sm" id="fb-pri-dot-sm"></span>
-                <svg class="fb-pri-arrow" width="8" height="5" viewBox="0 0 8 5" fill="none"><path d="M1 1l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <svg class="fb-pri-arrow" width="9" height="6" viewBox="0 0 8 5" fill="none"><path d="M1 1l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
               <div class="fb-pri-menu" id="fb-pri-menu">
                 <button class="fb-pri-opt" data-p="high"><span class="fb-pri-opt-dot" style="background:#ff8080"></span>Tinggi</button>
@@ -2265,43 +2272,46 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
                 <button class="fb-pri-opt" data-p="low"><span class="fb-pri-opt-dot" style="background:#69db7c"></span>Rendah</button>
               </div>
             </div>
-            <input class="fb-task-in2" id="fb-task-in" placeholder="Deskripsikan task (min. 20 karakter)…"
-              style="flex:1; height:48px; padding:0 14px; border:none; font-size:13.5px; outline:none; background:transparent; color:#1F1D1B;" />
-            <div style="display:flex; align-items:center; padding-right:12px; flex-shrink:0;">
-              <span id="fb-task-char-count" style="font-size:10px; color:#C5BDBB; font-weight:600; white-space:nowrap;">0/20</span>
+            <input class="fb-task-in2" id="fb-task-in" placeholder="Apa fokus utamamu hari ini? (min. 20 karakter)"
+              style="flex:1; height:52px; padding:0 16px; border:none; font-size:14px; font-weight:500; outline:none; background:transparent; color:#1F1D1B;" />
+            <div style="display:flex; align-items:center; padding-right:16px; flex-shrink:0;">
+              <span id="fb-task-char-count" style="font-size:10.5px; color:#C5BDBB; font-weight:700; white-space:nowrap; letter-spacing:0.5px;">0/20</span>
             </div>
           </div>
 
           <!-- Warning text (only shows when typing) -->
-          <div id="fb-task-char-warn" style="font-size:10.5px; font-weight:600; color:#E88B7D; min-height:0; padding:0 14px; line-height:0; overflow:hidden; transition:all .2s;"></div>
+          <div id="fb-task-char-warn" style="font-size:11px; font-weight:600; color:#E88B7D; min-height:0; padding:0 16px; line-height:0; overflow:hidden; transition:all .2s;"></div>
 
           <!-- Detail textarea -->
-          <textarea id="fb-task-desc" placeholder="Detail task (opsional)…"
-            style="width:100%; min-height:54px; padding:12px 14px; border:none; border-top:1px solid rgba(31,29,27,.06); font-size:12.5px; font-family:inherit; resize:none; outline:none; box-sizing:border-box; color:#524E49; background:#F9F9FB; line-height:1.55; display:block;"></textarea>
+          <textarea id="fb-task-desc" placeholder="Tambahkan deskripsi atau konteks (opsional)…"
+            style="width:100%; min-height:64px; padding:14px 16px; border:none; border-top:1px solid rgba(31,29,27,.04); font-size:13px; font-family:inherit; resize:none; outline:none; box-sizing:border-box; color:#524E49; background:#FAFAFA; line-height:1.6; display:block; transition:background .2s;" onfocus="this.style.background='#fff'" onblur="this.style.background='#FAFAFA'"></textarea>
 
           <!-- Date + KPI row -->
-          <div style="display:flex; gap:10px; padding:12px 14px; border-top:1px solid rgba(31,29,27,.07); background:#fff;">
+          <div style="display:flex; gap:12px; padding:14px 16px; border-top:1px solid rgba(31,29,27,.05); background:#fff;">
             <div style="flex:1; min-width:0;">
-              <div style="font-size:10px; color:#9E9892; margin-bottom:6px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; display:flex; align-items:center; gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Tanggal</div>
+              <div style="font-size:10px; color:#9E9892; margin-bottom:8px; font-weight:800; letter-spacing:0.8px; text-transform:uppercase; display:flex; align-items:center; gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Tanggal</div>
               <input type="date" id="fb-task-date"
-                style="width:100% !important; box-sizing:border-box !important; border:1px solid rgba(31,29,27,.1) !important; border-radius:0 !important; font-size:12.5px !important; font-family:inherit !important; outline:none !important; color:#1F1D1B !important; cursor:pointer !important; background:#F9F9FB !important; padding:8px 10px !important; display:block !important; transition:border .2s !important;"
-                onfocus="this.style.setProperty('border-color', '#4A90E2', 'important')" onblur="this.style.setProperty('border-color', 'rgba(31,29,27,.1)', 'important')"/>
+                style="width:100% !important; box-sizing:border-box !important; border:1.5px solid rgba(31,29,27,.08) !important; border-radius:10px !important; font-size:13px !important; font-family:inherit !important; outline:none !important; color:#1F1D1B !important; cursor:pointer !important; background:#fff !important; padding:9px 12px !important; display:block !important; transition:all .2s ease !important;"
+                onfocus="this.style.setProperty('border-color', '#4A90E2', 'important'); this.style.setProperty('box-shadow', '0 0 0 3px rgba(74,144,226,0.1)', 'important');" onblur="this.style.setProperty('border-color', 'rgba(31,29,27,.08)', 'important'); this.style.setProperty('box-shadow', 'none', 'important');"/>
             </div>
             <div style="flex:1.2; min-width:0;">
-              <div style="font-size:10px; color:#9E9892; margin-bottom:6px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; display:flex; align-items:center; gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> KPI Terkait</div>
+              <div style="font-size:10px; color:#9E9892; margin-bottom:8px; font-weight:800; letter-spacing:0.8px; text-transform:uppercase; display:flex; align-items:center; gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> KPI Terkait</div>
               <select id="fb-task-kpi"
-                style="width:100% !important; box-sizing:border-box !important; border:1px solid rgba(31,29,27,.1) !important; border-radius:0 !important; font-size:12.5px !important; font-family:inherit !important; outline:none !important; color:#1F1D1B !important; background:#F9F9FB !important; cursor:pointer !important; padding:8px 10px !important; display:block !important; transition:border .2s !important;"
-                onfocus="this.style.setProperty('border-color', '#4A90E2', 'important')" onblur="this.style.setProperty('border-color', 'rgba(31,29,27,.1)', 'important')">
-                <option value="">Umum (Tidak ada)</option>
+                style="width:100% !important; box-sizing:border-box !important; border:1.5px solid rgba(31,29,27,.08) !important; border-radius:10px !important; font-size:13px !important; font-family:inherit !important; outline:none !important; color:#1F1D1B !important; background:#fff !important; cursor:pointer !important; padding:9px 12px !important; display:block !important; transition:all .2s ease !important;"
+                onfocus="this.style.setProperty('border-color', '#4A90E2', 'important'); this.style.setProperty('box-shadow', '0 0 0 3px rgba(74,144,226,0.1)', 'important');" onblur="this.style.setProperty('border-color', 'rgba(31,29,27,.08)', 'important'); this.style.setProperty('box-shadow', 'none', 'important');">
+                <option value="">Umum (Tidak ada KPI)</option>
               </select>
             </div>
           </div>
 
           <!-- Submit button -->
-          <button id="fb-task-add-btn"
-            style="width:100%; padding:14px; border:none; border-top:1px solid rgba(31,29,27,.07); background:#D6D0CB; color:#fff; font-size:13.5px; font-weight:700; cursor:not-allowed; display:flex; justify-content:center; align-items:center; gap:7px; transition:background .25s, box-shadow .25s; letter-spacing:.3px; pointer-events:none; border-radius:0; box-shadow:none;">
-            <span style="font-size:15px; line-height:1;">+</span> Tambah Task
-          </button>
+          <div style="padding:16px; border-top:1px solid rgba(31,29,27,.05); background:#fff;">
+            <button id="fb-task-add-btn"
+              style="width:100%; padding:14px; border:none; border-radius:12px; background:#D6D0CB; color:#fff; font-size:14px; font-weight:800; cursor:not-allowed; display:flex; justify-content:center; align-items:center; gap:8px; transition:all .3s ease; letter-spacing:0.5px; pointer-events:none; box-shadow:none;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>Tambah Task</span>
+            </button>
+          </div>
 
         </div>
       </div>
@@ -3634,7 +3644,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
         <div class="fb-task-card-body">
           <div class="fb-task-card-txt">${esc(task.text)}</div>
           <div class="fb-task-card-meta">
-            ${task.kpiTitle ? `<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(31,29,27,.05);padding:2px 6px;border-radius:0;font-size:9.5px;color:#8A837C;margin-right:4px;">🎯 ${esc(task.kpiTitle)}</span>` : ''}
+            ${task.kpiTitle ? `<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(31,29,27,.04);padding:4px 8px;border-radius:8px;font-size:9px;font-weight:700;color:#8A837C;margin-right:2px;letter-spacing:0.5px;">🎯 ${esc(task.kpiTitle)}</span>` : ''}
             <span class="fb-task-pri-tag fb-pri-${task.priority}">${pcfg.label.replace(/🔴|🟡|🟢/, '').trim()}</span>
             <span class="fb-task-time-tag">${relTimeTask(task.id)}</span>
           </div>
