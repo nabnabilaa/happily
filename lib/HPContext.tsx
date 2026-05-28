@@ -177,9 +177,18 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
       if (data.error) throw new Error(`${data.error}: ${data.details || ''}`);
       skipNextSyncRef.current = true;
       if (data.state) {
-        setState(data.state);
+        // Sanitize habits to ensure 'done' status matches today's date in completedDates
+        const todayReal = new Date();
+        const todayStr = `${todayReal.getFullYear()}-${String(todayReal.getMonth() + 1).padStart(2, '0')}-${String(todayReal.getDate()).padStart(2, '0')}`;
+        const sanitizedHabits = (data.state.habits || []).map((h: any) => {
+          const done = h.completedDates ? h.completedDates.includes(todayStr) : h.done;
+          return { ...h, done };
+        });
+        const sanitizedState = { ...data.state, habits: sanitizedHabits };
+
+        setState(sanitizedState);
         // Pre-fill the payload ref so we don't sync this identical data back
-        const syncState: any = { ...data.state };
+        const syncState: any = { ...sanitizedState };
         delete syncState.hrData;
         delete syncState.managerData;
         delete syncState.surveys;

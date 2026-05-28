@@ -13,6 +13,7 @@ import HPGlyph from "@/components/ui/HPGlyph";
 import BeeMascot from "@/components/ui/BeeMascot";
 import TabNav from "@/components/layout/TabNav";
 import ErrorBoundary from "@/components/ui/ErrorBoundary";
+import ThemeSwitcher from "@/components/ui/ThemeSwitcher";
 
 // ── Shared Screens ──
 import CalendarScreen from "@/components/home/CalendarScreen";
@@ -138,7 +139,7 @@ function AppContent() {
         flexDirection: 'column',
         alignItems: 'center', 
         justifyContent: 'center', 
-        background: HP_TOKENS.paper,
+        background: 'var(--hp-paper)',
         gap: 24,
         fontFamily: HP_FONT
       }}>
@@ -148,7 +149,7 @@ function AppContent() {
         <div style={{ 
           fontSize: 15, 
           fontWeight: 700, 
-          color: HP_TOKENS.inkMute,
+          color: 'var(--hp-ink-mute)',
           textAlign: 'center',
           maxWidth: 240,
           lineHeight: 1.5,
@@ -286,6 +287,8 @@ function AppContent() {
           position: 'absolute', top: 16, right: 16, zIndex: 40,
           display: 'flex', alignItems: 'center', gap: 8,
         }}>
+          <ThemeSwitcher />
+
           <div
             style={{
               display: 'flex', alignItems: 'center', gap: 6,

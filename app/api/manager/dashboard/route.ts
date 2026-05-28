@@ -122,6 +122,7 @@ export async function GET(request: Request) {
         goalId: r.goal_id,
         done: !!r.is_done,
         verified: !!r.is_verified,
+        status: r.status,
         energy: r.energy_level,
         est: r.est_time,
         tone: r.tone,

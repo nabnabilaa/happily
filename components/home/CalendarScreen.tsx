@@ -241,7 +241,7 @@ export default function CalendarScreen({ openModal }: Props) {
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: 12, borderRadius: 12,
     border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 13,
-    outline: 'none', background: '#fff', color: HP_TOKENS.ink, boxSizing: 'border-box',
+    outline: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink, boxSizing: 'border-box',
   };
 
   const toggleUser = (uid: string) => {
@@ -439,7 +439,7 @@ export default function CalendarScreen({ openModal }: Props) {
 
               {visibility === 'custom' && (
                 <div style={{ 
-                  marginTop: 12, padding: 16, background: '#fff', 
+                  marginTop: 12, padding: 16, background: HP_TOKENS.card, 
                   border: `1px solid ${HP_TOKENS.line}`, borderRadius: 12 
                 }}>
                   {/* Selected users chips */}
@@ -464,7 +464,7 @@ export default function CalendarScreen({ openModal }: Props) {
                     placeholder="🔍 Cari nama atau departemen..."
                     style={{ width: '100%', padding: '12px 14px', borderRadius: 12,
                       border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT,
-                      fontSize: 13, outline: 'none', boxSizing: 'border-box', marginBottom: 12 }} />
+                      fontSize: 13, outline: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink, boxSizing: 'border-box', marginBottom: 12 }} />
 
                   {/* Department-grouped user list */}
                   <div style={{ maxHeight: 240, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -547,7 +547,7 @@ export default function CalendarScreen({ openModal }: Props) {
             </div>
 
             <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-              <button onClick={() => { setShowForm(false); resetForm(); }} style={{ flex: 1, padding: 12, borderRadius: 12, background: '#fff', border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>Batal</button>
+              <button onClick={() => { setShowForm(false); resetForm(); }} style={{ flex: 1, padding: 12, borderRadius: 12, background: HP_TOKENS.card, border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>Batal</button>
               <button onClick={handleSave} disabled={!title || !date || saving} style={{
                 flex: 2, padding: 12, borderRadius: 12, background: HP_TOKENS.blue, color: '#fff',
                 border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',

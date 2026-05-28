@@ -270,11 +270,11 @@ export default function HomeScreen({ openModal }: any) {
       let newDoneToday = habit.done;
       let newStreak = habit.streak;
 
+      if (newDone && !wasDone) newStreak += 1;
+      if (!newDone && wasDone) newStreak = Math.max(0, newStreak - 1);
+
       if (isToday) {
         newDoneToday = newDone;
-      } else {
-        if (newDone && !wasDone) newStreak += 1;
-        if (!newDone && wasDone) newStreak = Math.max(0, newStreak - 1);
       }
 
       let newCompletedDates = habit.completedDates ? [...habit.completedDates] : [];
@@ -460,7 +460,7 @@ export default function HomeScreen({ openModal }: any) {
                 }}
                 style={{
                   width: 36, height: 36, borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
-                  background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: HP_TOKENS.card, display: 'flex', alignItems: 'center', justifyContent: 'center',
                   cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
                 }}
                 className="hp-tap"
@@ -749,8 +749,9 @@ export default function HomeScreen({ openModal }: any) {
           display: 'flex', alignItems: 'flex-end', justifyContent: 'center'
         }}>
           <div style={{
-            background: '#fff', width: '100%', maxWidth: 500, borderRadius: '24px 24px 0 0',
-            padding: 24, paddingBottom: 40, animation: 'hpSlideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)'
+            background: HP_TOKENS.paper, width: '100%', maxWidth: 500, borderRadius: '24px 24px 0 0',
+            padding: 24, paddingBottom: 40, animation: 'hpSlideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)',
+            borderTop: `1.5px solid ${HP_TOKENS.line}`
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
               <div>
@@ -789,7 +790,7 @@ export default function HomeScreen({ openModal }: any) {
                 placeholder="Ada yang ingin dicatat untuk sesi ini?"
                 style={{
                   width: '100%', padding: 12, borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
-                  background: '#fafafa', fontFamily: HP_FONT, fontSize: 14, minHeight: 80, resize: 'vertical'
+                  background: HP_TOKENS.card, color: HP_TOKENS.ink, fontFamily: HP_FONT, fontSize: 14, minHeight: 80, resize: 'vertical'
                 }}
               />
               

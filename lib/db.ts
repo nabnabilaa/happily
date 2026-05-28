@@ -8,14 +8,14 @@ const globalForDb = globalThis as unknown as {
 };
 
 const poolOptions: mysql.PoolOptions = process.env.MYSQL_URI 
-  ? { uri: process.env.MYSQL_URI, waitForConnections: true, connectionLimit: 50, queueLimit: 0 }
+  ? { uri: process.env.MYSQL_URI, waitForConnections: true, connectionLimit: 5, queueLimit: 0 }
   : {
       host: process.env.MYSQL_HOST || 'localhost',
       user: process.env.MYSQL_USER || 'root',
       password: process.env.MYSQL_PASSWORD || '',
       database: process.env.MYSQL_DATABASE || 'happily_productive',
       waitForConnections: true,
-      connectionLimit: 50,
+      connectionLimit: 5,
       queueLimit: 0
     };
 

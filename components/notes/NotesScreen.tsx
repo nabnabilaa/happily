@@ -222,7 +222,7 @@ export default function NotesScreen() {
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '14px 16px', borderRadius: 14,
     border: `1.5px solid ${HP_TOKENS.lineSoft}`, fontFamily: HP_FONT, fontSize: 14,
-    outline: 'none', background: '#fff', color: HP_TOKENS.ink, boxSizing: 'border-box',
+    outline: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink, boxSizing: 'border-box',
     transition: '0.2s'
   };
 
@@ -235,7 +235,7 @@ export default function NotesScreen() {
         />
 
         <div style={{ 
-          background: '#fff', borderRadius: 24, padding: 20, 
+          background: HP_TOKENS.card, borderRadius: 24, padding: 20, 
           border: `1.5px solid ${HP_TOKENS.line}`, 
           boxShadow: '0 8px 24px rgba(0,0,0,0.03)'
         }}>
@@ -311,7 +311,7 @@ export default function NotesScreen() {
                           <div style={{
                             display: 'flex', alignItems: 'center', gap: 8,
                             padding: '10px 12px', borderRadius: 12,
-                            background: '#fff', border: `1.5px solid ${HP_TOKENS.lineSoft}`
+                            background: HP_TOKENS.card, border: `1.5px solid ${HP_TOKENS.lineSoft}`
                           }}>
                             <button onClick={(e) => { e.preventDefault(); toggleDeptCollapse(dept); }} className="hp-tap" style={{
                               background: 'none', border: 'none', cursor: 'pointer', padding: 0,
@@ -412,7 +412,7 @@ export default function NotesScreen() {
               className="hp-tap"
               style={{
                 padding: '14px 20px', borderRadius: 14, border: `1.5px solid ${HP_TOKENS.line}`,
-                background: '#fff', color: HP_TOKENS.inkSoft,
+                background: HP_TOKENS.card, color: HP_TOKENS.inkSoft,
                 fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer',
               }}
             >
@@ -452,7 +452,7 @@ export default function NotesScreen() {
           style={{
             flex: 1, padding: '14px 16px', borderRadius: 16,
             border: `1.5px solid ${HP_TOKENS.lineSoft}`, fontFamily: HP_FONT, fontSize: 14,
-            outline: 'none', background: '#fff', boxSizing: 'border-box'
+            outline: 'none', background: HP_TOKENS.card, boxSizing: 'border-box'
           }}
         />
         <button
@@ -492,7 +492,7 @@ export default function NotesScreen() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {dayNotes.map(note => (
                   <div key={note.id} style={{ 
-                    background: '#fff', borderRadius: 20, padding: 20, 
+                    background: HP_TOKENS.card, borderRadius: 20, padding: 20, 
                     border: `1.5px solid ${HP_TOKENS.line}`,
                     boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
                   }}>

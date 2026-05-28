@@ -46,7 +46,12 @@ export async function GET(request: Request) {
       sql: "SELECT * FROM habits WHERE user_id = ?",
       args: [userId]
     });
-    const habits = habitsRes.rows.map(r => {
+    const habitsUnique: any[] = [];
+    const seenHabits = new Set<string>();
+    for (const r of habitsRes.rows) {
+      const habitNameLower = (r.name || '').toLowerCase().trim();
+      if (!habitNameLower || seenHabits.has(habitNameLower)) continue;
+      seenHabits.add(habitNameLower);
       let completedDates = null;
       try {
         if (r.completed_dates) {
@@ -54,10 +59,14 @@ export async function GET(request: Request) {
         }
       } catch (e) { console.error("Failed to parse habit completed_dates", e); }
       
-      return {
-        name: r.name, streak: r.streak, target: r.target_days, done: !!r.is_done_today, glyph: r.glyph, completedDates
-      };
-    });
+      const todayReal = new Date();
+      const todayStr = `${todayReal.getFullYear()}-${String(todayReal.getMonth() + 1).padStart(2, '0')}-${String(todayReal.getDate()).padStart(2, '0')}`;
+      const isDoneToday = completedDates ? completedDates.includes(todayStr) : !!r.is_done_today;
+
+      habitsUnique.push({
+        name: r.name, streak: r.streak, target: r.target_days, done: isDoneToday, glyph: r.glyph, completedDates
+      });
+    }
 
     // Fetch Goals with Owner Names and Sub-goals
     const goalsRes = await db.execute({
@@ -284,7 +293,7 @@ export async function GET(request: Request) {
       intention: "",
       priorities,
       weeklyPriorities: [],
-      habits,
+      habits: habitsUnique,
       goals,
       surveys,
       feed,
@@ -446,7 +455,11 @@ export async function POST(request: Request) {
     // Sync Habits
     if (state.habits) {
       await db.execute({ sql: "DELETE FROM habits WHERE user_id = ?", args: [userId] });
+      const seenHabits = new Set<string>();
       for (const h of state.habits) {
+        const habitNameLower = (h.name || '').toLowerCase().trim();
+        if (!habitNameLower || seenHabits.has(habitNameLower)) continue;
+        seenHabits.add(habitNameLower);
         await db.execute({
           sql: `INSERT INTO habits (user_id, name, streak, target_days, is_done_today, glyph, completed_dates) VALUES (?, ?, ?, ?, ?, ?, ?)`,
           args: [userId, h.name, h.streak, h.target, h.done ? 1 : 0, h.glyph, h.completedDates ? JSON.stringify(h.completedDates) : null]

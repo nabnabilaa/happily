@@ -185,12 +185,12 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
       display: 'flex', 
       height: 'calc(100vh - 120px)', // Force height to fill available space and not grow
       width: '100%',
-      background: '#fff',
+      background: HP_TOKENS.paper,
       fontFamily: HP_FONT,
       borderRadius: 24,
       overflow: 'hidden',
       boxShadow: '0 10px 30px rgba(0,0,0,0.03)',
-      border: '1px solid rgba(0,0,0,0.05)',
+      border: `1px solid ${HP_TOKENS.line}`,
     }}>
       <style>{`
         @media (max-width: 767px) {
@@ -207,17 +207,17 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
       <div className="chat-sidebar" style={{
         display: 'flex',
         flexDirection: 'column',
-        background: '#fff',
+        background: HP_TOKENS.paper,
         height: '100%',
       }}>
         {/* Header */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '20px 16px 16px',
-          borderBottom: '1px solid rgba(0,0,0,0.05)',
+          borderBottom: `1px solid ${HP_TOKENS.line}`,
         }}>
           <div>
-            <div style={{ ...HP_TEXT.h, fontSize: 20, fontWeight: 900 }}>💬 Chat</div>
+            <div style={{ ...HP_TEXT.h, fontSize: 20, fontWeight: 900, color: HP_TOKENS.ink }}>💬 Chat</div>
             <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>Kolaborasi tim</div>
           </div>
           <button onClick={handleCreateDM} className="hp-tap" style={{
@@ -256,8 +256,8 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
                     display: 'flex', alignItems: 'center', gap: 10,
                     padding: '10px 12px', borderRadius: 14,
                     background: activeChannel?.id === ch.id
-                      ? '#EFF6FF'
-                      : (ch.unreadCount > 0 ? '#F8FAFC' : 'transparent'),
+                      ? HP_TOKENS.blueSoft
+                      : (ch.unreadCount > 0 ? HP_TOKENS.lineSoft : 'transparent'),
                     border: 'none',
                     cursor: 'pointer', width: '100%', textAlign: 'left',
                     transition: 'all 0.2s',
@@ -284,13 +284,13 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
                       <div style={{
                         ...HP_TEXT.h, fontSize: 13,
                         fontWeight: ch.unreadCount > 0 ? 900 : 700,
-                        color: '#1E293B',
+                        color: HP_TOKENS.ink,
                         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                       }}>
                         {ch.name}
                       </div>
                       {ch.lastMessageAt && (
-                        <div style={{ ...HP_TEXT.tiny, fontSize: 9, color: '#94A3B8', fontWeight: 600 }}>
+                        <div style={{ ...HP_TEXT.tiny, fontSize: 9, color: HP_TOKENS.inkMute, fontWeight: 600 }}>
                           {formatTime(ch.lastMessageAt)}
                         </div>
                       )}
@@ -298,7 +298,7 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }}>
                       {ch.lastMessage && (
                         <div style={{
-                          ...HP_TEXT.small, fontSize: 11, color: ch.unreadCount > 0 ? '#475569' : '#94A3B8',
+                          ...HP_TEXT.small, fontSize: 11, color: ch.unreadCount > 0 ? HP_TOKENS.inkSoft : HP_TOKENS.inkMute,
                           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                           fontWeight: ch.unreadCount > 0 ? 700 : 400,
                           flex: 1,
@@ -332,17 +332,18 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
       <div className="chat-main" style={{
         flex: 1,
         flexDirection: 'column',
-        background: '#FDFBF7', // Warm cream background to match app theme
+        background: HP_TOKENS.paper,
         height: '100%',
+        borderLeft: `1px solid ${HP_TOKENS.line}`
       }}>
         {activeChannel ? (
           <>
             {/* Chat Header */}
             <div style={{
               padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 14,
-              background: 'rgba(255, 255, 255, 0.85)',
+              background: HP_TOKENS.card,
               backdropFilter: 'blur(12px)',
-              borderBottom: `1px solid rgba(0, 0, 0, 0.05)`,
+              borderBottom: `1px solid ${HP_TOKENS.line}`,
               position: 'sticky', top: 0, zIndex: 10,
               boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
             }}>
@@ -372,8 +373,8 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
                 {activeChannel.type === 'dm' ? <HPAvatar name={activeChannel.name} size={38} /> : activeChannel.emoji}
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ ...HP_TEXT.h, fontSize: 16, fontWeight: 800, color: '#1E293B' }}>{activeChannel.name}</div>
-                <div style={{ ...HP_TEXT.tiny, color: activeChannel.type === 'broadcast' ? '#D97706' : '#64748B', fontWeight: 600 }}>
+                <div style={{ ...HP_TEXT.h, fontSize: 16, fontWeight: 800, color: HP_TOKENS.ink }}>{activeChannel.name}</div>
+                <div style={{ ...HP_TEXT.tiny, color: activeChannel.type === 'broadcast' ? '#D97706' : HP_TOKENS.inkSoft, fontWeight: 600 }}>
                   {activeChannel.type === 'dm' ? 'Direct Message' : activeChannel.type === 'broadcast' ? '📢 Pesan Siaran' : activeChannel.type === 'group' ? 'Grup Chat' : 'Team Channel'}
                 </div>
               </div>
@@ -383,7 +384,7 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
             <div style={{
               flex: 1, overflowY: 'auto', padding: '20px',
               display: 'flex', flexDirection: 'column', gap: 12,
-              background: '#FDFBF7', // Warm cream background
+              background: HP_TOKENS.paper,
             }}>
               {msgLoading ? (
                 <div style={{ textAlign: 'center', padding: 40, color: HP_TOKENS.inkMute }}>
@@ -393,8 +394,8 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
               ) : messages.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: 60, color: HP_TOKENS.inkMute }}>
                   <div style={{ fontSize: 48, marginBottom: 16 }}>👋</div>
-                  <div style={{ ...HP_TEXT.h, fontSize: 16, marginBottom: 4, color: '#1E293B' }}>Mulai percakapan!</div>
-                  <div style={{ ...HP_TEXT.small, color: '#94A3B8' }}>Kirim pesan pertama Anda di sini.</div>
+                  <div style={{ ...HP_TEXT.h, fontSize: 16, marginBottom: 4, color: HP_TOKENS.ink }}>Mulai percakapan!</div>
+                  <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute }}>Kirim pesan pertama Anda di sini.</div>
                 </div>
               ) : (
                 <>
@@ -413,7 +414,7 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
                       }}>
                         {showName && (
                           <div style={{
-                            ...HP_TEXT.tiny, color: '#64748B', marginBottom: 4,
+                            ...HP_TEXT.tiny, color: HP_TOKENS.inkSoft, marginBottom: 4,
                             marginLeft: isMe ? 0 : 8, marginRight: isMe ? 8 : 0,
                             fontWeight: 700, fontSize: 11,
                           }}>
@@ -424,10 +425,10 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
                           maxWidth: '75%', padding: '12px 16px',
                           borderRadius: isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
                           background: isMe
-                            ? `linear-gradient(135deg, #4F46E5 0%, #3B82F6 100%)`
-                            : '#FFFFFF',
-                          color: isMe ? '#fff' : '#1E293B',
-                          border: 'none',
+                            ? `linear-gradient(135deg, ${HP_TOKENS.blue}, #1e40af)`
+                            : HP_TOKENS.card,
+                          color: isMe ? '#fff' : HP_TOKENS.ink,
+                          border: isMe ? 'none' : `1px solid ${HP_TOKENS.line}`,
                           boxShadow: isMe
                             ? `0 4px 12px rgba(59, 130, 246, 0.2)`
                             : '0 2px 6px rgba(0,0,0,0.02)',
@@ -449,7 +450,7 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
                         </div>
                         {showTime && (
                           <div style={{
-                            ...HP_TEXT.tiny, color: '#94A3B8', fontSize: 10,
+                            ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontSize: 10,
                             marginTop: 4, marginLeft: isMe ? 0 : 8, marginRight: isMe ? 8 : 0,
                             fontWeight: 600,
                           }}>
@@ -467,9 +468,9 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
             {/* Message Input */}
             <div style={{
               padding: '16px 20px 20px', 
-              background: 'rgba(255, 255, 255, 0.85)',
+              background: HP_TOKENS.card,
               backdropFilter: 'blur(12px)',
-              borderTop: `1px solid rgba(0, 0, 0, 0.05)`,
+              borderTop: `1px solid ${HP_TOKENS.line}`,
               display: 'flex', gap: 12, alignItems: 'flex-end',
             }}>
               <div style={{ flex: 1, position: 'relative' }}>
@@ -480,20 +481,19 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
                   placeholder="Ketik pesan..."
                   style={{
                     width: '100%', padding: '14px 16px', borderRadius: 16,
-                    border: `1.5px solid rgba(0, 0, 0, 0.05)`,
+                    border: `1.5px solid ${HP_TOKENS.line}`,
                     fontFamily: HP_FONT, fontSize: 14, outline: 'none',
-                    background: '#F1F5F9',
+                    background: HP_TOKENS.paper,
+                    color: HP_TOKENS.ink,
                     boxSizing: 'border-box',
                     transition: 'all 0.2s',
                   }}
                   onFocus={e => {
-                    e.target.style.borderColor = '#3B82F6';
-                    e.target.style.background = '#FFFFFF';
-                    e.target.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.1)';
+                    e.target.style.borderColor = HP_TOKENS.blue;
+                    e.target.style.boxShadow = `0 0 0 4px ${HP_TOKENS.blue}20`;
                   }}
                   onBlur={e => {
-                    e.target.style.borderColor = 'rgba(0, 0, 0, 0.05)';
-                    e.target.style.background = '#F1F5F9';
+                    e.target.style.borderColor = HP_TOKENS.line;
                     e.target.style.boxShadow = 'none';
                   }}
                 />
@@ -526,8 +526,8 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
             color: HP_TOKENS.inkMute 
           }}>
             <div style={{ fontSize: 64, marginBottom: 16 }}>💬</div>
-            <div style={{ ...HP_TEXT.h, fontSize: 18, marginBottom: 4, color: '#1E293B' }}>Pilih Chat</div>
-            <div style={{ ...HP_TEXT.small, color: '#94A3B8' }}>Pilih percakapan untuk mulai mengobrol.</div>
+            <div style={{ ...HP_TEXT.h, fontSize: 18, marginBottom: 4, color: HP_TOKENS.ink }}>Pilih Chat</div>
+            <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute }}>Pilih percakapan untuk mulai mengobrol.</div>
           </div>
         )}
       </div>

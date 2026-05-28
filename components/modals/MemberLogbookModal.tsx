@@ -66,12 +66,17 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
     return () => clearTimeout(timer);
   }, [memberId, state?.managerData?.teamTasks]);
 
-  const handleVerify = async (taskId: string) => {
+  const handleVerify = async (taskId: string, action: 'approve' | 'reject' | 'revision' = 'approve') => {
     try {
-      const res = await fetch("/api/manager/verify-task", {
+      const url = action === 'approve' ? "/api/manager/verify-task" : "/api/manager/reject-task";
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ taskId, goalId, managerId: user?.id })
+        body: JSON.stringify({ 
+          taskId, 
+          managerId: user?.id, 
+          ...(action === 'approve' ? { goalId } : { action }) 
+        })
       });
 
       if (!res.ok) throw new Error("Failed");
@@ -79,11 +84,30 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
       // Update local state to reflect verification
       updateState((s: any) => {
         const newTeamTasks = s.managerData?.teamTasks?.map((t: any) => 
-          t.id === taskId ? { ...t, verified: true } : t
+          t.id === taskId 
+            ? { 
+                ...t, 
+                verified: action === 'approve', 
+                done: action === 'approve', 
+                status: action 
+              } 
+            : t
         ) || [];
         
+        let newGoals = s.goals;
+        if (goalId && action === 'approve') {
+          const tasksForGoal = newTeamTasks.filter((t: any) => String(t.goalId) === String(goalId));
+          const verifiedCount = tasksForGoal.filter((t: any) => t.verified).length;
+          newGoals = s.goals.map((g: any) => 
+            String(g.id) === String(goalId) 
+              ? { ...g, metric: `${verifiedCount}/${tasksForGoal.length} verified` } 
+              : g
+          );
+        }
+
         return {
           ...s,
+          goals: newGoals,
           managerData: {
             ...s.managerData,
             teamTasks: newTeamTasks
@@ -94,7 +118,16 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
       // Update current view logs
       setLogs(prev => prev.map(day => ({
         ...day,
-        tasks: day.tasks.map((t: any) => t.id === taskId ? { ...t, verified: true } : t)
+        tasks: day.tasks.map((t: any) => 
+          t.id === taskId 
+            ? { 
+                ...t, 
+                verified: action === 'approve', 
+                done: action === 'approve', 
+                status: action 
+              } 
+            : t
+        )
       })));
     } catch (e) {
       console.error(e);
@@ -215,71 +248,160 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
                       Tidak ada aktivitas tercatat pada tanggal ini.
                     </div>
                   ) : (
-                    day.tasks.map((t: any) => (
-                      <HPCard key={t.id} padding={16} style={{ 
-                        border: t.verified ? `1.5px solid ${HP_TOKENS.sage}30` : t.done ? `1.5px solid ${HP_TOKENS.yellow}40` : `1.5px solid ${HP_TOKENS.lineSoft}`,
-                        background: t.verified ? HP_TOKENS.sageWash : '#fff',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
-                        borderRadius: 22,
-                        transition: 'transform 0.2s ease'
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                          <div style={{ 
-                            width: 40, height: 40, borderRadius: 14, 
-                            background: t.verified ? HP_TOKENS.sage : t.done ? HP_TOKENS.yellow : HP_TOKENS.lineSoft,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            boxShadow: t.verified ? `0 4px 12px ${HP_TOKENS.sage}40` : t.done ? `0 4px 12px ${HP_TOKENS.yellow}40` : 'none'
-                          }}>
-                            <HPGlyph name={t.verified ? "check" : t.done ? "zap" : "activity"} size={20} color={t.verified || t.done ? "#fff" : HP_TOKENS.inkMute} />
-                          </div>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ ...HP_TEXT.h, fontSize: 15, color: HP_TOKENS.ink, lineHeight: 1.3 }}>{t.title}</div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-                              <div style={{ 
-                                padding: '2px 8px', borderRadius: 6, background: HP_TOKENS.paper,
-                                fontSize: 10, fontWeight: 800, color: HP_TOKENS.inkMute 
-                              }}>
-                                {t.est || '15m'}
-                              </div>
-                              {t.verified && (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                                  <div style={{ width: 4, height: 4, borderRadius: 2, background: HP_TOKENS.sage }} />
-                                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 900, fontSize: 9 }}>VERIFIED</div>
-                                </div>
-                              )}
-                              {!t.verified && t.done && (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                                  <div style={{ width: 4, height: 4, borderRadius: 2, background: HP_TOKENS.yellow }} />
-                                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.yellow, fontWeight: 900, fontSize: 9 }}>WAITING FOR ACC</div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          
-                          {t.done && !t.verified && (
-                            <button 
-                              onClick={() => handleVerify(t.id)}
-                              className="hp-tap"
-                              style={{
-                                padding: '10px 20px', borderRadius: 12, border: 'none',
-                                background: HP_TOKENS.sage, color: '#fff', fontSize: 12, fontWeight: 900, 
-                                cursor: 'pointer', boxShadow: `0 4px 12px ${HP_TOKENS.sage}40`
-                              }}
-                            >
-                              ACC
-                            </button>
-                          )}
-                          {t.verified && (
+                    day.tasks.map((t: any) => {
+                      const isRejected = !t.verified && !t.done && t.status === 'reject';
+                      const isRevision = !t.verified && !t.done && t.status === 'revision';
+                      
+                      const cardBorder = t.verified 
+                        ? `1.5px solid ${HP_TOKENS.sage}30` 
+                        : t.done 
+                          ? `1.5px solid ${HP_TOKENS.yellow}40` 
+                          : isRejected
+                            ? `1.5px solid ${HP_TOKENS.coral}30`
+                            : isRevision
+                              ? `1.5px solid ${HP_TOKENS.yellow}30`
+                              : `1.5px solid ${HP_TOKENS.lineSoft}`;
+
+                      const cardBg = t.verified 
+                        ? HP_TOKENS.sageWash 
+                        : isRejected
+                          ? HP_TOKENS.coralWash
+                          : isRevision
+                            ? HP_TOKENS.yellowWash
+                            : '#fff';
+
+                      const glyphBg = t.verified 
+                        ? HP_TOKENS.sage 
+                        : t.done 
+                          ? HP_TOKENS.yellow 
+                          : isRejected
+                            ? HP_TOKENS.coral
+                            : isRevision
+                              ? HP_TOKENS.yellow
+                              : HP_TOKENS.lineSoft;
+
+                      const glyphShadow = t.verified 
+                        ? `0 4px 12px ${HP_TOKENS.sage}40` 
+                        : t.done 
+                          ? `0 4px 12px ${HP_TOKENS.yellow}40` 
+                          : isRejected
+                            ? `0 4px 12px ${HP_TOKENS.coral}40`
+                            : isRevision
+                              ? `0 4px 12px ${HP_TOKENS.yellow}40`
+                              : 'none';
+
+                      const glyphName = t.verified 
+                        ? "check" 
+                        : t.done 
+                          ? "zap" 
+                          : isRejected
+                            ? "close" 
+                            : isRevision
+                              ? "refresh" 
+                              : "activity";
+
+                      return (
+                        <HPCard key={t.id} padding={16} style={{ 
+                          border: cardBorder,
+                          background: cardBg,
+                          boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
+                          borderRadius: 22,
+                          transition: 'transform 0.2s ease'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                             <div style={{ 
-                              width: 32, height: 32, borderRadius: 16, background: HP_TOKENS.sageWash,
-                              display: 'flex', alignItems: 'center', justifyContent: 'center', color: HP_TOKENS.sage
+                              width: 40, height: 40, borderRadius: 14, 
+                              background: glyphBg,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              boxShadow: glyphShadow
                             }}>
-                              <HPGlyph name="check" size={20} stroke={3} />
+                              <HPGlyph name={glyphName} size={20} color={t.verified || t.done || isRejected || isRevision ? "#fff" : HP_TOKENS.inkMute} />
                             </div>
-                          )}
-                        </div>
-                      </HPCard>
-                    ))
+                            <div style={{ flex: 1 }}>
+                              <div style={{ ...HP_TEXT.h, fontSize: 15, color: HP_TOKENS.ink, lineHeight: 1.3 }}>{t.title}</div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                                <div style={{ 
+                                  padding: '2px 8px', borderRadius: 6, background: HP_TOKENS.paper,
+                                  fontSize: 10, fontWeight: 800, color: HP_TOKENS.inkMute 
+                                }}>
+                                  {t.est || '15m'}
+                                </div>
+                                {t.verified && (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                    <div style={{ width: 4, height: 4, borderRadius: 2, background: HP_TOKENS.sage }} />
+                                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 900, fontSize: 9 }}>VERIFIED</div>
+                                  </div>
+                                )}
+                                {!t.verified && t.done && (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                    <div style={{ width: 4, height: 4, borderRadius: 2, background: HP_TOKENS.yellow }} />
+                                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.yellow, fontWeight: 900, fontSize: 9 }}>WAITING FOR ACC</div>
+                                  </div>
+                                )}
+                                {isRejected && (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                    <div style={{ width: 4, height: 4, borderRadius: 2, background: HP_TOKENS.coral }} />
+                                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.coral, fontWeight: 900, fontSize: 9 }}>DITOLAK</div>
+                                  </div>
+                                )}
+                                {isRevision && (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                    <div style={{ width: 4, height: 4, borderRadius: 2, background: '#8A6814' }} />
+                                    <div style={{ ...HP_TEXT.tiny, color: '#8A6814', fontWeight: 900, fontSize: 9 }}>BUTUH REVISI</div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {t.done && !t.verified && (
+                              <div style={{ display: 'flex', gap: 6 }}>
+                                <button 
+                                  onClick={() => handleVerify(t.id, 'approve')}
+                                  className="hp-tap"
+                                  style={{
+                                    padding: '8px 16px', borderRadius: 10, border: 'none',
+                                    background: HP_TOKENS.sage, color: '#fff', fontSize: 11, fontWeight: 900, 
+                                    cursor: 'pointer', boxShadow: `0 4px 12px ${HP_TOKENS.sage}40`
+                                  }}
+                                >
+                                  ACC
+                                </button>
+                                <button 
+                                  onClick={() => handleVerify(t.id, 'revision')}
+                                  className="hp-tap"
+                                  style={{
+                                    padding: '8px 12px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.yellow}`,
+                                    background: '#fff', color: '#8A6814', fontSize: 11, fontWeight: 900, 
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  Revisi
+                                </button>
+                                <button 
+                                  onClick={() => handleVerify(t.id, 'reject')}
+                                  className="hp-tap"
+                                  style={{
+                                    padding: '8px 12px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.coral}`,
+                                    background: '#fff', color: HP_TOKENS.coral, fontSize: 11, fontWeight: 900, 
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  Tolak
+                                </button>
+                              </div>
+                            )}
+                            {t.verified && (
+                              <div style={{ 
+                                width: 32, height: 32, borderRadius: 16, background: HP_TOKENS.sageWash,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', color: HP_TOKENS.sage
+                              }}>
+                                <HPGlyph name="check" size={20} stroke={3} />
+                              </div>
+                            )}
+                          </div>
+                        </HPCard>
+                      );
+                    })
                   )}
                 </div>
               </div>

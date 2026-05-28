@@ -8,149 +8,174 @@ window.__FB = window.__FB || {};
   style.id = styleId;
   style.textContent = `
     .fb-people-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-bottom: 14px;
+      display: grid !important;
+      grid-template-columns: repeat(3, 1fr) !important;
+      gap: 10px !important;
+      margin-bottom: 18px !important;
     }
     .fb-people-metric-card {
-      background: rgba(123,107,181,0.06);
-      border: 1px solid rgba(123,107,181,0.15);
-      padding: 8px 10px;
-      border-radius: 0px;
-      text-align: center;
+      background: var(--fb-card) !important;
+      border: 1.5px solid var(--fb-line) !important;
+      padding: 14px 10px !important;
+      border-radius: 14px !important;
+      text-align: center !important;
+      transition: all 0.2s ease !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03) !important;
+    }
+    .fb-people-metric-card:hover {
+      transform: translateY(-2px) !important;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.06) !important;
     }
     .fb-people-metric-lbl {
-      font-size: 9px;
-      font-weight: 800;
-      color: #7B6BB5;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-      margin-bottom: 2px;
+      font-size: 10px !important;
+      font-weight: 800 !important;
+      color: var(--fb-blue) !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.5px !important;
+      margin-bottom: 6px !important;
     }
     .fb-people-metric-val {
-      font-size: 15px;
-      font-weight: 900;
-      color: #1F1D1B;
+      font-size: 18px !important;
+      font-weight: 850 !important;
+      color: var(--fb-ink) !important;
     }
     .fb-people-metric-trend {
-      font-size: 8.5px;
-      font-weight: 700;
-      margin-top: 1px;
+      font-size: 9px !important;
+      font-weight: 700 !important;
+      margin-top: 2px !important;
     }
-    .fb-people-metric-trend.pos { color: #86C0A9; }
-    .fb-people-metric-trend.neg { color: #E88B7D; }
+    .fb-people-metric-trend.pos { color: #86C0A9 !important; }
+    .fb-people-metric-trend.neg { color: #E88B7D !important; }
     .fb-people-section-title {
-      font-size: 11px;
-      font-weight: 800;
-      color: #524E49;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin: 14px 0 8px 0;
-      border-bottom: 1.5px solid rgba(31,29,27,0.06);
-      padding-bottom: 4px;
+      font-size: 11.5px !important;
+      font-weight: 800 !important;
+      color: var(--fb-ink) !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.8px !important;
+      margin: 20px 0 12px 0 !important;
+      border-bottom: 1.5px solid var(--fb-line) !important;
+      padding-bottom: 8px !important;
     }
     .fb-people-risk-card {
-      background: #fff;
-      border: 1.5px solid rgba(31,29,27,0.07);
-      border-left: 3.5px solid #E88B7D;
-      padding: 10px 12px;
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
+      background: var(--fb-card) !important;
+      border: 1.5px solid var(--fb-line) !important;
+      border-left: 4.5px solid #E88B7D !important;
+      padding: 14px 16px !important;
+      margin-bottom: 10px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      gap: 12px !important;
+      border-radius: 14px !important;
+      transition: all 0.2s ease !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03) !important;
+    }
+    .fb-people-risk-card:hover {
+      transform: translateY(-1px) !important;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06) !important;
     }
     .fb-people-risk-card.med {
-      border-left-color: #ffd43b;
+      border-left-color: var(--fb-yellow) !important;
     }
     .fb-people-risk-info {
-      flex: 1;
-      min-width: 0;
+      flex: 1 !important;
+      min-width: 0 !important;
     }
     .fb-people-risk-name {
-      font-size: 12.5px;
-      font-weight: 700;
-      color: #1F1D1B;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-size: 13.5px !important;
+      font-weight: 700 !important;
+      color: var(--fb-ink) !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
     }
     .fb-people-risk-sub {
-      font-size: 10px;
-      color: #8A837C;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-size: 11px !important;
+      color: var(--fb-ink-mute) !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      margin-top: 2px !important;
     }
     .fb-people-risk-badge-wrap {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 2px;
-      flex-shrink: 0;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-end !important;
+      gap: 4px !important;
+      flex-shrink: 0 !important;
     }
     .fb-people-risk-level {
-      font-size: 8.5px;
-      font-weight: 850;
-      color: #fff;
-      background: #E88B7D;
-      padding: 1px 5px;
-      text-transform: uppercase;
+      font-size: 9px !important;
+      font-weight: 850 !important;
+      color: #fff !important;
+      background: #E88B7D !important;
+      padding: 3px 8px !important;
+      text-transform: uppercase !important;
+      border-radius: 6px !important;
     }
     .fb-people-risk-level.med {
-      background: #ffd43b;
-      color: #1F1D1B;
+      background: var(--fb-yellow-soft) !important;
+      color: var(--fb-yellow-dark) !important;
+      border: 1px solid var(--fb-yellow) !important;
     }
     .fb-people-risk-stats {
-      font-size: 10px;
-      font-weight: 650;
-      color: #8A837C;
+      font-size: 10px !important;
+      font-weight: 650 !important;
+      color: var(--fb-ink-mute) !important;
     }
     .fb-people-dept-card {
-      background: #fff;
-      border: 1px solid rgba(31,29,27,0.06);
-      padding: 10px 12px;
-      margin-bottom: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      background: var(--fb-card) !important;
+      border: 1.5px solid var(--fb-line) !important;
+      padding: 14px 16px !important;
+      margin-bottom: 10px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      border-radius: 14px !important;
+      transition: all 0.2s ease !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03) !important;
+    }
+    .fb-people-dept-card:hover {
+      transform: translateY(-1px) !important;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06) !important;
     }
     .fb-people-dept-name {
-      font-size: 12px;
-      font-weight: 700;
-      color: #1F1D1B;
+      font-size: 13px !important;
+      font-weight: 700 !important;
+      color: var(--fb-ink) !important;
     }
     .fb-people-dept-headcount {
-      font-size: 10px;
-      color: #8A837C;
+      font-size: 11px !important;
+      color: var(--fb-ink-mute) !important;
+      margin-top: 2px !important;
     }
     .fb-people-dept-metrics {
-      display: flex;
-      gap: 12px;
-      font-size: 11px;
-      font-weight: 700;
+      display: flex !important;
+      gap: 12px !important;
+      font-size: 11.5px !important;
+      font-weight: 700 !important;
     }
     .fb-people-pulse-wellbeing {
-      color: #86C0A9;
+      color: #86C0A9 !important;
     }
     .fb-people-pulse-wellbeing.low {
-      color: #E88B7D;
+      color: #E88B7D !important;
     }
     .fb-people-pulse-wellbeing.mid {
-      color: #ffd43b;
+      color: var(--fb-yellow-dark) !important;
     }
     .fb-people-pulse-engagement {
-      color: #7B6BB5;
+      color: var(--fb-blue) !important;
     }
     .fb-people-clean-success {
-      background: rgba(134,192,169,0.06);
-      border: 1px solid rgba(134,192,169,0.18);
-      color: #4B7865;
-      padding: 12px;
-      font-size: 12px;
-      font-weight: 650;
-      text-align: center;
+      background: rgba(134,192,169,0.12) !important;
+      border: 1.5px solid rgba(134,192,169,0.3) !important;
+      color: #86C0A9 !important;
+      padding: 16px !important;
+      font-size: 13px !important;
+      font-weight: 650 !important;
+      text-align: center !important;
+      border-radius: 14px !important;
     }
   `;
   document.head.appendChild(style);
@@ -184,7 +209,7 @@ window.__FB.renderPeoplePane = function() {
       <div class="fb-people-metric-card">
         <div class="fb-people-metric-lbl">Karyawan</div>
         <div class="fb-people-metric-val">${metrics.totalEmployees || 0}</div>
-        <div class="fb-people-metric-trend" style="color:#8A837C;">Aktif</div>
+        <div class="fb-people-metric-trend" style="color:var(--fb-ink-mute);">Aktif</div>
       </div>
       <div class="fb-people-metric-card">
         <div class="fb-people-metric-lbl">Keterlibatan</div>
@@ -232,7 +257,7 @@ window.__FB.renderPeoplePane = function() {
   // 3. Department Pulse
   html += `<div class="fb-people-section-title">Nadi Departemen</div>`;
   if (deptPulse.length === 0) {
-    html += `<div style="font-size:11px; color:#A09A93; font-style:italic;">Data departemen tidak tersedia</div>`;
+    html += `<div style="font-size:11.5px; color:var(--fb-ink-mute); font-style:italic;">Data departemen tidak tersedia</div>`;
   } else {
     deptPulse.forEach(dept => {
       let wbClass = '';

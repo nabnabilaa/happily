@@ -15,14 +15,19 @@ interface ManageHabitsModalProps {
 }
 
 export default function ManageHabitsModal({ onClose }: ManageHabitsModalProps) {
-  const { state, updateState } = useHP();
+  const { state, updateState, notify } = useHP();
   const [newName, setNewName] = useState("");
   const [glyph, setGlyph] = useState("sparkle");
 
   const addHabit = () => {
-    if (!newName) return;
+    if (!state || !newName) return;
+    const trimmedName = newName.trim();
+    if (state.habits?.some((h: any) => h.name.toLowerCase() === trimmedName.toLowerCase())) {
+      notify("Kebiasaan Sudah Ada", "Kebiasaan dengan nama tersebut sudah terdaftar.", "warning");
+      return;
+    }
     const newH = {
-      name: newName,
+      name: trimmedName,
       streak: 0,
       target: 7,
       done: false,
@@ -30,7 +35,7 @@ export default function ManageHabitsModal({ onClose }: ManageHabitsModalProps) {
     };
     updateState((s: any) => ({
       ...s,
-      habits: [...s.habits, newH]
+      habits: [...(s.habits || []), newH]
     }));
     setNewName("");
   };
@@ -49,9 +54,9 @@ export default function ManageHabitsModal({ onClose }: ManageHabitsModalProps) {
       <div style={{ marginTop: 4 }}>
         <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 12 }}>KEBIASAAN AKTIF</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 24 }}>
-          {state.habits.map((h: any) => (
+          {state.habits.map((h: any, i: number) => (
             <div 
-              key={h.name} 
+              key={`${h.name}-${i}`} 
               style={{
                 padding: 12, borderRadius: 16, background: HP_TOKENS.card, border: `1.5px solid ${HP_TOKENS.line}`,
                 position: 'relative'

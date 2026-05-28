@@ -1,49 +1,52 @@
 export const HP_TOKENS = {
-  // Core palette — all harmonized, low saturation
-  // Main Brand Palette — Flow Productivity (Yellow & Blue)
-  yellow: '#FDB913',
-  yellowLight: '#FFCA4D',
-  yellowSoft: '#FFF9DB',
-  yellowWash: '#FFFEF5',
+  // ── Theme-reactive tokens (resolve via CSS custom properties) ──
+  // These return `var(--hp-*)` strings, so inline styles automatically
+  // respond to light/dark mode changes without any component-level edits.
+  yellow: 'var(--hp-yellow)',
+  yellowLight: 'var(--hp-yellow-light)',
+  yellowSoft: 'var(--hp-yellow-soft)',
+  yellowWash: 'var(--hp-yellow-wash)',
 
-  blue: '#4A90E2',
-  blueLight: '#7FB1EB',
-  blueSoft: '#EBF4FF',
-  blueWash: '#F8FBFF',
+  blue: 'var(--hp-blue)',
+  blueLight: 'var(--hp-blue-light)',
+  blueSoft: 'var(--hp-blue-soft)',
+  blueWash: 'var(--hp-blue-wash)',
 
+  // Semantic colors — static (don't shift between themes)
   sage: '#4A7C59',
   sageLight: '#8FB39B',
-  sageSoft: '#E3EDE6',
-  sageWash: '#F3F7F4',
+  sageSoft: 'var(--hp-sage-soft)',
+  sageWash: 'var(--hp-sage-wash)',
 
   coral: '#E88B7D',
-  coralSoft: '#F6D8D2',
-  coralWash: '#FAF1EF',
+  coralSoft: 'var(--hp-coral-soft)',
+  coralWash: 'var(--hp-coral-wash)',
 
   lavender: '#A89BC9',
-  lavenderSoft: '#E9E4F1',
-  lavenderWash: '#F6F4FA',
+  lavenderSoft: 'var(--hp-lavender-soft)',
+  lavenderWash: 'var(--hp-lavender-wash)',
 
-  // Neutrals — warm, not sterile
-  ink: '#1F1D1B',
-  inkSoft: '#524E49',
-  inkMute: '#8A837C',
-  inkFade: '#BDB6AE',
-  paper: '#FFFBF5',
-  card: '#FFFFFF',
-  line: 'rgba(31,29,27,0.08)',
-  lineSoft: 'rgba(31,29,27,0.04)',
+  // Neutrals — theme-reactive
+  ink: 'var(--hp-ink)',
+  inkSoft: 'var(--hp-ink-soft)',
+  inkMute: 'var(--hp-ink-mute)',
+  inkFade: 'var(--hp-ink-fade)',
+  paper: 'var(--hp-paper)',
+  card: 'var(--hp-card)',
+  line: 'var(--hp-line)',
+  lineSoft: 'var(--hp-line-soft)',
 };
 
-export const HP_FONT = "'Nunito', 'Inter', -apple-system, system-ui, sans-serif";
+export const HP_FONT = "'Inter', -apple-system, system-ui, sans-serif";
+export const HP_FONT_DISPLAY = "'Space Grotesk', 'Inter', -apple-system, system-ui, sans-serif";
 
 export const HP_TEXT = {
-  display: { fontFamily: HP_FONT, fontWeight: 800, fontSize: 28, lineHeight: 1.15, color: HP_TOKENS.ink, letterSpacing: -0.4 },
-  title: { fontFamily: HP_FONT, fontWeight: 800, fontSize: 22, lineHeight: 1.2, color: HP_TOKENS.ink, letterSpacing: -0.2 },
-  h: { fontFamily: HP_FONT, fontWeight: 700, fontSize: 17, lineHeight: 1.25, color: HP_TOKENS.ink },
+  display: { fontFamily: HP_FONT_DISPLAY, fontWeight: 700, fontSize: 28, lineHeight: 1.15, color: HP_TOKENS.ink, letterSpacing: -0.4 },
+  title: { fontFamily: HP_FONT_DISPLAY, fontWeight: 700, fontSize: 22, lineHeight: 1.2, color: HP_TOKENS.ink, letterSpacing: -0.2 },
+  h: { fontFamily: HP_FONT_DISPLAY, fontWeight: 700, fontSize: 17, lineHeight: 1.25, color: HP_TOKENS.ink },
   body: { fontFamily: HP_FONT, fontWeight: 500, fontSize: 15, lineHeight: 1.45, color: HP_TOKENS.inkSoft },
   small: { fontFamily: HP_FONT, fontWeight: 600, fontSize: 13, lineHeight: 1.4, color: HP_TOKENS.inkMute },
-  tiny: { fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, lineHeight: 1.2, color: HP_TOKENS.inkMute, letterSpacing: 0.3, textTransform: 'uppercase' },
+  tiny: { fontFamily: 'var(--hp-font-mono)', fontWeight: 700, fontSize: 11, lineHeight: 1.2, color: HP_TOKENS.inkMute, letterSpacing: 0.5, textTransform: 'uppercase' as const },
 };
 
 export const HP_MOODS = [

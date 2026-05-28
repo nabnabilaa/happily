@@ -209,6 +209,7 @@ export async function POST(request: Request) {
           goalId: r.goal_id,
           done: !!r.is_done,
           verified: !!r.is_verified,
+          status: r.status,
           energy: r.energy_level,
           est: r.est_time,
           tone: r.tone,
@@ -409,9 +410,15 @@ export async function POST(request: Request) {
       tasks: tasksRes.rows.map(r => {
         let taskDate = '';
         if (r.target_date) {
-          taskDate = String(r.target_date).split(' ')[0];
+          if (r.target_date instanceof Date) {
+            const d = r.target_date;
+            taskDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          } else {
+            const str = String(r.target_date);
+            taskDate = str.includes('T') ? str.split('T')[0] : (str.includes(' ') ? str.split(' ')[0] : str);
+          }
         } else {
-          const d = r.created_at ? new Date(r.created_at) : new Date();
+          const d = r.created_at ? (r.created_at instanceof Date ? r.created_at : new Date(r.created_at)) : new Date();
           taskDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         }
         return {
@@ -422,7 +429,7 @@ export async function POST(request: Request) {
           isProject: !!r.is_project, metricValue: r.metric_value,
           goalId: r.goal_id, kpiId: r.kpi_id,
           description: r.description || '',
-          targetDate: r.target_date || '',
+          targetDate: taskDate,
         };
       }),
       notes: notesRes.rows.map(r => ({

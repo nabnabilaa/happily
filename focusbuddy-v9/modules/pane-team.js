@@ -8,351 +8,376 @@ window.__FB = window.__FB || {};
   style.id = styleId;
   style.textContent = `
     .fb-team-summary {
-      background: rgba(59,111,160,0.06);
-      border: 1px solid rgba(59,111,160,0.15);
-      padding: 12px;
-      margin-bottom: 14px;
-      border-radius: 0px;
+      background: var(--fb-blue-soft) !important;
+      border: 1.5px solid var(--fb-line) !important;
+      padding: 16px 18px !important;
+      margin-bottom: 18px !important;
+      border-radius: 14px !important;
     }
     .fb-team-summary-title {
-      font-size: 10px;
-      font-weight: 800;
-      color: #3B6FA0;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
+      font-size: 10.5px !important;
+      font-weight: 800 !important;
+      color: var(--fb-blue) !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.8px !important;
+      margin-bottom: 6px !important;
     }
     .fb-team-summary-val {
-      font-size: 18px;
-      font-weight: 900;
-      color: #1F1D1B;
+      font-size: 19px !important;
+      font-weight: 800 !important;
+      color: var(--fb-ink) !important;
     }
     .fb-team-member-card {
-      background: #fff;
-      border: 1px solid rgba(31,29,27,0.08);
-      margin-bottom: 10px;
-      padding: 12px;
-      transition: all 0.2s ease;
+      background: var(--fb-card) !important;
+      border: 1.5px solid var(--fb-line) !important;
+      margin-bottom: 14px !important;
+      padding: 16px 18px !important;
+      border-radius: 14px !important;
+      transition: all 0.2s ease !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03) !important;
     }
     .fb-team-member-card:hover {
-      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+      border-color: var(--fb-blue) !important;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.06) !important;
+      transform: translateY(-2px) !important;
     }
     .fb-team-member-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      cursor: pointer;
+      display: flex !important;
+      align-items: center !important;
+      gap: 14px !important;
+      cursor: pointer !important;
     }
     .fb-team-member-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 0px;
-      background: linear-gradient(135deg, #3B6FA0, #86C0A9);
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 13px;
+      width: 38px !important;
+      height: 38px !important;
+      border-radius: 50% !important;
+      background: linear-gradient(135deg, var(--fb-blue), var(--fb-yellow-dark)) !important;
+      color: #fff !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      font-weight: 800 !important;
+      font-size: 15px !important;
+      flex-shrink: 0 !important;
     }
     .fb-team-member-info {
-      flex: 1;
-      min-width: 0;
+      flex: 1 !important;
+      min-width: 0 !important;
     }
     .fb-team-member-name {
-      font-size: 13px;
-      font-weight: 700;
-      color: #1F1D1B;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-size: 13.5px !important;
+      font-weight: 700 !important;
+      color: var(--fb-ink) !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
     }
     .fb-team-member-role {
-      font-size: 10.5px;
-      color: #8A837C;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-size: 11px !important;
+      color: var(--fb-ink-mute) !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
     }
     .fb-team-member-badges {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 4px;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-end !important;
+      gap: 4px !important;
     }
     .fb-team-member-mood {
-      font-size: 10px;
-      font-weight: 700;
-      padding: 2px 6px;
-      background: #F0F4F8;
-      color: #3B6FA0;
+      font-size: 10.5px !important;
+      font-weight: 700 !important;
+      padding: 4px 10px !important;
+      background: var(--fb-line-soft) !important;
+      color: var(--fb-ink-mute) !important;
+      border-radius: 8px !important;
     }
     .fb-team-member-tasks-stat {
-      font-size: 10px;
-      font-weight: 700;
-      color: #86C0A9;
+      font-size: 10.5px !important;
+      font-weight: 700 !important;
+      color: var(--fb-blue) !important;
     }
     .fb-team-member-details {
-      margin-top: 10px;
-      border-top: 1px dashed rgba(31,29,27,0.08);
-      padding-top: 10px;
-      animation: fbSlideDown 0.2s ease-out;
+      margin-top: 14px !important;
+      border-top: 1.5px dashed var(--fb-line) !important;
+      padding-top: 14px !important;
+      animation: fbSlideDown 0.2s ease-out !important;
     }
     @keyframes fbSlideDown {
       from { opacity: 0; transform: translateY(-5px); }
       to { opacity: 1; transform: translateY(0); }
     }
     .fb-team-member-tasks-title {
-      font-size: 10px;
-      font-weight: 800;
-      color: #8A837C;
-      text-transform: uppercase;
-      margin-bottom: 6px;
+      font-size: 10.5px !important;
+      font-weight: 800 !important;
+      color: var(--fb-ink-mute) !important;
+      text-transform: uppercase !important;
+      margin-bottom: 10px !important;
+      letter-spacing: 0.5px !important;
     }
     .fb-team-member-task-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      padding: 6px 0;
-      font-size: 12px;
-      border-bottom: 1px solid rgba(31,29,27,0.03);
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      gap: 12px !important;
+      padding: 10px 0 !important;
+      font-size: 12.5px !important;
+      border-bottom: 1.5px solid var(--fb-line-soft) !important;
     }
     .fb-team-member-task-row:last-child {
-      border-bottom: none;
+      border-bottom: none !important;
+      padding-bottom: 0 !important;
     }
     .fb-team-member-task-txt {
-      flex: 1;
-      color: #524E49;
+      flex: 1 !important;
+      color: var(--fb-ink) !important;
     }
     .fb-team-member-task-txt.done {
-      text-decoration: line-through;
-      color: #A09A93;
+      text-decoration: line-through !important;
+      color: var(--fb-ink-mute) !important;
     }
     .fb-team-verify-btn {
-      background: #3B6FA0;
-      color: #fff;
-      border: none;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 3px 8px;
-      cursor: pointer;
-      transition: background 0.15s;
+      background: var(--fb-blue) !important;
+      color: #fff !important;
+      border: none !important;
+      font-size: 10.5px !important;
+      font-weight: 700 !important;
+      padding: 6px 14px !important;
+      border-radius: 8px !important;
+      cursor: pointer !important;
+      transition: all 0.15s !important;
     }
     .fb-team-verify-btn:hover {
-      background: #2B5286;
+      opacity: 0.85 !important;
+      transform: translateY(-1px) !important;
     }
     .fb-team-verified-badge {
-      font-size: 10px;
-      font-weight: 700;
-      color: #86C0A9;
-      display: flex;
-      align-items: center;
-      gap: 2px;
+      font-size: 10.5px !important;
+      font-weight: 700 !important;
+      color: #86C0A9 !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 3px !important;
     }
     .fb-team-member-wellbeing {
-      margin-top: 6px;
-      background: #F0F0F2;
-      height: 4px;
-      position: relative;
+      margin-top: 10px !important;
+      background: var(--fb-line-soft) !important;
+      height: 6px !important;
+      border-radius: 3px !important;
+      overflow: hidden !important;
+      position: relative !important;
     }
     .fb-team-member-wellbeing-fill {
-      height: 100%;
-      background: #86C0A9;
+      height: 100% !important;
+      border-radius: 3px !important;
+      transition: width 0.3s ease !important;
     }
 
     /* ─── KPI Section Styles ─── */
     .fb-kpi-section {
-      margin-bottom: 16px;
+      margin-bottom: 22px;
     }
     .fb-kpi-section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 10px;
-      padding: 0 2px;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      margin-bottom: 14px !important;
+      padding: 0 4px !important;
     }
     .fb-kpi-section-title {
-      font-size: 10px;
-      font-weight: 800;
-      color: #3B6FA0;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      font-size: 11px !important;
+      font-weight: 800 !important;
+      color: var(--fb-blue) !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.8px !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 6px !important;
     }
     .fb-kpi-section-count {
-      font-size: 10px;
-      font-weight: 700;
-      color: #fff;
-      background: #3B6FA0;
-      padding: 1px 6px;
-      border-radius: 8px;
-      min-width: 16px;
-      text-align: center;
+      font-size: 11px !important;
+      font-weight: 800 !important;
+      color: #fff !important;
+      background: var(--fb-blue) !important;
+      padding: 2px 8px !important;
+      border-radius: 10px !important;
+      min-width: 18px !important;
+      text-align: center !important;
     }
     .fb-kpi-card {
-      background: #fff;
-      border: 1px solid rgba(31,29,27,0.08);
-      margin-bottom: 8px;
-      padding: 12px;
-      transition: all 0.2s ease;
+      background: var(--fb-card) !important;
+      border: 1.5px solid var(--fb-line) !important;
+      margin-bottom: 12px !important;
+      padding: 16px 18px !important;
+      border-radius: 14px !important;
+      transition: all 0.2s ease !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03) !important;
     }
     .fb-kpi-card:hover {
-      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+      border-color: var(--fb-blue) !important;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.06) !important;
+      transform: translateY(-2px) !important;
     }
     .fb-kpi-card.pending {
-      border-left: 3px solid #ffd43b;
+      border-left: 4px solid var(--fb-yellow) !important;
     }
     .fb-kpi-card.approved {
-      border-left: 3px solid #86C0A9;
+      border-left: 4px solid #86C0A9 !important;
     }
     .fb-kpi-card.rejected {
-      border-left: 3px solid #E88B7D;
+      border-left: 4px solid #E88B7D !important;
     }
     .fb-kpi-card.revision {
-      border-left: 3px solid #ffa94d;
+      border-left: 4px solid var(--fb-yellow-dark) !important;
     }
     .fb-kpi-title {
-      font-size: 12.5px;
-      font-weight: 700;
-      color: #1F1D1B;
-      margin-bottom: 4px;
-      line-height: 1.3;
+      font-size: 13.5px !important;
+      font-weight: 700 !important;
+      color: var(--fb-ink) !important;
+      margin-bottom: 8px !important;
+      line-height: 1.4 !important;
     }
     .fb-kpi-meta {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
+      display: flex !important;
+      align-items: center !important;
+      gap: 10px !important;
+      flex-wrap: wrap !important;
     }
     .fb-kpi-owner {
-      font-size: 10px;
-      font-weight: 600;
-      color: #8A837C;
+      font-size: 10.5px !important;
+      font-weight: 600 !important;
+      color: var(--fb-ink-mute) !important;
     }
     .fb-kpi-badge {
-      font-size: 9px;
-      font-weight: 800;
-      padding: 2px 7px;
-      border-radius: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
+      font-size: 9.5px !important;
+      font-weight: 800 !important;
+      padding: 2.5px 8px !important;
+      border-radius: 6px !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.5px !important;
     }
     .fb-kpi-badge.pending {
-      background: #fff3cd;
-      color: #8A6814;
+      background: var(--fb-yellow-soft) !important;
+      color: var(--fb-yellow-dark) !important;
+      border: 1px solid var(--fb-yellow) !important;
     }
     .fb-kpi-badge.approved {
-      background: rgba(134,192,169,0.15);
-      color: #4a8a6f;
+      background: rgba(134,192,169,0.12) !important;
+      color: #86C0A9 !important;
+      border: 1px solid rgba(134,192,169,0.3) !important;
     }
     .fb-kpi-badge.rejected {
-      background: rgba(232,139,125,0.15);
-      color: #c0392b;
+      background: rgba(232,139,125,0.12) !important;
+      color: #E88B7D !important;
+      border: 1px solid rgba(232,139,125,0.3) !important;
     }
     .fb-kpi-badge.revision {
-      background: rgba(255,169,77,0.15);
-      color: #d68910;
+      background: var(--fb-yellow-soft) !important;
+      color: var(--fb-yellow-dark) !important;
+      border: 1px solid var(--fb-yellow) !important;
     }
     .fb-kpi-progress-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 8px;
+      display: flex !important;
+      align-items: center !important;
+      gap: 12px !important;
+      margin-top: 12px !important;
     }
     .fb-kpi-progress-bar {
-      flex: 1;
-      height: 4px;
-      background: #F0F0F2;
-      overflow: hidden;
+      flex: 1 !important;
+      height: 6px !important;
+      background: var(--fb-line-soft) !important;
+      border-radius: 3px !important;
+      overflow: hidden !important;
     }
     .fb-kpi-progress-fill {
-      height: 100%;
-      background: #3B6FA0;
-      transition: width 0.3s ease;
+      height: 100% !important;
+      border-radius: 3px !important;
+      transition: width 0.3s ease !important;
     }
     .fb-kpi-progress-pct {
-      font-size: 11px;
-      font-weight: 800;
-      color: #3B6FA0;
-      min-width: 32px;
-      text-align: right;
+      font-size: 11.5px !important;
+      font-weight: 800 !important;
+      min-width: 36px !important;
+      text-align: right !important;
     }
     .fb-kpi-actions {
-      display: flex;
-      gap: 6px;
-      margin-top: 10px;
+      display: flex !important;
+      gap: 10px !important;
+      margin-top: 14px !important;
     }
     .fb-kpi-action-btn {
-      flex: 1;
-      padding: 6px 4px;
-      border: none;
-      font-size: 10px;
-      font-weight: 800;
-      cursor: pointer;
-      transition: all 0.15s;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
+      flex: 1 !important;
+      padding: 9px 8px !important;
+      border: none !important;
+      font-size: 10.5px !important;
+      font-weight: 800 !important;
+      cursor: pointer !important;
+      transition: all 0.15s !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.5px !important;
+      border-radius: 10px !important;
     }
     .fb-kpi-action-btn.approve {
-      background: #86C0A9;
-      color: #fff;
+      background: #86C0A9 !important;
+      color: #fff !important;
     }
     .fb-kpi-action-btn.approve:hover {
-      background: #6aab90;
+      opacity: 0.85 !important;
     }
     .fb-kpi-action-btn.revision {
-      background: #fff;
-      color: #d68910;
-      border: 1px solid #ffd43b;
+      background: var(--fb-card) !important;
+      color: var(--fb-yellow-dark) !important;
+      border: 1.5px solid var(--fb-yellow) !important;
     }
     .fb-kpi-action-btn.revision:hover {
-      background: #fff8e6;
+      background: var(--fb-yellow-soft) !important;
     }
     .fb-kpi-action-btn.reject {
-      background: #fff;
-      color: #c0392b;
-      border: 1px solid #E88B7D;
+      background: var(--fb-card) !important;
+      color: #E88B7D !important;
+      border: 1.5px solid #E88B7D !important;
     }
     .fb-kpi-action-btn.reject:hover {
-      background: #fef0ee;
+      background: rgba(232,139,125,0.08) !important;
     }
     .fb-kpi-action-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+      opacity: 0.4 !important;
+      cursor: not-allowed !important;
     }
 
     /* ─── Sub-tab switcher ─── */
     .fb-team-subtabs {
-      display: flex;
-      gap: 4px;
-      margin-bottom: 14px;
-      background: rgba(31,29,27,0.03);
-      padding: 3px;
+      display: flex !important;
+      gap: 6px !important;
+      margin-bottom: 20px !important;
+      background: var(--fb-line-soft) !important;
+      padding: 5px !important;
+      border-radius: 12px !important;
     }
     .fb-team-subtab {
-      flex: 1;
-      padding: 7px 4px;
-      font-size: 10px;
-      font-weight: 800;
-      text-align: center;
-      border: none;
-      cursor: pointer;
-      background: transparent;
-      color: #8A837C;
-      transition: all 0.15s;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
+      flex: 1 !important;
+      padding: 10px 8px !important;
+      font-size: 11px !important;
+      font-weight: 800 !important;
+      text-align: center !important;
+      border: none !important;
+      border-radius: 9px !important;
+      cursor: pointer !important;
+      background: transparent !important;
+      color: var(--fb-ink-mute) !important;
+      transition: all 0.2s cubic-bezier(.34,1.56,.64,1) !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.5px !important;
     }
     .fb-team-subtab.active {
-      background: #3B6FA0;
-      color: #fff;
+      background: var(--fb-blue) !important;
+      color: #fff !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
     }
     .fb-team-subtab:hover:not(.active) {
-      background: rgba(59,111,160,0.08);
-      color: #3B6FA0;
+      background: var(--fb-blue-soft) !important;
+      color: var(--fb-blue) !important;
     }
   `;
   document.head.appendChild(style);
@@ -392,7 +417,7 @@ window.__FB.renderTeamPane = function() {
         👥 Anggota (${members.length})
       </button>
       <button class="fb-team-subtab ${subTab === 'kpi' ? 'active' : ''}" data-subtab="kpi">
-        🎯 KPI (${teamGoals.length})${teamApprovals.length > 0 ? ' <span style="background:#E88B7D;color:#fff;padding:0 4px;border-radius:8px;font-size:8px;margin-left:2px;">' + teamApprovals.length + '</span>' : ''}
+        🎯 KPI (${teamGoals.length})${teamApprovals.length > 0 ? ' <span style="background:#E88B7D; color:#fff; padding:2px 6px; border-radius:10px; font-size:9px; margin-left:4px; font-weight:800;">' + teamApprovals.length + '</span>' : ''}
       </button>
     </div>
   `;
@@ -517,7 +542,7 @@ function renderMembersTab(members, teamTasks) {
   let html = `
     <div class="fb-team-summary">
       <div class="fb-team-summary-title">Rata-rata Tugas Selesai Tim</div>
-      <div class="fb-team-summary-val">${avgPct}% <span style="font-size:12px; font-weight:500; color:#8A837C;">(${doneCounts}/${totalCounts} Tugas hari ini)</span></div>
+      <div class="fb-team-summary-val">${avgPct}% <span style="font-size:12px; font-weight:500; color:var(--fb-ink-mute);">(${doneCounts}/${totalCounts} Tugas hari ini)</span></div>
     </div>
   `;
 
@@ -560,7 +585,7 @@ function renderMembersTab(members, teamTasks) {
       `;
 
       if (memberTasks.length === 0) {
-        html += `<div style="font-size:11px; color:#A09A93; font-style:italic; padding:4px 0;">Belum membuat tugas hari ini</div>`;
+        html += `<div style="font-size:11.5px; color:var(--fb-ink-mute); font-style:italic; padding:6px 0;">Belum membuat tugas hari ini</div>`;
       } else {
         memberTasks.forEach(task => {
           const isDone = !!task.done;
@@ -578,7 +603,7 @@ function renderMembersTab(members, teamTasks) {
           } else if (isVerified) {
             html += `<span class="fb-team-verified-badge">✓ Terverifikasi</span>`;
           } else {
-            html += `<span style="font-size:10.5px; color:#A09A93; font-style:italic;">Aktif</span>`;
+            html += `<span style="font-size:11px; color:var(--fb-ink-mute); font-style:italic;">Aktif</span>`;
           }
 
           html += `
@@ -608,7 +633,7 @@ function renderKPITab(teamGoals, teamApprovals) {
         <div class="fb-kpi-section-header">
           <div class="fb-kpi-section-title">
             ⚠️ Menunggu Persetujuan
-            <span class="fb-kpi-section-count" style="background:#E88B7D;">${teamApprovals.length}</span>
+            <span class="fb-kpi-section-count" style="background:#E88B7D; color:#fff !important;">${teamApprovals.length}</span>
           </div>
         </div>
     `;
@@ -620,7 +645,7 @@ function renderKPITab(teamGoals, teamApprovals) {
           <div class="fb-kpi-meta">
             <span class="fb-kpi-owner">👤 ${esc(a.from)}</span>
             <span class="fb-kpi-badge pending">${a.type || 'GOAL'}</span>
-            ${a.due ? `<span style="font-size:9px; color:#8A837C;">📅 ${esc(a.due)}</span>` : ''}
+            ${a.due ? `<span style="font-size:10px; color:var(--fb-ink-mute);">📅 ${esc(a.due)}</span>` : ''}
           </div>
           <div class="fb-kpi-progress-row">
             <div class="fb-kpi-progress-bar">
@@ -665,7 +690,7 @@ function renderKPITab(teamGoals, teamApprovals) {
           <div class="fb-kpi-section-header">
             <div class="fb-kpi-section-title">
               📋 Pending KPI
-              <span class="fb-kpi-section-count" style="background:#ffd43b;color:#8A6814;">${unapprovedPending.length}</span>
+              <span class="fb-kpi-section-count" style="background:var(--fb-yellow-soft); color:var(--fb-yellow-dark) !important; border:1px solid var(--fb-yellow);">${unapprovedPending.length}</span>
             </div>
           </div>
       `;
@@ -698,10 +723,10 @@ function renderKPITab(teamGoals, teamApprovals) {
 
   if (teamGoals.length === 0 && teamApprovals.length === 0) {
     html += `
-      <div style="text-align:center; padding:30px 16px; color:#A09A93;">
-        <div style="font-size:28px; margin-bottom:8px;">🎯</div>
-        <div style="font-size:12px; font-weight:600;">Belum ada KPI tim.</div>
-        <div style="font-size:10.5px; margin-top:4px; color:#BDB6AE;">Buat KPI baru untuk anggota tim di aplikasi web.</div>
+      <div style="text-align:center; padding:36px 20px; color:var(--fb-ink-mute);">
+        <div style="font-size:34px; margin-bottom:12px;">🎯</div>
+        <div style="font-size:13px; font-weight:600;">Belum ada KPI tim.</div>
+        <div style="font-size:11.5px; margin-top:6px; color:var(--fb-ink-mute); opacity:0.8;">Buat KPI baru untuk anggota tim di aplikasi web.</div>
       </div>
     `;
   }
@@ -721,8 +746,8 @@ function renderGoalCard(g, showActions) {
       <div class="fb-kpi-meta">
         <span class="fb-kpi-owner">👤 ${esc(g.owner)}</span>
         <span class="fb-kpi-badge ${status}">${statusLabels[status] || status.toUpperCase()}</span>
-        ${g.is_kpi ? '<span class="fb-kpi-badge" style="background:rgba(59,111,160,0.1);color:#3B6FA0;">KPI</span>' : ''}
-        ${g.due ? `<span style="font-size:9px; color:#8A837C;">📅 ${esc(String(g.due))}</span>` : ''}
+        ${g.is_kpi ? '<span class="fb-kpi-badge" style="background:var(--fb-blue-soft); color:var(--fb-blue) !important; border:1px solid var(--fb-line);">KPI</span>' : ''}
+        ${g.due ? `<span style="font-size:10px; color:var(--fb-ink-mute);">📅 ${esc(String(g.due))}</span>` : ''}
       </div>
       <div class="fb-kpi-progress-row">
         <div class="fb-kpi-progress-bar">

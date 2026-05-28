@@ -1,25 +1,100 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
-
 :root {
-  --hp-yellow: #FDB913;
-  --hp-yellow-dark: #E5A800;
-  --hp-yellow-soft: #FFFDF0;
-  --hp-blue: #4A90E2;
-  --hp-blue-soft: #EBF4FF;
+  /* ── Brand: Yellow / Gold ── */
+  --hp-yellow: #c5a059;
+  --hp-yellow-dark: #a4803b;
+  --hp-yellow-light: #e3c07a;
+  --hp-yellow-soft: rgba(197, 160, 89, 0.08);
+  --hp-yellow-wash: rgba(197, 160, 89, 0.03);
+
+  /* ── Brand: Blue ── */
+  --hp-blue: #00b4d8;
+  --hp-blue-light: #48cae4;
+  --hp-blue-soft: rgba(0, 180, 216, 0.08);
+  --hp-blue-wash: rgba(0, 180, 216, 0.03);
+
+  /* ── Semantic: Sage ── */
+  --hp-sage-soft: #E3EDE6;
+  --hp-sage-wash: #F3F7F4;
+
+  /* ── Semantic: Coral ── */
+  --hp-coral-soft: #F6D8D2;
+  --hp-coral-wash: #FAF1EF;
+
+  /* ── Semantic: Lavender ── */
+  --hp-lavender-soft: #E9E4F1;
+  --hp-lavender-wash: #F6F4FA;
+
+  /* ── Amber ── */
   --hp-amber: #F2994A;
   --hp-amber-soft: #FEF6ED;
-  --hp-honey: #D4A373;
-  --hp-honey-soft: #F9F3EC;
-  --hp-gold: #FFD700;
-  --hp-paper: #FFFBF5;
-  --hp-ink: #1F1D1B;
-  --hp-ink-mute: #6B645E;
-  --hp-line: rgba(31,29,27,0.08);
-  --hp-line-soft: rgba(31,29,27,0.04);
-  --hp-card: #FFFFFF;
-  --hp-font: 'Nunito', -apple-system, system-ui, sans-serif;
-  --hp-font-mono: 'JetBrains Mono', monospace;
+
+  /* ── Gold / Honey ── */
+  --hp-honey: #c5a059;
+  --hp-honey-soft: rgba(197, 160, 89, 0.04);
+  --hp-gold: #c5a059;
+
+  /* ── Neutrals ── */
+  --hp-paper: #f4f6fa;
+  --hp-card: #ffffff;
+  --hp-ink: #050811;
+  --hp-ink-soft: #323846;
+  --hp-ink-mute: #5a6478;
+  --hp-ink-fade: #8c9bb4;
+  --hp-line: rgba(5, 8, 17, 0.06);
+  --hp-line-soft: rgba(5, 8, 17, 0.03);
+
+  /* ── Typography ── */
+  --hp-font: var(--hp-font);
+  --hp-font-display: var(--hp-font-display);
+  --hp-font-mono: var(--hp-font-mono);
 }
+
+.dark {
+  /* ── Brand: Yellow / Gold ── */
+  --hp-yellow: #ffd700;
+  --hp-yellow-dark: #c5a059;
+  --hp-yellow-light: #ffea79;
+  --hp-yellow-soft: rgba(255, 215, 0, 0.07);
+  --hp-yellow-wash: rgba(255, 215, 0, 0.03);
+
+  /* ── Brand: Blue ── */
+  --hp-blue: #00e5ff;
+  --hp-blue-light: #64ffda;
+  --hp-blue-soft: rgba(0, 229, 255, 0.1);
+  --hp-blue-wash: rgba(0, 229, 255, 0.04);
+
+  /* ── Semantic: Sage ── */
+  --hp-sage-soft: rgba(78, 159, 61, 0.12);
+  --hp-sage-wash: rgba(78, 159, 61, 0.05);
+
+  /* ── Semantic: Coral ── */
+  --hp-coral-soft: rgba(255, 92, 88, 0.12);
+  --hp-coral-wash: rgba(255, 92, 88, 0.05);
+
+  /* ── Semantic: Lavender ── */
+  --hp-lavender-soft: rgba(168, 155, 201, 0.12);
+  --hp-lavender-wash: rgba(168, 155, 201, 0.05);
+
+  /* ── Amber ── */
+  --hp-amber: #ffb74d;
+  --hp-amber-soft: rgba(255, 183, 77, 0.06);
+
+  /* ── Gold / Honey ── */
+  --hp-honey: #ffd700;
+  --hp-honey-soft: rgba(255, 215, 0, 0.04);
+  --hp-gold: #ffd700;
+
+  /* ── Neutrals ── */
+  --hp-paper: #04050a;
+  --hp-card: rgba(12, 14, 25, 0.65);
+  --hp-ink: #f0f4f9;
+  --hp-ink-soft: #a0aec0;
+  --hp-ink-mute: #718096;
+  --hp-ink-fade: #4a5568;
+  --hp-line: rgba(0, 229, 255, 0.15);
+  --hp-line-soft: rgba(0, 229, 255, 0.06);
+}
+
 
 * {
   margin: 0;
@@ -34,12 +109,28 @@ html, body {
   font-family: var(--hp-font);
   color: var(--hp-ink);
   overflow-x: hidden;
+  position: relative;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Background bloom gradients for Dark Mode */
+.dark html, .dark body {
+  background: 
+    radial-gradient(circle at 10% 20%, rgba(0, 229, 255, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(197, 160, 89, 0.04) 0%, transparent 40%),
+    #04050a;
+  background-attachment: fixed;
 }
 
 body {
   padding: 0;
 }
 
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--hp-font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
 
 button {
   font-family: inherit;
@@ -63,6 +154,41 @@ button {
 
 .hp-tap { transition: transform 180ms cubic-bezier(.2,.8,.2,1); }
 .hp-tap:active { transform: scale(0.96); }
+
+/* ── Dark mode premium effects ── */
+.dark .hp-app-nav {
+  backdrop-filter: blur(20px) saturate(1.3);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+  border-color: rgba(0, 229, 255, 0.15);
+  background: rgba(12, 14, 25, 0.7);
+  box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.4);
+}
+
+.dark .hp-nav-btn:hover {
+  background: rgba(0, 229, 255, 0.06);
+}
+
+.dark .hp-modal-overlay {
+  background: rgba(2, 3, 6, 0.75);
+  backdrop-filter: blur(12px);
+}
+
+.dark .hp-modal-content {
+  background: rgba(12, 14, 25, 0.8);
+  backdrop-filter: blur(32px) saturate(1.4);
+  -webkit-backdrop-filter: blur(32px) saturate(1.4);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  box-shadow: 0 -10px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Smooth transitions on interactive elements */
+button, input, textarea, select, a, [role="button"] {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+div, section, article, aside, nav, header, footer, main {
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
 
 /* Layout Components */
 .hp-shell {
@@ -253,3 +379,71 @@ button {
     display: none !important;
   }
 }
+
+/* ── Global Dark Mode Safety Net Overrides ── */
+.dark input:not([type="checkbox"]):not([type="radio"]), 
+.dark textarea, 
+.dark select {
+  background-color: var(--hp-card) !important;
+  color: var(--hp-ink) !important;
+  border-color: var(--hp-line) !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: var(--hp-ink-mute) !important;
+}
+
+/* Override hardcoded white inline-style backgrounds inside container elements in dark mode */
+.dark [style*="background"][style*="#fff"],
+.dark [style*="background"][style*="#ffffff"],
+.dark [style*="background"][style*="white"],
+.dark [style*="background"][style*="rgb(255, 255, 255)"],
+.dark [style*="background"][style*="255,255,255"],
+.dark [style*="background"][style*="#fafafa"] {
+  background-image: none !important;
+  background-color: var(--hp-card) !important;
+  background: var(--hp-card) !important;
+}
+
+/* Override hardcoded dark text color in dark mode */
+.dark [style*="color: #1F1D1B"],
+.dark [style*="color:#1F1D1B"],
+.dark [style*="color: #524E49"],
+.dark [style*="color:#524E49"],
+.dark [style*="color: #3a3f4a"],
+.dark [style*="color:#3a3f4a"],
+.dark [style*="color: #0b0f19"],
+.dark [style*="color:#0b0f19"] {
+  color: var(--hp-ink) !important;
+}
+
+/* Card and Glassmorphism styling overrides */
+.dark .hp-card,
+.dark [class*="card"],
+.dark [style*="background: var(--hp-card)"] {
+  background-color: var(--hp-card) !important;
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  border: 1px solid var(--hp-line) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Rounded corners Hud-style reduction */
+.hp-modal-content, .hp-card, [class*="card"] {
+  border-radius: 16px !important;
+}
+
+/* Active states and border glow transitions */
+.hp-tap {
+  transition: transform 180ms cubic-bezier(.2,.8,.2,1), border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.dark .hp-tap:hover,
+.dark button:hover,
+.dark .hp-nav-btn:hover {
+  border-color: rgba(0, 229, 255, 0.4) !important;
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.15) !important;
+}
+
+

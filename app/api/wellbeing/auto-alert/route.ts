@@ -4,9 +4,13 @@ import { hpEventEmitter } from "@/lib/events";
 
 // Auto-initialize the table if it doesn't exist
 try {
+  // Clean up any malformed legacy tables with TEXT primary keys
+  db.execute(`DROP TABLE IF EXISTS chat_messages`);
+  db.execute(`DROP TABLE IF EXISTS chat_channels`);
+
   db.execute(`
     CREATE TABLE IF NOT EXISTS chat_channels (
-      id TEXT PRIMARY KEY,
+      id VARCHAR(255) PRIMARY KEY,
       name TEXT NOT NULL,
       type TEXT NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -14,9 +18,9 @@ try {
   `);
   db.execute(`
     CREATE TABLE IF NOT EXISTS chat_messages (
-      id TEXT PRIMARY KEY,
-      channel_id TEXT NOT NULL,
-      sender_id TEXT NOT NULL,
+      id VARCHAR(255) PRIMARY KEY,
+      channel_id VARCHAR(255) NOT NULL,
+      sender_id VARCHAR(255) NOT NULL,
       sender_name TEXT NOT NULL,
       text TEXT NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
