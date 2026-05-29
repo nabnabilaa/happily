@@ -58,3 +58,29 @@ window.__FB.getRoleConfig = function() {
 window.__FB.roleHas = function(feature) {
   return window.__FB.getRoleConfig().features.includes(feature);
 };
+
+window.__FB.fetch = async function(url, options = {}) {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage({
+      type: 'FETCH_API',
+      url: url,
+      method: options.method || 'GET',
+      headers: options.headers || {},
+      body: options.body
+    }, (res) => {
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message));
+      } else if (res && res.success) {
+        resolve({
+          ok: res.result.ok,
+          status: res.result.status,
+          json: async () => res.result.data,
+          text: async () => typeof res.result.data === 'string' ? res.result.data : JSON.stringify(res.result.data)
+        });
+      } else {
+        reject(new Error(res ? res.error : 'Unknown network error'));
+      }
+    });
+  });
+};
+

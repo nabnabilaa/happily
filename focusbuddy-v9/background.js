@@ -10,6 +10,41 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 })
 
 chrome.runtime.onMessage.addListener((msg, _, res) => {
+  if (msg.type === 'FETCH_API') {
+    const opts = {
+      method: msg.method || 'GET',
+      headers: msg.headers || {}
+    }
+    if (msg.body) {
+      opts.body = msg.body
+    }
+    fetch(msg.url, opts)
+      .then(async response => {
+        const text = await response.text()
+        let json
+        try {
+          json = JSON.parse(text)
+        } catch(e) {
+          json = text
+        }
+        res({
+          success: true,
+          result: {
+            ok: response.ok,
+            status: response.status,
+            data: json
+          }
+        })
+      })
+      .catch(err => {
+        res({
+          success: false,
+          error: err.message || String(err)
+        })
+      })
+    return true
+  }
+
   if (msg.type === 'SET_ALARM') {
     const delay = (msg.timestamp - Date.now()) / 60000
     if (delay <= 0) { res({ ok:false }); return true }

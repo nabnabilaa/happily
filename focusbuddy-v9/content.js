@@ -311,7 +311,7 @@
         relatedEventId: n.relatedEventId || null,
       }))
 
-      const res = await fetch(`${FLOWBEE_API}/sync`, {
+      const res = await window.__FB.fetch(`${FLOWBEE_API}/sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -494,7 +494,7 @@
         // Mark all shown notifications as read in DB so they never repeat
         if (newNotifs.length > 0) {
           try {
-            fetch(`${FLOWBEE_API}/notifications`, {
+            window.__FB.fetch(`${FLOWBEE_API}/notifications`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -4219,7 +4219,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
     
     // Create KPI link via API immediately if applicable
     if (kpiId && flowbeeUserId) {
-      fetch(FLOWBEE_API.replace('/ext', '/kpi/link'), {
+      window.__FB.fetch(FLOWBEE_API.replace('/ext', '/kpi/link'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ taskId: String(newId), kpiId: kpiId })
@@ -4247,11 +4247,11 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
     try {
       const m = new Date().getMonth() + 1;
       const y = new Date().getFullYear();
-      const mRes = await fetch(`${FLOWBEE_API.replace('/ext', '/kpi')}?userId=${flowbeeUserId}&role=employee&month=${m}&year=${y}`);
+      const mRes = await window.__FB.fetch(`${FLOWBEE_API.replace('/ext', '/kpi')}?userId=${flowbeeUserId}&role=employee&month=${m}&year=${y}`);
       const mData = await mRes.json();
       const mKpis = (mData.kpis || []).map(k => ({ ...k, source: 'manager' }));
 
-      const pRes = await fetch(`${FLOWBEE_API.replace('/ext', '/kpi/personal')}?userId=${flowbeeUserId}&month=${m}&year=${y}`);
+      const pRes = await window.__FB.fetch(`${FLOWBEE_API.replace('/ext', '/kpi/personal')}?userId=${flowbeeUserId}&month=${m}&year=${y}`);
       const pData = await pRes.json();
       const pKpis = (pData.kpis || []).map(k => ({ ...k, source: 'personal' }));
 
@@ -4902,7 +4902,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
           // Persist timer stats so they survive page navigation
           chrome.storage.local.set({ fb3_timerStats: { sessions: pomodoroSessions, minutes: focusMinutesTotal } })
           if (flowbeeUserId) {
-            fetch(`${FLOWBEE_API}/timer-complete`, {
+            window.__FB.fetch(`${FLOWBEE_API}/timer-complete`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ userId: flowbeeUserId, durationMinutes: Math.round(timerMax / 60), label: timerLabel })
@@ -5437,7 +5437,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       const startDateTime = new Date(startTs);
       const endDateTime = new Date(endTs);
       try {
-        await fetch(`${FLOWBEE_API.replace('/ext', '/calendar')}`, {
+        await window.__FB.fetch(`${FLOWBEE_API.replace('/ext', '/calendar')}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -5501,7 +5501,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
 
     list.innerHTML = `<div class="fb-empty">Memuat chat...</div>`;
     try {
-      const res = await fetch(`${FLOWBEE_API.replace('/ext', '/chat')}?userId=${flowbeeUserId}`);
+      const res = await window.__FB.fetch(`${FLOWBEE_API.replace('/ext', '/chat')}?userId=${flowbeeUserId}`);
       const data = await res.json();
       const channels = data.channels || [];
       if (!channels.length) {
@@ -5539,7 +5539,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
     if (!msgWrap) return;
     if (!isPolling) msgWrap.innerHTML = `<div style="color:#8A837C;text-align:center;padding:20px;font-size:12px;font-weight:500;">Memuat...</div>`;
     try {
-      const res = await fetch(`${FLOWBEE_API.replace('/ext', '/chat')}?channelId=${channelId}&userId=${flowbeeUserId}`);
+      const res = await window.__FB.fetch(`${FLOWBEE_API.replace('/ext', '/chat')}?channelId=${channelId}&userId=${flowbeeUserId}`);
       const data = await res.json();
       const msgs = data.messages || [];
 
@@ -5604,7 +5604,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       msgWrap.scrollTop = msgWrap.scrollHeight;
 
       try {
-        await fetch(FLOWBEE_API.replace('/ext', '/chat'), {
+        await window.__FB.fetch(FLOWBEE_API.replace('/ext', '/chat'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ channelId: chatActiveChannelId, senderId: flowbeeUserId, content: txt })

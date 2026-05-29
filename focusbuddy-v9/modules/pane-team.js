@@ -461,7 +461,7 @@ window.__FB.renderTeamPane = function() {
 
       try {
         const flowbeeApi = window.__FB.FLOWBEE_API || (window.location.origin + '/api/ext');
-        const res = await fetch(flowbeeApi.replace('/ext', '/manager/verify-task'), {
+        const res = await window.__FB.fetch(flowbeeApi.replace('/ext', '/manager/verify-task'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -505,7 +505,7 @@ window.__FB.renderTeamPane = function() {
 
       try {
         const flowbeeApi = window.__FB.FLOWBEE_API || (window.location.origin + '/api/ext');
-        const res = await fetch(flowbeeApi.replace('/ext', '/goals/update'), {
+        const res = await window.__FB.fetch(flowbeeApi.replace('/ext', '/goals/update'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
