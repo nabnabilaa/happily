@@ -103,12 +103,24 @@
   let flowbeeUser = null // {id, name, role, points, coins, level, rank, streak, avatarImage}
   let flowbeeNotifCache = []
   let extensionEnabled = true
+  let mascotAnimated = true
 
   // Try to get userId and base URL from Flowbee cookie/localStorage on the website
   function detectFlowbeeUser() {
     try {
       // Check if we can read from the website's localStorage
       const stored = localStorage.getItem('hp_user_id')
+      const storedMascotAnim = localStorage.getItem('hp_mascot_animated')
+      if (storedMascotAnim !== null) {
+        const nextAnim = storedMascotAnim === '1';
+        if (mascotAnimated !== nextAnim) {
+          mascotAnimated = nextAnim;
+          try {
+            chrome.storage.local.set({ hp_mascot_animated: mascotAnimated });
+            applyMascotAnimated();
+          } catch (e) {}
+        }
+      }
       if (stored) {
         // Detect account change: if different user logged in, reset local data
         if (flowbeeUserId && flowbeeUserId !== stored) {
@@ -155,7 +167,7 @@
 
     // Also check chrome.storage for stored values
     try {
-      chrome.storage.local.get(['flowbee_user_id', 'flowbee_base_url', 'flowbee_user', 'fb_ext_enabled', 'fb3'], r => {
+      chrome.storage.local.get(['flowbee_user_id', 'flowbee_base_url', 'flowbee_user', 'fb_ext_enabled', 'fb3', 'hp_mascot_animated'], r => {
         if (r) {
           if (r.flowbee_user_id) {
             flowbeeUserId = r.flowbee_user_id;
@@ -170,6 +182,10 @@
           if (typeof r.fb_ext_enabled === 'boolean') {
             extensionEnabled = r.fb_ext_enabled;
             applyExtensionEnabled();
+          }
+          if (typeof r.hp_mascot_animated === 'boolean') {
+            mascotAnimated = r.hp_mascot_animated;
+            applyMascotAnimated();
           }
           if (r.fb3 && r.fb3.flowbeeNotifCache) {
             flowbeeNotifCache = r.fb3.flowbeeNotifCache;
@@ -260,6 +276,13 @@
     // Update toggle UI
     const toggle = root.querySelector('#fb-settings-toggle');
     if (toggle) toggle.checked = extensionEnabled;
+  }
+
+  function applyMascotAnimated() {
+    if (!root || !root.querySelector) return;
+    root.classList.toggle('quiet-mode', !mascotAnimated);
+    const toggle = root.querySelector('#fb-settings-mascot-anim-toggle');
+    if (toggle) toggle.checked = mascotAnimated;
   }
 
   async function flowbeeSyncAll() {
@@ -2560,6 +2583,41 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   color: var(--fb-ink) !important;
 }
 
+/* Quiet Mode — Stops all mascot animations */
+#fb-root.quiet-mode #fb-svg-wrap,
+#fb-root.quiet-mode #fb-bayangan,
+#fb-root.quiet-mode .mata-bisa-kedip,
+#fb-root.quiet-mode .gelembung-zzz,
+#fb-root.quiet-mode .gelembung-ingus,
+#fb-root.quiet-mode .tetesan-mata,
+#fb-root.quiet-mode .tetes-hujan,
+#fb-root.quiet-mode .balon-tiup,
+#fb-root.quiet-mode .ledakan-permen,
+#fb-root.quiet-mode .jarum-jam,
+#fb-root.quiet-mode .pupil-mata,
+#fb-root.quiet-mode .barbel,
+#fb-root.quiet-mode .keringat,
+#fb-root.quiet-mode .aura-api,
+#fb-root.quiet-mode .bohlam,
+#fb-root.quiet-mode .rumus,
+#fb-root.quiet-mode .garis-laser,
+#fb-root.quiet-mode .ring-1,
+#fb-root.quiet-mode .ring-2,
+#fb-root.quiet-mode .mata-laser,
+#fb-root.quiet-mode .hati-banyak,
+#fb-root.quiet-mode .sparkles-senang,
+#fb-root.quiet-mode .kembang-api,
+#fb-root.quiet-mode .api-roket,
+#fb-root.quiet-mode .biskuit-utuh,
+#fb-root.quiet-mode .biskuit-digigit,
+#fb-root.quiet-mode .remah-mulut,
+#fb-root.quiet-mode .remah-terbang,
+#fb-root.quiet-mode .urat-marah,
+#fb-root.quiet-mode .asap-kepala {
+  animation: none !important;
+  transform: none !important;
+}
+
 </style>
 
 <!-- Toast -->
@@ -3064,6 +3122,14 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
             <div class="fb-settings-item-sub">Nonaktifkan untuk menyembunyikan FocusBuddy sementara</div>
           </div>
           <input type="checkbox" class="fb-toggle" id="fb-settings-toggle" checked />
+        </div>
+        
+        <div class="fb-settings-item">
+          <div>
+            <div class="fb-settings-item-label">Mode Animasi Karakter</div>
+            <div class="fb-settings-item-sub">Matikan untuk membuat mascot diam (Mode Diam)</div>
+          </div>
+          <input type="checkbox" class="fb-toggle" id="fb-settings-mascot-anim-toggle" checked />
         </div>
       </div>
     </div>
@@ -3728,6 +3794,20 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       extensionEnabled = settingsToggle.checked;
       chrome.storage.local.set({ fb_ext_enabled: extensionEnabled });
       applyExtensionEnabled();
+    });
+  }
+  const mascotAnimToggle = $('fb-settings-mascot-anim-toggle');
+  if (mascotAnimToggle) {
+    mascotAnimToggle.addEventListener('change', () => {
+      mascotAnimated = mascotAnimToggle.checked;
+      chrome.storage.local.set({ hp_mascot_animated: mascotAnimated });
+      applyMascotAnimated();
+      // If we are on Happily portal tab, let's also set it in portal's localStorage so it stays perfectly in sync!
+      try {
+        localStorage.setItem('hp_mascot_animated', mascotAnimated ? '1' : '0');
+        // Dispatch event to update mascot on web page instantly if running on Portal
+        window.dispatchEvent(new CustomEvent('hp_mascot_anim_change', { detail: mascotAnimated }));
+      } catch (e) {}
     });
   }
 
