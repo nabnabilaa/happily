@@ -96,22 +96,65 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
     return combined;
   }, [apiKpis, goals, userId]);
 
+  const [currentPageKPI, setCurrentPageKPI] = useState(1);
+  const [currentPageMembers, setCurrentPageMembers] = useState(1);
+  const [currentPagePersonalKPI, setCurrentPagePersonalKPI] = useState(1);
+
+  useEffect(() => {
+    setCurrentPageKPI(1);
+    setCurrentPageMembers(1);
+    setCurrentPagePersonalKPI(1);
+  }, [activeTab]);
+
+  const personalKpiPerPage = 5;
+  const totalPagesPersonalKPI = Math.ceil(combinedMyGoals.length / personalKpiPerPage);
+  const activePagePersonalKPI = Math.min(currentPagePersonalKPI, Math.max(1, totalPagesPersonalKPI));
+  const paginatedPersonalKPIs = useMemo(() => {
+    const start = (activePagePersonalKPI - 1) * personalKpiPerPage;
+    return combinedMyGoals.slice(start, start + personalKpiPerPage);
+  }, [combinedMyGoals, activePagePersonalKPI]);
+
+  // Filter for goals relevant to the manager: goals assigned by manager OR goals owned by team members
+  const assignedGoals = useMemo(() => {
+    if (!state?.goals || !user?.id) return [];
+    return state.goals.filter((g: any) => 
+      (g.scope === 'assigned' && String(g.assignedById) === String(user.id)) || 
+      (String(g.ownerId) !== String(user.id) && g.scope !== 'company')
+    );
+  }, [state?.goals, user?.id]);
+
+  const topLevelGoals = useMemo(() => {
+    return assignedGoals.filter((g: any) => {
+      if (!g.parent_id) return true;
+      return !assignedGoals.some((p: any) => String(p.id) === String(g.parent_id));
+    });
+  }, [assignedGoals]);
+
+  const kpiPerPage = 5;
+  const totalPagesKPI = Math.ceil(topLevelGoals.length / kpiPerPage);
+  const activePageKPI = Math.min(currentPageKPI, Math.max(1, totalPagesKPI));
+  const paginatedKPIs = useMemo(() => {
+    const start = (activePageKPI - 1) * kpiPerPage;
+    return topLevelGoals.slice(start, start + kpiPerPage);
+  }, [topLevelGoals, activePageKPI]);
+
+  const membersList = useMemo(() => {
+    return state?.managerData?.members || [];
+  }, [state?.managerData?.members]);
+
+  const membersPerPage = 10;
+  const totalPagesMembers = Math.ceil(membersList.length / membersPerPage);
+  const activePageMembers = Math.min(currentPageMembers, Math.max(1, totalPagesMembers));
+  const paginatedMembers = useMemo(() => {
+    const start = (activePageMembers - 1) * membersPerPage;
+    return membersList.slice(start, start + membersPerPage);
+  }, [membersList, activePageMembers]);
+
   // Guard: all hooks are called above, safe to return early here
   if (!state || !user) return null;
 
-  // Filter for goals relevant to the manager: goals assigned by manager OR goals owned by team members
-  const assignedGoals = state.goals.filter((g: any) => 
-    (g.scope === 'assigned' && String(g.assignedById) === String(user.id)) || 
-    (String(g.ownerId) !== String(user.id) && g.scope !== 'company')
-  );
   const teamTasks = state.managerData?.teamTasks || [];
   const personalTasks = state.priorities || [];
-
-  // Only show top-level goals — hide children whose parent is already in the list
-  const topLevelGoals = assignedGoals.filter((g: any) => {
-    if (!g.parent_id) return true;
-    return !assignedGoals.some((p: any) => String(p.id) === String(g.parent_id));
-  });
 
   const handleVerifyTask = async (taskId: string, goalId: string) => {
     try {
@@ -316,7 +359,7 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
             onAction={() => openModal('new_goal', { scope: 'employee' })}
           />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {topLevelGoals.map(g => {
+            {paginatedKPIs.map(g => {
               // Find child/aligned goals
               const childGoals = assignedGoals.filter((c: any) => String(c.parent_id) === String(g.id));
               const childIds = childGoals.map((c: any) => String(c.id));
@@ -638,6 +681,42 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
             })}
             {topLevelGoals.length === 0 && <div style={{ textAlign: 'center', padding: 20, color: HP_TOKENS.inkMute }}>Belum ada OKR yang ditugaskan.</div>}
           </div>
+
+          {totalPagesKPI > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 16 }}>
+              <button 
+                onClick={() => setCurrentPageKPI(p => Math.max(1, p - 1))}
+                disabled={activePageKPI === 1}
+                style={{
+                  padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                  background: activePageKPI === 1 ? HP_TOKENS.lineSoft : '#fff',
+                  color: activePageKPI === 1 ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                  fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                  cursor: activePageKPI === 1 ? 'default' : 'pointer',
+                  opacity: activePageKPI === 1 ? 0.6 : 1, transition: 'all 0.2s'
+                }}
+              >
+                Sebelumnya
+              </button>
+              <span style={{ fontFamily: HP_FONT, fontSize: 13, fontWeight: 700, color: HP_TOKENS.inkSoft }}>
+                {activePageKPI} / {totalPagesKPI}
+              </span>
+              <button 
+                onClick={() => setCurrentPageKPI(p => Math.min(totalPagesKPI, p + 1))}
+                disabled={activePageKPI === totalPagesKPI}
+                style={{
+                  padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                  background: activePageKPI === totalPagesKPI ? HP_TOKENS.lineSoft : '#fff',
+                  color: activePageKPI === totalPagesKPI ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                  fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                  cursor: activePageKPI === totalPagesKPI ? 'default' : 'pointer',
+                  opacity: activePageKPI === totalPagesKPI ? 0.6 : 1, transition: 'all 0.2s'
+                }}
+              >
+                Berikutnya
+              </button>
+            </div>
+          )}
         </>
       )}
 
@@ -691,7 +770,7 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
             />
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
-              {combinedMyGoals.map((g: any) => (
+              {paginatedPersonalKPIs.map((g: any) => (
                 <div 
                   key={g.id} 
                   onClick={() => {
@@ -719,6 +798,42 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
                 </div>
               )}
             </div>
+
+            {totalPagesPersonalKPI > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 16 }}>
+                <button 
+                  onClick={() => setCurrentPagePersonalKPI(p => Math.max(1, p - 1))}
+                  disabled={activePagePersonalKPI === 1}
+                  style={{
+                    padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                    background: activePagePersonalKPI === 1 ? HP_TOKENS.lineSoft : '#fff',
+                    color: activePagePersonalKPI === 1 ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                    cursor: activePagePersonalKPI === 1 ? 'default' : 'pointer',
+                    opacity: activePagePersonalKPI === 1 ? 0.6 : 1, transition: 'all 0.2s'
+                  }}
+                >
+                  Sebelumnya
+                </button>
+                <span style={{ fontFamily: HP_FONT, fontSize: 13, fontWeight: 700, color: HP_TOKENS.inkSoft }}>
+                  {activePagePersonalKPI} / {totalPagesPersonalKPI}
+                </span>
+                <button 
+                  onClick={() => setCurrentPagePersonalKPI(p => Math.min(totalPagesPersonalKPI, p + 1))}
+                  disabled={activePagePersonalKPI === totalPagesPersonalKPI}
+                  style={{
+                    padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                    background: activePagePersonalKPI === totalPagesPersonalKPI ? HP_TOKENS.lineSoft : '#fff',
+                    color: activePagePersonalKPI === totalPagesPersonalKPI ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                    cursor: activePagePersonalKPI === totalPagesPersonalKPI ? 'default' : 'pointer',
+                    opacity: activePagePersonalKPI === totalPagesPersonalKPI ? 0.6 : 1, transition: 'all 0.2s'
+                  }}
+                >
+                  Berikutnya
+                </button>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -726,9 +841,9 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
       {/* ── Members ── */}
       {activeTab === 'members' && (
         <>
-          <SectionHeader icon="people" label="Anggota Tim" count={String(state.managerData?.members?.length || 0)} />
+          <SectionHeader icon="people" label="Anggota Tim" count={String(membersList.length)} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {(state.managerData?.members || []).map((m: any) => (
+            {paginatedMembers.map((m: any) => (
               <HPCard key={m.id} padding={14}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <HPAvatar name={m.name} size={44} />
@@ -764,6 +879,42 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
               </HPCard>
             ))}
           </div>
+
+          {totalPagesMembers > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 16 }}>
+              <button 
+                onClick={() => setCurrentPageMembers(p => Math.max(1, p - 1))}
+                disabled={activePageMembers === 1}
+                style={{
+                  padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                  background: activePageMembers === 1 ? HP_TOKENS.lineSoft : '#fff',
+                  color: activePageMembers === 1 ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                  fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                  cursor: activePageMembers === 1 ? 'default' : 'pointer',
+                  opacity: activePageMembers === 1 ? 0.6 : 1, transition: 'all 0.2s'
+                }}
+              >
+                Sebelumnya
+              </button>
+              <span style={{ fontFamily: HP_FONT, fontSize: 13, fontWeight: 700, color: HP_TOKENS.inkSoft }}>
+                {activePageMembers} / {totalPagesMembers}
+              </span>
+              <button 
+                onClick={() => setCurrentPageMembers(p => Math.min(totalPagesMembers, p + 1))}
+                disabled={activePageMembers === totalPagesMembers}
+                style={{
+                  padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                  background: activePageMembers === totalPagesMembers ? HP_TOKENS.lineSoft : '#fff',
+                  color: activePageMembers === totalPagesMembers ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                  fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                  cursor: activePageMembers === totalPagesMembers ? 'default' : 'pointer',
+                  opacity: activePageMembers === totalPagesMembers ? 0.6 : 1, transition: 'all 0.2s'
+                }}
+              >
+                Berikutnya
+              </button>
+            </div>
+          )}
         </>
       )}
 

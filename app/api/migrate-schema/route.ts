@@ -325,6 +325,7 @@ export async function POST() {
     { desc: "daily_priorities.kpi_id", sql: "ALTER TABLE daily_priorities ADD COLUMN kpi_id VARCHAR(100)" },
     { desc: "daily_priorities.department", sql: "ALTER TABLE daily_priorities ADD COLUMN department VARCHAR(100)" },
     { desc: "daily_priorities.submitted_at", sql: "ALTER TABLE daily_priorities ADD COLUMN submitted_at DATETIME" },
+    { desc: "daily_priorities.status", sql: "ALTER TABLE daily_priorities ADD COLUMN status VARCHAR(50) DEFAULT NULL" },
 
     // ── Notes table ──
     { desc: "notes.id_to_varchar", sql: "ALTER TABLE notes MODIFY COLUMN id VARCHAR(255)" },

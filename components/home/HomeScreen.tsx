@@ -444,11 +444,11 @@ export default function HomeScreen({ openModal }: any) {
                     background: HP_TOKENS.yellow, color: HP_TOKENS.ink, fontSize: 10, fontWeight: 900, 
                     padding: '2px 8px', borderRadius: 6, letterSpacing: 0.5 
                   }}>
-                    LV. {user.level}
+                    Level {user.level}
                   </div>
                 </div>
                 <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 700, fontSize: 12, marginTop: 2 }}>
-                  Rank {user.rank}
+                  Class {user.rank || 'E'}
                 </div>
               </div>
             </div>

@@ -22,6 +22,15 @@ export default function HRAttendanceView({ currentUser, openModal }: HRAttendanc
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
   const [summaryByUser, setSummaryByUser] = useState<Record<string, any>>({});
+  
+  const [currentPageSummary, setCurrentPageSummary] = useState(1);
+  const [currentPageLogs, setCurrentPageLogs] = useState(1);
+
+  // reset pages when month/year changes
+  useEffect(() => {
+    setCurrentPageSummary(1);
+    setCurrentPageLogs(1);
+  }, [month, year]);
 
   useEffect(() => {
     fetchLogs();
@@ -188,15 +197,19 @@ export default function HRAttendanceView({ currentUser, openModal }: HRAttendanc
       )}
 
       {/* Per-User Summary Table */}
-      {['hr', 'manager'].includes(currentUser?.role) && Object.keys(summaryByUser).length > 0 && (
-        <HPCard padding={0} style={{ overflow: 'hidden' }}>
-          <div style={{ padding: '14px 16px', borderBottom: `1px solid ${HP_TOKENS.lineSoft}` }}>
-            <div style={{ ...HP_TEXT.h, fontSize: 14 }}>👥 Ringkasan Per Karyawan</div>
-          </div>
-          <div style={{ maxHeight: 400, overflowY: 'auto' }}>
-            {Object.entries(summaryByUser)
-              .sort((a, b) => b[1].days - a[1].days)
-              .map(([userId, data]: [string, any]) => (
+      {['hr', 'manager'].includes(currentUser?.role) && Object.keys(summaryByUser).length > 0 && (() => {
+        const sortedEntries = Object.entries(summaryByUser).sort((a, b) => b[1].days - a[1].days);
+        const summaryPerPage = 10;
+        const totalPagesSummary = Math.ceil(sortedEntries.length / summaryPerPage);
+        const paginatedSummary = sortedEntries.slice((currentPageSummary - 1) * summaryPerPage, currentPageSummary * summaryPerPage);
+
+        return (
+          <HPCard padding={0} style={{ overflow: 'hidden' }}>
+            <div style={{ padding: '14px 16px', borderBottom: `1px solid ${HP_TOKENS.lineSoft}` }}>
+              <div style={{ ...HP_TEXT.h, fontSize: 14 }}>👥 Ringkasan Per Karyawan</div>
+            </div>
+            <div>
+              {paginatedSummary.map(([userId, data]: [string, any]) => (
                 <div 
                   key={userId}
                   onClick={() => openModal?.('attendance_history', { targetUserId: userId, targetUserName: data.name })}
@@ -227,11 +240,48 @@ export default function HRAttendanceView({ currentUser, openModal }: HRAttendanc
                     <HPGlyph name="chevronRight" size={14} color={HP_TOKENS.line} />
                   </div>
                 </div>
-              ))
-            }
-          </div>
-        </HPCard>
-      )}
+              ))}
+            </div>
+            
+            {/* Pagination Controls */}
+            {totalPagesSummary > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, padding: '14px 16px', borderTop: `1px solid ${HP_TOKENS.lineSoft}` }}>
+                <button 
+                  onClick={() => setCurrentPageSummary(p => Math.max(1, p - 1))}
+                  disabled={currentPageSummary === 1}
+                  style={{
+                    padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                    background: currentPageSummary === 1 ? HP_TOKENS.lineSoft : '#fff',
+                    color: currentPageSummary === 1 ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                    cursor: currentPageSummary === 1 ? 'default' : 'pointer',
+                    opacity: currentPageSummary === 1 ? 0.6 : 1, transition: 'all 0.2s'
+                  }}
+                >
+                  Sebelumnya
+                </button>
+                <span style={{ fontFamily: HP_FONT, fontSize: 13, fontWeight: 700, color: HP_TOKENS.inkSoft }}>
+                  {currentPageSummary} / {totalPagesSummary}
+                </span>
+                <button 
+                  onClick={() => setCurrentPageSummary(p => Math.min(totalPagesSummary, p + 1))}
+                  disabled={currentPageSummary === totalPagesSummary}
+                  style={{
+                    padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                    background: currentPageSummary === totalPagesSummary ? HP_TOKENS.lineSoft : '#fff',
+                    color: currentPageSummary === totalPagesSummary ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                    cursor: currentPageSummary === totalPagesSummary ? 'default' : 'pointer',
+                    opacity: currentPageSummary === totalPagesSummary ? 0.6 : 1, transition: 'all 0.2s'
+                  }}
+                >
+                  Berikutnya
+                </button>
+              </div>
+            )}
+          </HPCard>
+        );
+      })()}
 
       {/* Recent Logs */}
       <div>
@@ -245,44 +295,89 @@ export default function HRAttendanceView({ currentUser, openModal }: HRAttendanc
           <div style={{ textAlign: 'center', padding: 40, border: `1.5px dashed ${HP_TOKENS.line}`, borderRadius: 20, color: HP_TOKENS.inkMute }}>
             Belum ada data absensi bulan ini
           </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {logs.slice(0, 30).map((log: any) => (
-              <HPCard key={log.id} padding={12}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <HPAvatar name={log.user_name} size={36} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ ...HP_TEXT.h, fontSize: 13 }}>{log.user_name}</div>
-                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>
-                      {new Date(log.check_in_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                      {log.check_out_at && (
-                        <> → {new Date(log.check_out_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</>
-                      )}
-                      {log.check_in_type && ` · ${log.check_in_type}`}
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                    {log.duration_minutes && (
-                      <div style={{
-                        padding: '3px 8px', borderRadius: 8, fontSize: 10, fontWeight: 800, fontFamily: HP_FONT,
-                        background: HP_TOKENS.yellowSoft, color: '#8A6814'
-                      }}>
-                        {Math.floor(log.duration_minutes / 60)}j{log.duration_minutes % 60}m
+        ) : (() => {
+          const logsPerPage = 10;
+          const totalPagesLogs = Math.ceil(logs.length / logsPerPage);
+          const paginatedLogs = logs.slice((currentPageLogs - 1) * logsPerPage, currentPageLogs * logsPerPage);
+
+          return (
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {paginatedLogs.map((log: any) => (
+                  <HPCard key={log.id} padding={12}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <HPAvatar name={log.user_name} size={36} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ ...HP_TEXT.h, fontSize: 13 }}>{log.user_name}</div>
+                        <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>
+                          {new Date(log.check_in_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                          {log.check_out_at && (
+                            <> → {new Date(log.check_out_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</>
+                          )}
+                          {log.check_in_type && ` · ${log.check_in_type}`}
+                        </div>
                       </div>
-                    )}
-                    <div style={{
-                      padding: '3px 8px', borderRadius: 8, fontSize: 10, fontWeight: 800, fontFamily: HP_FONT,
-                      background: log.check_out_at ? HP_TOKENS.sageWash : HP_TOKENS.coralSoft,
-                      color: log.check_out_at ? HP_TOKENS.sage : HP_TOKENS.coral
-                    }}>
-                      {log.check_out_at ? 'LENGKAP' : 'BELUM OUT'}
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        {log.duration_minutes && (
+                          <div style={{
+                            padding: '3px 8px', borderRadius: 8, fontSize: 10, fontWeight: 800, fontFamily: HP_FONT,
+                            background: HP_TOKENS.yellowSoft, color: '#8A6814'
+                          }}>
+                            {Math.floor(log.duration_minutes / 60)}j{log.duration_minutes % 60}m
+                          </div>
+                        )}
+                        <div style={{
+                          padding: '3px 8px', borderRadius: 8, fontSize: 10, fontWeight: 800, fontFamily: HP_FONT,
+                          background: log.check_out_at ? HP_TOKENS.sageWash : HP_TOKENS.coralSoft,
+                          color: log.check_out_at ? HP_TOKENS.sage : HP_TOKENS.coral
+                        }}>
+                          {log.check_out_at ? 'LENGKAP' : 'BELUM OUT'}
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  </HPCard>
+                ))}
+              </div>
+
+              {/* Pagination Controls */}
+              {totalPagesLogs > 1 && (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 16 }}>
+                  <button 
+                    onClick={() => setCurrentPageLogs(p => Math.max(1, p - 1))}
+                    disabled={currentPageLogs === 1}
+                    style={{
+                      padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                      background: currentPageLogs === 1 ? HP_TOKENS.lineSoft : '#fff',
+                      color: currentPageLogs === 1 ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                      fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                      cursor: currentPageLogs === 1 ? 'default' : 'pointer',
+                      opacity: currentPageLogs === 1 ? 0.6 : 1, transition: 'all 0.2s'
+                    }}
+                  >
+                    Sebelumnya
+                  </button>
+                  <span style={{ fontFamily: HP_FONT, fontSize: 13, fontWeight: 700, color: HP_TOKENS.inkSoft }}>
+                    {currentPageLogs} / {totalPagesLogs}
+                  </span>
+                  <button 
+                    onClick={() => setCurrentPageLogs(p => Math.min(totalPagesLogs, p + 1))}
+                    disabled={currentPageLogs === totalPagesLogs}
+                    style={{
+                      padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                      background: currentPageLogs === totalPagesLogs ? HP_TOKENS.lineSoft : '#fff',
+                      color: currentPageLogs === totalPagesLogs ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                      fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                      cursor: currentPageLogs === totalPagesLogs ? 'default' : 'pointer',
+                      opacity: currentPageLogs === totalPagesLogs ? 0.6 : 1, transition: 'all 0.2s'
+                    }}
+                  >
+                    Berikutnya
+                  </button>
                 </div>
-              </HPCard>
-            ))}
-          </div>
-        )}
+              )}
+            </>
+          );
+        })()}
       </div>
     </div>
   );

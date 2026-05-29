@@ -18,6 +18,7 @@ export default function SurveyResultsModal({ onClose, surveyId }: SurveyResultsM
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'summary' | 'responses'>('summary');
   const [expandedResponses, setExpandedResponses] = useState<Record<string, boolean>>({});
+  const [currentPageResponses, setCurrentPageResponses] = useState(1);
 
   useEffect(() => {
     fetchResults();
@@ -104,6 +105,11 @@ export default function SurveyResultsModal({ onClose, surveyId }: SurveyResultsM
 
   const { survey, summary, totalResponses, responses } = data;
 
+  const responsesPerPage = 5;
+  const totalPagesResponses = Math.ceil((responses || []).length / responsesPerPage);
+  const activePageResponses = Math.min(currentPageResponses, Math.max(1, totalPagesResponses));
+  const paginatedResponses = (responses || []).slice((activePageResponses - 1) * responsesPerPage, activePageResponses * responsesPerPage);
+
   return (
     <Modal onClose={onClose} title={`📊 ${survey.title}`}>
       <div style={{ marginTop: 4 }}>
@@ -139,7 +145,7 @@ export default function SurveyResultsModal({ onClose, surveyId }: SurveyResultsM
         {/* Tabs & Actions */}
         <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
           {(['summary', 'responses'] as const).map(t => (
-            <button key={t} onClick={() => setActiveTab(t)} className="hp-tap" style={{
+            <button key={t} onClick={() => { setActiveTab(t); setCurrentPageResponses(1); }} className="hp-tap" style={{
               flex: 1, padding: '10px', borderRadius: 12,
               background: activeTab === t ? HP_TOKENS.lavender : HP_TOKENS.lineSoft,
               color: activeTab === t ? '#fff' : HP_TOKENS.inkSoft,
@@ -249,10 +255,10 @@ export default function SurveyResultsModal({ onClose, surveyId }: SurveyResultsM
         {/* Responses Tab */}
         {activeTab === 'responses' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {responses?.length === 0 ? (
+            {paginatedResponses.length === 0 ? (
               <div style={{ textAlign: 'center', padding: 30, color: HP_TOKENS.inkMute }}>Belum ada responden</div>
             ) : (
-              responses?.map((r: any, ri: number) => {
+              paginatedResponses.map((r: any, ri: number) => {
                 const isExpanded = expandedResponses[r.id || ri];
                 return (
                   <HPCard key={r.id || ri} padding={14}>
@@ -299,6 +305,43 @@ export default function SurveyResultsModal({ onClose, surveyId }: SurveyResultsM
                   </HPCard>
                 );
               })
+            )}
+
+            {/* Pagination Controls */}
+            {totalPagesResponses > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 16 }}>
+                <button 
+                  onClick={() => setCurrentPageResponses(p => Math.max(1, p - 1))}
+                  disabled={activePageResponses === 1}
+                  style={{
+                    padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                    background: activePageResponses === 1 ? HP_TOKENS.lineSoft : '#fff',
+                    color: activePageResponses === 1 ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                    cursor: activePageResponses === 1 ? 'default' : 'pointer',
+                    opacity: activePageResponses === 1 ? 0.6 : 1, transition: 'all 0.2s'
+                  }}
+                >
+                  Sebelumnya
+                </button>
+                <span style={{ fontFamily: HP_FONT, fontSize: 13, fontWeight: 700, color: HP_TOKENS.inkSoft }}>
+                  {activePageResponses} / {totalPagesResponses}
+                </span>
+                <button 
+                  onClick={() => setCurrentPageResponses(p => Math.min(totalPagesResponses, p + 1))}
+                  disabled={activePageResponses === totalPagesResponses}
+                  style={{
+                    padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                    background: activePageResponses === totalPagesResponses ? HP_TOKENS.lineSoft : '#fff',
+                    color: activePageResponses === totalPagesResponses ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                    cursor: activePageResponses === totalPagesResponses ? 'default' : 'pointer',
+                    opacity: activePageResponses === totalPagesResponses ? 0.6 : 1, transition: 'all 0.2s'
+                  }}
+                >
+                  Berikutnya
+                </button>
+              </div>
             )}
           </div>
         )}

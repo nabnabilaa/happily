@@ -84,7 +84,7 @@ export default function HRHomeScreen({ openModal }: Props) {
                 onClick={() => openModal('profile_editor')}
                 style={{ display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer' }}
               >
-                <HPAvatar name={user.name} size={52} rank={user.rank} />
+                <HPAvatar name={user.name} size={52} rank={user.rank} levelProgress={levelProgress} />
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div style={{ ...HP_TEXT.h, fontSize: 20 }}>{(user.name || "User").split(' ')[0]}</div>
@@ -92,7 +92,10 @@ export default function HRHomeScreen({ openModal }: Props) {
                       HR
                     </div>
                   </div>
-                  <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, marginTop: 2 }}>
+                  <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, marginTop: 2, fontWeight: 700 }}>
+                    Level {user.level} · Class {user.rank || 'E'}
+                  </div>
+                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 1 }}>
                     {user.role} · {m.totalEmployees} karyawan
                   </div>
                 </div>
@@ -127,9 +130,6 @@ export default function HRHomeScreen({ openModal }: Props) {
         {/* Burnout Early Warning */}
         <BurnoutAlertCard />
         
-        {/* Wellbeing Radar */}
-        <HRWellbeingDashboard state={state} />
-
         {/* Attendance Check-in Button */}
         <button 
           onClick={() => openModal('attendance_scanner')}
@@ -170,6 +170,10 @@ export default function HRHomeScreen({ openModal }: Props) {
             🎯 Kelola KPI
           </button>
         </div>
+
+        {/* Wellbeing Radar */}
+        <HRWellbeingDashboard state={state} />
+
 
         {/* Task Harian Widget for HR (as an employee) */}
         <TaskHarianWidget openModal={openModal} />

@@ -76,7 +76,8 @@
         notes: ctx.notes,
         alarms: ctx.alarms,
         deletedTaskIds: ctx.deletedTaskIds || [],
-        deletedNoteIds: ctx.deletedNoteIds || []
+        deletedNoteIds: ctx.deletedNoteIds || [],
+        flowbeeNotifCache: flowbeeNotifCache
       }
     })
   }
@@ -88,6 +89,7 @@
         ctx.alarms = (r.fb3.alarms || []).filter(a => a.timestamp > Date.now())
         ctx.deletedTaskIds = r.fb3.deletedTaskIds || []
         ctx.deletedNoteIds = r.fb3.deletedNoteIds || []
+        flowbeeNotifCache = r.fb3.flowbeeNotifCache || []
       }
       cb && cb()
     })
@@ -153,7 +155,7 @@
 
     // Also check chrome.storage for stored values
     try {
-      chrome.storage.local.get(['flowbee_user_id', 'flowbee_base_url', 'flowbee_user', 'fb_ext_enabled'], r => {
+      chrome.storage.local.get(['flowbee_user_id', 'flowbee_base_url', 'flowbee_user', 'fb_ext_enabled', 'fb3'], r => {
         if (r) {
           if (r.flowbee_user_id) {
             flowbeeUserId = r.flowbee_user_id;
@@ -168,6 +170,9 @@
           if (typeof r.fb_ext_enabled === 'boolean') {
             extensionEnabled = r.fb_ext_enabled;
             applyExtensionEnabled();
+          }
+          if (r.fb3 && r.fb3.flowbeeNotifCache) {
+            flowbeeNotifCache = r.fb3.flowbeeNotifCache;
           }
         }
       })
@@ -463,6 +468,21 @@
           } catch (e) { /* background might not handle this yet */ }
         }
         flowbeeNotifCache = data.notifications
+        // Mark all shown notifications as read in DB so they never repeat
+        if (newNotifs.length > 0) {
+          try {
+            fetch(`${FLOWBEE_API}/notifications`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: flowbeeUserId,
+                notificationIds: newNotifs.map(n => n.id)
+              })
+            }).catch(() => {})
+          } catch (e) { /* silent */ }
+        }
+      } else {
+        flowbeeNotifCache = []
       }
 
       save()

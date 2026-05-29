@@ -26,6 +26,7 @@ export default function NotesScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchUser, setSearchUser] = useState('');
   const [collapsedDepts, setCollapsedDepts] = useState<Set<string>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
 
   async function fetchData() {
     try {
@@ -164,6 +165,10 @@ export default function NotesScreen() {
     return diff < 15 * 60 * 1000;
   };
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
   const filteredNotes = notes.filter(n => {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
@@ -172,13 +177,24 @@ export default function NotesScreen() {
            (n.authorName && n.authorName.toLowerCase().includes(q));
   });
 
-  const groupedNotes = filteredNotes.reduce((acc, note) => {
-    const d = new Date(note.createdAt);
-    const dateKey = d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    if (!acc[dateKey]) acc[dateKey] = [];
-    acc[dateKey].push(note);
-    return acc;
-  }, {} as Record<string, any[]>);
+  const notesPerPage = 5;
+  const totalPagesNotes = Math.ceil(filteredNotes.length / notesPerPage);
+  const activePageNotes = Math.min(currentPage, Math.max(1, totalPagesNotes));
+  
+  const paginatedNotes = useMemo(() => {
+    const start = (activePageNotes - 1) * notesPerPage;
+    return filteredNotes.slice(start, start + notesPerPage);
+  }, [filteredNotes, activePageNotes]);
+
+  const groupedNotes = useMemo(() => {
+    return paginatedNotes.reduce((acc, note) => {
+      const d = new Date(note.createdAt);
+      const dateKey = d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      if (!acc[dateKey]) acc[dateKey] = [];
+      acc[dateKey].push(note);
+      return acc;
+    }, {} as Record<string, any[]>);
+  }, [paginatedNotes]);
 
   // Group Users logic
   const usersByDept = useMemo(() => {
@@ -585,6 +601,43 @@ export default function NotesScreen() {
               </div>
             </div>
           ))}
+          
+          {/* Pagination Controls */}
+          {totalPagesNotes > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 24 }}>
+              <button 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={activePageNotes === 1}
+                style={{
+                  padding: '8px 16px', borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
+                  background: activePageNotes === 1 ? HP_TOKENS.lineSoft : '#fff',
+                  color: activePageNotes === 1 ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                  fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, 
+                  cursor: activePageNotes === 1 ? 'default' : 'pointer',
+                  opacity: activePageNotes === 1 ? 0.6 : 1, transition: 'all 0.2s'
+                }}
+              >
+                Sebelumnya
+              </button>
+              <span style={{ fontFamily: HP_FONT, fontSize: 14, fontWeight: 700, color: HP_TOKENS.inkSoft }}>
+                {activePageNotes} / {totalPagesNotes}
+              </span>
+              <button 
+                onClick={() => setCurrentPage(p => Math.min(totalPagesNotes, p + 1))}
+                disabled={activePageNotes === totalPagesNotes}
+                style={{
+                  padding: '8px 16px', borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
+                  background: activePageNotes === totalPagesNotes ? HP_TOKENS.lineSoft : '#fff',
+                  color: activePageNotes === totalPagesNotes ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                  fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, 
+                  cursor: activePageNotes === totalPagesNotes ? 'default' : 'pointer',
+                  opacity: activePageNotes === totalPagesNotes ? 0.6 : 1, transition: 'all 0.2s'
+                }}
+              >
+                Berikutnya
+              </button>
+            </div>
+          )}
           
           {Object.keys(groupedNotes).length === 0 && searchQuery && (
             <div style={{ textAlign: 'center', padding: 40, color: HP_TOKENS.inkMute }}>

@@ -24,6 +24,8 @@ export default function AllRewardsModal({ onClose }: AllRewardsModalProps) {
   const { state, updateState, updateUser, user } = useHP();
   const [view, setView] = useState<"available" | "history">("available");
   const [activeCategory, setActiveCategory] = useState("Semua");
+  const [currentPageAvailable, setCurrentPageAvailable] = useState(1);
+  const [currentPageHistory, setCurrentPageHistory] = useState(1);
 
   const rewards = state?.rewards || [];
   const history = state?.rewardHistory || [];
@@ -32,6 +34,21 @@ export default function AllRewardsModal({ onClose }: AllRewardsModalProps) {
   const filtered = activeCategory === "Semua"
     ? rewards
     : rewards.filter(r => r.category === activeCategory);
+
+  useEffect(() => {
+    setCurrentPageAvailable(1);
+  }, [activeCategory]);
+
+  const availablePerPage = 5;
+  const totalPagesAvailable = Math.ceil(filtered.length / availablePerPage);
+  const activePageAvailable = Math.min(currentPageAvailable, Math.max(1, totalPagesAvailable));
+  const paginatedAvailable = filtered.slice((activePageAvailable - 1) * availablePerPage, activePageAvailable * availablePerPage);
+
+  const historyPerPage = 5;
+  const totalPagesHistory = Math.ceil(history.length / historyPerPage);
+  const activePageHistory = Math.min(currentPageHistory, Math.max(1, totalPagesHistory));
+  const reversedHistory = [...history].reverse();
+  const paginatedHistory = reversedHistory.slice((activePageHistory - 1) * historyPerPage, activePageHistory * historyPerPage);
 
   const [redeeming, setRedeeming] = useState(false);
 
@@ -161,7 +178,7 @@ export default function AllRewardsModal({ onClose }: AllRewardsModalProps) {
 
             {/* Rewards grid */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {filtered.map(reward => {
+              {paginatedAvailable.map(reward => {
                 const cfg = toneConfig[reward.tone] ?? toneConfig.sage;
                 const canAfford = userCoins >= reward.points;
 
@@ -222,6 +239,43 @@ export default function AllRewardsModal({ onClose }: AllRewardsModalProps) {
                 );
               })}
             </div>
+
+            {/* Pagination Controls */}
+            {totalPagesAvailable > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 16 }}>
+                <button 
+                  onClick={() => setCurrentPageAvailable(p => Math.max(1, p - 1))}
+                  disabled={activePageAvailable === 1}
+                  style={{
+                    padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                    background: activePageAvailable === 1 ? HP_TOKENS.lineSoft : '#fff',
+                    color: activePageAvailable === 1 ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                    cursor: activePageAvailable === 1 ? 'default' : 'pointer',
+                    opacity: activePageAvailable === 1 ? 0.6 : 1, transition: 'all 0.2s'
+                  }}
+                >
+                  Sebelumnya
+                </button>
+                <span style={{ fontFamily: HP_FONT, fontSize: 13, fontWeight: 700, color: HP_TOKENS.inkSoft }}>
+                  {activePageAvailable} / {totalPagesAvailable}
+                </span>
+                <button 
+                  onClick={() => setCurrentPageAvailable(p => Math.min(totalPagesAvailable, p + 1))}
+                  disabled={activePageAvailable === totalPagesAvailable}
+                  style={{
+                    padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                    background: activePageAvailable === totalPagesAvailable ? HP_TOKENS.lineSoft : '#fff',
+                    color: activePageAvailable === totalPagesAvailable ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                    cursor: activePageAvailable === totalPagesAvailable ? 'default' : 'pointer',
+                    opacity: activePageAvailable === totalPagesAvailable ? 0.6 : 1, transition: 'all 0.2s'
+                  }}
+                >
+                  Berikutnya
+                </button>
+              </div>
+            )}
           </>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -232,7 +286,7 @@ export default function AllRewardsModal({ onClose }: AllRewardsModalProps) {
                 <div style={{ ...HP_TEXT.body, fontSize: 13, marginTop: 4 }}>Ayo kumpulkan poin dengan memberi apresiasi!</div>
               </div>
             ) : (
-              [...history].reverse().map((h: any, idx) => (
+              paginatedHistory.map((h: any, idx) => (
                 <div key={idx} style={{
                   display: 'flex', alignItems: 'center', gap: 14,
                   padding: '12px 16px', borderRadius: 18,
@@ -255,6 +309,43 @@ export default function AllRewardsModal({ onClose }: AllRewardsModalProps) {
                   </div>
                 </div>
               ))
+            )}
+
+            {/* Pagination Controls */}
+            {totalPagesHistory > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 16 }}>
+                <button 
+                  onClick={() => setCurrentPageHistory(p => Math.max(1, p - 1))}
+                  disabled={activePageHistory === 1}
+                  style={{
+                    padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                    background: activePageHistory === 1 ? HP_TOKENS.lineSoft : '#fff',
+                    color: activePageHistory === 1 ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                    cursor: activePageHistory === 1 ? 'default' : 'pointer',
+                    opacity: activePageHistory === 1 ? 0.6 : 1, transition: 'all 0.2s'
+                  }}
+                >
+                  Sebelumnya
+                </button>
+                <span style={{ fontFamily: HP_FONT, fontSize: 13, fontWeight: 700, color: HP_TOKENS.inkSoft }}>
+                  {activePageHistory} / {totalPagesHistory}
+                </span>
+                <button 
+                  onClick={() => setCurrentPageHistory(p => Math.min(totalPagesHistory, p + 1))}
+                  disabled={activePageHistory === totalPagesHistory}
+                  style={{
+                    padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                    background: activePageHistory === totalPagesHistory ? HP_TOKENS.lineSoft : '#fff',
+                    color: activePageHistory === totalPagesHistory ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                    cursor: activePageHistory === totalPagesHistory ? 'default' : 'pointer',
+                    opacity: activePageHistory === totalPagesHistory ? 0.6 : 1, transition: 'all 0.2s'
+                  }}
+                >
+                  Berikutnya
+                </button>
+              </div>
             )}
           </div>
         )}

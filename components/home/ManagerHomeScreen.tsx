@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useHP, calculateLevelProgress } from "@/lib/HPContext";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
 import HPGlyph from "@/components/ui/HPGlyph";
@@ -28,10 +28,25 @@ interface TeamMember {
 }
 
 export default function ManagerHomeScreen({ openModal }: Props) {
-  const { state, user, awardXP } = useHP();
-  const managerData = state?.managerData || { members: [], goals: [], approvals: [] };
-  const { members, goals } = managerData;
+  const { state, user, awardXP, refresh } = useHP();
+  const managerData = state?.managerData || { members: [], goals: [], approvals: [], teamTasks: [] };
+  const { members, goals, approvals = [], teamTasks = [] } = managerData;
   const avgProgress = goals.length > 0 ? Math.round(goals.reduce((a: number, b: any) => a + Number(b.progress), 0) / goals.length) : 0;
+
+  const [currentPageApprovals, setCurrentPageApprovals] = useState(1);
+  const [currentPagePendingTasks, setCurrentPagePendingTasks] = useState(1);
+  const [taskLoadingId, setTaskLoadingId] = useState<string | null>(null);
+
+  const approvalsPerPage = 5;
+  const totalPagesApprovals = Math.ceil((approvals || []).length / approvalsPerPage);
+  const activePageApprovals = Math.min(currentPageApprovals, Math.max(1, totalPagesApprovals));
+  const paginatedApprovals = (approvals || []).slice((activePageApprovals - 1) * approvalsPerPage, activePageApprovals * approvalsPerPage);
+
+  const pendingTasks = teamTasks.filter((t: any) => t.done && !t.verified);
+  const pendingTasksPerPage = 5;
+  const totalPagesPendingTasks = Math.ceil(pendingTasks.length / pendingTasksPerPage);
+  const activePagePendingTasks = Math.min(currentPagePendingTasks, Math.max(1, totalPagesPendingTasks));
+  const paginatedPendingTasks = pendingTasks.slice((activePagePendingTasks - 1) * pendingTasksPerPage, activePagePendingTasks * pendingTasksPerPage);
 
   if (!user || !state) return null;
   const levelProgress = calculateLevelProgress(user.points || 0);
@@ -59,7 +74,7 @@ export default function ManagerHomeScreen({ openModal }: Props) {
                 onClick={() => openModal('profile_editor')}
                 style={{ display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer' }}
               >
-                <HPAvatar name={user.name} size={52} rank={user.rank} />
+                <HPAvatar name={user.name} size={52} rank={user.rank} levelProgress={levelProgress} />
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div style={{ ...HP_TEXT.h, fontSize: 20 }}>{user.name.split(' ')[0]}</div>
@@ -67,7 +82,10 @@ export default function ManagerHomeScreen({ openModal }: Props) {
                       MANAGER
                     </div>
                   </div>
-                  <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, marginTop: 2 }}>
+                  <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, marginTop: 2, fontWeight: 700 }}>
+                    Level {user.level} · Class {user.rank || 'E'}
+                  </div>
+                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 1 }}>
                     {user.role} · {members.length} anggota tim
                   </div>
                 </div>
@@ -271,6 +289,287 @@ export default function ManagerHomeScreen({ openModal }: Props) {
 
         {/* Task Harian Widget for Manager (as an employee) */}
         <TaskHarianWidget openModal={openModal} />
+
+        {/* Pending Approvals Widget */}
+        {approvals.length > 0 && (
+          <div style={{ marginTop: 16 }}>
+            <SectionHeader icon="alertCircle" label="Persetujuan Target Tim" count={`${approvals.length}`} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {paginatedApprovals.map((appr: any) => (
+                <HPCard key={appr.id} padding={16} style={{ borderLeft: `4px solid ${HP_TOKENS.blue}`, background: '#fff' }}>
+                  <div style={{ ...HP_TEXT.h, fontSize: 14 }}>{appr.desc}</div>
+                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 4 }}>
+                    Diajukan oleh: <b>{appr.from}</b> · {appr.type}
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                    <button
+                      onClick={async (e) => {
+                        const target = e.currentTarget;
+                        target.disabled = true;
+                        try {
+                          await fetch("/api/goals/update", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ goalId: appr.id, updates: { status: 'approved' } })
+                          });
+                          await refresh();
+                        } catch (err) {
+                          console.error(err);
+                          target.disabled = false;
+                        }
+                      }}
+                      className="hp-tap"
+                      style={{
+                        padding: '6px 12px', borderRadius: 8, background: HP_TOKENS.sage, color: '#fff',
+                        fontFamily: HP_FONT, fontSize: 11, fontWeight: 800, border: 'none', cursor: 'pointer'
+                      }}
+                    >
+                      ✓ Approve
+                    </button>
+                    <button
+                      onClick={async (e) => {
+                        const target = e.currentTarget;
+                        target.disabled = true;
+                        try {
+                          await fetch("/api/goals/update", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ goalId: appr.id, updates: { status: 'revision' } })
+                          });
+                          await refresh();
+                        } catch (err) {
+                          console.error(err);
+                          target.disabled = false;
+                        }
+                      }}
+                      className="hp-tap"
+                      style={{
+                        padding: '6px 12px', borderRadius: 8, background: HP_TOKENS.yellowWash, color: HP_TOKENS.yellow,
+                        fontFamily: HP_FONT, fontSize: 11, fontWeight: 800, border: `1px solid ${HP_TOKENS.yellow}`, cursor: 'pointer'
+                      }}
+                    >
+                      ↻ Revisi
+                    </button>
+                    <button
+                      onClick={async (e) => {
+                        const target = e.currentTarget;
+                        target.disabled = true;
+                        try {
+                          await fetch("/api/goals/update", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ goalId: appr.id, updates: { status: 'rejected' } })
+                          });
+                          await refresh();
+                        } catch (err) {
+                          console.error(err);
+                          target.disabled = false;
+                        }
+                      }}
+                      className="hp-tap"
+                      style={{
+                        padding: '6px 12px', borderRadius: 8, background: HP_TOKENS.coralSoft, color: HP_TOKENS.coral,
+                        fontFamily: HP_FONT, fontSize: 11, fontWeight: 800, border: 'none', cursor: 'pointer'
+                      }}
+                    >
+                      ✗ Reject
+                    </button>
+                  </div>
+                </HPCard>
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPagesApprovals > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 16 }}>
+                <button 
+                  onClick={() => setCurrentPageApprovals(p => Math.max(1, p - 1))}
+                  disabled={activePageApprovals === 1}
+                  style={{
+                    padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                    background: activePageApprovals === 1 ? HP_TOKENS.lineSoft : '#fff',
+                    color: activePageApprovals === 1 ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                    cursor: activePageApprovals === 1 ? 'default' : 'pointer',
+                    opacity: activePageApprovals === 1 ? 0.6 : 1, transition: 'all 0.2s'
+                  }}
+                >
+                  Sebelumnya
+                </button>
+                <span style={{ fontFamily: HP_FONT, fontSize: 13, fontWeight: 700, color: HP_TOKENS.inkSoft }}>
+                  {activePageApprovals} / {totalPagesApprovals}
+                </span>
+                <button 
+                  onClick={() => setCurrentPageApprovals(p => Math.min(totalPagesApprovals, p + 1))}
+                  disabled={activePageApprovals === totalPagesApprovals}
+                  style={{
+                    padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                    background: activePageApprovals === totalPagesApprovals ? HP_TOKENS.lineSoft : '#fff',
+                    color: activePageApprovals === totalPagesApprovals ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                    cursor: activePageApprovals === totalPagesApprovals ? 'default' : 'pointer',
+                    opacity: activePageApprovals === totalPagesApprovals ? 0.6 : 1, transition: 'all 0.2s'
+                  }}
+                >
+                  Berikutnya
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Pending Task Verifications Widget */}
+        {pendingTasks.length > 0 && (
+          <div style={{ marginTop: 16 }}>
+            <SectionHeader icon="check" label="Verifikasi Tugas Anggota Tim" count={`${pendingTasks.length}`} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {paginatedPendingTasks.map((task: any) => {
+                const isLoading = taskLoadingId === task.id;
+
+                const handleAction = async (action: 'approve' | 'reject' | 'revision') => {
+                  if (isLoading) return;
+                  setTaskLoadingId(task.id);
+                  try {
+                    const res = await fetch("/api/manager/verify-task", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ taskId: task.id, goalId: task.goalId, managerId: user.id, action })
+                    });
+                    if (res.ok) {
+                      await refresh();
+                    }
+                  } catch (err) {
+                    console.error(err);
+                  } finally {
+                    setTaskLoadingId(null);
+                  }
+                };
+
+                return (
+                  <HPCard key={task.id} padding={12} style={{ background: '#fff' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {/* Task Info */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div style={{
+                          width: 32, height: 32, borderRadius: 10,
+                          background: HP_TOKENS.yellowWash,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                        }}>
+                          <HPGlyph name="zap" size={16} color={HP_TOKENS.yellow} />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ ...HP_TEXT.body, fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {task.title}
+                          </div>
+                          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>
+                            SELESAI OLEH: <b style={{ color: HP_TOKENS.blue }}>{task.userName} ({task.userCode || 'EMP'})</b>
+                          </div>
+                        </div>
+                        {isLoading && (
+                          <div style={{ fontSize: 10, color: HP_TOKENS.inkMute, fontFamily: HP_FONT, fontWeight: 700 }}>
+                            ...
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 3 Action Buttons: Accept, Reject, Revisi */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
+                        {/* Accept */}
+                        <button
+                          onClick={() => handleAction('approve')}
+                          disabled={isLoading}
+                          className="hp-tap"
+                          style={{
+                            padding: '9px 4px', borderRadius: 10, border: 'none',
+                            background: HP_TOKENS.sage, color: '#fff',
+                            fontFamily: HP_FONT, fontSize: 11, fontWeight: 900, cursor: isLoading ? 'default' : 'pointer',
+                            opacity: isLoading ? 0.6 : 1,
+                            boxShadow: `0 2px 6px ${HP_TOKENS.sage}40`,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3
+                          }}
+                        >
+                          ✓ Accept
+                        </button>
+
+                        {/* Reject */}
+                        <button
+                          onClick={() => handleAction('reject')}
+                          disabled={isLoading}
+                          className="hp-tap"
+                          style={{
+                            padding: '9px 4px', borderRadius: 10,
+                            border: `1.5px solid ${HP_TOKENS.coral}`,
+                            background: '#fff', color: HP_TOKENS.coral,
+                            fontFamily: HP_FONT, fontSize: 11, fontWeight: 900, cursor: isLoading ? 'default' : 'pointer',
+                            opacity: isLoading ? 0.6 : 1,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3
+                          }}
+                        >
+                          ✗ Reject
+                        </button>
+
+                        {/* Revisi */}
+                        <button
+                          onClick={() => handleAction('revision')}
+                          disabled={isLoading}
+                          className="hp-tap"
+                          style={{
+                            padding: '9px 4px', borderRadius: 10,
+                            border: `1.5px solid ${HP_TOKENS.yellow}`,
+                            background: '#fff', color: '#8A6814',
+                            fontFamily: HP_FONT, fontSize: 11, fontWeight: 900, cursor: isLoading ? 'default' : 'pointer',
+                            opacity: isLoading ? 0.6 : 1,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3
+                          }}
+                        >
+                          ↻ Revisi
+                        </button>
+                      </div>
+                    </div>
+                  </HPCard>
+                );
+              })}
+            </div>
+
+
+            {/* Pagination Controls */}
+            {totalPagesPendingTasks > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 16 }}>
+                <button 
+                  onClick={() => setCurrentPagePendingTasks(p => Math.max(1, p - 1))}
+                  disabled={activePagePendingTasks === 1}
+                  style={{
+                    padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                    background: activePagePendingTasks === 1 ? HP_TOKENS.lineSoft : '#fff',
+                    color: activePagePendingTasks === 1 ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                    cursor: activePagePendingTasks === 1 ? 'default' : 'pointer',
+                    opacity: activePagePendingTasks === 1 ? 0.6 : 1, transition: 'all 0.2s'
+                  }}
+                >
+                  Sebelumnya
+                </button>
+                <span style={{ fontFamily: HP_FONT, fontSize: 13, fontWeight: 700, color: HP_TOKENS.inkSoft }}>
+                  {activePagePendingTasks} / {totalPagesPendingTasks}
+                </span>
+                <button 
+                  onClick={() => setCurrentPagePendingTasks(p => Math.min(totalPagesPendingTasks, p + 1))}
+                  disabled={activePagePendingTasks === totalPagesPendingTasks}
+                  style={{
+                    padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                    background: activePagePendingTasks === totalPagesPendingTasks ? HP_TOKENS.lineSoft : '#fff',
+                    color: activePagePendingTasks === totalPagesPendingTasks ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                    cursor: activePagePendingTasks === totalPagesPendingTasks ? 'default' : 'pointer',
+                    opacity: activePagePendingTasks === totalPagesPendingTasks ? 0.6 : 1, transition: 'all 0.2s'
+                  }}
+                >
+                  Berikutnya
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         <div style={{ marginTop: 16 }}>
           <SectionHeader icon="people" label="Status Tim" count={`${members.length} orang`} />

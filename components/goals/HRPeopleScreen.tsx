@@ -98,13 +98,51 @@ export default function HRPeopleScreen({ openModal }: Props) {
     return combined;
   }, [apiKpis, myAssignedGoals, myPersonalGoals]);
 
+  const [currentPageKPI, setCurrentPageKPI] = useState(1);
+  const kpisPerPage = 5;
+  const totalPagesKPI = Math.ceil(combinedMyGoals.length / kpisPerPage);
+  const paginatedKPIs = useMemo(() => {
+    const start = (currentPageKPI - 1) * kpisPerPage;
+    return combinedMyGoals.slice(start, start + kpisPerPage);
+  }, [combinedMyGoals, currentPageKPI]);
+
   const [search, setSearch] = useState('');
   const [dbUsers, setDbUsers] = useState<any[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [departments, setDepartments] = useState<any[]>([]);
   
+  const [currentPagePeople, setCurrentPagePeople] = useState(1);
+  const [currentPageContacts, setCurrentPageContacts] = useState(1);
+
   // Drill-down state: null = dept cards, string = people in that dept
   const [selectedDept, setSelectedDept] = useState<string | null>(null);
+
+  // reset pages on filter/search change
+  useEffect(() => {
+    setCurrentPagePeople(1);
+  }, [search, selectedDept]);
+
+  useEffect(() => {
+    setCurrentPageContacts(1);
+  }, [search]);
+
+  const filteredContacts = useMemo(() => {
+    const list = state?.contacts || [];
+    if (!search) return list;
+    return list.filter((c: any) => 
+      c.name?.toLowerCase().includes(search.toLowerCase()) ||
+      c.role?.toLowerCase().includes(search.toLowerCase()) ||
+      c.phone?.includes(search) ||
+      c.email?.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [state?.contacts, search]);
+
+  const contactsPerPage = 5;
+  const totalPagesContacts = Math.ceil(filteredContacts.length / contactsPerPage);
+  const paginatedContacts = useMemo(() => {
+    const start = (currentPageContacts - 1) * contactsPerPage;
+    return filteredContacts.slice(start, start + contactsPerPage);
+  }, [filteredContacts, currentPageContacts]);
 
   useEffect(() => {
     if (activeTab === 'users' && isHR) {
@@ -188,6 +226,13 @@ export default function HRPeopleScreen({ openModal }: Props) {
         u.job_title?.toLowerCase().includes(search.toLowerCase())
       )
     : [];
+
+  const peoplePerPage = 10;
+  const totalPagesPeople = Math.ceil(deptUsers.length / peoplePerPage);
+  const paginatedPeople = useMemo(() => {
+    const start = (currentPagePeople - 1) * peoplePerPage;
+    return deptUsers.slice(start, start + peoplePerPage);
+  }, [deptUsers, currentPagePeople]);
 
   const inputStyle: React.CSSProperties = {
     width: '100%', marginTop: 8, padding: 12, borderRadius: 12,
@@ -361,7 +406,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
 
               {/* People list */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {deptUsers.map(u => (
+                {paginatedPeople.map(u => (
                   <HPCard key={u.id} padding={14} style={{ border: `1.5px solid ${HP_TOKENS.line}` }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <HPAvatar name={u.name} size={46} image={u.avatar_image} />
@@ -387,9 +432,9 @@ export default function HRPeopleScreen({ openModal }: Props) {
                       </div>
                       <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                         <button onClick={() => openModal('employee_profile', { employeeId: u.id, employeeName: u.name })} className="hp-tap" style={{
-                          padding: '6px 10px', borderRadius: 8, border: `1px solid ${HP_TOKENS.blue}30`,
-                          background: HP_TOKENS.blueSoft, fontSize: 10, fontWeight: 800, color: HP_TOKENS.blue,
-                          fontFamily: HP_FONT, cursor: 'pointer',
+                           padding: '6px 10px', borderRadius: 8, border: `1px solid ${HP_TOKENS.blue}30`,
+                           background: HP_TOKENS.blueSoft, fontSize: 10, fontWeight: 800, color: HP_TOKENS.blue,
+                           fontFamily: HP_FONT, cursor: 'pointer',
                         }}>Profil</button>
                         <button onClick={() => openModal('edit_user', {
                           user: u, managers,
@@ -410,6 +455,43 @@ export default function HRPeopleScreen({ openModal }: Props) {
                   </div>
                 )}
               </div>
+
+              {/* Pagination Controls */}
+              {totalPagesPeople > 1 && (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 16 }}>
+                  <button 
+                    onClick={() => setCurrentPagePeople(p => Math.max(1, p - 1))}
+                    disabled={currentPagePeople === 1}
+                    style={{
+                      padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                      background: currentPagePeople === 1 ? HP_TOKENS.lineSoft : '#fff',
+                      color: currentPagePeople === 1 ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                      fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                      cursor: currentPagePeople === 1 ? 'default' : 'pointer',
+                      opacity: currentPagePeople === 1 ? 0.6 : 1, transition: 'all 0.2s'
+                    }}
+                  >
+                    Sebelumnya
+                  </button>
+                  <span style={{ fontFamily: HP_FONT, fontSize: 13, fontWeight: 700, color: HP_TOKENS.inkSoft }}>
+                    {currentPagePeople} / {totalPagesPeople}
+                  </span>
+                  <button 
+                    onClick={() => setCurrentPagePeople(p => Math.min(totalPagesPeople, p + 1))}
+                    disabled={currentPagePeople === totalPagesPeople}
+                    style={{
+                      padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                      background: currentPagePeople === totalPagesPeople ? HP_TOKENS.lineSoft : '#fff',
+                      color: currentPagePeople === totalPagesPeople ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                      fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                      cursor: currentPagePeople === totalPagesPeople ? 'default' : 'pointer',
+                      opacity: currentPagePeople === totalPagesPeople ? 0.6 : 1, transition: 'all 0.2s'
+                    }}
+                  >
+                    Berikutnya
+                  </button>
+                </div>
+              )}
             </>
           )}
         </>
@@ -465,7 +547,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
             />
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
-              {combinedMyGoals.map((g: any) => (
+              {paginatedKPIs.map((g: any) => (
                 <div 
                   key={g.id} 
                   onClick={() => {
@@ -477,6 +559,43 @@ export default function HRPeopleScreen({ openModal }: Props) {
                   <GoalCard g={g} isReadOnly={g.isApiKpi} />
                 </div>
               ))}
+              
+              {/* Pagination Controls */}
+              {totalPagesKPI > 1 && (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 16 }}>
+                  <button 
+                    onClick={() => setCurrentPageKPI(p => Math.max(1, p - 1))}
+                    disabled={currentPageKPI === 1}
+                    style={{
+                      padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                      background: currentPageKPI === 1 ? HP_TOKENS.lineSoft : '#fff',
+                      color: currentPageKPI === 1 ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                      fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                      cursor: currentPageKPI === 1 ? 'default' : 'pointer',
+                      opacity: currentPageKPI === 1 ? 0.6 : 1, transition: 'all 0.2s'
+                    }}
+                  >
+                    Sebelumnya
+                  </button>
+                  <span style={{ fontFamily: HP_FONT, fontSize: 13, fontWeight: 700, color: HP_TOKENS.inkSoft }}>
+                    {currentPageKPI} / {totalPagesKPI}
+                  </span>
+                  <button 
+                    onClick={() => setCurrentPageKPI(p => Math.min(totalPagesKPI, p + 1))}
+                    disabled={currentPageKPI === totalPagesKPI}
+                    style={{
+                      padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                      background: currentPageKPI === totalPagesKPI ? HP_TOKENS.lineSoft : '#fff',
+                      color: currentPageKPI === totalPagesKPI ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                      fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                      cursor: currentPageKPI === totalPagesKPI ? 'default' : 'pointer',
+                      opacity: currentPageKPI === totalPagesKPI ? 0.6 : 1, transition: 'all 0.2s'
+                    }}
+                  >
+                    Berikutnya
+                  </button>
+                </div>
+              )}
               {combinedMyGoals.length === 0 && !loadingKpis && (
                 <div style={{ 
                   textAlign: 'center', padding: '40px 20px', color: HP_TOKENS.inkMute, 
@@ -606,7 +725,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {(state?.contacts || []).filter((c:any) => c.name?.toLowerCase().includes(search.toLowerCase()) || c.role?.toLowerCase().includes(search.toLowerCase())).map((contact: any) => (
+            {paginatedContacts.map((contact: any) => (
               <HPCard key={contact.id} padding={14} style={{ border: `1.5px solid ${HP_TOKENS.lineSoft}`, transition: 'all 0.2s', ':hover': { borderColor: HP_TOKENS.blue } } as any}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                   <div style={{ width: 44, height: 44, borderRadius: 14, background: `linear-gradient(135deg, ${HP_TOKENS.blueSoft}, ${HP_TOKENS.lavenderSoft})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -642,10 +761,47 @@ export default function HRPeopleScreen({ openModal }: Props) {
                 </div>
               </HPCard>
             ))}
-            {(state?.contacts || []).filter((c:any) => c.name?.toLowerCase().includes(search.toLowerCase()) || c.role?.toLowerCase().includes(search.toLowerCase())).length === 0 && (
+            {filteredContacts.length === 0 && (
               <div style={{ textAlign: 'center', padding: 30, color: HP_TOKENS.inkMute }}>Tidak ada kontak yang cocok.</div>
             )}
           </div>
+
+          {/* Pagination Controls */}
+          {totalPagesContacts > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 16 }}>
+              <button 
+                onClick={() => setCurrentPageContacts(p => Math.max(1, p - 1))}
+                disabled={currentPageContacts === 1}
+                style={{
+                  padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                  background: currentPageContacts === 1 ? HP_TOKENS.lineSoft : '#fff',
+                  color: currentPageContacts === 1 ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                  fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                  cursor: currentPageContacts === 1 ? 'default' : 'pointer',
+                  opacity: currentPageContacts === 1 ? 0.6 : 1, transition: 'all 0.2s'
+                }}
+              >
+                Sebelumnya
+              </button>
+              <span style={{ fontFamily: HP_FONT, fontSize: 13, fontWeight: 700, color: HP_TOKENS.inkSoft }}>
+                {currentPageContacts} / {totalPagesContacts}
+              </span>
+              <button 
+                onClick={() => setCurrentPageContacts(p => Math.min(totalPagesContacts, p + 1))}
+                disabled={currentPageContacts === totalPagesContacts}
+                style={{
+                  padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                  background: currentPageContacts === totalPagesContacts ? HP_TOKENS.lineSoft : '#fff',
+                  color: currentPageContacts === totalPagesContacts ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                  fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                  cursor: currentPageContacts === totalPagesContacts ? 'default' : 'pointer',
+                  opacity: currentPageContacts === totalPagesContacts ? 0.6 : 1, transition: 'all 0.2s'
+                }}
+              >
+                Berikutnya
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>

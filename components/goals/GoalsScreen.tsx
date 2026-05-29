@@ -77,22 +77,41 @@ export default function GoalsScreen({ openModal }: GoalsScreenProps) {
     fetchKPIs();
   }, [user?.id]);
 
-  if (!state || !user) return null;
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Filter goals and merge with fetched KPIs
-  const filteredGoals = state.goals.filter((g: any) => {
-    if (tab === 'personal') return g.scope === 'personal' && String(g.ownerId) === String(user.id);
-    if (tab === 'assigned') return g.scope === 'assigned' && String(g.ownerId) === String(user.id);
-    return false;
-  });
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [tab]);
 
   // Merge with API KPIs to prevent duplication
-  const combinedGoals = [...filteredGoals];
-  apiKpis.filter((k: any) => k.scope === tab).forEach((k: any) => {
-    if (!combinedGoals.some((g: any) => String(g.id) === String(k.id) || g.title.toLowerCase() === k.title.toLowerCase())) {
-      combinedGoals.push(k);
-    }
-  });
+  const combinedGoals = useMemo(() => {
+    if (!state || !user) return [];
+    
+    // Filter goals and merge with fetched KPIs
+    const filteredGoals = state.goals.filter((g: any) => {
+      if (tab === 'personal') return g.scope === 'personal' && String(g.ownerId) === String(user.id);
+      if (tab === 'assigned') return g.scope === 'assigned' && String(g.ownerId) === String(user.id);
+      return false;
+    });
+
+    const combined = [...filteredGoals];
+    apiKpis.filter((k: any) => k.scope === tab).forEach((k: any) => {
+      if (!combined.some((g: any) => String(g.id) === String(k.id) || g.title.toLowerCase() === k.title.toLowerCase())) {
+        combined.push(k);
+      }
+    });
+    return combined;
+  }, [state?.goals, user?.id, tab, apiKpis]);
+
+  const goalsPerPage = 5;
+  const totalPages = Math.ceil(combinedGoals.length / goalsPerPage);
+  const activePage = Math.min(currentPage, Math.max(1, totalPages));
+  const paginatedGoals = useMemo(() => {
+    const start = (activePage - 1) * goalsPerPage;
+    return combinedGoals.slice(start, start + goalsPerPage);
+  }, [combinedGoals, activePage]);
+
+  if (!state || !user) return null;
 
   return (
     <div style={{ padding: '0 16px 120px', fontFamily: HP_FONT }}>
@@ -149,7 +168,7 @@ export default function GoalsScreen({ openModal }: GoalsScreenProps) {
       />
       
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {combinedGoals.map((g: any) => (
+        {paginatedGoals.map((g: any) => (
           <div 
             key={g.id} 
             onClick={() => {
@@ -174,6 +193,42 @@ export default function GoalsScreen({ openModal }: GoalsScreenProps) {
         {loadingKpis && combinedGoals.length === 0 && (
           <div style={{ textAlign: 'center', padding: '40px 20px', color: HP_TOKENS.inkMute }}>
             Memuat KPI...
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 16 }}>
+            <button 
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={activePage === 1}
+              style={{
+                padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                background: activePage === 1 ? HP_TOKENS.lineSoft : '#fff',
+                color: activePage === 1 ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                cursor: activePage === 1 ? 'default' : 'pointer',
+                opacity: activePage === 1 ? 0.6 : 1, transition: 'all 0.2s'
+              }}
+            >
+              Sebelumnya
+            </button>
+            <span style={{ fontFamily: HP_FONT, fontSize: 13, fontWeight: 700, color: HP_TOKENS.inkSoft }}>
+              {activePage} / {totalPages}
+            </span>
+            <button 
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={activePage === totalPages}
+              style={{
+                padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                background: activePage === totalPages ? HP_TOKENS.lineSoft : '#fff',
+                color: activePage === totalPages ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                cursor: activePage === totalPages ? 'default' : 'pointer',
+                opacity: activePage === totalPages ? 0.6 : 1, transition: 'all 0.2s'
+              }}
+            >
+              Berikutnya
+            </button>
           </div>
         )}
       </div>

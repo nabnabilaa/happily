@@ -36,6 +36,7 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
   const [view, setView] = useState<'list' | 'builder'>('list');
   const [surveys, setSurveys] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
   
   // Builder state
   const [editingId, setEditingId] = useState<number | null>(editId || null);
@@ -215,80 +216,125 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
               <div style={{ fontSize: 32, marginBottom: 8 }}>📝</div>
               <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.inkMute }}>Belum ada survey</div>
             </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {surveys.map(sr => (
-                <HPCard key={sr.id} padding={14} style={{ border: `1.5px solid ${sr.status === 'active' ? `${HP_TOKENS.sage}40` : HP_TOKENS.line}` }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                    <div style={{
-                      width: 42, height: 42, borderRadius: 12, flexShrink: 0,
-                      background: sr.status === 'active' ? HP_TOKENS.lavenderSoft : HP_TOKENS.lineSoft,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}>
-                      <HPGlyph name="book" size={20} color={sr.status === 'active' ? HP_TOKENS.lavender : HP_TOKENS.inkMute} />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ ...HP_TEXT.h, fontSize: 14 }}>{sr.title}</div>
+          ) : (() => {
+            const itemsPerPage = 5;
+            const totalPages = Math.ceil(surveys.length / itemsPerPage);
+            const paginatedSurveys = surveys.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+            return (
+              <>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {paginatedSurveys.map(sr => (
+                    <HPCard key={sr.id} padding={14} style={{ border: `1.5px solid ${sr.status === 'active' ? `${HP_TOKENS.sage}40` : HP_TOKENS.line}` }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                         <div style={{
-                          padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 800,
-                          background: sr.status === 'active' ? HP_TOKENS.sageWash : HP_TOKENS.lineSoft,
-                          color: sr.status === 'active' ? HP_TOKENS.sage : HP_TOKENS.inkMute,
-                          fontFamily: HP_FONT
+                          width: 42, height: 42, borderRadius: 12, flexShrink: 0,
+                          background: sr.status === 'active' ? HP_TOKENS.lavenderSoft : HP_TOKENS.lineSoft,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center'
                         }}>
-                          {(sr.status || 'active').toUpperCase()}
+                          <HPGlyph name="book" size={20} color={sr.status === 'active' ? HP_TOKENS.lavender : HP_TOKENS.inkMute} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div style={{ ...HP_TEXT.h, fontSize: 14 }}>{sr.title}</div>
+                            <div style={{
+                              padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 900,
+                              background: sr.status === 'active' ? HP_TOKENS.sageWash : HP_TOKENS.lineSoft,
+                              color: sr.status === 'active' ? HP_TOKENS.sage : HP_TOKENS.inkMute,
+                              fontFamily: HP_FONT
+                            }}>
+                              {(sr.status || 'active').toUpperCase()}
+                            </div>
+                          </div>
+                          {sr.description && (
+                            <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkSoft, marginTop: 2, fontSize: 12 }}>
+                              {sr.description}
+                            </div>
+                          )}
+                          <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
+                            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>
+                              📊 {sr.response_count || 0} responden
+                            </div>
+                            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>
+                              ❓ {sr.questions?.length || 0} pertanyaan
+                            </div>
+                            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, cursor: 'help', display: 'flex', alignItems: 'center', gap: 4 }} title={sr.target_audience === 'department' ? (sr.target_departments || []).join(', ') : ''}>
+                              🎯 {sr.target_audience === 'department' 
+                                  ? `${(sr.target_departments || []).length} Divisi` 
+                                  : 'Seluruh Perusahaan'}
+                              {sr.target_audience === 'department' && <span style={{ fontSize: 10 }}>ℹ️</span>}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      {sr.description && (
-                        <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkSoft, marginTop: 2, fontSize: 12 }}>
-                          {sr.description}
-                        </div>
-                      )}
-                      <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
-                        <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>
-                          📊 {sr.response_count || 0} responden
-                        </div>
-                        <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>
-                          ❓ {sr.questions?.length || 0} pertanyaan
-                        </div>
-                        <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, cursor: 'help', display: 'flex', alignItems: 'center', gap: 4 }} title={sr.target_audience === 'department' ? (sr.target_departments || []).join(', ') : ''}>
-                          🎯 {sr.target_audience === 'department' 
-                              ? `${(sr.target_departments || []).length} Divisi` 
-                              : 'Seluruh Perusahaan'}
-                          {sr.target_audience === 'department' && <span style={{ fontSize: 10 }}>ℹ️</span>}
-                        </div>
+                      <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
+                        {(sr.response_count || 0) > 0 && (
+                          <button onClick={() => openModal?.('survey_results', { surveyId: sr.id })} className="hp-tap" style={{
+                            flex: 1, padding: '8px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.blue}40`,
+                            background: HP_TOKENS.blueSoft, color: HP_TOKENS.blue,
+                            fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
+                          }}>
+                            📊 Lihat Hasil
+                          </button>
+                        )}
+                        <button onClick={() => loadSurveyForEdit(sr)} className="hp-tap" style={{
+                          flex: 1, padding: '8px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.line}`,
+                          background: '#fff', color: HP_TOKENS.inkSoft,
+                          fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
+                        }}>
+                          ✏️ Edit
+                        </button>
+                        <button onClick={() => deleteSurvey(sr.id)} className="hp-tap" style={{
+                          padding: '8px 12px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.coral}40`,
+                          background: HP_TOKENS.coralSoft, color: HP_TOKENS.coral,
+                          fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
+                        }}>
+                          🗑
+                        </button>
                       </div>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
-                    {(sr.response_count || 0) > 0 && (
-                      <button onClick={() => openModal?.('survey_results', { surveyId: sr.id })} className="hp-tap" style={{
-                        flex: 1, padding: '8px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.blue}40`,
-                        background: HP_TOKENS.blueSoft, color: HP_TOKENS.blue,
-                        fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
-                      }}>
-                        📊 Lihat Hasil
-                      </button>
-                    )}
-                    <button onClick={() => loadSurveyForEdit(sr)} className="hp-tap" style={{
-                      flex: 1, padding: '8px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.line}`,
-                      background: '#fff', color: HP_TOKENS.inkSoft,
-                      fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
-                    }}>
-                      ✏️ Edit
+                    </HPCard>
+                  ))}
+                </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 20 }}>
+                    <button 
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      style={{
+                        padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                        background: currentPage === 1 ? HP_TOKENS.lineSoft : '#fff',
+                        color: currentPage === 1 ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                        fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                        cursor: currentPage === 1 ? 'default' : 'pointer',
+                        opacity: currentPage === 1 ? 0.6 : 1, transition: 'all 0.2s'
+                      }}
+                    >
+                      Sebelumnya
                     </button>
-                    <button onClick={() => deleteSurvey(sr.id)} className="hp-tap" style={{
-                      padding: '8px 12px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.coral}40`,
-                      background: HP_TOKENS.coralSoft, color: HP_TOKENS.coral,
-                      fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
-                    }}>
-                      🗑
+                    <span style={{ fontFamily: HP_FONT, fontSize: 13, fontWeight: 700, color: HP_TOKENS.inkSoft }}>
+                      {currentPage} / {totalPages}
+                    </span>
+                    <button 
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      style={{
+                        padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                        background: currentPage === totalPages ? HP_TOKENS.lineSoft : '#fff',
+                        color: currentPage === totalPages ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                        fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                        cursor: currentPage === totalPages ? 'default' : 'pointer',
+                        opacity: currentPage === totalPages ? 0.6 : 1, transition: 'all 0.2s'
+                      }}
+                    >
+                      Berikutnya
                     </button>
                   </div>
-                </HPCard>
-              ))}
-            </div>
-          )}
+                )}
+              </>
+            );
+          })()}
         </div>
       </Modal>
     );

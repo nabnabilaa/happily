@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useHP } from "@/lib/HPContext";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
 import HPGlyph from "@/components/ui/HPGlyph";
@@ -42,6 +42,15 @@ export default function WeeklyReviewModal({ onClose }: { onClose: () => void }) 
   const [year, setYear] = useState(new Date().getFullYear());
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [moveTarget, setMoveTarget] = useState<{ linkId: number; show: boolean } | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const reviewsPerPage = 5;
+  const totalPages = Math.ceil(reviewData.length / reviewsPerPage);
+  const activePage = Math.min(currentPage, Math.max(1, totalPages));
+  const paginatedReviews = useMemo(() => {
+    const start = (activePage - 1) * reviewsPerPage;
+    return reviewData.slice(start, start + reviewsPerPage);
+  }, [reviewData, activePage]);
 
   useEffect(() => { fetchData(); }, [month, year]);
 
@@ -51,6 +60,7 @@ export default function WeeklyReviewModal({ onClose }: { onClose: () => void }) 
       const res = await fetch(`/api/kpi/review?managerId=${user?.id}&month=${month}&year=${year}`);
       const data = await res.json();
       setReviewData(data.reviewData || []);
+      setCurrentPage(1);
     } catch (e) { console.error(e); }
     setLoading(false);
   };
@@ -141,7 +151,7 @@ export default function WeeklyReviewModal({ onClose }: { onClose: () => void }) 
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {reviewData.map(kpi => (
+            {paginatedReviews.map(kpi => (
               <div key={kpi.kpiId} style={{
                 borderRadius: 20, background: HP_TOKENS.card,
                 border: `1.5px solid ${HP_TOKENS.line}`, overflow: 'hidden',
@@ -289,6 +299,42 @@ export default function WeeklyReviewModal({ onClose }: { onClose: () => void }) 
                 )}
               </div>
             ))}
+
+            {totalPages > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 16 }}>
+                <button 
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={activePage === 1}
+                  style={{
+                    padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                    background: activePage === 1 ? HP_TOKENS.lineSoft : '#fff',
+                    color: activePage === 1 ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                    cursor: activePage === 1 ? 'default' : 'pointer',
+                    opacity: activePage === 1 ? 0.6 : 1, transition: 'all 0.2s'
+                  }}
+                >
+                  Sebelumnya
+                </button>
+                <span style={{ fontFamily: HP_FONT, fontSize: 13, fontWeight: 700, color: HP_TOKENS.inkSoft }}>
+                  {activePage} / {totalPages}
+                </span>
+                <button 
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={activePage === totalPages}
+                  style={{
+                    padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                    background: activePage === totalPages ? HP_TOKENS.lineSoft : '#fff',
+                    color: activePage === totalPages ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                    cursor: activePage === totalPages ? 'default' : 'pointer',
+                    opacity: activePage === totalPages ? 0.6 : 1, transition: 'all 0.2s'
+                  }}
+                >
+                  Berikutnya
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

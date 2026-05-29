@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useHP } from "@/lib/HPContext";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
 import Modal from "@/components/ui/Modal";
@@ -22,6 +22,15 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
   const { state, updateState, user } = useHP();
   const [loading, setLoading] = useState(true);
   const [logs, setLogs] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const logsPerPage = 5;
+  const totalPages = Math.ceil(logs.length / logsPerPage);
+  const activePage = Math.min(currentPage, Math.max(1, totalPages));
+  const paginatedLogs = useMemo(() => {
+    const start = (activePage - 1) * logsPerPage;
+    return logs.slice(start, start + logsPerPage);
+  }, [logs, activePage]);
 
   useEffect(() => {
     if (!state?.managerData?.teamTasks) return;
@@ -62,6 +71,7 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
 
       setLogs(newLogs);
       setLoading(false);
+      setCurrentPage(1);
     }, 400);
     return () => clearTimeout(timer);
   }, [memberId, state?.managerData?.teamTasks]);
@@ -219,7 +229,7 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
             )}
 
             {/* Daily Tasks grouped by date */}
-            {logs.map((day, idx) => (
+            {paginatedLogs.map((day, idx) => (
               <div key={day.date}>
                 <div style={{ 
                   display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16,
@@ -227,11 +237,11 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
                 }}>
                   <div style={{ 
                     padding: '6px 14px', borderRadius: 12, 
-                    background: idx === 0 ? HP_TOKENS.blue : HP_TOKENS.paper,
-                    border: `1.5px solid ${idx === 0 ? HP_TOKENS.blue : HP_TOKENS.lineSoft}`,
-                    color: idx === 0 ? '#fff' : HP_TOKENS.inkSoft, 
+                    background: (activePage === 1 && idx === 0) ? HP_TOKENS.blue : HP_TOKENS.paper,
+                    border: `1.5px solid ${(activePage === 1 && idx === 0) ? HP_TOKENS.blue : HP_TOKENS.lineSoft}`,
+                    color: (activePage === 1 && idx === 0) ? '#fff' : HP_TOKENS.inkSoft, 
                     fontSize: 10, fontWeight: 900, letterSpacing: '0.05em',
-                    boxShadow: idx === 0 ? `0 4px 12px ${HP_TOKENS.blue}40` : 'none'
+                    boxShadow: (activePage === 1 && idx === 0) ? `0 4px 12px ${HP_TOKENS.blue}40` : 'none'
                   }}>
                     {day.label.toUpperCase()} — {new Date(day.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long' })}
                   </div>
@@ -406,6 +416,42 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
                 </div>
               </div>
             ))}
+
+            {totalPages > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 16 }}>
+                <button 
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={activePage === 1}
+                  style={{
+                    padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                    background: activePage === 1 ? HP_TOKENS.lineSoft : '#fff',
+                    color: activePage === 1 ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                    cursor: activePage === 1 ? 'default' : 'pointer',
+                    opacity: activePage === 1 ? 0.6 : 1, transition: 'all 0.2s'
+                  }}
+                >
+                  Sebelumnya
+                </button>
+                <span style={{ fontFamily: HP_FONT, fontSize: 13, fontWeight: 700, color: HP_TOKENS.inkSoft }}>
+                  {activePage} / {totalPages}
+                </span>
+                <button 
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={activePage === totalPages}
+                  style={{
+                    padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                    background: activePage === totalPages ? HP_TOKENS.lineSoft : '#fff',
+                    color: activePage === totalPages ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                    cursor: activePage === totalPages ? 'default' : 'pointer',
+                    opacity: activePage === totalPages ? 0.6 : 1, transition: 'all 0.2s'
+                  }}
+                >
+                  Berikutnya
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

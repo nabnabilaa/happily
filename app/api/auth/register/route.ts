@@ -53,7 +53,7 @@ async function seedDemoData(userId: string, userName: string) {
   // ── 4. Goals (3 goals with sub-goals) ──────────────────────────────────
   const goals = [
     {
-      id: uid(), title: "Meningkatkan Kualitas Code Review", progress: 65, alignment: "Tim Engineering",
+      id: uid(), title: "Meningkatkan Kualitas Code Review", progress: 65, alignment: 100,
       tone: "blue", metric: "8 PR reviewed/minggu", scope: "personal",
       subGoals: [
         { title: "Review minimal 2 PR per hari", done: true },
@@ -62,7 +62,7 @@ async function seedDemoData(userId: string, userName: string) {
       ]
     },
     {
-      id: uid(), title: "Sertifikasi Cloud Computing", progress: 40, alignment: "Pengembangan Diri",
+      id: uid(), title: "Sertifikasi Cloud Computing", progress: 40, alignment: 80,
       tone: "green", metric: "1 sertifikasi Q2", scope: "personal",
       subGoals: [
         { title: "Selesaikan modul Networking", done: true },
@@ -71,7 +71,7 @@ async function seedDemoData(userId: string, userName: string) {
       ]
     },
     {
-      id: uid(), title: "Optimasi Performa Aplikasi", progress: 30, alignment: "OKR Perusahaan",
+      id: uid(), title: "Optimasi Performa Aplikasi", progress: 30, alignment: 50,
       tone: "yellow", metric: "Load time < 2 detik", scope: "team",
       subGoals: [
         { title: "Audit query database", done: true },

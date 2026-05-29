@@ -17,6 +17,7 @@ interface Props {
 export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
   const { state, updateState, user, awardXP, syncSkillProgress } = useHP();
   const [completingTask, setCompletingTask] = useState<any>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const togglePriority = useCallback((id: number) => {
     const priority = state?.priorities?.find((p: any) => p.id === id);
@@ -155,6 +156,13 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
   const priorities = state.priorities || [];
   const done = priorities.filter((p: any) => p.done).length;
   const total = priorities.length;
+  
+  const itemsPerPage = 5;
+  const totalPages = Math.ceil(total / itemsPerPage);
+  const paginatedPriorities = React.useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return priorities.slice(start, start + itemsPerPage);
+  }, [priorities, currentPage]);
 
   return (
     <div style={{ marginTop: 24 }}>
@@ -229,8 +237,8 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
       </HPCard>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {priorities.length > 0 ? (
-          priorities.map((p: any) => (
+        {paginatedPriorities.length > 0 ? (
+          paginatedPriorities.map((p: any) => (
             <PriorityCard key={p.id} p={p} onToggle={() => togglePriority(p.id)}/>
           ))
         ) : (
@@ -243,6 +251,43 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
           </div>
         )}
         
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 8, marginBottom: 8 }}>
+            <button 
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              style={{
+                padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                background: currentPage === 1 ? HP_TOKENS.lineSoft : '#fff',
+                color: currentPage === 1 ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                cursor: currentPage === 1 ? 'default' : 'pointer',
+                opacity: currentPage === 1 ? 0.6 : 1, transition: 'all 0.2s'
+              }}
+            >
+              Sebelumnya
+            </button>
+            <span style={{ fontFamily: HP_FONT, fontSize: 13, fontWeight: 700, color: HP_TOKENS.inkSoft }}>
+              {currentPage} / {totalPages}
+            </span>
+            <button 
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              style={{
+                padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                background: currentPage === totalPages ? HP_TOKENS.lineSoft : '#fff',
+                color: currentPage === totalPages ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                cursor: currentPage === totalPages ? 'default' : 'pointer',
+                opacity: currentPage === totalPages ? 0.6 : 1, transition: 'all 0.2s'
+              }}
+            >
+              Berikutnya
+            </button>
+          </div>
+        )}
+
         {priorities.length > 0 && (
           <button onClick={() => openModal('focus')} className="hp-tap" style={{
             padding: '18px', borderRadius: 20, border: 'none',
