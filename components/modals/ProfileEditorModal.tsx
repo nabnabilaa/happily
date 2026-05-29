@@ -5,6 +5,7 @@ import { useHP } from "@/lib/HPContext";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
 import Modal from "@/components/ui/Modal";
 import HPGlyph from "@/components/ui/HPGlyph";
+import { getMascotAnimated, toggleMascotAnimation } from "@/components/ui/BeeMascot";
 
 interface ProfileEditorModalProps {
   onClose: () => void;
@@ -16,6 +17,12 @@ export default function ProfileEditorModal({ onClose }: ProfileEditorModalProps)
   const [preview, setPreview] = useState<string | null>(user?.avatarImage || null);
   const [name, setName] = useState(user?.name || "");
   const [midDayTime, setMidDayTime] = useState(state?.workSchedule?.midDayCheckInTime || "12:00");
+  const [mascotAnimated, setMascotAnimated] = useState(() => {
+    if (typeof window !== "undefined") {
+      return getMascotAnimated();
+    }
+    return true;
+  });
 
   const compressImage = (base64: string): Promise<string> => {
     return new Promise((resolve) => {
@@ -163,6 +170,83 @@ export default function ProfileEditorModal({ onClose }: ProfileEditorModalProps)
           </div>
           <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 6, fontWeight: 600 }}>
             Popup "Cek Target Kerja" akan muncul otomatis pada jam ini.
+          </div>
+        </div>
+
+        {/* 🐝 Mascot Animation Mode Control */}
+        <div style={{ width: '100%' }}>
+          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 700, marginBottom: 8 }}>MODE MASKOT (FLOWBEE)</div>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 1fr', 
+            gap: 10,
+            background: HP_TOKENS.lineSoft,
+            padding: 4,
+            borderRadius: 14,
+            border: `1.5px solid ${HP_TOKENS.line}`
+          }}>
+            <button
+              onClick={() => {
+                if (!mascotAnimated) {
+                  const next = toggleMascotAnimation();
+                  setMascotAnimated(next);
+                }
+              }}
+              style={{
+                padding: '12px 14px',
+                borderRadius: 10,
+                border: 'none',
+                fontFamily: HP_FONT,
+                fontSize: 13,
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                background: mascotAnimated ? HP_TOKENS.yellow : 'transparent',
+                color: mascotAnimated ? HP_TOKENS.ink : HP_TOKENS.inkMute,
+                boxShadow: mascotAnimated ? '0 4px 12px rgba(244,164,41,0.2)' : 'none',
+              }}
+              className="hp-tap"
+            >
+              <span>✨</span> Mode Animasi
+            </button>
+            <button
+              onClick={() => {
+                if (mascotAnimated) {
+                  const next = toggleMascotAnimation();
+                  setMascotAnimated(next);
+                }
+              }}
+              style={{
+                padding: '12px 14px',
+                borderRadius: 10,
+                border: 'none',
+                fontFamily: HP_FONT,
+                fontSize: 13,
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                background: !mascotAnimated ? HP_TOKENS.card : 'transparent',
+                color: !mascotAnimated ? HP_TOKENS.ink : HP_TOKENS.inkMute,
+                boxShadow: !mascotAnimated ? '0 4px 12px rgba(0,0,0,0.05)' : 'none',
+              }}
+              className="hp-tap"
+            >
+              <span>💤</span> Mode Diam
+            </button>
+          </div>
+          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 6, fontWeight: 600, lineHeight: 1.4 }}>
+            {mascotAnimated 
+              ? "Maskot akan melayang lembut, berkedip acak, dan memantul gemas saat disentuh."
+              : "Maskot akan tetap tenang dan diam untuk menjaga konsentrasi belajar & kerja Anda."
+            }
           </div>
         </div>
 
