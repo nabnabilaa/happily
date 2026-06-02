@@ -551,6 +551,7 @@
           try {
             chrome.runtime.sendMessage({
               type: 'SHOW_NOTIFICATION',
+              id: n.id,
               title: n.title,
               message: n.message || ''
             })

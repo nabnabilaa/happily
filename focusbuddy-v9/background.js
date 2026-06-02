@@ -56,7 +56,8 @@ chrome.runtime.onMessage.addListener((msg, _, res) => {
     res({ ok:true })
   }
   if (msg.type === 'SHOW_NOTIFICATION') {
-    chrome.notifications.create('fb_notif_' + Date.now(), {
+    const notifId = msg.id ? String(msg.id) : 'fb_notif_' + Date.now() + Math.random()
+    chrome.notifications.create(notifId, {
       type: 'basic',
       iconUrl: 'icons/icon.png',
       title: msg.title || '🐝 Flowbee',
