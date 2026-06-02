@@ -6036,6 +6036,8 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
           // ── REAL-TIME CHAT SYNC: triggered by any tab that sends a message ──
           if (changes.fb_chat_update && changes.fb_chat_update.newValue) {
             const update = changes.fb_chat_update.newValue;
+
+            // 1. Update the extension panel if chat tab is open
             if (activeTab === 'chat') {
               if (chatActiveChannelId && chatActiveChannelId === update.channelId) {
                 // We are in the exact channel that was updated — refresh messages immediately
@@ -6049,6 +6051,16 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
                 }
               }
             }
+
+            // 2. Also notify the website React app on this tab so it refreshes too
+            // ChatScreen.tsx listens for FLOWBEE_CHAT_INCOMING via window.addEventListener
+            try {
+              window.postMessage({
+                type: 'FLOWBEE_CHAT_INCOMING',
+                channelId: update.channelId,
+                ts: update.ts,
+              }, '*');
+            } catch (e) { /* silent */ }
           }
           
           if (needsRenderTasks && typeof renderTasks === 'function') renderTasks();
