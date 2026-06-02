@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import { Editor } from '@tinymce/tinymce-react';
 import { useHP } from "@/lib/HPContext";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
 import HPGlyph from "@/components/ui/HPGlyph";
@@ -410,14 +411,28 @@ export default function NotesScreen() {
               <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 8, letterSpacing: 0.5 }}>
                 ISI CATATAN
               </div>
-              <textarea
-                value={newNote}
-                onChange={(e) => setNewNote(e.target.value)}
-                placeholder="Tuliskan semua idemu di sini..."
-                style={{
-                  ...inputStyle, minHeight: 200, resize: 'vertical', lineHeight: 1.6
-                }}
-              />
+              <div style={{ background: HP_TOKENS.card, borderRadius: 14, overflow: 'hidden' }}>
+                <Editor
+                  apiKey="no-api-key"
+                  value={newNote}
+                  onEditorChange={(content) => setNewNote(content)}
+                  init={{
+                    height: 300,
+                    menubar: false,
+                    plugins: [
+                      'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                      'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                      'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+                    ],
+                    toolbar: 'undo redo | blocks | ' +
+                      'bold italic forecolor | alignleft aligncenter ' +
+                      'alignright alignjustify | bullist numlist outdent indent | ' +
+                      'removeformat | help',
+                    content_style: `body { font-family: ${HP_FONT}, sans-serif; font-size: 14px; line-height: 1.6; }`,
+                    placeholder: "Tuliskan semua idemu di sini..."
+                  }}
+                />
+              </div>
             </div>
           </div>
 
@@ -580,9 +595,11 @@ export default function NotesScreen() {
                       </div>
                     </div>
                     
-                    <div style={{ ...HP_TEXT.body, fontSize: 14, whiteSpace: 'pre-wrap', lineHeight: 1.6, marginTop: 12 }}>
-                      {note.content}
-                    </div>
+                    <div 
+                      className="tinymce-content"
+                      style={{ ...HP_TEXT.body, fontSize: 14, whiteSpace: 'pre-wrap', lineHeight: 1.6, marginTop: 12, padding: 0 }}
+                      dangerouslySetInnerHTML={{ __html: note.content }}
+                    />
 
                     <div style={{ 
                       marginTop: 20, paddingTop: 12, borderTop: `1px dashed ${HP_TOKENS.line}`,
