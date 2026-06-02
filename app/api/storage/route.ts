@@ -399,27 +399,100 @@ export async function POST(request: Request) {
     const activeRole = user.userRole || user.role;
     if ((activeRole === 'hr') && state.rewards) {
       try {
-        // Use a more robust sync: Delete and re-insert
-        await db.execute("DELETE FROM rewards");
-        for (const r of state.rewards) {
+        // Programmatic Diffing for Rewards instead of deleting all
+        const dbRewardsRes = await db.execute("SELECT id, title, points_cost, category, tone, glyph, description, stock FROM rewards");
+        const dbRewardsMap = new Map(dbRewardsRes.rows.map(r => [String(r.id), r]));
+        const payloadRewardIds = new Set(state.rewards.map((r: any) => String(r.id)));
+
+        // 1. Delete rewards that are not in the payload
+        const deleteIds = Array.from(dbRewardsMap.keys()).filter(id => !payloadRewardIds.has(id));
+        if (deleteIds.length > 0) {
           await db.execute({
-            sql: `INSERT INTO rewards (id, title, points_cost, category, tone, glyph, description, stock) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            args: [String(r.id), r.title, r.points, r.category || 'General', r.tone || 'blue', r.glyph || 'gift', r.description || '', r.stock || 0]
+            sql: `DELETE FROM rewards WHERE id IN (${deleteIds.map(() => '?').join(',')})`,
+            args: deleteIds
           });
+        }
+
+        // 2. Insert or update rewards in payload
+        for (const r of state.rewards) {
+          const idStr = String(r.id);
+          const existing = dbRewardsMap.get(idStr);
+          if (!existing) {
+            await db.execute({
+              sql: `INSERT INTO rewards (id, title, points_cost, category, tone, glyph, description, stock) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+              args: [idStr, r.title, r.points, r.category || 'General', r.tone || 'blue', r.glyph || 'gift', r.description || '', r.stock || 0]
+            });
+          } else {
+            // Only update if something changed
+            const pointsCost = Number(existing.points_cost);
+            const stockVal = Number(existing.stock);
+            if (
+              existing.title !== r.title ||
+              pointsCost !== r.points ||
+              existing.category !== (r.category || 'General') ||
+              existing.tone !== (r.tone || 'blue') ||
+              existing.glyph !== (r.glyph || 'gift') ||
+              existing.description !== (r.description || '') ||
+              stockVal !== (r.stock || 0)
+            ) {
+              await db.execute({
+                sql: `UPDATE rewards SET title = ?, points_cost = ?, category = ?, tone = ?, glyph = ?, description = ?, stock = ? WHERE id = ?`,
+                args: [r.title, r.points, r.category || 'General', r.tone || 'blue', r.glyph || 'gift', r.description || '', r.stock || 0, idStr]
+              });
+            }
+          }
         }
       } catch (e) {
         console.error("Reward sync error:", e);
       }
     }
 
-    // Sync Reward History
+    // Sync Reward History (Programmatic Diffing)
     if (state.rewardHistory) {
-      await db.execute({ sql: "DELETE FROM user_rewards WHERE user_id = ?", args: [userId] });
-      for (const rh of state.rewardHistory) {
-        await db.execute({
-          sql: `INSERT INTO user_rewards (id, user_id, title, points, date, glyph) VALUES (?, ?, ?, ?, ?, ?)`,
-          args: [String(rh.id), userId, rh.title, rh.points, rh.date, rh.glyph || 'gift']
+      try {
+        const dbHistoryRes = await db.execute({
+          sql: "SELECT id, title, points, date, glyph FROM user_rewards WHERE user_id = ?",
+          args: [userId]
         });
+        const dbHistoryMap = new Map(dbHistoryRes.rows.map(r => [String(r.id), r]));
+        const payloadHistoryIds = new Set(state.rewardHistory.map((rh: any) => String(rh.id)));
+
+        // Delete history entries that are not in the payload
+        const deleteHistoryIds = Array.from(dbHistoryMap.keys()).filter(id => !payloadHistoryIds.has(id));
+        if (deleteHistoryIds.length > 0) {
+          await db.execute({
+            sql: `DELETE FROM user_rewards WHERE user_id = ? AND id IN (${deleteHistoryIds.map(() => '?').join(',')})`,
+            args: [userId, ...deleteHistoryIds]
+          });
+        }
+
+        // Insert or update entries in payload
+        for (const rh of state.rewardHistory) {
+          const idStr = String(rh.id);
+          const existing = dbHistoryMap.get(idStr);
+          if (!existing) {
+            await db.execute({
+              sql: `INSERT INTO user_rewards (id, user_id, title, points, date, glyph) VALUES (?, ?, ?, ?, ?, ?)`,
+              args: [idStr, userId, rh.title, rh.points, rh.date, rh.glyph || 'gift']
+            });
+          } else {
+            // Update if changed
+            const pointsVal = Number(existing.points);
+            if (
+              existing.title !== rh.title ||
+              pointsVal !== rh.points ||
+              existing.date !== rh.date ||
+              existing.glyph !== (rh.glyph || 'gift')
+            ) {
+              await db.execute({
+                sql: `UPDATE user_rewards SET title = ?, points = ?, date = ?, glyph = ? WHERE user_id = ? AND id = ?`,
+                args: [rh.title, rh.points, rh.date, rh.glyph || 'gift', userId, idStr]
+              });
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Reward history sync error:", e);
       }
     }
 
@@ -475,18 +548,80 @@ export async function POST(request: Request) {
     }
 
 
-    // Sync Habits
+    // Sync Habits (Programmatic Diffing)
     if (state.habits) {
-      await db.execute({ sql: "DELETE FROM habits WHERE user_id = ?", args: [userId] });
-      const seenHabits = new Set<string>();
-      for (const h of state.habits) {
-        const habitNameLower = (h.name || '').toLowerCase().trim();
-        if (!habitNameLower || seenHabits.has(habitNameLower)) continue;
-        seenHabits.add(habitNameLower);
-        await db.execute({
-          sql: `INSERT INTO habits (user_id, name, streak, target_days, is_done_today, glyph, completed_dates) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          args: [userId, h.name, h.streak, h.target, h.done ? 1 : 0, h.glyph, h.completedDates ? JSON.stringify(h.completedDates) : null]
+      try {
+        const dbHabitsRes = await db.execute({
+          sql: "SELECT id, name, streak, target_days, is_done_today, glyph, completed_dates FROM habits WHERE user_id = ?",
+          args: [userId]
         });
+        const dbHabitsMap = new Map<string, any>();
+        for (const r of dbHabitsRes.rows) {
+          const key = (r.name || '').toLowerCase().trim();
+          if (key) dbHabitsMap.set(key, r);
+        }
+
+        const payloadHabitsSet = new Set<string>();
+        const seenHabits = new Set<string>();
+
+        for (const h of state.habits) {
+          const habitNameLower = (h.name || '').toLowerCase().trim();
+          if (!habitNameLower || seenHabits.has(habitNameLower)) continue;
+          seenHabits.add(habitNameLower);
+          payloadHabitsSet.add(habitNameLower);
+
+          const existing = dbHabitsMap.get(habitNameLower);
+          const isDoneTodayVal = h.done ? 1 : 0;
+          const completedDatesStr = h.completedDates ? JSON.stringify(h.completedDates) : null;
+
+          if (!existing) {
+            // Insert new habit
+            await db.execute({
+              sql: `INSERT INTO habits (user_id, name, streak, target_days, is_done_today, glyph, completed_dates) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+              args: [userId, h.name, h.streak, h.target, isDoneTodayVal, h.glyph, completedDatesStr]
+            });
+          } else {
+            // Parse existing completed dates to compare safely
+            let existingCompletedDatesStr = null;
+            if (existing.completed_dates) {
+              existingCompletedDatesStr = typeof existing.completed_dates === 'string' 
+                ? existing.completed_dates 
+                : JSON.stringify(existing.completed_dates);
+            }
+            const existingIsDone = Number(existing.is_done_today);
+            const existingStreak = Number(existing.streak);
+            const existingTarget = Number(existing.target_days);
+
+            // Update only if anything changed
+            if (
+              existingStreak !== h.streak ||
+              existingTarget !== h.target ||
+              existingIsDone !== isDoneTodayVal ||
+              existing.glyph !== h.glyph ||
+              existingCompletedDatesStr !== completedDatesStr ||
+              existing.name !== h.name
+            ) {
+              await db.execute({
+                sql: `UPDATE habits SET streak = ?, target_days = ?, is_done_today = ?, glyph = ?, completed_dates = ?, name = ? WHERE id = ? AND user_id = ?`,
+                args: [h.streak, h.target, isDoneTodayVal, h.glyph, completedDatesStr, h.name, existing.id, userId]
+              });
+            }
+          }
+        }
+
+        // Delete habits in DB that are not in the payload
+        const deleteHabitIds = Array.from(dbHabitsMap.entries())
+          .filter(([key]) => !payloadHabitsSet.has(key))
+          .map(([, r]) => r.id);
+
+        if (deleteHabitIds.length > 0) {
+          await db.execute({
+            sql: `DELETE FROM habits WHERE user_id = ? AND id IN (${deleteHabitIds.map(() => '?').join(',')})`,
+            args: [userId, ...deleteHabitIds]
+          });
+        }
+      } catch (e) {
+        console.error("Habit sync error:", e);
       }
     }
 
@@ -567,14 +702,64 @@ export async function POST(request: Request) {
       }
     }
 
-    // Sync Skills
+    // Sync Skills (Programmatic Diffing)
     if (state.skills) {
-      await db.execute({ sql: "DELETE FROM user_skills WHERE user_id = ?", args: [userId] });
-      for (const sk of state.skills) {
-        await db.execute({
-          sql: `INSERT INTO user_skills (user_id, name, current_level, target_level) VALUES (?, ?, ?, ?)`,
-          args: [userId, sk.name, sk.current || 0, sk.target || 100]
+      try {
+        const dbSkillsRes = await db.execute({
+          sql: "SELECT id, name, current_level, target_level FROM user_skills WHERE user_id = ?",
+          args: [userId]
         });
+        const dbSkillsMap = new Map<string, any>();
+        for (const r of dbSkillsRes.rows) {
+          const key = (r.name || '').toLowerCase().trim();
+          if (key) dbSkillsMap.set(key, r);
+        }
+
+        const payloadSkillsSet = new Set<string>();
+
+        for (const sk of state.skills) {
+          const skillKey = (sk.name || '').toLowerCase().trim();
+          if (!skillKey) continue;
+          payloadSkillsSet.add(skillKey);
+
+          const existing = dbSkillsMap.get(skillKey);
+          const currentLevel = sk.current || 0;
+          const targetLevel = sk.target || 100;
+
+          if (!existing) {
+            await db.execute({
+              sql: `INSERT INTO user_skills (user_id, name, current_level, target_level) VALUES (?, ?, ?, ?)`,
+              args: [userId, sk.name, currentLevel, targetLevel]
+            });
+          } else {
+            const existingCurrent = Number(existing.current_level);
+            const existingTarget = Number(existing.target_level);
+            if (
+              existingCurrent !== currentLevel ||
+              existingTarget !== targetLevel ||
+              existing.name !== sk.name
+            ) {
+              await db.execute({
+                sql: `UPDATE user_skills SET current_level = ?, target_level = ?, name = ? WHERE id = ? AND user_id = ?`,
+                args: [currentLevel, targetLevel, sk.name, existing.id, userId]
+              });
+            }
+          }
+        }
+
+        // Delete skills in DB that are not in the payload
+        const deleteSkillIds = Array.from(dbSkillsMap.entries())
+          .filter(([key]) => !payloadSkillsSet.has(key))
+          .map(([, r]) => r.id);
+
+        if (deleteSkillIds.length > 0) {
+          await db.execute({
+            sql: `DELETE FROM user_skills WHERE user_id = ? AND id IN (${deleteSkillIds.map(() => '?').join(',')})`,
+            args: [userId, ...deleteSkillIds]
+          });
+        }
+      } catch (e) {
+        console.error("Skill sync error:", e);
       }
     }
 
@@ -594,8 +779,9 @@ export async function POST(request: Request) {
       }
     }
 
-    // Emit real-time event to refresh open website tabs/extension sync
-    hpEventEmitter.emit("db_update", { type: "refresh", targetUserId: userId, timestamp: Date.now() });
+    // Trigger serverless-compatible real-time update using Pusher with local fallback
+    const { triggerRealtimeUpdate } = await import('@/lib/realtime');
+    await triggerRealtimeUpdate(userId, { type: "refresh" });
 
     return NextResponse.json({ success: true, message: 'Updated database successfully' });
   } catch (error: any) {

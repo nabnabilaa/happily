@@ -364,60 +364,109 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // ── Auto-refresh via Server-Sent Events (SSE) ──
+  // ── Auto-refresh via Real-time Engine (Pusher with SSE Fallback) ──
   useEffect(() => {
-    if (!user?.id) return;
-    
-    const eventSource = new EventSource(`/api/events?userId=${user.id}`);
-    
-    eventSource.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === 'refresh') {
-          // Hanya refresh kalau tab sedang aktif untuk menghemat resource browser
-          if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
-            fetchData(user.id);
-            refreshSurveys();
-            const activeRole = user.userRole || user.role;
-            if (activeRole === 'hr' || activeRole === 'manager') {
-              fetchDashboards(user.id, activeRole);
-            }
-            // Kirim event ke komponen lain (HRPeopleScreen, dll)
-            window.dispatchEvent(new Event('hp_db_update'));
-            // Notify extension running on this page context
-            window.postMessage({ type: "FLOWBEE_WEBSITE_UPDATE" }, "*");
-          }
-        } else if (data.type === 'new_message') {
-          // If targeted to a specific user, ignore if not us
-          if (data.targetUserId && data.targetUserId !== user.id) return;
+    if (!user || !user.id) return;
 
-          // Cross-platform notification trigger
-          if (typeof window !== "undefined" && "Notification" in window) {
-            if (Notification.permission === "granted") {
-              new Notification(data.title || "Pesan Baru", {
-                body: data.text || "Kamu mendapat pesan baru.",
-                icon: "/icon-192.png"
-              });
-            } else if (Notification.permission !== "denied") {
-              Notification.requestPermission().then(permission => {
-                if (permission === "granted") {
-                  new Notification(data.title || "Pesan Baru", { body: data.text });
-                }
-              });
-            }
+    const userId = user.id;
+    const activeRole = user.userRole || user.role;
+    let cleanupFn = () => {};
+    const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
+    const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'mt1';
+
+    const handleRealtimeData = (data: any) => {
+      if (data.type === 'refresh') {
+        // Hanya refresh kalau tab sedang aktif untuk menghemat resource browser
+        if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+          fetchData(userId);
+          refreshSurveys();
+          if (activeRole === 'hr' || activeRole === 'manager') {
+            fetchDashboards(userId, activeRole);
           }
-          // Internal UI Notification
-          notify(data.title || "Pesan Baru", data.text, "info");
+          // Kirim event ke komponen lain (HRPeopleScreen, dll)
+          window.dispatchEvent(new Event('hp_db_update'));
+          // Notify extension running on this page context
+          window.postMessage({ type: "FLOWBEE_WEBSITE_UPDATE" }, "*");
         }
-      } catch (e) {
-        console.error("SSE parse error", e);
+      } else if (data.type === 'new_message') {
+        // If targeted to a specific user, ignore if not us
+        if (data.targetUserId && data.targetUserId !== userId) return;
+
+        // Cross-platform notification trigger
+        if (typeof window !== "undefined" && "Notification" in window) {
+          if (Notification.permission === "granted") {
+            new Notification(data.title || "Pesan Baru", {
+              body: data.text || "Kamu mendapat pesan baru.",
+              icon: "/icon-192.png"
+            });
+          } else if (Notification.permission !== "denied") {
+            Notification.requestPermission().then(permission => {
+              if (permission === "granted") {
+                new Notification(data.title || "Pesan Baru", { body: data.text });
+              }
+            });
+          }
+        }
+        // Internal UI Notification
+        notify(data.title || "Pesan Baru", data.text, "info");
       }
     };
 
+    if (pusherKey) {
+      // 1. Pusher Mode (Production/Serverless)
+      import('pusher-js').then(({ default: PusherClient }) => {
+        try {
+          const pusher = new PusherClient(pusherKey, {
+            cluster: pusherCluster,
+            forceTLS: true,
+          });
+
+          const channelName = `user-${userId}`;
+          const channel = pusher.subscribe(channelName);
+
+          channel.bind('db_update', (data: any) => {
+            handleRealtimeData(data);
+          });
+
+          cleanupFn = () => {
+            channel.unbind_all();
+            pusher.unsubscribe(channelName);
+            pusher.disconnect();
+          };
+        } catch (e) {
+          console.error("Failed to initialize Pusher client, falling back to SSE", e);
+          startSSE();
+        }
+      }).catch(err => {
+        console.error("Failed to load pusher-js package, falling back to SSE", err);
+        startSSE();
+      });
+    } else {
+      // 2. SSE Fallback Mode (Local Dev/Default)
+      startSSE();
+    }
+
+    function startSSE() {
+      const eventSource = new EventSource(`/api/events?userId=${userId}`);
+      
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          handleRealtimeData(data);
+        } catch (e) {
+          console.error("SSE parse error", e);
+        }
+      };
+
+      cleanupFn = () => {
+        eventSource.close();
+      };
+    }
+
     return () => {
-      eventSource.close();
+      cleanupFn();
     };
-  }, [user?.id, fetchData, fetchDashboards, refreshSurveys]);
+  }, [user, fetchData, fetchDashboards, refreshSurveys, notify]);
 
   const awardXP = useCallback(async (actionType: string, description?: string) => {
     const currentUser = userRef.current;
