@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import bcrypt from "bcryptjs";
+import { seedDemoData } from "@/lib/demo-data";
 
 export async function POST(request: Request) {
   try {
@@ -10,42 +10,89 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Email dan password wajib diisi" }, { status: 400 });
     }
 
-    const res = await db.execute({
+    // 1. Cek kredensial ke Laravel Maxy API (SOT)
+    const apiUrl = process.env.MAXY_M2M_API_URL || 'http://127.0.0.1:8082/api/m2m';
+    const serviceKey = process.env.MAXY_SERVICE_KEY || '';
+
+    const lmsRes = await fetch(`${apiUrl}/auth/verify-credential`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Service-Key': serviceKey
+      },
+      body: JSON.stringify({ email, password })
+    });
+
+    const lmsData = await lmsRes.json();
+
+    if (!lmsRes.ok) {
+      return NextResponse.json({ error: lmsData.error || "Gagal verifikasi dari Maxy LMS" }, { status: lmsRes.status });
+    }
+
+    const lmsUser = lmsData.user;
+
+    // 2. Sinkronisasi dengan Flowbee database
+    const fbRes = await db.execute({
       sql: "SELECT * FROM users WHERE email = ?",
       args: [email]
     });
 
-    const userRow = res.rows[0];
+    let fbUserRow = fbRes.rows[0];
 
-    if (!userRow) {
-      return NextResponse.json({ error: "User tidak ditemukan" }, { status: 401 });
+    // Jika belum ada di Flowbee, buat otomatis (Auto-sync)
+    if (!fbUserRow) {
+      const newId = "u_" + Math.random().toString(36).substring(2, 9);
+      const role = "employee"; // Default role di Flowbee
+
+      await db.execute({
+        sql: `INSERT INTO users (id, email, name, role, password_hash, points, coins, level, \`rank\`, streak, is_onboarded) 
+              VALUES (?, ?, ?, ?, ?, 0, 0, 1, 'E', 0, 0)`,
+        args: [newId, email, lmsUser.name, role, lmsUser.password]
+      });
+
+      // Seed data agar dashboard Flowbee tidak kosong
+      try {
+        await seedDemoData(newId, lmsUser.name);
+      } catch (e) {
+        console.error("Demo seed warning:", e);
+      }
+
+      // Ambil ulang user yang baru di-insert
+      const newlyCreatedRes = await db.execute({
+        sql: "SELECT * FROM users WHERE id = ?",
+        args: [newId]
+      });
+      fbUserRow = newlyCreatedRes.rows[0];
+    } else {
+      // Jika nama berubah di LMS, update di Flowbee
+      if (fbUserRow.name !== lmsUser.name) {
+        await db.execute({
+          sql: "UPDATE users SET name = ? WHERE id = ?",
+          args: [lmsUser.name, fbUserRow.id]
+        });
+        fbUserRow.name = lmsUser.name;
+      }
     }
 
-    const isValid = await bcrypt.compare(password, userRow.password_hash as string);
-
-    if (!isValid) {
-      return NextResponse.json({ error: "Password salah" }, { status: 401 });
-    }
-
+    // 3. Return user untuk login session Flowbee
     const user = {
-      id: userRow.id,
-      email: userRow.email,
-      name: userRow.name,
-      role: userRow.role,
-      points: userRow.points,
-      coins: userRow.coins || 0,
-      level: userRow.level,
-      rank: userRow.rank,
-      streak: userRow.streak,
-      avatarImage: userRow.avatar_image,
-      userRole: userRow.user_role_context || userRow.role,
-      onboarded: !!userRow.is_onboarded
+      id: fbUserRow.id,
+      email: fbUserRow.email,
+      name: fbUserRow.name,
+      role: fbUserRow.role,
+      points: fbUserRow.points,
+      coins: fbUserRow.coins || 0,
+      level: fbUserRow.level,
+      rank: fbUserRow.rank,
+      streak: fbUserRow.streak,
+      avatarImage: fbUserRow.avatar_image,
+      userRole: fbUserRow.user_role_context || fbUserRow.role,
+      onboarded: !!fbUserRow.is_onboarded
     };
 
     return NextResponse.json({ user });
   } catch (error) {
     console.error("Login Error:", error);
-    return NextResponse.json({ error: "Gagal login" }, { status: 500 });
+    return NextResponse.json({ error: "Terjadi kesalahan server saat memproses login" }, { status: 500 });
   }
 }
-

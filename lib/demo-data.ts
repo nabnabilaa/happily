@@ -1,6 +1,4 @@
-import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import bcrypt from "bcryptjs";
+import { db } from './db';
 
 // Generate N recent dates (e.g. last N days including today)
 function recentDates(count: number): string[] {
@@ -14,7 +12,7 @@ function recentDates(count: number): string[] {
   return dates;
 }
 
-async function seedDemoData(userId: string, userName: string) {
+export async function seedDemoData(userId: string, userName: string) {
   const uid = () => "seed_" + Math.random().toString(36).substring(2, 10);
 
   // ── 1. Points, Level, Rank ──────────────────────────────────────────────
@@ -262,61 +260,4 @@ async function seedDemoData(userId: string, userName: string) {
     console.error("Chat seed error:", e);
   }
 }
-
-export async function POST(request: Request) {
-  try {
-    const { name, email, password } = await request.json();
-
-    if (!name || !email || !password) {
-      return NextResponse.json({ error: "Semua field harus diisi" }, { status: 400 });
-    }
-
-    // Check if user exists
-    const existing = await db.execute({
-      sql: "SELECT id FROM users WHERE email = ?",
-      args: [email]
-    });
-
-    if (existing.rows.length > 0) {
-      return NextResponse.json({ error: "Email sudah terdaftar" }, { status: 400 });
-    }
-
-    const password_hash = await bcrypt.hash(password, 10);
-    const userId = "u_" + Math.random().toString(36).substring(2, 9);
-    
-    // Default role is 'employee'
-    const role = "employee";
-
-    await db.execute({
-      sql: `INSERT INTO users (id, email, name, role, password_hash, points, coins, level, \`rank\`, streak) 
-            VALUES (?, ?, ?, ?, ?, 0, 0, 1, 'E', 0)`,
-      args: [userId, email, name, role, password_hash]
-    });
-
-    // Seed demo data so new users see a fully populated interface
-    try {
-      await seedDemoData(userId, name);
-    } catch (seedErr) {
-      console.error("Demo seed warning (non-fatal):", seedErr);
-    }
-
-    const user = {
-      id: userId,
-      email,
-      name,
-      role,
-      points: 1500,
-      coins: 1500,
-      level: 6,
-      rank: 'C',
-      streak: 12,
-    };
-
-    return NextResponse.json({ user });
-  } catch (error) {
-    console.error("Register Error:", error);
-    return NextResponse.json({ error: "Gagal mendaftar" }, { status: 500 });
-  }
-}
-
 
