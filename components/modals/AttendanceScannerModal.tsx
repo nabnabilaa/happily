@@ -182,7 +182,7 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
               </div>
             )}
             <div style={{ ...HP_TEXT.small, color: HP_TOKENS.sage, fontWeight: 800, marginTop: 12 }}>
-              +{checkoutResult ? '10' : '20'} XP 🎁
+              +{checkoutResult ? '10' : '20'} EXP 🎁
             </div>
           </div>
         ) : isDone ? (

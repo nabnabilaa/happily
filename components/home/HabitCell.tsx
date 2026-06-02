@@ -145,7 +145,7 @@ export default function HabitCell({ h, onToggle, onQuickComplete, onFinish }: Ha
         <button
           onClick={(e) => {
             e.stopPropagation();
-            if (window.confirm(`Yakin ingin menamatkan training "${h.name}"? Ini akan menghapusnya dari daftar harianmu dan memberikan reward XP.`)) {
+            if (window.confirm(`Yakin ingin menamatkan training "${h.name}"? Ini akan menghapusnya dari daftar harianmu dan memberikan reward EXP.`)) {
               onFinish?.();
             }
           }}

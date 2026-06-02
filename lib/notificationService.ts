@@ -46,7 +46,7 @@ export const FALLBACK_TEMPLATES: Record<string, Omit<NotificationTemplate, "trig
   // --- Task Events ---
   "task_approved": {
     titleTemplate: "Tugas Disetujui! 🎉",
-    messageTemplate: "Tugas '{task_title}' kamu telah disetujui oleh {manager_name}. XP bertambah!",
+    messageTemplate: "Tugas '{task_title}' kamu telah disetujui oleh {manager_name}. EXP bertambah!",
     type: "success",
     category: "task",
   },

@@ -5,20 +5,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const apiKey = process.env.GEMINI_API_KEY || '';
 const genAI = new GoogleGenerativeAI(apiKey);
 
-// Auto-initialize the table if it doesn't exist
-try {
-  db.execute(`
-    CREATE TABLE IF NOT EXISTS mood_wall_posts (
-      id INT PRIMARY KEY AUTO_INCREMENT,
-      mood VARCHAR(50) NOT NULL,
-      content TEXT NOT NULL,
-      department VARCHAR(255) NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-} catch (e) {
-  console.error("Failed to initialize mood_wall_posts table", e);
-}
+// The mood_wall_posts table is now initialized centrally in app/api/migrate-schema/route.ts
 
 export async function GET() {
   try {

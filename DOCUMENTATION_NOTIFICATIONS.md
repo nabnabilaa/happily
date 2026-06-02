@@ -1,4 +1,4 @@
-# 🐝 Bee Flow - Premium Zero-Cost Notification & Check-in System
+# Bee Flow - Premium Zero-Cost Notification & Check-in System
 
 Dokumentasi ini menjelaskan desain, arsitektur, dan implementasi dari sistem **Notification & Daily Check-In Template System** yang dirancang khusus untuk memangkas biaya token LLM hingga **100% (Zero-Cost)**, dengan kecepatan respons instan (<10ms) dan keandalan tinggi.
 

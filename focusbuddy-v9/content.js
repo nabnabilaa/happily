@@ -3,6 +3,44 @@
   if (document.getElementById('fb-root')) return
   if (location.protocol === 'chrome-extension:' || location.protocol === 'devtools:') return
 
+  // Safety wrapper to prevent "Extension context invalidated" errors when developer reloads extension
+  function isContextValid() {
+    try {
+      return !!(window.chrome && window.chrome.runtime && window.chrome.runtime.id);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Shadow global chrome object inside IIFE to automatically catch invalidation on all calls
+  const chrome = {
+    get storage() {
+      if (!isContextValid()) {
+        return {
+          local: {
+            set: (data, cb) => { if (cb) cb(); },
+            get: (keys, cb) => { if (cb) cb({}); },
+            remove: (keys, cb) => { if (cb) cb(); }
+          }
+        };
+      }
+      return window.chrome.storage;
+    },
+    get runtime() {
+      if (!isContextValid()) {
+        return {
+          sendMessage: (msg, cb) => { if (cb) cb(); },
+          getURL: (path) => "",
+          onMessage: {
+            addListener: () => {},
+            removeListener: () => {}
+          }
+        };
+      }
+      return window.chrome.runtime;
+    }
+  };
+
   // ═══════════════════════════════════════════════════════════════
   // STATE MACHINE  (FocusBuddy state → SVG state mapping)
   // ═══════════════════════════════════════════════════════════════
@@ -283,6 +321,11 @@
     root.classList.toggle('quiet-mode', !mascotAnimated);
     const toggle = root.querySelector('#fb-settings-mascot-anim-toggle');
     if (toggle) toggle.checked = mascotAnimated;
+    
+    // Re-snap position so mini-buddy is flush with screen edge
+    const ax = parseInt(root.style.left) || window.innerWidth - 28;
+    const ay = parseInt(root.style.top) || window.innerHeight - 28;
+    applyPos(ax, ay);
   }
 
   async function flowbeeSyncAll() {
@@ -654,6 +697,63 @@
   cursor:grab !important; pointer-events:all !important; user-select:none;
   perspective:500px;
   z-index: 2147483640 !important;
+}
+#fb-root.quiet-mode #fb-buddy {
+  pointer-events: none !important;
+}
+#fb-root.quiet-mode #fb-buddy.dragging {
+  pointer-events: all !important;
+}
+#fb-mini-buddy {
+  position: absolute !important;
+  bottom: 20px;
+  right: -30px;
+  width: 74px !important;
+  height: 48px !important;
+  display: none !important;
+  align-items: center;
+  justify-content: flex-start;
+  pointer-events: all !important;
+  cursor: pointer !important;
+  z-index: 5 !important;
+}
+#fb-root.quiet-mode #fb-mini-buddy {
+  display: flex !important;
+}
+.fb-mini-bg {
+  width: 64px !important;
+  height: 44px !important;
+  background: var(--fb-card) !important;
+  border: 1px solid var(--fb-line) !important;
+  border-right: none !important;
+  border-radius: 22px 0 0 22px !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-start;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+  transition: transform 0.2s, background-color 0.2s;
+  padding-left: 8px;
+}
+#fb-mini-buddy:hover .fb-mini-bg {
+  transform: translateX(-6px);
+  background: var(--fb-line-soft) !important;
+}
+/* Snapped left-edge styles */
+#fb-buddy.on-left #fb-mini-buddy {
+  left: -30px;
+  right: auto;
+  justify-content: flex-end;
+}
+#fb-buddy.on-left .fb-mini-bg {
+  border-radius: 0 22px 22px 0 !important;
+  border-right: 1px solid var(--fb-line) !important;
+  border-left: none !important;
+  padding-left: 0;
+  padding-right: 8px;
+  justify-content: flex-end;
+}
+#fb-buddy.on-left #fb-mini-buddy:hover .fb-mini-bg {
+  transform: translateX(6px);
 }
 #fb-buddy.dragging { cursor:grabbing !important }
 #fb-drag-dot {
@@ -2583,9 +2683,16 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   color: var(--fb-ink) !important;
 }
 
-/* Quiet Mode — Stops all mascot animations */
+/* Quiet Mode — Stops all mascot animations and hides the big character */
 #fb-root.quiet-mode #fb-svg-wrap,
-#fb-root.quiet-mode #fb-bayangan,
+#fb-root.quiet-mode #fb-bayangan {
+  display: none !important;
+}
+#fb-root.quiet-mode #fb-badge,
+#fb-root.quiet-mode #fb-drag-dot,
+#fb-root.quiet-mode #fb-snap-ring {
+  display: none !important;
+}
 #fb-root.quiet-mode .mata-bisa-kedip,
 #fb-root.quiet-mode .gelembung-zzz,
 #fb-root.quiet-mode .gelembung-ingus,
@@ -3119,7 +3226,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
         <div class="fb-settings-item">
           <div>
             <div class="fb-settings-item-label">Aktifkan FocusBuddy</div>
-            <div class="fb-settings-item-sub">Nonaktifkan untuk menyembunyikan FocusBuddy sementara</div>
+            <div class="fb-settings-item-sub">Nonaktifkan untuk menyembunyikan FocusBuddy sementara. Klik ikon ekstensi di pojok kanan atas browser untuk memunculkan kembali.</div>
           </div>
           <input type="checkbox" class="fb-toggle" id="fb-settings-toggle" checked />
         </div>
@@ -3141,6 +3248,13 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
 <div id="fb-buddy">
   <div id="fb-snap-ring"></div>
   <div id="fb-drag-dot"></div>
+
+  <!-- Mini Buddy (Quiet Mode Edge Button) -->
+  <div id="fb-mini-buddy">
+    <div class="fb-mini-bg">
+      <img src="${chrome.runtime.getURL('icons/icon.png')}" width="32" height="32" style="object-fit: contain !important; pointer-events: none !important;" />
+    </div>
+  </div>
 
   <div id="fb-svg-wrap" class="state-idle">
     <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" width="100" height="100" overflow="visible">
@@ -3588,13 +3702,32 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
 
   function applyPos(ax, ay) {
     const W = window.innerWidth, H = window.innerHeight
-    // Clamp buddy (100x130) with 8px margin from all edges
-    ax = Math.max(100 + 8, Math.min(W - 8, ax))
-    ay = Math.max(130 + 8, Math.min(H - 8, ay))
+    
+    if (root.classList.contains('quiet-mode')) {
+      // Snap to edge in quiet-mode (0px margin)
+      if (ax < W / 2) {
+        ax = 100 // Left edge (so rect.left = 0)
+      } else {
+        ax = W   // Right edge (so rect.right = W)
+      }
+      ay = Math.max(70, Math.min(H + 10, ay))
+    } else {
+      // Clamp buddy (100x130) with 8px margin from all edges
+      ax = Math.max(100 + 8, Math.min(W - 8, ax))
+      ay = Math.max(130 + 8, Math.min(H - 8, ay))
+    }
+    
     root.style.setProperty('left', ax + 'px', 'important')
     root.style.setProperty('top', ay + 'px', 'important')
     root.style.setProperty('right', 'auto', 'important')
     root.style.setProperty('bottom', 'auto', 'important')
+    
+    // Toggle on-left class dynamically based on screen side
+    const buddyEl = root.querySelector('#fb-buddy')
+    if (buddyEl) {
+      buddyEl.classList.toggle('on-left', ax < W / 2)
+    }
+    
     positionPanel(ax, ay)
   }
 
@@ -3970,7 +4103,18 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       save(); renderAlarms()
     }
     if (msg.type === 'FB_TOGGLE') {
-      panelOpen = !panelOpen; panel.classList.toggle('open', panelOpen)
+      if (!extensionEnabled) {
+        extensionEnabled = true;
+        try {
+          chrome.storage.local.set({ fb_ext_enabled: true });
+        } catch (e) {}
+        applyExtensionEnabled();
+        panelOpen = true;
+        panel.classList.add('open');
+      } else {
+        panelOpen = !panelOpen;
+        panel.classList.toggle('open', panelOpen);
+      }
       if (panelOpen) {
         renderAll();
         flowbeeSyncAll();
@@ -5696,6 +5840,10 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
 
     // State eval loop — 4s interval for responsive state transitions
     evalIv = setInterval(() => {
+      if (!isContextValid()) {
+        clearInterval(evalIv);
+        return;
+      }
       const s = getState()
       if (s !== currentState) {
         currentState = s

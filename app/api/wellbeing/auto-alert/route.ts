@@ -2,34 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { hpEventEmitter } from "@/lib/events";
 
-// Auto-initialize the table if it doesn't exist
-try {
-  // Clean up any malformed legacy tables with TEXT primary keys
-  db.execute(`DROP TABLE IF EXISTS chat_messages`);
-  db.execute(`DROP TABLE IF EXISTS chat_channels`);
-
-  db.execute(`
-    CREATE TABLE IF NOT EXISTS chat_channels (
-      id VARCHAR(255) PRIMARY KEY,
-      name TEXT NOT NULL,
-      type TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-  db.execute(`
-    CREATE TABLE IF NOT EXISTS chat_messages (
-      id VARCHAR(255) PRIMARY KEY,
-      channel_id VARCHAR(255) NOT NULL,
-      sender_id VARCHAR(255) NOT NULL,
-      sender_name TEXT NOT NULL,
-      text TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(channel_id) REFERENCES chat_channels(id)
-    )
-  `);
-} catch (e) {
-  console.error("Failed to initialize chat tables", e);
-}
+// Chat tables are now centrally managed in app/api/migrate-schema/route.ts as message_channels & messages.
 
 export async function POST(req: Request) {
   try {
@@ -39,27 +12,46 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Generate a predictable channel ID for HR-Employee direct message
+    // Predictable DM channel ID
     const channelId = `hr-dm-${userId}`;
+
+    // Get an HR user to act as sender/creator from database
+    const hrUserRes = await db.execute(`SELECT id, name FROM users WHERE role = 'hr' ORDER BY id LIMIT 1`);
+    const hrUser = hrUserRes.rows[0] || { id: 'user_hr', name: 'Maya Sari (HR)' };
     
-    // Check if channel exists, if not create it
-    const existing = await db.execute(`SELECT id FROM chat_channels WHERE id = ?`, [channelId]);
+    // Check if channel exists in message_channels, if not create it
+    const existing = await db.execute(`SELECT id FROM message_channels WHERE id = ?`, [channelId]);
     const channelExists = existing.rows.length > 0;
     
     if (!channelExists) {
+      // Create message_channel
       await db.execute(
-        `INSERT INTO chat_channels (id, name, type) VALUES (?, ?, ?)`,
-        [channelId, `HR & ${userName}`, 'dm']
+        `INSERT INTO message_channels (id, name, type, created_by) VALUES (?, ?, ?, ?)`,
+        [channelId, `HR & ${userName}`, 'dm', hrUser.id]
       );
+
+      // Add members to message_channel_members
+      try {
+        await db.execute(
+          `INSERT IGNORE INTO message_channel_members (channel_id, user_id) VALUES (?, ?)`,
+          [channelId, hrUser.id]
+        );
+        await db.execute(
+          `INSERT IGNORE INTO message_channel_members (channel_id, user_id) VALUES (?, ?)`,
+          [channelId, userId]
+        );
+      } catch (memErr) {
+        console.error("Failed to insert channel members:", memErr);
+      }
     }
 
-    // Send the automated message
-    const msgId = `msg-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+    // Send the automated message into messages
+    const msgId = "msg_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
     const text = `Hai ${userName}, kami dari HR Department melihat akhir-akhir ini beban kerjamu cukup berat dan indikator kesejahteraanmu menurun. Jangan lupa istirahat ya. Balas pesan ini jika kamu ingin menjadwalkan ngobrol santai dengan kami. Kami di sini untuk mendukungmu! 💙`;
     
     await db.execute(
-      `INSERT INTO chat_messages (id, channel_id, sender_id, sender_name, text) VALUES (?, ?, ?, ?, ?)`,
-      [msgId, channelId, 'hr-system', 'HR Department', text]
+      `INSERT INTO messages (id, channel_id, sender_id, content, message_type) VALUES (?, ?, ?, ?, 'text')`,
+      [msgId, channelId, hrUser.id, text]
     );
 
     // Emit event to notify user via SSE
@@ -74,6 +66,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, channelId, messageId: msgId });
   } catch (error: any) {
+    console.error("Auto Alert Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

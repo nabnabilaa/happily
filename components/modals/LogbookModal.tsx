@@ -218,7 +218,7 @@ export default function LogbookModal({ onClose }: LogbookModalProps) {
             { label: 'Absen', value: summary.absent, color: '#E03131', bg: '#FFEBEE' },
             { label: 'Sakit', value: summary.sick, color: '#E03131', bg: '#FFF3E0' },
             { label: 'Izin', value: summary.izin, color: '#7B6BB5', bg: '#EDE7F6' },
-            { label: 'XP', value: `+${summary.totalXP}`, color: HP_TOKENS.sage, bg: HP_TOKENS.sageWash },
+            { label: 'EXP', value: `+${summary.totalXP}`, color: HP_TOKENS.sage, bg: HP_TOKENS.sageWash },
           ].map(s => (
             <div key={s.label} style={{
               padding: '4px 10px', borderRadius: 8, background: s.bg,
@@ -337,7 +337,7 @@ export default function LogbookModal({ onClose }: LogbookModalProps) {
               {dayDetail.xpBreakdown.length > 0 && (
                 <div>
                   <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 6 }}>
-                    XP HARI INI: <span style={{ color: HP_TOKENS.sage, fontWeight: 900 }}>+{dayDetail.totalXP}</span>
+                    EXP HARI INI: <span style={{ color: HP_TOKENS.sage, fontWeight: 900 }}>+{dayDetail.totalXP}</span>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {dayDetail.xpBreakdown.map((xp: any, i: number) => (

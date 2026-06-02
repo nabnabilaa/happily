@@ -427,7 +427,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
                           </div>
                         </div>
                         <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginTop: 3 }}>
-                          {u.job_title || 'No Title'} · Lvl {u.level || 1} · {u.points || 0} XP
+                          {u.job_title || 'No Title'} · Lvl {u.level || 1} · {u.points || 0} EXP
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>

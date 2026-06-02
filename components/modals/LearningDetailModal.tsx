@@ -99,7 +99,7 @@ export default function LearningDetailModal({ onClose }: LearningDetailModalProp
           </div>
           <div style={{ ...HP_TEXT.body, color: HP_TOKENS.inkMute, marginTop: 12 }}>
             {quizResult === 'success' 
-              ? `Kamu berhasil memahami materi "${moduleData.title}" dan mendapatkan XP.` 
+              ? `Kamu berhasil memahami materi "${moduleData.title}" dan mendapatkan EXP.` 
               : `Sayang sekali jawabanmu kurang tepat. Coba pahami lagi materinya besok ya!`}
           </div>
           

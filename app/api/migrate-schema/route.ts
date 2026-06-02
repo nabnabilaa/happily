@@ -261,6 +261,16 @@ export async function POST() {
         direction VARCHAR(50),
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`
+    },
+    {
+      desc: "Create mood_wall_posts table",
+      sql: `CREATE TABLE IF NOT EXISTS mood_wall_posts (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        mood VARCHAR(50) NOT NULL,
+        content TEXT NOT NULL,
+        department VARCHAR(255) NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`
     }
   ];
 
