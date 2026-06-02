@@ -413,7 +413,7 @@ export default function NotesScreen() {
               </div>
               <div style={{ background: HP_TOKENS.card, borderRadius: 14, overflow: 'hidden' }}>
                 <Editor
-                  apiKey="no-api-key"
+                  tinymceScriptSrc="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js"
                   value={newNote}
                   onEditorChange={(content) => setNewNote(content)}
                   init={{
