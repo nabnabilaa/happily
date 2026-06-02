@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     }
 
     // 1. Kirim data ke Laravel Maxy API (SOT)
-    const apiUrl = process.env.MAXY_M2M_API_URL || 'http://127.0.0.1:8082/api/m2m';
+    const apiUrl = process.env.MAXY_M2M_API_URL || 'https://cms.maxy.academy/api/m2m';
     const serviceKey = process.env.MAXY_SERVICE_KEY || '';
 
     const lmsRes = await fetch(`${apiUrl}/auth/verify-google`, {

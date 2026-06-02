@@ -176,23 +176,8 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
             />
           </div>
 
-          <div style={{ marginTop: 32 }}>
-            <a
-              href="http://localhost/laravel-maxy-backendv2/public/laravel-maxy-frontendv2/register"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                color: HP_TOKENS.ink,
-                fontFamily: HP_FONT,
-                fontWeight: 700,
-                fontSize: 14,
-                cursor: 'pointer',
-                textDecoration: 'underline'
-              }}
-            >
-              Belum punya akun? Daftar di LMS Maxy
-            </a>
-          </div>
+
+
 
           <div style={{ marginTop: 24, ...HP_TEXT.small, color: HP_TOKENS.inkMute }}>
             Login terintegrasi dengan LMS Maxy Academy.
