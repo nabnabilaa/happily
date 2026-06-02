@@ -154,6 +154,14 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
         setMessages(prev => prev.map(m =>
           m.id === tempMsg.id ? { ...data.message } : m
         ));
+        // ── Notify extension (all tabs) that a chat message was sent ──
+        // content.js intercepts FLOWBEE_CHAT_UPDATE and writes to chrome.storage
+        // so every extension instance (including Gemini tab) gets updated in real-time.
+        window.postMessage({
+          type: 'FLOWBEE_CHAT_UPDATE',
+          channelId: activeChannel.id,
+          ts: Date.now(),
+        }, '*');
       }
     } catch (e) { console.error(e); }
     setSending(false);
