@@ -412,6 +412,34 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
+    let sseActive = false;
+    let eventSourceInstance: EventSource | null = null;
+
+    function startSSE() {
+      if (sseActive) return;
+      sseActive = true;
+      console.log("[Realtime] Starting SSE connection fallback...");
+      eventSourceInstance = new EventSource(`/api/events?userId=${userId}`);
+      
+      eventSourceInstance.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          handleRealtimeData(data);
+        } catch (e) {
+          console.error("SSE parse error", e);
+        }
+      };
+    }
+
+    function stopSSE() {
+      if (eventSourceInstance) {
+        eventSourceInstance.close();
+        eventSourceInstance = null;
+      }
+      sseActive = false;
+      console.log("[Realtime] SSE fallback stopped.");
+    }
+
     if (pusherKey) {
       // 1. Pusher Mode (Production/Serverless)
       import('pusher-js').then(({ default: PusherClient }) => {
@@ -419,6 +447,26 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
           const pusher = new PusherClient(pusherKey, {
             cluster: pusherCluster,
             forceTLS: true,
+          });
+
+          // Bind connection events for runtime limit/failure detection
+          pusher.connection.bind('state_change', (states: any) => {
+            console.log(`[Realtime] Pusher state changed: ${states.previous} -> ${states.current}`);
+            if (states.current === 'failed' || states.current === 'unavailable') {
+              console.warn("[Realtime] Pusher failed/unavailable. Falling back to SSE.");
+              startSSE();
+            } else if (states.current === 'connected') {
+              stopSSE();
+            }
+          });
+
+          pusher.connection.bind('error', (err: any) => {
+            console.error("[Realtime] Pusher connection error:", err);
+            // 4004 is Pusher's error code for over quota / limit reached
+            if (err?.error?.code === 4004 || err?.status === 403) {
+              console.warn("[Realtime] Pusher limit reached or Auth error. Switching to SSE.");
+              startSSE();
+            }
           });
 
           const channelName = `user-${userId}`;
@@ -432,6 +480,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
             channel.unbind_all();
             pusher.unsubscribe(channelName);
             pusher.disconnect();
+            stopSSE();
           };
         } catch (e) {
           console.error("Failed to initialize Pusher client, falling back to SSE", e);
@@ -444,23 +493,6 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
     } else {
       // 2. SSE Fallback Mode (Local Dev/Default)
       startSSE();
-    }
-
-    function startSSE() {
-      const eventSource = new EventSource(`/api/events?userId=${userId}`);
-      
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          handleRealtimeData(data);
-        } catch (e) {
-          console.error("SSE parse error", e);
-        }
-      };
-
-      cleanupFn = () => {
-        eventSource.close();
-      };
     }
 
     return () => {
