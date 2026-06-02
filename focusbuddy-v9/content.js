@@ -233,6 +233,14 @@
     } catch (e) {}
   }
 
+  function isHappilyWebsite() {
+    try {
+      return !!localStorage.getItem('hp_user_id');
+    } catch (e) {
+      return false;
+    }
+  }
+
   function updateIdentityUI() {
     if (window.__FB) {
       window.__FB.currentUser = flowbeeUser;
@@ -328,31 +336,41 @@
     applyPos(ax, ay);
   }
 
-  async function flowbeeSyncAll() {
+  async function flowbeeSyncAll(pullOnly = false) {
     if (!flowbeeUserId || !extensionEnabled) return
     try {
-      // Push local tasks that are for today — with enhanced fields
-      const localTasks = ctx.tasks.filter(t => t.date === today()).map(t => ({
-        id: String(t.id), title: t.text || t.title || '', done: !!t.done,
-        energy: t.priority || 'mid', est: '30m', tone: 'sage',
-        proofLink: t.proofLink || null,
-        progress: t.progress || 0,
-        isProject: !!t.isProject,
-        projectDurationDays: t.projectDurationDays || null,
-        projectDescription: t.projectDescription || null,
-        metricValue: t.metricValue || null,
-        description: t.description || null,
-        targetDate: t.targetDate || null,
-        kpiId: t.kpiId || null,
-        goalId: t.goalId || null,
-      }))
+      let localTasks = []
+      let localNotes = []
+      let localDeletedTaskIds = []
+      let localDeletedNoteIds = []
 
-      // Push local notes
-      const localNotes = ctx.notes.map(n => ({
-        id: String(n.id), title: n.title || '', content: n.text || n.content || '',
-        visibility: n.visibility || 'private',
-        relatedEventId: n.relatedEventId || null,
-      }))
+      if (!pullOnly) {
+        // Push local tasks that are for today — with enhanced fields
+        localTasks = ctx.tasks.filter(t => t.date === today()).map(t => ({
+          id: String(t.id), title: t.text || t.title || '', done: !!t.done,
+          energy: t.priority || 'mid', est: '30m', tone: 'sage',
+          proofLink: t.proofLink || null,
+          progress: t.progress || 0,
+          isProject: !!t.isProject,
+          projectDurationDays: t.projectDurationDays || null,
+          projectDescription: t.projectDescription || null,
+          metricValue: t.metricValue || null,
+          description: t.description || null,
+          targetDate: t.targetDate || null,
+          kpiId: t.kpiId || null,
+          goalId: t.goalId || null,
+        }))
+
+        // Push local notes
+        localNotes = ctx.notes.map(n => ({
+          id: String(n.id), title: n.title || '', content: n.text || n.content || '',
+          visibility: n.visibility || 'private',
+          relatedEventId: n.relatedEventId || null,
+        }))
+        
+        localDeletedTaskIds = ctx.deletedTaskIds || []
+        localDeletedNoteIds = ctx.deletedNoteIds || []
+      }
 
       const res = await window.__FB.fetch(`${FLOWBEE_API}/sync`, {
         method: 'POST',
@@ -362,17 +380,22 @@
           tasks: localTasks,
           notes: localNotes,
           calendarRequest: true, // Request upcoming calendar events
-          deletedTaskIds: ctx.deletedTaskIds || [],
-          deletedNoteIds: ctx.deletedNoteIds || []
+          deletedTaskIds: localDeletedTaskIds,
+          deletedNoteIds: localDeletedNoteIds
         })
       })
       const data = await res.json()
 
       if (data.success) {
-        ctx.deletedTaskIds = []
-        ctx.deletedNoteIds = []
+        if (!pullOnly) {
+          ctx.deletedTaskIds = []
+          ctx.deletedNoteIds = []
+        }
         if (window.__FB) {
           window.__FB.roleData = data;
+        }
+        if (isHappilyWebsite() && !pullOnly) {
+          window.postMessage({ type: 'FLOWBEE_DB_UPDATE' }, '*');
         }
       }
 
@@ -522,7 +545,7 @@
 
       // Show notifications from web
       if (data.notifications && data.notifications.length > 0) {
-        const cachedIds = new Set(flowbeeNotifCache.map(n => n.id))
+        const cachedIds = new Set(flowbeeNotifCache.map(n => typeof n === 'object' && n !== null ? n.id : n))
         const newNotifs = data.notifications.filter(n => !cachedIds.has(n.id))
         for (const n of newNotifs) {
           try {
@@ -532,8 +555,13 @@
               message: n.message || ''
             })
           } catch (e) { /* background might not handle this yet */ }
+          // Add to cache to prevent duplicate notifications
+          flowbeeNotifCache.push(n.id)
         }
-        flowbeeNotifCache = data.notifications
+        // Limit cache size to 100 entries to prevent memory growth
+        if (flowbeeNotifCache.length > 100) {
+          flowbeeNotifCache = flowbeeNotifCache.slice(flowbeeNotifCache.length - 100)
+        }
         // Mark all shown notifications as read in DB so they never repeat
         if (newNotifs.length > 0) {
           try {
@@ -547,8 +575,6 @@
             }).catch(() => {})
           } catch (e) { /* silent */ }
         }
-      } else {
-        flowbeeNotifCache = []
       }
 
       save()
@@ -670,6 +696,13 @@
   pointer-events:none !important; opacity:0 !important; transition:opacity .3s;
 }
 @keyframes genanganMeluas { 0%{transform:translateX(-50%) scale(0);opacity:0} 100%{transform:translateX(-50%) scale(1);opacity:1} }
+
+#fb-root.quiet-mode #fb-genangan {
+  display: none !important;
+  opacity: 0 !important;
+  animation: none !important;
+}
+
 :where(#fb-root div,#fb-root button,#fb-root input,#fb-root textarea,#fb-root span,#fb-root p,#fb-root label,#fb-root select,#fb-root details,#fb-root summary) {
   box-sizing: border-box !important; font-family: Outfit,system-ui,sans-serif !important;
   margin: 0 !important; padding: 0 !important; border: 0 !important; outline: 0 !important;
@@ -847,6 +880,7 @@
 .state-sedih .tetes-hujan    { opacity:1 !important; animation:hujanTurun .8s infinite linear }
 .state-sedih .mulut          { animation:bibirGemetar 2.5s infinite }
 .state-sedih ~ #fb-genangan    { opacity:1 !important; animation:genanganMeluas 3s forwards }
+
 
 /* MENUNGGU */
 .state-menunggu #fb-svg-wrap { animation:nungguBosan 3s infinite ease-in-out }
@@ -3617,6 +3651,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
 
   <div id="fb-bayangan"></div>
   <div id="fb-genangan"></div>
+
   <div id="fb-badge"></div>
 </div>`
 
@@ -5869,6 +5904,9 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
         if (lblInput) lblInput.value = goal;
         forceState('FOCUS', 5000);
       }
+      if (event.data?.type === 'FLOWBEE_WEBSITE_UPDATE') {
+        flowbeeSyncAll(true);
+      }
       if (event.data?.type === 'FLOWBEE_WEBSITE_USER') {
         const { userId, user } = event.data;
         if (userId) {
@@ -5900,6 +5938,68 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
         }
       }
     });
+
+    // Listen to changes in chrome.storage.local from other tabs
+    try {
+      if (window.chrome && window.chrome.storage && window.chrome.storage.onChanged) {
+        window.chrome.storage.onChanged.addListener((changes, areaName) => {
+          if (areaName !== 'local') return;
+          
+          let needsRenderTasks = false;
+          let needsRenderNotes = false;
+          let needsRenderAlarms = false;
+          
+          if (changes.fb3) {
+            const newVal = changes.fb3.newValue || {};
+            ctx.tasks = newVal.tasks || [];
+            ctx.notes = newVal.notes || [];
+            ctx.alarms = (newVal.alarms || []).filter(a => a.timestamp > Date.now());
+            ctx.deletedTaskIds = newVal.deletedTaskIds || [];
+            ctx.deletedNoteIds = newVal.deletedNoteIds || [];
+            flowbeeNotifCache = newVal.flowbeeNotifCache || [];
+            
+            needsRenderTasks = true;
+            needsRenderNotes = true;
+            needsRenderAlarms = true;
+          }
+          
+          if (changes.flowbee_user_id) {
+            flowbeeUserId = changes.flowbee_user_id.newValue || null;
+          }
+          
+          if (changes.flowbee_base_url) {
+            FLOWBEE_API = (changes.flowbee_base_url.newValue || '').replace(/\/$/, '') + '/api/ext';
+          }
+          
+          if (changes.flowbee_user) {
+            flowbeeUser = changes.flowbee_user.newValue || null;
+            updateIdentityUI();
+          }
+          
+          if (changes.fb_ext_enabled) {
+            extensionEnabled = !!changes.fb_ext_enabled.newValue;
+            applyExtensionEnabled();
+          }
+          
+          if (changes.hp_mascot_animated) {
+            mascotAnimated = !!changes.hp_mascot_animated.newValue;
+            applyMascotAnimated();
+          }
+          
+          if (changes.fbTheme) {
+            _manualTheme = changes.fbTheme.newValue || null;
+            syncTheme();
+          }
+          
+          if (needsRenderTasks && typeof renderTasks === 'function') renderTasks();
+          if (needsRenderNotes && typeof renderNotes === 'function') renderNotes();
+          if (needsRenderAlarms && typeof renderAlarms === 'function') renderAlarms();
+          
+        });
+      }
+    } catch (e) {
+      console.warn("Could not register chrome.storage.onChanged listener:", e);
+    }
 
     // Ask the website for current user details
     window.postMessage({ type: 'FLOWBEE_REQ_USER' }, '*');
