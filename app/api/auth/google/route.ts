@@ -123,8 +123,12 @@ export async function POST(request: Request) {
     };
 
     return NextResponse.json({ user });
-  } catch (error) {
-    console.error("Google Auth Error:", error);
-    return NextResponse.json({ error: "Terjadi kesalahan server saat memproses login Google" }, { status: 500 });
+  } catch (error: any) {
+    console.error("Google Auth Error:", error?.message || error);
+    console.error("Google Auth Stack:", error?.stack);
+    return NextResponse.json({ 
+      error: "Terjadi kesalahan server saat memproses login Google",
+      detail: error?.message || String(error)
+    }, { status: 500 });
   }
 }
