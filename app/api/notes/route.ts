@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { v4 as uuidv4 } from "uuid";
+import { hpEventEmitter } from "@/lib/events";
 
 // GET: Fetch notes for a user (own + shared)
 export async function GET(request: Request) {
@@ -94,6 +95,7 @@ export async function POST(request: Request) {
       }
     }
 
+    hpEventEmitter.emit("db_update", { type: "refresh", targetUserId: userId, timestamp: Date.now() });
     return NextResponse.json({ success: true, noteId });
   } catch (error: any) {
     console.error("Notes POST Error:", error);
@@ -136,6 +138,7 @@ export async function PATCH(request: Request) {
       ]
     });
 
+    hpEventEmitter.emit("db_update", { type: "refresh", targetUserId: userId, timestamp: Date.now() });
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error("Notes PATCH Error:", error);
@@ -152,6 +155,7 @@ export async function DELETE(request: Request) {
     if (!noteId || !userId) return NextResponse.json({ error: "noteId and userId required" }, { status: 400 });
 
     await db.execute({ sql: "DELETE FROM notes WHERE id = ? AND user_id = ?", args: [noteId, userId] });
+    hpEventEmitter.emit("db_update", { type: "refresh", targetUserId: userId, timestamp: Date.now() });
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error("Notes DELETE Error:", error);

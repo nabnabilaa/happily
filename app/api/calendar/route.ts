@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { v4 as uuidv4 } from "uuid";
+import { hpEventEmitter } from "@/lib/events";
 
 // GET: Fetch calendar events for a user
 export async function GET(request: Request) {
@@ -75,6 +76,7 @@ export async function POST(request: Request) {
       }
     }
 
+    hpEventEmitter.emit("db_update", { type: "refresh", targetUserId: userId, timestamp: Date.now() });
     return NextResponse.json({ success: true, eventId });
   } catch (error: any) {
     console.error("Calendar POST Error:", error);
@@ -105,6 +107,7 @@ export async function DELETE(request: Request) {
     await db.execute({ sql: "DELETE FROM calendar_attendees WHERE event_id = ?", args: [eventId] });
     await db.execute({ sql: "DELETE FROM calendar_events WHERE id = ?", args: [eventId] });
 
+    hpEventEmitter.emit("db_update", { type: "refresh", targetUserId: userId, timestamp: Date.now() });
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error("Calendar DELETE Error:", error);

@@ -49,7 +49,14 @@ export default function NotesScreen() {
   }
 
   useEffect(() => {
-    if (user?.id) fetchData();
+    if (user?.id) {
+      fetchData();
+      const handleUpdate = () => {
+        fetchData();
+      };
+      window.addEventListener('hp_db_update', handleUpdate);
+      return () => window.removeEventListener('hp_db_update', handleUpdate);
+    }
   }, [user?.id]);
 
   const addNote = async () => {
@@ -86,6 +93,10 @@ export default function NotesScreen() {
         setNotes(freshNotesData.notes || []);
         
         cancelForm();
+
+        if (typeof window !== "undefined") {
+          window.postMessage({ type: "FLOWBEE_WEBSITE_UPDATE" }, "*");
+        }
       }
     } catch (e) {
       console.error('Failed to add note', e);
@@ -99,6 +110,9 @@ export default function NotesScreen() {
         method: 'DELETE',
       });
       setNotes(notes.filter(n => String(n.id) !== String(id)));
+      if (typeof window !== "undefined") {
+        window.postMessage({ type: "FLOWBEE_WEBSITE_UPDATE" }, "*");
+      }
     } catch (e) {
       console.error(e);
     }

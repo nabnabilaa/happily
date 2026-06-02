@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { hpEventEmitter } from "@/lib/events";
 
 function getCorsHeaders(request: Request) {
   const origin = request.headers.get("origin") || "*";
@@ -396,6 +397,8 @@ export async function POST(request: Request) {
       };
     }
 
+    // Emit real-time event to refresh open website tabs
+    hpEventEmitter.emit("db_update", { type: "refresh", targetUserId: userId, timestamp: Date.now() });
 
     return NextResponse.json({ 
       success: true, 

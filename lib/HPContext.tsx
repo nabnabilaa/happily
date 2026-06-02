@@ -136,6 +136,8 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
   const skipNextSyncRef = useRef(false);
   const lastSyncedPayloadRef = useRef<string | null>(null);
   const loginInProgressRef = useRef(false); // blocks sync during user transitions
+  const activeFetchDataRef = useRef<Promise<void> | null>(null);
+  const activeFetchDashboardsRef = useRef<Promise<void> | null>(null);
 
   // 3. CALLBACKS
   const updateState = useCallback((update: Partial<HPState> | ((prev: HPState) => HPState)) => {
@@ -171,61 +173,77 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
   const [syncing, setSyncing] = useState(false);
 
   const fetchData = useCallback(async (userId: string) => {
-    try {
-      const res = await fetch(`/api/storage?userId=${userId}`);
-      const data = await res.json();
-      if (data.error) throw new Error(`${data.error}: ${data.details || ''}`);
-      skipNextSyncRef.current = true;
-      if (data.state) {
-        // Sanitize habits to ensure 'done' status matches today's date in completedDates
-        const todayReal = new Date();
-        const todayStr = `${todayReal.getFullYear()}-${String(todayReal.getMonth() + 1).padStart(2, '0')}-${String(todayReal.getDate()).padStart(2, '0')}`;
-        const sanitizedHabits = (data.state.habits || []).map((h: any) => {
-          const done = h.completedDates ? h.completedDates.includes(todayStr) : h.done;
-          return { ...h, done };
-        });
-        const sanitizedState = { ...data.state, habits: sanitizedHabits };
+    if (activeFetchDataRef.current) return activeFetchDataRef.current;
 
-        setState(sanitizedState);
-        // Pre-fill the payload ref so we don't sync this identical data back
-        const syncState: any = { ...sanitizedState };
-        delete syncState.hrData;
-        delete syncState.managerData;
-        delete syncState.surveys;
-        delete syncState.feed;
-        const isHRUser = (data.user || user)?.role === 'hr' || (data.user || user)?.userRole === 'hr';
-        if (!isHRUser) {
-          delete syncState.rewards;
+    const promise = (async () => {
+      try {
+        const res = await fetch(`/api/storage?userId=${userId}`);
+        const data = await res.json();
+        if (data.error) throw new Error(`${data.error}: ${data.details || ''}`);
+        skipNextSyncRef.current = true;
+        if (data.state) {
+          // Sanitize habits to ensure 'done' status matches today's date in completedDates
+          const todayReal = new Date();
+          const todayStr = `${todayReal.getFullYear()}-${String(todayReal.getMonth() + 1).padStart(2, '0')}-${String(todayReal.getDate()).padStart(2, '0')}`;
+          const sanitizedHabits = (data.state.habits || []).map((h: any) => {
+            const done = h.completedDates ? h.completedDates.includes(todayStr) : h.done;
+            return { ...h, done };
+          });
+          const sanitizedState = { ...data.state, habits: sanitizedHabits };
+
+          setState(prev => {
+            // Preserve dashboard data that is fetched separately and not included in synced state
+            const preserved: any = {};
+            if (prev?.managerData) preserved.managerData = prev.managerData;
+            if (prev?.hrData) preserved.hrData = prev.hrData;
+            if (prev?.surveys) preserved.surveys = prev.surveys;
+            if (prev?.feed) preserved.feed = prev.feed;
+            return { ...sanitizedState, ...preserved };
+          });
+          // Pre-fill the payload ref so we don't sync this identical data back
+          const syncState: any = { ...sanitizedState };
+          delete syncState.hrData;
+          delete syncState.managerData;
+          delete syncState.surveys;
+          delete syncState.feed;
+          const isHRUser = (data.user || userRef.current)?.role === 'hr' || (data.user || userRef.current)?.userRole === 'hr';
+          if (!isHRUser) {
+            delete syncState.rewards;
+          }
+          lastSyncedPayloadRef.current = JSON.stringify({ state: syncState, user: data.user || userRef.current });
         }
-        lastSyncedPayloadRef.current = JSON.stringify({ state: syncState, user: data.user || user });
+        else {
+          setState({
+            mood: null, energy: null, tag: null, intention: "",
+            priorities: [], feed: [], goals: [], habits: [],
+            surveys: [], skills: [], learning: [], coaching: null, wellbeing: { dims: [], programs: [] },
+            points: data.user?.points || 0, coins: data.user?.points || 0, notifications: 0, 
+            rewards: [], rewardHistory: [],
+            logbook: [], lastActivityDate: new Date().toISOString(),
+            penaltyActive: false, penaltyThresholdDays: 3,
+            workSchedule: { start: "08:00", end: "17:00", breakStart: "12:00", breakEnd: "13:00", midDayCheckInTime: "12:00" },
+            contacts: [],
+            onboarded: false,
+            focusTaskId: null,
+            focusProgress: 0,
+            moods: data.state?.moods || [],
+            energyOpts: data.state?.energyOpts || [],
+            companyValues: data.state?.companyValues || [],
+            coachSuggestions: data.state?.coachSuggestions || [],
+          });
+        }
+        if (data.user) setUser(data.user);
+      } catch (error) {
+        console.error("Failed to fetch state:", error);
+      } finally {
+        setLoading(false);
+        loginInProgressRef.current = false; // login transition complete, safe to sync again
+        activeFetchDataRef.current = null;
       }
-      else {
-        setState({
-          mood: null, energy: null, tag: null, intention: "",
-          priorities: [], feed: [], goals: [], habits: [],
-          surveys: [], skills: [], learning: [], coaching: null, wellbeing: { dims: [], programs: [] },
-          points: data.user?.points || 0, coins: data.user?.points || 0, notifications: 0, 
-          rewards: [], rewardHistory: [],
-          logbook: [], lastActivityDate: new Date().toISOString(),
-          penaltyActive: false, penaltyThresholdDays: 3,
-          workSchedule: { start: "08:00", end: "17:00", breakStart: "12:00", breakEnd: "13:00", midDayCheckInTime: "12:00" },
-          contacts: [],
-          onboarded: false,
-          focusTaskId: null,
-          focusProgress: 0,
-          moods: data.state?.moods || [],
-          energyOpts: data.state?.energyOpts || [],
-          companyValues: data.state?.companyValues || [],
-          coachSuggestions: data.state?.coachSuggestions || [],
-        });
-      }
-      if (data.user) setUser(data.user);
-    } catch (error) {
-      console.error("Failed to fetch state:", error);
-    } finally {
-      setLoading(false);
-      loginInProgressRef.current = false; // login transition complete, safe to sync again
-    }
+    })();
+
+    activeFetchDataRef.current = promise;
+    return promise;
   }, []);
 
   const login = useCallback((userData: any) => {
@@ -248,21 +266,30 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const fetchDashboards = useCallback(async (userId: string, role: string) => {
-    try {
-      if (role === 'hr') {
-        const res = await fetch('/api/hr/dashboard');
-        const data = await res.json();
-        if (data && data.metrics) {
-          setState(prev => prev ? { ...prev, hrData: data } : null);
+    if (activeFetchDashboardsRef.current) return activeFetchDashboardsRef.current;
+
+    const promise = (async () => {
+      try {
+        if (role === 'hr') {
+          const res = await fetch('/api/hr/dashboard');
+          const data = await res.json();
+          if (data && data.metrics) {
+            setState(prev => prev ? { ...prev, hrData: data } : null);
+          }
+        } else if (role === 'manager') {
+          const res = await fetch(`/api/manager/dashboard?userId=${userId}`);
+          const data = await res.json();
+          setState(prev => prev ? { ...prev, managerData: data } : null);
         }
-      } else if (role === 'manager') {
-        const res = await fetch(`/api/manager/dashboard?userId=${userId}`);
-        const data = await res.json();
-        setState(prev => prev ? { ...prev, managerData: data } : null);
+      } catch (e) {
+        console.error("Dashboard fetch error:", e);
+      } finally {
+        activeFetchDashboardsRef.current = null;
       }
-    } catch (e) {
-      console.error("Dashboard fetch error:", e);
-    }
+    })();
+
+    activeFetchDashboardsRef.current = promise;
+    return promise;
   }, []);
 
 
@@ -357,6 +384,8 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
             }
             // Kirim event ke komponen lain (HRPeopleScreen, dll)
             window.dispatchEvent(new Event('hp_db_update'));
+            // Notify extension running on this page context
+            window.postMessage({ type: "FLOWBEE_WEBSITE_UPDATE" }, "*");
           }
         } else if (data.type === 'new_message') {
           // If targeted to a specific user, ignore if not us
@@ -410,8 +439,19 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
   }, [updateUser, updateState]);
 
   const refresh = useCallback(async () => {
-    if (userRef.current?.id) await fetchData(userRef.current.id);
-  }, [fetchData]);
+    if (userRef.current?.id) {
+      const fetchDataPromise = fetchData(userRef.current.id);
+      const activeRole = userRef.current.userRole || userRef.current.role;
+      if (activeRole === 'hr' || activeRole === 'manager') {
+        await Promise.all([
+          fetchDataPromise,
+          fetchDashboards(userRef.current.id, activeRole)
+        ]);
+      } else {
+        await fetchDataPromise;
+      }
+    }
+  }, [fetchData, fetchDashboards]);
 
   // 4. ALL EFFECTS AT THE END
   useEffect(() => {
@@ -511,7 +551,11 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
             body: finalPayload,
           });
           
-          if (!response.ok) {
+          if (response.ok) {
+            if (typeof window !== "undefined") {
+              window.postMessage({ type: "FLOWBEE_WEBSITE_UPDATE" }, "*");
+            }
+          } else {
             const errData = await response.json().catch(() => ({}));
             console.error("Sync failed:", errData.error || response.statusText);
           }
@@ -591,11 +635,17 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
           }, "*");
         }
       }
+
+      if (event.data?.type === "FLOWBEE_DB_UPDATE") {
+        refresh();
+        refreshSurveys();
+        window.dispatchEvent(new Event('hp_db_update'));
+      }
     };
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [user]);
+  }, [user, refresh, refreshSurveys]);
 
   // Broadcast user info on changes
   useEffect(() => {

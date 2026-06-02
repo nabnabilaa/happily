@@ -9,13 +9,23 @@ interface PriorityCardProps {
   p: any;
   onToggle: () => void;
   openModal?: (name: string, props?: any) => void;
+  onDelete?: () => void;
 }
 
-export default function PriorityCard({ p, onToggle, openModal }: PriorityCardProps) {
+export default function PriorityCard({ p, onToggle, openModal, onDelete }: PriorityCardProps) {
   const { state, updateState } = useHP();
   const [showPoints, setShowPoints] = useState(false);
   const [showFocusToast, setShowFocusToast] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm("Apakah Anda yakin ingin menghapus task ini?")) {
+      if (onDelete) {
+        onDelete();
+      }
+    }
+  };
 
   React.useEffect(() => {
     if (!p.timer_started_at) {
@@ -389,12 +399,19 @@ export default function PriorityCard({ p, onToggle, openModal }: PriorityCardPro
           </>
         )}
         
-        <div style={{ 
-          width: 32, height: 32, borderRadius: 16, background: HP_TOKENS.paper,
-          display: 'flex', alignItems: 'center', justifyContent: 'center'
-        }}>
-           <HPGlyph name="arrow" size={14} color={HP_TOKENS.line} />
-        </div>
+        <button 
+          onClick={handleDelete}
+          className="hp-tap"
+          title="Hapus Task"
+          style={{ 
+            width: 32, height: 32, borderRadius: 16, background: HP_TOKENS.coralSoft,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          <HPGlyph name="trash" size={14} color={HP_TOKENS.coral} />
+        </button>
+
       </div>
     </div>
   );

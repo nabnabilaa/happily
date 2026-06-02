@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { hpEventEmitter } from '@/lib/events';
 
 export async function GET(request: Request) {
   try {
@@ -37,9 +38,26 @@ export async function GET(request: Request) {
       sql: "SELECT * FROM daily_priorities WHERE user_id = ? AND (is_done = 0 OR COALESCE(DATE(target_date), DATE(created_at)) = CURDATE()) ORDER BY COALESCE(target_date, created_at) ASC",
       args: [userId]
     });
-    const priorities = prioritiesRes.rows.map(r => ({
-      id: r.id, title: r.title, description: r.description, targetDate: r.target_date, goal: r.goal_title, goal_id: r.goal_id, kpi_id: r.kpi_id || null, kpi_title: r.goal_title || null, energy: r.energy_level, est: r.est_time, done: !!r.is_done, verified: !!r.is_verified, tone: r.tone, time_tracked: Number(r.time_tracked) || 0, timer_started_at: r.timer_started_at || null
-    }));
+    const priorities = prioritiesRes.rows.map(r => {
+      const parsedId = isNaN(Number(r.id)) ? r.id : Number(r.id);
+      return {
+        id: parsedId,
+        title: r.title,
+        description: r.description,
+        targetDate: r.target_date,
+        goal: r.goal_title,
+        goal_id: r.goal_id ? (isNaN(Number(r.goal_id)) ? r.goal_id : Number(r.goal_id)) : null,
+        kpi_id: r.kpi_id ? (isNaN(Number(r.kpi_id)) ? r.kpi_id : Number(r.kpi_id)) : null,
+        kpi_title: r.goal_title || null,
+        energy: r.energy_level,
+        est: r.est_time,
+        done: !!r.is_done,
+        verified: !!r.is_verified,
+        tone: r.tone,
+        time_tracked: Number(r.time_tracked) || 0,
+        timer_started_at: r.timer_started_at || null
+      };
+    });
 
 
     const habitsRes = await db.execute({
@@ -290,7 +308,9 @@ export async function GET(request: Request) {
       mood: latestMood?.mood_key || 'calm',
       energy: latestMood?.energy_key || 'mid',
       tag: latestMood?.tag || null,
-      intention: "",
+      intention: userRow.focus_intention || "",
+      focusTaskId: userRow.focus_task_id ? (isNaN(Number(userRow.focus_task_id)) ? userRow.focus_task_id : Number(userRow.focus_task_id)) : null,
+      focusProgress: userRow.focus_progress || 0,
       priorities,
       weeklyPriorities: [],
       habits: habitsUnique,
@@ -340,7 +360,7 @@ export async function POST(request: Request) {
     // Update User
     try {
       await db.execute({
-        sql: `UPDATE users SET name = ?, streak = ?, avatar_image = ?, user_role_context = ?, last_activity_at = ?, personal_wellbeing_goal = ?, wellbeing_routine = ?, is_onboarded = ? WHERE id = ?`,
+        sql: `UPDATE users SET name = ?, streak = ?, avatar_image = ?, user_role_context = ?, last_activity_at = ?, personal_wellbeing_goal = ?, wellbeing_routine = ?, is_onboarded = ?, focus_task_id = ?, focus_progress = ?, focus_intention = ? WHERE id = ?`,
         args: [
           user.name, user.streak,
           user.avatarImage || null,
@@ -349,6 +369,9 @@ export async function POST(request: Request) {
           state.personalWellbeingGoal || "",
           JSON.stringify(state.wellbeingRoutine || []),
           state.onboarded ? 1 : 0,
+          state.focusTaskId || null,
+          state.focusProgress || 0,
+          state.intention || "",
           userId
         ]
       });
@@ -570,6 +593,9 @@ export async function POST(request: Request) {
         });
       }
     }
+
+    // Emit real-time event to refresh open website tabs/extension sync
+    hpEventEmitter.emit("db_update", { type: "refresh", targetUserId: userId, timestamp: Date.now() });
 
     return NextResponse.json({ success: true, message: 'Updated database successfully' });
   } catch (error: any) {

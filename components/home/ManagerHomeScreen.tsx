@@ -28,7 +28,7 @@ interface TeamMember {
 }
 
 export default function ManagerHomeScreen({ openModal }: Props) {
-  const { state, user, awardXP, refresh } = useHP();
+  const { state, user, awardXP, refresh, updateState } = useHP();
   const managerData = state?.managerData || { members: [], goals: [], approvals: [], teamTasks: [] };
   const { members, goals, approvals = [], teamTasks = [] } = managerData;
   const avgProgress = goals.length > 0 ? Math.round(goals.reduce((a: number, b: any) => a + Number(b.progress), 0) / goals.length) : 0;
@@ -436,6 +436,26 @@ export default function ManagerHomeScreen({ openModal }: Props) {
                       body: JSON.stringify({ taskId: task.id, goalId: task.goalId, managerId: user.id, action })
                     });
                     if (res.ok) {
+                      updateState((s: any) => {
+                        if (!s || !s.managerData) return s;
+                        const newTeamTasks = (s.managerData.teamTasks || []).map((t: any) => {
+                          if (t.id === task.id) {
+                            if (action === 'approve') {
+                              return { ...t, verified: true, done: true, status: 'approved' };
+                            } else {
+                              return { ...t, verified: false, done: false, status: action };
+                            }
+                          }
+                          return t;
+                        });
+                        return {
+                          ...s,
+                          managerData: {
+                            ...s.managerData,
+                            teamTasks: newTeamTasks
+                          }
+                        };
+                      });
                       await refresh();
                     }
                   } catch (err) {

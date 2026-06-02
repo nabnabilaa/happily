@@ -308,6 +308,9 @@ export async function POST() {
     { desc: "users.wellbeing_routine", sql: "ALTER TABLE users ADD COLUMN wellbeing_routine TEXT" },
     { desc: "users.avatar_image", sql: "ALTER TABLE users ADD COLUMN avatar_image TEXT" },
     { desc: "users.is_onboarded", sql: "ALTER TABLE users ADD COLUMN is_onboarded INTEGER DEFAULT 0" },
+    { desc: "users.focus_task_id", sql: "ALTER TABLE users ADD COLUMN focus_task_id VARCHAR(255) DEFAULT NULL" },
+    { desc: "users.focus_progress", sql: "ALTER TABLE users ADD COLUMN focus_progress INTEGER DEFAULT 0" },
+    { desc: "users.focus_intention", sql: "ALTER TABLE users ADD COLUMN focus_intention TEXT DEFAULT NULL" },
 
     // ── Goals table ──
     { desc: "goals.parent_id", sql: "ALTER TABLE goals ADD COLUMN parent_id TEXT" },
