@@ -531,6 +531,56 @@ export default function HRPeopleScreen({ openModal }: Props) {
                       <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue }}>{t.est || '15m'}</div>
                     </div>
                   </div>
+                  <button
+                    onClick={() => {
+                      if (confirm("Apakah Anda yakin ingin menghapus task ini?")) {
+                        updateState((s: any) => {
+                          const newPriorities = s.priorities.filter((p: any) => p.id !== t.id);
+                          
+                          const targetId = t.goal_id || t.kpi_id;
+                          const updatedGoals = s.goals.map((goal: any) => {
+                            if (targetId && String(goal.id) === String(targetId)) {
+                              const todayTasks = newPriorities.filter((p: any) => 
+                                (p.goal_id && String(p.goal_id) === String(goal.id)) || 
+                                (p.kpi_id && String(p.kpi_id) === String(goal.id))
+                              );
+                              const total = todayTasks.length;
+                              const completed = todayTasks.filter((p: any) => p.done).length;
+                              const newProgress = total > 0 ? Math.round((completed / total) * 100) : 0;
+                              return { 
+                                ...goal, 
+                                progress: newProgress, 
+                                metric: total > 0 ? `${completed}/${total} task selesai` : `0/0 task selesai`
+                              };
+                            }
+                            return goal;
+                          });
+
+                          const extraState: any = {};
+                          if (s.focusTaskId === t.id) {
+                            extraState.focusTaskId = null;
+                            extraState.focusProgress = 0;
+                            extraState.intention = "";
+                          }
+
+                          return {
+                            ...s,
+                            priorities: newPriorities,
+                            goals: updatedGoals,
+                            ...extraState
+                          };
+                        });
+                      }
+                    }}
+                    style={{
+                      background: HP_TOKENS.coralSoft, border: 'none', cursor: 'pointer',
+                      width: 28, height: 28, borderRadius: 8,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}
+                    title="Hapus Task"
+                  >
+                    <HPGlyph name="trash" size={12} color={HP_TOKENS.coral} />
+                  </button>
                 </div>
               </HPCard>
             ))}

@@ -61,6 +61,49 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
     }
   }, [state, updateState]);
 
+  const deletePriority = useCallback((id: number) => {
+    updateState((s: any) => {
+      const taskToDelete = s.priorities.find((p: any) => p.id === id);
+      if (!taskToDelete) return s;
+
+      const newPriorities = s.priorities.filter((p: any) => p.id !== id);
+
+      const targetId = taskToDelete.goal_id || taskToDelete.kpi_id;
+      const updatedGoals = s.goals.map((goal: any) => {
+        if (targetId && String(goal.id) === String(targetId)) {
+          const todayTasks = newPriorities.filter((p: any) => 
+            (p.goal_id && String(p.goal_id) === String(goal.id)) || 
+            (p.kpi_id && String(p.kpi_id) === String(goal.id))
+          );
+          const total = todayTasks.length;
+          const completed = todayTasks.filter((p: any) => p.done).length;
+
+          const newProgress = total > 0 ? Math.round((completed / total) * 100) : 0;
+          return { 
+            ...goal, 
+            progress: newProgress, 
+            metric: total > 0 ? `${completed}/${total} task selesai` : `0/0 task selesai`
+          };
+        }
+        return goal;
+      });
+
+      const extraState: any = {};
+      if (s.focusTaskId === id) {
+        extraState.focusTaskId = null;
+        extraState.focusProgress = 0;
+        extraState.intention = "";
+      }
+
+      return { 
+        ...s, 
+        priorities: newPriorities, 
+        goals: updatedGoals,
+        ...extraState 
+      };
+    });
+  }, [updateState]);
+
   const confirmTaskComplete = useCallback((data: {
     proofLinks: string[]; isProject: boolean; metricValue?: number; notes?: string;
   }) => {
@@ -215,9 +258,15 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
           </div>
 
           {/* Focus Task Sync Display */}
-          {state.focusTaskId && (
+          <div style={{ 
+            marginTop: state.focusTaskId ? 16 : 0,
+            maxHeight: state.focusTaskId ? 80 : 0,
+            opacity: state.focusTaskId ? 1 : 0,
+            overflow: 'hidden',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}>
             <div style={{ 
-              marginTop: 16, padding: '12px 16px', borderRadius: 12, 
+              padding: '12px 16px', borderRadius: 12, 
               background: 'rgba(255,255,255,0.6)', border: `1px dashed ${HP_TOKENS.yellow}`,
               display: 'flex', alignItems: 'center', gap: 12
             }}>
@@ -232,14 +281,14 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
               </div>
               <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.yellow }}>{state.focusProgress || 0}%</div>
             </div>
-          )}
+          </div>
         </div>
       </HPCard>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {paginatedPriorities.length > 0 ? (
           paginatedPriorities.map((p: any) => (
-            <PriorityCard key={p.id} p={p} onToggle={() => togglePriority(p.id)}/>
+            <PriorityCard key={p.id} p={p} onToggle={() => togglePriority(p.id)} onDelete={() => deletePriority(p.id)}/>
           ))
         ) : (
           <div style={{ 

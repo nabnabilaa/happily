@@ -78,7 +78,14 @@ export default function CalendarScreen({ openModal }: Props) {
   const [collapsedDepts, setCollapsedDepts] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+    const handleUpdate = () => {
+      fetchData();
+    };
+    window.addEventListener('hp_db_update', handleUpdate);
+    return () => window.removeEventListener('hp_db_update', handleUpdate);
+  }, []);
 
   const fetchData = async () => {
     setLoading(true);
@@ -199,6 +206,7 @@ export default function CalendarScreen({ openModal }: Props) {
           label: title,
           timestamp: startDT.getTime() - (offset * 60000)
         }, "*");
+        window.postMessage({ type: "FLOWBEE_WEBSITE_UPDATE" }, "*");
       }
 
       notify('Agenda Dibuat', `"${title}" berhasil ditambahkan.`, 'success');
@@ -215,6 +223,9 @@ export default function CalendarScreen({ openModal }: Props) {
       await fetch(`/api/calendar?eventId=${eventId}&userId=${user?.id}`, { method: 'DELETE' });
       notify('Agenda Dihapus', '', 'info');
       fetchData();
+      if (typeof window !== "undefined") {
+        window.postMessage({ type: "FLOWBEE_WEBSITE_UPDATE" }, "*");
+      }
     } catch (e) { console.error(e); }
   };
 

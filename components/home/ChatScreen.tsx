@@ -45,13 +45,29 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
+  const channelPollRef = useRef<NodeJS.Timeout | null>(null); // polls channel list for unread updates
   const pendingChannelIdRef = useRef<string | null>(null);
+  const activeChannelRef = useRef<Channel | null>(null); // track current channel inside callbacks
 
-  // Fetch channels
+  // Fetch channels on mount + start channel list polling
   useEffect(() => {
     fetchChannels();
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+
+    // ── Fallback: refresh channel list every 8s so lastMessage & unread badges update ──
+    channelPollRef.current = setInterval(() => {
+      fetchChannels();
+    }, 8000);
+
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+      if (channelPollRef.current) clearInterval(channelPollRef.current);
+    };
   }, []);
+
+  // Keep activeChannelRef in sync for use in async event callbacks
+  useEffect(() => {
+    activeChannelRef.current = activeChannel;
+  }, [activeChannel]);
 
   // Listen for new channel creation events
   useEffect(() => {
@@ -65,6 +81,29 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
     window.addEventListener('chat_channel_created', handleNewChannel as EventListener);
     return () => window.removeEventListener('chat_channel_created', handleNewChannel as EventListener);
   }, []);
+
+  // ── Listen for real-time chat updates relayed by extension content.js ──
+  // content.js writes fb_chat_update to chrome.storage when any tab sends a message,
+  // then re-posts FLOWBEE_CHAT_INCOMING to window so this React app refreshes instantly.
+  useEffect(() => {
+    const handleIncoming = (event: MessageEvent) => {
+      if (event.data?.type !== 'FLOWBEE_CHAT_INCOMING') return;
+      const { channelId } = event.data;
+      const current = activeChannelRef.current;
+      if (current && current.id === channelId) {
+        // User is in the updated channel — fetch new messages immediately
+        fetch(`/api/chat?channelId=${current.id}&userId=${user?.id}`)
+          .then(r => r.json())
+          .then(data => setMessages(data.messages || []))
+          .catch(() => {});
+      } else {
+        // User is on channel list — refresh to show latest lastMessage & unread badge
+        fetchChannels();
+      }
+    };
+    window.addEventListener('message', handleIncoming);
+    return () => window.removeEventListener('message', handleIncoming);
+  }, [user?.id]);
 
   const fetchChannels = async () => {
     try {
@@ -154,6 +193,14 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
         setMessages(prev => prev.map(m =>
           m.id === tempMsg.id ? { ...data.message } : m
         ));
+        // ── Notify extension (all tabs) that a chat message was sent ──
+        // content.js intercepts FLOWBEE_CHAT_UPDATE and writes to chrome.storage
+        // so every extension instance (including Gemini tab) gets updated in real-time.
+        window.postMessage({
+          type: 'FLOWBEE_CHAT_UPDATE',
+          channelId: activeChannel.id,
+          ts: Date.now(),
+        }, '*');
       }
     } catch (e) { console.error(e); }
     setSending(false);

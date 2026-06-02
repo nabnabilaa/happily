@@ -4073,6 +4073,11 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
         tabsEl.querySelectorAll('.fb-tab').forEach(b => b.classList.remove('act'));
         root.querySelectorAll('.fb-pane').forEach(p => p.classList.remove('show'));
         btn.classList.add('act');
+        // ── Stop chat polling when leaving the chat tab ──
+        if (activeTab === 'chat' && btn.dataset.tab !== 'chat') {
+          clearInterval(chatPollIv); chatPollIv = null;
+          clearInterval(chatChannelPollIv); chatChannelPollIv = null;
+        }
         activeTab = btn.dataset.tab;
         const targetPane = root.querySelector('#pane-' + activeTab);
         if (targetPane) targetPane.classList.add('show');
@@ -5654,6 +5659,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   // ═══════════════════════════════════════════════════════════════
   let chatActiveChannelId = null;
   let chatPollIv = null;
+  let chatChannelPollIv = null; // polls channel list (unread counts) when chat tab active
 
   async function renderChat() {
     const list = $('fb-chat-channel-list');
@@ -5666,11 +5672,15 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       chView.style.display = 'none';
       msgView.style.display = 'flex';
       renderChatMessages(chatActiveChannelId);
+      // ── Poll active messages every 3s ──
       if (!chatPollIv) chatPollIv = setInterval(() => renderChatMessages(chatActiveChannelId, true), 3000);
+      // ── Also keep channel list (unread badges) fresh every 10s ──
+      if (!chatChannelPollIv) chatChannelPollIv = setInterval(() => renderChatChannelList(true), 10000);
       return;
     }
 
     clearInterval(chatPollIv); chatPollIv = null;
+    clearInterval(chatChannelPollIv); chatChannelPollIv = null;
     chView.style.display = 'block';
     msgView.style.display = 'none';
 
@@ -5712,6 +5722,23 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
     } catch (e) {
       list.innerHTML = `<div class="fb-empty" style="color:#ff6b6b">Gagal memuat chat<br><small style="color:#8A837C;font-size:10px;display:block;margin-top:4px;">${e.message || String(e)}</small></div>`;
     }
+  }
+
+  // ── Fetch and re-render only the channel list (for unread badge updates) ──
+  async function renderChatChannelList(silent = false) {
+    if (!flowbeeUserId) return;
+    try {
+      const res = await window.__FB.fetch(`${FLOWBEE_API.replace('/ext', '/chat')}?userId=${flowbeeUserId}`);
+      const data = await res.json();
+      const channels = data.channels || [];
+      const list = $('fb-chat-channel-list');
+      if (!list || chatActiveChannelId) return; // only update when on channel list view
+      // Re-render list in place (silent refresh)
+      if (!silent || channels.length) {
+        // Reuse the full renderChat() flow only if not in message view
+        await renderChat();
+      }
+    } catch (e) { /* offline — silent */ }
   }
 
   async function renderChatMessages(channelId, isPolling = false) {
@@ -5790,6 +5817,10 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
           body: JSON.stringify({ channelId: chatActiveChannelId, senderId: flowbeeUserId, content: txt })
         });
         renderChatMessages(chatActiveChannelId);
+        // ── Broadcast to all other tabs that chat has new message ──
+        try {
+          chrome.storage.local.set({ fb_chat_update: { ts: Date.now(), channelId: chatActiveChannelId } });
+        } catch (e) { /* silent */ }
       } catch (e) { }
     };
   }
@@ -5908,6 +5939,16 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       if (event.data?.type === 'FLOWBEE_WEBSITE_UPDATE') {
         flowbeeSyncAll(true);
       }
+      // ── Bridge website chat → ALL extension tabs via chrome.storage ──
+      // Website fires FLOWBEE_CHAT_UPDATE after sending a message.
+      // content.js on the website tab catches it here and writes to chrome.storage,
+      // which immediately fires storage.onChanged in every other tab (Gemini, etc.)
+      if (event.data?.type === 'FLOWBEE_CHAT_UPDATE') {
+        const { channelId, ts } = event.data;
+        try {
+          chrome.storage.local.set({ fb_chat_update: { ts: ts || Date.now(), channelId } });
+        } catch (e) { /* silent */ }
+      }
       if (event.data?.type === 'FLOWBEE_WEBSITE_USER') {
         const { userId, user } = event.data;
         if (userId) {
@@ -5990,6 +6031,36 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
           if (changes.fbTheme) {
             _manualTheme = changes.fbTheme.newValue || null;
             syncTheme();
+          }
+
+          // ── REAL-TIME CHAT SYNC: triggered by any tab that sends a message ──
+          if (changes.fb_chat_update && changes.fb_chat_update.newValue) {
+            const update = changes.fb_chat_update.newValue;
+
+            // 1. Update the extension panel if chat tab is open
+            if (activeTab === 'chat') {
+              if (chatActiveChannelId && chatActiveChannelId === update.channelId) {
+                // We are in the exact channel that was updated — refresh messages immediately
+                if (typeof renderChatMessages === 'function') {
+                  renderChatMessages(chatActiveChannelId, true);
+                }
+              } else if (!chatActiveChannelId) {
+                // We are on channel list view — refresh to update unread badges
+                if (typeof renderChat === 'function') {
+                  renderChat();
+                }
+              }
+            }
+
+            // 2. Also notify the website React app on this tab so it refreshes too
+            // ChatScreen.tsx listens for FLOWBEE_CHAT_INCOMING via window.addEventListener
+            try {
+              window.postMessage({
+                type: 'FLOWBEE_CHAT_INCOMING',
+                channelId: update.channelId,
+                ts: update.ts,
+              }, '*');
+            } catch (e) { /* silent */ }
           }
           
           if (needsRenderTasks && typeof renderTasks === 'function') renderTasks();
