@@ -6,7 +6,7 @@ function getCorsHeaders(request: Request) {
   const origin = request.headers.get("origin") || "*";
   return {
     "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Allow-Credentials": "true",
   };
@@ -19,11 +19,13 @@ export async function OPTIONS(request: Request) {
   });
 }
 
-// GET: Fetch unread notifications for extension
+// GET: Fetch notifications (unread only or all history)
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
+    const all = searchParams.get('all') === 'true';
+
     if (!userId) {
       return NextResponse.json(
         { error: "userId required" },
@@ -31,19 +33,32 @@ export async function GET(request: Request) {
       );
     }
 
+    let sql = `SELECT id, title, message, type, is_read, reference_id, reference_type, created_at 
+               FROM notifications WHERE user_id = ? AND is_read = 0 
+               ORDER BY created_at DESC LIMIT 30`;
+    if (all) {
+      sql = `SELECT id, title, message, type, is_read, reference_id, reference_type, created_at 
+             FROM notifications WHERE user_id = ? 
+             ORDER BY created_at DESC LIMIT 50`;
+    }
+
     const res = await db.execute({
-      sql: `SELECT id, title, message, type, created_at 
-            FROM notifications WHERE user_id = ? AND is_read = 0 
-            ORDER BY created_at DESC LIMIT 20`,
+      sql,
       args: [userId]
     });
 
     return NextResponse.json({
       notifications: res.rows.map(r => ({
-        id: r.id, title: r.title, message: r.message,
-        type: r.type, createdAt: r.created_at,
+        id: r.id,
+        title: r.title,
+        message: r.message,
+        type: r.type,
+        isRead: r.is_read === 1,
+        referenceId: r.reference_id,
+        referenceType: r.reference_type,
+        createdAt: r.created_at,
       })),
-      unreadCount: res.rows.length
+      unreadCount: res.rows.filter(r => r.is_read === 0).length
     }, {
       headers: getCorsHeaders(request)
     });
@@ -91,6 +106,48 @@ export async function POST(request: Request) {
   }
 }
 
+// DELETE: Delete single or all notifications for a user
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId');
+    const id = searchParams.get('id');
+    const all = searchParams.get('all') === 'true';
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "userId required" },
+        { status: 400, headers: getCorsHeaders(request) }
+      );
+    }
+
+    if (all) {
+      await db.execute({
+        sql: "DELETE FROM notifications WHERE user_id = ?",
+        args: [userId]
+      });
+    } else if (id) {
+      await db.execute({
+        sql: "DELETE FROM notifications WHERE user_id = ? AND id = ?",
+        args: [userId, id]
+      });
+    } else {
+      return NextResponse.json(
+        { error: "Parameter id atau all wajib diisi" },
+        { status: 400, headers: getCorsHeaders(request) }
+      );
+    }
+
+    return NextResponse.json({ success: true }, { headers: getCorsHeaders(request) });
+  } catch (error: any) {
+    console.error("Delete Notification Error:", error);
+    return NextResponse.json(
+      { error: "Failed to delete notification", details: error.message },
+      { status: 500, headers: getCorsHeaders(request) }
+    );
+  }
+}
+
 // PUT: Create a new notification
 export async function PUT(request: Request) {
   try {
@@ -125,7 +182,6 @@ export async function PUT(request: Request) {
       });
       if (userRes.rows.length > 0) {
         const user = userRes.rows[0];
-        // Don't await sendEmail so it doesn't block the API response
         sendEmail({
           to: user.email as string,
           subject: title,
@@ -145,4 +201,3 @@ export async function PUT(request: Request) {
     );
   }
 }
-

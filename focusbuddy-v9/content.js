@@ -336,6 +336,16 @@
     applyPos(ax, ay);
   }
 
+  function setMascotAnimated(val) {
+    mascotAnimated = val;
+    chrome.storage.local.set({ hp_mascot_animated: mascotAnimated });
+    try {
+      localStorage.setItem('hp_mascot_animated', mascotAnimated ? '1' : '0');
+      window.dispatchEvent(new CustomEvent('hp_mascot_anim_change', { detail: mascotAnimated }));
+    } catch (e) {}
+    applyMascotAnimated();
+  }
+
   async function flowbeeSyncAll(pullOnly = false) {
     if (!flowbeeUserId || !extensionEnabled) return
     try {
@@ -3748,9 +3758,15 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       }
       ay = Math.max(70, Math.min(H + 10, ay))
     } else {
-      // Clamp buddy (100x130) with 8px margin from all edges
-      ax = Math.max(100 + 8, Math.min(W - 8, ax))
-      ay = Math.max(130 + 8, Math.min(H - 8, ay))
+      if (isDragging) {
+        // While dragging, allow the big mascot to be dragged slightly off-screen to trigger the quiet mode transition
+        ax = Math.max(50, Math.min(W + 50, ax))
+        ay = Math.max(130 + 8, Math.min(H - 8, ay))
+      } else {
+        // Clamp buddy (100x130) with 8px margin from all edges
+        ax = Math.max(100 + 8, Math.min(W - 8, ax))
+        ay = Math.max(130 + 8, Math.min(H - 8, ay))
+      }
     }
     
     root.style.setProperty('left', ax + 'px', 'important')
@@ -3849,7 +3865,25 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
     isDragging = false
     buddy.classList.remove('dragging')
     if (dragOverlay) { dragOverlay.remove(); dragOverlay = null }
-    if (dragDidMove) savePos(parseInt(root.style.left), parseInt(root.style.top))
+    if (dragDidMove) {
+      const W = window.innerWidth
+      let ax = parseInt(root.style.left) || W - 8
+      let ay = parseInt(root.style.top) || window.innerHeight - 8
+      
+      // Check if we dragged the big mascot into the screen edge to trigger quiet-mode (small version)
+      if (!root.classList.contains('quiet-mode')) {
+        if (ax < 95 || ax > W - 15) {
+          setMascotAnimated(false);
+          const snappedX = parseInt(root.style.left) || (ax < W / 2 ? 100 : W);
+          const snappedY = parseInt(root.style.top) || ay;
+          savePos(snappedX, snappedY);
+          return;
+        }
+      }
+      
+      applyPos(ax, ay)
+      savePos(ax, ay)
+    }
   }
 
   // ── Mouse drag ──
@@ -3868,7 +3902,26 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   window.addEventListener('mousemove', e => {
     if (!isDragging) return
     dragDidMove = true
-    applyPos(e.clientX - dragOffX + 100, e.clientY - dragOffY + 130)
+    let targetX = e.clientX - dragOffX + 100
+    let targetY = e.clientY - dragOffY + 130
+    
+    if (root.classList.contains('quiet-mode')) {
+      const W = window.innerWidth
+      const currentSnapX = parseInt(root.style.left) || W
+      const currentSnapLeft = currentSnapX < W / 2
+      
+      if (currentSnapLeft) {
+        if (targetX > 140) {
+          setMascotAnimated(true)
+        }
+      } else {
+        if (targetX < W - 40) {
+          setMascotAnimated(true)
+        }
+      }
+    }
+    
+    applyPos(targetX, targetY)
   }, true)
 
   window.addEventListener('mouseup', endDrag, true)
@@ -3886,7 +3939,26 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   window.addEventListener('touchmove', e => {
     if (!isDragging) return; dragDidMove = true
     const t = e.touches[0]
-    applyPos(t.clientX - dragOffX + 100, t.clientY - dragOffY + 130)
+    let targetX = t.clientX - dragOffX + 100
+    let targetY = t.clientY - dragOffY + 130
+    
+    if (root.classList.contains('quiet-mode')) {
+      const W = window.innerWidth
+      const currentSnapX = parseInt(root.style.left) || W
+      const currentSnapLeft = currentSnapX < W / 2
+      
+      if (currentSnapLeft) {
+        if (targetX > 140) {
+          setMascotAnimated(true)
+        }
+      } else {
+        if (targetX < W - 40) {
+          setMascotAnimated(true)
+        }
+      }
+    }
+    
+    applyPos(targetX, targetY)
     e.preventDefault()
   }, { capture: true, passive: false })
 
@@ -3904,6 +3976,12 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   // ── Click: toggle panel ──
   buddy.addEventListener('click', () => {
     if (dragDidMove) { dragDidMove = false; return }
+    
+    // If clicked in quiet mode, exit quiet mode!
+    if (root.classList.contains('quiet-mode')) {
+      setMascotAnimated(true)
+    }
+    
     const now = Date.now()
     if (now - ctx.clickWindowStart > 3000) { ctx.clickCount = 1; ctx.clickWindowStart = now }
     else ctx.clickCount++

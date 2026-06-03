@@ -14,6 +14,8 @@ import HPGlyph from "@/components/ui/HPGlyph";
 import Modal from "@/components/ui/Modal";
 import BeeMascot from "@/components/ui/BeeMascot";
 
+import { queueOfflineCheckIn, queueOfflineXP } from "@/lib/offlineSync";
+
 interface CheckInModalProps {
   onClose: () => void;
 }
@@ -30,25 +32,47 @@ const ghostBtn: React.CSSProperties = {
 };
 
 export default function CheckInModal({ onClose }: CheckInModalProps) {
-  const { state, updateState, awardXP, user } = useHP();
+  const { state, updateState, awardXP, user, notify } = useHP();
   const [mood, setMood] = useState(state?.mood || null);
   const [energy, setEnergy] = useState(state?.energy || null);
   const [tag, setTag] = useState(state?.tag || null);
   const [step, setStep] = useState(1);
 
   const save = async () => {
+    // 1. Update client context state immediately so UI changes without delay
     updateState({ mood, energy, tag });
 
-    // Persist mood to database (time-series)
+    if (typeof window !== "undefined" && !navigator.onLine) {
+      // Offline mode: Queue check-in and XP locally
+      if (user?.id) {
+        queueOfflineCheckIn(user.id, mood!, energy, tag);
+        queueOfflineXP(user.id, 'mood_checkin', 'Daily mood check-in');
+        notify("Offline Check-In", "Tersimpan lokal. Akan disinkronkan otomatis saat online.", "warning");
+      }
+      onClose();
+      return;
+    }
+
+    // Online mode: Persist mood to database
     try {
-      await fetch('/api/mood/checkin', {
+      const response = await fetch('/api/mood/checkin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user?.id, mood, energy, tag })
       });
-      awardXP('mood_checkin', 'Daily mood check-in');
+      
+      if (!response.ok) {
+        throw new Error("API checkin error");
+      }
+
+      await awardXP('mood_checkin', 'Daily mood check-in');
     } catch (e) {
-      console.error('Failed to save mood:', e);
+      console.error('Failed to save mood, queuing offline:', e);
+      if (user?.id) {
+        queueOfflineCheckIn(user.id, mood!, energy, tag);
+        queueOfflineXP(user.id, 'mood_checkin', 'Daily mood check-in');
+        notify("Check-In Tersimpan", "Tersimpan lokal karena kendala koneksi server.", "warning");
+      }
     }
 
     onClose();

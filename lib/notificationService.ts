@@ -261,18 +261,11 @@ export async function dispatchNotification(
 
     // F. Attempt Push Notification if subscription exists
     try {
-      const subsRes = await db.execute({
-        sql: "SELECT * FROM push_subscriptions WHERE user_id = ?",
-        args: [userId]
-      });
-
-      if (subsRes.rows.length > 0) {
-        // Here, you would trigger Web Push logic. Since we already have `/api/notifications/send` defined,
-        // we can simply log it or call our push delivery method.
-        console.log(`[NotificationService] Push delivery ready for ${subsRes.rows.length} subscriptions.`);
-      }
+      const { sendPushNotification } = await import("@/lib/pushService");
+      await sendPushNotification(userId, title, message);
+      console.log("[NotificationService] Push delivery completed successfully.");
     } catch (pushErr) {
-      console.warn("[NotificationService] Web push check skipped/failed:", pushErr);
+      console.warn("[NotificationService] Web push dispatch failed:", pushErr);
     }
 
     // Emit database update event to trigger live UI refresh via SSE

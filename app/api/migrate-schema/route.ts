@@ -271,6 +271,19 @@ export async function POST() {
         department VARCHAR(255) NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`
+    },
+    {
+      desc: "Create push_subscriptions table",
+      sql: `CREATE TABLE IF NOT EXISTS push_subscriptions (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        user_id VARCHAR(100) NOT NULL,
+        endpoint VARCHAR(500) NOT NULL,
+        p256dh VARCHAR(255) NOT NULL,
+        auth VARCHAR(255) NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        UNIQUE(user_id, endpoint(255))
+      )`
     }
   ];
 

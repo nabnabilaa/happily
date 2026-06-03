@@ -67,8 +67,17 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
       const data = await res.json();
       setUsers(data.users || []);
       setSummary(data.summary || null);
-    } catch (e) {
-      console.error("Failed to fetch presence:", e);
+    } catch (e: any) {
+      const isNetworkError = e instanceof TypeError || (e.message && (
+        e.message.toLowerCase().includes('failed to fetch') || 
+        e.message.toLowerCase().includes('networkerror') ||
+        e.message.toLowerCase().includes('fetch failed')
+      ));
+      if (isNetworkError) {
+        console.warn("Failed to fetch presence (network issue):", e.message || e);
+      } else {
+        console.error("Failed to fetch presence:", e);
+      }
     }
     setLoading(false);
   }, [user]);

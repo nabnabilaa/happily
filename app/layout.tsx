@@ -4,6 +4,9 @@ import "./globals.css";
 import Shell from "@/components/layout/Shell";
 import PWARegistration from "@/components/pwa/PWARegistration";
 import InstallButton from "@/components/pwa/InstallButton";
+import OfflineToast from "@/components/pwa/OfflineToast";
+import { HPProvider } from "@/lib/HPContext";
+import Script from "next/script";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -52,9 +55,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrains.variable}`} suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{__html: `
-          (function() {
+      <head />
+      <body>
+        <Script id="theme-loader" strategy="beforeInteractive">
+          {`
             try {
               var saved = localStorage.getItem('hp-theme');
               var system = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -65,13 +69,14 @@ export default function RootLayout({
                 document.documentElement.classList.remove('dark');
               }
             } catch (e) {}
-          })();
-        `}} />
-      </head>
-      <body>
-        <PWARegistration />
-        <InstallButton />
-        <Shell>{children}</Shell>
+          `}
+        </Script>
+        <HPProvider>
+          <PWARegistration />
+          <InstallButton />
+          <OfflineToast />
+          <Shell>{children}</Shell>
+        </HPProvider>
       </body>
     </html>
   );

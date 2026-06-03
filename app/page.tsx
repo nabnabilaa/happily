@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect } from "react";
-import { HPProvider, useHP, UserRole } from "@/lib/HPContext";
+import { useHP, UserRole } from "@/lib/HPContext";
 import { HP_TOKENS, HP_FONT } from "@/lib/constants";
 
 // Auth
@@ -87,6 +87,7 @@ import AppreciateModal from "@/components/modals/AppreciateModal";
 import AnnouncementModal from "@/components/modals/AnnouncementModal";
 import HPToastContainer from "@/components/ui/HPToastContainer";
 import ConfirmLogoutModal from "@/components/modals/ConfirmLogoutModal";
+import NotificationBanner from "@/components/pwa/NotificationBanner";
 
 
 // ─── Role pill badge colors ──────────────────────────────────────────────────
@@ -289,6 +290,53 @@ function AppContent() {
         }}>
           <ThemeSwitcher />
 
+          <button
+            onClick={() => openModal('notifications')}
+            className="hp-tap"
+            title="Notifikasi"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 38,
+              height: 38,
+              borderRadius: "50%",
+              border: `1.5px solid var(--hp-line)`,
+              background: "var(--hp-card)",
+              color: "var(--hp-ink)",
+              boxShadow: "0 2px 10px rgba(0,0,0,0.06)",
+              cursor: "pointer",
+              position: "relative",
+              transition: "all 0.2s ease",
+            }}
+          >
+            <HPGlyph name="bell" size={18} stroke={2.5} color={HP_TOKENS.ink} />
+            {state?.notifications && state.notifications > 0 ? (
+              <span
+                style={{
+                  position: "absolute",
+                  top: -2,
+                  right: -2,
+                  background: HP_TOKENS.coral,
+                  color: "#fff",
+                  fontSize: 10,
+                  fontWeight: 800,
+                  borderRadius: 99,
+                  minWidth: 16,
+                  height: 16,
+                  padding: "0 4px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 2px 6px rgba(232, 139, 125, 0.4)",
+                  border: "1.5px solid var(--hp-card)",
+                }}
+              >
+                {state.notifications}
+              </span>
+            ) : null}
+          </button>
+
           <div
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
@@ -329,6 +377,7 @@ function AppContent() {
         </div>
 
         <div className="hp-screen-container">
+          <NotificationBanner />
           {renderScreen()}
         </div>
 
@@ -422,10 +471,8 @@ function AppContent() {
 
 export default function Home() {
   return (
-    <HPProvider>
-      <ErrorBoundary>
-        <AppContent />
-      </ErrorBoundary>
-    </HPProvider>
+    <ErrorBoundary>
+      <AppContent />
+    </ErrorBoundary>
   );
 }

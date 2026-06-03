@@ -30,6 +30,7 @@
     "react-dom": "19.2.4",
     "react-leaflet": "^5.0.0",
     "uuid": "^14.0.0",
+    "web-push": "^3.6.7",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
@@ -39,6 +40,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/uuid": "^10.0.0",
+    "@types/web-push": "^3.6.4",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "tsx": "^4.21.0",

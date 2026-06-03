@@ -180,6 +180,10 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         const res = await fetch(`/api/storage?userId=${userId}`);
         const data = await res.json();
         if (data.error) throw new Error(`${data.error}: ${data.details || ''}`);
+        
+        // Cache successfully fetched data
+        localStorage.setItem(`hp_cached_state_${userId}`, JSON.stringify(data));
+
         skipNextSyncRef.current = true;
         if (data.state) {
           // Sanitize habits to ensure 'done' status matches today's date in completedDates
@@ -233,8 +237,34 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
           });
         }
         if (data.user) setUser(data.user);
-      } catch (error) {
-        console.error("Failed to fetch state:", error);
+      } catch (error: any) {
+        const isNetworkError = error instanceof TypeError || (error.message && (
+          error.message.toLowerCase().includes('failed to fetch') || 
+          error.message.toLowerCase().includes('networkerror') ||
+          error.message.toLowerCase().includes('fetch failed')
+        ));
+        if (isNetworkError) {
+          console.warn("Failed to fetch state (network issue), falling back to local cache:", error.message || error);
+        } else {
+          console.error("Failed to fetch state, falling back to local cache:", error);
+        }
+        // Fallback to local storage cache
+        try {
+          const cachedDataRaw = localStorage.getItem(`hp_cached_state_${userId}`);
+          if (cachedDataRaw) {
+            const data = JSON.parse(cachedDataRaw);
+            skipNextSyncRef.current = true;
+            if (data.state) {
+              setState(data.state);
+            }
+            if (data.user) {
+              setUser(data.user);
+            }
+            console.log("Loaded state successfully from offline local cache.");
+          }
+        } catch (e) {
+          console.error("Failed to parse local cache state:", e);
+        }
       } finally {
         setLoading(false);
         loginInProgressRef.current = false; // login transition complete, safe to sync again
@@ -281,8 +311,17 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
           const data = await res.json();
           setState(prev => prev ? { ...prev, managerData: data } : null);
         }
-      } catch (e) {
-        console.error("Dashboard fetch error:", e);
+      } catch (e: any) {
+        const isNetworkError = e instanceof TypeError || (e.message && (
+          e.message.toLowerCase().includes('failed to fetch') || 
+          e.message.toLowerCase().includes('networkerror') ||
+          e.message.toLowerCase().includes('fetch failed')
+        ));
+        if (isNetworkError) {
+          console.warn("Dashboard fetch error (network issue):", e.message || e);
+        } else {
+          console.error("Dashboard fetch error:", e);
+        }
       } finally {
         activeFetchDashboardsRef.current = null;
       }
@@ -353,14 +392,24 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshSurveys = useCallback(async () => {
+    if (typeof window !== "undefined" && !navigator.onLine) return;
     try {
       const res = await fetch('/api/hr/surveys');
       const data = await res.json();
       if (data.surveys) {
         setState(prev => prev ? { ...prev, surveys: data.surveys } : null);
       }
-    } catch (e) {
-      console.error("Failed to refresh surveys:", e);
+    } catch (e: any) {
+      const isNetworkError = e instanceof TypeError || (e.message && (
+        e.message.toLowerCase().includes('failed to fetch') || 
+        e.message.toLowerCase().includes('networkerror') ||
+        e.message.toLowerCase().includes('fetch failed')
+      ));
+      if (isNetworkError) {
+        console.warn("Failed to refresh surveys (network issue):", e.message || e);
+      } else {
+        console.error("Failed to refresh surveys:", e);
+      }
     }
   }, []);
 
@@ -514,8 +563,17 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         updateUser({ points: data.newTotal, coins: data.newTotal });
         updateState((s: any) => ({ ...s, points: data.newTotal, coins: data.newTotal }));
       }
-    } catch (e) {
-      console.error("Failed to award XP:", e);
+    } catch (e: any) {
+      const isNetworkError = e instanceof TypeError || (e.message && (
+        e.message.toLowerCase().includes('failed to fetch') || 
+        e.message.toLowerCase().includes('networkerror') ||
+        e.message.toLowerCase().includes('fetch failed')
+      ));
+      if (isNetworkError) {
+        console.warn("Failed to award XP (network issue):", e.message || e);
+      } else {
+        console.error("Failed to award XP:", e);
+      }
     }
   }, [updateUser, updateState]);
 
@@ -640,8 +698,17 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
             const errData = await response.json().catch(() => ({}));
             console.error("Sync failed:", errData.error || response.statusText);
           }
-        } catch (e) {
-          console.error("Sync error:", e);
+        } catch (e: any) {
+          const isNetworkError = e instanceof TypeError || (e.message && (
+            e.message.toLowerCase().includes('failed to fetch') || 
+            e.message.toLowerCase().includes('networkerror') ||
+            e.message.toLowerCase().includes('fetch failed')
+          ));
+          if (isNetworkError) {
+            console.warn("Sync error (network issue):", e.message || e);
+          } else {
+            console.error("Sync error:", e);
+          }
         } finally {
           setSyncing(false);
         }

@@ -23,12 +23,25 @@ export default function AttendanceWidget({ openModal }: AttendanceWidgetProps) {
   }, []);
 
   const fetchStatus = async () => {
+    if (typeof window !== "undefined" && !navigator.onLine) {
+      setLoading(false);
+      return;
+    }
     try {
       const res = await fetch(`/api/attendance/summary?userId=${user?.id}`);
       const data = await res.json();
       if (data.today) setTodayData(data.today);
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      const isNetworkError = e instanceof TypeError || (e.message && (
+        e.message.toLowerCase().includes('failed to fetch') || 
+        e.message.toLowerCase().includes('networkerror') ||
+        e.message.toLowerCase().includes('fetch failed')
+      ));
+      if (isNetworkError) {
+        console.warn("Failed to fetch attendance status (network issue):", e.message || e);
+      } else {
+        console.error(e);
+      }
     }
     setLoading(false);
   };
