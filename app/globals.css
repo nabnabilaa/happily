@@ -203,8 +203,8 @@ div, section, article, aside, nav, header, footer, main {
 /* PWA Components */
 .hp-install-btn {
   position: fixed;
-  top: 16px;
-  right: 16px;
+  left: 16px;
+  bottom: 100px;
   background: var(--hp-ink);
   color: var(--hp-yellow);
   padding: 8px 16px;
@@ -221,9 +221,17 @@ div, section, article, aside, nav, header, footer, main {
   transition: transform 0.2s ease, background 0.2s ease;
 }
 
-.hp-install-btn:hover {
-  transform: translateY(-2px);
-  background: #000000;
+@media (min-width: 768px) {
+  .hp-install-btn {
+    left: 24px;
+    bottom: 24px;
+  }
+}
+
+@media (hover: hover) {
+  .hp-install-btn:hover {
+    background: #000000;
+  }
 }
 
 /* Responsive Layout */

@@ -306,6 +306,7 @@
 
       if (settingsUserCard) settingsUserCard.style.display = 'none';
     }
+    if (typeof renderAll === 'function') renderAll();
   }
 
   function applyExtensionEnabled() {
@@ -1108,14 +1109,14 @@
   transition:background .2s,color .2s, transform .2s; border:none !important;
 }
 #fb-settings-btn:hover { background:rgba(31,29,27,.10) !important; transform:rotate(45deg); }
-#fb-theme-toggle {
+#fb-theme-toggle, #fb-web-btn {
   width:32px !important; height:32px !important; border-radius:10px !important; flex-shrink:0 !important;
   background:var(--fb-line) !important; color:var(--fb-ink-mute) !important;
   cursor:pointer !important; font-size:14px !important;
   display:flex !important; align-items:center !important; justify-content:center !important;
   transition:background .2s,color .2s; border:none !important;
 }
-#fb-theme-toggle:hover { background:rgba(31,29,27,.10) !important; }
+#fb-theme-toggle:hover, #fb-web-btn:hover { background:rgba(31,29,27,.10) !important; }
 
 /* Identity row */
 #fb-identity-row {
@@ -2723,7 +2724,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
 .fb-settings-user-meta {
   color: var(--fb-ink-mute) !important;
 }
-#fb-x:hover {
+#fb-x:hover, #fb-settings-btn:hover, #fb-theme-toggle:hover, #fb-web-btn:hover {
   background: var(--fb-line-soft) !important;
   color: var(--fb-ink) !important;
 }
@@ -2792,6 +2793,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
         <span class="fb-pill" id="fb-spill">IDLE</span>
       </div>
       <div id="fb-hdr-r">
+        <button id="fb-web-btn" title="Buka Website Happily"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></button>
         <button id="fb-theme-toggle" title="Ubah Tema"></button>
         <button id="fb-settings-btn" title="Pengaturan"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
         <button id="fb-x"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
@@ -2815,6 +2817,16 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
     <button class="fb-tab"     data-tab="chat"><span class="ti">💬</span>Chat</button>
   </div>
   <div id="fb-body">
+
+    <!-- LOCKED VIEW -->
+    <div class="fb-pane" id="pane-locked" style="display:none; flex-direction:column !important; align-items:center !important; justify-content:center !important; text-align:center !important; padding:45px 24px !important; gap:20px !important;">
+      <div style="width:72px !important; height:72px !important; border-radius:24px !important; background:rgba(74,144,226,0.1) !important; display:flex !important; align-items:center !important; justify-content:center !important; font-size:32px !important; animation:melayangHalus 3s infinite ease-in-out !important; border:1px dashed rgba(74,144,226,0.3) !important;">🔒</div>
+      <div style="display:flex !important; flex-direction:column !important; gap:8px !important;">
+        <div style="font-size:17px !important; font-weight:800 !important; color:var(--fb-ink) !important; letter-spacing:-0.4px !important;">FocusBuddy Terkunci</div>
+        <div style="font-size:12.5px !important; color:var(--fb-ink-mute) !important; line-height:1.6 !important; max-width:320px !important; margin:0 auto !important;">Kamu belum login ke Happily. Silakan buka website Happily dan login terlebih dahulu untuk mengaktifkan semua fitur interaktif.</div>
+      </div>
+      <button id="fb-locked-login-btn" class="fb-btn" style="padding:12px 28px !important; font-size:13.5px !important; border-radius:12px !important; background:linear-gradient(135deg, var(--fb-blue), #86C0A9) !important; border:none !important; color:white !important; font-weight:800 !important; cursor:pointer !important; box-shadow:0 4px 15px rgba(74,144,226,0.3) !important; transition:all 0.2s ease-in-out !important; margin-top:8px !important;">🔗 Buka & Login Happily</button>
+    </div>
 
     <!-- TASKS -->
     <div class="fb-pane show" id="pane-tasks">
@@ -4021,6 +4033,22 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   })
   $('fb-toast-x').addEventListener('click', () => { toast.classList.remove('show'); const actBtn = $('fb-toast-action'); if (actBtn) actBtn.style.display = 'none' })
 
+  const webBtn = $('fb-web-btn');
+  if (webBtn) {
+    webBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      window.open('https://happily-flowbee.vercel.app/', '_blank');
+    });
+  }
+
+  const lockedLoginBtn = $('fb-locked-login-btn');
+  if (lockedLoginBtn) {
+    lockedLoginBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      window.open('https://happily-flowbee.vercel.app/', '_blank');
+    });
+  }
+
   // Settings Panel wiring
   const settingsPanel = root.querySelector('#fb-settings-panel');
   const settingsBtn = $('fb-settings-btn');
@@ -4123,6 +4151,12 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   function buildTabs() {
     const tabsEl = root.querySelector('#fb-tabs');
     if (!tabsEl) return;
+    
+    if (!flowbeeUserId) {
+      tabsEl.style.setProperty('display', 'none', 'important');
+      return;
+    }
+    tabsEl.style.setProperty('display', 'flex', 'important');
     
     const config = window.__FB ? window.__FB.getRoleConfig() : {
       tabs: [
@@ -5914,6 +5948,28 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   // RENDER HELPERS
   // ═══════════════════════════════════════════════════════════════
   function renderAll() { 
+    const tabsEl = root.querySelector('#fb-tabs');
+    const lockedPane = root.querySelector('#pane-locked');
+    
+    if (!flowbeeUserId) {
+      if (tabsEl) tabsEl.style.setProperty('display', 'none', 'important');
+      root.querySelectorAll('.fb-pane').forEach(p => p.classList.remove('show'));
+      if (lockedPane) {
+        lockedPane.classList.add('show');
+        lockedPane.style.setProperty('display', 'flex', 'important');
+      }
+      return;
+    }
+
+    if (lockedPane) {
+      lockedPane.classList.remove('show');
+      lockedPane.style.setProperty('display', 'none', 'important');
+    }
+    if (tabsEl) {
+      tabsEl.style.setProperty('display', 'flex', 'important');
+      buildTabs();
+    }
+
     renderTasks(); 
     renderNotes(); 
     renderAlarms(); 
@@ -5933,6 +5989,10 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   }
   
   function renderTab(t) {
+    if (!flowbeeUserId) {
+      renderAll();
+      return;
+    }
     if (t === 'tasks') renderTasks()
     if (t === 'notes') renderNotes()
     if (t === 'timer') {

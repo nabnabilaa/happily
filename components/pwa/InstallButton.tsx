@@ -8,6 +8,7 @@ export default function InstallButton() {
   const [isInstalled, setIsInstalled] = useState(false);
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   
   const dragRef = useRef<{ startX: number; startY: number; initialX: number; initialY: number } | null>(null);
 
@@ -88,14 +89,15 @@ export default function InstallButton() {
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className="hp-install-btn"
       id="install-button"
       style={{
-        right: 16 - pos.x,
-        top: 80 + pos.y,
+        transform: `translate(${pos.x}px, ${pos.y}px)${!isDragging && isHovered ? ' translateY(-2px)' : ''}`,
         touchAction: 'none',
         cursor: isDragging ? 'grabbing' : 'pointer',
-        transition: isDragging ? 'none' : 'transform 0.2s ease, background 0.2s ease, right 0.2s ease, top 0.2s ease',
+        transition: isDragging ? 'none' : 'transform 0.2s ease, background 0.2s ease',
         zIndex: 1001, // Higher than role badge (zIndex: 40)
       }}
     >
