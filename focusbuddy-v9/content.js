@@ -5671,9 +5671,14 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
     return new Date(ts).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
   }
 
+  let _lastRenderNotesState = '';
   function renderNotes(filter) {
+    const q = (filter !== undefined ? filter : ($('fb-note-search')?.value || '')).toLowerCase().trim()
+    const stateStr = JSON.stringify(ctx.notes || []) + '::' + q;
+    if (_lastRenderNotesState === stateStr) return;
+    _lastRenderNotesState = stateStr;
+
     const list = $('fb-note-list')
-    const q = (filter || $('fb-note-search')?.value || '').toLowerCase().trim()
     let notes = [...(ctx.notes || [])]
     if (q) notes = notes.filter(n => n.text.toLowerCase().includes(q) || (n.title || '').toLowerCase().includes(q))
 
@@ -6904,6 +6909,40 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   let chatPollIv = null;
   let chatChannelPollIv = null; // polls channel list (unread counts) when chat tab active
 
+  function renderChannelItemsDom(channels, list) {
+    if (!channels.length) {
+      list.innerHTML = `<div class="fb-empty">Belum ada percakapan.</div>`;
+      return;
+    }
+    list.innerHTML = '';
+    channels.forEach(ch => {
+      const div = document.createElement('div');
+      div.style.cssText = 'padding:12px 10px;border-bottom:1px solid rgba(31,29,27,0.06);cursor:pointer;display:flex;gap:12px;align-items:center;transition:background 0.2s;border-radius:0;';
+      div.onmouseover = () => div.style.background = 'rgba(31,29,27,0.03)';
+      div.onmouseout = () => div.style.background = 'transparent';
+      
+      let dName = ch.name;
+      if (!dName || String(dName).toLowerCase() === 'null') {
+        dName = 'Pengguna Tidak Dikenal';
+      }
+
+      div.innerHTML = `
+        <div style="font-size:24px;line-height:1;">${ch.emoji || '💬'}</div>
+        <div style="flex:1;overflow:hidden;">
+          <div style="color:var(--fb-ink);font-weight:700;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;">${esc(dName)}</div>
+          <div style="color:var(--fb-ink-mute);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(ch.lastMessage || 'Mulai percakapan')}</div>
+        </div>
+        ${ch.unreadCount ? `<div style="background:#FA5252;color:white;font-size:10px;font-weight:bold;padding:2px 8px;border-radius:4px;">${ch.unreadCount}</div>` : ''}
+      `;
+      div.onclick = () => {
+        chatActiveChannelId = ch.id;
+        $('fb-chat-active-name').textContent = dName;
+        renderChat();
+      };
+      list.appendChild(div);
+    });
+  }
+
   async function renderChat() {
     const list = $('fb-chat-channel-list');
     const msgView = $('fb-chat-messages-view');
@@ -6915,15 +6954,17 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       chView.style.display = 'none';
       msgView.style.display = 'flex';
       renderChatMessages(chatActiveChannelId);
-      // ── Poll active messages every 3s ──
+      
+      // Stop channel poll, start message poll
+      clearInterval(chatChannelPollIv); chatChannelPollIv = null;
       if (!chatPollIv) chatPollIv = setInterval(() => renderChatMessages(chatActiveChannelId, true), 3000);
-      // ── Also keep channel list (unread badges) fresh every 10s ──
-      if (!chatChannelPollIv) chatChannelPollIv = setInterval(() => renderChatChannelList(true), 10000);
       return;
     }
 
+    // Stop message poll, start channel poll
     clearInterval(chatPollIv); chatPollIv = null;
-    clearInterval(chatChannelPollIv); chatChannelPollIv = null;
+    if (!chatChannelPollIv) chatChannelPollIv = setInterval(() => renderChatChannelList(true), 10000);
+
     chView.style.display = 'block';
     msgView.style.display = 'none';
 
@@ -6932,55 +6973,30 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       return;
     }
 
-    list.innerHTML = `<div class="fb-empty">Memuat chat...</div>`;
+    // Hanya tampilkan "Memuat" jika list belum ada isinya (mencegah glitch berkedip)
+    if (!list.innerHTML || list.innerHTML.trim() === '') {
+      list.innerHTML = `<div class="fb-empty">Memuat chat...</div>`;
+    }
+
     try {
       const res = await window.__FB.fetch(`${FLOWBEE_API.replace('/ext', '/chat')}?userId=${flowbeeUserId}`);
       const data = await res.json();
-      const channels = data.channels || [];
-      if (!channels.length) {
-        list.innerHTML = `<div class="fb-empty">Belum ada percakapan.</div>`;
-        return;
-      }
-      list.innerHTML = '';
-      channels.forEach(ch => {
-        const div = document.createElement('div');
-        div.style.cssText = 'padding:12px 10px;border-bottom:1px solid rgba(31,29,27,0.06);cursor:pointer;display:flex;gap:12px;align-items:center;transition:background 0.2s;border-radius:0;';
-        div.onmouseover = () => div.style.background = 'rgba(31,29,27,0.03)';
-        div.onmouseout = () => div.style.background = 'transparent';
-        div.innerHTML = `
-          <div style="font-size:24px;line-height:1;">${ch.emoji || '💬'}</div>
-          <div style="flex:1;overflow:hidden;">
-            <div style="color:#1F1D1B;font-weight:700;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;">${esc(ch.name)}</div>
-            <div style="color:#8A837C;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(ch.lastMessage || 'Mulai percakapan')}</div>
-          </div>
-          ${ch.unreadCount ? `<div style="background:#ff6b6b;color:white;font-size:10px;font-weight:bold;padding:2px 8px;border-radius:0;">${ch.unreadCount}</div>` : ''}
-        `;
-        div.onclick = () => {
-          chatActiveChannelId = ch.id;
-          $('fb-chat-active-name').textContent = ch.name;
-          renderChat();
-        };
-        list.appendChild(div);
-      });
+      renderChannelItemsDom(data.channels || [], list);
     } catch (e) {
-      list.innerHTML = `<div class="fb-empty" style="color:#ff6b6b">Gagal memuat chat<br><small style="color:#8A837C;font-size:10px;display:block;margin-top:4px;">${e.message || String(e)}</small></div>`;
+      list.innerHTML = `<div class="fb-empty" style="color:#FA5252">Gagal memuat chat<br><small style="color:var(--fb-ink-mute);font-size:10px;display:block;margin-top:4px;">${e.message || String(e)}</small></div>`;
     }
   }
 
   // ── Fetch and re-render only the channel list (for unread badge updates) ──
   async function renderChatChannelList(silent = false) {
     if (!flowbeeUserId) return;
+    const list = $('fb-chat-channel-list');
+    if (!list || chatActiveChannelId) return; // only update when on channel list view
+    
     try {
       const res = await window.__FB.fetch(`${FLOWBEE_API.replace('/ext', '/chat')}?userId=${flowbeeUserId}`);
       const data = await res.json();
-      const channels = data.channels || [];
-      const list = $('fb-chat-channel-list');
-      if (!list || chatActiveChannelId) return; // only update when on channel list view
-      // Re-render list in place (silent refresh)
-      if (!silent || channels.length) {
-        // Reuse the full renderChat() flow only if not in message view
-        await renderChat();
-      }
+      renderChannelItemsDom(data.channels || [], list);
     } catch (e) { /* offline — silent */ }
   }
 

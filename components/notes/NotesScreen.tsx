@@ -51,11 +51,6 @@ export default function NotesScreen() {
   useEffect(() => {
     if (user?.id) {
       fetchData();
-      const handleUpdate = () => {
-        fetchData();
-      };
-      window.addEventListener('hp_db_update', handleUpdate);
-      return () => window.removeEventListener('hp_db_update', handleUpdate);
     }
   }, [user?.id]);
 
