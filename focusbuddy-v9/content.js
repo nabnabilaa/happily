@@ -62,6 +62,9 @@
     lastActivity: Date.now(), clickCount: 0, clickWindowStart: 0,
     rubScore: 0, rubLastTime: 0,
     deletedTaskIds: [], deletedNoteIds: [],
+    focusTaskId: null, focusProgress: 0, focusIntention: "",
+    habits: [],
+    reflectionDoneDate: "",
   }
 
   function today() {
@@ -115,7 +118,12 @@
         alarms: ctx.alarms,
         deletedTaskIds: ctx.deletedTaskIds || [],
         deletedNoteIds: ctx.deletedNoteIds || [],
-        flowbeeNotifCache: flowbeeNotifCache
+        flowbeeNotifCache: flowbeeNotifCache,
+        focusTaskId: ctx.focusTaskId,
+        focusProgress: ctx.focusProgress,
+        focusIntention: ctx.focusIntention,
+        habits: ctx.habits || [],
+        reflectionDoneDate: ctx.reflectionDoneDate || "",
       }
     })
   }
@@ -128,6 +136,11 @@
         ctx.deletedTaskIds = r.fb3.deletedTaskIds || []
         ctx.deletedNoteIds = r.fb3.deletedNoteIds || []
         flowbeeNotifCache = r.fb3.flowbeeNotifCache || []
+        ctx.focusTaskId = r.fb3.focusTaskId !== undefined ? r.fb3.focusTaskId : null
+        ctx.focusProgress = r.fb3.focusProgress !== undefined ? r.fb3.focusProgress : 0
+        ctx.focusIntention = r.fb3.focusIntention !== undefined ? r.fb3.focusIntention : ""
+        ctx.habits = r.fb3.habits || []
+        ctx.reflectionDoneDate = r.fb3.reflectionDoneDate || ""
       }
       cb && cb()
     })
@@ -306,6 +319,10 @@
 
       if (settingsUserCard) settingsUserCard.style.display = 'none';
     }
+    const tutupHariBtn = $('fb-tutup-hari-btn');
+    if (tutupHariBtn) {
+      tutupHariBtn.style.display = flowbeeUser ? 'block' : 'none';
+    }
     if (typeof renderAll === 'function') renderAll();
   }
 
@@ -352,6 +369,7 @@
     try {
       let localTasks = []
       let localNotes = []
+      let localHabits = []
       let localDeletedTaskIds = []
       let localDeletedNoteIds = []
 
@@ -370,13 +388,27 @@
           targetDate: t.targetDate || null,
           kpiId: t.kpiId || null,
           goalId: t.goalId || null,
+          timeTracked: t.timeTracked || 0,
+          timerStartedAt: t.timerStartedAt || null,
         }))
 
         // Push local notes
         localNotes = ctx.notes.map(n => ({
           id: String(n.id), title: n.title || '', content: n.text || n.content || '',
           visibility: n.visibility || 'private',
+          sharedWithUsers: n.sharedWithUsers || [],
+          sharedPermission: n.sharedPermission || 'view',
           relatedEventId: n.relatedEventId || null,
+        }))
+
+        // Push local habits
+        localHabits = (ctx.habits || []).map(h => ({
+          name: h.name,
+          streak: h.streak || 0,
+          target: h.target || 30,
+          done: !!h.done,
+          glyph: h.glyph || 'check',
+          completedDates: h.completedDates || []
         }))
         
         localDeletedTaskIds = ctx.deletedTaskIds || []
@@ -390,9 +422,13 @@
           userId: flowbeeUserId,
           tasks: localTasks,
           notes: localNotes,
+          habits: localHabits,
           calendarRequest: true, // Request upcoming calendar events
           deletedTaskIds: localDeletedTaskIds,
-          deletedNoteIds: localDeletedNoteIds
+          deletedNoteIds: localDeletedNoteIds,
+          focusTaskId: ctx.focusTaskId,
+          focusProgress: ctx.focusProgress,
+          focusIntention: ctx.focusIntention,
         })
       })
       const data = await res.json()
@@ -408,13 +444,34 @@
         if (isHappilyWebsite() && !pullOnly) {
           window.postMessage({ type: 'FLOWBEE_DB_UPDATE' }, '*');
         }
+        if (data.allUsers) {
+          noteAllUsers = data.allUsers;
+        }
       }
 
+      let focusChanged = false;
       // Update user identity from server
       if (data.user) {
         flowbeeUser = data.user;
+        const nextFocusId = data.user.focusTaskId ? String(data.user.focusTaskId) : null;
+        const nextFocusProgress = Number(data.user.focusProgress) || 0;
+        const nextFocusIntention = data.user.focusIntention || "";
+        
+        if (String(ctx.focusTaskId) !== String(nextFocusId) || 
+            ctx.focusProgress !== nextFocusProgress || 
+            ctx.focusIntention !== nextFocusIntention) {
+          ctx.focusTaskId = nextFocusId;
+          ctx.focusProgress = nextFocusProgress;
+          ctx.focusIntention = nextFocusIntention;
+          focusChanged = true;
+        }
         try { chrome.storage.local.set({ flowbee_user: data.user }); } catch(e) {}
         updateIdentityUI();
+      }
+
+      if (focusChanged) {
+        save();
+        renderTasks();
       }
 
       // Re-render role-specific panels if active
@@ -440,6 +497,8 @@
               proofLink: wt.proofLink || '', progress: wt.progress || 0,
               isProject: wt.isProject || false, goalId: wt.goalId, kpiId: wt.kpiId,
               description: wt.description || '', targetDate: wt.targetDate || '',
+              timeTracked: Number(wt.timeTracked) || 0,
+              timerStartedAt: wt.timerStartedAt || null,
             })
             changed = true;
           } else {
@@ -450,6 +509,8 @@
                 existing.progress !== (wt.progress || 0) ||
                 existing.description !== (wt.description || '') ||
                 existing.targetDate !== (wt.targetDate || '') ||
+                existing.timeTracked !== (Number(wt.timeTracked) || 0) ||
+                existing.timerStartedAt !== (wt.timerStartedAt || null) ||
                 existing.date !== (wt.date || today())) {
               existing.done = wt.done
               existing.text = wt.title
@@ -457,6 +518,8 @@
               existing.progress = wt.progress || 0
               existing.description = wt.description || ''
               existing.targetDate = wt.targetDate || ''
+              existing.timeTracked = Number(wt.timeTracked) || 0
+              existing.timerStartedAt = wt.timerStartedAt || null
               existing.date = wt.date || today()
               changed = true;
             }
@@ -479,8 +542,9 @@
           changed = true;
         }
 
-        if (changed) {
+        if (changed || focusChanged) {
           renderTasks();
+          renderCoachInsights();
         }
       }
 
@@ -497,22 +561,37 @@
               title: wn.title || '',
               text: wn.content || '',
               visibility: wn.visibility || 'private',
+              sharedWithUsers: wn.sharedWithUsers || [],
+              sharedPermission: wn.sharedPermission || 'view',
               relatedEventId: wn.relatedEventId || null,
               createdAt: wn.createdAt ? new Date(wn.createdAt).getTime() : Date.now(),
               pinned: false,
-              color: NOTE_COLORS[0].id
+              color: NOTE_COLORS[0].id,
+              userId: wn.userId,
+              authorName: wn.authorName || 'SAYA',
+              authorDepartment: wn.authorDepartment || ''
             })
             changed = true;
           } else {
             // Update fields if changed
             if (existing.text !== (wn.content || '') || 
-                existing.title !== (wn.title || '') ||
-                existing.visibility !== (wn.visibility || 'private') ||
-                existing.relatedEventId !== (wn.relatedEventId || null)) {
+              existing.title !== (wn.title || '') ||
+              existing.visibility !== (wn.visibility || 'private') ||
+              JSON.stringify(existing.sharedWithUsers || []) !== JSON.stringify(wn.sharedWithUsers || []) ||
+              existing.sharedPermission !== (wn.sharedPermission || 'view') ||
+              existing.relatedEventId !== (wn.relatedEventId || null) ||
+              existing.userId !== wn.userId ||
+              existing.authorName !== (wn.authorName || 'SAYA') ||
+              existing.authorDepartment !== (wn.authorDepartment || '')) {
               existing.text = wn.content || ''
               existing.title = wn.title || ''
               existing.visibility = wn.visibility || 'private'
+              existing.sharedWithUsers = wn.sharedWithUsers || []
+              existing.sharedPermission = wn.sharedPermission || 'view'
               existing.relatedEventId = wn.relatedEventId || null
+              existing.userId = wn.userId
+              existing.authorName = wn.authorName || 'SAYA'
+              existing.authorDepartment = wn.authorDepartment || ''
               changed = true;
             }
           }
@@ -536,6 +615,19 @@
 
         if (changed) {
           renderNotes();
+        }
+      }
+
+      // Merge: web habits
+      if (data.habits) {
+        let changed = false;
+        const isDifferent = JSON.stringify(ctx.habits) !== JSON.stringify(data.habits);
+        if (isDifferent) {
+          ctx.habits = data.habits;
+          changed = true;
+        }
+        if (changed) {
+          renderHabits();
         }
       }
 
@@ -607,6 +699,30 @@
     'font-family:Outfit,system-ui,sans-serif!important',
     'width:0!important', 'height:0!important',
   ].join(';')
+
+  // Attach Shadow DOM for style and DOM isolation
+  const shadow = root.attachShadow({ mode: 'open' })
+
+  // Inner root container that matches CSS selectors (#fb-root)
+  const innerRoot = document.createElement('div')
+  innerRoot.id = 'fb-root'
+  shadow.appendChild(innerRoot)
+
+  // Redirect classList operations to innerRoot
+  Object.defineProperty(root, 'classList', {
+    get() { return innerRoot.classList; }
+  });
+
+  // Redirect selector queries & appends to innerRoot/shadow
+  root.querySelector = shadow.querySelector.bind(shadow)
+  root.querySelectorAll = shadow.querySelectorAll.bind(shadow)
+  root.appendChild = innerRoot.appendChild.bind(innerRoot)
+
+  // Auto-move styling injected by modules into the shadow DOM
+  const teamStyles = document.getElementById('fb-team-pane-styles')
+  if (teamStyles) shadow.appendChild(teamStyles)
+  const peopleStyles = document.getElementById('fb-people-pane-styles')
+  if (peopleStyles) shadow.appendChild(peopleStyles)
   
   // Theme sync function — supports manual override via fbTheme
   let _manualTheme = null; // null = auto, 'light', 'dark'
@@ -666,7 +782,7 @@
   // ═══════════════════════════════════════════════════════════════
   // HTML + CSS
   // ═══════════════════════════════════════════════════════════════
-  root.innerHTML = `
+  innerRoot.innerHTML = `
 <style>
 #fb-root {
   --fb-yellow: #FDB913 !important;
@@ -1637,11 +1753,74 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   box-shadow: 0 4px 16px rgba(0,0,0,.03) !important;
   box-sizing: border-box !important;
 }
+.fb-task-card.focused {
+  border-color: var(--fb-yellow) !important;
+  box-shadow: 0 8px 24px rgba(253, 185, 19, 0.15), 0 4px 16px rgba(0,0,0,.03) !important;
+}
 .fb-task-card.done { border-left-color: var(--fb-line) !important; }
 .fb-task-card:hover { transform: translateY(-3px) !important; box-shadow: 0 12px 28px rgba(0,0,0,.06) !important; border-color: var(--fb-line) !important; }
 .fb-task-card.done { opacity: .60 !important }
 .fb-task-card.done .fb-task-card-txt { text-decoration: line-through !important; color: var(--fb-ink-mute) !important }
 .fb-task-card.removing { opacity: 0 !important; transform: translateX(12px) scale(.95) !important }
+
+/* ── Daily Task Actions ── */
+.fb-task-actions-group {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  flex-shrink: 0 !important;
+}
+.fb-task-action-btn {
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 15px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: none !important;
+  cursor: pointer !important;
+  font-size: 13px !important;
+  transition: all 0.2s ease !important;
+  padding: 0 !important;
+  background: var(--fb-line-soft) !important;
+  color: var(--fb-ink) !important;
+  box-sizing: border-box !important;
+}
+.fb-task-action-btn:hover {
+  transform: scale(1.15) !important;
+}
+.fb-task-action-btn:active {
+  transform: scale(0.95) !important;
+}
+.fb-task-action-btn.play-btn {
+  background: rgba(81, 207, 102, 0.1) !important;
+  color: #2F9E44 !important;
+}
+.fb-task-action-btn.play-btn.running {
+  background: rgba(81, 207, 102, 0.25) !important;
+  box-shadow: 0 0 8px rgba(81, 207, 102, 0.4) !important;
+  animation: fbPulse 1.5s infinite !important;
+}
+.fb-task-action-btn.focus-btn {
+  background: rgba(253, 185, 19, 0.1) !important;
+  color: #D4980A !important;
+}
+.fb-task-action-btn.del-btn {
+  background: rgba(232, 139, 125, 0.1) !important;
+  color: #E88B7D !important;
+}
+.fb-task-action-btn.del-btn:hover {
+  background: rgba(232, 139, 125, 0.25) !important;
+}
+.fb-task-time-tracked-tag.running {
+  animation: fbPulse 1.5s infinite !important;
+}
+
+@keyframes fbPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
 
 /* Checkbox */
 .fb-task-chk2 {
@@ -1969,6 +2148,64 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   pointer-events: none !important;
   opacity: .45 !important;
 }
+
+/* Rich Text Editor */
+.fb-rte-btn {
+  width: 28px !important; height: 28px !important; display: flex !important; align-items: center !important; justify-content: center !important;
+  border: 1px solid var(--fb-line) !important; border-radius: 6px !important; background: transparent !important;
+  color: var(--fb-ink) !important; font-size: 12px !important; cursor: pointer !important; transition: all .15s !important;
+  font-family: inherit !important; padding: 0 !important; line-height: 1 !important;
+}
+.fb-rte-btn:hover { background: var(--fb-blue-soft) !important; color: var(--fb-blue) !important; border-color: var(--fb-blue) !important; }
+.fb-rte-btn.active { background: var(--fb-blue) !important; color: #fff !important; border-color: var(--fb-blue) !important; }
+.fb-rte-editor:empty::before {
+  content: attr(data-placeholder); color: var(--fb-ink-mute) !important; font-style: normal; pointer-events: none;
+}
+.fb-rte-editor:focus { border-color: var(--fb-blue) !important; }
+.fb-rte-editor ul, .fb-rte-editor ol { margin: 4px 0 !important; padding-left: 20px !important; }
+.fb-rte-editor li { margin-bottom: 2px !important; }
+.fb-rte-editor b, .fb-rte-editor strong { font-weight: 800 !important; }
+
+/* Member Picker */
+.fb-mp-dept-hdr {
+  display: flex !important; align-items: center !important; gap: 8px !important;
+  padding: 8px 10px !important; border-radius: 8px !important; background: var(--fb-card) !important;
+  border: 1px solid var(--fb-line) !important; cursor: pointer !important;
+}
+.fb-mp-dept-hdr:hover { border-color: var(--fb-blue) !important; }
+.fb-mp-dept-name { flex:1 !important; font-size: 11.5px !important; font-weight: 700 !important; color: var(--fb-ink) !important; }
+.fb-mp-dept-selectall {
+  padding: 3px 10px !important; border-radius: 6px !important; font-size: 10px !important; font-weight: 800 !important;
+  border: none !important; cursor: pointer !important; transition: all .15s !important;
+}
+.fb-mp-user-row {
+  display: flex !important; align-items: center !important; gap: 10px !important;
+  padding: 7px 10px 7px 24px !important; border-radius: 8px !important; cursor: pointer !important;
+  transition: background .15s !important;
+}
+.fb-mp-user-row:hover { background: rgba(74,144,226,.06) !important; }
+.fb-mp-user-row.selected { background: rgba(74,144,226,.08) !important; }
+.fb-mp-avatar {
+  width: 28px !important; height: 28px !important; border-radius: 50% !important;
+  background: linear-gradient(135deg, var(--fb-blue), #7B6BB5) !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  color: #fff !important; font-size: 11px !important; font-weight: 800 !important; flex-shrink: 0 !important;
+}
+.fb-mp-user-info { flex: 1 !important; min-width: 0 !important; }
+.fb-mp-user-name { font-size: 12px !important; font-weight: 700 !important; color: var(--fb-ink) !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+.fb-mp-user-dept { font-size: 10px !important; color: var(--fb-ink-mute) !important; }
+.fb-mp-chk {
+  width: 18px !important; height: 18px !important; border-radius: 5px !important; flex-shrink: 0 !important;
+  border: 2px solid var(--fb-line) !important; display: flex !important; align-items: center !important; justify-content: center !important;
+  transition: all .15s !important; font-size: 10px !important;
+}
+.fb-mp-chk.checked { background: var(--fb-blue) !important; border-color: var(--fb-blue) !important; color: #fff !important; }
+.fb-mp-tag {
+  padding: 4px 10px !important; border-radius: 6px !important; font-size: 10.5px !important; font-weight: 800 !important;
+  background: var(--fb-blue) !important; color: #fff !important; cursor: pointer !important; white-space: nowrap !important;
+  transition: opacity .15s !important;
+}
+.fb-mp-tag:hover { opacity: .8 !important; }
 
 .fb-note-section-lbl {
   font-size: 9.5px !important;
@@ -2933,6 +3170,25 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       <!-- Task list -->
       <div class="fb-task-list2" id="fb-task-list"></div>
 
+      <!-- Habits list -->
+      <div id="fb-habits-section" style="margin-top: 16px !important; border-top: 1.5px solid var(--fb-line) !important; padding-top: 12px !important; display: none;">
+        <div style="font-size: 11px !important; font-weight: 800 !important; color: var(--fb-ink-mute) !important; text-transform: uppercase !important; letter-spacing: 0.8px !important; margin-bottom: 8px !important; display: flex !important; justify-content: space-between !important; align-items: center !important;">
+          <span>LATIHAN HARIAN (HABITS)</span>
+        </div>
+        <div id="fb-habits-list" style="display: flex !important; flex-direction: column !important; gap: 8px !important;"></div>
+      </div>
+
+      <!-- Tutup Hari Button -->
+      <button id="fb-tutup-hari-btn" class="fb-btn" style="width: 100% !important; margin-top: 16px !important; background: linear-gradient(135deg, #86C0A9, #5c8ee8) !important; color: #fff !important; font-weight: 800 !important; padding: 12px !important; border-radius: 12px !important; font-size: 12.5px !important; border: none !important; cursor: pointer !important; display: none; text-align: center !important; box-shadow: 0 4px 12px rgba(134,192,169,0.2) !important; box-sizing: border-box !important;">📝 Tutup Hari (Reflection & Clock Out)</button>
+
+      <!-- AI Coach Insights Section -->
+      <div id="fb-coach-section" style="margin-top: 16px !important; border-top: 1.5px solid var(--fb-line) !important; padding-top: 12px !important; display: none;">
+        <div style="font-size: 11px !important; font-weight: 800 !important; color: var(--fb-ink-mute) !important; text-transform: uppercase !important; letter-spacing: 0.8px !important; margin-bottom: 8px !important;">
+          💡 REKOMENDASI AI COACH
+        </div>
+        <div id="fb-coach-list" style="display: flex !important; flex-direction: column !important; gap: 8px !important;"></div>
+      </div>
+
     </div>
 
     <!-- TIMER -->
@@ -3035,6 +3291,8 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
 
       </div><!-- /#fb-timer-run-view -->
 
+
+
     </div><!-- /#pane-timer -->
 
     <!-- NOTES -->
@@ -3059,33 +3317,53 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       <!-- Composer (collapsible) -->
       <div id="fb-note-composer-wrap" style="display:none; margin-bottom:22px;">
         <div class="fb-note-composer" style="border-radius:12px; background:var(--fb-card); border:1px solid var(--fb-line); overflow:hidden;">
-          <!-- Side-by-side row: Access & Title -->
-          <div style="display:flex; gap:12px; padding:14px 16px; border-bottom:1px solid var(--fb-line); background:var(--fb-card);">
-            <div style="flex:1; min-width:0;">
-              <div style="font-size:9.5px; font-weight:800; color:var(--fb-ink-mute); letter-spacing:.8px; text-transform:uppercase; margin-bottom:6px;">Akses</div>
+          <!-- Row: Access + Permission -->
+          <div style="padding:14px 16px; border-bottom:1px solid var(--fb-line); background:var(--fb-card);">
+            <div style="font-size:9.5px; font-weight:800; color:var(--fb-ink-mute); letter-spacing:.8px; text-transform:uppercase; margin-bottom:6px;">Akses & Bagikan Catatan</div>
+            <div style="display:flex; gap:10px; align-items:center;">
               <select id="fb-note-vis" class="fb-select"
-                style="width:100% !important; box-sizing:border-box !important; padding:9px 10px !important; display:block !important;">
-                <option value="private">🔒 Pribadi</option>
-                <option value="division">👥 Divisi</option>
-                <option value="company">🏢 Semua</option>
+                style="flex:2; box-sizing:border-box !important; padding:9px 10px !important; display:block !important;">
+                <option value="private">🔒 Pribadi (Hanya Saya)</option>
+                <option value="company">🏢 Seluruh Perusahaan</option>
+                <option value="custom">👥 Pilih Anggota Spesifik...</option>
+              </select>
+              <select id="fb-note-perm" class="fb-select"
+                style="flex:1; box-sizing:border-box !important; padding:9px 10px !important; display:none !important;">
+                <option value="view">👁️ Bisa Lihat</option>
+                <option value="edit">✏️ Bisa Edit</option>
               </select>
             </div>
-            <div style="flex:1.8; min-width:0;">
-              <div style="font-size:9.5px; font-weight:800; color:var(--fb-ink-mute); letter-spacing:.8px; text-transform:uppercase; margin-bottom:6px;">Judul Catatan</div>
-              <input class="fb-note-title-in fb-in" id="fb-note-title" placeholder="Rapat Mingguan, Ide Kreatif, dll." maxlength="80" style="width:100% !important; box-sizing:border-box !important; padding:9px 12px !important; display:block !important;" />
-            </div>
           </div>
-          <!-- Content field -->
+          <!-- Member Picker (hidden by default) -->
+          <div id="fb-note-member-picker" style="display:none; padding:12px 16px; border-bottom:1px solid var(--fb-line); background:var(--fb-card);">
+            <div id="fb-note-member-tags" style="display:none; gap:5px; flex-wrap:wrap; padding:8px 10px; border-radius:10px; background:rgba(74,144,226,.08); margin-bottom:10px;"></div>
+            <input type="text" id="fb-note-member-search" placeholder="🔍 Cari nama atau departemen..." class="fb-in"
+              style="width:100% !important; box-sizing:border-box !important; padding:9px 12px !important; margin-bottom:8px !important; border-radius:10px !important;" />
+            <div id="fb-note-member-list" style="max-height:180px; overflow-y:auto; display:flex; flex-direction:column; gap:3px;"></div>
+          </div>
+          <!-- Title field -->
+          <div style="padding:14px 16px; border-bottom:1px solid var(--fb-line);">
+            <div style="font-size:9.5px; font-weight:800; color:var(--fb-ink-mute); letter-spacing:.8px; text-transform:uppercase; margin-bottom:6px;">Judul Catatan</div>
+            <input class="fb-note-title-in fb-in" id="fb-note-title" placeholder="Rapat Mingguan, Ide Kreatif, dll." maxlength="80" style="width:100% !important; box-sizing:border-box !important; padding:9px 12px !important; display:block !important;" />
+          </div>
+          <!-- Rich text editor -->
           <div style="padding:12px 16px 0;">
             <div style="font-size:9.5px; font-weight:800; color:var(--fb-ink-mute); letter-spacing:.8px; text-transform:uppercase; margin-bottom:5px;">Isi Catatan</div>
-            <textarea id="fb-note-in" class="fb-in" placeholder="Tuliskan semua idemu di sini…" maxlength="800" style="width:100% !important; min-height:90px !important; padding:12px !important; line-height:1.6 !important; resize:none !important; box-sizing:border-box !important;"></textarea>
+            <div id="fb-note-toolbar" style="display:flex; gap:4px; padding:6px 8px; border:1px solid var(--fb-line); border-bottom:none; border-radius:8px 8px 0 0; background:var(--fb-card);">
+              <button type="button" class="fb-rte-btn" data-cmd="bold" title="Bold (Ctrl+B)" style="font-weight:800;">B</button>
+              <button type="button" class="fb-rte-btn" data-cmd="italic" title="Italic (Ctrl+I)" style="font-style:italic;">I</button>
+              <span style="width:1px; background:var(--fb-line); margin:0 4px;"></span>
+              <button type="button" class="fb-rte-btn" data-cmd="insertUnorderedList" title="Bullet List">•</button>
+              <button type="button" class="fb-rte-btn" data-cmd="insertOrderedList" title="Numbered List">1.</button>
+              <span style="width:1px; background:var(--fb-line); margin:0 4px;"></span>
+              <button type="button" class="fb-rte-btn" data-cmd="removeFormat" title="Clear Format" style="font-size:11px;">✕</button>
+            </div>
+            <div id="fb-note-in" contenteditable="true" class="fb-in fb-rte-editor" 
+              style="width:100% !important; min-height:100px !important; max-height:200px !important; overflow-y:auto !important; padding:12px !important; line-height:1.6 !important; box-sizing:border-box !important; border:1px solid var(--fb-line) !important; border-radius:0 0 8px 8px !important; outline:none !important;"
+              data-placeholder="Tuliskan semua idemu di sini…"></div>
           </div>
           <!-- Footer bar -->
-          <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px 14px; border-top:1px solid var(--fb-line); background:var(--fb-card);">
-            <div style="display:flex; align-items:center; gap:12px;">
-              <span class="fb-note-cc2" id="fb-note-cc" style="color:var(--fb-ink-mute); font-size:10.5px; font-weight:600; min-width:42px;">0/800</span>
-              <div class="fb-note-clr-picks" id="fb-note-clrs" style="display:flex; gap:6px;"></div>
-            </div>
+          <div style="display:flex; align-items:center; justify-content:flex-end; padding:12px 16px 14px;">
             <div style="display:flex; gap:8px; align-items:center;">
               <button id="fb-note-cancel" style="padding:8px 14px !important; border-radius:8px !important; border:1px solid var(--fb-line) !important; background:transparent !important; color:var(--fb-ink-mute) !important; font-size:12px !important; font-weight:700 !important; cursor:pointer !important; font-family:inherit !important; transition:all .2s !important;">Batal</button>
               <button id="fb-note-save" style="padding:8px 16px !important; border-radius:8px !important; border:none !important; background:var(--fb-blue) !important; color:#fff !important; font-size:12px !important; font-weight:800 !important; cursor:pointer !important; font-family:inherit !important; transition:all .2s !important; box-shadow:none !important;">Simpan Catatan</button>
@@ -3298,6 +3576,75 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       </div>
     </div>
 
+    <!-- Evening Reflection Overlay Modal -->
+    <div id="fb-reflection-modal" style="display: none; position: absolute !important; inset: 0 !important; background: var(--fb-paper) !important; z-index: 2000000000 !important; padding: 16px !important; overflow-y: auto !important; flex-direction: column !important; gap: 14px !important; box-sizing: border-box !important;">
+      <div style="display: flex !important; justify-content: space-between !important; align-items: center !important; margin-bottom: 4px !important; flex-shrink: 0 !important;">
+        <div style="display: flex !important; align-items: center !important; gap: 6px !important;">
+          <span style="font-size: 20px !important;">🧘‍♂️</span>
+          <span style="font-size: 14px !important; font-weight: 850 !important; color: var(--fb-ink) !important;">Tutup Hari (Clock Out)</span>
+        </div>
+        <button id="fb-reflection-close" style="background: transparent !important; border: none !important; cursor: pointer !important; color: var(--fb-ink-mute) !important; font-size: 16px !important; font-weight: bold !important; padding: 4px !important;">✕</button>
+      </div>
+
+      <div style="background: rgba(134,192,169,0.1) !important; border: 1px solid rgba(134,192,169,0.2) !important; padding: 10px !important; border-radius: 10px !important; font-size: 11.5px !important; color: var(--fb-ink-mute) !important; line-height: 1.4 !important; flex-shrink: 0 !important;">
+        Refleksi singkat membantu menjernihkan pikiran sebelum istirahat.
+      </div>
+
+      <!-- Mood Selector -->
+      <div style="flex-shrink: 0 !important;">
+        <div style="font-size: 11.5px !important; font-weight: 800 !important; color: var(--fb-ink) !important; margin-bottom: 6px !important;">Bagaimana perasaanmu saat ini?</div>
+        <div style="display: flex !important; gap: 6px !important;">
+          <button class="fb-reflect-mood-btn sel" data-mood="joy" style="flex: 1 !important; padding: 10px 4px !important; border-radius: 10px !important; border: 1.5px solid var(--fb-line) !important; background: var(--fb-card) !important; cursor: pointer !important; text-align: center !important; display: block !important;">
+            <div style="font-size: 18px !important; margin-bottom: 3px !important; pointer-events: none !important;">😊</div>
+            <div style="font-size: 9px !important; font-weight: 700 !important; color: var(--fb-ink-mute) !important; pointer-events: none !important;">Senang</div>
+          </button>
+          <button class="fb-reflect-mood-btn" data-mood="calm" style="flex: 1 !important; padding: 10px 4px !important; border-radius: 10px !important; border: 1.5px solid var(--fb-line) !important; background: var(--fb-card) !important; cursor: pointer !important; text-align: center !important; display: block !important;">
+            <div style="font-size: 18px !important; margin-bottom: 3px !important; pointer-events: none !important;">😌</div>
+            <div style="font-size: 9px !important; font-weight: 700 !important; color: var(--fb-ink-mute) !important; pointer-events: none !important;">Tenang</div>
+          </button>
+          <button class="fb-reflect-mood-btn" data-mood="neutral" style="flex: 1 !important; padding: 10px 4px !important; border-radius: 10px !important; border: 1.5px solid var(--fb-line) !important; background: var(--fb-card) !important; cursor: pointer !important; text-align: center !important; display: block !important;">
+            <div style="font-size: 18px !important; margin-bottom: 3px !important; pointer-events: none !important;">😐</div>
+            <div style="font-size: 9px !important; font-weight: 700 !important; color: var(--fb-ink-mute) !important; pointer-events: none !important;">Biasa</div>
+          </button>
+          <button class="fb-reflect-mood-btn" data-mood="tired" style="flex: 1 !important; padding: 10px 4px !important; border-radius: 10px !important; border: 1.5px solid var(--fb-line) !important; background: var(--fb-card) !important; cursor: pointer !important; text-align: center !important; display: block !important;">
+            <div style="font-size: 18px !important; margin-bottom: 3px !important; pointer-events: none !important;">🥱</div>
+            <div style="font-size: 9px !important; font-weight: 700 !important; color: var(--fb-ink-mute) !important; pointer-events: none !important;">Lelah</div>
+          </button>
+          <button class="fb-reflect-mood-btn" data-mood="stress" style="flex: 1 !important; padding: 10px 4px !important; border-radius: 10px !important; border: 1.5px solid var(--fb-line) !important; background: var(--fb-card) !important; cursor: pointer !important; text-align: center !important; display: block !important;">
+            <div style="font-size: 18px !important; margin-bottom: 3px !important; pointer-events: none !important;">😰</div>
+            <div style="font-size: 9px !important; font-weight: 700 !important; color: var(--fb-ink-mute) !important; pointer-events: none !important;">Stres</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Productivity Selector -->
+      <div style="flex-shrink: 0 !important;">
+        <div style="font-size: 11.5px !important; font-weight: 800 !important; color: var(--fb-ink) !important; margin-bottom: 6px !important;">Seberapa produktif kamu hari ini?</div>
+        <div style="display: flex !important; gap: 8px !important;">
+          <button class="fb-reflect-prod-btn sel" data-prod="high" style="flex: 1 !important; padding: 8px !important; border-radius: 10px !important; border: 1.5px solid var(--fb-line) !important; background: var(--fb-card) !important; font-size: 10px !important; font-weight: 700 !important; color: var(--fb-ink-mute) !important; cursor: pointer !important; text-align: center !important; display: block !important;">🤩 Tinggi</button>
+          <button class="fb-reflect-prod-btn" data-prod="mid" style="flex: 1 !important; padding: 8px !important; border-radius: 10px !important; border: 1.5px solid var(--fb-line) !important; background: var(--fb-card) !important; font-size: 10px !important; font-weight: 700 !important; color: var(--fb-ink-mute) !important; cursor: pointer !important; text-align: center !important; display: block !important;">🙂 Sedang</button>
+          <button class="fb-reflect-prod-btn" data-prod="low" style="flex: 1 !important; padding: 8px !important; border-radius: 10px !important; border: 1.5px solid var(--fb-line) !important; background: var(--fb-card) !important; font-size: 10px !important; font-weight: 700 !important; color: var(--fb-ink-mute) !important; cursor: pointer !important; text-align: center !important; display: block !important;">🥱 Rendah</button>
+        </div>
+      </div>
+
+      <!-- Work-Life Balance Selector -->
+      <div style="flex-shrink: 0 !important;">
+        <div style="font-size: 11.5px !important; font-weight: 800 !important; color: var(--fb-ink) !important; margin-bottom: 6px !important;">Bagaimana keseimbangan kerjamu?</div>
+        <div style="display: flex !important; gap: 8px !important;">
+          <button class="fb-reflect-wl-btn sel" data-wl="balanced" style="flex: 1 !important; padding: 8px !important; border-radius: 10px !important; border: 1.5px solid var(--fb-line) !important; background: var(--fb-card) !important; font-size: 10px !important; font-weight: 700 !important; color: var(--fb-ink-mute) !important; cursor: pointer !important; text-align: center !important; display: block !important;">😎 Seimbang</button>
+          <button class="fb-reflect-wl-btn" data-wl="ok" style="flex: 1 !important; padding: 8px !important; border-radius: 10px !important; border: 1.5px solid var(--fb-line) !important; background: var(--fb-card) !important; font-size: 10px !important; font-weight: 700 !important; color: var(--fb-ink-mute) !important; cursor: pointer !important; text-align: center !important; display: block !important;">😐 Lumayan</button>
+          <button class="fb-reflect-wl-btn" data-wl="burnout" style="flex: 1 !important; padding: 8px !important; border-radius: 10px !important; border: 1.5px solid var(--fb-line) !important; background: var(--fb-card) !important; font-size: 10px !important; font-weight: 700 !important; color: var(--fb-ink-mute) !important; cursor: pointer !important; text-align: center !important; display: block !important;">😵‍💫 Kewalahan</button>
+        </div>
+      </div>
+
+      <!-- Blockers Input -->
+      <div style="flex-shrink: 0 !important;">
+        <div style="font-size: 11.5px !important; font-weight: 800 !important; color: var(--fb-ink) !important; margin-bottom: 4px !important;">Ada hambatan hari ini? <span style="font-weight: 400 !important; color: var(--fb-ink-mute) !important;">(Opsional)</span></div>
+        <textarea id="fb-reflect-blockers" placeholder="Tulis hambatanmu (jika ada)..." style="width: 100% !important; padding: 8px !important; border-radius: 10px !important; border: 1.5px solid var(--fb-line) !important; background: var(--fb-card) !important; color: var(--fb-ink) !important; font-size: 11px !important; resize: none !important; min-height: 48px !important; outline: none !important; font-family: inherit !important; box-sizing: border-box !important; margin: 0 !important;"></textarea>
+      </div>
+
+      <button id="fb-reflect-submit" class="fb-btn" style="width: 100% !important; padding: 12px !important; border-radius: 12px !important; background: #86C0A9 !important; color: white !important; font-weight: 800 !important; font-size: 13px !important; margin-top: 4px !important; cursor: pointer !important; text-align: center !important; border: none !important; box-shadow: 0 4px 12px rgba(134,192,169,0.2) !important;">Simpan & Tutup Hari (+30 Poin)</button>
+    </div>
   </div>
 </div>
 
@@ -3695,10 +4042,17 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
 
   // ── Start user detection & sync AFTER DOM is ready ──
   detectFlowbeeUser()
+  initReflectionModal()
+  
+  // Initial render of habits and coach insights
+  renderHabits()
+  renderCoachInsights()
+
   setInterval(() => {
     detectFlowbeeUser()
     if (!availableKPIs || !availableKPIs.length) loadKPIs()
     flowbeeSyncAll()
+    checkReflectionReminder()
   }, 30000)
 
   $('fb-date').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })
@@ -4389,6 +4743,84 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
     return h < 24 ? `${h}j lalu` : `${Math.floor(h / 24)}h lalu`
   }
 
+  function getElapsedSeconds(timerStartedAt) {
+    if (!timerStartedAt) return 0;
+    const startTime = new Date(timerStartedAt).getTime();
+    if (isNaN(startTime)) return 0;
+    return Math.max(0, Math.floor((Date.now() - startTime) / 1000));
+  }
+
+  function formatTrackedTime(seconds, timerStartedAt) {
+    const totalSeconds = (seconds || 0) + getElapsedSeconds(timerStartedAt);
+    if (totalSeconds <= 0) return "0d";
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    
+    const parts = [];
+    if (h > 0) parts.push(`${h}j`);
+    if (m > 0 || h > 0) parts.push(`${m}m`);
+    if (s > 0 || parts.length === 0) parts.push(`${s}d`);
+    return parts.join(" ");
+  }
+
+  function toggleTaskTimer(id) {
+    let changed = false;
+    ctx.tasks.forEach(item => {
+      if (String(item.id) === String(id)) {
+        if (item.timerStartedAt) {
+          // Pause timer
+          const startTime = new Date(item.timerStartedAt).getTime();
+          const sessionSeconds = isNaN(startTime) ? 0 : Math.max(0, Math.floor((Date.now() - startTime) / 1000));
+          item.timeTracked = (item.timeTracked || 0) + sessionSeconds;
+          item.timerStartedAt = null;
+        } else {
+          // Start timer
+          item.timerStartedAt = new Date().toISOString();
+        }
+        changed = true;
+      } else {
+        // Pause any other active timer
+        if (item.timerStartedAt) {
+          const startTime = new Date(item.timerStartedAt).getTime();
+          const sessionSeconds = isNaN(startTime) ? 0 : Math.max(0, Math.floor((Date.now() - startTime) / 1000));
+          item.timeTracked = (item.timeTracked || 0) + sessionSeconds;
+          item.timerStartedAt = null;
+          changed = true;
+        }
+      }
+    });
+
+    if (changed) {
+      save();
+      renderTasks();
+      flowbeeSyncAll();
+    }
+  }
+
+  function setTaskAsFocus(id) {
+    const task = ctx.tasks.find(t => String(t.id) === String(id));
+    if (!task) return;
+    
+    ctx.focusTaskId = String(task.id);
+    ctx.focusIntention = task.text || '';
+    ctx.focusProgress = task.progress || 0;
+    
+    showToast('🎯 Fokus Utama!', `"${task.text}" dijadikan fokus utama hari ini`, 2000);
+    
+    save();
+    renderTasks();
+    flowbeeSyncAll();
+    
+    if (isHappilyWebsite()) {
+      window.postMessage({
+        type: "FLOWBEE_SET_FOCUS",
+        goal: task.text,
+        progress: task.progress || 0
+      }, "*");
+    }
+  }
+
   function renderTasks() {
     const td = ctx.tasks.filter(t => t.date === today())
     const done = td.filter(t => t.done).length
@@ -4454,8 +4886,9 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
     list.innerHTML = ''
     filtered.forEach(task => {
       const pcfg = PRIORITY_CFG[task.priority] || PRIORITY_CFG.med
+      const isFocused = String(ctx.focusTaskId) === String(task.id)
       const card = document.createElement('div')
-      card.className = 'fb-task-card' + (task.done ? ' done' : '')
+      card.className = 'fb-task-card' + (task.done ? ' done' : '') + (isFocused ? ' focused' : '')
       card.style.setProperty('--task-color', pcfg.color)
       card.innerHTML = `
         <button class="fb-task-chk2">${task.done ? '✓' : ''}</button>
@@ -4465,15 +4898,59 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
             ${task.kpiTitle ? `<span class="fb-task-kpi-tag">🎯 ${esc(task.kpiTitle)}</span>` : ''}
             <span class="fb-task-pri-tag fb-pri-${task.priority}">${pcfg.label.replace(/🔴|🟡|🟢/, '').trim()}</span>
             <span class="fb-task-time-tag">${relTimeTask(task.id)}</span>
+            ${(task.timeTracked > 0 || task.timerStartedAt) ? `
+              <span style="color:var(--fb-line); font-size:10px;">•</span>
+              <span style="font-size:11px;">⏱️</span>
+              <span class="fb-task-time-tracked-tag ${task.timerStartedAt ? 'running' : ''}" style="
+                font-size: 9px !important;
+                font-weight: 800 !important;
+                color: ${task.timerStartedAt ? '#2F9E44' : 'var(--fb-ink-mute)'} !important;
+                background: ${task.timerStartedAt ? 'rgba(81, 207, 102, 0.15)' : 'transparent'} !important;
+                padding: ${task.timerStartedAt ? '2px 6px' : '0'} !important;
+                border-radius: 6px !important;
+              ">
+                ${task.timerStartedAt ? 'Sedang kerja: ' : 'Durasi: '}
+                ${formatTrackedTime(task.timeTracked || 0, task.timerStartedAt)}
+              </span>
+            ` : ''}
           </div>
+          ${(task.progress > 0 || isFocused) ? `
+            <div style="width: 100%; height: 4px; background: var(--fb-line-soft); border-radius: 2px; margin-top: 6px; overflow: hidden;">
+              <div style="
+                width: ${isFocused ? (ctx.focusProgress || 0) : (task.progress || 0)}%;
+                height: 100%;
+                background: ${isFocused ? 'var(--fb-yellow)' : '#2F9E44'};
+                border-radius: 2px;
+                transition: width 0.3s ease;
+              "></div>
+            </div>
+          ` : ''}
         </div>
-        <button class="fb-task-del2">✕</button>`
+        <div class="fb-task-actions-group">
+          ${!task.done ? `
+            <button class="fb-task-action-btn play-btn ${task.timerStartedAt ? 'running' : ''}" title="${task.timerStartedAt ? 'Jeda Pekerjaan' : 'Mulai Pekerjaan'}">
+              ${task.timerStartedAt ? '⏸️' : '▶️'}
+            </button>
+            <button class="fb-task-action-btn focus-btn" title="Set as Focus Today">
+              ✨
+            </button>
+          ` : ''}
+          <button class="fb-task-action-btn del-btn" title="Hapus Task">
+            🗑️
+          </button>
+        </div>`
       card.querySelector('.fb-task-chk2').onclick = () => toggleTask(task.id)
-      card.querySelector('.fb-task-del2').onclick = () => deleteTask(task.id, card)
+      if (!task.done) {
+        card.querySelector('.play-btn').onclick = () => toggleTaskTimer(task.id)
+        card.querySelector('.focus-btn').onclick = () => setTaskAsFocus(task.id)
+      }
+      card.querySelector('.del-btn').onclick = () => deleteTask(task.id, card)
       list.appendChild(card)
     })
 
     applyMood(currentState)
+    renderHabits();
+    renderCoachInsights();
   }
 
   function updateCharCount() {
@@ -4581,7 +5058,17 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
 
   function toggleTask(id) {
     const t = ctx.tasks.find(t => t.id === id); if (!t) return
-    t.done = !t.done; save(); renderTasks();
+    t.done = !t.done;
+    
+    // Auto-pause timer if running when task is marked complete
+    if (t.done && t.timerStartedAt) {
+      const startTime = new Date(t.timerStartedAt).getTime();
+      const sessionSeconds = isNaN(startTime) ? 0 : Math.max(0, Math.floor((Date.now() - startTime) / 1000));
+      t.timeTracked = (t.timeTracked || 0) + sessionSeconds;
+      t.timerStartedAt = null;
+    }
+    
+    save(); renderTasks();
     flowbeeSyncAll(); // Sync immediately when toggled
     if (t.done) {
       burst()
@@ -4612,6 +5099,433 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       save(); 
       renderTasks(); 
       flowbeeSyncAll();
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // DAILY TRAINING & AI COACH INSIGHTS & BREATHING & EVENING REFLECTION
+  // ═══════════════════════════════════════════════════════════════
+
+  function renderHabits() {
+    const list = $('fb-habits-list');
+    const sec = $('fb-habits-section');
+    if (!list || !sec) return;
+
+    if (!flowbeeUserId || !ctx.habits || ctx.habits.length === 0) {
+      sec.style.display = 'none';
+      return;
+    }
+
+    sec.style.display = 'block';
+    list.innerHTML = '';
+
+    ctx.habits.forEach(h => {
+      const card = document.createElement('div');
+      card.className = 'fb-task-card' + (h.done ? ' done' : '');
+      card.style.setProperty('--task-color', '#dfb875'); // gold/yellow for habits
+      card.style.padding = '8px 12px !important';
+      card.style.marginBottom = '6px !important';
+
+      const glyphMap = {
+        leaf: '🌿',
+        brain: '🧠',
+        heart: '❤️',
+        smile: '😊',
+        coffee: '☕',
+        check: '✅',
+        book: '📚',
+        activity: '🏃',
+        sun: '☀️'
+      };
+      const glyphIcon = glyphMap[h.glyph] || h.glyph || '🌿';
+
+      card.innerHTML = `
+        <button class="fb-habit-chk" style="
+          width: 18px !important;
+          height: 18px !important;
+          border-radius: 6px !important;
+          border: 1.5px solid var(--fb-line) !important;
+          background: ${h.done ? 'var(--fb-yellow)' : 'transparent'} !important;
+          color: var(--fb-ink) !important;
+          font-size: 10px !important;
+          font-weight: 900 !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          cursor: pointer !important;
+          padding: 0 !important;
+          margin-right: 8px !important;
+          flex-shrink: 0 !important;
+          outline: none !important;
+        ">${h.done ? '✓' : ''}</button>
+        <div style="flex: 1 !important; min-width: 0 !important;">
+          <div style="font-size: 12px !important; font-weight: 700 !important; color: var(--fb-ink) !important; text-decoration: ${h.done ? 'line-through' : 'none'} !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;">
+            ${glyphIcon} ${esc(h.name)}
+          </div>
+          <div style="font-size: 10px !important; color: var(--fb-ink-mute) !important; font-weight: 600 !important; margin-top: 1px !important;">
+            🔥 ${h.streak || 0} streak • Target: ${h.target || 30} hari
+          </div>
+        </div>
+      `;
+
+      const chkBtn = card.querySelector('.fb-habit-chk');
+      chkBtn.onclick = () => {
+        h.done = !h.done;
+        const todayStr = today();
+        h.completedDates = h.completedDates || [];
+        if (h.done) {
+          h.streak = (h.streak || 0) + 1;
+          if (!h.completedDates.includes(todayStr)) {
+            h.completedDates.push(todayStr);
+          }
+          burst();
+          forceState('HAPPY', 3000);
+          currentState = 'HAPPY';
+          updateBuddySVG('HAPPY');
+          applyMood('HAPPY');
+        } else {
+          h.streak = Math.max(0, (h.streak || 0) - 1);
+          h.completedDates = h.completedDates.filter(d => d !== todayStr);
+        }
+        save();
+        renderHabits();
+        flowbeeSyncAll();
+      };
+
+      list.appendChild(card);
+    });
+  }
+
+  function generateLocalAIInsights() {
+    const insights = [];
+    const user = flowbeeUser;
+    
+    // 1. Streak Insight
+    if (user && user.streak > 0) {
+      insights.push({
+        tone: 'yellow',
+        title: `Streak ${user.streak} hari 🎉`,
+        body: `Kamu rutin menyapa diri sendiri — ini kebiasaan kecil yang dampaknya besar bagi produktivitasmu.`
+      });
+    }
+
+    // 2. Mood & Energy Insight (derived from evaluated state)
+    const stateEval = getState();
+    if (stateEval === 'SLEEPY' || stateEval === 'SAD' || stateEval === 'ANNOYED') {
+      insights.push({
+        tone: 'coral',
+        title: 'Energi kamu butuh perhatian',
+        body: `Kondisi kamu sedang lelah/stres. Coba 5-menit reset atau istirahat sejenak untuk memulihkan fokus.`
+      });
+    } else if (stateEval === 'HAPPY' || stateEval === 'EXCITED') {
+      insights.push({
+        tone: 'sage',
+        title: 'Vibe kamu positif hari ini!',
+        body: 'Gunakan energi positif ini untuk menyelesaikan tugas-tugas "Deep Work" atau bantu rekan tim.'
+      });
+    }
+
+    // 3. Task Progress Insight
+    const td = ctx.tasks.filter(t => t.date === today());
+    const doneTasks = td.filter(t => t.done).length;
+    const totalTasks = td.length;
+
+    if (doneTasks > 0 && doneTasks === totalTasks) {
+      insights.push({
+        tone: 'blue',
+        title: 'Semua prioritas selesai! 🚀',
+        body: 'Luar biasa, kamu menyelesaikan semua target hari ini. Jangan lupa istirahat yang cukup ya.'
+      });
+    } else if (doneTasks > 0) {
+      insights.push({
+        tone: 'blue',
+        title: `${doneTasks} dari ${totalTasks} tugas selesai`,
+        body: 'Kamu sudah di jalur yang benar. Fokus selesaikan sisa tugas dengan perlahan tapi pasti.'
+      });
+    } else if (totalTasks > 0) {
+       insights.push({
+        tone: 'lavender',
+        title: 'Ayo mulai hari kamu',
+        body: `Ada ${totalTasks} tugas menunggu. Coba mulai dari yang paling ringan untuk memicu momentum.`
+      });
+    }
+
+    // Fallback if no insights generated
+    if (insights.length === 0) {
+      insights.push({
+        tone: 'sage',
+        title: 'Siap untuk hari ini?',
+        body: 'Tentukan prioritasmu dan biarkan aku membantumu tetap fokus dan sehat.'
+      });
+    }
+
+    return insights.slice(0, 3);
+  }
+
+  function renderCoachInsights() {
+    const list = $('fb-coach-list');
+    const sec = $('fb-coach-section');
+    if (!list || !sec) return;
+
+    if (!flowbeeUserId) {
+      sec.style.display = 'none';
+      return;
+    }
+
+    sec.style.display = 'block';
+    const insights = generateLocalAIInsights();
+    list.innerHTML = '';
+
+    const toneColors = {
+      sage: { bg: 'rgba(255, 253, 240, 0.7)', border: '#FDB913', fg: 'var(--fb-ink)', emoji: '✨' },
+      blue: { bg: 'rgba(235, 244, 255, 0.7)', border: 'rgba(0, 176, 255, 0.3)', fg: '#1a56db', emoji: '🏃' },
+      yellow: { bg: 'rgba(255, 253, 240, 0.8)', border: '#FDB913', fg: 'var(--fb-ink)', emoji: '🎯' },
+      coral: { bg: 'rgba(232, 139, 125, 0.12)', border: '#E88B7D', fg: '#E88B7D', emoji: '⚡' },
+      lavender: { bg: 'rgba(177, 151, 252, 0.12)', border: '#b197fc', fg: '#b197fc', emoji: '✨' }
+    };
+
+    insights.forEach(ins => {
+      const t = toneColors[ins.tone] || toneColors.sage;
+      const card = document.createElement('div');
+      card.style.cssText = `
+        padding: 10px !important;
+        border-radius: 12px !important;
+        background: var(--fb-card) !important;
+        border: 1px solid var(--fb-line) !important;
+        display: flex !important;
+        gap: 10px !important;
+        align-items: flex-start !important;
+      `;
+      card.innerHTML = `
+        <div style="
+          width: 28px !important;
+          height: 28px !important;
+          border-radius: 8px !important;
+          background: ${t.bg} !important;
+          border: 1px solid ${t.border} !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          font-size: 14px !important;
+          flex-shrink: 0 !important;
+        ">${t.emoji}</div>
+        <div style="flex: 1 !important; min-width: 0 !important;">
+          <div style="font-size: 11.5px !important; font-weight: 700 !important; color: var(--fb-ink) !important;">
+            ${esc(ins.title)}
+          </div>
+          <div style="font-size: 10.5px !important; color: var(--fb-ink-mute) !important; margin-top: 2px !important; line-height: 1.4 !important;">
+            ${esc(ins.body)}
+          </div>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+  }
+
+  let selectedReflectMood = 'joy';
+  let selectedReflectProd = 'high';
+  let selectedReflectWl = 'balanced';
+
+  function initReflectionModal() {
+    const modalEl = $('fb-reflection-modal');
+    const tutupHariBtn = $('fb-tutup-hari-btn');
+    if (!modalEl) return;
+
+    if (tutupHariBtn) {
+      tutupHariBtn.onclick = () => {
+        showReflectionModal();
+      };
+    }
+
+    // Mood click handlers
+    modalEl.querySelectorAll('.fb-reflect-mood-btn').forEach(btn => {
+      btn.onclick = () => {
+        modalEl.querySelectorAll('.fb-reflect-mood-btn').forEach(b => {
+          b.classList.remove('sel');
+          b.style.borderColor = 'var(--fb-line)';
+          b.style.background = 'var(--fb-card)';
+        });
+        btn.classList.add('sel');
+        btn.style.borderColor = '#86C0A9';
+        btn.style.background = 'rgba(134,192,169,0.06)';
+        selectedReflectMood = btn.getAttribute('data-mood');
+      };
+    });
+
+    // Productivity click handlers
+    modalEl.querySelectorAll('.fb-reflect-prod-btn').forEach(btn => {
+      btn.onclick = () => {
+        modalEl.querySelectorAll('.fb-reflect-prod-btn').forEach(b => {
+          b.classList.remove('sel');
+          b.style.borderColor = 'var(--fb-line)';
+          b.style.background = 'var(--fb-card)';
+        });
+        btn.classList.add('sel');
+        btn.style.borderColor = '#86C0A9';
+        btn.style.background = 'rgba(134,192,169,0.06)';
+        selectedReflectProd = btn.getAttribute('data-prod');
+      };
+    });
+
+    // Work-life click handlers
+    modalEl.querySelectorAll('.fb-reflect-wl-btn').forEach(btn => {
+      btn.onclick = () => {
+        modalEl.querySelectorAll('.fb-reflect-wl-btn').forEach(b => {
+          b.classList.remove('sel');
+          b.style.borderColor = 'var(--fb-line)';
+          b.style.background = 'var(--fb-card)';
+        });
+        btn.classList.add('sel');
+        btn.style.borderColor = '#86C0A9';
+        btn.style.background = 'rgba(134,192,169,0.06)';
+        selectedReflectWl = btn.getAttribute('data-wl');
+      };
+    });
+
+    // Close button
+    const closeBtn = $('fb-reflection-close');
+    if (closeBtn) {
+      closeBtn.onclick = () => {
+        modalEl.style.display = 'none';
+      };
+    }
+
+    // Submit button
+    const submitBtn = $('fb-reflect-submit');
+    if (submitBtn) {
+      submitBtn.onclick = async () => {
+        if (!flowbeeUserId) return;
+        
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Menyimpan...';
+
+        const moodLabels = { joy: 'Senang', calm: 'Tenang', neutral: 'Biasa', tired: 'Lelah', stress: 'Stres' };
+        const prodLabels = { high: 'Tinggi', mid: 'Sedang', low: 'Rendah' };
+        const wlLabels = { balanced: 'Seimbang', ok: 'Lumayan', burnout: 'Kewalahan' };
+
+        const summary = `Mood: ${moodLabels[selectedReflectMood]}\nProduktivitas: ${prodLabels[selectedReflectProd]}\nWork-Life Balance: ${wlLabels[selectedReflectWl]}`;
+        const blockers = $('fb-reflect-blockers')?.value.trim() || '';
+
+        const now = new Date();
+        const timestamp = {
+          date: now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
+          day: now.toLocaleDateString('id-ID', { weekday: 'long' }),
+          time: now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+        };
+
+        try {
+          // 1. Save logbook
+          await window.__FB.fetch(`${FLOWBEE_API.replace('/ext', '/logbook')}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: flowbeeUserId,
+              type: 'daily_reflection',
+              title: 'Tutup Hari (Clock Out)',
+              content: blockers ? `${summary}\nHambatan: ${blockers}` : summary,
+              points: 30,
+              metadata: {
+                mood: selectedReflectMood,
+                productivity: selectedReflectProd,
+                workLife: selectedReflectWl,
+                blockers,
+                ...timestamp,
+                taskCount: ctx.tasks.filter(t => t.date === today() && t.done).length
+              }
+            })
+          });
+
+          // 2. Clock out
+          await window.__FB.fetch(`${FLOWBEE_API.replace('/ext', '/attendance/check-out')}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: flowbeeUserId,
+              mood: selectedReflectMood,
+              notes: blockers
+            })
+          });
+
+          // 3. Award daily reflection XP (+100 XP)
+          await window.__FB.fetch(`${FLOWBEE_API.replace('/ext', '/xp/award')}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: flowbeeUserId,
+              actionType: 'daily_reflection',
+              description: 'Tutup Hari (Clock Out) via Extension'
+            })
+          });
+
+          ctx.reflectionDoneDate = today();
+          save();
+
+          await flowbeeSyncAll();
+
+          showToast('Tutup Hari Berhasil!', 'Sampai jumpa besok! Selamat beristirahat 🌟');
+          modalEl.style.display = 'none';
+
+          if ($('fb-reflect-blockers')) $('fb-reflect-blockers').value = '';
+
+        } catch (e) {
+          showToast('Koneksi Gagal', 'Gagal menyimpan refleksi. Coba lagi.', 'error');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Simpan & Tutup Hari (+30 Poin)';
+        }
+      };
+    }
+  }
+
+  function showReflectionModal() {
+    const modalEl = $('fb-reflection-modal');
+    if (modalEl) {
+      modalEl.style.display = 'flex';
+      modalEl.querySelectorAll('.fb-reflect-mood-btn').forEach(b => {
+        const isSel = b.getAttribute('data-mood') === 'joy';
+        b.style.borderColor = isSel ? '#86C0A9' : 'var(--fb-line)';
+        b.style.background = isSel ? 'rgba(134,192,169,0.06)' : 'var(--fb-card)';
+      });
+      modalEl.querySelectorAll('.fb-reflect-prod-btn').forEach(b => {
+        const isSel = b.getAttribute('data-prod') === 'high';
+        b.style.borderColor = isSel ? '#86C0A9' : 'var(--fb-line)';
+        b.style.background = isSel ? 'rgba(134,192,169,0.06)' : 'var(--fb-card)';
+      });
+      modalEl.querySelectorAll('.fb-reflect-wl-btn').forEach(b => {
+        const isSel = b.getAttribute('data-wl') === 'balanced';
+        b.style.borderColor = isSel ? '#86C0A9' : 'var(--fb-line)';
+        b.style.background = isSel ? 'rgba(134,192,169,0.06)' : 'var(--fb-card)';
+      });
+      selectedReflectMood = 'joy';
+      selectedReflectProd = 'high';
+      selectedReflectWl = 'balanced';
+    }
+  }
+
+  function checkReflectionReminder() {
+    if (!flowbeeUserId) return;
+    if (ctx.reflectionDoneDate === today()) return;
+
+    const now = new Date();
+    const hrs = now.getHours();
+    const mins = now.getMinutes();
+    
+    if (hrs > 16 || (hrs === 16 && mins >= 45)) {
+      const lastPromptTime = ctx.lastReflectionPromptTime || 0;
+      if (Date.now() - lastPromptTime > 900000) { // 15 mins
+        ctx.lastReflectionPromptTime = Date.now();
+        save();
+        
+        showToast(
+          'Waktunya Tutup Hari 📝', 
+          'Shift kamu hampir selesai! Luangkan waktu 1 menit untuk mengisi refleksi harian.', 
+          8000, 
+          'Isi Sekarang', 
+          () => {
+            showReflectionModal();
+          }
+        );
+      }
     }
   }
 
@@ -4781,6 +5695,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
     const VIS_BADGE = {
       company:  { label: 'COMPANY',  bg: '#d3f9d8', color: '#2f9e44' },
       division: { label: 'DIVISI',   bg: '#dbe4ff', color: '#3b5bdb' },
+      custom:   { label: 'CUSTOM',   bg: '#e5dbff', color: '#7048e8' },
       private:  { label: 'PRIBADI',  bg: '#f1f3f5', color: '#868e96' },
     }
 
@@ -4791,27 +5706,49 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       const el = document.createElement('div')
       el.className = 'fb-note' + (note.pinned ? ' pinned' : '')
       el.style.cssText = `--nc:${c.hex}; --note-bg:${c.bg} !important; --note-border:${c.hex}30 !important; --note-border-hover:${c.hex}60 !important; border-left:3.5px solid ${c.hex} !important;`
+      
+      // Determine display text: if content looks like HTML, render it; otherwise escape
+      const contentText = note.text || note.content || ''
+      const isHTML = /<[a-z][\s\S]*>/i.test(contentText)
+      const renderedContent = isHTML ? contentText : esc(contentText)
+      
+      // Sharing info
+      const sharedCount = (note.sharedWithUsers || []).length
+      const sharedInfo = note.visibility === 'custom' && sharedCount > 0
+        ? `<span style="font-size:9px;font-weight:700;color:#7048e8;margin-left:4px;">(${sharedCount} orang)</span>` : ''
+      const permBadge = note.sharedPermission === 'edit'
+        ? `<span style="font-size:8.5px;font-weight:800;padding:1.5px 6px;border-radius:4px;background:#fff3bf;color:#8A6814;margin-left:4px;">EDIT</span>` : ''
+
+      // Check if user has permission to edit/delete
+      const isAuthor = !note.userId || String(note.userId) === String(flowbeeUserId)
+      const canEdit = isAuthor || note.sharedPermission === 'edit'
+
+      const authorText = isAuthor 
+        ? 'DITULIS OLEH SAYA' 
+        : `DITULIS OLEH ${esc((note.authorName || 'LAINNYA').toUpperCase())}${note.authorDepartment ? ` (${esc(note.authorDepartment.toUpperCase())})` : ''}`
+      
       el.innerHTML = `
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
           <span style="font-size:11px;color:#9E9892;font-weight:600;font-variant-numeric:tabular-nums;">${timeStr}</span>
           <div style="display:flex;align-items:center;gap:5px;">
             ${note.pinned ? `<span style="font-size:10px;">📌</span>` : ''}
             <span style="font-size:9.5px;font-weight:800;padding:2px 8px;border-radius:0;background:${vis.bg};color:${vis.color};letter-spacing:.4px;">${vis.label}</span>
+            ${sharedInfo}${permBadge}
           </div>
         </div>
         ${note.title ? `<div style="font-size:13.5px;font-weight:800;color:#1F1D1B;margin-bottom:4px;line-height:1.3;">${esc(note.title)}</div>` : ''}
-        <div class="fb-note-txt clamped" style="font-size:12.5px;color:#524E49;line-height:1.55;">${esc(note.text)}</div>
+        <div class="fb-note-txt clamped" style="font-size:12.5px;color:#524E49;line-height:1.55;">${renderedContent}</div>
         <button class="fb-note-expand" style="display:none;font-size:10px;color:#4A90E2;background:none;border:none;cursor:pointer;padding:2px 0;margin-top:2px;">Lihat semua ▾</button>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1px solid rgba(31,29,27,.05);">
           <div style="display:flex;align-items:center;gap:5px;color:#BDB6AE;font-size:10.5px;font-weight:600;">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            DITULIS OLEH ${esc((ctx.flowbeeUserName || 'SAYA').toUpperCase())}
+            ${authorText}
           </div>
           <div class="fb-note-actions">
             <button class="fb-note-act pin${note.pinned ? ' active' : ''}" title="${note.pinned ? 'Unpin' : 'Pin'}">📌</button>
-            <button class="fb-note-act edit" title="Edit">✏️</button>
+            ${canEdit ? `<button class="fb-note-act edit" title="Edit">✏️</button>` : ''}
             <button class="fb-note-act copy" title="Salin">📋</button>
-            <button class="fb-note-act del" title="Hapus">🗑</button>
+            ${isAuthor ? `<button class="fb-note-act del" title="Hapus">🗑</button>` : ''}
           </div>
         </div>`
 
@@ -4824,38 +5761,67 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
         txtEl.classList.toggle('clamped', !expanded)
         expandBtn.textContent = expanded ? 'Sembunyikan ▴' : 'Lihat semua ▾'
       }
-      el.querySelector('.fb-note-act.pin').onclick = () => { note.pinned = !note.pinned; save(); renderNotes() }
-      el.querySelector('.fb-note-act.edit').onclick = () => {
-        const inp = $('fb-note-in'), titleInp = $('fb-note-title')
-        if (inp) { inp.value = note.text; $('fb-note-cc').textContent = note.text.length + '/800' }
-        if (titleInp) titleInp.value = note.title || ''
-        noteColor = note.color || NOTE_COLORS[0].id
-        applyNoteColor(noteColor)
-        editingNoteId = note.id
-        const saveBtn = $('fb-note-save')
-        if (saveBtn) { saveBtn.textContent = 'Update'; saveBtn.style.background = '#f0a500' }
-        // Open composer
-        const wrap = $('fb-note-composer-wrap'); if (wrap) wrap.style.display = 'block'
-        inp.focus(); inp.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      
+      const pinBtn = el.querySelector('.fb-note-act.pin')
+      if (pinBtn) pinBtn.onclick = () => { note.pinned = !note.pinned; save(); renderNotes() }
+      
+      const editBtn = el.querySelector('.fb-note-act.edit')
+      if (editBtn) {
+        editBtn.onclick = () => {
+          const inp = $('fb-note-in'), titleInp = $('fb-note-title')
+          const contentText = note.text || note.content || ''
+          if (inp) inp.innerHTML = contentText
+          if (titleInp) titleInp.value = note.title || ''
+          noteColor = note.color || NOTE_COLORS[0].id
+          applyNoteColor(noteColor)
+          editingNoteId = note.id
+          
+          // Set visibility
+          const visEl = $('fb-note-vis')
+          if (visEl) visEl.value = note.visibility || 'private'
+          // Set permission
+          const permEl = $('fb-note-perm')
+          if (permEl) permEl.value = note.sharedPermission || 'view'
+          // Set shared users
+          noteSharedUsers = [...(note.sharedWithUsers || [])]
+          
+          // Trigger visibility change to show/hide panels
+          handleVisibilityChange()
+          
+          const saveBtn = $('fb-note-save')
+          if (saveBtn) { saveBtn.textContent = 'Update'; saveBtn.style.background = '#f0a500' }
+          // Open composer
+          const wrap = $('fb-note-composer-wrap'); if (wrap) wrap.style.display = 'block'
+          inp.focus(); inp.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+        }
       }
-      el.querySelector('.fb-note-act.copy').onclick = () => {
-        const fullText = (note.title ? note.title + '\n' : '') + note.text
-        navigator.clipboard?.writeText(fullText).catch(() => {})
-        const btn = el.querySelector('.fb-note-act.copy')
-        btn.textContent = '✅'; setTimeout(() => { btn.textContent = '📋' }, 1200)
+      
+      const copyBtn = el.querySelector('.fb-note-act.copy')
+      if (copyBtn) {
+        copyBtn.onclick = () => {
+          const contentText = note.text || note.content || ''
+          const stripped = contentText.replace(/<[^>]*>/g, '').trim()
+          const fullText = (note.title ? note.title + '\n' : '') + stripped
+          navigator.clipboard?.writeText(fullText).catch(() => {})
+          copyBtn.textContent = '✅'; setTimeout(() => { copyBtn.textContent = '📋' }, 1200)
+        }
       }
-      el.querySelector('.fb-note-act.del').onclick = () => {
-        if (editingNoteId === note.id) cancelNoteEdit()
-        if (!ctx.deletedNoteIds) ctx.deletedNoteIds = []
-        ctx.deletedNoteIds.push(String(note.id))
-        el.style.transition = 'opacity .2s,transform .2s'
-        el.style.opacity = '0'; el.style.transform = 'translateX(12px)'
-        setTimeout(() => { 
-          ctx.notes = ctx.notes.filter(n => String(n.id) !== String(note.id)); 
-          save(); 
-          renderNotes(); 
-          flowbeeSyncAll(); 
-        }, 200)
+      
+      const delBtn = el.querySelector('.fb-note-act.del')
+      if (delBtn) {
+        delBtn.onclick = () => {
+          if (editingNoteId === note.id) cancelNoteEdit()
+          if (!ctx.deletedNoteIds) ctx.deletedNoteIds = []
+          ctx.deletedNoteIds.push(String(note.id))
+          el.style.transition = 'opacity .2s,transform .2s'
+          el.style.opacity = '0'; el.style.transform = 'translateX(12px)'
+          setTimeout(() => { 
+            ctx.notes = ctx.notes.filter(n => String(n.id) !== String(note.id)); 
+            save(); 
+            renderNotes(); 
+            flowbeeSyncAll(); 
+          }, 200)
+        }
       }
       return el
     }
@@ -4893,46 +5859,211 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       groups.forEach(lbl => { list.appendChild(mkSectionLbl(lbl)); list.appendChild(mkGroup(seen.get(lbl))) })
     }
   }
+  // Shared users state for member picker
+  let noteSharedUsers = []
+  let noteAllUsers = [] // populated from sync response
+
   function saveNote() {
-    const inp = $('fb-note-in'), txt = inp.value.trim(); if (!txt) return
+    const inp = $('fb-note-in')
+    const html = inp ? inp.innerHTML.trim() : ''
+    // Check if contentEditable has actual content (not just tags/whitespace)
+    const textContent = inp ? inp.textContent.trim() : ''
+    if (!textContent && !html) return
     const titleInp = $('fb-note-title')
     const title = titleInp ? titleInp.value.trim() : ''
     if (!ctx.notes) ctx.notes = []
     const c = NOTE_COLORS.find(x => x.id === noteColor) || NOTE_COLORS[0]
+    const vis = $('fb-note-vis') ? $('fb-note-vis').value : 'private'
+    const perm = $('fb-note-perm') ? $('fb-note-perm').value : 'view'
+    
     if (editingNoteId) {
-      // Update existing note
       const idx = ctx.notes.findIndex(n => n.id === editingNoteId)
       if (idx !== -1) {
-        ctx.notes[idx] = { ...ctx.notes[idx], text: txt, title, color: noteColor }
+        ctx.notes[idx] = { 
+          ...ctx.notes[idx], text: html, content: html, title, color: noteColor,
+          visibility: vis, sharedWithUsers: vis === 'custom' ? [...noteSharedUsers] : [],
+          sharedPermission: vis !== 'private' ? perm : 'view'
+        }
       }
       cancelNoteEdit()
     } else {
-      const vis = $('fb-note-vis') ? $('fb-note-vis').value : 'private'
-      ctx.notes.push({ id: Date.now(), text: txt, title, color: noteColor, pinned: false, createdAt: Date.now(), visibility: vis })
-      inp.value = ''; if (titleInp) titleInp.value = ''
-      $('fb-note-cc').textContent = '0/800'
+      ctx.notes.push({ 
+        id: Date.now(), text: html, content: html, title, color: noteColor, 
+        pinned: false, createdAt: Date.now(), visibility: vis,
+        sharedWithUsers: vis === 'custom' ? [...noteSharedUsers] : [],
+        sharedPermission: vis !== 'private' ? perm : 'view'
+      })
+      if (inp) inp.innerHTML = ''
+      if (titleInp) titleInp.value = ''
     }
     save(); renderNotes(); burst()
-    flowbeeSyncAll(); // Sync immediately on note save
-    // Pulse with selected color
+    flowbeeSyncAll()
     const comp = inp.closest('.fb-note-composer')
-    comp.style.transition = 'box-shadow .15s'
-    comp.style.boxShadow = `0 0 0 3px color-mix(in srgb, ${c.hex} 40%, transparent)`
-    setTimeout(() => { comp.style.boxShadow = '' }, 500)
+    if (comp) {
+      comp.style.transition = 'box-shadow .15s'
+      comp.style.boxShadow = `0 0 0 3px color-mix(in srgb, ${c.hex} 40%, transparent)`
+      setTimeout(() => { comp.style.boxShadow = '' }, 500)
+    }
   }
 
   function cancelNoteEdit() {
     editingNoteId = null
     const inp = $('fb-note-in'), titleInp = $('fb-note-title')
-    if (inp) { inp.value = ''; $('fb-note-cc').textContent = '0/800' }
+    if (inp) inp.innerHTML = ''
     if (titleInp) titleInp.value = ''
     const saveBtn = $('fb-note-save')
     if (saveBtn) { saveBtn.textContent = 'Simpan Catatan'; saveBtn.style.background = '' }
+    // Reset sharing state
+    const visEl = $('fb-note-vis'); if (visEl) visEl.value = 'private'
+    const permEl = $('fb-note-perm'); if (permEl) permEl.value = 'view'
+    noteSharedUsers = []
+    handleVisibilityChange()
+  }
+
+  // ── Visibility change handler ──
+  function handleVisibilityChange() {
+    const vis = $('fb-note-vis')?.value || 'private'
+    const permEl = $('fb-note-perm')
+    const memberPicker = $('fb-note-member-picker')
+    // Show permission dropdown for non-private
+    if (permEl) permEl.style.display = (vis !== 'private') ? 'block' : 'none'
+    // Show member picker for custom
+    if (memberPicker) memberPicker.style.display = (vis === 'custom') ? 'block' : 'none'
+    // Re-render member picker
+    if (vis === 'custom') renderMemberPicker()
+  }
+
+  // ── Member Picker ──
+  function renderMemberPicker() {
+    const listEl = $('fb-note-member-list')
+    const tagsEl = $('fb-note-member-tags')
+    const searchEl = $('fb-note-member-search')
+    if (!listEl) return
+    
+    const query = (searchEl?.value || '').toLowerCase()
+    const users = (noteAllUsers || []).filter(u => String(u.id) !== String(flowbeeUserId))
+    const filtered = query 
+      ? users.filter(u => u.name.toLowerCase().includes(query) || (u.department || '').toLowerCase().includes(query))
+      : users
+    
+    // Group by department
+    const byDept = {}
+    filtered.forEach(u => {
+      const dept = u.department || 'Lainnya'
+      if (!byDept[dept]) byDept[dept] = []
+      byDept[dept].push(u)
+    })
+    
+    // Render tags
+    if (tagsEl) {
+      if (noteSharedUsers.length > 0) {
+        tagsEl.style.display = 'flex'
+        tagsEl.innerHTML = noteSharedUsers.map(uid => {
+          const u = users.find(x => String(x.id) === String(uid))
+          return u ? `<span class="fb-mp-tag" data-uid="${uid}">${esc(u.name.split(' ')[0])} ✕</span>` : ''
+        }).join('')
+        tagsEl.querySelectorAll('.fb-mp-tag').forEach(tag => {
+          tag.onclick = () => { 
+            noteSharedUsers = noteSharedUsers.filter(id => String(id) !== tag.dataset.uid)
+            renderMemberPicker() 
+          }
+        })
+      } else {
+        tagsEl.style.display = 'none'
+        tagsEl.innerHTML = ''
+      }
+    }
+    
+    // Render list
+    let html = ''
+    const depts = Object.keys(byDept).sort()
+    if (depts.length === 0) {
+      html = '<div style="text-align:center; padding:16px; color:var(--fb-ink-mute); font-size:11px;">Tidak ditemukan</div>'
+    } else {
+      depts.forEach(dept => {
+        const deptUsers = byDept[dept]
+        const allSelected = deptUsers.every(u => noteSharedUsers.includes(String(u.id)))
+        const someSelected = deptUsers.some(u => noteSharedUsers.includes(String(u.id)))
+        
+        html += `<div class="fb-mp-dept-hdr" data-dept="${esc(dept)}">
+          <span class="fb-mp-dept-name">${esc(dept)} (${deptUsers.length})</span>
+          <button class="fb-mp-dept-selectall" data-dept="${esc(dept)}"
+            style="background:${allSelected ? 'var(--fb-blue)' : someSelected ? 'rgba(74,144,226,.15)' : 'var(--fb-line-soft)'};
+                   color:${allSelected ? '#fff' : 'var(--fb-blue)'};">${allSelected ? '✓ Semua' : 'Pilih Semua'}</button>
+        </div>`
+        
+        deptUsers.forEach(u => {
+          const sel = noteSharedUsers.includes(String(u.id))
+          const initials = u.name ? u.name.charAt(0).toUpperCase() : '?'
+          html += `<div class="fb-mp-user-row ${sel ? 'selected' : ''}" data-uid="${u.id}">
+            <div class="fb-mp-avatar">${initials}</div>
+            <div class="fb-mp-user-info">
+              <div class="fb-mp-user-name">${esc(u.name)}</div>
+              <div class="fb-mp-user-dept">${esc(u.department || '')}</div>
+            </div>
+            <div class="fb-mp-chk ${sel ? 'checked' : ''}">${sel ? '✓' : ''}</div>
+          </div>`
+        })
+      })
+    }
+    listEl.innerHTML = html
+    
+    // Event handlers
+    listEl.querySelectorAll('.fb-mp-user-row').forEach(row => {
+      row.onclick = () => {
+        const uid = String(row.dataset.uid)
+        if (noteSharedUsers.includes(uid)) {
+          noteSharedUsers = noteSharedUsers.filter(id => id !== uid)
+        } else {
+          noteSharedUsers.push(uid)
+        }
+        renderMemberPicker()
+      }
+    })
+    listEl.querySelectorAll('.fb-mp-dept-selectall').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation()
+        const dept = btn.dataset.dept
+        const deptUserIds = (byDept[dept] || []).map(u => String(u.id))
+        const allSel = deptUserIds.every(id => noteSharedUsers.includes(id))
+        if (allSel) {
+          noteSharedUsers = noteSharedUsers.filter(id => !deptUserIds.includes(id))
+        } else {
+          noteSharedUsers = [...new Set([...noteSharedUsers, ...deptUserIds])]
+        }
+        renderMemberPicker()
+      }
+    })
   }
 
   $('fb-note-save').onclick = saveNote
-  $('fb-note-in').oninput = () => { $('fb-note-cc').textContent = $('fb-note-in').value.length + '/800' }
-  $('fb-note-in').onkeydown = e => { if (e.key === 'Enter' && e.ctrlKey) saveNote() }
+  
+  // Rich text toolbar
+  const rteToolbar = $('fb-note-toolbar')
+  if (rteToolbar) {
+    rteToolbar.querySelectorAll('.fb-rte-btn').forEach(btn => {
+      btn.onmousedown = (e) => { e.preventDefault() } // Prevent losing focus from editor
+      btn.onclick = () => {
+        const cmd = btn.dataset.cmd
+        document.execCommand(cmd, false, null)
+        $('fb-note-in')?.focus()
+      }
+    })
+  }
+  
+  // contentEditable Ctrl+Enter save
+  const noteInEl = $('fb-note-in')
+  if (noteInEl) {
+    noteInEl.onkeydown = e => { if (e.key === 'Enter' && e.ctrlKey) saveNote() }
+  }
+  
+  // Visibility change
+  const noteVisEl = $('fb-note-vis')
+  if (noteVisEl) noteVisEl.onchange = handleVisibilityChange
+  
+  // Member search
+  const memberSearchEl = $('fb-note-member-search')
+  if (memberSearchEl) memberSearchEl.oninput = () => renderMemberPicker()
 
   // Toggle composer visibility
   const noteAddToggle = $('fb-note-add-toggle')
@@ -6056,6 +7187,20 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
         applyMood(s)
       }
     }, 4000)
+
+    // Real-time task timer stopwatch ticking interval
+    const taskTimerIv = setInterval(() => {
+      if (!isContextValid()) {
+        clearInterval(taskTimerIv);
+        return;
+      }
+      if (panelOpen && activeTab === 'tasks') {
+        const hasRunningTimer = ctx.tasks.some(t => t.date === today() && t.timerStartedAt);
+        if (hasRunningTimer) {
+          renderTasks();
+        }
+      }
+    }, 1000);
 
     // Listen to events from Flowbee Web App
     window.addEventListener('message', (event) => {

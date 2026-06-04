@@ -176,6 +176,37 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
     if (activeFetchDataRef.current) return activeFetchDataRef.current;
 
     const promise = (async () => {
+      if (typeof window !== "undefined" && !navigator.onLine) {
+        console.warn("Browser is offline, loading state from local cache directly.");
+        try {
+          const cachedDataRaw = localStorage.getItem(`hp_cached_state_${userId}`);
+          if (cachedDataRaw) {
+            const data = JSON.parse(cachedDataRaw);
+            skipNextSyncRef.current = true;
+            if (data.state) {
+              setState(prev => {
+                const preserved: any = {};
+                if (prev?.managerData) preserved.managerData = prev.managerData;
+                if (prev?.hrData) preserved.hrData = prev.hrData;
+                if (prev?.surveys) preserved.surveys = prev.surveys;
+                if (prev?.feed) preserved.feed = prev.feed;
+                return { ...data.state, ...preserved };
+              });
+            }
+            if (data.user) {
+              setUser(data.user);
+            }
+            console.log("Loaded state successfully from offline local cache.");
+          }
+        } catch (e) {
+          console.error("Failed to parse local cache state:", e);
+        }
+        setLoading(false);
+        loginInProgressRef.current = false;
+        activeFetchDataRef.current = null;
+        return;
+      }
+
       try {
         const res = await fetch(`/api/storage?userId=${userId}`);
         const data = await res.json();
@@ -238,15 +269,16 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         }
         if (data.user) setUser(data.user);
       } catch (error: any) {
-        const isNetworkError = error instanceof TypeError || (error.message && (
-          error.message.toLowerCase().includes('failed to fetch') || 
-          error.message.toLowerCase().includes('networkerror') ||
-          error.message.toLowerCase().includes('fetch failed')
-        ));
+        const errorMsg = error?.message || String(error);
+        const isNetworkError = error instanceof TypeError || 
+          errorMsg.toLowerCase().includes('failed to fetch') || 
+          errorMsg.toLowerCase().includes('networkerror') ||
+          errorMsg.toLowerCase().includes('fetch failed');
+
         if (isNetworkError) {
-          console.warn("Failed to fetch state (network issue), falling back to local cache:", error.message || error);
+          console.warn("Failed to fetch state (network issue), falling back to local cache:", errorMsg);
         } else {
-          console.error("Failed to fetch state, falling back to local cache:", error);
+          console.error("Failed to fetch state, falling back to local cache:", errorMsg, error);
         }
         // Fallback to local storage cache
         try {
@@ -287,8 +319,18 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
   }, [fetchData]);
 
   const logout = useCallback(() => {
-    setUser(null);
-    setState(null);
+    // Cancel any pending Google FedCM / One Tap requests BEFORE navigating
+    // This prevents the "[GSI_LOGGER]: FedCM get() rejects with AbortError" console error
+    if (typeof window !== "undefined") {
+      try {
+        const g = (window as any).google;
+        if (g?.accounts?.id) {
+          g.accounts.id.cancel();        // cancel pending FedCM credential requests
+          g.accounts.id.disableAutoSelect(); // prevent auto-select from re-triggering
+        }
+      } catch (_) { /* GSI not loaded — safe to ignore */ }
+    }
+
     localStorage.removeItem("hp_user_id");
     if (typeof window !== "undefined") {
       window.location.href = "/";
@@ -299,6 +341,10 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
     if (activeFetchDashboardsRef.current) return activeFetchDashboardsRef.current;
 
     const promise = (async () => {
+      if (typeof window !== "undefined" && !navigator.onLine) {
+        activeFetchDashboardsRef.current = null;
+        return;
+      }
       try {
         if (role === 'hr') {
           const res = await fetch('/api/hr/dashboard');
@@ -312,13 +358,13 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
           setState(prev => prev ? { ...prev, managerData: data } : null);
         }
       } catch (e: any) {
-        const isNetworkError = e instanceof TypeError || (e.message && (
-          e.message.toLowerCase().includes('failed to fetch') || 
-          e.message.toLowerCase().includes('networkerror') ||
-          e.message.toLowerCase().includes('fetch failed')
-        ));
+        const errorMsg = e?.message || String(e);
+        const isNetworkError = e instanceof TypeError || 
+          errorMsg.toLowerCase().includes('failed to fetch') || 
+          errorMsg.toLowerCase().includes('networkerror') ||
+          errorMsg.toLowerCase().includes('fetch failed');
         if (isNetworkError) {
-          console.warn("Dashboard fetch error (network issue):", e.message || e);
+          console.warn("Dashboard fetch error (network issue):", errorMsg);
         } else {
           console.error("Dashboard fetch error:", e);
         }
@@ -552,6 +598,10 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
   const awardXP = useCallback(async (actionType: string, description?: string) => {
     const currentUser = userRef.current;
     if (!currentUser) return;
+    if (typeof window !== "undefined" && !navigator.onLine) {
+      console.warn("Browser is offline, queueing XP award for offline sync.");
+      return;
+    }
     try {
       const res = await fetch("/api/xp/award", {
         method: "POST",
@@ -564,13 +614,13 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         updateState((s: any) => ({ ...s, points: data.newTotal, coins: data.newTotal }));
       }
     } catch (e: any) {
-      const isNetworkError = e instanceof TypeError || (e.message && (
-        e.message.toLowerCase().includes('failed to fetch') || 
-        e.message.toLowerCase().includes('networkerror') ||
-        e.message.toLowerCase().includes('fetch failed')
-      ));
+      const errorMsg = e?.message || String(e);
+      const isNetworkError = e instanceof TypeError || 
+        errorMsg.toLowerCase().includes('failed to fetch') || 
+        errorMsg.toLowerCase().includes('networkerror') ||
+        errorMsg.toLowerCase().includes('fetch failed');
       if (isNetworkError) {
-        console.warn("Failed to award XP (network issue):", e.message || e);
+        console.warn("Failed to award XP (network issue):", errorMsg);
       } else {
         console.error("Failed to award XP:", e);
       }
@@ -669,6 +719,11 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         const data = latestSyncRef.current;
         if (!data) return;
         
+        if (typeof window !== "undefined" && !navigator.onLine) {
+          console.warn("Browser is offline, skipping sync.");
+          return;
+        }
+
         try {
           setSyncing(true);
           const finalSyncState: any = { ...data.state };
@@ -699,13 +754,13 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
             console.error("Sync failed:", errData.error || response.statusText);
           }
         } catch (e: any) {
-          const isNetworkError = e instanceof TypeError || (e.message && (
-            e.message.toLowerCase().includes('failed to fetch') || 
-            e.message.toLowerCase().includes('networkerror') ||
-            e.message.toLowerCase().includes('fetch failed')
-          ));
+          const errorMsg = e?.message || String(e);
+          const isNetworkError = e instanceof TypeError || 
+            errorMsg.toLowerCase().includes('failed to fetch') || 
+            errorMsg.toLowerCase().includes('networkerror') ||
+            errorMsg.toLowerCase().includes('fetch failed');
           if (isNetworkError) {
-            console.warn("Sync error (network issue):", e.message || e);
+            console.warn("Sync error (network issue):", errorMsg);
           } else {
             console.error("Sync error:", e);
           }

@@ -379,6 +379,95 @@ window.__FB = window.__FB || {};
       background: var(--fb-blue-soft) !important;
       color: var(--fb-blue) !important;
     }
+
+    /* ─── Task Verification Styles ─── */
+    .fb-task-verify-card {
+      background: var(--fb-card) !important;
+      border: 1.5px solid var(--fb-line) !important;
+      margin-bottom: 12px !important;
+      padding: 14px 16px !important;
+      border-radius: 14px !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03) !important;
+    }
+    .fb-task-verify-header {
+      display: flex !important;
+      align-items: center !important;
+      gap: 10px !important;
+      margin-bottom: 10px !important;
+    }
+    .fb-task-verify-icon {
+      width: 28px !important;
+      height: 28px !important;
+      border-radius: 8px !important;
+      background: var(--fb-yellow-soft) !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      flex-shrink: 0 !important;
+      font-size: 14px !important;
+    }
+    .fb-task-verify-title-container {
+      flex: 1 !important;
+      min-width: 0 !important;
+    }
+    .fb-task-verify-title {
+      font-size: 12.5px !important;
+      font-weight: 700 !important;
+      color: var(--fb-ink) !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+    .fb-task-verify-meta {
+      font-size: 10px !important;
+      color: var(--fb-ink-mute) !important;
+      margin-top: 2px !important;
+    }
+    .fb-task-verify-actions {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr 1fr !important;
+      gap: 6px !important;
+    }
+    .fb-task-verify-btn {
+      padding: 8px 4px !important;
+      border-radius: 9px !important;
+      border: none !important;
+      font-size: 10.5px !important;
+      font-weight: 800 !important;
+      cursor: pointer !important;
+      transition: all 0.15s !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 3px !important;
+    }
+    .fb-task-verify-btn.accept {
+      background: #86C0A9 !important;
+      color: #fff !important;
+    }
+    .fb-task-verify-btn.accept:hover {
+      opacity: 0.85 !important;
+    }
+    .fb-task-verify-btn.reject {
+      background: var(--fb-card) !important;
+      color: #E88B7D !important;
+      border: 1.5px solid #E88B7D !important;
+    }
+    .fb-task-verify-btn.reject:hover {
+      background: rgba(232,139,125,0.08) !important;
+    }
+    .fb-task-verify-btn.revision {
+      background: var(--fb-card) !important;
+      color: #8A6814 !important;
+      border: 1.5px solid var(--fb-yellow) !important;
+    }
+    .fb-task-verify-btn.revision:hover {
+      background: var(--fb-yellow-soft) !important;
+    }
+    .fb-task-verify-btn:disabled {
+      opacity: 0.4 !important;
+      cursor: not-allowed !important;
+    }
   `;
   document.head.appendChild(style);
 })();
@@ -441,7 +530,7 @@ window.__FB.renderTeamPane = function() {
   // ── Member expand/collapse handlers ──
   container.querySelectorAll('.fb-team-member-header').forEach(header => {
     header.addEventListener('click', (e) => {
-      if (e.target.classList.contains('fb-team-verify-btn')) return;
+      if (e.target.closest('.fb-task-verify-btn')) return;
       const card = header.closest('.fb-team-member-card');
       const memberId = card.dataset.memberId;
       window.__FB.expandedMembers[memberId] = !window.__FB.expandedMembers[memberId];
@@ -449,15 +538,22 @@ window.__FB.renderTeamPane = function() {
     });
   });
 
-  // ── Verify task handlers ──
-  container.querySelectorAll('.fb-team-verify-btn').forEach(btn => {
+  // ── Verify task handlers (Accept / Reject / Revisi) ──
+  container.querySelectorAll('.fb-task-verify-btn').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
       const taskId = btn.dataset.taskId;
       const goalId = btn.dataset.goalId;
+      const action = btn.dataset.action; // 'approve', 'reject', 'revision'
       
       btn.textContent = '...';
       btn.disabled = true;
+
+      // Disable sibling buttons in the card
+      const actionRow = btn.closest('.fb-task-verify-actions');
+      if (actionRow) {
+        actionRow.querySelectorAll('.fb-task-verify-btn').forEach(b => b.disabled = true);
+      }
 
       try {
         const flowbeeApi = window.__FB.FLOWBEE_API || (window.location.origin + '/api/ext');
@@ -467,7 +563,8 @@ window.__FB.renderTeamPane = function() {
           body: JSON.stringify({
             taskId,
             goalId: goalId || null,
-            managerId: window.__FB.currentUser?.id || null
+            managerId: window.__FB.currentUser?.id || null,
+            action
           })
         });
         const data = await res.json();
@@ -476,7 +573,7 @@ window.__FB.renderTeamPane = function() {
             await window.__FB.flowbeeSyncAll();
           }
         } else {
-          alert('Gagal memverifikasi tugas: ' + (data.error || 'error'));
+          alert('Gagal memproses tugas: ' + (data.error || 'error'));
           window.__FB.renderTeamPane();
         }
       } catch (err) {
@@ -486,6 +583,7 @@ window.__FB.renderTeamPane = function() {
       }
     });
   });
+
 
   // ── KPI Approval action handlers ──
   container.querySelectorAll('.fb-kpi-action-btn').forEach(btn => {
@@ -539,7 +637,46 @@ function renderMembersTab(members, teamTasks) {
   const totalCounts = members.reduce((sum, m) => sum + (m.tasks?.total || 0), 0);
   const avgPct = totalCounts > 0 ? Math.round((doneCounts / totalCounts) * 100) : 0;
 
-  let html = `
+  let html = '';
+
+  // ── Pending Task Verifications (Verifikasi Tugas Anggota Tim) ──
+  const pendingTasks = teamTasks.filter(t => t.done && !t.verified);
+  if (pendingTasks.length > 0) {
+    html += `
+      <div class="fb-kpi-section">
+        <div class="fb-kpi-section-header">
+          <div class="fb-kpi-section-title">
+            ✓ Verifikasi Tugas Anggota Tim
+            <span class="fb-kpi-section-count" style="background:#E88B7D; color:#fff !important;">${pendingTasks.length}</span>
+          </div>
+        </div>
+    `;
+
+    pendingTasks.forEach(task => {
+      html += `
+        <div class="fb-task-verify-card">
+          <div class="fb-task-verify-header">
+            <div class="fb-task-verify-icon">⚡</div>
+            <div class="fb-task-verify-title-container">
+              <div class="fb-task-verify-title" title="${esc(task.title)}">${esc(task.title)}</div>
+              <div class="fb-task-verify-meta">
+                SELESAI OLEH: <b style="color:var(--fb-blue);">${esc(task.userName)}</b>
+              </div>
+            </div>
+          </div>
+          <div class="fb-task-verify-actions">
+            <button class="fb-task-verify-btn accept" data-task-id="${task.id}" data-goal-id="${task.goalId || ''}" data-action="approve">✓ Accept</button>
+            <button class="fb-task-verify-btn reject" data-task-id="${task.id}" data-goal-id="${task.goalId || ''}" data-action="reject">✗ Reject</button>
+            <button class="fb-task-verify-btn revision" data-task-id="${task.id}" data-goal-id="${task.goalId || ''}" data-action="revision">↻ Revisi</button>
+          </div>
+        </div>
+      `;
+    });
+
+    html += `</div>`;
+  }
+
+  html += `
     <div class="fb-team-summary">
       <div class="fb-team-summary-title">Rata-rata Tugas Selesai Tim</div>
       <div class="fb-team-summary-val">${avgPct}% <span style="font-size:12px; font-weight:500; color:var(--fb-ink-mute);">(${doneCounts}/${totalCounts} Tugas hari ini)</span></div>
@@ -591,15 +728,20 @@ function renderMembersTab(members, teamTasks) {
           const isDone = !!task.done;
           const isVerified = !!task.verified;
           html += `
-            <div class="fb-team-member-task-row">
+            <div class="fb-team-member-task-row" style="flex-direction: column; align-items: flex-start; gap: 8px;">
               <span class="fb-team-member-task-txt ${isDone ? 'done' : ''}">
                 ${isDone ? '✓' : '○'} ${esc(task.title)}
               </span>
-              <div style="flex-shrink: 0;">
           `;
 
           if (isDone && !isVerified) {
-            html += `<button class="fb-team-verify-btn" data-task-id="${task.id}" data-goal-id="${task.goalId || ''}">Verifikasi</button>`;
+            html += `
+              <div class="fb-task-verify-actions" style="width: 100%;">
+                <button class="fb-task-verify-btn accept" data-task-id="${task.id}" data-goal-id="${task.goalId || ''}" data-action="approve">✓ Accept</button>
+                <button class="fb-task-verify-btn reject" data-task-id="${task.id}" data-goal-id="${task.goalId || ''}" data-action="reject">✗ Reject</button>
+                <button class="fb-task-verify-btn revision" data-task-id="${task.id}" data-goal-id="${task.goalId || ''}" data-action="revision">↻ Revisi</button>
+              </div>
+            `;
           } else if (isVerified) {
             html += `<span class="fb-team-verified-badge">✓ Terverifikasi</span>`;
           } else {
@@ -607,7 +749,6 @@ function renderMembersTab(members, teamTasks) {
           }
 
           html += `
-              </div>
             </div>
           `;
         });

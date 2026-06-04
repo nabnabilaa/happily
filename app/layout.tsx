@@ -55,10 +55,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrains.variable}`} suppressHydrationWarning>
-      <head />
+      <head>
+      </head>
       <body>
-        <Script id="theme-loader" strategy="beforeInteractive">
-          {`
+        <Script id="theme-loader" strategy="beforeInteractive" dangerouslySetInnerHTML={{
+          __html: `
             try {
               var saved = localStorage.getItem('hp-theme');
               var system = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -69,8 +70,60 @@ export default function RootLayout({
                 document.documentElement.classList.remove('dark');
               }
             } catch (e) {}
-          `}
-        </Script>
+          `
+        }} />
+        <Script id="gsi-error-suppressor" strategy="beforeInteractive" dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              try {
+                var originalError = console.error;
+                console.error = function() {
+                  var args = Array.prototype.slice.call(arguments);
+                  var isGsiAbortError = args.some(function(arg) {
+                    var str = '';
+                    if (arg instanceof Error) {
+                      str = arg.message + ' ' + arg.stack;
+                    } else if (arg && typeof arg === 'object') {
+                      try { str = JSON.stringify(arg); } catch(e) { str = String(arg); }
+                    } else {
+                      str = String(arg || '');
+                    }
+                    return str.indexOf('[GSI_LOGGER]') !== -1 || str.indexOf('AbortError') !== -1 || str.indexOf('FedCM') !== -1;
+                  });
+                  
+                  if (isGsiAbortError) {
+                    return;
+                  }
+                  originalError.apply(console, arguments);
+                };
+
+                window.addEventListener('unhandledrejection', function(event) {
+                  var reason = event.reason;
+                  var msg = '';
+                  if (reason instanceof Error) {
+                    msg = reason.message;
+                  } else if (reason && typeof reason === 'object') {
+                    msg = reason.message || String(reason);
+                  } else {
+                    msg = String(reason || '');
+                  }
+                  if (msg.indexOf('[GSI_LOGGER]') !== -1 || msg.indexOf('AbortError') !== -1 || msg.indexOf('FedCM') !== -1) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }
+                });
+
+                window.addEventListener('error', function(event) {
+                  var msg = event.message || '';
+                  if (msg.indexOf('[GSI_LOGGER]') !== -1 || msg.indexOf('AbortError') !== -1 || msg.indexOf('FedCM') !== -1) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }
+                }, true);
+              } catch(e) {}
+            })();
+          `
+        }} />
         <HPProvider>
           <PWARegistration />
           <InstallButton />

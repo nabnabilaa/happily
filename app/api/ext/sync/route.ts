@@ -22,7 +22,7 @@ export async function OPTIONS(request: Request) {
 // POST: Enhanced 2-way sync between extension and web
 export async function POST(request: Request) {
   try {
-    const { userId, tasks, notes, calendarRequest, deletedTaskIds, deletedNoteIds } = await request.json();
+    const { userId, tasks, notes, habits, calendarRequest, deletedTaskIds, deletedNoteIds, focusTaskId, focusProgress, focusIntention } = await request.json();
     if (!userId) {
       return NextResponse.json(
         { error: "userId required" },
@@ -69,19 +69,22 @@ export async function POST(request: Request) {
 
         await db.execute({
           sql: `INSERT INTO daily_priorities (id, user_id, title, description, target_date, kpi_id, goal_id, energy_level, est_time, is_done, tone, source, 
-                proof_link, proof_notes, metric_value, progress, is_project, project_duration_days, project_description, created_at) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'extension', ?, ?, ?, ?, ?, ?, ?, NOW())
+                proof_link, proof_notes, metric_value, progress, is_project, project_duration_days, project_description, time_tracked, timer_started_at, created_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'extension', ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
                 ON DUPLICATE KEY UPDATE 
                 is_done = VALUES(is_done), title = VALUES(title), progress = VALUES(progress),
                 description = VALUES(description), target_date = VALUES(target_date),
                 kpi_id = VALUES(kpi_id), goal_id = VALUES(goal_id),
                 proof_link = COALESCE(VALUES(proof_link), proof_link),
-                metric_value = COALESCE(VALUES(metric_value), metric_value)`,
+                metric_value = COALESCE(VALUES(metric_value), metric_value),
+                time_tracked = VALUES(time_tracked),
+                timer_started_at = VALUES(timer_started_at)`,
           args: [
             String(t.id), userId, t.title, t.description || null, t.targetDate || null, t.kpiId || null, verifiedGoalId, t.energy || 'mid', t.est || '30m', 
             t.done ? 1 : 0, t.tone || 'sage',
             t.proofLink || null, t.proofNotes || null, t.metricValue || null,
-            t.progress || 0, t.isProject ? 1 : 0, t.projectDurationDays || null, t.projectDescription || null
+            t.progress || 0, t.isProject ? 1 : 0, t.projectDurationDays || null, t.projectDescription || null,
+            t.timeTracked || 0, t.timerStartedAt || null
           ]
         });
         tasksSynced++;
@@ -94,12 +97,17 @@ export async function POST(request: Request) {
         if (!n.id || !n.content) continue;
 
         await db.execute({
-          sql: `INSERT INTO notes (id, user_id, title, content, visibility, source, related_event_id)
-                VALUES (?, ?, ?, ?, ?, 'extension', ?)
-                ON DUPLICATE KEY UPDATE content = VALUES(content), title = VALUES(title)`,
+          sql: `INSERT INTO notes (id, user_id, title, content, visibility, shared_with_users, shared_permission, source, related_event_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'extension', ?)
+                ON DUPLICATE KEY UPDATE content = VALUES(content), title = VALUES(title), 
+                visibility = VALUES(visibility), shared_with_users = VALUES(shared_with_users), 
+                shared_permission = VALUES(shared_permission)`,
           args: [
             String(n.id), userId, n.title || null, n.content,
-            n.visibility || 'private', n.relatedEventId || null
+            n.visibility || 'private',
+            n.sharedWithUsers ? JSON.stringify(n.sharedWithUsers) : null,
+            n.sharedPermission || 'view',
+            n.relatedEventId || null
           ]
         });
         notesSynced++;
@@ -114,29 +122,137 @@ export async function POST(request: Request) {
       });
     } catch (e) { /* non-critical */ }
 
+    // Sync Focus Task to users table if provided in the payload
+    if (focusTaskId !== undefined || focusProgress !== undefined || focusIntention !== undefined) {
+      try {
+        await db.execute({
+          sql: `UPDATE users SET 
+                focus_task_id = ?, 
+                focus_progress = ?, 
+                focus_intention = ? 
+                WHERE id = ?`,
+          args: [
+            focusTaskId !== undefined ? (focusTaskId || null) : null,
+            focusProgress !== undefined ? (Number(focusProgress) || 0) : 0,
+            focusIntention !== undefined ? (focusIntention || "") : "",
+            userId
+          ]
+        });
+      } catch (e) {
+        console.error("Failed to update focus task in users table:", e);
+      }
+    }
+
+    // ── HABITS SYNC (Programmatic Diffing) ──
+    if (habits && Array.isArray(habits)) {
+      try {
+        const dbHabitsRes = await db.execute({
+          sql: "SELECT id, name, streak, target_days, is_done_today, glyph, completed_dates FROM habits WHERE user_id = ?",
+          args: [userId]
+        });
+        const dbHabitsMap = new Map<string, any>();
+        for (const r of dbHabitsRes.rows) {
+          const key = (r.name || '').toLowerCase().trim();
+          if (key) dbHabitsMap.set(key, r);
+        }
+
+        const payloadHabitsSet = new Set<string>();
+        const seenHabits = new Set<string>();
+
+        for (const h of habits) {
+          const habitNameLower = (h.name || '').toLowerCase().trim();
+          if (!habitNameLower || seenHabits.has(habitNameLower)) continue;
+          seenHabits.add(habitNameLower);
+          payloadHabitsSet.add(habitNameLower);
+
+          const existing = dbHabitsMap.get(habitNameLower);
+          const isDoneTodayVal = h.done ? 1 : 0;
+          const completedDatesStr = h.completedDates ? JSON.stringify(h.completedDates) : null;
+
+          if (!existing) {
+            // Insert new habit
+            await db.execute({
+              sql: `INSERT INTO habits (user_id, name, streak, target_days, is_done_today, glyph, completed_dates) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+              args: [userId, h.name, h.streak || 0, h.target || 30, isDoneTodayVal, h.glyph || 'check', completedDatesStr]
+            });
+          } else {
+            let existingCompletedDatesStr = null;
+            if (existing.completed_dates) {
+              existingCompletedDatesStr = typeof existing.completed_dates === 'string' 
+                ? existing.completed_dates 
+                : JSON.stringify(existing.completed_dates);
+            }
+            const existingIsDone = Number(existing.is_done_today);
+            const existingStreak = Number(existing.streak);
+            const existingTarget = Number(existing.target_days);
+
+            if (
+              existingStreak !== h.streak ||
+              existingTarget !== h.target ||
+              existingIsDone !== isDoneTodayVal ||
+              existing.glyph !== h.glyph ||
+              existingCompletedDatesStr !== completedDatesStr ||
+              existing.name !== h.name
+            ) {
+              await db.execute({
+                sql: `UPDATE habits SET streak = ?, target_days = ?, is_done_today = ?, glyph = ?, completed_dates = ?, name = ? WHERE id = ? AND user_id = ?`,
+                args: [h.streak, h.target, isDoneTodayVal, h.glyph, completedDatesStr, h.name, existing.id, userId]
+              });
+            }
+          }
+        }
+
+        // Delete habits in DB that are not in the payload
+        const deleteHabitIds = Array.from(dbHabitsMap.entries())
+          .filter(([key]) => !payloadHabitsSet.has(key))
+          .map(([, r]) => r.id);
+
+        if (deleteHabitIds.length > 0) {
+          await db.execute({
+            sql: `DELETE FROM habits WHERE user_id = ? AND id IN (${deleteHabitIds.map(() => '?').join(',')})`,
+            args: [userId, ...deleteHabitIds]
+          });
+        }
+      } catch (e) {
+        console.error("Habit sync error in ext:", e);
+      }
+    }
+
     // ── Fetch user identity for extension (role-based awareness) ──
     const userRes = await db.execute({
-      sql: "SELECT id, name, role, user_role_context, points, coins, level, `rank`, avatar_image, streak FROM users WHERE id = ?",
+      sql: "SELECT id, name, role, user_role_context, points, coins, level, `rank`, avatar_image, streak, focus_task_id, focus_progress, focus_intention, department FROM users WHERE id = ?",
       args: [userId]
     });
     const userRow = userRes.rows[0];
+    const userDept = userRow?.department || '';
 
     // ── Return latest data from website (for 2-way sync) ──
     
     // Tasks today / active
     const tasksRes = await db.execute({
       sql: `SELECT id, title, goal_title, is_done, energy_level, est_time, tone, 
-            proof_link, proof_notes, metric_value, progress, is_project, project_duration_days, project_description, goal_id, kpi_id, description, target_date, created_at
+            proof_link, proof_notes, metric_value, progress, is_project, project_duration_days, project_description, goal_id, kpi_id, description, target_date, time_tracked, timer_started_at, created_at
             FROM daily_priorities WHERE user_id = ? AND (is_done = 0 OR COALESCE(DATE(target_date), DATE(created_at)) = CURDATE())`,
       args: [userId]
     });
 
-    // Notes (own, recent 20)
+    // Notes (own + shared, recent 20)
     const notesRes = await db.execute({
-      sql: `SELECT id, title, content, visibility, related_event_id, created_at
-            FROM notes WHERE user_id = ? ORDER BY updated_at DESC LIMIT 20`,
-      args: [userId]
+      sql: `SELECT n.id, n.title, n.content, n.visibility, n.shared_with_users, n.shared_permission, n.related_event_id, n.created_at, n.user_id, u.name as author_name, u.department as author_department
+            FROM notes n
+            JOIN users u ON n.user_id = u.id
+            WHERE n.user_id = ? 
+               OR n.visibility = 'company'
+               OR (n.visibility = 'division' AND u.department = ?)
+               OR (n.visibility = 'custom' AND JSON_CONTAINS(n.shared_with_users, JSON_QUOTE(?)))
+            ORDER BY n.updated_at DESC LIMIT 20`,
+      args: [userId, userDept, userId]
     });
+
+    // All users (for member picker in extension)
+    const allUsersRes = await db.execute(
+      "SELECT id, name, department FROM users ORDER BY name ASC"
+    );
 
     // Calendar events (upcoming 7 days)
     let calEvents: any[] = [];
@@ -350,6 +466,24 @@ export async function POST(request: Request) {
             risk: mood === 'stress' ? 'high' : 'medium'
           });
         }
+
+        const todayTasksRes = await db.execute({
+          sql: `SELECT COUNT(*) as total, SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as done
+                FROM daily_priorities WHERE user_id = ? AND DATE(created_at) = CURDATE()`,
+          args: [String(u.id)]
+        });
+        const tTotal = Number(todayTasksRes.rows[0]?.total) || 0;
+        const tDone = Number(todayTasksRes.rows[0]?.done) || 0;
+
+        members.push({
+          id: u.id,
+          name: u.name,
+          role: u.job_title || 'Employee',
+          dept: u.team_name || 'Unassigned',
+          mood,
+          wellbeing: MOOD_VALUES[mood] || 50,
+          tasks: { done: tDone, total: tTotal }
+        });
       }
 
       const teamsRes = await db.execute("SELECT * FROM departments");
@@ -397,18 +531,52 @@ export async function POST(request: Request) {
       };
     }
 
-    // Emit real-time event to refresh open website tabs
-    hpEventEmitter.emit("db_update", { type: "refresh", targetUserId: userId, timestamp: Date.now() });
+    const hasChanges = tasksSynced > 0 || notesSynced > 0 || (deletedTaskIds && deletedTaskIds.length > 0) || (deletedNoteIds && deletedNoteIds.length > 0);
+    if (hasChanges) {
+      // Emit real-time event to refresh open website tabs
+      hpEventEmitter.emit("db_update", { type: "refresh", targetUserId: userId, timestamp: Date.now() });
+    }
+
+    // Fetch Habits from DB to return
+    const habitsRes = await db.execute({
+      sql: "SELECT id, name, streak, target_days, is_done_today, glyph, completed_dates FROM habits WHERE user_id = ?",
+      args: [userId]
+    });
+    const habitsUnique: any[] = [];
+    const seenHabits = new Set<string>();
+    for (const r of habitsRes.rows) {
+      const habitNameLower = (r.name || '').toLowerCase().trim();
+      if (!habitNameLower || seenHabits.has(habitNameLower)) continue;
+      seenHabits.add(habitNameLower);
+      let completedDates = [];
+      try {
+        if (r.completed_dates) {
+          completedDates = typeof r.completed_dates === 'string' ? JSON.parse(r.completed_dates) : r.completed_dates;
+        }
+      } catch (e) { console.error("Failed to parse habit completed_dates", e); }
+      
+      const todayReal = new Date();
+      const todayStr = `${todayReal.getFullYear()}-${String(todayReal.getMonth() + 1).padStart(2, '0')}-${String(todayReal.getDate()).padStart(2, '0')}`;
+      const isDoneToday = completedDates ? completedDates.includes(todayStr) : !!r.is_done_today;
+
+      habitsUnique.push({
+        name: r.name, streak: r.streak, target: r.target_days, done: isDoneToday, glyph: r.glyph, completedDates
+      });
+    }
 
     return NextResponse.json({ 
       success: true, 
       tasksSynced, notesSynced,
+      habits: habitsUnique,
       user: userRow ? {
         id: userRow.id, name: userRow.name,
         role: userRow.user_role_context || userRow.role,
         points: userRow.points, coins: userRow.coins,
         level: userRow.level, rank: userRow.rank,
         streak: userRow.streak, avatarImage: userRow.avatar_image,
+        focusTaskId: userRow.focus_task_id ? (isNaN(Number(userRow.focus_task_id)) ? userRow.focus_task_id : Number(userRow.focus_task_id)) : null,
+        focusProgress: userRow.focus_progress || 0,
+        focusIntention: userRow.focus_intention || "",
       } : null,
       tasks: tasksRes.rows.map(r => {
         let taskDate = '';
@@ -433,18 +601,31 @@ export async function POST(request: Request) {
           goalId: r.goal_id, kpiId: r.kpi_id,
           description: r.description || '',
           targetDate: taskDate,
+          timeTracked: Number(r.time_tracked) || 0,
+          timerStartedAt: r.timer_started_at || null,
         };
       }),
-      notes: notesRes.rows.map(r => ({
-        id: r.id, title: r.title, content: r.content,
-        visibility: r.visibility, relatedEventId: r.related_event_id,
-        createdAt: r.created_at,
-      })),
+      notes: notesRes.rows.map(r => {
+        let swu: string[] = [];
+        try { if (r.shared_with_users) swu = typeof r.shared_with_users === 'string' ? JSON.parse(r.shared_with_users) : r.shared_with_users; } catch(_) {}
+        return {
+          id: r.id, title: r.title, content: r.content,
+          visibility: r.visibility,
+          sharedWithUsers: swu,
+          sharedPermission: r.shared_permission || 'view',
+          relatedEventId: r.related_event_id,
+          createdAt: r.created_at,
+          userId: r.user_id,
+          authorName: r.author_name || 'SAYA',
+          authorDepartment: r.author_department || '',
+        };
+      }),
+      allUsers: allUsersRes.rows.map(r => ({ id: r.id, name: r.name, department: r.department })),
       calendar: calEvents,
       notifications: notifsRes.rows.map(r => ({
         id: r.id, title: r.title, message: r.message, type: r.type,
       })),
-      members: userRole === 'manager' ? members : undefined,
+      members: (userRole === 'manager' || userRole === 'hr') ? members : undefined,
       teamTasks: userRole === 'manager' ? teamTasks : undefined,
       teamGoals: userRole === 'manager' ? teamGoals : undefined,
       teamApprovals: userRole === 'manager' ? teamApprovals : undefined,

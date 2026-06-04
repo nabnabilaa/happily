@@ -19,7 +19,21 @@ export default function PWARegistration() {
   const { user } = useHP();
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+      return;
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Disabling Service Worker in development to prevent Turbopack HMR / chunk caching issues.');
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const registration of registrations) {
+          registration.unregister();
+        }
+      });
+      return;
+    }
+
+    if (!('PushManager' in window)) {
       return;
     }
 

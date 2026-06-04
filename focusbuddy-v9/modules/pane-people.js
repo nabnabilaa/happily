@@ -60,12 +60,12 @@ window.__FB = window.__FB || {};
       background: var(--fb-card) !important;
       border: 1.5px solid var(--fb-line) !important;
       border-left: 4.5px solid #E88B7D !important;
-      padding: 14px 16px !important;
+      padding: 12px 14px !important;
       margin-bottom: 10px !important;
       display: flex !important;
-      align-items: center !important;
-      justify-content: space-between !important;
-      gap: 12px !important;
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 8px !important;
       border-radius: 14px !important;
       transition: all 0.2s ease !important;
       box-shadow: 0 2px 8px rgba(0,0,0,0.03) !important;
@@ -129,11 +129,18 @@ window.__FB = window.__FB || {};
       padding: 14px 16px !important;
       margin-bottom: 10px !important;
       display: flex !important;
-      align-items: center !important;
-      justify-content: space-between !important;
+      flex-direction: column !important;
+      align-items: stretch !important;
       border-radius: 14px !important;
       transition: all 0.2s ease !important;
       box-shadow: 0 2px 8px rgba(0,0,0,0.03) !important;
+    }
+    .fb-people-dept-header {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      cursor: pointer !important;
+      width: 100% !important;
     }
     .fb-people-dept-card:hover {
       transform: translateY(-1px) !important;
@@ -239,20 +246,50 @@ window.__FB.renderPeoplePane = function() {
   } else {
     atRiskEmployees.forEach(emp => {
       const isHigh = emp.risk === 'high';
+      const triggers = [];
+      if (emp.wellbeing < 50) {
+        triggers.push(`Tingkat wellbeing rendah (Skor ${emp.wellbeing}/100${emp.mood ? ` - Mood: ${emp.mood}` : ''})`);
+      }
+      if (emp.completionRate < 30) {
+        triggers.push(`Penyelesaian tugas harian di bawah target (Hanya ${emp.completionRate}%)`);
+      }
+      if (triggers.length === 0) {
+        triggers.push("Penurunan konsistensi performa kerja mingguan");
+      }
+
       html += `
         <div class="fb-people-risk-card ${isHigh ? '' : 'med'}">
-          <div class="fb-people-risk-info">
-            <div class="fb-people-risk-name">${esc(emp.name)}</div>
-            <div class="fb-people-risk-sub">${esc(emp.role)} • ${esc(emp.dept)}</div>
+          <div style="display: flex !important; justify-content: space-between !important; align-items: flex-start !important; gap: 12px !important;">
+            <div class="fb-people-risk-info">
+              <div class="fb-people-risk-name">${esc(emp.name)}</div>
+              <div class="fb-people-risk-sub">${esc(emp.role || emp.department || 'Team Member')} • ${esc(emp.dept || 'Unassigned')}</div>
+            </div>
+            <div class="fb-people-risk-badge-wrap">
+              <span class="fb-people-risk-level ${isHigh ? '' : 'med'}">${isHigh ? 'Risiko Tinggi' : 'Risiko Sedang'}</span>
+            </div>
           </div>
-          <div class="fb-people-risk-badge-wrap">
-            <span class="fb-people-risk-level ${isHigh ? '' : 'med'}">${isHigh ? 'High' : 'Med'}</span>
-            <span class="fb-people-risk-stats">😊 ${emp.wellbeing}% • ✅ ${emp.completionRate}%</span>
+          
+          <div style="margin-top: 4px !important;">
+            <div style="font-size: 10px !important; font-weight: 800 !important; margin-bottom: 4px !important; color: var(--fb-ink) !important;">
+              Indikator:
+            </div>
+            <ul style="margin: 0 !important; padding-left: 16px !important; font-size: 11px !important; color: var(--fb-ink-mute) !important; line-height: 1.4 !important; list-style-type: disc !important;">
+              ${triggers.map(trig => `<li style="margin-bottom: 2px !important;">${esc(trig)}</li>`).join('')}
+            </ul>
+          </div>
+
+          <div style="margin-top: 4px !important; display: flex !important; gap: 8px !important;">
+            <div style="padding: 4px 8px !important; border-radius: 6px !important; background: rgba(134,192,169,0.12) !important; color: #86C0A9 !important; font-size: 10.5px !important; font-weight: 800 !important; display: inline-block !important;">
+              ✅ Pesan Otomatis Terkirim
+            </div>
           </div>
         </div>
       `;
     });
   }
+
+  // Initialize expandedDepts if not already
+  window.__FB.expandedDepts = window.__FB.expandedDepts || {};
 
   // 3. Department Pulse
   html += `<div class="fb-people-section-title">Nadi Departemen</div>`;
@@ -264,22 +301,74 @@ window.__FB.renderPeoplePane = function() {
       if (dept.wellbeing < 40) wbClass = 'low';
       else if (dept.wellbeing < 70) wbClass = 'mid';
 
+      const isExpanded = !!window.__FB.expandedDepts[dept.dept];
+      const deptMembers = (roleData?.members || []).filter(m => m.dept === dept.dept);
+
       html += `
-        <div class="fb-people-dept-card">
-          <div>
-            <div class="fb-people-dept-name">${esc(dept.dept)}</div>
-            <div class="fb-people-dept-headcount">${dept.headcount} anggota${dept.atRisk > 0 ? ` • <span style="color:#E88B7D; font-weight:700;">${dept.atRisk} berisiko</span>` : ''}</div>
+        <div class="fb-people-dept-card" data-dept-name="${esc(dept.dept)}" style="cursor: pointer !important;">
+          <div class="fb-people-dept-header">
+            <div>
+              <div class="fb-people-dept-name">${esc(dept.dept)}</div>
+              <div class="fb-people-dept-headcount">${dept.headcount} anggota${dept.atRisk > 0 ? ` • <span style="color:#E88B7D; font-weight:700;">${dept.atRisk} berisiko</span>` : ''}</div>
+            </div>
+            <div style="display: flex !important; align-items: center !important; gap: 10px !important;">
+              <div class="fb-people-dept-metrics">
+                <span class="fb-people-pulse-wellbeing ${wbClass}" title="Wellbeing">😊 ${dept.wellbeing}%</span>
+                <span class="fb-people-pulse-engagement" title="Engagement">✅ ${dept.engagement}%</span>
+              </div>
+              <span class="fb-people-dept-arrow" style="font-size: 9px !important; color: var(--fb-ink-mute) !important; transition: transform 0.2s !important; display: inline-block !important; transform: ${isExpanded ? 'rotate(180deg)' : 'rotate(0deg)'};">▼</span>
+            </div>
           </div>
-          <div class="fb-people-dept-metrics">
-            <span class="fb-people-pulse-wellbeing ${wbClass}" title="Wellbeing">😊 ${dept.wellbeing}%</span>
-            <span class="fb-people-pulse-engagement" title="Engagement">✅ ${dept.engagement}%</span>
-          </div>
-        </div>
       `;
+
+      if (isExpanded) {
+        html += `
+          <div class="fb-people-dept-members" style="margin-top: 12px !important; border-top: 1.5px dashed var(--fb-line) !important; padding-top: 10px !important; display: flex !important; flex-direction: column !important; gap: 8px !important; width: 100% !important;">
+        `;
+        if (deptMembers.length === 0) {
+          html += `<div style="font-size: 11px; color: var(--fb-ink-mute); font-style: italic; padding: 4px 0;">Tidak ada anggota di departemen ini</div>`;
+        } else {
+          deptMembers.forEach(member => {
+            const initials = member.name ? member.name.charAt(0).toUpperCase() : '?';
+            const wellbeing = member.wellbeing || 70;
+            const moodIcons = { joy: '😊', calm: '😌', neutral: '😐', tired: '😴', stress: '😰' };
+            const moodLabel = moodIcons[member.mood] || '😐';
+            
+            html += `
+              <div class="fb-people-member-row" style="display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 10px !important; padding: 8px 10px !important; border-radius: 10px !important; background: var(--fb-line-soft) !important;">
+                <div style="display: flex !important; align-items: center !important; gap: 10px !important; min-width: 0 !important; flex: 1 !important;">
+                  <div style="width: 30px !important; height: 30px !important; border-radius: 50% !important; background: linear-gradient(135deg, var(--fb-blue), var(--fb-yellow-dark)) !important; color: #fff !important; display: flex !important; align-items: center !important; justify-content: center !important; font-weight: 800 !important; font-size: 12px !important; flex-shrink: 0 !important;">${initials}</div>
+                  <div style="min-width: 0 !important; flex: 1 !important;">
+                    <div style="font-size: 12px !important; font-weight: 700 !important; color: var(--fb-ink) !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;">${esc(member.name)}</div>
+                    <div style="font-size: 10.5px !important; color: var(--fb-ink-mute) !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;">${esc(member.role)}</div>
+                  </div>
+                </div>
+                <div style="display: flex !important; flex-direction: column !important; align-items: flex-end !important; gap: 2px !important; flex-shrink: 0 !important;">
+                  <span style="font-size: 10px !important; font-weight: 700 !important; padding: 2.5px 6px !important; background: var(--fb-card) !important; color: var(--fb-ink-mute) !important; border-radius: 6px !important; border: 1.5px solid var(--fb-line) !important; display: inline-block !important;">${moodLabel} ${wellbeing}%</span>
+                  <span style="font-size: 10px !important; font-weight: 700 !important; color: var(--fb-blue) !important;">${member.tasks?.done || 0}/${member.tasks?.total || 0} Selesai</span>
+                </div>
+              </div>
+            `;
+          });
+        }
+        html += `</div>`;
+      }
+
+      html += `</div>`;
     });
   }
 
   container.innerHTML = html;
+
+  // Add click handlers for department expansion
+  container.querySelectorAll('.fb-people-dept-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.fb-people-dept-members')) return;
+      const deptName = card.dataset.deptName;
+      window.__FB.expandedDepts[deptName] = !window.__FB.expandedDepts[deptName];
+      window.__FB.renderPeoplePane();
+    });
+  });
 };
 
 // Helper function to escape HTML

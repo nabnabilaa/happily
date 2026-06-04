@@ -10,9 +10,10 @@ interface PriorityCardProps {
   onToggle: () => void;
   openModal?: (name: string, props?: any) => void;
   onDelete?: () => void;
+  onEdit?: () => void;
 }
 
-export default function PriorityCard({ p, onToggle, openModal, onDelete }: PriorityCardProps) {
+export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit }: PriorityCardProps) {
   const { state, updateState } = useHP();
   const [showPoints, setShowPoints] = useState(false);
   const [showFocusToast, setShowFocusToast] = useState(false);
@@ -399,6 +400,21 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete }: Prior
           </>
         )}
         
+        {onEdit && !p.done && (
+          <button 
+            onClick={(e) => { e.stopPropagation(); onEdit(); }}
+            className="hp-tap"
+            title="Edit Task"
+            style={{ 
+              width: 32, height: 32, borderRadius: 16, background: HP_TOKENS.blueWash,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            <HPGlyph name="edit" size={14} color={HP_TOKENS.blue} />
+          </button>
+        )}
+
         <button 
           onClick={handleDelete}
           className="hp-tap"

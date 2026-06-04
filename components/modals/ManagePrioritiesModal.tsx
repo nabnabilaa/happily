@@ -10,12 +10,13 @@ import {
 import HPGlyph from "@/components/ui/HPGlyph";
 import Modal from "@/components/ui/Modal";
 
-export default function ManagePrioritiesModal({ onClose, initialGoalId }: { onClose: () => void; initialGoalId?: string }) {
+export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask }: { onClose: () => void; initialGoalId?: string; editTask?: any }) {
   const { state, updateState, user, notify } = useHP();
-  const [newTitle, setNewTitle] = useState("");
-  const [newDescription, setNewDescription] = useState("");
-  const [targetDate, setTargetDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
-  const [selectedKpiId, setSelectedKpiId] = useState<string>(initialGoalId || "");
+  const [newTitle, setNewTitle] = useState(editTask?.title || "");
+  const [newDescription, setNewDescription] = useState(editTask?.description || "");
+  const [targetDate, setTargetDate] = useState<string>(editTask?.targetDate || (() => new Date().toISOString().split('T')[0]));
+  const [selectedKpiId, setSelectedKpiId] = useState<string>(editTask?.kpi_id || initialGoalId || "");
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Fetch KPIs from API (manager monthly_kpis + personal_kpis tables) — only once
   const [apiKpis, setApiKpis] = useState<any[]>([]);
@@ -82,14 +83,41 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId }: { onCl
 
   if (!state) return null;
 
-  // Anti-abuse: minimum 20 characters for task title (Spec v2)
-  const MIN_TASK_CHARS = 20;
+  // Anti-abuse: minimum characters for task title
+  const MIN_TASK_CHARS = 5;
   const titleTooShort = newTitle.length > 0 && newTitle.length < MIN_TASK_CHARS;
   const canAdd = newTitle.length >= MIN_TASK_CHARS;
 
-  const addPriority = () => {
+  const savePriority = () => {
     if (!canAdd) return;
     const selectedKpi = myKpis.find((k: any) => String(k.id) === String(selectedKpiId));
+    
+    if (editTask) {
+      // Edit mode
+      updateState((s: any) => {
+        const newPriorities = s.priorities.map((p: any) => {
+          if (p.id === editTask.id) {
+            return {
+              ...p,
+              title: newTitle,
+              description: newDescription,
+              targetDate: targetDate,
+              kpi_id: selectedKpiId || null,
+              kpi_title: selectedKpi?.title || null,
+              goal_id: selectedKpiId || null,
+              goal: selectedKpi?.title || null,
+            };
+          }
+          return p;
+        });
+        return { ...s, priorities: newPriorities };
+      });
+      notify("Task Berhasil Diperbarui", `${newTitle} diperbarui pada ${targetDate}`, "success");
+      onClose();
+      return;
+    }
+
+    // Create mode
     const newP = {
       id: Math.floor(Math.random() * 2000000000),
       title: newTitle,
@@ -208,134 +236,32 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId }: { onCl
     boxSizing: 'border-box',
   };
 
+  const itemsPerPage = 5;
+  const totalTasks = state.priorities.length;
+  const totalPages = Math.ceil(totalTasks / itemsPerPage);
+  
+  const paginatedTasks = React.useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return state.priorities.slice(start, start + itemsPerPage);
+  }, [state.priorities, currentPage]);
+
   return (
     <Modal onClose={onClose} title="📋 Kelola Task Harian">
       <div style={{ marginTop: 4 }}>
         
-        {/* Active tasks list */}
-        <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 8 }}>TASK AKTIF HARI INI</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
-          {state.priorities.length === 0 ? (
-            <div style={{ padding: 20, textAlign: 'center', background: HP_TOKENS.paper, borderRadius: 16, border: `1.5px dashed ${HP_TOKENS.line}` }}>
-              <div style={{ fontSize: 24, marginBottom: 6 }}>📝</div>
-              <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute }}>Belum ada task. Tambahkan di bawah.</div>
-            </div>
-          ) : (
-            state.priorities.map((p: any) => (
-              <div 
-                key={p.id} 
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 14,
-                  background: p.done ? HP_TOKENS.sageWash : HP_TOKENS.card, 
-                  border: `1.5px solid ${p.done ? HP_TOKENS.sage + '30' : HP_TOKENS.line}`,
-                }}
-              >
-                <div style={{ 
-                  width: 22, height: 22, borderRadius: 11, flexShrink: 0,
-                  background: p.done ? HP_TOKENS.sage : 'transparent',
-                  border: `2px solid ${p.done ? HP_TOKENS.sage : HP_TOKENS.line}`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }}>
-                  {p.done && <HPGlyph name="check" size={12} color="#fff"/>}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ 
-                    ...HP_TEXT.body, fontSize: 13, fontWeight: 600, 
-                    color: p.done ? HP_TOKENS.inkFade : HP_TOKENS.ink,
-                    textDecoration: p.done ? 'line-through' : 'none',
-                  }}>
-                    {p.title}
-                  </div>
-                  {p.description && (
-                    <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontSize: 11, marginTop: 2 }}>
-                      {p.description}
-                    </div>
-                  )}
-                  {/* KPI tag */}
-                  {(() => {
-                    const goalId = p.goal_id || p.kpi_id;
-                    const fallbackTitle = p.kpi_title || p.goal || 'KPI';
-                    if (!goalId) return null;
-                    const goal = state.goals?.find((g: any) => String(g.id) === String(goalId));
-                    if (!goal) {
-                      return (
-                        <div style={{ 
-                          display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4,
-                          padding: '2px 8px', borderRadius: 6, 
-                          background: HP_TOKENS.blueSoft, 
-                        }}>
-                          <span style={{ fontSize: 10 }}>🎯</span>
-                          <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 800, fontSize: 9 }}>
-                            {fallbackTitle}
-                          </span>
-                        </div>
-                      );
-                    }
-                    const parent = goal.parent_id ? state.goals?.find((g: any) => String(g.id) === String(goal.parent_id)) : null;
-                    const displayTag = parent ? `${goal.title} (Aligned to: ${parent.title})` : goal.title;
-                    return (
-                      <div style={{ 
-                        display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4,
-                        padding: '2px 8px', borderRadius: 6, 
-                        background: HP_TOKENS.blueSoft, 
-                      }}>
-                        <span style={{ fontSize: 10 }}>🎯</span>
-                        <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 800, fontSize: 9 }}>
-                          {displayTag}
-                        </span>
-                      </div>
-                    );
-                  })()}
-                  {/* Proof links indicator */}
-                  {p.proof_links && p.proof_links.length > 0 && (
-                    <div style={{ 
-                      display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, marginLeft: 4,
-                      padding: '2px 8px', borderRadius: 6, background: HP_TOKENS.sageSoft,
-                    }}>
-                      <span style={{ fontSize: 10 }}>📎</span>
-                      <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 800, fontSize: 9 }}>
-                        {p.proof_links.length} link
-                      </span>
-                    </div>
-                  )}
-                  {/* Project tag */}
-                  {p.is_project && (
-                    <div style={{ 
-                      display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, marginLeft: 4,
-                      padding: '2px 8px', borderRadius: 6, background: HP_TOKENS.lavenderSoft,
-                    }}>
-                      <span style={{ fontSize: 10 }}>📁</span>
-                      <span style={{ ...HP_TEXT.tiny, color: '#6B5F8E', fontWeight: 800, fontSize: 9 }}>
-                        Jangka Panjang
-                      </span>
-                    </div>
-                  )}
-                </div>
-                {!p.done && (
-                  <button 
-                    onClick={() => deletePriority(p.id)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, flexShrink: 0 }}
-                  >
-                    <HPGlyph name="close" size={14} color={HP_TOKENS.coral}/>
-                  </button>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-
-        {/* Add new task form — SIMPLIFIED */}
-        <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 8 }}>TAMBAH TASK BARU</div>
+        {/* Add/Edit task form */}
+        <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 8 }}>{editTask ? "EDIT TASK" : "TAMBAH TASK BARU"}</div>
         <div style={{ 
           display: 'flex', flexDirection: 'column', gap: 10, 
-          padding: 16, borderRadius: 16, background: HP_TOKENS.paper, border: `1.5px solid ${HP_TOKENS.line}` 
+          padding: 16, borderRadius: 16, background: HP_TOKENS.paper, border: `1.5px solid ${HP_TOKENS.line}`,
+          marginBottom: 24
         }}>
           <input 
             type="text" 
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && addPriority()}
-            placeholder="Deskripsikan task (min. 20 karakter)..."
+            onKeyDown={(e) => e.key === 'Enter' && savePriority()}
+            placeholder={`Deskripsikan task (min. ${MIN_TASK_CHARS} karakter)...`}
             style={{
               ...inputStyle,
               borderColor: titleTooShort ? HP_TOKENS.coral : HP_TOKENS.line,
@@ -443,7 +369,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId }: { onCl
           </div>
 
           <button 
-            onClick={addPriority}
+            onClick={savePriority}
             disabled={!canAdd}
             style={{
               padding: 14, borderRadius: 12, border: 'none',
@@ -453,9 +379,158 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId }: { onCl
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}
           >
-            + Tambah Task
+            {editTask ? "Simpan Perubahan" : "+ Tambah Task"}
           </button>
         </div>
+
+        {/* Active tasks list */}
+        <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 8 }}>TASK AKTIF HARI INI</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
+          {state.priorities.length === 0 ? (
+            <div style={{ padding: 20, textAlign: 'center', background: HP_TOKENS.paper, borderRadius: 16, border: `1.5px dashed ${HP_TOKENS.line}` }}>
+              <div style={{ fontSize: 24, marginBottom: 6 }}>📝</div>
+              <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute }}>Belum ada task. Tambahkan di atas.</div>
+            </div>
+          ) : (
+            paginatedTasks.map((p: any) => (
+              <div 
+                key={p.id} 
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 14,
+                  background: p.done ? HP_TOKENS.sageWash : HP_TOKENS.card, 
+                  border: `1.5px solid ${p.done ? HP_TOKENS.sage + '30' : HP_TOKENS.line}`,
+                }}
+              >
+                <div style={{ 
+                  width: 22, height: 22, borderRadius: 11, flexShrink: 0,
+                  background: p.done ? HP_TOKENS.sage : 'transparent',
+                  border: `2px solid ${p.done ? HP_TOKENS.sage : HP_TOKENS.line}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}>
+                  {p.done && <HPGlyph name="check" size={12} color="#fff"/>}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ 
+                    ...HP_TEXT.body, fontSize: 13, fontWeight: 600, 
+                    color: p.done ? HP_TOKENS.inkFade : HP_TOKENS.ink,
+                    textDecoration: p.done ? 'line-through' : 'none',
+                  }}>
+                    {p.title}
+                  </div>
+                  {p.description && (
+                    <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontSize: 11, marginTop: 2 }}>
+                      {p.description}
+                    </div>
+                  )}
+                  {/* KPI tag */}
+                  {(() => {
+                    const goalId = p.goal_id || p.kpi_id;
+                    const fallbackTitle = p.kpi_title || p.goal || 'KPI';
+                    if (!goalId) return null;
+                    const goal = state.goals?.find((g: any) => String(g.id) === String(goalId));
+                    if (!goal) {
+                      return (
+                        <div style={{ 
+                          display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4,
+                          padding: '2px 8px', borderRadius: 6, 
+                          background: HP_TOKENS.blueSoft, 
+                        }}>
+                          <span style={{ fontSize: 10 }}>🎯</span>
+                          <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 800, fontSize: 9 }}>
+                            {fallbackTitle}
+                          </span>
+                        </div>
+                      );
+                    }
+                    const parent = goal.parent_id ? state.goals?.find((g: any) => String(g.id) === String(goal.parent_id)) : null;
+                    const displayTag = parent ? `${goal.title} (Aligned to: ${parent.title})` : goal.title;
+                    return (
+                      <div style={{ 
+                        display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4,
+                        padding: '2px 8px', borderRadius: 6, 
+                        background: HP_TOKENS.blueSoft, 
+                      }}>
+                        <span style={{ fontSize: 10 }}>🎯</span>
+                        <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 800, fontSize: 9 }}>
+                          {displayTag}
+                        </span>
+                      </div>
+                    );
+                  })()}
+                  {/* Proof links indicator */}
+                  {p.proof_links && p.proof_links.length > 0 && (
+                    <div style={{ 
+                      display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, marginLeft: 4,
+                      padding: '2px 8px', borderRadius: 6, background: HP_TOKENS.sageSoft,
+                    }}>
+                      <span style={{ fontSize: 10 }}>📎</span>
+                      <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 800, fontSize: 9 }}>
+                        {p.proof_links.length} link
+                      </span>
+                    </div>
+                  )}
+                  {/* Project tag */}
+                  {p.is_project && (
+                    <div style={{ 
+                      display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, marginLeft: 4,
+                      padding: '2px 8px', borderRadius: 6, background: HP_TOKENS.lavenderSoft,
+                    }}>
+                      <span style={{ fontSize: 10 }}>📁</span>
+                      <span style={{ ...HP_TEXT.tiny, color: '#6B5F8E', fontWeight: 800, fontSize: 9 }}>
+                        Jangka Panjang
+                      </span>
+                    </div>
+                  )}
+                </div>
+                {!p.done && (
+                  <button 
+                    onClick={() => deletePriority(p.id)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, flexShrink: 0 }}
+                  >
+                    <HPGlyph name="close" size={14} color={HP_TOKENS.coral}/>
+                  </button>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 16, marginBottom: 8 }}>
+            <button 
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              style={{
+                padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                background: currentPage === 1 ? HP_TOKENS.lineSoft : '#fff',
+                color: currentPage === 1 ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                cursor: currentPage === 1 ? 'default' : 'pointer',
+                opacity: currentPage === 1 ? 0.6 : 1, transition: 'all 0.2s'
+              }}
+            >
+              Sebelumnya
+            </button>
+            <span style={{ fontFamily: HP_FONT, fontSize: 13, fontWeight: 700, color: HP_TOKENS.inkSoft }}>
+              {currentPage} / {totalPages}
+            </span>
+            <button 
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              style={{
+                padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                background: currentPage === totalPages ? HP_TOKENS.lineSoft : '#fff',
+                color: currentPage === totalPages ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                cursor: currentPage === totalPages ? 'default' : 'pointer',
+                opacity: currentPage === totalPages ? 0.6 : 1, transition: 'all 0.2s'
+              }}
+            >
+              Berikutnya
+            </button>
+          </div>
+        )}
       </div>
     </Modal>
   );

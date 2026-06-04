@@ -1,9 +1,51 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
 import HPGlyph from "@/components/ui/HPGlyph";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
+
+// Intercept and suppress Google Sign-In / FedCM AbortErrors immediately on module load
+if (typeof window !== "undefined") {
+  const originalError = console.error;
+  console.error = (...args: any[]) => {
+    const isGsiAbortError = args.some((arg) => {
+      if (typeof arg === "string") {
+        return arg.includes("[GSI_LOGGER]") || arg.includes("AbortError");
+      }
+      if (arg && typeof arg === "object" && "message" in arg) {
+        const msg = (arg as any).message;
+        return typeof msg === "string" && (msg.includes("[GSI_LOGGER]") || msg.includes("AbortError"));
+      }
+      return false;
+    });
+
+    if (isGsiAbortError) {
+      // Suppress Google One Tap / FedCM aborted errors to keep dev/prod console clean
+      return;
+    }
+    originalError.apply(console, args);
+  };
+
+  // Prevent GSI AbortError unhandled promise rejections
+  window.addEventListener("unhandledrejection", (event) => {
+    const reason = event.reason;
+    const msg = reason?.message || (typeof reason === "string" ? reason : "");
+    if (msg.includes("[GSI_LOGGER]") || msg.includes("AbortError")) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  });
+
+  // Catch generic window errors related to GSI
+  window.addEventListener("error", (event) => {
+    const msg = event.message || "";
+    if (msg.includes("[GSI_LOGGER]") || msg.includes("AbortError")) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }, true);
+}
 
 interface AuthScreenProps {
   onLogin: (userData: any) => void;
@@ -19,6 +61,21 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
   });
 
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "DUMMY_CLIENT_ID.apps.googleusercontent.com";
+
+  // Cancel any pending Google FedCM / One Tap requests when this component unmounts
+  // (e.g. after a successful login when AuthScreen is replaced by the main app)
+  useEffect(() => {
+    return () => {
+      try {
+        const g = (window as any).google;
+        if (g?.accounts?.id) {
+          g.accounts.id.cancel();
+          g.accounts.id.disableAutoSelect();
+        }
+      } catch (_) { /* GSI not loaded — safe to ignore */ }
+    };
+  }, []);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,7 +224,7 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
               onError={handleGoogleError}
-              useOneTap
+              useOneTap={process.env.NODE_ENV !== "development"}
               theme="outline"
               size="large"
               width="400"
@@ -176,8 +233,79 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
             />
           </div>
 
-
-
+          {process.env.NODE_ENV === "development" && (
+            <div style={{
+              marginTop: 24,
+              padding: 16,
+              borderRadius: 16,
+              background: "#f8f9fa",
+              border: `1.5px dashed ${HP_TOKENS.line}`,
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+              textAlign: "left"
+            }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: HP_TOKENS.inkMute, display: "flex", alignItems: "center", gap: 6 }}>
+                🛠️ <span>Developer Auto-fill Login</span>
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => setForm({ email: "employee@gmail.com", password: "employee123" })}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: 8,
+                    border: `1px solid ${HP_TOKENS.line}`,
+                    background: "#fff",
+                    color: HP_TOKENS.ink,
+                    fontWeight: 600,
+                    fontSize: 11,
+                    cursor: "pointer",
+                    transition: "all 0.2s"
+                  }}
+                  className="hp-tap"
+                >
+                  Employee
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm({ email: "manager@gmail.com", password: "manager123" })}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: 8,
+                    border: `1px solid ${HP_TOKENS.line}`,
+                    background: "#fff",
+                    color: HP_TOKENS.ink,
+                    fontWeight: 600,
+                    fontSize: 11,
+                    cursor: "pointer",
+                    transition: "all 0.2s"
+                  }}
+                  className="hp-tap"
+                >
+                  Manager
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm({ email: "hr@gmail.com", password: "hr123" })}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: 8,
+                    border: `1px solid ${HP_TOKENS.line}`,
+                    background: "#fff",
+                    color: HP_TOKENS.ink,
+                    fontWeight: 600,
+                    fontSize: 11,
+                    cursor: "pointer",
+                    transition: "all 0.2s"
+                  }}
+                  className="hp-tap"
+                >
+                  HR
+                </button>
+              </div>
+            </div>
+          )}
 
           <div style={{ marginTop: 24, ...HP_TEXT.small, color: HP_TOKENS.inkMute }}>
             Login terintegrasi dengan LMS Maxy Academy.
@@ -187,6 +315,7 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
     </GoogleOAuthProvider>
   );
 }
+
 
 const inputStyle: React.CSSProperties = {
   width: "100%",

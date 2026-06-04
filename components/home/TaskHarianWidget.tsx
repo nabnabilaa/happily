@@ -288,7 +288,13 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {paginatedPriorities.length > 0 ? (
           paginatedPriorities.map((p: any) => (
-            <PriorityCard key={p.id} p={p} onToggle={() => togglePriority(p.id)} onDelete={() => deletePriority(p.id)}/>
+            <PriorityCard 
+              key={p.id} 
+              p={p} 
+              onToggle={() => togglePriority(p.id)} 
+              onDelete={() => deletePriority(p.id)}
+              onEdit={() => openModal('manage_priorities', { editTask: p })}
+            />
           ))
         ) : (
           <div style={{ 

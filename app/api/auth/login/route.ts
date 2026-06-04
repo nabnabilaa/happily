@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { seedDemoData } from "@/lib/demo-data";
+import bcrypt from "bcryptjs";
 
 export async function POST(request: Request) {
   try {
@@ -10,7 +11,37 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Email dan password wajib diisi" }, { status: 400 });
     }
 
-    // 1. Cek kredensial ke Laravel Maxy API (SOT)
+    // 1. Cek di local database dulu (Bypass/Developer login untuk testing lokal)
+    const fbRes = await db.execute({
+      sql: "SELECT * FROM users WHERE email = ?",
+      args: [email]
+    });
+
+    let fbUserRow = fbRes.rows[0];
+
+    if (fbUserRow && fbUserRow.password_hash) {
+      const isMatch = await bcrypt.compare(password, fbUserRow.password_hash);
+      if (isMatch) {
+        const user = {
+          id: fbUserRow.id,
+          email: fbUserRow.email,
+          name: fbUserRow.name,
+          role: fbUserRow.role,
+          points: fbUserRow.points,
+          coins: fbUserRow.coins || 0,
+          level: fbUserRow.level,
+          rank: fbUserRow.rank,
+          streak: fbUserRow.streak,
+          avatarImage: fbUserRow.avatar_image,
+          userRole: fbUserRow.user_role_context || fbUserRow.role,
+          onboarded: !!fbUserRow.is_onboarded
+        };
+        return NextResponse.json({ user });
+      }
+    }
+
+    // 2. Cek kredensial ke Laravel Maxy API (SOT) jika local check terlewati
+
     const apiUrl = process.env.MAXY_M2M_API_URL || 'https://cms.maxy.academy/api/m2m';
     const serviceKey = process.env.MAXY_SERVICE_KEY || '';
 
@@ -32,12 +63,13 @@ export async function POST(request: Request) {
     const lmsUser = lmsData.user;
 
     // 2. Sinkronisasi dengan Flowbee database
-    const fbRes = await db.execute({
+    const syncRes = await db.execute({
       sql: "SELECT * FROM users WHERE email = ?",
       args: [email]
     });
 
-    let fbUserRow = fbRes.rows[0];
+    fbUserRow = syncRes.rows[0];
+
 
     // Jika belum ada di Flowbee, buat otomatis (Auto-sync)
     if (!fbUserRow) {
