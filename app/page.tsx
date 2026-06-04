@@ -41,53 +41,70 @@ import HRRecognizeScreen from "@/components/recognize/HRRecognizeScreen";
 
 
 
+// Helper to handle ChunkLoadError on dynamic imports cleanly
+const safeDynamic = <P,>(
+  importFunc: () => Promise<{ default: React.ComponentType<P> }>
+) => {
+  return dynamic<P>(
+    () =>
+      importFunc().catch((err) => {
+        console.error("Dynamic chunk load error, reloading page:", err);
+        if (typeof window !== "undefined") {
+          window.location.reload();
+        }
+        return { default: (() => null) as React.ComponentType<P> };
+      }),
+    { ssr: false }
+  );
+};
+
 // Modals dynamically imported to optimize page loading time
-const CheckInModal = dynamic(() => import("@/components/modals/CheckInModal"), { ssr: false });
-const FocusModal = dynamic(() => import("@/components/modals/FocusModal"), { ssr: false });
-const OvertimePromptModal = dynamic(() => import("@/components/modals/OvertimePromptModal"), { ssr: false });
+const CheckInModal = safeDynamic(() => import("@/components/modals/CheckInModal"));
+const FocusModal = safeDynamic(() => import("@/components/modals/FocusModal"));
+const OvertimePromptModal = safeDynamic(() => import("@/components/modals/OvertimePromptModal"));
 
-const PauseModal = dynamic(() => import("@/components/modals/PauseModal"), { ssr: false });
-const ReflectModal = dynamic(() => import("@/components/modals/ReflectModal"), { ssr: false });
-const CoachModal = dynamic(() => import("@/components/modals/CoachModal"), { ssr: false });
-const NotificationsModal = dynamic(() => import("@/components/modals/NotificationsModal"), { ssr: false });
+const PauseModal = safeDynamic(() => import("@/components/modals/PauseModal"));
+const ReflectModal = safeDynamic(() => import("@/components/modals/ReflectModal"));
+const CoachModal = safeDynamic(() => import("@/components/modals/CoachModal"));
+const NotificationsModal = safeDynamic(() => import("@/components/modals/NotificationsModal"));
 
-const GoalModal = dynamic(() => import("@/components/modals/GoalModal"), { ssr: false });
-const WorkCheckInModal = dynamic(() => import("@/components/modals/WorkCheckInModal"), { ssr: false });
-const ManagePrioritiesModal = dynamic(() => import("@/components/modals/ManagePrioritiesModal"), { ssr: false });
-const ManageHabitsModal = dynamic(() => import("@/components/modals/ManageHabitsModal"), { ssr: false });
-const ManageLearningModal = dynamic(() => import("@/components/modals/ManageLearningModal"), { ssr: false });
-const ScheduleCoachingModal = dynamic(() => import("@/components/modals/ScheduleCoachingModal"), { ssr: false });
-const LearningDetailModal = dynamic(() => import("@/components/modals/LearningDetailModal"), { ssr: false });
-const ManageProgramsModal = dynamic(() => import("@/components/modals/ManageProgramsModal"), { ssr: false });
-const AllRewardsModal = dynamic(() => import("@/components/modals/AllRewardsModal"), { ssr: false });
-const LogbookModal = dynamic(() => import("@/components/modals/LogbookModal"), { ssr: false });
-const CalendarModal = dynamic(() => import("@/components/modals/CalendarModal"), { ssr: false });
-const SystemGuideModal = dynamic(() => import("@/components/modals/SystemGuideModal"), { ssr: false });
-const ProfileEditorModal = dynamic(() => import("@/components/modals/ProfileEditorModal"), { ssr: false });
-const ManageSurveysModal = dynamic(() => import("@/components/modals/ManageSurveysModal"), { ssr: false });
-const TakeSurveyModal = dynamic(() => import("@/components/modals/TakeSurveyModal"), { ssr: false });
-const SurveyResultsModal = dynamic(() => import("@/components/modals/SurveyResultsModal"), { ssr: false });
-const AttendanceScannerModal = dynamic(() => import("@/components/modals/AttendanceScannerModal"), { ssr: false });
-const AttendanceHistoryModal = dynamic(() => import("@/components/modals/AttendanceHistoryModal"), { ssr: false });
-const OKRDictionaryModal = dynamic(() => import("@/components/modals/OKRDictionaryModal"), { ssr: false });
-const ManageContactsModal = dynamic(() => import("@/components/modals/ManageContactsModal"), { ssr: false });
-const RewardEditorModal = dynamic(() => import("@/components/modals/RewardEditorModal"), { ssr: false });
-const ContactEditorModal = dynamic(() => import("@/components/modals/ContactEditorModal"), { ssr: false });
-const EditUserModal = dynamic(() => import("@/components/modals/EditUserModal"), { ssr: false });
-const CreateUserModal = dynamic(() => import("@/components/modals/CreateUserModal"), { ssr: false });
-const DepartmentManagerModal = dynamic(() => import("@/components/modals/DepartmentManagerModal"), { ssr: false });
-const MemberLogbookModal = dynamic(() => import("@/components/modals/MemberLogbookModal"), { ssr: false });
-const ManageKPIModal = dynamic(() => import("@/components/modals/ManageKPIModal"), { ssr: false });
-const WeeklyReviewModal = dynamic(() => import("@/components/modals/WeeklyReviewModal"), { ssr: false });
-const MonthlyReportModal = dynamic(() => import("@/components/modals/MonthlyReportModal"), { ssr: false });
-const AIAuditModal = dynamic(() => import("@/components/modals/AIAuditModal"), { ssr: false });
-const EmployeeProfileModal = dynamic(() => import("@/components/modals/EmployeeProfileModal"), { ssr: false });
-const StatusInputModal = dynamic(() => import("@/components/modals/StatusInputModal"), { ssr: false });
-const NewChatModal = dynamic(() => import("@/components/modals/NewChatModal"), { ssr: false });
-const AppreciateModal = dynamic(() => import("@/components/modals/AppreciateModal"), { ssr: false });
-const AnnouncementModal = dynamic(() => import("@/components/modals/AnnouncementModal"), { ssr: false });
+const GoalModal = safeDynamic(() => import("@/components/modals/GoalModal"));
+const WorkCheckInModal = safeDynamic(() => import("@/components/modals/WorkCheckInModal"));
+const ManagePrioritiesModal = safeDynamic(() => import("@/components/modals/ManagePrioritiesModal"));
+const ManageHabitsModal = safeDynamic(() => import("@/components/modals/ManageHabitsModal"));
+const ManageLearningModal = safeDynamic(() => import("@/components/modals/ManageLearningModal"));
+const ScheduleCoachingModal = safeDynamic(() => import("@/components/modals/ScheduleCoachingModal"));
+const LearningDetailModal = safeDynamic(() => import("@/components/modals/LearningDetailModal"));
+const ManageProgramsModal = safeDynamic(() => import("@/components/modals/ManageProgramsModal"));
+const AllRewardsModal = safeDynamic(() => import("@/components/modals/AllRewardsModal"));
+const LogbookModal = safeDynamic(() => import("@/components/modals/LogbookModal"));
+const CalendarModal = safeDynamic(() => import("@/components/modals/CalendarModal"));
+const SystemGuideModal = safeDynamic(() => import("@/components/modals/SystemGuideModal"));
+const ProfileEditorModal = safeDynamic(() => import("@/components/modals/ProfileEditorModal"));
+const ManageSurveysModal = safeDynamic(() => import("@/components/modals/ManageSurveysModal"));
+const TakeSurveyModal = safeDynamic(() => import("@/components/modals/TakeSurveyModal"));
+const SurveyResultsModal = safeDynamic(() => import("@/components/modals/SurveyResultsModal"));
+const AttendanceScannerModal = safeDynamic(() => import("@/components/modals/AttendanceScannerModal"));
+const AttendanceHistoryModal = safeDynamic(() => import("@/components/modals/AttendanceHistoryModal"));
+const OKRDictionaryModal = safeDynamic(() => import("@/components/modals/OKRDictionaryModal"));
+const ManageContactsModal = safeDynamic(() => import("@/components/modals/ManageContactsModal"));
+const RewardEditorModal = safeDynamic(() => import("@/components/modals/RewardEditorModal"));
+const ContactEditorModal = safeDynamic(() => import("@/components/modals/ContactEditorModal"));
+const EditUserModal = safeDynamic(() => import("@/components/modals/EditUserModal"));
+const CreateUserModal = safeDynamic(() => import("@/components/modals/CreateUserModal"));
+const DepartmentManagerModal = safeDynamic(() => import("@/components/modals/DepartmentManagerModal"));
+const MemberLogbookModal = safeDynamic(() => import("@/components/modals/MemberLogbookModal"));
+const ManageKPIModal = safeDynamic(() => import("@/components/modals/ManageKPIModal"));
+const WeeklyReviewModal = safeDynamic(() => import("@/components/modals/WeeklyReviewModal"));
+const MonthlyReportModal = safeDynamic(() => import("@/components/modals/MonthlyReportModal"));
+const AIAuditModal = safeDynamic(() => import("@/components/modals/AIAuditModal"));
+const EmployeeProfileModal = safeDynamic(() => import("@/components/modals/EmployeeProfileModal"));
+const StatusInputModal = safeDynamic(() => import("@/components/modals/StatusInputModal"));
+const NewChatModal = safeDynamic(() => import("@/components/modals/NewChatModal"));
+const AppreciateModal = safeDynamic(() => import("@/components/modals/AppreciateModal"));
+const AnnouncementModal = safeDynamic(() => import("@/components/modals/AnnouncementModal"));
 import HPToastContainer from "@/components/ui/HPToastContainer";
-const ConfirmLogoutModal = dynamic(() => import("@/components/modals/ConfirmLogoutModal"), { ssr: false });
+import ConfirmLogoutModal from "@/components/modals/ConfirmLogoutModal";
 import NotificationBanner from "@/components/pwa/NotificationBanner";
 
 
@@ -172,7 +189,12 @@ function AppContent() {
 
   // ── Auth Check ─────────────────────────────────────────────────────────────
   if (!user) {
-    return <AuthScreen onLogin={login} />;
+    return (
+      <>
+        <AuthScreen onLogin={login} />
+        <HPToastContainer />
+      </>
+    );
   }
 
   const handleOnboardingFinish = async () => {

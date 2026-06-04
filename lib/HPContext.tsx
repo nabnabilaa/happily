@@ -332,6 +332,9 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
     }
 
     localStorage.removeItem("hp_user_id");
+    localStorage.setItem("hp_logout_toast", "true");
+    setUser(null);
+    setState(null);
     if (typeof window !== "undefined") {
       window.location.href = "/";
     }
@@ -649,9 +652,22 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const savedUserId = localStorage.getItem("hp_user_id");
-    if (savedUserId) fetchData(savedUserId);
-    else setLoading(false);
-  }, [fetchData]);
+    if (savedUserId) {
+      fetchData(savedUserId);
+    } else {
+      setLoading(false);
+      // Check if we just logged out to trigger the toast
+      if (typeof window !== "undefined") {
+        const justLoggedOut = localStorage.getItem("hp_logout_toast");
+        if (justLoggedOut === "true") {
+          localStorage.removeItem("hp_logout_toast");
+          setTimeout(() => {
+            notify("Logout Berhasil", "Anda telah keluar dari akun.", "success");
+          }, 300);
+        }
+      }
+    }
+  }, [fetchData, notify]);
 
   useEffect(() => {
     if (user) {
@@ -851,24 +867,27 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
   }, [user, refresh, refreshSurveys]);
 
   // Broadcast user info on changes
+  const userPayloadString = user ? JSON.stringify({
+    id: user.id,
+    name: user.name,
+    role: user.userRole || user.role,
+    points: user.points,
+    coins: user.coins,
+    level: user.level,
+    rank: user.rank,
+    streak: user.streak,
+    avatarImage: user.avatarImage,
+    department: user.department,
+  }) : null;
+
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (user) {
+    if (userPayloadString) {
+      const payload = JSON.parse(userPayloadString);
       window.postMessage({
         type: "FLOWBEE_WEBSITE_USER",
-        userId: user.id,
-        user: {
-          id: user.id,
-          name: user.name,
-          role: user.userRole || user.role,
-          points: user.points,
-          coins: user.coins,
-          level: user.level,
-          rank: user.rank,
-          streak: user.streak,
-          avatarImage: user.avatarImage,
-          department: user.department,
-        }
+        userId: payload.id,
+        user: payload
       }, "*");
     } else {
       window.postMessage({
@@ -877,7 +896,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         user: null
       }, "*");
     }
-  }, [user]);
+  }, [userPayloadString]);
 
   return (
     <HPContext.Provider value={{ 

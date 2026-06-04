@@ -152,6 +152,7 @@
   let FLOWBEE_API = 'http://localhost:3000/api/ext'
   let flowbeeUserId = null
   let flowbeeUser = null // {id, name, role, points, coins, level, rank, streak, avatarImage}
+  let todayAttendance = null
   let flowbeeNotifCache = []
   let extensionEnabled = true
   let mascotAnimated = true
@@ -178,6 +179,7 @@
           ctx.tasks = []; ctx.notes = []; ctx.alarms = [];
           ctx.deletedTaskIds = []; ctx.deletedNoteIds = [];
           flowbeeUser = null;
+          todayAttendance = null;
           save();
         }
         flowbeeUserId = stored; 
@@ -201,6 +203,7 @@
           ctx.tasks = []; ctx.notes = []; ctx.alarms = [];
           ctx.deletedTaskIds = []; ctx.deletedNoteIds = [];
           flowbeeUser = null;
+          todayAttendance = null;
           save();
         }
         flowbeeUserId = session; 
@@ -218,13 +221,16 @@
 
     // Also check chrome.storage for stored values
     try {
-      chrome.storage.local.get(['flowbee_user_id', 'flowbee_base_url', 'flowbee_user', 'fb_ext_enabled', 'fb3', 'hp_mascot_animated'], r => {
+      chrome.storage.local.get(['flowbee_user_id', 'flowbee_base_url', 'flowbee_user', 'flowbee_today_attendance', 'fb_ext_enabled', 'fb3', 'hp_mascot_animated'], r => {
         if (r) {
           if (r.flowbee_user_id) {
             flowbeeUserId = r.flowbee_user_id;
           }
           if (r.flowbee_base_url) {
             FLOWBEE_API = r.flowbee_base_url.replace(/\/$/, '') + '/api/ext';
+          }
+          if (r.flowbee_today_attendance) {
+            todayAttendance = r.flowbee_today_attendance;
           }
           if (r.flowbee_user && !flowbeeUser) {
             flowbeeUser = r.flowbee_user;
@@ -251,6 +257,31 @@
       return !!localStorage.getItem('hp_user_id');
     } catch (e) {
       return false;
+    }
+  }
+
+  function updateAttendanceUI() {
+    const masukBtn = $('fb-absen-masuk-btn');
+    const tutupBtn = $('fb-tutup-hari-btn');
+    const selesaiTxt = $('fb-hari-selesai-text');
+    
+    if (!masukBtn || !tutupBtn || !selesaiTxt) return;
+
+    // Default: hide all
+    masukBtn.style.display = 'none';
+    tutupBtn.style.display = 'none';
+    selesaiTxt.style.display = 'none';
+
+    if (!flowbeeUser) return;
+
+    const status = (todayAttendance && todayAttendance.status) || 'not_checked_in';
+
+    if (status === 'not_checked_in') {
+      masukBtn.style.display = 'block';
+    } else if (status === 'checked_in') {
+      tutupBtn.style.display = 'block';
+    } else if (status === 'checked_out') {
+      selesaiTxt.style.display = 'block';
     }
   }
 
@@ -319,10 +350,7 @@
 
       if (settingsUserCard) settingsUserCard.style.display = 'none';
     }
-    const tutupHariBtn = $('fb-tutup-hari-btn');
-    if (tutupHariBtn) {
-      tutupHariBtn.style.display = flowbeeUser ? 'block' : 'none';
-    }
+    updateAttendanceUI();
     if (typeof renderAll === 'function') renderAll();
   }
 
@@ -437,6 +465,13 @@
         if (!pullOnly) {
           ctx.deletedTaskIds = []
           ctx.deletedNoteIds = []
+        }
+        if (data.todayAttendance) {
+          todayAttendance = data.todayAttendance;
+          try { chrome.storage.local.set({ flowbee_today_attendance: todayAttendance }); } catch(e) {}
+        } else {
+          todayAttendance = null;
+          try { chrome.storage.local.remove('flowbee_today_attendance'); } catch(e) {}
         }
         if (window.__FB) {
           window.__FB.roleData = data;
@@ -3178,8 +3213,10 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
         <div id="fb-habits-list" style="display: flex !important; flex-direction: column !important; gap: 8px !important;"></div>
       </div>
 
-      <!-- Tutup Hari Button -->
+      <!-- Attendance Buttons -->
+      <button id="fb-absen-masuk-btn" class="fb-btn" style="width: 100% !important; margin-top: 16px !important; background: linear-gradient(135deg, #4A90E2, #86C0A9) !important; color: #fff !important; font-weight: 800 !important; padding: 12px !important; border-radius: 12px !important; font-size: 12.5px !important; border: none !important; cursor: pointer !important; display: none; text-align: center !important; box-shadow: 0 4px 12px rgba(74,144,226,0.2) !important; box-sizing: border-box !important;">⏰ Mulai Hari (Clock In)</button>
       <button id="fb-tutup-hari-btn" class="fb-btn" style="width: 100% !important; margin-top: 16px !important; background: linear-gradient(135deg, #86C0A9, #5c8ee8) !important; color: #fff !important; font-weight: 800 !important; padding: 12px !important; border-radius: 12px !important; font-size: 12.5px !important; border: none !important; cursor: pointer !important; display: none; text-align: center !important; box-shadow: 0 4px 12px rgba(134,192,169,0.2) !important; box-sizing: border-box !important;">📝 Tutup Hari (Reflection & Clock Out)</button>
+      <div id="fb-hari-selesai-text" style="width: 100% !important; margin-top: 16px !important; padding: 12px !important; border-radius: 12px !important; font-size: 12.5px !important; display: none; text-align: center !important; border: 1.5px solid rgba(134,192,169,0.3) !important; background: rgba(134,192,169,0.06) !important; color: #4e8a71 !important; font-weight: 800 !important; box-sizing: border-box !important;">✅ Hari Ini Sudah Selesai!</div>
 
       <!-- AI Coach Insights Section -->
       <div id="fb-coach-section" style="margin-top: 16px !important; border-top: 1.5px solid var(--fb-line) !important; padding-top: 12px !important; display: none;">
@@ -3643,7 +3680,52 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
         <textarea id="fb-reflect-blockers" placeholder="Tulis hambatanmu (jika ada)..." style="width: 100% !important; padding: 8px !important; border-radius: 10px !important; border: 1.5px solid var(--fb-line) !important; background: var(--fb-card) !important; color: var(--fb-ink) !important; font-size: 11px !important; resize: none !important; min-height: 48px !important; outline: none !important; font-family: inherit !important; box-sizing: border-box !important; margin: 0 !important;"></textarea>
       </div>
 
-      <button id="fb-reflect-submit" class="fb-btn" style="width: 100% !important; padding: 12px !important; border-radius: 12px !important; background: #86C0A9 !important; color: white !important; font-weight: 800 !important; font-size: 13px !important; margin-top: 4px !important; cursor: pointer !important; text-align: center !important; border: none !important; box-shadow: 0 4px 12px rgba(134,192,169,0.2) !important;">Simpan & Tutup Hari (+30 Poin)</button>
+    </div>
+
+    <!-- Clock In Overlay Modal -->
+    <div id="fb-clockin-modal" style="display: none; position: absolute !important; inset: 0 !important; background: var(--fb-paper) !important; z-index: 2000000000 !important; padding: 16px !important; overflow-y: auto !important; flex-direction: column !important; gap: 14px !important; box-sizing: border-box !important;">
+      <div style="display: flex !important; justify-content: space-between !important; align-items: center !important; margin-bottom: 4px !important; flex-shrink: 0 !important;">
+        <div style="display: flex !important; align-items: center !important; gap: 6px !important;">
+          <span style="font-size: 20px !important;">⏰</span>
+          <span style="font-size: 14px !important; font-weight: 850 !important; color: var(--fb-ink) !important;">Clock In Kehadiran</span>
+        </div>
+        <button id="fb-clockin-close" style="background: transparent !important; border: none !important; cursor: pointer !important; color: var(--fb-ink-mute) !important; font-size: 16px !important; font-weight: bold !important; padding: 4px !important;">✕</button>
+      </div>
+
+      <div style="background: rgba(74,144,226,0.1) !important; border: 1px solid rgba(74,144,226,0.2) !important; padding: 10px !important; border-radius: 10px !important; font-size: 11.5px !important; color: var(--fb-ink-mute) !important; line-height: 1.4 !important; flex-shrink: 0 !important;">
+        Mulai harimu dengan melakukan check-in kehadiran di bawah ini.
+      </div>
+
+      <!-- Tipe Kehadiran Selector -->
+      <div style="flex-shrink: 0 !important;">
+        <div style="font-size: 11.5px !important; font-weight: 800 !important; color: var(--fb-ink) !important; margin-bottom: 6px !important;">Tipe Kehadiran</div>
+        <select id="fb-clockin-type" class="fb-select" style="width: 100% !important; box-sizing: border-box !important; padding: 10px !important; font-size: 12.5px !important; display: block !important;">
+          <option value="WFO">Work From Office (WFO)</option>
+          <option value="WFA">Work From Anywhere (WFA)</option>
+          <option value="DINAS">Perjalanan Dinas (DINAS)</option>
+        </select>
+      </div>
+
+      <!-- Lokasi Kantor (WFO Only) -->
+      <div id="fb-clockin-office-container" style="flex-shrink: 0 !important;">
+        <div style="font-size: 11.5px !important; font-weight: 800 !important; color: var(--fb-ink) !important; margin-bottom: 6px !important;">Lokasi Kantor</div>
+        <select id="fb-clockin-office" class="fb-select" style="width: 100% !important; box-sizing: border-box !important; padding: 10px !important; font-size: 12.5px !important; display: block !important;">
+          <option value="">Memuat kantor...</option>
+        </select>
+      </div>
+
+      <!-- Catatan/Alasan (Non-WFO or Optional) -->
+      <div style="flex-shrink: 0 !important;">
+        <div style="font-size: 11.5px !important; font-weight: 800 !important; color: var(--fb-ink) !important; margin-bottom: 4px !important;">Catatan / Alasan</div>
+        <input type="text" id="fb-clockin-notes" placeholder="Tulis catatan (misal: wfa cafe)..." style="width: 100% !important; padding: 10px !important; border-radius: 10px !important; border: 1.5px solid var(--fb-line) !important; background: var(--fb-card) !important; color: var(--fb-ink) !important; font-size: 12px !important; outline: none !important; font-family: inherit !important; box-sizing: border-box !important; margin: 0 !important;" />
+      </div>
+
+      <!-- Geolocation Status -->
+      <div id="fb-clockin-geo" style="background: var(--fb-line-soft) !important; border: 1px solid var(--fb-line) !important; padding: 10px !important; border-radius: 10px !important; font-size: 11px !important; color: var(--fb-ink-mute) !important; line-height: 1.4 !important; display: flex !important; align-items: center !important; gap: 8px !important;">
+        <span>📍 Mengambil lokasi...</span>
+      </div>
+
+      <button id="fb-clockin-submit" class="fb-btn" style="width: 100% !important; padding: 12px !important; border-radius: 12px !important; background: var(--fb-blue) !important; color: white !important; font-weight: 800 !important; font-size: 13px !important; margin-top: 4px !important; cursor: pointer !important; text-align: center !important; border: none !important; box-shadow: 0 4px 12px var(--fb-blue-soft) !important;">Clock In Sekarang (+20 EXP)</button>
     </div>
   </div>
 </div>
@@ -4043,6 +4125,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   // ── Start user detection & sync AFTER DOM is ready ──
   detectFlowbeeUser()
   initReflectionModal()
+  initClockInModal()
   
   // Initial render of habits and coach insights
   renderHabits()
@@ -5325,6 +5408,145 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   let selectedReflectMood = 'joy';
   let selectedReflectProd = 'high';
   let selectedReflectWl = 'balanced';
+
+  function initClockInModal() {
+    const modalEl = $('fb-clockin-modal');
+    const masukBtn = $('fb-absen-masuk-btn');
+    if (!modalEl) return;
+
+    if (masukBtn) {
+      masukBtn.onclick = () => {
+        showClockInModal();
+      };
+    }
+
+    // Close button
+    const closeBtn = $('fb-clockin-close');
+    if (closeBtn) {
+      closeBtn.onclick = () => {
+        modalEl.style.display = 'none';
+      };
+    }
+
+    // Handle Type Change
+    const typeSelect = $('fb-clockin-type');
+    const officeContainer = $('fb-clockin-office-container');
+    if (typeSelect && officeContainer) {
+      typeSelect.onchange = () => {
+        if (typeSelect.value === 'WFO') {
+          officeContainer.style.display = 'block';
+        } else {
+          officeContainer.style.display = 'none';
+        }
+      };
+    }
+
+    // Submit button
+    const submitBtn = $('fb-clockin-submit');
+    if (submitBtn) {
+      submitBtn.onclick = async () => {
+        if (!flowbeeUserId) return;
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Menyimpan...';
+
+        const checkInType = $('fb-clockin-type')?.value || 'WFO';
+        const officeId = $('fb-clockin-office')?.value || '';
+        const notes = $('fb-clockin-notes')?.value.trim() || '';
+
+        // Get coordinates
+        let lat = null;
+        let lng = null;
+        if (navigator.geolocation) {
+          try {
+            const pos = await new Promise((resolve, reject) => {
+              navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+            });
+            lat = pos.coords.latitude;
+            lng = pos.coords.longitude;
+          } catch (e) {
+            console.warn("Could not get geolocation, continuing with null:", e);
+          }
+        }
+
+        try {
+          // Clock-in API call
+          const res = await window.__FB.fetch(`${FLOWBEE_API.replace('/ext', '/attendance/check-in')}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: flowbeeUserId,
+              token: "manual_checkin",
+              lat,
+              lng,
+              checkInType,
+              officeId: checkInType === 'WFO' ? officeId : undefined,
+              notes: checkInType !== 'WFO' ? notes : undefined
+            })
+          });
+          const data = await res.json();
+
+          if (data.success) {
+            showToast('Clock In Berhasil!', 'Selamat bekerja! Semangat untuk hari ini ☀️');
+            modalEl.style.display = 'none';
+            if ($('fb-clockin-notes')) $('fb-clockin-notes').value = '';
+            
+            // Re-sync to get updated attendance status immediately
+            await flowbeeSyncAll();
+          } else {
+            showToast('Gagal Clock In', data.error || 'Terjadi kesalahan.', 'error');
+          }
+        } catch (e) {
+          showToast('Koneksi Gagal', 'Gagal menyimpan kehadiran. Coba lagi.', 'error');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Clock In Sekarang (+20 EXP)';
+        }
+      };
+    }
+  }
+
+  async function showClockInModal() {
+    const modalEl = $('fb-clockin-modal');
+    if (!modalEl) return;
+
+    modalEl.style.display = 'flex';
+
+    // Fetch offices
+    const officeSelect = $('fb-clockin-office');
+    if (officeSelect) {
+      try {
+        officeSelect.innerHTML = '<option value="">Memuat kantor...</option>';
+        const res = await window.__FB.fetch(`${FLOWBEE_API.replace('/ext', '/settings/office')}`);
+        const data = await res.json();
+        if (data && data.offices) {
+          officeSelect.innerHTML = data.offices.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
+        } else {
+          officeSelect.innerHTML = '<option value="">Gagal memuat daftar kantor</option>';
+        }
+      } catch (e) {
+        officeSelect.innerHTML = '<option value="">Gagal memuat daftar kantor</option>';
+      }
+    }
+
+    // Geolocation retrieval indicator
+    const geoEl = $('fb-clockin-geo');
+    if (geoEl) {
+      geoEl.innerHTML = '<span>📍 Mengambil lokasi GPS...</span>';
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            geoEl.innerHTML = `<span>📍 Lokasi didapatkan: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}</span>`;
+          },
+          (err) => {
+            geoEl.innerHTML = '<span>⚠️ GPS tidak aktif / izin ditolak (absen manual tetap bisa dilakukan)</span>';
+          }
+        );
+      } else {
+        geoEl.innerHTML = '<span>⚠️ Geolocation tidak didukung browser</span>';
+      }
+    }
+  }
 
   function initReflectionModal() {
     const modalEl = $('fb-reflection-modal');
@@ -7272,8 +7494,9 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
         } else {
           flowbeeUserId = null;
           flowbeeUser = null;
+          todayAttendance = null;
           try {
-            chrome.storage.local.remove(['flowbee_user_id', 'flowbee_user']);
+            chrome.storage.local.remove(['flowbee_user_id', 'flowbee_user', 'flowbee_today_attendance']);
           } catch (e) {}
           updateIdentityUI();
         }

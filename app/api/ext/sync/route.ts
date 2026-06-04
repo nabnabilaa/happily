@@ -537,6 +537,20 @@ export async function POST(request: Request) {
       hpEventEmitter.emit("db_update", { type: "refresh", targetUserId: userId, timestamp: Date.now() });
     }
 
+    // Fetch today's attendance status
+    const todayRes = await db.execute({
+      sql: `SELECT check_in_at, check_out_at, check_in_type, mood
+            FROM attendance 
+            WHERE user_id = ? AND DATE(check_in_at) = CURDATE()
+            ORDER BY check_in_at DESC LIMIT 1`,
+      args: [userId]
+    });
+    const todayRecord = todayRes.rows[0];
+    let attendanceStatus = 'not_checked_in';
+    if (todayRecord) {
+      attendanceStatus = todayRecord.check_out_at ? 'checked_out' : 'checked_in';
+    }
+
     // Fetch Habits from DB to return
     const habitsRes = await db.execute({
       sql: "SELECT id, name, streak, target_days, is_done_today, glyph, completed_dates FROM habits WHERE user_id = ?",
@@ -568,6 +582,15 @@ export async function POST(request: Request) {
       success: true, 
       tasksSynced, notesSynced,
       habits: habitsUnique,
+      todayAttendance: todayRecord ? {
+        status: attendanceStatus,
+        checkInAt: todayRecord.check_in_at,
+        checkOutAt: todayRecord.check_out_at,
+        type: todayRecord.check_in_type,
+        mood: todayRecord.mood,
+      } : {
+        status: attendanceStatus
+      },
       user: userRow ? {
         id: userRow.id, name: userRow.name,
         role: userRow.user_role_context || userRow.role,
