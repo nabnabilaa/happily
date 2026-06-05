@@ -7,25 +7,27 @@ import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 
 // Intercept and suppress Google Sign-In / FedCM AbortErrors immediately on module load
 if (typeof window !== "undefined") {
-  const originalError = console.error;
-  console.error = (...args: any[]) => {
-    const isGsiAbortError = args.some((arg) => {
-      if (typeof arg === "string") {
-        return arg.includes("[GSI_LOGGER]") || arg.includes("AbortError");
-      }
-      if (arg && typeof arg === "object" && "message" in arg) {
-        const msg = (arg as any).message;
-        return typeof msg === "string" && (msg.includes("[GSI_LOGGER]") || msg.includes("AbortError"));
-      }
-      return false;
-    });
+  const methods: (keyof Console)[] = ["error", "warn", "log", "info", "debug"];
+  methods.forEach((method) => {
+    const original = console[method] as Function;
+    if (typeof original === "function") {
+      (console as any)[method] = (...args: any[]) => {
+        const isGsiAbortError = args.some((arg) => {
+          if (typeof arg === "string") {
+            return arg.includes("[GSI_LOGGER]") || arg.includes("AbortError");
+          }
+          if (arg && typeof arg === "object" && "message" in arg) {
+            const msg = (arg as any).message;
+            return typeof msg === "string" && (msg.includes("[GSI_LOGGER]") || msg.includes("AbortError"));
+          }
+          return false;
+        });
 
-    if (isGsiAbortError) {
-      // Suppress Google One Tap / FedCM aborted errors to keep dev/prod console clean
-      return;
+        if (isGsiAbortError) return;
+        original.apply(console, args);
+      };
     }
-    originalError.apply(console, args);
-  };
+  });
 
   // Prevent GSI AbortError unhandled promise rejections
   window.addEventListener("unhandledrejection", (event) => {
@@ -225,6 +227,8 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
               onSuccess={handleGoogleSuccess}
               onError={handleGoogleError}
               useOneTap={process.env.NODE_ENV !== "development"}
+              auto_select={false}
+              cancel_on_tap_outside={false}
               theme="outline"
               size="large"
               width="400"
