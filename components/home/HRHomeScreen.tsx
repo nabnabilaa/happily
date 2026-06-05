@@ -69,9 +69,9 @@ export default function HRHomeScreen({ openModal }: Props) {
 
         {/* Header Card */}
         <div style={{
-          background: `linear-gradient(135deg, ${HP_TOKENS.paper}, #fff)`,
+          background: `linear-gradient(135deg, ${HP_TOKENS.paper}, ${HP_TOKENS.card})`,
           borderRadius: 24, padding: '24px 20px', marginTop: 8,
-          border: `1.5px solid ${HP_TOKENS.line}`, boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
+          border: `1.5px solid ${HP_TOKENS.line}`, boxShadow: '0 10px 30px rgba(26,29,35,0.04)',
           position: 'relative', overflow: 'hidden'
         }}>
           <div style={{ position: 'absolute', top: -20, right: -10, fontSize: 100, fontWeight: 900, color: HP_TOKENS.lineSoft, opacity: 0.4 }}>
@@ -88,7 +88,7 @@ export default function HRHomeScreen({ openModal }: Props) {
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div style={{ ...HP_TEXT.h, fontSize: 20 }}>{(user.name || "User").split(' ')[0]}</div>
-                    <div style={{ background: HP_TOKENS.lavender, color: '#fff', fontSize: 10, fontWeight: 900, padding: '2px 8px', borderRadius: 6 }}>
+                    <div style={{ background: HP_TOKENS.lavender, color: '#F4F7F9', fontSize: 10, fontWeight: 900, padding: '2px 8px', borderRadius: 6 }}>
                       HR
                     </div>
                   </div>
@@ -135,13 +135,13 @@ export default function HRHomeScreen({ openModal }: Props) {
           onClick={() => openModal('attendance_scanner')}
           style={{
             marginTop: 16, width: '100%', padding: '14px', borderRadius: 20, 
-            background: HP_TOKENS.ink, color: '#fff',
+            background: HP_TOKENS.ink, color: '#F4F7F9',
             border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+            boxShadow: '0 4px 12px rgba(26,29,35,0.1)'
           }} className="hp-tap"
         >
-          <HPGlyph name="target" size={18} color="#fff" />
+          <HPGlyph name="target" size={18} color="#F4F7F9" />
           Check-in Office
         </button>
 
@@ -184,7 +184,7 @@ export default function HRHomeScreen({ openModal }: Props) {
         {/* Quick Action: Manage Surveys */}
         <button onClick={() => openModal('manage_surveys')} className="hp-tap" style={{
           marginTop: 16, width: '100%', padding: '16px', borderRadius: 22,
-          background: `linear-gradient(135deg, ${HP_TOKENS.lavender}, #5A4E8C)`, color: '#fff',
+          background: `linear-gradient(135deg, ${HP_TOKENS.lavender}, #5A4E8C)`, color: '#F4F7F9',
           border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14,
           fontFamily: HP_FONT, textAlign: 'left', boxShadow: '0 8px 22px rgba(123,107,181,0.3)',
           position: 'relative', overflow: 'hidden',
@@ -195,12 +195,12 @@ export default function HRHomeScreen({ openModal }: Props) {
             display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22
           }}>📋</div>
           <div style={{ flex: 1, position: 'relative' }}>
-            <div style={{ ...HP_TEXT.h, fontSize: 15, color: '#fff' }}>Kelola Survey</div>
+            <div style={{ ...HP_TEXT.h, fontSize: 15, color: '#F4F7F9' }}>Kelola Survey</div>
             <div style={{ ...HP_TEXT.small, fontWeight: 700, color: 'rgba(255,255,255,0.75)', marginTop: 2 }}>
               Buat, edit, dan lihat hasil survey internal
             </div>
           </div>
-          <HPGlyph name="arrow" size={18} color="#fff" />
+          <HPGlyph name="arrow" size={18} color="#F4F7F9" />
         </button>
       </div>
     </div>

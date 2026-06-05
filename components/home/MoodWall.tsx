@@ -90,7 +90,7 @@ export default function MoodWall() {
           style={{
             width: '100%', padding: 12, borderRadius: 12,
             border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 13,
-            outline: 'none', background: '#fff', color: HP_TOKENS.ink, boxSizing: 'border-box',
+            outline: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink, boxSizing: 'border-box',
             minHeight: 80, resize: 'none'
           }}
         />
@@ -109,7 +109,7 @@ export default function MoodWall() {
           </div>
           <button onClick={handleSubmit} disabled={isSubmitting || !content.trim()} style={{
             padding: '8px 16px', borderRadius: 99, border: 'none',
-            background: HP_TOKENS.blue, color: '#fff', fontFamily: HP_FONT, fontWeight: 800,
+            background: HP_TOKENS.blue, color: '#F4F7F9', fontFamily: HP_FONT, fontWeight: 800,
             cursor: (!content.trim() || isSubmitting) ? 'not-allowed' : 'pointer',
             opacity: (!content.trim() || isSubmitting) ? 0.5 : 1
           }}>

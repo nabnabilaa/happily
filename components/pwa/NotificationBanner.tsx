@@ -115,7 +115,7 @@ export default function NotificationBanner() {
             borderRadius: 99,
             border: 'none',
             background: 'var(--hp-yellow)',
-            color: '#fff',
+            color: '#F4F7F9',
             fontFamily: HP_FONT,
             fontWeight: 800,
             fontSize: 12,

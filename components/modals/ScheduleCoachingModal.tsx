@@ -74,7 +74,7 @@ export default function ScheduleCoachingModal({ onClose }: ScheduleCoachingModal
           onClick={save} 
           style={{
             width: '100%', marginTop: 32, padding: '16px', borderRadius: 99,
-            background: HP_TOKENS.blue, color: '#fff', border: 'none',
+            background: HP_TOKENS.blue, color: '#F4F7F9', border: 'none',
             fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
             boxShadow: `0 8px 24px ${HP_TOKENS.blueSoft}`,
           }}

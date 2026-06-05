@@ -143,7 +143,7 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
   return (
     <HPCard padding={16} style={{ 
       border: `1.5px solid ${HP_TOKENS.line}`,
-      boxShadow: '0 4px 12px rgba(0,0,0,0.01)',
+      boxShadow: '0 4px 12px rgba(26,29,35,0.01)',
       transition: 'all 0.2s ease',
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
@@ -226,7 +226,7 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
                     }}
                     style={{
                       padding: '5px 12px', borderRadius: 8, border: 'none',
-                      background: HP_TOKENS.sage, color: '#fff', fontSize: 11,
+                      background: HP_TOKENS.sage, color: '#F4F7F9', fontSize: 11,
                       fontWeight: 900, cursor: 'pointer',
                       boxShadow: `0 2px 8px ${HP_TOKENS.sage}40`
                     }}
@@ -235,7 +235,7 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
                     onClick={(e) => { e.stopPropagation(); setEditingProgress(false); }}
                     style={{
                       padding: '5px 8px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
-                      background: '#fff', color: HP_TOKENS.inkFade, fontSize: 11,
+                      background: HP_TOKENS.card, color: HP_TOKENS.inkFade, fontSize: 11,
                       fontWeight: 900, cursor: 'pointer'
                     }}
                   >✕ Batal</button>
@@ -325,7 +325,7 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 flexShrink: 0
               }}>
-                {sg.done && <HPGlyph name="check" size={8} color="#fff" stroke={4}/>}
+                {sg.done && <HPGlyph name="check" size={8} color="#F4F7F9" stroke={4}/>}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
                 <div style={{ 

@@ -44,14 +44,14 @@ export default function ManageContactsModal({ onClose }: ManageContactsModalProp
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 100,
-      background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)',
+      background: 'rgba(26,29,35,0.4)', backdropFilter: 'blur(8px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
     }}>
       <div 
         className="hp-pop"
         style={{
           width: '100%', maxWidth: 400, background: HP_TOKENS.paper,
-          borderRadius: 32, overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
+          borderRadius: 32, overflow: 'hidden', boxShadow: '0 20px 40px rgba(26,29,35,0.1)'
         }}
       >
         <div style={{ padding: 24, borderBottom: `1px solid ${HP_TOKENS.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -96,7 +96,7 @@ export default function ManageContactsModal({ onClose }: ManageContactsModalProp
               className="hp-tap"
               style={{
                 width: '100%', padding: '14px', borderRadius: 16, background: HP_TOKENS.ink,
-                color: '#fff', border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer'
+                color: '#F4F7F9', border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer'
               }}
             >
               + Tambah Kontak
@@ -134,5 +134,5 @@ export default function ManageContactsModal({ onClose }: ManageContactsModalProp
 
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '12px 16px', borderRadius: 14, border: `1.5px solid ${HP_TOKENS.line}`,
-  fontFamily: HP_FONT, fontSize: 14, outline: 'none', background: '#fff', boxSizing: 'border-box'
+  fontFamily: HP_FONT, fontSize: 14, outline: 'none', background: HP_TOKENS.card, boxSizing: 'border-box'
 };

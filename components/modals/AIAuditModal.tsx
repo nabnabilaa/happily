@@ -59,7 +59,7 @@ export default function AIAuditModal({ onClose, type }: AIAuditModalProps) {
 
           <button onClick={onClose} style={{
             marginTop: 24, width: '100%', padding: '16px', borderRadius: 16, border: 'none',
-            background: type === 'weekly' ? HP_TOKENS.blue : '#6B5F8E', color: '#fff',
+            background: type === 'weekly' ? HP_TOKENS.blue : '#6B5F8E', color: '#F4F7F9',
             fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer',
             boxShadow: `0 8px 24px ${type === 'weekly' ? HP_TOKENS.blueSoft : '#6B5F8E40'}`
           }} className="hp-tap">

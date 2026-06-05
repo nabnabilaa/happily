@@ -58,15 +58,15 @@ export default function TabNav({ tab, setTab, userRole }: TabNavProps) {
             onClick={() => setTab(t.key)}
             className="hp-nav-btn hp-tap"
             style={{
-              color: active ? HP_TOKENS.yellow : HP_TOKENS.inkMute,
-              background: active ? HP_TOKENS.yellowSoft : 'transparent',
+              color: active ? HP_TOKENS.primary : HP_TOKENS.inkMute,
+              background: active ? HP_TOKENS.primarySoft : 'transparent',
             }}
           >
             <div className="hp-nav-btn-icon">
               <HPGlyph
                 name={t.icon}
                 size={22}
-                color={active ? HP_TOKENS.yellow : HP_TOKENS.inkMute}
+                color={active ? HP_TOKENS.primary : HP_TOKENS.inkMute}
                 stroke={active ? 2.5 : 2}
               />
             </div>

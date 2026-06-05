@@ -16,6 +16,7 @@ interface HPState {
   learning: any[];
   coaching: any;
   wellbeing: any;
+  wishlistId?: string | null;
   points: number;
   coins: number;
   notifications: number;

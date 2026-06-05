@@ -85,7 +85,7 @@ export default function OKRDictionaryModal({ onClose }: OKRDictionaryModalProps)
           className="hp-tap"
           style={{
             marginTop: 24, padding: 14, borderRadius: 12, border: 'none',
-            background: HP_TOKENS.ink, color: '#fff', width: '100%',
+            background: HP_TOKENS.ink, color: '#F4F7F9', width: '100%',
             fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer'
           }}
         >

@@ -54,8 +54,8 @@ export default function ThemeSwitcher() {
         background: isDark ? "rgba(16, 22, 42, 0.65)" : "var(--hp-card)",
         color: "var(--hp-yellow)",
         boxShadow: isDark
-          ? "0 0 12px rgba(255, 215, 0, 0.15), 0 2px 10px rgba(0,0,0,0.2)"
-          : "0 2px 10px rgba(0,0,0,0.06)",
+          ? "0 0 12px rgba(255, 215, 0, 0.15), 0 2px 10px rgba(26,29,35,0.2)"
+          : "0 2px 10px rgba(26,29,35,0.06)",
         cursor: "pointer",
         position: "relative",
         overflow: "hidden",

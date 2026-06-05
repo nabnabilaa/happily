@@ -153,7 +153,7 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
 
   const selectStyle: React.CSSProperties = {
     padding: 10, borderRadius: 10, border: `1.5px solid ${HP_TOKENS.line}`,
-    fontFamily: HP_FONT, fontSize: 13, background: '#fff', outline: 'none',
+    fontFamily: HP_FONT, fontSize: 13, background: HP_TOKENS.card, outline: 'none',
   };
 
   const statCard = (label: string, value: string | number, sub?: string, tone?: string) => (
@@ -313,7 +313,7 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
                     <span style={{ ...HP_TEXT.body, fontWeight: 700, color: 'rgba(255,255,255,0.7)' }}>
                       Skor KPI Tertimbang
                     </span>
-                    <span style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 28, color: '#fff' }}>
+                    <span style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 28, color: '#F4F7F9' }}>
                       {calcWeightedScore()}<span style={{ fontSize: 14, opacity: 0.5 }}>/100</span>
                     </span>
                   </div>
@@ -336,7 +336,7 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
                   style={{
                     width: '100%', padding: 12, borderRadius: 12,
                     border: `1.5px solid ${HP_TOKENS.line}`,
-                    fontFamily: HP_FONT, fontSize: 13, background: '#fff', outline: 'none',
+                    fontFamily: HP_FONT, fontSize: 13, background: HP_TOKENS.card, outline: 'none',
                     resize: 'none', boxSizing: 'border-box',
                   }}
                 />
@@ -367,10 +367,10 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
                   disabled={submitting}
                   style={{
                     flex: 2, padding: 14, borderRadius: 14, border: 'none',
-                    background: HP_TOKENS.sage, color: '#fff',
+                    background: HP_TOKENS.sage, color: '#F4F7F9',
                     fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
                     opacity: submitting ? 0.5 : 1,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                    boxShadow: '0 4px 12px rgba(26,29,35,0.1)',
                   }}
                 >
                   {submitting ? 'Menyimpan...' : '✅ Finalisasi Laporan'}

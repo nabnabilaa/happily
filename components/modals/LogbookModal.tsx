@@ -343,7 +343,7 @@ export default function LogbookModal({ onClose }: LogbookModalProps) {
                     {dayDetail.xpBreakdown.map((xp: any, i: number) => (
                       <div key={i} style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '6px 10px', borderRadius: 8, background: '#fff',
+                        padding: '6px 10px', borderRadius: 8, background: HP_TOKENS.card,
                         border: `1px solid ${HP_TOKENS.lineSoft}`,
                       }}>
                         <div style={{ ...HP_TEXT.small, fontSize: 11, color: HP_TOKENS.inkSoft }}>

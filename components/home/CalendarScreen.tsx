@@ -304,15 +304,15 @@ export default function CalendarScreen({ openModal }: Props) {
           padding: '14px 20px', background: `linear-gradient(135deg, ${HP_TOKENS.blue}, #2B5A8C)`,
         }}>
           <button onClick={prevMonth} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 8 }}>
-            <HPGlyph name="arrow" size={18} color="#fff" />
+            <HPGlyph name="arrow" size={18} color="#F4F7F9" />
           </button>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ color: '#fff', fontWeight: 900, fontSize: 16, fontFamily: HP_FONT }}>
+            <div style={{ color: '#F4F7F9', fontWeight: 900, fontSize: 16, fontFamily: HP_FONT }}>
               {MONTHS[viewMonth]} {viewYear}
             </div>
           </div>
           <button onClick={nextMonth} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 8, transform: 'rotate(180deg)' }}>
-            <HPGlyph name="arrow" size={18} color="#fff" />
+            <HPGlyph name="arrow" size={18} color="#F4F7F9" />
           </button>
         </div>
 
@@ -384,12 +384,12 @@ export default function CalendarScreen({ openModal }: Props) {
           className="hp-tap"
           style={{
             padding: '10px 16px', borderRadius: 12, border: 'none',
-            background: HP_TOKENS.blue, color: '#fff',
+            background: HP_TOKENS.blue, color: '#F4F7F9',
             fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: 6,
           }}
         >
-          <HPGlyph name="plus" size={14} color="#fff" />
+          <HPGlyph name="plus" size={14} color="#F4F7F9" />
           Buat Agenda
         </button>
       </div>
@@ -463,7 +463,7 @@ export default function CalendarScreen({ openModal }: Props) {
                           <span key={uid} onClick={() => toggleUser(uid)} style={{
                             padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700,
                             cursor: 'pointer', fontFamily: HP_FONT, border: 'none',
-                            background: HP_TOKENS.blue, color: '#fff',
+                            background: HP_TOKENS.blue, color: '#F4F7F9',
                           }}>{u.name.split(' ')[0]} ✕</span>
                         ) : null;
                       })}
@@ -543,7 +543,7 @@ export default function CalendarScreen({ openModal }: Props) {
                                     background: isSelected ? HP_TOKENS.blue : 'transparent',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                   }}>
-                                    {isSelected && <HPGlyph name="check" size={11} color="#fff" />}
+                                    {isSelected && <HPGlyph name="check" size={11} color="#F4F7F9" />}
                                   </div>
                                 </button>
                               );
@@ -560,7 +560,7 @@ export default function CalendarScreen({ openModal }: Props) {
             <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
               <button onClick={() => { setShowForm(false); resetForm(); }} style={{ flex: 1, padding: 12, borderRadius: 12, background: HP_TOKENS.card, border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>Batal</button>
               <button onClick={handleSave} disabled={!title || !date || saving} style={{
-                flex: 2, padding: 12, borderRadius: 12, background: HP_TOKENS.blue, color: '#fff',
+                flex: 2, padding: 12, borderRadius: 12, background: HP_TOKENS.blue, color: '#F4F7F9',
                 border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',
                 opacity: (!title || !date || saving) ? 0.5 : 1,
               }}>
@@ -654,7 +654,7 @@ export default function CalendarScreen({ openModal }: Props) {
                 className="hp-tap"
                 style={{
                   padding: '10px 16px', borderRadius: 10, border: 'none',
-                  background: HP_TOKENS.coral, color: '#fff',
+                  background: HP_TOKENS.coral, color: '#F4F7F9',
                   fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
                 }}
               >

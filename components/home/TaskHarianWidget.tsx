@@ -220,9 +220,9 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
       {/* Realization Progress Card */}
       <HPCard padding={20} style={{ 
         marginBottom: 20, 
-        background: `linear-gradient(135deg, ${HP_TOKENS.sageWash} 0%, #fff 100%)`, 
+        background: `linear-gradient(135deg, ${HP_TOKENS.sageWash} 0%, ${HP_TOKENS.card} 100%)`, 
         border: `1.5px solid ${HP_TOKENS.sage}20`,
-        boxShadow: '0 10px 30px rgba(0,0,0,0.03)',
+        boxShadow: '0 10px 30px rgba(26,29,35,0.03)',
         position: 'relative',
         overflow: 'hidden'
       }}>
@@ -347,7 +347,7 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
           <button onClick={() => openModal('focus')} className="hp-tap" style={{
             padding: '18px', borderRadius: 20, border: 'none',
             background: HP_TOKENS.sage,
-            color: '#fff', cursor: 'pointer', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15,
+            color: '#F4F7F9', cursor: 'pointer', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
             marginTop: 8,
             boxShadow: `0 8px 24px ${HP_TOKENS.sage}30`

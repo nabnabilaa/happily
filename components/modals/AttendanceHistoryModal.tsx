@@ -91,14 +91,14 @@ export default function AttendanceHistoryModal({ onClose, targetUserId, targetUs
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <button onClick={() => navigateMonth(-1)} className="hp-tap" style={{
           width: 36, height: 36, borderRadius: 10, border: `1px solid ${HP_TOKENS.line}`,
-          background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+          background: HP_TOKENS.card, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
         }}>
           <HPGlyph name="chevronLeft" size={16} color={HP_TOKENS.ink} />
         </button>
         <div style={{ ...HP_TEXT.h, fontSize: 16 }}>{MONTHS[month - 1]} {year}</div>
         <button onClick={() => navigateMonth(1)} className="hp-tap" style={{
           width: 36, height: 36, borderRadius: 10, border: `1px solid ${HP_TOKENS.line}`,
-          background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+          background: HP_TOKENS.card, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
         }}>
           <HPGlyph name="chevronRight" size={16} color={HP_TOKENS.ink} />
         </button>
@@ -249,13 +249,13 @@ export default function AttendanceHistoryModal({ onClose, targetUserId, targetUs
               {selectedLog ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div style={{ display: 'flex', gap: 12 }}>
-                    <div style={{ flex: 1, padding: '10px', borderRadius: 10, background: '#fff', textAlign: 'center' }}>
+                    <div style={{ flex: 1, padding: '10px', borderRadius: 10, background: HP_TOKENS.card, textAlign: 'center' }}>
                       <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>CLOCK IN</div>
                       <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 16, color: HP_TOKENS.sage }}>
                         {new Date(selectedLog.check_in_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                       </div>
                     </div>
-                    <div style={{ flex: 1, padding: '10px', borderRadius: 10, background: '#fff', textAlign: 'center' }}>
+                    <div style={{ flex: 1, padding: '10px', borderRadius: 10, background: HP_TOKENS.card, textAlign: 'center' }}>
                       <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>CLOCK OUT</div>
                       <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 16, color: selectedLog.check_out_at ? HP_TOKENS.blue : HP_TOKENS.coral }}>
                         {selectedLog.check_out_at 
@@ -263,7 +263,7 @@ export default function AttendanceHistoryModal({ onClose, targetUserId, targetUs
                           : '—'}
                       </div>
                     </div>
-                    <div style={{ flex: 1, padding: '10px', borderRadius: 10, background: '#fff', textAlign: 'center' }}>
+                    <div style={{ flex: 1, padding: '10px', borderRadius: 10, background: HP_TOKENS.card, textAlign: 'center' }}>
                       <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>DURASI</div>
                       <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 16, color: '#8A6814' }}>
                         {selectedLog.duration_minutes 

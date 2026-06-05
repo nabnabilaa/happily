@@ -69,7 +69,7 @@ export default function DepartmentManagerModal({ onClose }: DepartmentManagerMod
   const inputStyle: React.CSSProperties = {
     flex: 1, padding: '12px 14px', borderRadius: 14,
     border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT,
-    fontSize: 14, fontWeight: 700, outline: 'none', background: '#fff',
+    fontSize: 14, fontWeight: 700, outline: 'none', background: HP_TOKENS.card,
   };
 
   return (
@@ -89,7 +89,7 @@ export default function DepartmentManagerModal({ onClose }: DepartmentManagerMod
             onClick={handleAdd} disabled={loading || !newName.trim()}
             className="hp-tap"
             style={{
-              padding: '0 18px', borderRadius: 14, background: HP_TOKENS.ink, color: '#fff',
+              padding: '0 18px', borderRadius: 14, background: HP_TOKENS.ink, color: '#F4F7F9',
               border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',
               opacity: !newName.trim() ? 0.4 : 1,
             }}
@@ -122,7 +122,7 @@ export default function DepartmentManagerModal({ onClose }: DepartmentManagerMod
                   />
                   <button onClick={() => handleEdit(d.id)} className="hp-tap" style={{
                     padding: '6px 12px', borderRadius: 8, border: 'none',
-                    background: HP_TOKENS.blue, color: '#fff',
+                    background: HP_TOKENS.blue, color: '#F4F7F9',
                     fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
                   }}>Simpan</button>
                   <button onClick={() => setEditingId(null)} style={{
@@ -144,7 +144,7 @@ export default function DepartmentManagerModal({ onClose }: DepartmentManagerMod
                     className="hp-tap"
                     style={{
                       padding: '5px 10px', borderRadius: 8,
-                      border: `1px solid ${HP_TOKENS.line}`, background: '#fff',
+                      border: `1px solid ${HP_TOKENS.line}`, background: HP_TOKENS.card,
                       fontFamily: HP_FONT, fontWeight: 800, fontSize: 10, cursor: 'pointer',
                       color: HP_TOKENS.blue,
                     }}

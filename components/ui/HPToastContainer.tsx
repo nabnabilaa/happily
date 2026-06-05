@@ -71,7 +71,7 @@ function ToastItem({ toast, onDismiss }: { toast: any, onDismiss: () => void }) 
       borderLeft: `4px solid ${config.color}`,
       padding: '12px 16px',
       borderRadius: 14,
-      boxShadow: '0 8px 30px rgba(0,0,0,0.08)',
+      boxShadow: '0 8px 30px rgba(26,29,35,0.08)',
       display: 'flex',
       alignItems: 'flex-start',
       gap: 12,

@@ -44,7 +44,7 @@ export default function ConfirmLogoutModal({ onClose, onConfirm }: ConfirmLogout
             onClick={onConfirm}
             style={{
               width: '100%', padding: '16px', borderRadius: 16,
-              background: HP_TOKENS.coral, color: '#fff',
+              background: HP_TOKENS.coral, color: '#F4F7F9',
               border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15,
               cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
               boxShadow: `0 8px 20px ${HP_TOKENS.coral}30`

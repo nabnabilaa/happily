@@ -36,7 +36,32 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
   // Ignore non-GET requests and browser extensions or hot reload endpoints
-  if (event.request.method !== 'GET' || url.origin !== self.location.origin || url.pathname.includes('/_next/webpack-hmr') || url.pathname.startsWith('/api/')) {
+  if (event.request.method !== 'GET' || url.origin !== self.location.origin || url.pathname.includes('/_next/webpack-hmr')) {
+    return;
+  }
+
+  // API Requests (Network-First with Cache fallback)
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
+          }
+          return networkResponse;
+        })
+        .catch(async () => {
+          const cachedResponse = await caches.match(event.request);
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          return new Response(JSON.stringify({ error: "Offline" }), {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        })
+    );
     return;
   }
 

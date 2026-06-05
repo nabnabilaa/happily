@@ -135,7 +135,7 @@ export default function AttendanceDashboard({ logs, users }: AttendanceDashboard
           { label: 'WFA', value: stats.wfa, color: HP_TOKENS.lavender },
           { label: 'Dinas', value: stats.dinas, color: HP_TOKENS.yellow },
         ].map(item => (
-          <div key={item.label} style={{ background: '#fff', border: `1px solid ${HP_TOKENS.lineSoft}`, borderRadius: 12, padding: 12, textAlign: 'center' }}>
+          <div key={item.label} style={{ background: HP_TOKENS.card, border: `1px solid ${HP_TOKENS.lineSoft}`, borderRadius: 12, padding: 12, textAlign: 'center' }}>
             <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>{item.label}</div>
             <div style={{ fontSize: 18, fontWeight: 800, color: item.color, marginTop: 4 }}>{item.value}</div>
           </div>

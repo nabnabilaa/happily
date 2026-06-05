@@ -29,7 +29,20 @@ export default function StatBlock({ label, value, icon, tone }: StatBlockProps) 
       }}>
         <HPGlyph name={icon} size={16} color={fg}/>
       </div>
-      <div style={{ ...HP_TEXT.title, fontSize: 20 }}>{value}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {label.toLowerCase().includes('poin') && (
+          <div style={{
+            width: 20, height: 20, borderRadius: '50%',
+            background: 'linear-gradient(135deg, #FFEC99, #FFD43B)',
+            border: '2px solid #F59F00',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 2px 6px rgba(245, 159, 0, 0.3)'
+          }}>
+            <HPGlyph name="star" size={10} color="#E67700" />
+          </div>
+        )}
+        <div style={{ ...HP_TEXT.title, fontSize: 22 }}>{value}</div>
+      </div>
       <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 600 }}>{label}</div>
     </div>
   );

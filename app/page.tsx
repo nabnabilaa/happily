@@ -327,7 +327,7 @@ function AppContent() {
               border: `1.5px solid var(--hp-line)`,
               background: "var(--hp-card)",
               color: "var(--hp-ink)",
-              boxShadow: "0 2px 10px rgba(0,0,0,0.06)",
+              boxShadow: "0 2px 10px rgba(26,29,35,0.06)",
               cursor: "pointer",
               position: "relative",
               transition: "all 0.2s ease",
@@ -341,7 +341,7 @@ function AppContent() {
                   top: -2,
                   right: -2,
                   background: HP_TOKENS.coral,
-                  color: "#fff",
+                  color: '#F4F7F9',
                   fontSize: 10,
                   fontWeight: 800,
                   borderRadius: 99,
@@ -368,7 +368,7 @@ function AppContent() {
               border: `1.5px solid ${meta.color}30`,
               fontFamily: HP_FONT, fontWeight: 800, fontSize: 11,
               color: meta.color,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+              boxShadow: '0 2px 8px rgba(26,29,35,0.06)',
             }}
           >
             <HPGlyph name={meta.glyph} size={11} color={meta.color} />
@@ -385,7 +385,7 @@ function AppContent() {
               border: `1.5px solid ${HP_TOKENS.coral}30`,
               fontFamily: HP_FONT, fontWeight: 800, fontSize: 11,
               color: HP_TOKENS.coral,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+              boxShadow: '0 2px 8px rgba(26,29,35,0.06)',
               cursor: 'pointer',
             }}
             title="Keluar (Logout)"

@@ -122,7 +122,7 @@ export default function OfficeSettingsMap() {
       <HPCard style={{ background: HP_TOKENS.blueSoft, border: 'none', marginBottom: 4 }} padding={16}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 36, height: 36, borderRadius: 10, background: HP_TOKENS.blue, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <HPGlyph name="target" size={18} color="#fff" />
+            <HPGlyph name="target" size={18} color="#F4F7F9" />
           </div>
           <div>
             <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.blue }}>Pengaturan Lokasi Kantor</div>

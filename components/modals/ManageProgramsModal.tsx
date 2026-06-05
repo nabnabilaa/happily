@@ -93,7 +93,7 @@ export default function ManageProgramsModal({ onClose }: ManageProgramsModalProp
             onClick={addProgram}
             style={{
               padding: '0 20px', borderRadius: 12, border: 'none',
-              background: HP_TOKENS.sage, color: '#fff', fontFamily: HP_FONT, fontWeight: 800, cursor: 'pointer'
+              background: HP_TOKENS.sage, color: '#F4F7F9', fontFamily: HP_FONT, fontWeight: 800, cursor: 'pointer'
             }}
           >
             Ikut

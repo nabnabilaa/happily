@@ -74,7 +74,7 @@ export default function SystemGuideModal({ onClose }: SystemGuideModalProps) {
               { rank: 'S', lv: 'Lv. 71+', color: '#4A3A6E' },
             ].map(r => (
               <div key={r.rank} style={{ 
-                padding: '12px 8px', borderRadius: 14, background: '#fff', 
+                padding: '12px 8px', borderRadius: 14, background: HP_TOKENS.card, 
                 border: `1.5px solid ${HP_TOKENS.line}`, textAlign: 'center' 
               }}>
                 <div style={{ 
@@ -93,7 +93,7 @@ export default function SystemGuideModal({ onClose }: SystemGuideModalProps) {
         {/* Skill Guide */}
         <section style={{ 
           marginTop: 8, padding: 16, borderRadius: 20, 
-          background: `linear-gradient(135deg, ${HP_TOKENS.sageWash}, #fff)`,
+          background: `linear-gradient(135deg, ${HP_TOKENS.sageWash}, ${HP_TOKENS.card})`,
           border: `1.5px solid ${HP_TOKENS.sageSoft}`
         }}>
           <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.sage }}>Otomatisasi Progress Skill</div>
@@ -115,10 +115,10 @@ export default function SystemGuideModal({ onClose }: SystemGuideModalProps) {
              }}
              style={{
                width: '100%', padding: '14px', borderRadius: 16,
-               background: HP_TOKENS.ink, color: '#fff', border: 'none',
+               background: HP_TOKENS.ink, color: '#F4F7F9', border: 'none',
                fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',
                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-               boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+               boxShadow: '0 4px 12px rgba(26,29,35,0.1)'
              }}
            >
              <span style={{ fontSize: 18 }}>🐝</span>

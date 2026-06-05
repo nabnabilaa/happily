@@ -114,7 +114,7 @@ export default function CalendarModal({ onClose }: Props) {
 
   const selectStyle: React.CSSProperties = {
     padding: 12, borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
-    fontFamily: HP_FONT, fontSize: 13, background: '#fff', outline: 'none', width: '100%',
+    fontFamily: HP_FONT, fontSize: 13, background: HP_TOKENS.card, outline: 'none', width: '100%',
     boxSizing: 'border-box'
   };
 
@@ -177,8 +177,8 @@ export default function CalendarModal({ onClose }: Props) {
             </div>
 
             <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-              <button onClick={() => setShowForm(false)} style={{ flex: 1, padding: 14, borderRadius: 12, background: '#fff', border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontWeight: 800, cursor: 'pointer' }}>Batal</button>
-              <button onClick={handleSave} disabled={!title || !date || !time || saving} style={{ flex: 2, padding: 14, borderRadius: 12, background: HP_TOKENS.blue, color: '#fff', border: 'none', fontFamily: HP_FONT, fontWeight: 800, cursor: 'pointer', opacity: (!title || !date || !time || saving) ? 0.5 : 1 }}>
+              <button onClick={() => setShowForm(false)} style={{ flex: 1, padding: 14, borderRadius: 12, background: HP_TOKENS.card, border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontWeight: 800, cursor: 'pointer' }}>Batal</button>
+              <button onClick={handleSave} disabled={!title || !date || !time || saving} style={{ flex: 2, padding: 14, borderRadius: 12, background: HP_TOKENS.blue, color: '#F4F7F9', border: 'none', fontFamily: HP_FONT, fontWeight: 800, cursor: 'pointer', opacity: (!title || !date || !time || saving) ? 0.5 : 1 }}>
                 {saving ? 'Menyimpan...' : 'Buat Agenda'}
               </button>
             </div>
@@ -212,7 +212,7 @@ export default function CalendarModal({ onClose }: Props) {
                   const isOwner = String(ev.creatorId) === String(user?.id);
                   return (
                     <div key={ev.id} style={{
-                      padding: 16, borderRadius: 16, border: `1px solid ${HP_TOKENS.line}`, background: '#fff',
+                      padding: 16, borderRadius: 16, border: `1px solid ${HP_TOKENS.line}`, background: HP_TOKENS.card,
                       display: 'flex', gap: 16, alignItems: 'flex-start'
                     }}>
                       <div style={{

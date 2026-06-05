@@ -106,7 +106,7 @@ export default function ManageKPIModal({ onClose }: ManageKPIModalProps) {
 
   const selectStyle: React.CSSProperties = {
     padding: 12, borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
-    fontFamily: HP_FONT, fontSize: 13, background: '#fff', outline: 'none', width: '100%',
+    fontFamily: HP_FONT, fontSize: 13, background: HP_TOKENS.card, outline: 'none', width: '100%',
     boxSizing: 'border-box',
   };
 
@@ -241,13 +241,13 @@ export default function ManageKPIModal({ onClose }: ManageKPIModalProps) {
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => setShowForm(false)} style={{
                 flex: 1, padding: 12, borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
-                background: '#fff', fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer', color: HP_TOKENS.inkSoft
+                background: HP_TOKENS.card, fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer', color: HP_TOKENS.inkSoft
               }}>
                 Batal
               </button>
               <button onClick={handleCreate} disabled={!title || !assignTo || saving} style={{
                 flex: 2, padding: 12, borderRadius: 12, border: 'none',
-                background: HP_TOKENS.sage, color: '#fff',
+                background: HP_TOKENS.sage, color: '#F4F7F9',
                 fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',
                 opacity: !title || !assignTo || saving ? 0.5 : 1,
               }}>

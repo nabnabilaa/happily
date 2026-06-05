@@ -406,7 +406,7 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
                         <div style={{ 
                           fontSize: 9, fontWeight: 900, padding: '4px 10px', borderRadius: 99,
                           background: g.status === 'approved' ? HP_TOKENS.sage : g.status === 'rejected' ? HP_TOKENS.coral : g.status === 'revision' ? HP_TOKENS.yellow : HP_TOKENS.yellow,
-                          color: '#fff'
+                          color: '#F4F7F9'
                         }}>
                           {g.status === 'approved' ? 'ACCEPT' : g.status === 'rejected' ? 'REJECT' : g.status === 'revision' ? 'REVISI' : 'ON PROGRESS'}
                         </div>
@@ -414,7 +414,7 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
                           onClick={(e) => handleDeleteGoal(g.id, e)}
                           className="hp-tap"
                           style={{
-                            width: 24, height: 24, borderRadius: 12, border: 'none', background: 'rgba(0,0,0,0.05)',
+                            width: 24, height: 24, borderRadius: 12, border: 'none', background: 'rgba(26,29,35,0.05)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'
                           }}
                         >
@@ -448,9 +448,9 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
                             const childToneColor = TONE[child.tone] || HP_TOKENS.sage;
                             return (
                               <div key={child.id} style={{
-                                padding: '14px 16px', background: '#fff', borderRadius: 16,
+                                padding: '14px 16px', background: HP_TOKENS.card, borderRadius: 16,
                                 border: `1.5px solid ${child.status === 'pending' ? `${HP_TOKENS.yellow}40` : HP_TOKENS.lineSoft}`,
-                                boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+                                boxShadow: '0 2px 8px rgba(26,29,35,0.02)'
                               }}>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                   <div style={{ flex: 1 }}>
@@ -497,7 +497,7 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
                                       className="hp-tap"
                                       style={{
                                         flex: 1, padding: '8px', borderRadius: 10, border: 'none',
-                                        background: HP_TOKENS.sage, color: '#fff', fontFamily: HP_FONT,
+                                        background: HP_TOKENS.sage, color: '#F4F7F9', fontFamily: HP_FONT,
                                         fontWeight: 900, fontSize: 11, cursor: 'pointer',
                                         boxShadow: `0 2px 8px ${HP_TOKENS.sage}40`
                                       }}
@@ -508,7 +508,7 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
                                       style={{
                                         flex: 1, padding: '8px', borderRadius: 10,
                                         border: `1.5px solid ${HP_TOKENS.yellow}`,
-                                        background: '#fff', color: '#8A6814', fontFamily: HP_FONT,
+                                        background: HP_TOKENS.card, color: '#8A6814', fontFamily: HP_FONT,
                                         fontWeight: 900, fontSize: 11, cursor: 'pointer'
                                       }}
                                     >Revisi</button>
@@ -518,7 +518,7 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
                                       style={{
                                         flex: 1, padding: '8px', borderRadius: 10,
                                         border: `1.5px solid ${HP_TOKENS.coral}`,
-                                        background: '#fff', color: HP_TOKENS.coral, fontFamily: HP_FONT,
+                                        background: HP_TOKENS.card, color: HP_TOKENS.coral, fontFamily: HP_FONT,
                                         fontWeight: 900, fontSize: 11, cursor: 'pointer'
                                       }}
                                     >Reject</button>
@@ -543,14 +543,14 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
                             {pendingVerification.map((t: any) => (
                               <div key={t.id} style={{ 
                                 display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', 
-                                background: '#fff', borderRadius: 18, border: `1.5px solid ${HP_TOKENS.yellow}30`,
-                                boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
+                                background: HP_TOKENS.card, borderRadius: 18, border: `1.5px solid ${HP_TOKENS.yellow}30`,
+                                boxShadow: '0 4px 12px rgba(26,29,35,0.02)'
                               }}>
                                 <div style={{ 
                                   width: 32, height: 32, borderRadius: 10, background: HP_TOKENS.yellow,
                                   display: 'flex', alignItems: 'center', justifyContent: 'center'
                                 }}>
-                                  <HPGlyph name="zap" size={16} color="#fff" />
+                                  <HPGlyph name="zap" size={16} color="#F4F7F9" />
                                 </div>
                                 <div style={{ flex: 1 }}>
                                   <div style={{ fontSize: 13, fontWeight: 800, color: HP_TOKENS.ink }}>{t.title}</div>
@@ -565,7 +565,7 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
                                     className="hp-tap"
                                     style={{
                                       padding: '8px 16px', borderRadius: 10, border: 'none',
-                                      background: HP_TOKENS.sage, color: '#fff', fontSize: 11, fontWeight: 900, cursor: 'pointer',
+                                      background: HP_TOKENS.sage, color: '#F4F7F9', fontSize: 11, fontWeight: 900, cursor: 'pointer',
                                       boxShadow: `0 4px 12px ${HP_TOKENS.sage}40`
                                     }}
                                   >
@@ -576,7 +576,7 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
                                     className="hp-tap"
                                     style={{
                                       padding: '8px 12px', borderRadius: 10, border: `1px solid ${HP_TOKENS.yellow}`,
-                                      background: '#fff', color: '#8A6814', fontSize: 11, fontWeight: 900, cursor: 'pointer',
+                                      background: HP_TOKENS.card, color: '#8A6814', fontSize: 11, fontWeight: 900, cursor: 'pointer',
                                     }}
                                   >
                                     Revisi
@@ -586,7 +586,7 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
                                     className="hp-tap"
                                     style={{
                                       padding: '8px 12px', borderRadius: 10, border: `1px solid ${HP_TOKENS.coral}`,
-                                      background: '#fff', color: HP_TOKENS.coral, fontSize: 11, fontWeight: 900, cursor: 'pointer',
+                                      background: HP_TOKENS.card, color: HP_TOKENS.coral, fontSize: 11, fontWeight: 900, cursor: 'pointer',
                                     }}
                                   >
                                     Tolak
@@ -641,7 +641,7 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
                             className="hp-tap"
                             style={{
                               flex: 1, padding: '14px', borderRadius: 14, border: 'none',
-                              background: HP_TOKENS.sage, color: '#fff', fontFamily: HP_FONT, fontWeight: 900, fontSize: 13, cursor: 'pointer'
+                              background: HP_TOKENS.sage, color: '#F4F7F9', fontFamily: HP_FONT, fontWeight: 900, fontSize: 13, cursor: 'pointer'
                             }}
                           >
                             Approve KPI
@@ -654,7 +654,7 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
                             className="hp-tap"
                             style={{
                               flex: 1, padding: '14px', borderRadius: 14, border: `1.5px solid ${HP_TOKENS.yellow}`,
-                              background: '#fff', color: '#8A6814', fontFamily: HP_FONT, fontWeight: 900, fontSize: 13, cursor: 'pointer'
+                              background: HP_TOKENS.card, color: '#8A6814', fontFamily: HP_FONT, fontWeight: 900, fontSize: 13, cursor: 'pointer'
                             }}
                           >
                             Revisi
@@ -667,7 +667,7 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
                             className="hp-tap"
                             style={{
                               flex: 1, padding: '14px', borderRadius: 14, border: `1.5px solid ${HP_TOKENS.coral}`,
-                              background: '#fff', color: HP_TOKENS.coral, fontFamily: HP_FONT, fontWeight: 900, fontSize: 13, cursor: 'pointer'
+                              background: HP_TOKENS.card, color: HP_TOKENS.coral, fontFamily: HP_FONT, fontWeight: 900, fontSize: 13, cursor: 'pointer'
                             }}
                           >
                             Reject
@@ -745,7 +745,7 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
                       display: 'flex', alignItems: 'center', justifyContent: 'center'
                     }}
                   >
-                    {t.done && <HPGlyph name="check" size={14} color="#fff" />}
+                    {t.done && <HPGlyph name="check" size={14} color="#F4F7F9" />}
                   </button>
                   <div style={{ flex: 1 }}>
                     <div style={{ ...HP_TEXT.h, fontSize: 14, textDecoration: t.done ? 'line-through' : 'none', color: t.done ? HP_TOKENS.inkMute : HP_TOKENS.ink }}>{t.title}</div>

@@ -104,7 +104,7 @@ export default function HabitCell({ h, onToggle, onQuickComplete, onFinish }: Ha
         position: 'relative',
         overflow: 'hidden',
         transition: 'all 0.2s ease',
-        boxShadow: h.done ? 'none' : '0 2px 8px rgba(0,0,0,0.03)',
+        boxShadow: h.done ? 'none' : '0 2px 8px rgba(26,29,35,0.03)',
       }}
     >
 

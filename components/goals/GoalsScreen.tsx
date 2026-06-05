@@ -130,7 +130,7 @@ export default function GoalsScreen({ openModal }: GoalsScreenProps) {
             background: tab === 'personal' ? HP_TOKENS.sage : tab === 'assigned' ? HP_TOKENS.lavender : HP_TOKENS.blue, 
             display: 'flex', alignItems: 'center', justifyContent: 'center' 
           }}>
-            <HPGlyph name={tab === 'personal' ? "sparkle" : tab === 'assigned' ? "target" : "people"} size={18} color="#fff"/>
+            <HPGlyph name={tab === 'personal' ? "sparkle" : tab === 'assigned' ? "target" : "people"} size={18} color="#F4F7F9"/>
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ ...HP_TEXT.h, fontSize: 14, color: tab === 'personal' ? HP_TOKENS.sage : HP_TOKENS.lavender }}>

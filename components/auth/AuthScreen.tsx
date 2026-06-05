@@ -260,7 +260,7 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                     padding: "8px 12px",
                     borderRadius: 8,
                     border: `1px solid ${HP_TOKENS.line}`,
-                    background: "#fff",
+                    background: HP_TOKENS.card,
                     color: HP_TOKENS.ink,
                     fontWeight: 600,
                     fontSize: 11,
@@ -278,7 +278,7 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                     padding: "8px 12px",
                     borderRadius: 8,
                     border: `1px solid ${HP_TOKENS.line}`,
-                    background: "#fff",
+                    background: HP_TOKENS.card,
                     color: HP_TOKENS.ink,
                     fontWeight: 600,
                     fontSize: 11,
@@ -296,7 +296,7 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                     padding: "8px 12px",
                     borderRadius: 8,
                     border: `1px solid ${HP_TOKENS.line}`,
-                    background: "#fff",
+                    background: HP_TOKENS.card,
                     color: HP_TOKENS.ink,
                     fontWeight: 600,
                     fontSize: 11,
@@ -330,7 +330,7 @@ const inputStyle: React.CSSProperties = {
   fontSize: 15,
   outline: "none",
   transition: "border-color 0.2s",
-  background: "#fff",
+  background: HP_TOKENS.card,
 };
 
 const buttonStyle: React.CSSProperties = {

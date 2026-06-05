@@ -189,7 +189,7 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '12px 14px', borderRadius: 12,
     border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 14,
-    outline: 'none', background: '#fff', color: HP_TOKENS.ink, boxSizing: 'border-box',
+    outline: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink, boxSizing: 'border-box',
   };
 
   // ── LIST VIEW ──
@@ -201,11 +201,11 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
           <button onClick={() => { resetBuilder(); setView('builder'); }} className="hp-tap" style={{
             width: '100%', padding: '16px', borderRadius: 16, border: 'none',
             background: `linear-gradient(135deg, ${HP_TOKENS.lavender}, #5A4E8C)`,
-            color: '#fff', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
+            color: '#F4F7F9', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
             marginBottom: 20, boxShadow: '0 6px 20px rgba(123,107,181,0.3)',
           }}>
-            <HPGlyph name="plus" size={18} color="#fff" />
+            <HPGlyph name="plus" size={18} color="#F4F7F9" />
             Buat Survey Baru
           </button>
 
@@ -279,7 +279,7 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
                         )}
                         <button onClick={() => loadSurveyForEdit(sr)} className="hp-tap" style={{
                           flex: 1, padding: '8px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.line}`,
-                          background: '#fff', color: HP_TOKENS.inkSoft,
+                          background: HP_TOKENS.card, color: HP_TOKENS.inkSoft,
                           fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
                         }}>
                           ✏️ Edit
@@ -369,8 +369,8 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
             {showDeptDropdown && (
               <div style={{
                 position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, zIndex: 10,
-                background: '#fff', borderRadius: 14, padding: 12,
-                boxShadow: '0 4px 20px rgba(0,0,0,0.1)', border: `1.5px solid ${HP_TOKENS.blue}30`,
+                background: HP_TOKENS.card, borderRadius: 14, padding: 12,
+                boxShadow: '0 4px 20px rgba(26,29,35,0.1)', border: `1.5px solid ${HP_TOKENS.blue}30`,
               }}>
                 <div 
                   onClick={() => { setTargetAudience('company'); setTargetDepts([]); setShowDeptDropdown(false); }}
@@ -506,9 +506,9 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
                   background: q.required ? HP_TOKENS.sage : HP_TOKENS.lineSoft, transition: '0.2s',
                 }}>
                   <div style={{
-                    width: 14, height: 14, borderRadius: 7, background: '#fff',
+                    width: 14, height: 14, borderRadius: 7, background: HP_TOKENS.card,
                     position: 'absolute', top: 2, left: q.required ? 18 : 2, transition: '0.2s',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
+                    boxShadow: '0 1px 2px rgba(26,29,35,0.2)',
                   }} />
                 </button>
                 <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>Wajib diisi</span>
@@ -526,7 +526,7 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
               {QUESTION_TYPES.map(t => (
                 <button key={t.key} onClick={() => addQuestion(t.key)} className="hp-tap" style={{
                   padding: '8px 12px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.lavender}30`,
-                  background: '#fff', fontFamily: HP_FONT, fontWeight: 700, fontSize: 11,
+                  background: HP_TOKENS.card, fontFamily: HP_FONT, fontWeight: 700, fontSize: 11,
                   color: HP_TOKENS.ink, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
                 }}>
                   {t.icon} {t.label}
@@ -540,7 +540,7 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
         <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={() => { resetBuilder(); setView('list'); }} style={{
             flex: 1, padding: '14px', borderRadius: 14, border: `1.5px solid ${HP_TOKENS.line}`,
-            background: '#fff', color: HP_TOKENS.inkSoft,
+            background: HP_TOKENS.card, color: HP_TOKENS.inkSoft,
             fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer',
           }}>
             Batal
@@ -552,7 +552,7 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
             fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           }}>
-            <HPGlyph name={editingId ? "sparkle" : "plus"} size={16} color="#fff" />
+            <HPGlyph name={editingId ? "sparkle" : "plus"} size={16} color="#F4F7F9" />
             {saving ? "Menyimpan..." : editingId ? "Update Survey" : "Terbitkan Survey"}
           </button>
         </div>

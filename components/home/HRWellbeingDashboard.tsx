@@ -36,14 +36,14 @@ export default function HRWellbeingDashboard({ state }: Props) {
       </div>
       
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-        <HPCard padding={16} style={{ background: '#fff' }}>
+        <HPCard padding={16} style={{ background: HP_TOKENS.card }}>
           <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 4 }}>Company Wellbeing</div>
           <div style={{ ...HP_TEXT.h, fontSize: 24, color: HP_TOKENS.sage }}>{wellbeingAvg}/100</div>
           <div style={{ ...HP_TEXT.small, color: isWbTrendPos ? HP_TOKENS.sage : HP_TOKENS.coral, marginTop: 4 }}>
             {wellbeingTrend}% vs last week
           </div>
         </HPCard>
-        <HPCard padding={16} style={{ background: '#fff' }}>
+        <HPCard padding={16} style={{ background: HP_TOKENS.card }}>
           <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 4 }}>Total At Risk</div>
           <div style={{ ...HP_TEXT.h, fontSize: 24, color: HP_TOKENS.coral }}>{atRisk} Karyawan</div>
           <div style={{ ...HP_TEXT.small, color: atRisk > 0 ? HP_TOKENS.coral : HP_TOKENS.sage, marginTop: 4 }}>
@@ -52,7 +52,7 @@ export default function HRWellbeingDashboard({ state }: Props) {
         </HPCard>
       </div>
 
-      <HPCard padding={16} style={{ background: '#fff' }}>
+      <HPCard padding={16} style={{ background: HP_TOKENS.card }}>
         <div style={{ ...HP_TEXT.h, fontSize: 15, marginBottom: 16 }}>Status per Departemen</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {paginatedDepts.map((dept: any, i: number) => (

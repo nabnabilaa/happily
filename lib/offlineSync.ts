@@ -1,5 +1,7 @@
 'use client';
 
+import { get, set } from 'idb-keyval';
+
 export interface OfflineCheckIn {
   id: string;
   userId: string;
@@ -20,18 +22,19 @@ export interface OfflineXP {
 const CHECKIN_QUEUE_KEY = 'hp_offline_checkins';
 const XP_QUEUE_KEY = 'hp_offline_xp';
 
-export function getOfflineCheckIns(): OfflineCheckIn[] {
+export async function getOfflineCheckIns(): Promise<OfflineCheckIn[]> {
   if (typeof window === 'undefined') return [];
   try {
-    return JSON.parse(localStorage.getItem(CHECKIN_QUEUE_KEY) || '[]');
+    const data = await get(CHECKIN_QUEUE_KEY);
+    return data || [];
   } catch (e) {
     return [];
   }
 }
 
-export function queueOfflineCheckIn(userId: string, mood: string, energy: string | null, tag: string | null) {
+export async function queueOfflineCheckIn(userId: string, mood: string, energy: string | null, tag: string | null) {
   if (typeof window === 'undefined') return;
-  const queue = getOfflineCheckIns();
+  const queue = await getOfflineCheckIns();
   const newItem: OfflineCheckIn = {
     id: Math.random().toString(36).substring(2, 9),
     userId,
@@ -41,27 +44,29 @@ export function queueOfflineCheckIn(userId: string, mood: string, energy: string
     timestamp: Date.now(),
   };
   queue.push(newItem);
-  localStorage.setItem(CHECKIN_QUEUE_KEY, JSON.stringify(queue));
+  await set(CHECKIN_QUEUE_KEY, queue);
 }
 
-export function clearOfflineCheckIn(id: string) {
+export async function clearOfflineCheckIn(id: string) {
   if (typeof window === 'undefined') return;
-  const queue = getOfflineCheckIns().filter(item => item.id !== id);
-  localStorage.setItem(CHECKIN_QUEUE_KEY, JSON.stringify(queue));
+  const queue = await getOfflineCheckIns();
+  const filtered = queue.filter(item => item.id !== id);
+  await set(CHECKIN_QUEUE_KEY, filtered);
 }
 
-export function getOfflineXP(): OfflineXP[] {
+export async function getOfflineXP(): Promise<OfflineXP[]> {
   if (typeof window === 'undefined') return [];
   try {
-    return JSON.parse(localStorage.getItem(XP_QUEUE_KEY) || '[]');
+    const data = await get(XP_QUEUE_KEY);
+    return data || [];
   } catch (e) {
     return [];
   }
 }
 
-export function queueOfflineXP(userId: string, actionType: string, description?: string) {
+export async function queueOfflineXP(userId: string, actionType: string, description?: string) {
   if (typeof window === 'undefined') return;
-  const queue = getOfflineXP();
+  const queue = await getOfflineXP();
   const newItem: OfflineXP = {
     id: Math.random().toString(36).substring(2, 9),
     userId,
@@ -70,20 +75,24 @@ export function queueOfflineXP(userId: string, actionType: string, description?:
     timestamp: Date.now(),
   };
   queue.push(newItem);
-  localStorage.setItem(XP_QUEUE_KEY, JSON.stringify(queue));
+  await set(XP_QUEUE_KEY, queue);
 }
 
-export function clearOfflineXP(id: string) {
+export async function clearOfflineXP(id: string) {
   if (typeof window === 'undefined') return;
-  const queue = getOfflineXP().filter(item => item.id !== id);
-  localStorage.setItem(XP_QUEUE_KEY, JSON.stringify(queue));
+  const queue = await getOfflineXP();
+  const filtered = queue.filter(item => item.id !== id);
+  await set(XP_QUEUE_KEY, filtered);
 }
 
 export async function syncOfflineData(userId: string, awardXP: (actionType: string, description?: string) => Promise<void>): Promise<boolean> {
   if (typeof window === 'undefined' || !navigator.onLine) return false;
 
-  const checkins = getOfflineCheckIns().filter(item => item.userId === userId);
-  const xps = getOfflineXP().filter(item => item.userId === userId);
+  const allCheckins = await getOfflineCheckIns();
+  const checkins = allCheckins.filter(item => item.userId === userId);
+  
+  const allXPs = await getOfflineXP();
+  const xps = allXPs.filter(item => item.userId === userId);
 
   if (checkins.length === 0 && xps.length === 0) return false;
 
@@ -103,7 +112,7 @@ export async function syncOfflineData(userId: string, awardXP: (actionType: stri
         }),
       });
       if (res.ok) {
-        clearOfflineCheckIn(item.id);
+        await clearOfflineCheckIn(item.id);
         successCount++;
       }
     } catch (e) {
@@ -115,7 +124,7 @@ export async function syncOfflineData(userId: string, awardXP: (actionType: stri
   for (const item of xps) {
     try {
       await awardXP(item.actionType, item.description);
-      clearOfflineXP(item.id);
+      await clearOfflineXP(item.id);
       successCount++;
     } catch (e) {
       console.error('Failed to sync XP item:', item, e);

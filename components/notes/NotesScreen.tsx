@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import useSWR from 'swr';
 import { Editor } from '@tinymce/tinymce-react';
 import { useHP } from "@/lib/HPContext";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
@@ -10,8 +11,14 @@ import HPAvatar from "@/components/ui/HPAvatar";
 
 export default function NotesScreen() {
   const { user } = useHP();
-  const [notes, setNotes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  
+  // Fetch with SWR for offline caching and automatic revalidation
+  const { data: notesRes, mutate: mutateNotes } = useSWR(user?.id ? `/api/notes?userId=${user.id}` : null);
+  const { data: usersRes } = useSWR('/api/users');
+
+  const notes: any[] = notesRes?.notes || [];
+  const allUsers: any[] = (usersRes?.users || []).filter((u: any) => String(u.id) !== String(user?.id));
+  const loading = !notesRes || !usersRes;
 
   // Form State
   const [showForm, setShowForm] = useState(false);
@@ -23,36 +30,10 @@ export default function NotesScreen() {
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
 
   // Users & Search State
-  const [allUsers, setAllUsers] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchUser, setSearchUser] = useState('');
   const [collapsedDepts, setCollapsedDepts] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
-
-  async function fetchData() {
-    try {
-      const [notesRes, usersRes] = await Promise.all([
-        fetch(`/api/notes?userId=${user?.id}`),
-        fetch('/api/users')
-      ]);
-      const notesData = await notesRes.json();
-      setNotes(notesData.notes || []);
-
-      const usersData = await usersRes.json();
-      const users = (usersData.users || []).filter((u: any) => String(u.id) !== String(user?.id));
-      setAllUsers(users);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    if (user?.id) {
-      fetchData();
-    }
-  }, [user?.id]);
 
   const addNote = async () => {
     if (!newNote.trim()) return;
@@ -83,9 +64,7 @@ export default function NotesScreen() {
       });
       const data = await res.json();
       if (data.success) {
-        const freshNotesRes = await fetch(`/api/notes?userId=${user?.id}`);
-        const freshNotesData = await freshNotesRes.json();
-        setNotes(freshNotesData.notes || []);
+        await mutateNotes();
         
         cancelForm();
 
@@ -104,7 +83,7 @@ export default function NotesScreen() {
       await fetch(`/api/notes?noteId=${id}&userId=${user?.id}`, {
         method: 'DELETE',
       });
-      setNotes(notes.filter(n => String(n.id) !== String(id)));
+      await mutateNotes();
       if (typeof window !== "undefined") {
         window.postMessage({ type: "FLOWBEE_WEBSITE_UPDATE" }, "*");
       }
@@ -119,7 +98,7 @@ export default function NotesScreen() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'lock', noteId: note.id, userId: user?.id })
     });
-    fetchData();
+    await mutateNotes();
 
     setEditingNoteId(note.id);
     setNoteTitle(note.title || '');
@@ -132,7 +111,7 @@ export default function NotesScreen() {
       const toSelect: string[] = [];
       if (note.sharedWithDivisions && note.sharedWithDivisions.length > 0) {
         note.sharedWithDivisions.forEach((dept: string) => {
-          allUsers.filter(u => u.department === dept).forEach(u => toSelect.push(String(u.id)));
+          allUsers.filter((u: any) => u.department === dept).forEach((u: any) => toSelect.push(String(u.id)));
         });
       }
       if (note.sharedWithUsers && note.sharedWithUsers.length > 0) {
@@ -155,7 +134,7 @@ export default function NotesScreen() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'unlock', noteId: editingNoteId, userId: user?.id })
       });
-      fetchData();
+      await mutateNotes();
     }
     setEditingNoteId(null);
     setNoteTitle('');
@@ -179,7 +158,7 @@ export default function NotesScreen() {
     setCurrentPage(1);
   }, [searchQuery]);
 
-  const filteredNotes = notes.filter(n => {
+  const filteredNotes = notes.filter((n: any) => {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     return (n.title && n.title.toLowerCase().includes(q)) || 
@@ -197,7 +176,7 @@ export default function NotesScreen() {
   }, [filteredNotes, activePageNotes]);
 
   const groupedNotes = useMemo(() => {
-    return paginatedNotes.reduce((acc, note) => {
+    return paginatedNotes.reduce((acc: Record<string, any[]>, note: any) => {
       const d = new Date(note.createdAt);
       const dateKey = d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
       if (!acc[dateKey]) acc[dateKey] = [];
@@ -209,11 +188,11 @@ export default function NotesScreen() {
   // Group Users logic
   const usersByDept = useMemo(() => {
     const map: Record<string, any[]> = {};
-    const filtered = allUsers.filter(u =>
+    const filtered = allUsers.filter((u: any) =>
       u.name.toLowerCase().includes(searchUser.toLowerCase()) ||
       u.department?.toLowerCase().includes(searchUser.toLowerCase())
     );
-    filtered.forEach(u => {
+    filtered.forEach((u: any) => {
       const dept = u.department || 'Lainnya';
       if (!map[dept]) map[dept] = [];
       map[dept].push(u);
@@ -228,7 +207,7 @@ export default function NotesScreen() {
   };
 
   const selectAllInDept = (dept: string) => {
-    const deptUserIds = (usersByDept[dept] || []).map(u => String(u.id));
+    const deptUserIds = (usersByDept[dept] || []).map((u: any) => String(u.id));
     const allSelected = deptUserIds.every(id => sharedUsers.includes(id));
     if (allSelected) {
       setSharedUsers(prev => prev.filter(id => !deptUserIds.includes(id)));
@@ -263,7 +242,7 @@ export default function NotesScreen() {
         <div style={{ 
           background: HP_TOKENS.card, borderRadius: 24, padding: 20, 
           border: `1.5px solid ${HP_TOKENS.line}`, 
-          boxShadow: '0 8px 24px rgba(0,0,0,0.03)'
+          boxShadow: '0 8px 24px rgba(26,29,35,0.03)'
         }}>
           {/* ACCESS CONFIGURATION TOP */}
           <div style={{ marginBottom: 20 }}>
@@ -306,12 +285,12 @@ export default function NotesScreen() {
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', padding: '10px',
                     borderRadius: 12, background: HP_TOKENS.blueWash, marginBottom: 12 }}>
                     {sharedUsers.map(uid => {
-                      const u = allUsers.find(x => String(x.id) === uid);
+                      const u = allUsers.find((x: any) => String(x.id) === uid);
                       return u ? (
                         <span key={uid} onClick={() => toggleUser(uid)} style={{
                           padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 800,
                           cursor: 'pointer', fontFamily: HP_FONT, border: 'none',
-                          background: HP_TOKENS.blue, color: '#fff',
+                          background: HP_TOKENS.blue, color: '#F4F7F9',
                         }}>{u.name.split(' ')[0]} ✕</span>
                       ) : null;
                     })}
@@ -329,8 +308,8 @@ export default function NotesScreen() {
                     deptNames.map(dept => {
                       const deptUsers = usersByDept[dept];
                       const isCollapsed = collapsedDepts.has(dept);
-                      const allInDeptSelected = deptUsers.every(u => sharedUsers.includes(String(u.id)));
-                      const someInDeptSelected = deptUsers.some(u => sharedUsers.includes(String(u.id)));
+                      const allInDeptSelected = deptUsers.every((u: any) => sharedUsers.includes(String(u.id)));
+                      const someInDeptSelected = deptUsers.some((u: any) => sharedUsers.includes(String(u.id)));
 
                       return (
                         <div key={dept} style={{ marginBottom: 4 }}>
@@ -361,7 +340,7 @@ export default function NotesScreen() {
                             </button>
                           </div>
 
-                          {!isCollapsed && deptUsers.map(u => {
+                          {!isCollapsed && deptUsers.map((u: any) => {
                             const isSelected = sharedUsers.includes(String(u.id));
                             return (
                               <button key={u.id} onClick={(e) => { e.preventDefault(); toggleUser(String(u.id)); }}
@@ -386,7 +365,7 @@ export default function NotesScreen() {
                                   background: isSelected ? HP_TOKENS.blue : 'transparent',
                                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 }}>
-                                  {isSelected && <HPGlyph name="check" size={12} color="#fff" />}
+                                  {isSelected && <HPGlyph name="check" size={12} color="#F4F7F9" />}
                                 </div>
                               </button>
                             );
@@ -500,13 +479,13 @@ export default function NotesScreen() {
           className="hp-tap"
           style={{
             padding: '0 20px', borderRadius: 16, border: 'none',
-            background: HP_TOKENS.blue, color: '#fff',
+            background: HP_TOKENS.blue, color: '#F4F7F9',
             fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap',
             boxShadow: `0 4px 16px ${HP_TOKENS.blue}40`
           }}
         >
-          <HPGlyph name="plus" size={16} color="#fff" />
+          <HPGlyph name="plus" size={16} color="#F4F7F9" />
           Tambah Catatan
         </button>
       </div>
@@ -534,7 +513,7 @@ export default function NotesScreen() {
                   <div key={note.id} style={{ 
                     background: HP_TOKENS.card, borderRadius: 20, padding: 20, 
                     border: `1.5px solid ${HP_TOKENS.line}`,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
+                    boxShadow: '0 4px 12px rgba(26,29,35,0.02)'
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                       <div>

@@ -147,7 +147,7 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
   const selectStyle: React.CSSProperties = {
     width: '100%', padding: '12px', borderRadius: 14,
     border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 14,
-    outline: 'none', background: '#fff', color: HP_TOKENS.ink, boxSizing: 'border-box',
+    outline: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink, boxSizing: 'border-box',
   };
 
   if (status === 'loading') {
@@ -364,7 +364,7 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
                     background: isCheckingIn 
                       ? `linear-gradient(135deg, ${HP_TOKENS.blue}, #2B5286)` 
                       : `linear-gradient(135deg, ${HP_TOKENS.sage}, #2D7A4E)`,
-                    color: '#fff',
+                    color: '#F4F7F9',
                     fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                     boxShadow: isCheckingIn 
@@ -372,7 +372,7 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
                       : '0 6px 20px rgba(74,124,89,0.3)',
                   }}
                 >
-                  <HPGlyph name={isCheckingIn ? "target" : "check"} size={18} color="#fff" />
+                  <HPGlyph name={isCheckingIn ? "target" : "check"} size={18} color="#F4F7F9" />
                   {isCheckingIn ? 'Clock In Sekarang' : 'Clock Out Sekarang'}
                 </button>
                 

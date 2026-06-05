@@ -157,7 +157,7 @@ ${coachingLogs || 'No recent coaching commitments.'}`;
             alignItems: 'center', 
             justifyContent: 'center' 
           }}>
-            <HPGlyph name="sparkle" size={22} color="#fff"/>
+            <HPGlyph name="sparkle" size={22} color="#F4F7F9"/>
           </div>
           <div>
             <div style={{ ...HP_TEXT.h, fontSize: 16 }}>Flow, AI coach kamu</div>
@@ -263,7 +263,7 @@ ${coachingLogs || 'No recent coaching commitments.'}`;
             }}
             className="hp-tap"
           >
-            <HPGlyph name="send" size={18} color="#fff"/>
+            <HPGlyph name="send" size={18} color="#F4F7F9"/>
           </button>
         </div>
       </div>

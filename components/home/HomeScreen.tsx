@@ -420,7 +420,7 @@ export default function HomeScreen({ openModal }: any) {
           padding: '24px',
           marginTop: 16,
           border: `1px solid ${HP_TOKENS.line}`,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.02)',
+          boxShadow: '0 8px 24px rgba(26,29,35,0.02)',
           position: 'relative',
         }}>
           <div 
@@ -461,7 +461,7 @@ export default function HomeScreen({ openModal }: any) {
                 style={{
                   width: 36, height: 36, borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
                   background: HP_TOKENS.card, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                  cursor: 'pointer', boxShadow: '0 2px 8px rgba(26,29,35,0.04)'
                 }}
                 className="hp-tap"
               >
@@ -563,8 +563,8 @@ export default function HomeScreen({ openModal }: any) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <div style={{ 
                 width: 44, height: 44, borderRadius: 14, 
-                background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.02)', fontSize: 20
+                background: HP_TOKENS.card, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(26,29,35,0.02)', fontSize: 20
               }}>
                 🧘‍♂️
               </div>
@@ -581,7 +581,7 @@ export default function HomeScreen({ openModal }: any) {
                 className="hp-tap"
                 style={{
                   padding: '10px 16px', borderRadius: 12, border: 'none',
-                  background: HP_TOKENS.sage, color: '#fff',
+                  background: HP_TOKENS.sage, color: '#F4F7F9',
                   fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
                   boxShadow: `0 4px 12px ${HP_TOKENS.sage}30`,
                   whiteSpace: 'nowrap'
@@ -626,7 +626,7 @@ export default function HomeScreen({ openModal }: any) {
                     className="hp-tap"
                     style={{ 
                       padding: '8px 14px', borderRadius: 10, border: 'none', 
-                      background: HP_TOKENS.sage, color: '#fff', 
+                      background: HP_TOKENS.sage, color: '#F4F7F9', 
                       fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer'
                     }}
                   >
@@ -639,12 +639,12 @@ export default function HomeScreen({ openModal }: any) {
                     className="hp-tap"
                     style={{ 
                       padding: '8px 14px', borderRadius: 10, border: 'none', 
-                      background: HP_TOKENS.blue, color: '#fff', 
+                      background: HP_TOKENS.blue, color: '#F4F7F9', 
                       fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
                       display: 'flex', alignItems: 'center', gap: 6
                     }}
                   >
-                    <HPGlyph name="video" size={12} color="#fff" />
+                    <HPGlyph name="video" size={12} color="#F4F7F9" />
                     Join Meet
                   </button>
                 )}
@@ -745,7 +745,7 @@ export default function HomeScreen({ openModal }: any) {
       {selectedHabitDay && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999,
-          background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)',
+          background: 'rgba(26,29,35,0.6)', backdropFilter: 'blur(10px)',
           display: 'flex', alignItems: 'flex-end', justifyContent: 'center'
         }}>
           <div style={{

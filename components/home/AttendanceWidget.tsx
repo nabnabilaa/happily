@@ -65,7 +65,7 @@ export default function AttendanceWidget({ openModal }: AttendanceWidgetProps) {
         style={{
           width: '100%', padding: '16px', borderRadius: 20, 
           background: `linear-gradient(135deg, ${HP_TOKENS.coral}, #E03131)`, 
-          color: '#fff', border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer',
+          color: '#F4F7F9', border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
           boxShadow: '0 4px 16px rgba(224,49,49,0.3)',
           animation: 'hpPulse 2s infinite ease-in-out'
@@ -116,12 +116,12 @@ export default function AttendanceWidget({ openModal }: AttendanceWidgetProps) {
             style={{
               padding: '14px 20px', border: 'none', cursor: 'pointer',
               background: `linear-gradient(135deg, ${HP_TOKENS.sage}, #2D7A4E)`,
-              color: '#fff', fontFamily: HP_FONT, fontWeight: 800, fontSize: 12,
+              color: '#F4F7F9', fontFamily: HP_FONT, fontWeight: 800, fontSize: 12,
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
               borderLeft: `1px solid ${HP_TOKENS.sage}40`,
             }}
           >
-            <HPGlyph name="moon" size={16} color="#fff" />
+            <HPGlyph name="moon" size={16} color="#F4F7F9" />
             Clock Out
           </button>
         </div>

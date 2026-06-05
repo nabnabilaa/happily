@@ -188,7 +188,7 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
         onClick={handleFinish} 
         style={{
           width: '100%', padding: 18, borderRadius: 99,
-          background: HP_TOKENS.sage, color: '#fff', border: 'none',
+          background: HP_TOKENS.sage, color: '#F4F7F9', border: 'none',
           fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
           boxShadow: `0 8px 24px ${HP_TOKENS.sageSoft}`,
         }}

@@ -81,7 +81,7 @@ export default function AnnouncementModal({ onClose }: AnnouncementModalProps) {
           disabled={loading}
           style={{
             padding: '16px', borderRadius: 16, background: HP_TOKENS.sage,
-            color: '#fff', border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 14,
+            color: '#F4F7F9', border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 14,
             cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             opacity: loading ? 0.7 : 1, marginTop: 10
           }}
@@ -89,7 +89,7 @@ export default function AnnouncementModal({ onClose }: AnnouncementModalProps) {
         >
           {loading ? "Mengirim..." : (
             <>
-              <HPGlyph name="sparkle" size={16} color="#fff" />
+              <HPGlyph name="sparkle" size={16} color="#F4F7F9" />
               Kirim Pengumuman
             </>
           )}

@@ -2,11 +2,18 @@ export const HP_TOKENS = {
   // ── Theme-reactive tokens (resolve via CSS custom properties) ──
   // These return `var(--hp-*)` strings, so inline styles automatically
   // respond to light/dark mode changes without any component-level edits.
+  primary: 'var(--hp-primary)',
+  primaryLight: 'var(--hp-primary-light)',
+  primarySoft: 'var(--hp-primary-soft)',
+  primaryWash: 'var(--hp-primary-wash)',
+
+  // Brand: Yellow (Kept temporarily to avoid TS errors, mapped to primary in CSS)
   yellow: 'var(--hp-yellow)',
   yellowLight: 'var(--hp-yellow-light)',
   yellowSoft: 'var(--hp-yellow-soft)',
   yellowWash: 'var(--hp-yellow-wash)',
 
+  // Brand: Blue
   blue: 'var(--hp-blue)',
   blueLight: 'var(--hp-blue-light)',
   blueSoft: 'var(--hp-blue-soft)',
@@ -37,15 +44,15 @@ export const HP_TOKENS = {
   lineSoft: 'var(--hp-line-soft)',
 };
 
-export const HP_FONT = "'Inter', -apple-system, system-ui, sans-serif";
-export const HP_FONT_DISPLAY = "'Space Grotesk', 'Inter', -apple-system, system-ui, sans-serif";
+export const HP_FONT = "var(--hp-font)";
+export const HP_FONT_DISPLAY = "var(--hp-font-display)";
 
 export const HP_TEXT = {
-  display: { fontFamily: HP_FONT_DISPLAY, fontWeight: 700, fontSize: 28, lineHeight: 1.15, color: HP_TOKENS.ink, letterSpacing: -0.4 },
-  title: { fontFamily: HP_FONT_DISPLAY, fontWeight: 700, fontSize: 22, lineHeight: 1.2, color: HP_TOKENS.ink, letterSpacing: -0.2 },
-  h: { fontFamily: HP_FONT_DISPLAY, fontWeight: 700, fontSize: 17, lineHeight: 1.25, color: HP_TOKENS.ink },
-  body: { fontFamily: HP_FONT, fontWeight: 500, fontSize: 15, lineHeight: 1.45, color: HP_TOKENS.inkSoft },
-  small: { fontFamily: HP_FONT, fontWeight: 600, fontSize: 13, lineHeight: 1.4, color: HP_TOKENS.inkMute },
+  display: { fontFamily: HP_FONT_DISPLAY, fontWeight: 800, fontSize: 34, lineHeight: 1.15, color: HP_TOKENS.ink, letterSpacing: -0.8 },
+  title: { fontFamily: HP_FONT_DISPLAY, fontWeight: 800, fontSize: 26, lineHeight: 1.2, color: HP_TOKENS.ink, letterSpacing: -0.4 },
+  h: { fontFamily: HP_FONT_DISPLAY, fontWeight: 800, fontSize: 20, lineHeight: 1.25, color: HP_TOKENS.ink },
+  body: { fontFamily: HP_FONT, fontWeight: 500, fontSize: 16, lineHeight: 1.45, color: HP_TOKENS.inkSoft },
+  small: { fontFamily: HP_FONT, fontWeight: 600, fontSize: 14, lineHeight: 1.4, color: HP_TOKENS.inkMute },
   tiny: { fontFamily: 'var(--hp-font-mono)', fontWeight: 700, fontSize: 11, lineHeight: 1.2, color: HP_TOKENS.inkMute, letterSpacing: 0.5, textTransform: 'uppercase' as const },
 };
 

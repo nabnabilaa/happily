@@ -42,7 +42,7 @@ export default function EditUserModal({ onClose, user, managers, onSave, onDelet
 
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '14px', borderRadius: 16, border: `1.5px solid ${HP_TOKENS.line}`,
-    fontFamily: HP_FONT, fontSize: 14, fontWeight: 700, outline: 'none', background: '#fff', boxSizing: 'border-box'
+    fontFamily: HP_FONT, fontSize: 14, fontWeight: 700, outline: 'none', background: HP_TOKENS.card, boxSizing: 'border-box'
   };
 
   const selectStyle: React.CSSProperties = {
@@ -120,12 +120,12 @@ export default function EditUserModal({ onClose, user, managers, onSave, onDelet
             className="hp-tap"
             style={{
               flex: 1, padding: '16px', borderRadius: 20, 
-              background: HP_TOKENS.ink, color: '#fff',
+              background: HP_TOKENS.ink, color: '#F4F7F9',
               border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10
             }}
           >
-            <HPGlyph name="check" size={20} color="#fff" />
+            <HPGlyph name="check" size={20} color="#F4F7F9" />
             <span>Simpan Perubahan</span>
           </button>
         </div>

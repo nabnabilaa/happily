@@ -22,7 +22,7 @@ interface CheckInModalProps {
 
 const primaryBtn: React.CSSProperties = {
   padding: '14px', borderRadius: 99, border: 'none', background: HP_TOKENS.sage,
-  color: '#fff', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
+  color: '#F4F7F9', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
   boxShadow: `0 4px 14px ${HP_TOKENS.sageSoft}`,
 };
 
@@ -45,8 +45,8 @@ export default function CheckInModal({ onClose }: CheckInModalProps) {
     if (typeof window !== "undefined" && !navigator.onLine) {
       // Offline mode: Queue check-in and XP locally
       if (user?.id) {
-        queueOfflineCheckIn(user.id, mood!, energy, tag);
-        queueOfflineXP(user.id, 'mood_checkin', 'Daily mood check-in');
+        await queueOfflineCheckIn(user.id, mood!, energy, tag);
+        await queueOfflineXP(user.id, 'mood_checkin', 'Daily mood check-in');
         notify("Offline Check-In", "Tersimpan lokal. Akan disinkronkan otomatis saat online.", "warning");
       }
       onClose();
@@ -69,8 +69,8 @@ export default function CheckInModal({ onClose }: CheckInModalProps) {
     } catch (e) {
       console.error('Failed to save mood, queuing offline:', e);
       if (user?.id) {
-        queueOfflineCheckIn(user.id, mood!, energy, tag);
-        queueOfflineXP(user.id, 'mood_checkin', 'Daily mood check-in');
+        await queueOfflineCheckIn(user.id, mood!, energy, tag);
+        await queueOfflineXP(user.id, 'mood_checkin', 'Daily mood check-in');
         notify("Check-In Tersimpan", "Tersimpan lokal karena kendala koneksi server.", "warning");
       }
     }
@@ -139,7 +139,7 @@ export default function CheckInModal({ onClose }: CheckInModalProps) {
                 </div>
                 {energy === e.key && (
                   <div style={{ width: 22, height: 22, borderRadius: 11, background: HP_TOKENS.sage, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <HPGlyph name="check" size={14} color="#fff" stroke={2.5}/>
+                    <HPGlyph name="check" size={14} color="#F4F7F9" stroke={2.5}/>
                   </div>
                 )}
               </button>

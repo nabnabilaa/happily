@@ -128,7 +128,7 @@ export default function StatusInputModal({ onClose }: StatusInputModalProps) {
                 background: selectedStatus === s.key ? s.color : HP_TOKENS.card,
                 cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10,
                 transition: 'all 0.2s',
-                boxShadow: selectedStatus === s.key ? `0 4px 16px ${s.color}40` : `0 1px 4px rgba(0,0,0,0.04)`,
+                boxShadow: selectedStatus === s.key ? `0 4px 16px ${s.color}40` : `0 1px 4px rgba(26,29,35,0.04)`,
                 outline: selectedStatus === s.key ? 'none' : `1.5px solid ${HP_TOKENS.line}`,
               }}
             >

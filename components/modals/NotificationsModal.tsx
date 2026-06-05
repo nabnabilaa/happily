@@ -175,7 +175,7 @@ export default function NotificationsModal({ onClose, openModal }: Notifications
             fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',
             background: activeTab === 'unread' ? HP_TOKENS.card : 'transparent',
             color: activeTab === 'unread' ? HP_TOKENS.ink : HP_TOKENS.inkSoft,
-            boxShadow: activeTab === 'unread' ? '0 2px 8px rgba(0,0,0,0.04)' : 'none',
+            boxShadow: activeTab === 'unread' ? '0 2px 8px rgba(26,29,35,0.04)' : 'none',
             transition: 'all 0.15s ease'
           }}
         >
@@ -188,7 +188,7 @@ export default function NotificationsModal({ onClose, openModal }: Notifications
             fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',
             background: activeTab === 'all' ? HP_TOKENS.card : 'transparent',
             color: activeTab === 'all' ? HP_TOKENS.ink : HP_TOKENS.inkSoft,
-            boxShadow: activeTab === 'all' ? '0 2px 8px rgba(0,0,0,0.04)' : 'none',
+            boxShadow: activeTab === 'all' ? '0 2px 8px rgba(26,29,35,0.04)' : 'none',
             transition: 'all 0.15s ease'
           }}
         >
@@ -309,7 +309,7 @@ export default function NotificationsModal({ onClose, openModal }: Notifications
                     className="hp-tap"
                     style={{
                       marginTop: 10, padding: '8px 12px', borderRadius: 10,
-                      background: '#fff', border: `1px solid ${HP_TOKENS.line}`,
+                      background: HP_TOKENS.card, border: `1px solid ${HP_TOKENS.line}`,
                       fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
                       color: HP_TOKENS.blue, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                     }}

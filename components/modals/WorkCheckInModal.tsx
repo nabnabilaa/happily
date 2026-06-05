@@ -199,7 +199,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
 
   return (
     <Modal onClose={onClose} title="Mid-Day Check-In 🍯">
-      <div style={{ marginBottom: 24, padding: '24px 20px', background: `linear-gradient(135deg, ${HP_TOKENS.sageWash} 0%, #fff 100%)`, borderRadius: 24, border: `1px solid ${HP_TOKENS.sage}30`, boxShadow: '0 8px 32px rgba(0,0,0,0.03)' }}>
+      <div style={{ marginBottom: 24, padding: '24px 20px', background: `linear-gradient(135deg, ${HP_TOKENS.sageWash} 0%, ${HP_TOKENS.card} 100%)`, borderRadius: 24, border: `1px solid ${HP_TOKENS.sage}30`, boxShadow: '0 8px 32px rgba(26,29,35,0.03)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div>
             <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 900, letterSpacing: 1, marginBottom: 4 }}>OVERALL PROGRESS</div>
@@ -210,7 +210,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
             <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>Target Selesai</div>
           </div>
         </div>
-        <div style={{ height: 12, background: HP_TOKENS.lineSoft, borderRadius: 6, overflow: 'hidden', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)' }}>
+        <div style={{ height: 12, background: HP_TOKENS.lineSoft, borderRadius: 6, overflow: 'hidden', boxShadow: 'inset 0 2px 4px rgba(26,29,35,0.02)' }}>
           <div style={{ 
             width: `${progress}%`, height: '100%', 
             background: `linear-gradient(to right, ${HP_TOKENS.sage}, #4ADE80)`,
@@ -223,7 +223,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
       {(state.focusTaskId || state.intention) ? (
         <HPCard padding={20} style={{ 
           marginBottom: 24, 
-          background: `linear-gradient(135deg, ${HP_TOKENS.yellowWash} 0%, #fff 100%)`, 
+          background: `linear-gradient(135deg, ${HP_TOKENS.yellowWash} 0%, ${HP_TOKENS.card} 100%)`, 
           border: `1.5px solid ${HP_TOKENS.yellow}`,
           boxShadow: '0 8px 24px rgba(253,185,19,0.1)'
         }}>
@@ -300,7 +300,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
               style={{
                 width: '100%', padding: '12px', borderRadius: 12, border: `1px solid ${HP_TOKENS.lineSoft}`,
                 fontFamily: HP_FONT, fontSize: 13, minHeight: 80, boxSizing: 'border-box',
-                background: '#fff', outline: 'none', transition: '0.2s',
+                background: HP_TOKENS.card, outline: 'none', transition: '0.2s',
                 lineHeight: 1.5
               }}
             />
@@ -331,7 +331,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
                 color: notes.trim() ? HP_TOKENS.yellow : HP_TOKENS.inkFade, 
                 border: 'none',
                 fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: notes.trim() ? 'pointer' : 'default',
-                boxShadow: notes.trim() ? '0 4px 12px rgba(0,0,0,0.1)' : 'none'
+                boxShadow: notes.trim() ? '0 4px 12px rgba(26,29,35,0.1)' : 'none'
               }}
             >
               Simpan ke Logbook Activity
@@ -366,7 +366,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
                   transition: '0.2s'
                 }}
               >
-                {p.done && <HPGlyph name="check" size={14} color="#fff" stroke={4}/>}
+                {p.done && <HPGlyph name="check" size={14} color="#F4F7F9" stroke={4}/>}
               </button>
               <div style={{ flex: 1 }}>
                 <div style={{ 
@@ -408,7 +408,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
           className="hp-tap"
           style={{
             width: '100%', padding: '16px', borderRadius: 20,
-            background: HP_TOKENS.blue, color: '#fff', border: 'none',
+            background: HP_TOKENS.blue, color: '#F4F7F9', border: 'none',
             fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
             boxShadow: `0 8px 24px ${HP_TOKENS.blueSoft}`,
@@ -418,7 +418,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
             "Meminta saran Flow..."
           ) : (
             <>
-              <HPGlyph name="sparkle" size={18} color="#fff" />
+              <HPGlyph name="sparkle" size={18} color="#F4F7F9" />
               Bantu Aku Fokus (AI)
             </>
           )}
@@ -427,7 +427,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
         <HPCard padding={16} style={{ background: HP_TOKENS.blueWash, border: 'none', position: 'relative' }}>
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ width: 32, height: 32, borderRadius: 10, background: HP_TOKENS.blue, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <HPGlyph name="sparkle" size={16} color="#fff" />
+              <HPGlyph name="sparkle" size={16} color="#F4F7F9" />
             </div>
             <div style={{ ...HP_TEXT.body, fontSize: 13, lineHeight: 1.5, color: HP_TOKENS.ink }}>
               {aiResponse}

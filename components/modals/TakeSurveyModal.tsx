@@ -80,7 +80,7 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
         </div>
         <button onClick={() => { awardXP('survey_complete', `Survey: ${survey.title}`); onClose(); }} className="hp-tap" style={{
           width: '100%', padding: '16px', borderRadius: 16, marginTop: 16,
-          background: HP_TOKENS.lavender, color: '#fff', border: 'none',
+          background: HP_TOKENS.lavender, color: '#F4F7F9', border: 'none',
           fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
         }}>
           Saya sudah mengisi survey & Ambil 100 Point 🎁
@@ -102,7 +102,7 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
           <div style={{ ...HP_TEXT.small, color: HP_TOKENS.sage, fontWeight: 800, marginTop: 16 }}>+100 Point Earned 🎁</div>
           <button onClick={onClose} className="hp-tap" style={{
             marginTop: 24, padding: '14px 40px', borderRadius: 99, border: 'none',
-            background: HP_TOKENS.lavender, color: '#fff',
+            background: HP_TOKENS.lavender, color: '#F4F7F9',
             fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
           }}>
             Tutup
@@ -115,7 +115,7 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '12px 14px', borderRadius: 12,
     border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 14,
-    outline: 'none', background: '#fff', color: HP_TOKENS.ink, boxSizing: 'border-box',
+    outline: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink, boxSizing: 'border-box',
   };
 
   return (
@@ -237,7 +237,7 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
                         background: answers[q.id] === opt ? HP_TOKENS.lavender : 'transparent',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                       }}>
-                        {answers[q.id] === opt && <HPGlyph name="check" size={10} color="#fff" />}
+                        {answers[q.id] === opt && <HPGlyph name="check" size={10} color="#F4F7F9" />}
                       </div>
                       <span style={{ fontFamily: HP_FONT, fontWeight: 600, fontSize: 14, color: HP_TOKENS.ink }}>{opt}</span>
                     </button>

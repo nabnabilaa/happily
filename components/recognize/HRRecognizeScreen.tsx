@@ -17,7 +17,16 @@ export default function HRRecognizeScreen({ openModal }: Props) {
   const [currentPage, setCurrentPage] = useState(1);
   if (!state) return null;
 
+  const wishlistId = state.wishlistId || null;
   const rewards = state.rewards || [];
+  const wishlistReward = rewards.find((r: any) => r.id === wishlistId);
+  const userCoins = state.points ?? 0;
+
+  const sortedRewards = [...rewards].sort((a: any, b: any) => {
+    if (a.id === wishlistId) return -1;
+    if (b.id === wishlistId) return 1;
+    return 0;
+  });
 
   const handleAddReward = () => {
     openModal('reward_editor', {
@@ -47,23 +56,95 @@ export default function HRRecognizeScreen({ openModal }: Props) {
 
   return (
     <div style={{ padding: '0 16px 120px', fontFamily: HP_FONT }}>
-      <ScreenHeader title="Rewards" subtitle="Kelola inventory atau tukarkan poin kamu" />
+      <ScreenHeader title="Rewards" subtitle="Tukarkan poin atau pantau wishlist kamu" />
 
-      {/* Stats */}
-      <HPCard style={{ background: `linear-gradient(135deg, ${HP_TOKENS.yellowWash}, ${HP_TOKENS.lavenderSoft})`, border: 'none', marginBottom: 20 }} padding={16}>
-        <div style={{ display: 'flex', gap: 20 }}>
-          <StatBlock label="Poin kamu" value={state.points.toLocaleString()} icon="trophy" tone="yellow" />
+      {/* Gamified Hero Banner */}
+      <HPCard 
+        style={{ 
+          background: `linear-gradient(135deg, ${HP_TOKENS.primaryLight}, ${HP_TOKENS.primary})`,
+          border: 'none', 
+          marginBottom: 24,
+          position: 'relative',
+          overflow: 'hidden'
+        }} 
+        padding={24}
+      >
+        <div style={{ position: 'absolute', right: -20, top: -40, width: 150, height: 150, background: 'rgba(255,255,255,0.1)', borderRadius: '50%', filter: 'blur(20px)' }} />
+        <div style={{ position: 'absolute', left: '20%', bottom: -30, width: 100, height: 100, background: 'rgba(255,255,255,0.1)', borderRadius: '50%', filter: 'blur(15px)' }} />
+
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {wishlistReward ? (
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ ...HP_TEXT.display, color: '#fff', fontSize: 36, marginBottom: 4, textShadow: '0 4px 12px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{
+                    width: 32, height: 32, borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #FFEC99, #FFD43B)',
+                    border: '2px solid #F59F00',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: '0 4px 8px rgba(245, 159, 0, 0.4)'
+                  }}>
+                    <HPGlyph name="star" size={16} color="#E67700" />
+                  </div>
+                  <div>
+                    {userCoins.toLocaleString()} <span style={{ fontSize: 18, fontWeight: 700, opacity: 0.9 }}>poin</span>
+                  </div>
+                </div>
+                <div style={{ ...HP_TEXT.body, color: '#fff', opacity: 0.9 }}>
+                  {userCoins >= wishlistReward.points 
+                    ? `Selamat! Poin kamu cukup untuk menukar ${wishlistReward.title}!` 
+                    : `${(wishlistReward.points - userCoins).toLocaleString()} poin lagi menuju wishlist-mu! 🔥`}
+                </div>
+              </div>
+              <div style={{ 
+                width: 60, height: 60, borderRadius: 20, background: 'rgba(255,255,255,0.2)', 
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 8px 16px rgba(0,0,0,0.1)', backdropFilter: 'blur(10px)'
+              }}>
+                <HPGlyph name="star" size={32} color="#FFD43B" />
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ ...HP_TEXT.display, color: '#fff', fontSize: 36, marginBottom: 4, textShadow: '0 4px 12px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{
+                    width: 32, height: 32, borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #FFEC99, #FFD43B)',
+                    border: '2px solid #F59F00',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: '0 4px 8px rgba(245, 159, 0, 0.4)'
+                  }}>
+                    <HPGlyph name="star" size={16} color="#E67700" />
+                  </div>
+                  <div>
+                    {userCoins.toLocaleString()} <span style={{ fontSize: 18, fontWeight: 700, opacity: 0.9 }}>poin</span>
+                  </div>
+                </div>
+                <div style={{ ...HP_TEXT.body, color: '#fff', opacity: 0.9 }}>
+                  Kumpulkan terus poinmu dan jadikan reward favorit sebagai Wishlist! 🎁
+                </div>
+              </div>
+              <div style={{ 
+                width: 60, height: 60, borderRadius: 20, background: 'rgba(255,255,255,0.2)', 
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 8px 16px rgba(0,0,0,0.1)', backdropFilter: 'blur(10px)'
+              }}>
+                <HPGlyph name="trophy" size={32} color="#FFD43B" />
+              </div>
+            </div>
+          )}
         </div>
       </HPCard>
 
       {/* Tukar Poin Section */}
       <SectionHeader icon="trophy" label="Tukar Poin" action="Semua" onAction={() => openModal('all_rewards')} />
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16, marginBottom: 24 }}>
         {(() => {
-          const itemsPerPage = 4;
-          const totalPages = Math.ceil(rewards.length / itemsPerPage);
+          const itemsPerPage = 6;
+          const totalPages = Math.ceil(sortedRewards.length / itemsPerPage);
           const start = (currentPage - 1) * itemsPerPage;
-          const paginatedRewards = rewards.slice(start, start + itemsPerPage);
+          const paginatedRewards = sortedRewards.slice(start, start + itemsPerPage);
 
           return (
             <>
@@ -79,6 +160,14 @@ export default function HRRecognizeScreen({ openModal }: Props) {
                     points={r.points} 
                     tone={r.tone as any} 
                     glyph={r.glyph}
+                    isWishlist={wishlistId === r.id}
+                    onToggleWishlist={(e) => {
+                      e.stopPropagation();
+                      updateState((s: any) => ({
+                        ...s,
+                        wishlistId: s.wishlistId === r.id ? null : r.id
+                      }));
+                    }}
                   />
                 </div>
               ))}
@@ -161,7 +250,7 @@ export default function HRRecognizeScreen({ openModal }: Props) {
                   className="hp-tap"
                   style={{
                     padding: '8px 12px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.line}`,
-                    background: '#fff', color: HP_TOKENS.inkSoft,
+                    background: HP_TOKENS.card, color: HP_TOKENS.inkSoft,
                     fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
                   }}
                 >

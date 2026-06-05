@@ -73,7 +73,7 @@ export default function HPAvatar({
         height: size, 
         borderRadius: size / 2,
         background: avatarToDisplay ? 'transparent' : bg, 
-        color: '#fff',
+        color: '#F4F7F9',
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center',
@@ -101,7 +101,7 @@ export default function HPAvatar({
           position: 'absolute', bottom: 4, right: 4, width: 22, height: 22, borderRadius: 11,
           background: HP_TOKENS.yellow, color: '#8A6814', fontSize: 11, fontWeight: 900,
           display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #fff',
-          zIndex: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          zIndex: 2, boxShadow: '0 2px 4px rgba(26,29,35,0.1)',
           animation: 'hpPop 0.3s ease-out'
         }}>
           {rank.substring(0, 1).toUpperCase()}

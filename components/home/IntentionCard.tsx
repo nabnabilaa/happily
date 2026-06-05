@@ -98,7 +98,7 @@ export default function IntentionCard({ state, setState }: IntentionCardProps) {
               fontWeight: 700,
               color: HP_TOKENS.ink, 
               outline: 'none', 
-              background: '#fff', 
+              background: HP_TOKENS.card, 
               boxSizing: 'border-box',
               appearance: 'none',
               cursor: 'pointer',

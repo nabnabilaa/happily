@@ -43,18 +43,25 @@
                 <p class="status-desc">Minimize distractions and boost productivity.</p>
             </div>
             
-            <div class="timer-wrapper">
-                <div class="timer-input-group">
-                    <input type="text" class="timer-input" value="25" aria-label="Minutes" maxlength="2">
-                    <span class="timer-separator">:</span>
-                    <input type="text" class="timer-input" value="00" aria-label="Seconds" maxlength="2">
+            <div class="timer-card">
+                <div class="timer-display">
+                    <span id="timer-min">00</span>
+                    <span class="timer-colon">:</span>
+                    <span id="timer-sec">00</span>
+                    <span class="timer-dot">.</span>
+                    <span id="timer-ms">00</span>
                 </div>
                 
-                <div class="quick-pills">
-                    <button class="pill-btn">+5m</button>
-                    <button class="pill-btn">+15m</button>
-                    <button class="pill-btn active">25m</button>
-                    <button class="pill-btn">+60m</button>
+                <div class="timer-actions">
+                    <button id="btn-reset" class="btn-timer btn-reset">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-9.21l5.25 5.25"/></svg>
+                        Reset
+                    </button>
+                    <button id="btn-start-stop" class="btn-timer btn-start">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="icon-play"><path d="M5 3l14 9-14 9V3z"/></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="icon-stop" style="display:none;"><path d="M6 6h12v12H6z"/></svg>
+                        <span id="start-stop-text">Start</span>
+                    </button>
                 </div>
             </div>
         </main>

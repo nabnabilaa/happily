@@ -53,7 +53,7 @@ export default function DivisionTargetsView({ openModal }: Props) {
 
   const selectStyle: React.CSSProperties = {
     padding: '8px 12px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.line}`,
-    fontFamily: HP_FONT, fontSize: 12, fontWeight: 700, background: '#fff', outline: 'none',
+    fontFamily: HP_FONT, fontSize: 12, fontWeight: 700, background: HP_TOKENS.card, outline: 'none',
     color: HP_TOKENS.ink,
   };
 

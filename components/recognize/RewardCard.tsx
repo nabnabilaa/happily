@@ -10,12 +10,14 @@ interface RewardCardProps {
   points: number;
   tone: "sage" | "yellow" | "blue" | "coral" | "lavender";
   glyph?: string;
+  isWishlist?: boolean;
+  onToggleWishlist?: (e: React.MouseEvent) => void;
   onRedeem?: () => void;
 }
 
 const TONE_CONFIG: Record<string, any> = {
-  blue:   { bg: HP_TOKENS.blueWash,   accent: HP_TOKENS.blue,   text: '#003399', glow: 'rgba(0,82,204,0.12)' },
-  yellow: { bg: HP_TOKENS.yellowWash, accent: HP_TOKENS.yellow, text: '#8A6814', glow: 'rgba(255,215,0,0.15)' },
+  blue:   { bg: HP_TOKENS.primaryWash,   accent: HP_TOKENS.primary,   text: '#00558A', glow: 'rgba(77,168,218,0.12)' },
+  yellow: { bg: HP_TOKENS.primaryWash,   accent: HP_TOKENS.primary,   text: '#00558A', glow: 'rgba(77,168,218,0.12)' },
   sage:   { bg: HP_TOKENS.sageWash,   accent: HP_TOKENS.sage,   text: '#2D5A3D', glow: 'rgba(74,124,89,0.12)' },
   coral:  { bg: '#FEF0ED',            accent: HP_TOKENS.coral,  text: '#8B3A2F', glow: 'rgba(232,139,125,0.15)' },
   lavender: { bg: HP_TOKENS.lavenderSoft, accent: HP_TOKENS.lavender, text: '#4A3A6E', glow: 'rgba(123,104,238,0.12)' },
@@ -33,9 +35,9 @@ const GLYPH_MAP: Record<string, string> = {
   'Sesi wellness 1:1':     'people',
 };
 
-export default function RewardCard({ title, points, tone, glyph, onRedeem }: RewardCardProps) {
+export default function RewardCard({ title, points, tone, glyph, isWishlist, onToggleWishlist, onRedeem }: RewardCardProps) {
   const { state, updateState, updateUser, user, notify } = useHP();
-  const cfg = TONE_CONFIG[tone] || TONE_CONFIG.sage;
+  const cfg = TONE_CONFIG[tone] || TONE_CONFIG.blue;
   const icon = glyph ?? GLYPH_MAP[title] ?? 'sparkle';
 
   const userCoins = state?.points ?? 0;
@@ -96,49 +98,93 @@ export default function RewardCard({ title, points, tone, glyph, onRedeem }: Rew
       }} />
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', zIndex: 1 }}>
-        <div style={{ 
-          width: 44, height: 44, borderRadius: 14, 
-          background: isLocked ? HP_TOKENS.lineSoft : '#fff',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: isLocked ? 'none' : '0 4px 10px rgba(0,0,0,0.05)'
-        }}>
-          <HPGlyph name={isLocked ? "lock" : icon} size={22} color={isLocked ? HP_TOKENS.inkFade : cfg.accent} />
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <div style={{ 
+            width: 50, height: 50, borderRadius: 16, 
+            background: isLocked ? HP_TOKENS.paper : HP_TOKENS.paper,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: isLocked ? 'inset 0 2px 4px rgba(0,0,0,0.05)' : '0 6px 12px rgba(26,29,35,0.08)',
+            border: isLocked ? `1.5px solid ${HP_TOKENS.lineSoft}` : 'none'
+          }}>
+            <HPGlyph name={isLocked ? "lock" : icon} size={26} color={isLocked ? HP_TOKENS.inkFade : cfg.accent} />
+          </div>
         </div>
         
-        <div style={{ 
-          padding: '4px 10px', borderRadius: 10,
-          background: isLocked ? HP_TOKENS.lineSoft : cfg.accent,
-          color: isLocked ? HP_TOKENS.inkMute : '#fff',
-          fontFamily: HP_FONT, fontWeight: 900, fontSize: 11,
-          letterSpacing: 0.5
-        }}>
-          {points} poin
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+          <div style={{ 
+            display: 'flex', alignItems: 'center', gap: 6,
+            padding: '6px 12px', borderRadius: 12,
+            background: isLocked ? HP_TOKENS.lineSoft : cfg.accent,
+            color: isLocked ? HP_TOKENS.inkMute : HP_TOKENS.paper,
+            fontFamily: HP_FONT, fontWeight: 900, fontSize: 13,
+            letterSpacing: 0.5,
+            boxShadow: isLocked ? 'none' : '0 4px 8px rgba(0,0,0,0.1)'
+          }}>
+            <div style={{
+              width: 16, height: 16, borderRadius: '50%',
+              background: 'linear-gradient(135deg, #FFEC99, #FFD43B)',
+              border: '1.5px solid #F59F00',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 2px 4px rgba(245, 159, 0, 0.3)',
+              filter: isLocked ? 'grayscale(100%) opacity(0.6)' : 'none'
+            }}>
+              <HPGlyph name="star" size={8} color="#E67700" />
+            </div>
+            {points.toLocaleString()} <span style={{ opacity: 0.9, fontWeight: 800 }}>poin</span>
+          </div>
+          
+          {onToggleWishlist && (
+            <div 
+              onClick={onToggleWishlist}
+              style={{
+                width: 32, height: 32, borderRadius: '50%',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: isWishlist ? '#FFD43B' : HP_TOKENS.paper,
+                border: `1.5px solid ${isWishlist ? '#FCC419' : HP_TOKENS.lineSoft}`,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                boxShadow: isWishlist ? '0 4px 10px rgba(252, 196, 25, 0.3)' : 'none'
+              }}
+              title={isWishlist ? "Hapus dari Wishlist" : "Jadikan Wishlist"}
+              className="hp-tap"
+            >
+              <HPGlyph name="star" size={16} color={isWishlist ? '#fff' : HP_TOKENS.inkFade} />
+            </div>
+          )}
         </div>
       </div>
 
       <div style={{ position: 'relative', zIndex: 1 }}>
         <div style={{ 
-          ...HP_TEXT.h, fontSize: 14, color: isLocked ? HP_TOKENS.inkMute : cfg.text, 
-          lineHeight: 1.4, marginBottom: 4, height: 40, overflow: 'hidden' 
+          ...HP_TEXT.h, fontSize: 16, color: isLocked ? HP_TOKENS.inkMute : cfg.text, 
+          lineHeight: 1.3, marginBottom: 8, minHeight: 44, display: 'flex', alignItems: 'center'
         }}>
           {title}
         </div>
         
         {isLocked ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-            <div style={{ flex: 1, height: 4, background: HP_TOKENS.lineSoft, borderRadius: 2 }}>
-              <div style={{ width: `${(userCoins / points) * 100}%`, height: '100%', background: HP_TOKENS.inkFade, borderRadius: 2 }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 700 }}>Progres Kamu</span>
+              <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkSoft, fontWeight: 800 }}>{points - userCoins} poin lagi!</span>
             </div>
-            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade }}>{points - userCoins} lagi</div>
+            <div style={{ width: '100%', height: 8, background: HP_TOKENS.lineSoft, borderRadius: 4, overflow: 'hidden' }}>
+              <div style={{ width: `${Math.min(100, (userCoins / points) * 100)}%`, height: '100%', background: HP_TOKENS.inkFade, borderRadius: 4, transition: 'width 0.5s ease-out' }} />
+            </div>
           </div>
         ) : (
-          <div style={{ 
-            display: 'flex', alignItems: 'center', gap: 6, marginTop: 4,
-            color: cfg.accent, fontWeight: 800, fontSize: 11
-          }}>
-            <span>Tukar Sekarang</span>
-            <HPGlyph name="arrow" size={10} color={cfg.accent} />
-          </div>
+          <button style={{ 
+            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 4,
+            background: cfg.accent, color: '#fff', border: 'none', borderRadius: 14,
+            padding: '12px', fontWeight: 800, fontSize: 13, fontFamily: HP_FONT,
+            cursor: 'pointer', transition: 'all 0.2s',
+            boxShadow: `0 4px 12px ${cfg.glow}`
+          }}
+          className="hp-tap"
+          >
+            Tukar Sekarang
+            <HPGlyph name="sparkle" size={14} color="#fff" />
+          </button>
         )}
       </div>
     </div>

@@ -135,7 +135,7 @@ export default function HRAttendanceView({ currentUser, openModal }: HRAttendanc
           style={{
             flex: 1, padding: '10px 12px', borderRadius: 12,
             border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT,
-            fontWeight: 700, fontSize: 13, outline: 'none', background: '#fff'
+            fontWeight: 700, fontSize: 13, outline: 'none', background: HP_TOKENS.card
           }}
         >
           {MONTHS.map((m, i) => (
@@ -148,7 +148,7 @@ export default function HRAttendanceView({ currentUser, openModal }: HRAttendanc
           style={{
             width: 100, padding: '10px 12px', borderRadius: 12,
             border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT,
-            fontWeight: 700, fontSize: 13, outline: 'none', background: '#fff'
+            fontWeight: 700, fontSize: 13, outline: 'none', background: HP_TOKENS.card
           }}
         >
           {[2024, 2025, 2026, 2027].map(y => (
@@ -159,15 +159,15 @@ export default function HRAttendanceView({ currentUser, openModal }: HRAttendanc
           background: HP_TOKENS.blue, border: 'none', cursor: 'pointer', 
           padding: '10px 14px', borderRadius: 12, display: 'flex', alignItems: 'center'
         }}>
-          <HPGlyph name="refresh" size={14} color="#fff" />
+          <HPGlyph name="refresh" size={14} color="#F4F7F9" />
         </button>
         {['hr', 'manager'].includes(currentUser?.role) && (
           <button onClick={handleExportCSV} style={{ 
             background: HP_TOKENS.sage, border: 'none', cursor: 'pointer', 
             padding: '10px 14px', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 6,
-            color: '#fff', fontFamily: HP_FONT, fontWeight: 700, fontSize: 13
+            color: '#F4F7F9', fontFamily: HP_FONT, fontWeight: 700, fontSize: 13
           }}>
-            <HPGlyph name="sparkle" size={14} color="#fff" />
+            <HPGlyph name="sparkle" size={14} color="#F4F7F9" />
             CSV
           </button>
         )}

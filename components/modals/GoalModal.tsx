@@ -248,7 +248,7 @@ export default function GoalModal({ onClose, goal }: { onClose: () => void; goal
             <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 10 }}>ASSIGN KE ANGGOTA ({selectedOwnerIds.length})</div>
             <div style={{ 
               display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', 
-              background: '#fff', borderRadius: 16, border: `1.5px solid ${HP_TOKENS.line}`,
+              background: HP_TOKENS.card, borderRadius: 16, border: `1.5px solid ${HP_TOKENS.line}`,
               marginBottom: 12
             }}>
               <HPGlyph name="target" size={16} color={HP_TOKENS.inkMute} />
@@ -281,9 +281,9 @@ export default function GoalModal({ onClose, goal }: { onClose: () => void; goal
                         <div style={{ 
                           position: 'absolute', bottom: -2, right: -2, width: 20, height: 20, borderRadius: 10,
                           background: HP_TOKENS.blue, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          border: '2px solid #fff', boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                          border: '2px solid #fff', boxShadow: '0 2px 6px rgba(26,29,35,0.1)'
                         }}>
-                          <HPGlyph name="check" size={10} color="#fff" stroke={4} />
+                          <HPGlyph name="check" size={10} color="#F4F7F9" stroke={4} />
                         </div>
                       )}
                     </div>
@@ -322,7 +322,7 @@ export default function GoalModal({ onClose, goal }: { onClose: () => void; goal
           disabled={!title || !due || (scope === 'employee' && selectedOwnerIds.length === 0)}
           style={{
             width: '100%', marginTop: 32, padding: '18px', borderRadius: 99,
-            background: HP_TOKENS.sage, color: '#fff', border: 'none',
+            background: HP_TOKENS.sage, color: '#F4F7F9', border: 'none',
             fontFamily: HP_FONT, fontWeight: 900, fontSize: 16, cursor: 'pointer',
             opacity: (!title || !due || (scope === 'employee' && selectedOwnerIds.length === 0)) ? 0.4 : 1,
             boxShadow: `0 10px 25px ${HP_TOKENS.sageSoft}`,
@@ -330,7 +330,7 @@ export default function GoalModal({ onClose, goal }: { onClose: () => void; goal
           }}
           className="hp-tap"
         >
-          <HPGlyph name="sparkle" size={20} color="#fff" />
+          <HPGlyph name="sparkle" size={20} color="#F4F7F9" />
           {scope === 'employee' ? `Assign OKR ke ${selectedOwnerIds.length} Orang` : 'Simpan & Publikasikan OKR'}
         </button>
       </div>

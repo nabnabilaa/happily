@@ -237,7 +237,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
   const inputStyle: React.CSSProperties = {
     width: '100%', marginTop: 8, padding: 12, borderRadius: 12,
     border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 14,
-    outline: 'none', background: '#fff', color: HP_TOKENS.ink, boxSizing: 'border-box',
+    outline: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink, boxSizing: 'border-box',
   };
 
   return (
@@ -277,11 +277,11 @@ export default function HRPeopleScreen({ openModal }: Props) {
           <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
             <button onClick={() => openModal('create_user', { onSave: handleCreateUser })} className="hp-tap" style={{
               flex: 1, padding: '12px', borderRadius: 14, border: 'none',
-              background: HP_TOKENS.ink, color: '#fff',
+              background: HP_TOKENS.ink, color: '#F4F7F9',
               fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}>
-              <HPGlyph name="plus" size={14} color="#fff" />
+              <HPGlyph name="plus" size={14} color="#F4F7F9" />
               Tambah Akun
             </button>
             <button onClick={() => openModal('manage_depts')} className="hp-tap" style={{
@@ -442,7 +442,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
                           onDelete: () => handleDeleteUser(u.id)
                         })} className="hp-tap" style={{
                           padding: '6px 10px', borderRadius: 8, border: `1px solid ${HP_TOKENS.line}`,
-                          background: '#fff', fontSize: 10, fontWeight: 800, color: HP_TOKENS.inkMute,
+                          background: HP_TOKENS.card, fontSize: 10, fontWeight: 800, color: HP_TOKENS.inkMute,
                           fontFamily: HP_FONT, cursor: 'pointer',
                         }}>Edit</button>
                       </div>
@@ -522,7 +522,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
                       display: 'flex', alignItems: 'center', justifyContent: 'center'
                     }}
                   >
-                    {t.done && <HPGlyph name="check" size={14} color="#fff" />}
+                    {t.done && <HPGlyph name="check" size={14} color="#F4F7F9" />}
                   </button>
                   <div style={{ flex: 1 }}>
                     <div style={{ ...HP_TEXT.h, fontSize: 14, textDecoration: t.done ? 'line-through' : 'none', color: t.done ? HP_TOKENS.inkMute : HP_TOKENS.ink }}>{t.title}</div>
@@ -675,7 +675,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
           <HPCard style={{ background: HP_TOKENS.lavenderSoft, border: `1.5px solid ${HP_TOKENS.lavender}20`, marginBottom: 16 }} padding={16}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ width: 44, height: 44, borderRadius: 12, background: HP_TOKENS.lavender, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <HPGlyph name="book" size={22} color="#fff" />
+                <HPGlyph name="book" size={22} color="#F4F7F9" />
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ ...HP_TEXT.h, fontSize: 15 }}>Survey Internal</div>
@@ -688,11 +688,11 @@ export default function HRPeopleScreen({ openModal }: Props) {
           <button onClick={() => openModal('manage_surveys')} className="hp-tap" style={{
             width: '100%', padding: '16px', borderRadius: 16, border: 'none',
             background: `linear-gradient(135deg, ${HP_TOKENS.lavender}, #5A4E8C)`,
-            color: '#fff', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
+            color: '#F4F7F9', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
             boxShadow: '0 6px 20px rgba(123,107,181,0.3)',
           }}>
-            <HPGlyph name="book" size={18} color="#fff" />
+            <HPGlyph name="book" size={18} color="#F4F7F9" />
             Kelola Survey
           </button>
         </>
@@ -703,7 +703,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
           <HPCard style={{ background: HP_TOKENS.sageSoft, border: 'none', marginBottom: 16 }} padding={16}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ width: 44, height: 44, borderRadius: 12, background: HP_TOKENS.sage, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <HPGlyph name="calendar" size={24} color="#fff" />
+                <HPGlyph name="calendar" size={24} color="#F4F7F9" />
               </div>
               <div>
                 <div style={{ ...HP_TEXT.h, fontSize: 16 }}>Jam Kerja Organisasi</div>

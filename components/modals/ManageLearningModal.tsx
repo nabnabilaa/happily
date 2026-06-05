@@ -81,7 +81,7 @@ export default function ManageLearningModal({ onClose }: ManageLearningModalProp
             placeholder="Judul pembelajaran baru"
             style={{
               padding: 14, borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
-              fontFamily: HP_FONT, fontSize: 14, background: '#fff', outline: 'none'
+              fontFamily: HP_FONT, fontSize: 14, background: HP_TOKENS.card, outline: 'none'
             }}
           />
           <div style={{ display: 'flex', gap: 8 }}>
@@ -105,7 +105,7 @@ export default function ManageLearningModal({ onClose }: ManageLearningModalProp
             disabled={!title}
             style={{
               marginTop: 4, padding: 14, borderRadius: 12, border: 'none',
-              background: HP_TOKENS.ink, color: '#fff',
+              background: HP_TOKENS.ink, color: '#F4F7F9',
               fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',
               opacity: !title ? 0.5 : 1
             }}

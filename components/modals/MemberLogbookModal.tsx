@@ -195,7 +195,7 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           boxShadow: `0 4px 12px ${child.progress >= 100 ? HP_TOKENS.sage : HP_TOKENS.blue}30`
                         }}>
-                          <HPGlyph name="target" size={20} color="#fff" />
+                          <HPGlyph name="target" size={20} color="#F4F7F9" />
                         </div>
                         <div style={{ flex: 1 }}>
                           <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.ink }}>{child.title}</div>
@@ -233,7 +233,7 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
               <div key={day.date}>
                 <div style={{ 
                   display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16,
-                  position: 'sticky', top: 0, background: '#fff', zIndex: 10, padding: '8px 0'
+                  position: 'sticky', top: 0, background: HP_TOKENS.card, zIndex: 10, padding: '8px 0'
                 }}>
                   <div style={{ 
                     padding: '6px 14px', borderRadius: 12, 
@@ -314,7 +314,7 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
                         <HPCard key={t.id} padding={16} style={{ 
                           border: cardBorder,
                           background: cardBg,
-                          boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
+                          boxShadow: '0 4px 20px rgba(26,29,35,0.02)',
                           borderRadius: 22,
                           transition: 'transform 0.2s ease'
                         }}>
@@ -370,7 +370,7 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
                                   className="hp-tap"
                                   style={{
                                     padding: '8px 16px', borderRadius: 10, border: 'none',
-                                    background: HP_TOKENS.sage, color: '#fff', fontSize: 11, fontWeight: 900, 
+                                    background: HP_TOKENS.sage, color: '#F4F7F9', fontSize: 11, fontWeight: 900, 
                                     cursor: 'pointer', boxShadow: `0 4px 12px ${HP_TOKENS.sage}40`
                                   }}
                                 >
@@ -381,7 +381,7 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
                                   className="hp-tap"
                                   style={{
                                     padding: '8px 12px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.yellow}`,
-                                    background: '#fff', color: '#8A6814', fontSize: 11, fontWeight: 900, 
+                                    background: HP_TOKENS.card, color: '#8A6814', fontSize: 11, fontWeight: 900, 
                                     cursor: 'pointer'
                                   }}
                                 >
@@ -392,7 +392,7 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
                                   className="hp-tap"
                                   style={{
                                     padding: '8px 12px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.coral}`,
-                                    background: '#fff', color: HP_TOKENS.coral, fontSize: 11, fontWeight: 900, 
+                                    background: HP_TOKENS.card, color: HP_TOKENS.coral, fontSize: 11, fontWeight: 900, 
                                     cursor: 'pointer'
                                   }}
                                 >

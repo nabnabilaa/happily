@@ -296,7 +296,7 @@ export default function NewChatModal({ onClose, onChannelCreated }: NewChatModal
             background: allSelected ? '#F59E0B' : 'transparent',
             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}>
-            {allSelected && <HPGlyph name="check" size={12} color="#fff" />}
+            {allSelected && <HPGlyph name="check" size={12} color="#F4F7F9" />}
           </div>
           <div style={{ ...HP_TEXT.h, fontSize: 13, flex: 1, textAlign: 'left' }}>Semua Divisi</div>
           <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontSize: 10 }}>{departments.length} divisi</div>
@@ -330,7 +330,7 @@ export default function NewChatModal({ onClose, onChannelCreated }: NewChatModal
                     background: sel ? '#F59E0B' : 'transparent',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                   }}>
-                    {sel && <HPGlyph name="check" size={10} color="#fff" />}
+                    {sel && <HPGlyph name="check" size={10} color="#F4F7F9" />}
                   </div>
                   <div style={{ ...HP_TEXT.h, fontSize: 13, flex: 1, textAlign: 'left',
                     color: sel ? '#92400E' : HP_TOKENS.ink }}>
@@ -357,7 +357,7 @@ export default function NewChatModal({ onClose, onChannelCreated }: NewChatModal
             {selectedDepts.map(d => (
               <span key={d} onClick={() => toggleDeptForBroadcast(d)} style={{
                 padding: '3px 8px', borderRadius: 6, background: '#F59E0B',
-                color: '#fff', fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: HP_FONT,
+                color: '#F4F7F9', fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: HP_FONT,
               }}>{d} ✕</span>
             ))}
           </div>
@@ -447,7 +447,7 @@ export default function NewChatModal({ onClose, onChannelCreated }: NewChatModal
               const u = users.find(x => x.id === uid);
               return u ? (
                 <span key={uid} onClick={() => toggleUser(uid)} style={{
-                  ...chipStyle, background: HP_TOKENS.blue, color: '#fff',
+                  ...chipStyle, background: HP_TOKENS.blue, color: '#F4F7F9',
                 }}>{u.name.split(' ')[0]} ✕</span>
               ) : null;
             })}
@@ -529,7 +529,7 @@ export default function NewChatModal({ onClose, onChannelCreated }: NewChatModal
                         background: isSelected ? HP_TOKENS.blue : 'transparent',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}>
-                        {isSelected && <HPGlyph name="check" size={11} color="#fff" />}
+                        {isSelected && <HPGlyph name="check" size={11} color="#F4F7F9" />}
                       </div>
                     </button>
                   );

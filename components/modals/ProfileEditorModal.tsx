@@ -123,7 +123,7 @@ export default function ProfileEditorModal({ onClose }: ProfileEditorModalProps)
           
           <div style={{
             position: 'absolute', bottom: 0, left: 0, right: 0, height: 40,
-            background: 'rgba(0,0,0,0.4)', color: '#fff',
+            background: 'rgba(26,29,35,0.4)', color: '#F4F7F9',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontFamily: HP_FONT, fontSize: 10, fontWeight: 800,
           }}>
@@ -235,7 +235,7 @@ export default function ProfileEditorModal({ onClose }: ProfileEditorModalProps)
                 transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 background: !mascotAnimated ? HP_TOKENS.card : 'transparent',
                 color: !mascotAnimated ? HP_TOKENS.ink : HP_TOKENS.inkMute,
-                boxShadow: !mascotAnimated ? '0 4px 12px rgba(0,0,0,0.05)' : 'none',
+                boxShadow: !mascotAnimated ? '0 4px 12px rgba(26,29,35,0.05)' : 'none',
               }}
               className="hp-tap"
             >

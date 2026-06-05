@@ -82,7 +82,7 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: 12, borderRadius: 10,
     border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 13,
-    outline: 'none', background: '#fff', color: HP_TOKENS.ink, boxSizing: 'border-box',
+    outline: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink, boxSizing: 'border-box',
   };
 
   return (
@@ -99,7 +99,7 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
             width: 28, height: 28, borderRadius: 14, background: HP_TOKENS.sage,
             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}>
-            <HPGlyph name="check" size={16} color="#fff" />
+            <HPGlyph name="check" size={16} color="#F4F7F9" />
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ ...HP_TEXT.h, fontSize: 14 }}>{task?.title}</div>
@@ -217,10 +217,10 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
             }}
           >
             <div style={{
-              width: 18, height: 18, borderRadius: 9, background: '#fff',
+              width: 18, height: 18, borderRadius: 9, background: HP_TOKENS.card,
               position: 'absolute', top: 3,
               left: isProject ? 21 : 3, transition: '0.2s',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+              boxShadow: '0 1px 3px rgba(26,29,35,0.2)'
             }} />
           </button>
           <div>
@@ -252,7 +252,7 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
             onClick={onClose}
             style={{
               flex: 1, padding: 14, borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
-              background: '#fff', fontFamily: HP_FONT, fontWeight: 700, fontSize: 14,
+              background: HP_TOKENS.card, fontFamily: HP_FONT, fontWeight: 700, fontSize: 14,
               cursor: 'pointer', color: HP_TOKENS.inkMute,
             }}
           >
@@ -262,12 +262,12 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
             onClick={handleConfirm}
             style={{
               flex: 2, padding: 14, borderRadius: 12, border: 'none',
-              background: HP_TOKENS.sage, color: '#fff',
+              background: HP_TOKENS.sage, color: '#F4F7F9',
               fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}
           >
-            <HPGlyph name="check" size={16} color="#fff" />
+            <HPGlyph name="check" size={16} color="#F4F7F9" />
             Selesai ✓
           </button>
         </div>

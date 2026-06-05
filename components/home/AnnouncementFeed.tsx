@@ -119,8 +119,8 @@ export default function AnnouncementFeed() {
               maxWidth: 280,
               flexShrink: 0,
               borderLeft: `6px solid ${HP_TOKENS[a.tone as keyof typeof HP_TOKENS] || HP_TOKENS.blue}`,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-              background: '#fff'
+              boxShadow: '0 4px 12px rgba(26,29,35,0.05)',
+              background: HP_TOKENS.card
             }}
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -175,10 +175,10 @@ export default function AnnouncementFeed() {
 
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '10px 14px', borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
-  fontFamily: HP_FONT, fontSize: 14, outline: 'none', background: '#fff', boxSizing: 'border-box'
+  fontFamily: HP_FONT, fontSize: 14, outline: 'none', background: HP_TOKENS.card, boxSizing: 'border-box'
 };
 
 const buttonStyle: React.CSSProperties = {
   width: '100%', padding: '12px', borderRadius: 12, border: 'none',
-  background: HP_TOKENS.blue, color: '#fff', fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer'
+  background: HP_TOKENS.blue, color: '#F4F7F9', fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer'
 };

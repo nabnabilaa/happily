@@ -234,7 +234,7 @@ export default function AppreciateModal({ onClose }: AppreciateModalProps) {
             padding: '16px', 
             borderRadius: 99,
             background: HP_TOKENS.sage, 
-            color: '#fff', 
+            color: '#F4F7F9', 
             border: 'none',
             fontFamily: HP_FONT, 
             fontWeight: 800, 

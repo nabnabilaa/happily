@@ -58,7 +58,7 @@ export default function OnboardingScreen({ onFinish, userName }: OnboardingScree
               onClick={() => setStep(step - 1)}
               style={{
                 flex: 1, padding: '16px', borderRadius: 16, border: `1.5px solid ${HP_TOKENS.line}`,
-                background: '#fff', color: HP_TOKENS.inkSoft, fontFamily: HP_FONT, fontWeight: 800,
+                background: HP_TOKENS.card, color: HP_TOKENS.inkSoft, fontFamily: HP_FONT, fontWeight: 800,
                 cursor: 'pointer'
               }}
             >

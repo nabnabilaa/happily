@@ -32,7 +32,7 @@ export default function TabBar({ options, value, onChange }: TabBarProps) {
             fontWeight: 800, 
             fontSize: 13, 
             cursor: 'pointer',
-            boxShadow: value === o.key ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+            boxShadow: value === o.key ? '0 1px 3px rgba(26,29,35,0.06)' : 'none',
             transition: 'all 200ms',
           }}
         >

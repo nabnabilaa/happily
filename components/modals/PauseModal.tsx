@@ -61,7 +61,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
       desc: 'Tarik napas perlahan lewat hidung Anda...',
       scale: 1.35,
       color: HP_TOKENS.sage,
-      bg: `radial-gradient(circle at center, ${HP_TOKENS.sageWash} 0%, #fff 100%)`,
+      bg: `radial-gradient(circle at center, ${HP_TOKENS.sageWash} 0%, ${HP_TOKENS.card} 100%)`,
     },
     hold_in: {
       label: 'Tahan',
@@ -75,7 +75,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
       desc: 'Keluarkan napas perlahan lewat mulut...',
       scale: 0.85,
       color: HP_TOKENS.coral,
-      bg: `radial-gradient(circle at center, #FFF0ED 0%, #fff 100%)`,
+      bg: `radial-gradient(circle at center, #FFF0ED 0%, ${HP_TOKENS.card} 100%)`,
     },
     hold_out: {
       label: 'Tahan',
@@ -121,7 +121,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
           style={{
             width: 44, height: 44, borderRadius: 22, border: `1px solid ${HP_TOKENS.line}`,
             background: 'rgba(255,255,255,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+            boxShadow: '0 2px 8px rgba(26,29,35,0.04)',
           }} 
           className="hp-tap"
         >
@@ -174,14 +174,14 @@ export default function PauseModal({ onClose }: PauseModalProps) {
             width: 180, 
             height: 180, 
             borderRadius: 90, 
-            background: '#fff',
+            background: HP_TOKENS.card,
             display: 'flex', 
             flexDirection: 'column',
             alignItems: 'center', 
             justifyContent: 'center',
             transform: `scale(${currentInfo.scale})`, 
             transition: 'transform 4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.5s ease-out',
-            boxShadow: isPlaying ? '0 20px 50px rgba(0,0,0,0.06)' : '0 8px 20px rgba(0,0,0,0.04)',
+            boxShadow: isPlaying ? '0 20px 50px rgba(26,29,35,0.06)' : '0 8px 20px rgba(26,29,35,0.04)',
             border: `2px solid ${isPlaying ? currentInfo.color : HP_TOKENS.line}`,
           }}>
             <div style={{ ...HP_TEXT.h, fontSize: 32, fontWeight: 900, color: currentInfo.color, transition: 'color 1s ease-in-out' }}>
@@ -211,11 +211,11 @@ export default function PauseModal({ onClose }: PauseModalProps) {
             className="hp-tap"
             style={{
               padding: '14px', borderRadius: 16,
-              background: '#fff', color: HP_TOKENS.ink,
+              background: HP_TOKENS.card, color: HP_TOKENS.ink,
               border: `1.5px solid ${HP_TOKENS.line}`,
               fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
+              boxShadow: '0 4px 12px rgba(26,29,35,0.02)'
             }}
           >
             <HPGlyph name={isPlaying ? 'pause' : 'refresh'} size={16} color={HP_TOKENS.ink} />

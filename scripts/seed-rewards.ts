@@ -16,8 +16,10 @@ async function seedRewards() {
       { title: 'Tumbler Eksklusif Flowbee', cost: 500, category: 'Merchandise', glyph: 'star', desc: 'Tumbler stainless steel tahan panas dan dingin dengan logo perusahaan.', stock: 50 },
       { title: 'Voucher GoFood Rp 50.000', cost: 1000, category: 'Voucher', glyph: 'gift', desc: 'Voucher digital GoFood senilai 50 ribu rupiah.', stock: 100 },
       { title: 'Tiket Nonton Cinema XXI', cost: 1500, category: 'Voucher', glyph: 'ticket', desc: 'Satu buah tiket nonton gratis di seluruh jaringan Cinema XXI.', stock: 30 },
+      { title: 'Voucher Tokopedia Rp 100.000', cost: 2000, category: 'Voucher', glyph: 'gift', desc: 'Voucher belanja digital Tokopedia senilai 100 ribu rupiah.', stock: 50 },
       { title: 'Hoodie Perusahaan DX', cost: 2500, category: 'Merchandise', glyph: 'shirt', desc: 'Hoodie nyaman dan stylish khusus untuk anggota tim Digital Experience.', stock: 20 },
       { title: 'Parkir VIP 1 Bulan', cost: 3000, category: 'Office', glyph: 'car', desc: 'Akses slot parkir VIP di depan lobby kantor selama 1 bulan penuh.', stock: 5 },
+      { title: 'Headset Bluetooth Premium', cost: 4000, category: 'Merchandise', glyph: 'trophy', desc: 'Headset bluetooth premium untuk menunjang produktivitas kerja.', stock: 15 },
       { title: 'Cuti Tambahan 1 Hari', cost: 5000, category: 'Benefit', glyph: 'sun', desc: 'Tambahan kuota cuti tahunan sebanyak 1 hari (memerlukan persetujuan HR).', stock: 10 }
     ];
 

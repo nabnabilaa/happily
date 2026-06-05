@@ -232,7 +232,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: 14, borderRadius: 12, 
     border: `1.5px solid ${HP_TOKENS.line}`,
-    fontFamily: HP_FONT, fontSize: 14, background: '#fff', outline: 'none',
+    fontFamily: HP_FONT, fontSize: 14, background: HP_TOKENS.card, outline: 'none',
     boxSizing: 'border-box',
   };
 
@@ -373,7 +373,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
             disabled={!canAdd}
             style={{
               padding: 14, borderRadius: 12, border: 'none',
-              background: HP_TOKENS.sage, color: '#fff',
+              background: HP_TOKENS.sage, color: '#F4F7F9',
               fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: canAdd ? 'pointer' : 'default',
               opacity: !canAdd ? 0.5 : 1,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -407,7 +407,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                   border: `2px solid ${p.done ? HP_TOKENS.sage : HP_TOKENS.line}`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}>
-                  {p.done && <HPGlyph name="check" size={12} color="#fff"/>}
+                  {p.done && <HPGlyph name="check" size={12} color="#F4F7F9"/>}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ 

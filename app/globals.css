@@ -1,16 +1,23 @@
 :root {
-  /* ── Brand: Yellow / Gold ── */
-  --hp-yellow: #c5a059;
-  --hp-yellow-dark: #a4803b;
-  --hp-yellow-light: #e3c07a;
-  --hp-yellow-soft: rgba(197, 160, 89, 0.08);
-  --hp-yellow-wash: rgba(197, 160, 89, 0.03);
+  /* ── Primary: Biru Muda (Corporate Accent) ── */
+  --hp-primary: #4DA8DA;
+  --hp-primary-dark: #3A8FBF;
+  --hp-primary-light: #7BC4E8;
+  --hp-primary-soft: rgba(77, 168, 218, 0.10);
+  --hp-primary-wash: rgba(77, 168, 218, 0.04);
 
-  /* ── Brand: Blue ── */
-  --hp-blue: #00b4d8;
-  --hp-blue-light: #48cae4;
-  --hp-blue-soft: rgba(0, 180, 216, 0.08);
-  --hp-blue-wash: rgba(0, 180, 216, 0.03);
+  /* ── Brand: Blue (Kept for compatibility, aligned to Biru Muda) ── */
+  --hp-blue: #4DA8DA;
+  --hp-blue-light: #7BC4E8;
+  --hp-blue-soft: rgba(77, 168, 218, 0.10);
+  --hp-blue-wash: rgba(77, 168, 218, 0.04);
+
+  /* ── Brand: Yellow (Kept temporarily to avoid TS errors, will be removed) ── */
+  --hp-yellow: #4DA8DA;
+  --hp-yellow-dark: #3A8FBF;
+  --hp-yellow-light: #7BC4E8;
+  --hp-yellow-soft: rgba(77, 168, 218, 0.10);
+  --hp-yellow-wash: rgba(77, 168, 218, 0.04);
 
   /* ── Semantic: Sage ── */
   --hp-sage-soft: #E3EDE6;
@@ -29,39 +36,41 @@
   --hp-amber-soft: #FEF6ED;
 
   /* ── Gold / Honey ── */
-  --hp-honey: #c5a059;
-  --hp-honey-soft: rgba(197, 160, 89, 0.04);
-  --hp-gold: #c5a059;
+  --hp-honey: #4DA8DA;
+  --hp-honey-soft: rgba(77, 168, 218, 0.04);
+  --hp-gold: #4DA8DA;
 
-  /* ── Neutrals ── */
-  --hp-paper: #f4f6fa;
-  --hp-card: #ffffff;
-  --hp-ink: #050811;
-  --hp-ink-soft: #323846;
-  --hp-ink-mute: #5a6478;
-  --hp-ink-fade: #8c9bb4;
-  --hp-line: rgba(5, 8, 17, 0.06);
-  --hp-line-soft: rgba(5, 8, 17, 0.03);
-
-  /* ── Typography ── */
-  --hp-font: var(--hp-font);
-  --hp-font-display: var(--hp-font-display);
-  --hp-font-mono: var(--hp-font-mono);
+  /* ── Neutrals (Strictly NO pure white/black) ── */
+  --hp-paper: #F4F7F9;
+  --hp-card: #FAFBFC;
+  --hp-ink: #1A1D23;
+  --hp-ink-soft: #39404B;
+  --hp-ink-mute: #5C6779;
+  --hp-ink-fade: #8E9BAF;
+  --hp-line: rgba(26, 29, 35, 0.08);
+  --hp-line-soft: rgba(26, 29, 35, 0.04);
 }
 
 .dark {
-  /* ── Brand: Yellow / Gold ── */
-  --hp-yellow: #ffd700;
-  --hp-yellow-dark: #c5a059;
-  --hp-yellow-light: #ffea79;
-  --hp-yellow-soft: rgba(255, 215, 0, 0.07);
-  --hp-yellow-wash: rgba(255, 215, 0, 0.03);
+  /* ── Primary: Adjusted Biru Muda for dark bg ── */
+  --hp-primary: #5CBAE6;
+  --hp-primary-dark: #4DA8DA;
+  --hp-primary-light: #8DD0F0;
+  --hp-primary-soft: rgba(92, 186, 230, 0.10);
+  --hp-primary-wash: rgba(92, 186, 230, 0.04);
 
   /* ── Brand: Blue ── */
-  --hp-blue: #00e5ff;
-  --hp-blue-light: #64ffda;
-  --hp-blue-soft: rgba(0, 229, 255, 0.1);
-  --hp-blue-wash: rgba(0, 229, 255, 0.04);
+  --hp-blue: #5CBAE6;
+  --hp-blue-light: #8DD0F0;
+  --hp-blue-soft: rgba(92, 186, 230, 0.10);
+  --hp-blue-wash: rgba(92, 186, 230, 0.04);
+
+  /* ── Brand: Yellow (Mapped to Primary) ── */
+  --hp-yellow: #5CBAE6;
+  --hp-yellow-dark: #4DA8DA;
+  --hp-yellow-light: #8DD0F0;
+  --hp-yellow-soft: rgba(92, 186, 230, 0.07);
+  --hp-yellow-wash: rgba(92, 186, 230, 0.03);
 
   /* ── Semantic: Sage ── */
   --hp-sage-soft: rgba(78, 159, 61, 0.12);
@@ -80,19 +89,19 @@
   --hp-amber-soft: rgba(255, 183, 77, 0.06);
 
   /* ── Gold / Honey ── */
-  --hp-honey: #ffd700;
-  --hp-honey-soft: rgba(255, 215, 0, 0.04);
-  --hp-gold: #ffd700;
+  --hp-honey: #5CBAE6;
+  --hp-honey-soft: rgba(92, 186, 230, 0.04);
+  --hp-gold: #5CBAE6;
 
-  /* ── Neutrals ── */
-  --hp-paper: #04050a;
-  --hp-card: rgba(12, 14, 25, 0.65);
-  --hp-ink: #f0f4f9;
-  --hp-ink-soft: #a0aec0;
-  --hp-ink-mute: #718096;
-  --hp-ink-fade: #4a5568;
-  --hp-line: rgba(0, 229, 255, 0.15);
-  --hp-line-soft: rgba(0, 229, 255, 0.06);
+  /* ── Neutrals (Strictly NO pure black/white) ── */
+  --hp-paper: #121418;
+  --hp-card: rgba(26, 30, 40, 0.75);
+  --hp-ink: #E8ECF1;
+  --hp-ink-soft: #A2AAB5;
+  --hp-ink-mute: #7A8493;
+  --hp-ink-fade: #525C6B;
+  --hp-line: rgba(92, 186, 230, 0.15);
+  --hp-line-soft: rgba(92, 186, 230, 0.06);
 }
 
 
@@ -116,9 +125,9 @@ html, body {
 /* Background bloom gradients for Dark Mode */
 .dark html, .dark body {
   background: 
-    radial-gradient(circle at 10% 20%, rgba(0, 229, 255, 0.05) 0%, transparent 40%),
-    radial-gradient(circle at 90% 80%, rgba(197, 160, 89, 0.04) 0%, transparent 40%),
-    #04050a;
+    radial-gradient(circle at 10% 20%, rgba(92, 186, 230, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(77, 168, 218, 0.04) 0%, transparent 40%),
+    #121418;
   background-attachment: fixed;
 }
 
@@ -294,9 +303,9 @@ div, section, article, aside, nav, header, footer, main {
 
 .hp-screen-container {
   width: 100%;
-  max-width: 1024px;
+  max-width: 100%; /* Fully flexible */
   margin: 0 auto;
-  padding: 64px 16px 24px; /* Default top padding to account for top elements */
+  padding: 64px 20px 32px; /* Comfortable padding on mobile */
 }
 
 /* Desktop overrides */
@@ -337,7 +346,7 @@ div, section, article, aside, nav, header, footer, main {
   }
 
   .hp-screen-container {
-    padding: 48px 40px 40px; /* more spacious padding on desktop */
+    padding: 56px 64px 64px; /* generous padding on desktop so it doesn't feel empty */
   }
 }
 

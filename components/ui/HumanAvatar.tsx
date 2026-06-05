@@ -62,26 +62,26 @@ function renderEyes(expression: string) {
     case 'joy':
       return (
         <>
-          <path d="M0 2C0 0 4 0 4 2" stroke="rgba(0,0,0,0.5)" strokeWidth="1.5" strokeLinecap="round" />
-          <path d="M12 2C12 0 16 0 16 2" stroke="rgba(0,0,0,0.5)" strokeWidth="1.5" strokeLinecap="round" />
+          <path d="M0 2C0 0 4 0 4 2" stroke="rgba(26,29,35,0.5)" strokeWidth="1.5" strokeLinecap="round" />
+          <path d="M12 2C12 0 16 0 16 2" stroke="rgba(26,29,35,0.5)" strokeWidth="1.5" strokeLinecap="round" />
         </>
       );
     case 'tired':
     case 'stress':
       return (
         <>
-          <circle cx="2" cy="2" r="1.5" fill="rgba(0,0,0,0.4)" />
-          <circle cx="14" cy="2" r="1.5" fill="rgba(0,0,0,0.4)" />
-          <path d="M0 6H4" stroke="rgba(0,0,0,0.15)" strokeWidth="1" />
-          <path d="M12 6H16" stroke="rgba(0,0,0,0.15)" strokeWidth="1" />
+          <circle cx="2" cy="2" r="1.5" fill="rgba(26,29,35,0.4)" />
+          <circle cx="14" cy="2" r="1.5" fill="rgba(26,29,35,0.4)" />
+          <path d="M0 6H4" stroke="rgba(26,29,35,0.15)" strokeWidth="1" />
+          <path d="M12 6H16" stroke="rgba(26,29,35,0.15)" strokeWidth="1" />
         </>
       );
     case 'calm':
     default:
       return (
         <>
-          <circle cx="2" cy="2" r="2" fill="rgba(0,0,0,0.7)" />
-          <circle cx="14" cy="2" r="2" fill="rgba(0,0,0,0.7)" />
+          <circle cx="2" cy="2" r="2" fill="rgba(26,29,35,0.7)" />
+          <circle cx="14" cy="2" r="2" fill="rgba(26,29,35,0.7)" />
         </>
       );
   }
@@ -90,14 +90,14 @@ function renderEyes(expression: string) {
 function renderMouth(expression: string) {
   switch (expression) {
     case 'joy':
-      return <path d="M0 2C2 5 6 5 8 2" stroke="rgba(0,0,0,0.5)" strokeWidth="2" strokeLinecap="round" />;
+      return <path d="M0 2C2 5 6 5 8 2" stroke="rgba(26,29,35,0.5)" strokeWidth="2" strokeLinecap="round" />;
     case 'stress':
-      return <path d="M0 4C2 2 6 2 8 4" stroke="rgba(0,0,0,0.5)" strokeWidth="2" strokeLinecap="round" />;
+      return <path d="M0 4C2 2 6 2 8 4" stroke="rgba(26,29,35,0.5)" strokeWidth="2" strokeLinecap="round" />;
     case 'tired':
-      return <rect x="2" y="2" width="4" height="1.5" rx="0.75" fill="rgba(0,0,0,0.3)" />;
+      return <rect x="2" y="2" width="4" height="1.5" rx="0.75" fill="rgba(26,29,35,0.3)" />;
     case 'calm':
     default:
-      return <path d="M1 3C3 4 5 4 7 3" stroke="rgba(0,0,0,0.4)" strokeWidth="1.5" strokeLinecap="round" />;
+      return <path d="M1 3C3 4 5 4 7 3" stroke="rgba(26,29,35,0.4)" strokeWidth="1.5" strokeLinecap="round" />;
   }
 }
 

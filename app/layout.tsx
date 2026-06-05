@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google";
+import { Nunito, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Shell from "@/components/layout/Shell";
 import PWARegistration from "@/components/pwa/PWARegistration";
@@ -8,15 +8,15 @@ import OfflineToast from "@/components/pwa/OfflineToast";
 import { HPProvider } from "@/lib/HPContext";
 import Script from "next/script";
 
-const inter = Inter({
+const nunito = Nunito({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700", "800", "900"],
   variable: "--hp-font",
 });
 
-const spaceGrotesk = Space_Grotesk({
+const nunitoDisplay = Nunito({
   subsets: ["latin"],
-  weight: ["500", "700"],
+  weight: ["700", "800", "900"],
   variable: "--hp-font-display",
 });
 
@@ -48,13 +48,15 @@ export const metadata: Metadata = {
   },
 };
 
+import SWRProvider from "@/components/SWRProvider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrains.variable}`} suppressHydrationWarning>
+    <html lang="id" className={`${nunito.variable} ${nunitoDisplay.variable} ${jetbrains.variable}`} suppressHydrationWarning>
       <head>
       </head>
       <body>
@@ -124,12 +126,14 @@ export default function RootLayout({
             })();
           `
         }} />
-        <HPProvider>
-          <PWARegistration />
-          <InstallButton />
-          <OfflineToast />
-          <Shell>{children}</Shell>
-        </HPProvider>
+        <SWRProvider>
+          <HPProvider>
+            <PWARegistration />
+            <InstallButton />
+            <OfflineToast />
+            <Shell>{children}</Shell>
+          </HPProvider>
+        </SWRProvider>
       </body>
     </html>
   );

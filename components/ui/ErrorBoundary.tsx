@@ -46,7 +46,7 @@ export default class ErrorBoundary extends React.Component<Props, State> {
             }}
             style={{
               padding: '12px 24px', borderRadius: 14, border: 'none',
-              background: HP_TOKENS.ink, color: '#fff',
+              background: HP_TOKENS.ink, color: '#F4F7F9',
               fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer'
             }}
           >

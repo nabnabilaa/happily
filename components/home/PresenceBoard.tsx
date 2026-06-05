@@ -176,13 +176,13 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
         style={{
           width: '100%', padding: '12px 16px', borderRadius: 14,
           background: `linear-gradient(135deg, ${HP_TOKENS.blue}, #2D6A9F)`,
-          color: '#fff', border: 'none', fontFamily: HP_FONT, fontWeight: 800,
+          color: '#F4F7F9', border: 'none', fontFamily: HP_FONT, fontWeight: 800,
           fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center',
           justifyContent: 'center', gap: 8, marginBottom: 16,
           boxShadow: `0 4px 16px ${HP_TOKENS.blue}30`,
         }}
       >
-        <HPGlyph name="activity" size={16} color="#fff" />
+        <HPGlyph name="activity" size={16} color="#F4F7F9" />
         Update Status Saya
       </button>
 
@@ -208,7 +208,7 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
                     width: 14, height: 14, borderRadius: 7,
                     background: getStatusDotColor(u.status),
                     border: '2.5px solid #fff',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+                    boxShadow: '0 1px 3px rgba(26,29,35,0.15)',
                   }} />
                 </div>
 

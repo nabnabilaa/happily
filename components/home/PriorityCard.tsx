@@ -162,7 +162,7 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit 
       background: p.done ? HP_TOKENS.card : '#fff',
       border: `1.5px solid ${state?.focusTaskId === p.id ? HP_TOKENS.yellow : (p.done ? HP_TOKENS.line : HP_TOKENS.line)}`,
       borderRadius: 20, 
-      boxShadow: state?.focusTaskId === p.id ? `0 8px 24px ${HP_TOKENS.yellow}20` : (p.done ? 'none' : '0 4px 12px rgba(0,0,0,0.02)'),
+      boxShadow: state?.focusTaskId === p.id ? `0 8px 24px ${HP_TOKENS.yellow}20` : (p.done ? 'none' : '0 4px 12px rgba(26,29,35,0.02)'),
       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     }}>
       {/* Floating +50 Poin */}
@@ -174,7 +174,7 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit 
           padding: '4px 10px', borderRadius: 10,
           animation: 'hpRise 1.2s ease-out forwards',
           pointerEvents: 'none', zIndex: 10,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+          boxShadow: '0 4px 12px rgba(26,29,35,0.1)'
         }}>
           +{p.points || 50} Point
         </div>
@@ -188,7 +188,7 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit 
           fontSize: 11, fontWeight: 800, fontFamily: HP_FONT,
           padding: '6px 12px', borderRadius: 10,
           animation: 'hpRise 0.3s ease-out',
-          zIndex: 20, boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+          zIndex: 20, boxShadow: '0 4px 12px rgba(26,29,35,0.1)',
           whiteSpace: 'nowrap'
         }}>
           🎯 Jadi Fokus Utama!

@@ -122,7 +122,7 @@ export default function OfflineToast() {
         borderRadius: 99,
         background: bg,
         border: `1.5px solid ${border}`,
-        boxShadow: '0 8px 30px rgba(0,0,0,0.08)',
+        boxShadow: '0 8px 30px rgba(26,29,35,0.08)',
         color: color,
         fontFamily: HP_FONT,
         fontWeight: 700,

@@ -59,9 +59,9 @@ export default function ManagerHomeScreen({ openModal }: Props) {
 
         {/* Header */}
         <div style={{
-          background: `linear-gradient(135deg, ${HP_TOKENS.paper}, #fff)`,
+          background: `linear-gradient(135deg, ${HP_TOKENS.paper}, ${HP_TOKENS.card})`,
           borderRadius: 24, padding: '24px 20px', marginTop: 8,
-          border: `1.5px solid ${HP_TOKENS.line}`, boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
+          border: `1.5px solid ${HP_TOKENS.line}`, boxShadow: '0 10px 30px rgba(26,29,35,0.04)',
           position: 'relative', overflow: 'hidden'
         }}>
           <div style={{ position: 'absolute', top: -20, right: -10, fontSize: 100, fontWeight: 900, color: HP_TOKENS.lineSoft, zIndex: 0, opacity: 0.4 }}>
@@ -78,7 +78,7 @@ export default function ManagerHomeScreen({ openModal }: Props) {
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div style={{ ...HP_TEXT.h, fontSize: 20 }}>{user.name.split(' ')[0]}</div>
-                    <div style={{ background: HP_TOKENS.blue, color: '#fff', fontSize: 10, fontWeight: 900, padding: '2px 8px', borderRadius: 6 }}>
+                    <div style={{ background: HP_TOKENS.blue, color: '#F4F7F9', fontSize: 10, fontWeight: 900, padding: '2px 8px', borderRadius: 6 }}>
                       MANAGER
                     </div>
                   </div>
@@ -175,7 +175,7 @@ export default function ManagerHomeScreen({ openModal }: Props) {
           onClick={() => openModal('manage_kpi')}
           style={{
             marginTop: 10, width: '100%', padding: '14px', borderRadius: 20, 
-            background: `linear-gradient(135deg, ${HP_TOKENS.blue}, #2B5286)`, color: '#fff',
+            background: `linear-gradient(135deg, ${HP_TOKENS.blue}, #2B5286)`, color: '#F4F7F9',
             border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
             boxShadow: '0 4px 12px rgba(59,111,160,0.3)'
@@ -296,7 +296,7 @@ export default function ManagerHomeScreen({ openModal }: Props) {
             <SectionHeader icon="alertCircle" label="Persetujuan Target Tim" count={`${approvals.length}`} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {paginatedApprovals.map((appr: any) => (
-                <HPCard key={appr.id} padding={16} style={{ borderLeft: `4px solid ${HP_TOKENS.blue}`, background: '#fff' }}>
+                <HPCard key={appr.id} padding={16} style={{ borderLeft: `4px solid ${HP_TOKENS.blue}`, background: HP_TOKENS.card }}>
                   <div style={{ ...HP_TEXT.h, fontSize: 14 }}>{appr.desc}</div>
                   <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 4 }}>
                     Diajukan oleh: <b>{appr.from}</b> · {appr.type}
@@ -320,7 +320,7 @@ export default function ManagerHomeScreen({ openModal }: Props) {
                       }}
                       className="hp-tap"
                       style={{
-                        padding: '6px 12px', borderRadius: 8, background: HP_TOKENS.sage, color: '#fff',
+                        padding: '6px 12px', borderRadius: 8, background: HP_TOKENS.sage, color: '#F4F7F9',
                         fontFamily: HP_FONT, fontSize: 11, fontWeight: 800, border: 'none', cursor: 'pointer'
                       }}
                     >
@@ -466,7 +466,7 @@ export default function ManagerHomeScreen({ openModal }: Props) {
                 };
 
                 return (
-                  <HPCard key={task.id} padding={12} style={{ background: '#fff' }}>
+                  <HPCard key={task.id} padding={12} style={{ background: HP_TOKENS.card }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                       {/* Task Info */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -501,7 +501,7 @@ export default function ManagerHomeScreen({ openModal }: Props) {
                           className="hp-tap"
                           style={{
                             padding: '9px 4px', borderRadius: 10, border: 'none',
-                            background: HP_TOKENS.sage, color: '#fff',
+                            background: HP_TOKENS.sage, color: '#F4F7F9',
                             fontFamily: HP_FONT, fontSize: 11, fontWeight: 900, cursor: isLoading ? 'default' : 'pointer',
                             opacity: isLoading ? 0.6 : 1,
                             boxShadow: `0 2px 6px ${HP_TOKENS.sage}40`,
@@ -519,7 +519,7 @@ export default function ManagerHomeScreen({ openModal }: Props) {
                           style={{
                             padding: '9px 4px', borderRadius: 10,
                             border: `1.5px solid ${HP_TOKENS.coral}`,
-                            background: '#fff', color: HP_TOKENS.coral,
+                            background: HP_TOKENS.card, color: HP_TOKENS.coral,
                             fontFamily: HP_FONT, fontSize: 11, fontWeight: 900, cursor: isLoading ? 'default' : 'pointer',
                             opacity: isLoading ? 0.6 : 1,
                             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3
@@ -536,7 +536,7 @@ export default function ManagerHomeScreen({ openModal }: Props) {
                           style={{
                             padding: '9px 4px', borderRadius: 10,
                             border: `1.5px solid ${HP_TOKENS.yellow}`,
-                            background: '#fff', color: '#8A6814',
+                            background: HP_TOKENS.card, color: '#8A6814',
                             fontFamily: HP_FONT, fontSize: 11, fontWeight: 900, cursor: isLoading ? 'default' : 'pointer',
                             opacity: isLoading ? 0.6 : 1,
                             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3
@@ -615,12 +615,12 @@ export default function ManagerHomeScreen({ openModal }: Props) {
         }} onClick={() => openModal('coach')} className="hp-tap">
           <BeeMascot mood="happy" size={56} />
           <div style={{ flex: 1 }}>
-            <div style={{ ...HP_TEXT.h, fontSize: 15, color: '#fff' }}>AI Manager Coach</div>
+            <div style={{ ...HP_TEXT.h, fontSize: 15, color: '#F4F7F9' }}>AI Manager Coach</div>
             <div style={{ ...HP_TEXT.small, fontWeight: 700, color: 'rgba(255,255,255,0.75)', marginTop: 2 }}>
               Feedback, coaching & pengelolaan tim
             </div>
           </div>
-          <HPGlyph name="arrow" size={18} color="#fff" />
+          <HPGlyph name="arrow" size={18} color="#F4F7F9" />
         </div>
       </div>
     </div>

@@ -84,7 +84,7 @@ export default function ManageHabitsModal({ onClose }: ManageHabitsModalProps) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 16, borderRadius: 20, background: HP_TOKENS.blueWash }}>
           <div style={{ display: 'flex', gap: 8 }}>
             <div style={{ 
-              width: 48, height: 48, borderRadius: 12, background: '#fff', 
+              width: 48, height: 48, borderRadius: 12, background: HP_TOKENS.card, 
               display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24,
               border: `1.5px solid ${HP_TOKENS.line}`
             }}>
@@ -97,7 +97,7 @@ export default function ManageHabitsModal({ onClose }: ManageHabitsModalProps) {
               placeholder="Nama kebiasaan..."
               style={{
                 flex: 1, padding: 14, borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
-                fontFamily: HP_FONT, fontSize: 14, background: '#fff', outline: 'none'
+                fontFamily: HP_FONT, fontSize: 14, background: HP_TOKENS.card, outline: 'none'
               }}
             />
           </div>
@@ -122,7 +122,7 @@ export default function ManageHabitsModal({ onClose }: ManageHabitsModalProps) {
             disabled={!newName}
             style={{
               marginTop: 4, padding: 14, borderRadius: 12, border: 'none',
-              background: HP_TOKENS.blue, color: '#fff',
+              background: HP_TOKENS.blue, color: '#F4F7F9',
               fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
               opacity: !newName ? 0.5 : 1
             }}

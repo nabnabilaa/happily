@@ -112,7 +112,7 @@ export default function WeeklyReviewModal({ onClose }: { onClose: () => void }) 
 
   const selectStyle: React.CSSProperties = {
     padding: 10, borderRadius: 10, border: `1.5px solid ${HP_TOKENS.line}`,
-    fontFamily: HP_FONT, fontSize: 13, background: '#fff', outline: 'none',
+    fontFamily: HP_FONT, fontSize: 13, background: HP_TOKENS.card, outline: 'none',
   };
 
   return (
@@ -205,7 +205,7 @@ export default function WeeklyReviewModal({ onClose }: { onClose: () => void }) 
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             flexShrink: 0,
                           }}>
-                            {link.taskDone && <HPGlyph name="check" size={10} color="#fff" />}
+                            {link.taskDone && <HPGlyph name="check" size={10} color="#F4F7F9" />}
                           </div>
 
                           {/* Task Info */}
@@ -232,7 +232,7 @@ export default function WeeklyReviewModal({ onClose }: { onClose: () => void }) 
                                 disabled={actionLoading === link.id}
                                 style={{
                                   padding: '5px 10px', borderRadius: 8, border: 'none',
-                                  background: HP_TOKENS.sage, color: '#fff',
+                                  background: HP_TOKENS.sage, color: '#F4F7F9',
                                   fontFamily: HP_FONT, fontWeight: 800, fontSize: 10, cursor: 'pointer',
                                   opacity: actionLoading === link.id ? 0.5 : 1,
                                 }}
@@ -242,7 +242,7 @@ export default function WeeklyReviewModal({ onClose }: { onClose: () => void }) 
                                 disabled={actionLoading === link.id}
                                 style={{
                                   padding: '5px 10px', borderRadius: 8, border: 'none',
-                                  background: HP_TOKENS.coral, color: '#fff',
+                                  background: HP_TOKENS.coral, color: '#F4F7F9',
                                   fontFamily: HP_FONT, fontWeight: 800, fontSize: 10, cursor: 'pointer',
                                   opacity: actionLoading === link.id ? 0.5 : 1,
                                 }}
@@ -253,7 +253,7 @@ export default function WeeklyReviewModal({ onClose }: { onClose: () => void }) 
                                 style={{
                                   padding: '5px 8px', borderRadius: 8,
                                   border: `1px solid ${HP_TOKENS.line}`,
-                                  background: '#fff', color: HP_TOKENS.blue,
+                                  background: HP_TOKENS.card, color: HP_TOKENS.blue,
                                   fontFamily: HP_FONT, fontWeight: 800, fontSize: 10, cursor: 'pointer',
                                 }}
                               >↗</button>

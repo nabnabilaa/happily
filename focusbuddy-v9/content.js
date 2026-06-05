@@ -52,7 +52,7 @@
     FOCUS: { color: '#ff9a1a', badge: 'Fokus bareng! 🔥', svgState: 'fokus', w1: '#e5dbff', w2: '#845ef7', wp: '#b197fc', mouth: 'M 92 128 L 108 128' },
     EATING: { color: '#ff6b6b', badge: 'Makan dulu! 🍱', svgState: 'makan', w1: '#ffe8cc', w2: '#ffa94d', wp: '#ffc078', mouth: 'M 85 125 Q 100 155 115 125' },
     STRETCHING: { color: '#4ecdc4', badge: 'Stretching~ 🤸', svgState: 'olahraga', w1: '#ffc9c9', w2: '#ff8787', wp: '#ff6b6b', mouth: 'M 85 125 Q 100 115 115 125' },
-    EXCITED: { color: '#ffd93d', badge: 'Luar biasa!!! ✨', svgState: 'semangat', w1: '#ffec99', w2: '#fcc419', wp: '#ffd43b', mouth: 'M 75 120 Q 100 180 125 120' },
+    EXCITED: { color: '#ffd93d', badge: 'Luar biasa!!! \u2728', svgState: 'semangat', w1: '#ffec99', w2: '#fcc419', wp: '#ffd43b', mouth: 'M 75 120 Q 100 180 125 120' },
     ANNOYED: { color: '#ff4757', badge: 'Jangan digangguin! 😤', svgState: 'kesal', w1: '#ffc9c9', w2: '#fa5252', wp: '#c92a2a', mouth: 'M 85 135 Q 100 115 115 135' },
     WAITING: { color: '#a8edea', badge: 'Menunggu… ⏳', svgState: 'menunggu', w1: '#c3fae8', w2: '#20c997', wp: '#63e6be', mouth: 'M 95 125 A 5 5 0 1 1 105 125 A 5 5 0 1 1 95 125' },
   }
@@ -323,7 +323,7 @@
         roleEl.style.background = (roleColors[role] || '#00b4d8') + '24';
         roleEl.style.color = roleColors[role] || '#00b4d8';
       }
-      if (levelEl) levelEl.textContent = 'Lv.' + (flowbeeUser.level || 1) + ' • ' + (flowbeeUser.points || 0) + ' XP';
+      if (levelEl) levelEl.textContent = 'Lv.' + (flowbeeUser.level || 1) + ' \u2022 ' + (flowbeeUser.points || 0) + ' XP';
       if (idRow) idRow.style.setProperty('display', 'flex', 'important');
       if (loginMsg) loginMsg.style.display = 'none';
 
@@ -333,7 +333,7 @@
         const role = (flowbeeUser.role || 'employee').toLowerCase();
         const roleLabels = { employee: 'Employee', manager: 'Manager', hr: 'HR' };
         const displayRole = roleLabels[role] || 'Employee';
-        settingsMeta.textContent = displayRole + ' • Lv.' + (flowbeeUser.level || 1) + ' (' + (flowbeeUser.points || 0) + ' XP)';
+        settingsMeta.textContent = displayRole + ' \u2022 Lv.' + (flowbeeUser.level || 1) + ' (' + (flowbeeUser.points || 0) + ' XP)';
       }
       if (settingsAvatar) {
         const initials = flowbeeUser.name ? flowbeeUser.name.charAt(0).toUpperCase() : '👤';
@@ -731,7 +731,7 @@
   root.style.cssText = [
     'all:initial!important', 'position:fixed!important',
     'z-index:2147483647!important', 'pointer-events:none!important',
-    'font-family:Outfit,system-ui,sans-serif!important',
+    'font-family:\"Nunito\",system-ui,sans-serif!important',
     'width:0!important', 'height:0!important',
   ].join(';')
 
@@ -810,7 +810,7 @@
   if (!document.querySelector('#fb-font')) {
     const l = document.createElement('link')
     l.id = 'fb-font'; l.rel = 'stylesheet'
-    l.href = 'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap'
+    l.href = 'https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap'
     document.head && document.head.appendChild(l)
   }
 
@@ -820,36 +820,36 @@
   innerRoot.innerHTML = `
 <style>
 #fb-root {
-  --fb-yellow: #FDB913 !important;
-  --fb-yellow-dark: #E5A800 !important;
-  --fb-yellow-soft: #FFFDF0 !important;
-  --fb-blue: #1a56db !important;
-  --fb-blue-soft: #EBF4FF !important;
-  --fb-gold: #dfb875 !important;
-  --fb-paper: #ffffff !important;
-  --fb-card: #f9fafb !important;
-  --fb-card-fade: rgba(249, 250, 251, 0) !important;
-  --fb-ink: #0b0f19 !important;
-  --fb-ink-mute: #5c6470 !important;
-  --fb-line: rgba(11, 15, 25, 0.08) !important;
-  --fb-line-soft: rgba(11, 15, 25, 0.04) !important;
+  --fb-yellow: #4DA8DA !important;
+  --fb-yellow-dark: #3A8FBF !important;
+  --fb-yellow-soft: rgba(77, 168, 218, 0.10) !important;
+  --fb-blue: #4DA8DA !important;
+  --fb-blue-soft: rgba(77, 168, 218, 0.10) !important;
+  --fb-gold: #4DA8DA !important;
+  --fb-paper: #F4F7F9 !important;
+  --fb-card: #FAFBFC !important;
+  --fb-card-fade: rgba(250, 251, 252, 0) !important;
+  --fb-ink: #1A1D23 !important;
+  --fb-ink-mute: #5C6779 !important;
+  --fb-line: rgba(26, 29, 35, 0.08) !important;
+  --fb-line-soft: rgba(26, 29, 35, 0.04) !important;
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease !important;
 }
 
 #fb-root.dark {
-  --fb-paper: #06080f !important;
-  --fb-card: rgba(16, 22, 42, 0.85) !important;
-  --fb-card-fade: rgba(16, 22, 42, 0) !important;
-  --fb-ink: #f0f4f9 !important;
-  --fb-ink-mute: #8ca0b8 !important;
-  --fb-yellow: #ffd700 !important;
-  --fb-yellow-dark: #dfb875 !important;
-  --fb-yellow-soft: rgba(223, 184, 117, 0.06) !important;
-  --fb-blue: #4fc3f7 !important;
-  --fb-blue-soft: rgba(0, 176, 255, 0.1) !important;
-  --fb-gold: #dfb875 !important;
-  --fb-line: rgba(223, 184, 117, 0.25) !important;
-  --fb-line-soft: rgba(223, 184, 117, 0.12) !important;
+  --fb-paper: #121418 !important;
+  --fb-card: rgba(26, 30, 40, 0.85) !important;
+  --fb-card-fade: rgba(26, 30, 40, 0) !important;
+  --fb-ink: #E8ECF1 !important;
+  --fb-ink-mute: #7A8493 !important;
+  --fb-yellow: #5CBAE6 !important;
+  --fb-yellow-dark: #4DA8DA !important;
+  --fb-yellow-soft: rgba(92, 186, 230, 0.10) !important;
+  --fb-blue: #5CBAE6 !important;
+  --fb-blue-soft: rgba(92, 186, 230, 0.10) !important;
+  --fb-gold: #5CBAE6 !important;
+  --fb-line: rgba(92, 186, 230, 0.15) !important;
+  --fb-line-soft: rgba(92, 186, 230, 0.06) !important;
 }
 
 #fb-genangan {
@@ -867,7 +867,7 @@
 }
 
 :where(#fb-root div,#fb-root button,#fb-root input,#fb-root textarea,#fb-root span,#fb-root p,#fb-root label,#fb-root select,#fb-root details,#fb-root summary) {
-  box-sizing: border-box !important; font-family: Outfit,system-ui,sans-serif !important;
+  box-sizing: border-box !important; font-family: Nunito,system-ui,sans-serif !important;
   margin: 0 !important; padding: 0 !important; border: 0 !important; outline: 0 !important;
   text-decoration: none !important; list-style: none !important;
   -webkit-tap-highlight-color: transparent !important;
@@ -877,7 +877,7 @@
 :where(#fb-root select) {
   -webkit-appearance:none !important; appearance:none !important;
   display:block !important; box-sizing:border-box !important;
-  font-family:Outfit,system-ui,sans-serif !important;
+  font-family:Nunito,system-ui,sans-serif !important;
   background-color:var(--fb-card) !important;
 }
 :where(#fb-root details) { display:block !important }
@@ -2364,435 +2364,322 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   color: var(--fb-blue) !important;
 }
 
-/* ── TIMER DRUM PICKER ── */
-#fb-timer-set-view { padding-bottom:8px !important }
-#fb-timer-run-view { text-align:center !important; padding:8px 0 !important }
-
-/* Drum wrap */
-.fb-drum-wrap {
-  position:relative !important; display:flex !important; align-items:stretch !important;
-  justify-content:center !important; gap:0 !important; height:160px !important;
-  margin:0 0 24px !important; overflow:hidden !important; border-radius:16px !important;
-  background:var(--fb-card) !important;
-  border:1.5px solid var(--fb-line) !important;
-  user-select:none; -webkit-user-select:none;
+/* --- Timer Card UI (Unified) --- */
+.fb-timer-card {
+    background: var(--fb-card);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    border: 1px solid var(--fb-line);
 }
 
-/* Top & bottom gradient fade */
-.fb-drum-overlay {
-  position:absolute !important; left:0; right:0; z-index:3; pointer-events:none !important;
-  height:52px !important;
+/* Preset Chips */
+.fb-timer-presets {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
 }
-.fb-drum-overlay.top {
-  top:0;
-  background:linear-gradient(to bottom, var(--fb-card) 0%, var(--fb-card-fade) 100%) !important;
+.fb-timer-preset-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    border-radius: 20px;
+    border: 1.5px solid var(--fb-line);
+    background: var(--fb-paper);
+    color: var(--fb-ink-mute);
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
-.fb-drum-overlay.bottom {
-  bottom:0;
-  background:linear-gradient(to top, var(--fb-card) 0%, var(--fb-card-fade) 100%) !important;
+.fb-timer-preset-btn:hover {
+    border-color: var(--fb-blue);
+    color: var(--fb-blue);
+    background: var(--fb-blue-soft);
 }
-
-/* Center highlight bar */
-.fb-drum-highlight {
-  position:absolute !important; left:12px; right:12px; top:50%; z-index:2; pointer-events:none !important;
-  height:36px !important; transform:translateY(-50%);
-  background:var(--fb-blue-soft) !important; border-radius:8px !important;
-  border-top:1px solid var(--fb-line) !important; border-bottom:1px solid var(--fb-line) !important;
-}
-
-/* Column */
-.fb-drum-col {
-  flex:1 !important; display:flex !important; flex-direction:column !important; align-items:center !important;
-  position:relative !important; cursor:ns-resize !important;
-}
-
-.fb-drum-label {
-  position:absolute !important; bottom:4px;
-  font-size:9px !important; font-weight:700 !important;
-  color:var(--fb-ink-mute) !important; letter-spacing:.8px !important; text-transform:uppercase !important;
-  pointer-events:none !important; z-index:4; background:transparent !important;
+.fb-timer-preset-btn.active {
+    background: var(--fb-blue);
+    border-color: var(--fb-blue);
+    color: #fff;
 }
 
-/* Scroll track */
-.fb-drum-scroll {
-  width:100% !important; overflow-y:auto !important; overflow-x:hidden !important; height:152px !important;
-  -webkit-overflow-scrolling:touch;
-  scroll-snap-type:y mandatory;
-  display:flex !important; flex-direction:column !important; align-items:center !important;
-  scrollbar-width:none;
-  padding: 0 !important;
-  margin: 0 !important;
-  box-sizing: border-box !important;
+/* Label Row */
+.fb-timer-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--fb-paper);
+    border: 1px solid var(--fb-line);
+    border-radius: 10px;
+    gap: 8px;
 }
-.fb-drum-scroll::-webkit-scrollbar { display:none !important }
+.fb-timer-label-key {
+    font-size: 10.5px;
+    font-weight: 800;
+    color: var(--fb-ink-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+}
+.fb-timer-label-val {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--fb-ink);
+    font-size: 12.5px;
+    font-weight: 600;
+    text-align: right;
+    font-family: inherit;
+    min-width: 0;
+}
+.fb-timer-label-val::placeholder { color: var(--fb-ink-mute); }
 
-/* Each drum item */
-.fb-drum-item {
-  flex-shrink:0 !important; height:36px !important; display:flex !important;
-  align-items:center !important; justify-content:center !important;
-  font-size:20px !important; font-weight:400 !important;
-  color:var(--fb-ink-mute) !important;
-  width:100% !important; scroll-snap-align:center;
-  transition:color .18s, font-weight .18s, font-size .18s;
-  text-align:center !important;
-}
-.fb-drum-item.selected {
-  color:var(--fb-ink) !important; font-size:27px !important; font-weight:200 !important;
-  text-shadow:none !important; opacity:1 !important;
-}
-.fb-drum-item.near {
-  color:var(--fb-ink) !important; font-size:22px !important; opacity:0.5 !important;
-}
-
-/* Buttons row */
-.fb-drum-btns {
-  display:flex !important; align-items:center !important; justify-content:space-between !important;
-  margin:18px 4px 14px !important;
-}
-.fb-drum-btn {
-  width:62px !important; height:62px !important; border-radius:16px !important; border:none !important;
-  font-size:14px !important; font-weight:600 !important; cursor:pointer !important;
-  transition:transform .12s, opacity .15s;
-  display:flex !important; align-items:center !important; justify-content:center !important;
-}
-.fb-drum-btn:active { transform:scale(.92) }
-.fb-drum-btn.cancel {
-  background:var(--fb-card) !important;
-  color:var(--fb-ink) !important;
-  border:1.5px solid var(--fb-line) !important;
-}
-.fb-drum-btn.cancel:hover { background:var(--fb-line) !important; }
-.fb-drum-btn.start {
-  background:var(--fb-blue) !important; color:#fff !important;
-  width:90px !important; font-size:15px !important;
-  box-shadow:0 6px 24px rgba(0,229,255,.2);
-}
-.fb-drum-btn.start:hover { opacity:.88 !important }
-.fb-drum-btn.start.zero { opacity:.38 !important; pointer-events:none !important }
-
-/* Meta row (Label) */
-.fb-drum-meta {
-  border-radius:14px !important; overflow:hidden !important;
-  background:var(--fb-card) !important; border:1.5px solid var(--fb-line) !important;
-  margin-bottom:20px !important;
-}
-.fb-drum-meta-row {
-  display:flex !important; align-items:center !important; justify-content:space-between !important;
-  padding:13px 18px !important; border-bottom:1px solid var(--fb-line) !important;
-}
-.fb-drum-meta-row:last-child { border-bottom:none !important }
-.fb-drum-meta-lbl { font-size:13.5px !important; color:var(--fb-ink) !important; font-weight:500 !important }
-.fb-drum-meta-val { font-size:13.5px !important; color:var(--fb-ink-mute) !important }
-
-/* Recents */
-.fb-drum-recents { margin-top:16px !important; padding-top:14px !important; border-top:1px solid var(--fb-line) !important; }
-.fb-drum-recents-title {
-  font-size:13px !important; font-weight:700 !important; color:var(--fb-ink-mute) !important;
-  margin-bottom:6px !important; letter-spacing:.5px !important; text-transform:uppercase !important;
-}
-.fb-drum-recent-item {
-  display:flex !important; align-items:center !important; justify-content:space-between !important;
-  padding:12px 0 !important; border-bottom:1px solid var(--fb-line) !important;
-  cursor:pointer !important;
-}
-.fb-drum-recent-item:last-child { border-bottom:none !important }
-.fb-drum-recent-time { font-size:28px !important; font-weight:300 !important; color:var(--fb-ink) !important; letter-spacing:-1px !important }
-.fb-drum-recent-sub { font-size:11px !important; color:var(--fb-ink-mute) !important; margin-top:2px !important }
-.fb-drum-recent-play {
-  width:38px !important; height:38px !important; border-radius:10px !important; border:none !important;
-  background:var(--fb-blue) !important; color:#fff !important;
-  font-size:14px !important; cursor:pointer !important; display:flex !important;
-  align-items:center !important; justify-content:center !important;
-  transition:opacity .15s;
-}
-.fb-drum-recent-play:hover { opacity:.82 !important }
-
-/* Running ring view */
-.fb-timer-ring {
-  width:170px !important; height:170px !important; margin:14px auto 18px !important;
-  position:relative !important; filter:drop-shadow(0 0 0px transparent);
-  transition:filter .6s ease;
-}
-.fb-timer-ring.running {
-  filter:drop-shadow(0 0 18px var(--tc,#4d9fff)) drop-shadow(0 0 6px var(--tc,#4d9fff));
-  animation:ringPulse 2s infinite ease-in-out;
-}
-@keyframes ringPulse {
-  0%,100% { filter:drop-shadow(0 0 12px var(--tc,#4d9fff)) drop-shadow(0 0 3px var(--tc,#4d9fff)) }
-  50%      { filter:drop-shadow(0 0 28px var(--tc,#4d9fff)) drop-shadow(0 0 12px var(--tc,#4d9fff)) }
-}
-.fb-timer-ring svg { display:block !important; transform:rotate(-90deg) }
-.fb-tc {
-  position:absolute !important; inset:0; display:flex !important;
-  flex-direction:column !important; align-items:center !important; justify-content:center !important; z-index:2;
-}
-.fb-t-digits {
-  font-size:34px !important; font-weight:300 !important; color:var(--fb-ink) !important;
-  letter-spacing:-1px !important; font-variant-numeric:tabular-nums;
-}
-.fb-t-lbl {
-  font-size:11px !important; font-weight:700 !important; letter-spacing:2px !important;
-  text-transform:uppercase !important; margin-top:4px !important; transition:color .5s;
-  color:var(--fb-ink-mute) !important;
-}
-.fb-timer-ring-bg {
-  position:absolute !important; inset:-20px; border-radius:0 !important;
-  background:radial-gradient(circle, var(--tc,#4A90E2) 0%, transparent 70%) !important;
-  opacity:0 !important; transition:opacity .6s ease; pointer-events:none !important; filter:blur(20px); z-index:0;
-}
-.fb-timer-ring.running .fb-timer-ring-bg { opacity:0.08 !important }
-
-/* Running view buttons */
-.fb-timer-run-btns {
-  display:flex !important; gap:18px !important; justify-content:center !important; margin-bottom:22px !important;
-}
-.fb-run-btn {
-  height:52px !important; min-width:52px !important; padding:0 20px !important; border-radius:14px !important; border:none !important;
-  font-size:15px !important; cursor:pointer !important; transition:transform .12s, background .15s;
-  display:flex !important; align-items:center !important; justify-content:center !important; font-weight:700 !important;
-}
-.fb-run-btn:active { transform:scale(.92) }
-.fb-run-btn.pause {
-  background:var(--fb-line) !important; color:var(--fb-ink) !important;
-}
-.fb-run-btn.stop {
-  background:rgba(232,139,125,.12) !important; color:#E88B7D !important;
-}
-.fb-run-btn.pause.running { background:var(--fb-blue) !important; color:#fff !important }
-
-/* Stats bar */
-.fb-timer-stats {
-  display:flex !important; justify-content:space-between !important; align-items:center !important;
-  padding:16px 20px !important; border-radius:14px !important;
-  background:var(--fb-card) !important; border:1.5px solid var(--fb-line) !important;
-  margin-top:8px !important;
-}
-.fb-tstat { text-align:center !important; flex:1 !important }
-.fb-tstat-val { font-size:19px !important; font-weight:700 !important; color:var(--fb-ink) !important }
-.fb-tstat-lbl { font-size:11px !important; color:var(--fb-ink-mute) !important; margin-top:3px !important; letter-spacing:.5px !important; text-transform:uppercase !important }
-.fb-tstat-div { width:1px !important; height:34px !important; background:var(--fb-line) !important; flex-shrink:0 !important }
-
-@keyframes timerComplete {
-  0%{transform:scale(1)} 18%{transform:scale(1.09)} 36%{transform:scale(.97)} 54%{transform:scale(1.04)} 100%{transform:scale(1)}
-}
-.fb-timer-ring.complete { animation:timerComplete .65s ease-out }
-
-
-/* ── ALARM — clean redesign ── */
-
-/* Creator */
-.fb-alarm-creator {
-  margin-bottom:20px !important;
-}
-.fb-alarm-input-wrap {
-  position:relative !important; margin-bottom:10px !important;
-}
-.fb-alarm-lbl-in {
-  width:100% !important; background:var(--fb-card) !important;
-  border:1.5px solid var(--fb-line) !important;
-  border-radius:12px !important; color:var(--fb-ink) !important;
-  font-size:14px !important; font-weight:400 !important;
-  padding:13px 16px !important; outline:none !important;
-  transition:border-color .2s, box-shadow .2s;
-}
-.fb-alarm-lbl-in:focus {
-  border-color:var(--fb-blue) !important;
-  box-shadow:0 0 0 3px var(--fb-blue-soft) !important;
-}
-.fb-alarm-lbl-in::placeholder { color: var(--fb-ink-mute) !important }
-
-/* Quick time chips */
-.fb-al-quick-row {
-  display:flex !important; gap:8px !important; margin-bottom:14px !important; flex-wrap:nowrap !important;
-  overflow-x:auto !important; scrollbar-width:none !important;
-}
-.fb-al-quickbtn {
-  padding:7px 13px !important; border-radius:8px !important;
-  font-size:11.5px !important; font-weight:600 !important; letter-spacing:.1px !important;
-  border:1.5px solid var(--fb-line) !important;
-  background:var(--fb-card) !important; color:var(--fb-ink-mute) !important;
-  cursor:pointer !important; transition:all .18s; white-space:nowrap !important;
-}
-.fb-al-quickbtn:hover { background:var(--fb-line-soft) !important; color:var(--fb-ink) !important; border-color:var(--fb-line) !important }
-.fb-al-quickbtn.active {
-  background:var(--fb-blue-soft) !important;
-  border-color:var(--fb-blue) !important; color:var(--fb-blue) !important;
-  box-shadow:none !important;
+/* Timer Display */
+.fb-timer-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 8px 0 4px;
 }
 
-/* Date+time row */
-.fb-alarm-timepick {
-  display:grid !important; grid-template-columns:1fr 1fr; gap:12px !important; margin-bottom:14px !important;
+.fb-timer-input-group {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-/* Set button */
-.fb-al-set-btn {
-  width:100% !important; padding:14px !important; border-radius:12px !important;
-  font-size:14.5px !important; font-weight:700 !important; letter-spacing:.3px !important;
-  background:var(--fb-blue) !important; color:#fff !important;
-  border:none !important; cursor:pointer !important;
-  transition:opacity .15s, transform .1s, box-shadow .25s;
-  box-shadow:0 6px 22px rgba(0,229,255,.2);
+.fb-timer-input {
+    width: 68px;
+    height: 56px;
+    text-align: center;
+    font-size: 40px;
+    font-weight: 800;
+    color: var(--fb-ink);
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 0 8px 0 0;
+    margin: 0;
+    border-radius: 10px;
+    transition: background 0.2s;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -2px;
 }
-.fb-al-set-btn:hover { opacity:.88 !important; box-shadow:0 8px 28px rgba(0,229,255,.3) }
-.fb-al-set-btn:active { transform:scale(.97) }
+.fb-timer-input:hover { background: var(--fb-line-soft); }
+.fb-timer-input:focus { background: var(--fb-line-soft); }
 
-/* Feedback */
-.fb-fb { font-size:12px !important; min-height:18px !important; margin:4px 2px 10px !important; }
-
-/* Section header */
-.fb-al-section-hdr {
-  display:flex !important; align-items:center !important; justify-content:space-between !important;
-  margin-bottom:10px !important;
-}
-.fb-al-section-title {
-  font-size:12px !important; font-weight:700 !important; letter-spacing:.8px !important;
-  text-transform:uppercase !important; color:var(--fb-ink-mute) !important;
-}
-.fb-al-section-count {
-  font-size:11px !important; font-weight:600 !important;
-  color:var(--fb-ink-mute) !important;
-}
-
-/* Alarm cards */
-.fb-alarm-card {
-  display:flex !important; align-items:center !important; gap:10px !important;
-  padding:12px 14px !important; border-radius:12px !important;
-  background:var(--fb-card) !important;
-  border:1.5px solid var(--fb-line) !important;
-  box-shadow:0 2px 8px rgba(0,0,0,.04) !important;
-  animation:fb-in .22s ease;
-  transition:all .2s;
-  margin-bottom:6px !important;
-}
-.fb-alarm-card:last-child { margin-bottom:0 !important }
-.fb-alarm-card:hover { 
-  background:var(--fb-line-soft) !important;
-  transform:translateY(-1px) !important;
-  box-shadow:0 4px 16px rgba(0,0,0,.07) !important;
-}
-.fb-alarm-card.urgent .fb-alcard-time-big { color:#E88B7D !important }
-
-/* Left: big time + label */
-.fb-alcard-left { flex:1 !important; min-width:0 !important }
-.fb-alcard-time-big {
-  font-size:18px !important; font-weight:600 !important; letter-spacing:-.3px !important;
-  color:var(--fb-ink) !important; font-variant-numeric:tabular-nums; line-height:1 !important;
-}
-.fb-alarm-card.urgent .fb-alcard-time-big { color:#E88B7D !important }
-.fb-alcard-label {
-  font-size:11px !important; font-weight:500 !important;
-  color:var(--fb-ink-mute) !important; margin-top:3px !important;
-  white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis;
-  max-width:180px !important;
+.fb-timer-colon {
+    color: var(--fb-ink-mute);
+    font-size: 34px;
+    font-weight: 400;
+    margin-bottom: 6px;
+    line-height: 1;
 }
 
-/* Right: countdown + delete */
-.fb-alcard-right {
-  display:flex !important; align-items:center !important; gap:8px !important; flex-shrink:0 !important;
-}
-.fb-alcard-cd {
-  font-size:11px !important; font-weight:600 !important;
-  color:var(--fb-blue) !important; font-variant-numeric:tabular-nums;
-  text-align:right !important; white-space:nowrap !important;
-}
-.fb-alarm-card.urgent .fb-alcard-cd { color:#E88B7D !important }
-.fb-alcard-del {
-  width:24px !important; height:24px !important; border-radius:6px !important; flex-shrink:0 !important;
-  background:none !important; border:none !important;
-  color:var(--fb-ink-mute) !important; font-size:11px !important;
-  cursor:pointer !important; display:flex !important; align-items:center !important; justify-content:center !important;
-  transition:all .15s;
-}
-.fb-alcard-del:hover { background:rgba(232,139,125,.12) !important; color:#E88B7D !important }
-
-/* Empty state */
-.fb-al-empty {
-  text-align:center !important; padding:36px 16px 12px !important;
-  font-size:12.5px !important; color:var(--fb-ink-mute) !important; line-height:1.7 !important;
-}
-.fb-al-empty-ico { font-size:32px !important; display:block !important; margin-bottom:10px !important; opacity:.45 !important }
-
-.fb-alarm-fields { display:flex !important; flex-direction:column !important; gap:10px !important; margin-bottom:10px !important }
-.fb-fb { font-size:12.5px !important; min-height:20px !important; margin:2px 0 12px !important; padding:0 2px !important }
-
-#fb-toast {
-  position:absolute !important; bottom:112px; right:0; width:320px !important;
-  background:var(--fb-paper) !important; border:1.5px solid var(--fb-yellow-dark) !important;
-  border-radius:12px !important; padding:16px 48px 16px 18px !important; box-shadow:0 12px 40px rgba(0,0,0,.12);
-  transform:translateY(12px) scale(.94); opacity:0 !important; pointer-events:none !important;
-  transition:all .3s cubic-bezier(.34,1.56,.64,1);
-}
-#fb-toast.show { transform:translateY(0) scale(1); opacity:1 !important; pointer-events:all !important }
-#fb-toast-ttl { font-size:13.5px !important; font-weight:700 !important; color:var(--fb-yellow-dark) !important; margin-bottom:5px !important }
-#fb-toast-msg { font-size:13px !important; color:var(--fb-ink) !important; line-height:1.45 !important }
-#fb-toast-action {
-  margin-top:10px !important; padding:7px 18px !important; border-radius:8px !important;
-  background:#E88B7D !important; color:#fff !important; font-size:12px !important; font-weight:700 !important;
-  border:none !important; cursor:pointer !important; display:none !important; transition:opacity .15s;
-}
-#fb-toast-action:hover { opacity:.85 !important }
-#fb-toast-x { position:absolute !important; top:13px; right:15px; background:none !important; border:none !important; color:var(--fb-ink-mute) !important; cursor:pointer !important; font-size:15px !important; transition:color .15s }
-#fb-toast-x:hover { color:var(--fb-ink) !important }
-
-.fb-pt { position:absolute !important; border-radius:0 !important; pointer-events:none !important; animation:fb-burst .7s ease-out forwards }
-@keyframes fb-burst { 0%{opacity:1;transform:translate(0,0) scale(1)} 100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(.1)} }
-
-/* fb-task-pri-lbl2 removed — replaced by fb-pri-dd dropdown */
-
-/* ── Note title input ── */
-.fb-note-title-in {
-  width:100% !important; background:transparent !important;
-  color:var(--fb-ink) !important; font-size:13px !important; font-weight:600 !important;
-  border:none !important; border-bottom:1px solid var(--fb-line) !important;
-  padding:6px 2px !important; margin-bottom:6px !important;
-}
-.fb-note-title-in::placeholder { color:var(--fb-ink-mute) !important; font-weight:400 !important }
-.fb-note-title-lbl {
-  font-size:13px !important; font-weight:700 !important; color:var(--fb-ink) !important;
-  margin-bottom:4px !important;
+/* Action Buttons */
+.fb-timer-actions {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    align-items: stretch;
 }
 
-/* Timer label inline input */
-.fb-drum-label-input {
-  background:transparent !important; color:var(--fb-ink-mute) !important;
-  font-size:13px !important; font-weight:500 !important;
-  border:none !important; border-bottom:1px solid var(--fb-line) !important;
-  text-align:right !important; width:120px !important; padding:2px 4px !important;
+.fb-timer-btn {
+    position: relative !important;
+    height: 46px !important;
+    border-radius: 23px !important;
+    border: none !important;
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    transition: all 0.2s ease !important;
+    font-family: inherit !important;
+    line-height: 1 !important;
+    box-sizing: border-box !important;
+    padding: 0 24px !important;
+    vertical-align: middle !important;
 }
-.fb-drum-label-input:focus { border-bottom-color:var(--fb-blue) !important; color:var(--fb-ink) !important }
 
-/* ── Alarm & Timer history items ── */
-.fb-alarm-history-item {
-  display:flex !important; align-items:center !important; gap:10px !important;
-  padding:8px 0 !important; border-bottom:1px solid rgba(31,29,27,.05) !important;
+.fb-timer-btn-icon,
+.fb-timer-btn-icon svg,
+.fb-timer-btn svg {
+    position: static !important;
+    width: 14px !important;
+    height: 14px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    left: auto !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    flex-shrink: 0 !important;
 }
-.fb-alarm-history-item:last-child { border-bottom:none !important }
-.fb-al-history { margin-top:12px !important; padding-top:10px !important; border-top:1px solid rgba(31,29,27,.08) !important }
-/* timer history removed */
 
-/* ── Alarm ringing banner ── */
-.fb-al-ringing {
-  align-items:center !important; gap:12px !important;
-  background:rgba(255,60,60,.18) !important; border:1.5px solid rgba(255,80,80,.40) !important;
-  border-radius:0 !important; padding:14px 16px !important; margin-bottom:14px !important;
-  animation:fb-pulse-red .9s ease-in-out infinite;
-  box-shadow:0 0 30px rgba(255,60,60,.15) !important;
+.fb-timer-btn-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
-.fb-al-ringing.visible {
-  display:flex !important;
+
+.fb-timer-btn-text,
+#fb-textStartStop {
+    position: static !important;
+    display: inline-block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
 }
-@keyframes fb-pulse-red { 0%,100%{box-shadow:0 0 0 0 rgba(255,80,80,.4), 0 0 30px rgba(255,60,60,.1)} 50%{box-shadow:0 0 0 8px rgba(255,80,80,0), 0 0 40px rgba(255,60,60,.2)} }
-.fb-al-ring-ico { font-size:22px !important; animation:fb-ring-shake .4s ease infinite }
-@keyframes fb-ring-shake { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-18deg)} 75%{transform:rotate(18deg)} }
-.fb-al-ring-lbl { flex:1 !important; font-size:14px !important; font-weight:700 !important; color:#ff9090 !important; line-height:1.3 !important }
-.fb-al-stop-btn {
-  padding:8px 18px !important; border-radius:0 !important;
-  background:#ff4444 !important; color:#fff !important; font-size:12px !important; font-weight:800 !important;
-  border:none !important; cursor:pointer !important;
-  box-shadow:0 4px 14px rgba(255,60,60,.4) !important; transition:opacity .15s;
+
+.fb-btn-reset {
+    flex: 0 0 88px !important;
+    background: var(--fb-line-soft) !important;
+    color: var(--fb-ink-mute) !important;
+    border: 1.5px solid var(--fb-line) !important;
 }
-.fb-al-stop-btn:hover { opacity:.88 !important }
+.fb-btn-reset:hover {
+    background: var(--fb-line) !important;
+    color: var(--fb-ink) !important;
+}
+
+.fb-btn-start {
+    flex: 1 !important;
+    background: #6c5ce7 !important;
+    color: white !important;
+    box-shadow: 0 4px 14px rgba(108, 92, 231, 0.3) !important;
+}
+.fb-btn-start:hover {
+    background: #5b4bc4 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 18px rgba(108, 92, 231, 0.4) !important;
+}
+.fb-btn-start:active { transform: translateY(0) !important; }
+.fb-btn-start.running {
+    background: #e84393 !important;
+    box-shadow: 0 4px 14px rgba(232, 67, 147, 0.3) !important;
+}
+.fb-btn-start.running:hover { background: #cf3a84 !important; transform: translateY(-1px) !important; }
+
+/* Timer History */
+.fb-timer-history-wrap {
+    border-top: 1px solid var(--fb-line);
+    padding-top: 12px;
+    margin-top: 2px;
+    width: 100%;
+}
+.fb-timer-history-hdr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+.fb-timer-history-lbl {
+    font-size: 9.5px;
+    font-weight: 800;
+    color: var(--fb-ink-mute);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.fb-timer-history-time {
+    font-size: 9.5px;
+    color: var(--fb-ink-mute);
+    font-weight: 600;
+}
+.fb-timer-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+}
+.fb-timer-history-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 9px;
+    background: var(--fb-paper);
+    border: 1px solid var(--fb-line);
+    transition: border-color 0.15s;
+    box-sizing: border-box;
+    width: 100%;
+}
+.fb-timer-history-item:hover { border-color: var(--fb-blue); }
+.fb-timer-history-icon {
+    font-size: 14px;
+    flex-shrink: 0;
+    line-height: 1;
+}
+.fb-timer-history-info {
+    flex: 1;
+    min-width: 0;
+}
+.fb-timer-history-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--fb-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.fb-timer-history-dur {
+    font-size: 10.5px;
+    color: var(--fb-ink-mute);
+    margin-top: 1px;
+}
+.fb-timer-history-restart {
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--fb-line);
+    background: transparent;
+    color: var(--fb-ink-mute);
+    font-size: 10.5px;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+    font-family: inherit;
+    transition: all 0.15s;
+}
+.fb-timer-history-restart:hover {
+    background: var(--fb-blue-soft);
+    border-color: var(--fb-blue);
+    color: var(--fb-blue);
+}
+.fb-timer-history-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.fb-timer-history-del {
+    background: transparent;
+    border: none;
+    color: var(--fb-ink-mute);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 2px 6px;
+    line-height: 1;
+    transition: color 0.15s;
+}
+.fb-timer-history-del:hover {
+    color: var(--fb-red);
+}
 
 /* ── Alarm creator new layout ── */
 .fb-al-create-row {
@@ -3084,7 +2971,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   <div id="fb-tabs">
     <button class="fb-tab act" data-tab="tasks"><span class="ti">✅</span>Tugas</button>
     <button class="fb-tab"     data-tab="notes"><span class="ti">📝</span>Catatan</button>
-    <button class="fb-tab"     data-tab="timer"><span class="ti">⏱</span>Timer</button>
+    <button class="fb-tab"     data-tab="timer"><span class="ti">&#9201;</span>Timer</button>
     <button class="fb-tab"     data-tab="alarm"><span class="ti">🗓️</span>Kalender</button>
     <button class="fb-tab"     data-tab="chat"><span class="ti">💬</span>Chat</button>
   </div>
@@ -3230,108 +3117,75 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
 
     <!-- TIMER -->
     <div class="fb-pane" id="pane-timer">
+        <div class="fb-timer-card">
+            <!-- Preset Chips -->
+            <div class="fb-timer-presets">
+                <button class="fb-timer-preset-btn" data-h="0" data-m="25" data-s="0" data-label="FOKUS">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    25m (Pomo)
+                </button>
+                <button class="fb-timer-preset-btn" data-h="0" data-m="15" data-s="0" data-label="ISTIRAHAT">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    15m (Istirahat)
+                </button>
+                <button class="fb-timer-preset-btn" data-h="0" data-m="5" data-s="0" data-label="FOKUS KILAT">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    5m (Cepat)
+                </button>
+                <button class="fb-timer-preset-btn" data-h="1" data-m="0" data-s="0" data-label="Sesi Panjang">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    1h (Sesi)
+                </button>
+            </div>
 
-      <!-- SET VIEW: Drum Picker -->
-      <div id="fb-timer-set-view">
+            <!-- Label Row -->
+            <div class="fb-timer-label-row">
+                <span class="fb-timer-label-key">Label</span>
+                <input type="text" id="fb-timer-label-input" class="fb-timer-label-val" placeholder="Sesi Menulis Fokus" maxlength="40">
+            </div>
 
-        <!-- Drum columns -->
-        <div class="fb-drum-wrap">
-          <div class="fb-drum-highlight"></div>
+            <!-- Timer Display -->
+            <div class="fb-timer-display">
+                <div class="fb-timer-input-group">
+                    <input type="number" id="fb-timer-hrs" class="fb-timer-input" value="00" min="0" max="99" title="Jam">
+                </div>
+                <span class="fb-timer-colon">:</span>
+                <div class="fb-timer-input-group">
+                    <input type="number" id="fb-timer-min" class="fb-timer-input" value="25" min="0" max="59" title="Menit">
+                </div>
+                <span class="fb-timer-colon">:</span>
+                <div class="fb-timer-input-group">
+                    <input type="number" id="fb-timer-sec" class="fb-timer-input" value="00" min="0" max="59" title="Detik">
+                </div>
+            </div>
+            
+            <div class="fb-timer-actions">
+                <button class="fb-timer-btn fb-btn-reset" id="fb-btnReset">
+                    <span class="fb-timer-btn-icon">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                    </span>
+                    <span class="fb-timer-btn-text">Reset</span>
+                </button>
+                <button class="fb-timer-btn fb-btn-start" id="fb-btnStartStop">
+                    <span class="fb-timer-btn-icon">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" id="fb-iconPlay"><path d="M5 3l14 9-14 9V3z"/></svg>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" id="fb-iconStop" style="display:none;"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                    </span>
+                    <span id="fb-textStartStop">Mulai</span>
+                </button>
+            </div>
 
-          <!-- Hours -->
-          <div class="fb-drum-col">
-            <div class="fb-drum-scroll" id="fb-drum-h-scroll"></div>
-            <div class="fb-drum-label">JAM</div>
-          </div>
+            <!-- Timer History -->
+            <div class="fb-timer-history-wrap" id="fb-timer-history-wrap" style="display:none">
+                <div class="fb-timer-history-hdr">
+                    <span class="fb-timer-history-lbl">Riwayat Timer &amp; Preset</span>
+                    <span class="fb-timer-history-time" id="fb-timer-history-ts"></span>
+                </div>
+                <div class="fb-timer-history-list" id="fb-timer-history-list"></div>
+            </div>
 
-          <!-- separator -->
-          <div style="display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:200;color:var(--fb-ink-mute);padding:0 2px;z-index:5;margin-bottom:12px !important;">:</div>
-
-          <!-- Minutes -->
-          <div class="fb-drum-col">
-            <div class="fb-drum-scroll" id="fb-drum-m-scroll"></div>
-            <div class="fb-drum-label">MNT</div>
-          </div>
-
-          <!-- separator -->
-          <div style="display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:200;color:var(--fb-ink-mute);padding:0 2px;z-index:5;margin-bottom:12px !important;">:</div>
-
-          <!-- Seconds -->
-          <div class="fb-drum-col">
-            <div class="fb-drum-scroll" id="fb-drum-s-scroll"></div>
-            <div class="fb-drum-label">DTK</div>
-          </div>
-
-          <div class="fb-drum-overlay top"></div>
-          <div class="fb-drum-overlay bottom"></div>
         </div>
-
-        <!-- Label input -->
-        <div class="fb-drum-meta">
-          <div class="fb-drum-meta-row">
-            <span class="fb-drum-meta-lbl">Label</span>
-            <input class="fb-drum-label-input" id="fb-t-label-val" value="Timer" maxlength="30" placeholder="Timer" />
-          </div>
-        </div>
-
-        <!-- Buttons row -->
-        <div class="fb-drum-btns">
-          <button class="fb-drum-btn cancel" id="fb-t-cancel">Batal</button>
-          <button class="fb-drum-btn start zero" id="fb-t-start-drum">▶ Mulai</button>
-        </div>
-
-        <!-- Recent timers -->
-        <div class="fb-drum-recents" id="fb-drum-recents" style="display:none">
-          <div class="fb-drum-recents-title">Terakhir Dipakai</div>
-          <div id="fb-drum-recents-list"></div>
-        </div>
-
-      </div><!-- /#fb-timer-set-view -->
-
-      <!-- RUN VIEW: countdown ring (hidden initially) -->
-      <div id="fb-timer-run-view" style="display:none">
-
-        <!-- Ring -->
-        <div class="fb-timer-ring" id="fb-timer-ring-wrap">
-          <div class="fb-timer-ring-bg"></div>
-          <svg width="160" height="160" viewBox="0 0 160 160">
-            <circle cx="80" cy="80" r="74" fill="none" stroke="rgba(31,29,27,.07)" stroke-width="7"/>
-            <circle id="fb-tring" cx="80" cy="80" r="74" fill="none"
-              stroke="#4A90E2" stroke-width="7"
-              stroke-dasharray="465" stroke-dashoffset="0"
-              stroke-linecap="round"/>
-          </svg>
-          <div class="fb-tc">
-            <div class="fb-t-digits" id="fb-tdisp">00:00</div>
-            <div class="fb-t-lbl" id="fb-tlbl">TIMER</div>
-          </div>
-        </div>
-
-        <!-- Pause / Stop buttons -->
-        <div class="fb-timer-run-btns">
-          <button class="fb-run-btn pause" id="fb-t-pause">▶</button>
-          <button class="fb-run-btn stop"  id="fb-t-stop">■ Stop</button>
-        </div>
-
-        <!-- Stats -->
-        <div class="fb-timer-stats">
-          <div class="fb-tstat">
-            <div class="fb-tstat-val" id="fb-tstat-sess">0</div>
-            <div class="fb-tstat-lbl">Sesi Fokus</div>
-          </div>
-          <div class="fb-tstat-div"></div>
-          <div class="fb-tstat">
-            <div class="fb-tstat-val" id="fb-tstat-min">0m</div>
-            <div class="fb-tstat-lbl">Total Menit</div>
-          </div>
-        </div>
-
-      </div><!-- /#fb-timer-run-view -->
-
-
-
     </div><!-- /#pane-timer -->
-
     <!-- NOTES -->
     <div class="fb-pane" id="pane-notes">
       <!-- Header -->
@@ -3390,14 +3244,14 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
               <button type="button" class="fb-rte-btn" data-cmd="bold" title="Bold (Ctrl+B)" style="font-weight:800;">B</button>
               <button type="button" class="fb-rte-btn" data-cmd="italic" title="Italic (Ctrl+I)" style="font-style:italic;">I</button>
               <span style="width:1px; background:var(--fb-line); margin:0 4px;"></span>
-              <button type="button" class="fb-rte-btn" data-cmd="insertUnorderedList" title="Bullet List">•</button>
+              <button type="button" class="fb-rte-btn" data-cmd="insertUnorderedList" title="Bullet List">&bull;</button>
               <button type="button" class="fb-rte-btn" data-cmd="insertOrderedList" title="Numbered List">1.</button>
               <span style="width:1px; background:var(--fb-line); margin:0 4px;"></span>
-              <button type="button" class="fb-rte-btn" data-cmd="removeFormat" title="Clear Format" style="font-size:11px;">✕</button>
+              <button type="button" class="fb-rte-btn" data-cmd="removeFormat" title="Clear Format" style="font-size:11px;">&#10006;</button>
             </div>
             <div id="fb-note-in" contenteditable="true" class="fb-in fb-rte-editor" 
               style="width:100% !important; min-height:100px !important; max-height:200px !important; overflow-y:auto !important; padding:12px !important; line-height:1.6 !important; box-sizing:border-box !important; border:1px solid var(--fb-line) !important; border-radius:0 0 8px 8px !important; outline:none !important;"
-              data-placeholder="Tuliskan semua idemu di sini…"></div>
+              data-placeholder="Tuliskan semua idemu di sini..."></div>
           </div>
           <!-- Footer bar -->
           <div style="display:flex; align-items:center; justify-content:flex-end; padding:12px 16px 14px;">
@@ -3509,7 +3363,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       <!-- Filter strip (shown when a date is selected) -->
       <div class="fb-cal-filter-bar" id="fb-cal-filter-bar" style="display:none">
         <span class="fb-cal-filter-lbl" id="fb-cal-filter-lbl">📅 Semua acara</span>
-        <button class="fb-cal-filter-clr" id="fb-cal-filter-clr">Semua ×</button>
+        <button class="fb-cal-filter-clr" id="fb-cal-filter-clr">Semua &times;</button>
       </div>
 
 
@@ -4093,9 +3947,9 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
 
       <!-- ZZZ (tidur) -->
       <g class="gelembung-zzz">
-        <text x="138" y="50" fill="white" font-size="32" font-weight="900" font-family="Outfit,sans-serif" filter="url(#fb-text-shadow)">Z</text>
-        <text x="163" y="28" fill="white" font-size="22" font-weight="900" font-family="Outfit,sans-serif" filter="url(#fb-text-shadow)">z</text>
-        <text x="178" y="12" fill="white" font-size="15" font-weight="900" font-family="Outfit,sans-serif" filter="url(#fb-text-shadow)">z</text>
+        <text x="138" y="50" fill="white" font-size="32" font-weight="900" font-family="Nunito,sans-serif" filter="url(#fb-text-shadow)">Z</text>
+        <text x="163" y="28" fill="white" font-size="22" font-weight="900" font-family="Nunito,sans-serif" filter="url(#fb-text-shadow)">z</text>
+        <text x="178" y="12" fill="white" font-size="15" font-weight="900" font-family="Nunito,sans-serif" filter="url(#fb-text-shadow)">z</text>
       </g>
 
     </svg>
@@ -4599,7 +4453,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       tabs: [
         { key: 'tasks', icon: '✅', label: 'Tugas' },
         { key: 'notes', icon: '📝', label: 'Catatan' },
-        { key: 'timer', icon: '⏱',  label: 'Timer' },
+        { key: 'timer', icon: '\u23f1',  label: 'Timer' },
         { key: 'alarm', icon: '🗓️', label: 'Kalender' },
         { key: 'chat',  icon: '💬', label: 'Chat' },
       ],
@@ -4791,7 +4645,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
     { min: 0, max: 0, msg: 'Yuk mulai hari ini! 💪' },
     { min: 1, max: 25, msg: 'Langkah pertama sudah dimulai! 🚀' },
     { min: 26, max: 50, msg: 'Setengah perjalanan! 🔥' },
-    { min: 51, max: 75, msg: 'Hampir sampai! ✨' },
+    { min: 51, max: 75, msg: 'Hampir sampai! \u2728' },
     { min: 76, max: 99, msg: 'Satu lagi, pasti bisa! 🎯' },
     { min: 100, max: 100, msg: 'Semua selesai! Luar biasa! 🎉' },
   ]
@@ -4889,7 +4743,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
     ctx.focusIntention = task.text || '';
     ctx.focusProgress = task.progress || 0;
     
-    showToast('🎯 Fokus Utama!', `"${task.text}" dijadikan fokus utama hari ini`, 2000);
+    showToast('&#127919; Fokus Utama!', `"${task.text}" dijadikan fokus utama hari ini`, 2000);
     
     save();
     renderTasks();
@@ -4951,17 +4805,17 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
 
     if (!filtered.length) {
       if (taskFilter === 'done' && done === 0) {
-        list.innerHTML = `<div class="fb-empty"><span class="fb-empty-ico">✅</span>Belum ada yang selesai</div>`
+        list.innerHTML = `<div class="fb-empty"><span class="fb-empty-ico">&#9989;</span>Belum ada yang selesai</div>`
       } else if (taskFilter === 'active' && active === 0 && td.length > 0) {
         // All done! celebration
         list.innerHTML = `
           <div class="fb-task-celebrate">
-            <span class="fb-task-celebrate-ico">🏆</span>
+            <span class="fb-task-celebrate-ico">&#127942;</span>
             <div class="fb-task-celebrate-msg">Semua tugas selesai!</div>
-            <div class="fb-task-celebrate-sub">Kamu luar biasa hari ini ✨</div>
+            <div class="fb-task-celebrate-sub">Kamu luar biasa hari ini &#10024;</div>
           </div>`
       } else {
-        list.innerHTML = `<div class="fb-empty"><span class="fb-empty-ico">📋</span>Belum ada tugas hari ini</div>`
+        list.innerHTML = `<div class="fb-empty"><span class="fb-empty-ico">&#128203;</span>Belum ada tugas hari ini</div>`
       }
       return
     }
@@ -4974,7 +4828,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       card.className = 'fb-task-card' + (task.done ? ' done' : '') + (isFocused ? ' focused' : '')
       card.style.setProperty('--task-color', pcfg.color)
       card.innerHTML = `
-        <button class="fb-task-chk2">${task.done ? '✓' : ''}</button>
+        <button class="fb-task-chk2">${task.done ? '&#10003;' : ''}</button>
         <div class="fb-task-card-body">
           <div class="fb-task-card-txt">${esc(task.text)}</div>
           <div class="fb-task-card-meta">
@@ -4983,7 +4837,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
             <span class="fb-task-time-tag">${relTimeTask(task.id)}</span>
             ${(task.timeTracked > 0 || task.timerStartedAt) ? `
               <span style="color:var(--fb-line); font-size:10px;">•</span>
-              <span style="font-size:11px;">⏱️</span>
+              <span style="font-size:11px;">&#9201;&#65039;</span>
               <span class="fb-task-time-tracked-tag ${task.timerStartedAt ? 'running' : ''}" style="
                 font-size: 9px !important;
                 font-weight: 800 !important;
@@ -5012,14 +4866,14 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
         <div class="fb-task-actions-group">
           ${!task.done ? `
             <button class="fb-task-action-btn play-btn ${task.timerStartedAt ? 'running' : ''}" title="${task.timerStartedAt ? 'Jeda Pekerjaan' : 'Mulai Pekerjaan'}">
-              ${task.timerStartedAt ? '⏸️' : '▶️'}
+              ${task.timerStartedAt ? '&#9208;' : '&#9654;'}
             </button>
             <button class="fb-task-action-btn focus-btn" title="Set as Focus Today">
-              ✨
+              &#10024;
             </button>
           ` : ''}
           <button class="fb-task-action-btn del-btn" title="Hapus Task">
-            🗑️
+            &#128465;
           </button>
         </div>`
       card.querySelector('.fb-task-chk2').onclick = () => toggleTask(task.id)
@@ -5210,7 +5064,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       card.style.marginBottom = '6px !important';
 
       const glyphMap = {
-        leaf: '🌿',
+        leaf: '\ud83c\udf3f',
         brain: '🧠',
         heart: '❤️',
         smile: '😊',
@@ -5240,13 +5094,13 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
           margin-right: 8px !important;
           flex-shrink: 0 !important;
           outline: none !important;
-        ">${h.done ? '✓' : ''}</button>
+        ">${h.done ? '&#10003;' : ''}</button>
         <div style="flex: 1 !important; min-width: 0 !important;">
           <div style="font-size: 12px !important; font-weight: 700 !important; color: var(--fb-ink) !important; text-decoration: ${h.done ? 'line-through' : 'none'} !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;">
             ${glyphIcon} ${esc(h.name)}
           </div>
           <div style="font-size: 10px !important; color: var(--fb-ink-mute) !important; font-weight: 600 !important; margin-top: 1px !important;">
-            🔥 ${h.streak || 0} streak • Target: ${h.target || 30} hari
+            &#128293; ${h.streak || 0} streak &#8226; Target: ${h.target || 30} hari
           </div>
         </div>
       `;
@@ -5287,7 +5141,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
     if (user && user.streak > 0) {
       insights.push({
         tone: 'yellow',
-        title: `Streak ${user.streak} hari 🎉`,
+        title: `Streak ${user.streak} hari &#127881;`,
         body: `Kamu rutin menyapa diri sendiri — ini kebiasaan kecil yang dampaknya besar bagi produktivitasmu.`
       });
     }
@@ -5316,7 +5170,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
     if (doneTasks > 0 && doneTasks === totalTasks) {
       insights.push({
         tone: 'blue',
-        title: 'Semua prioritas selesai! 🚀',
+        title: 'Semua prioritas selesai! &#128640;',
         body: 'Luar biasa, kamu menyelesaikan semua target hari ini. Jangan lupa istirahat yang cukup ya.'
       });
     } else if (doneTasks > 0) {
@@ -5360,11 +5214,11 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
     list.innerHTML = '';
 
     const toneColors = {
-      sage: { bg: 'rgba(255, 253, 240, 0.7)', border: '#FDB913', fg: 'var(--fb-ink)', emoji: '✨' },
+      sage: { bg: 'rgba(255, 253, 240, 0.7)', border: '#FDB913', fg: 'var(--fb-ink)', emoji: '\u2728' },
       blue: { bg: 'rgba(235, 244, 255, 0.7)', border: 'rgba(0, 176, 255, 0.3)', fg: '#1a56db', emoji: '🏃' },
       yellow: { bg: 'rgba(255, 253, 240, 0.8)', border: '#FDB913', fg: 'var(--fb-ink)', emoji: '🎯' },
       coral: { bg: 'rgba(232, 139, 125, 0.12)', border: '#E88B7D', fg: '#E88B7D', emoji: '⚡' },
-      lavender: { bg: 'rgba(177, 151, 252, 0.12)', border: '#b197fc', fg: '#b197fc', emoji: '✨' }
+      lavender: { bg: 'rgba(177, 151, 252, 0.12)', border: '#b197fc', fg: '#b197fc', emoji: '\u2728' }
     };
 
     insights.forEach(ins => {
@@ -5487,7 +5341,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
           const data = await res.json();
 
           if (data.success) {
-            showToast('Clock In Berhasil!', 'Selamat bekerja! Semangat untuk hari ini ☀️');
+            showToast('Clock In Berhasil!', 'Selamat bekerja! Semangat untuk hari ini &#9728;&#65039;');
             modalEl.style.display = 'none';
             if ($('fb-clockin-notes')) $('fb-clockin-notes').value = '';
             
@@ -5532,18 +5386,18 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
     // Geolocation retrieval indicator
     const geoEl = $('fb-clockin-geo');
     if (geoEl) {
-      geoEl.innerHTML = '<span>📍 Mengambil lokasi GPS...</span>';
+      geoEl.innerHTML = '<span>&#128205; Mengambil lokasi GPS...</span>';
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
-            geoEl.innerHTML = `<span>📍 Lokasi didapatkan: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}</span>`;
+            geoEl.innerHTML = `<span>&#128205; Lokasi didapatkan: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}</span>`;
           },
           (err) => {
-            geoEl.innerHTML = '<span>⚠️ GPS tidak aktif / izin ditolak (absen manual tetap bisa dilakukan)</span>';
+            geoEl.innerHTML = '<span>&#9888;&#65039; GPS tidak aktif / izin ditolak (absen manual tetap bisa dilakukan)</span>';
           }
         );
       } else {
-        geoEl.innerHTML = '<span>⚠️ Geolocation tidak didukung browser</span>';
+        geoEl.innerHTML = '<span>&#9888;&#65039; Geolocation tidak didukung browser</span>';
       }
     }
   }
@@ -5684,7 +5538,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
 
           await flowbeeSyncAll();
 
-          showToast('Tutup Hari Berhasil!', 'Sampai jumpa besok! Selamat beristirahat 🌟');
+          showToast('Tutup Hari Berhasil!', 'Sampai jumpa besok! Selamat beristirahat &#127775;');
           modalEl.style.display = 'none';
 
           if ($('fb-reflect-blockers')) $('fb-reflect-blockers').value = '';
@@ -5739,7 +5593,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
         save();
         
         showToast(
-          'Waktunya Tutup Hari 📝', 
+          'Waktunya Tutup Hari \u{1F4DD}', 
           'Shift kamu hampir selesai! Luangkan waktu 1 menit untuk mengisi refleksi harian.', 
           8000, 
           'Isi Sekarang', 
@@ -5975,7 +5829,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
             <button class="fb-note-act pin${note.pinned ? ' active' : ''}" title="${note.pinned ? 'Unpin' : 'Pin'}">📌</button>
             ${canEdit ? `<button class="fb-note-act edit" title="Edit">✏️</button>` : ''}
             <button class="fb-note-act copy" title="Salin">📋</button>
-            ${isAuthor ? `<button class="fb-note-act del" title="Hapus">🗑</button>` : ''}
+            ${isAuthor ? `<button class="fb-note-act del" title="Hapus">&#128465;</button>` : ''}
           </div>
         </div>`
 
@@ -6319,356 +6173,295 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   const srch = $('fb-note-search')
   if (srch) srch.oninput = () => renderNotes(srch.value)
 
+  // TIMER — Minimalist Card Timer & History
   // ═══════════════════════════════════════════════════════════════
-  // TIMER — Drum Picker + Running View
-  // ═══════════════════════════════════════════════════════════════
-  const CIRC = 465
-  let focusMinutesTotal = 0
-  let timerRecents = []   // [{h,m,s,label}]
+  let timerStartTime;
+  let timerInterval;
+  let isTimerRunning = false;
+  let timerElapsedMs = 0;
+  let timerMode = 'countdown';
+  let timerTargetMs = 0;
+  let timerSessionLabel = 'Timer';
 
-  // ── Drum picker state ──
-  let drumH = 0, drumM = 0, drumS = 0   // current picker values
-  let drumLabel = 'Timer'
+  let timerHistory = [];
+  try {
+      const saved = localStorage.getItem('fb_timer_history');
+      if (saved) timerHistory = JSON.parse(saved);
+  } catch(e) {}
 
-  // ── Build one drum column ──
-  function buildDrumScroll(elId, max, padded) {
-    const el = $(elId)
-    if (!el) return
-    el.innerHTML = ''
-    // Padding items top
-    for (let i = 0; i < 2; i++) {
-      const d = document.createElement('div')
-      d.className = 'fb-drum-item'; d.textContent = ''; el.appendChild(d)
-    }
-    for (let v = 0; v <= max; v++) {
-      const d = document.createElement('div')
-      d.className = 'fb-drum-item'
-      d.textContent = padded ? String(v).padStart(2, '0') : v
-      d.dataset.val = v
-      el.appendChild(d)
-    }
-    // Padding items bottom
-    for (let i = 0; i < 2; i++) {
-      const d = document.createElement('div')
-      d.className = 'fb-drum-item'; d.textContent = ''; el.appendChild(d)
-    }
+  const hrsEl = $('fb-timer-hrs');
+  const minEl = $('fb-timer-min');
+  const secEl = $('fb-timer-sec');
+  const btnStartStop = $('fb-btnStartStop');
+  const btnReset = $('fb-btnReset');
+  const iconPlay = $('fb-iconPlay');
+  const iconStop = $('fb-iconStop');
+  const textStartStop = $('fb-textStartStop');
+  const labelInput = $('fb-timer-label-input');
+
+  function getHistoryIcon(label) {
+      const l = (label || '').toLowerCase();
+      if (l.includes('pomo') || l.includes('fokus')) return '&#127811;'; // leaf/pomo
+      if (l.includes('istirahat') || l.includes('break')) return '&#9749;';
+      if (l.includes('coding') || l.includes('kode') || l.includes('develop')) return '&#128187;';
+      if (l.includes('tulis') || l.includes('menulis') || l.includes('pena')) return '&#9999;&#65039;';
+      if (l.includes('rapat') || l.includes('meeting')) return '&#128101;';
+      if (l.includes('baca') || l.includes('riset')) return '&#128218;';
+      return '\u23f1';
   }
 
-  // ── Scroll to a value (instant or smooth) — centers item in 152px container ──
-  function drumScrollTo(elId, val, smooth) {
-    const el = $(elId)
-    if (!el) return
-    const ITEM_H = 36, PADDING = 2, CONTAINER_H = 152
-    const offset = PADDING * ITEM_H - (CONTAINER_H / 2 - ITEM_H / 2) // = 14px
-    el.scrollTo({ top: Math.max(0, val * ITEM_H + offset), behavior: smooth ? 'smooth' : 'instant' })
+  function formatDuration(ms) {
+      const totalSec = Math.round(ms / 1000);
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+      const parts = [];
+      if (h > 0) parts.push(`${h}h`);
+      if (m > 0) parts.push(`${m}m`);
+      if (s > 0 || parts.length === 0) parts.push(`${s}s`);
+      return parts.join(' ');
   }
 
-  // ── Read currently snapped value from a drum scroll ──
-  function readDrum(elId) {
-    const el = $(elId)
-    if (!el) return 0
-    const ITEM_H = 36, PADDING = 2, CONTAINER_H = 152
-    const offset = PADDING * ITEM_H - (CONTAINER_H / 2 - ITEM_H / 2) // = 14px
-    return Math.max(0, Math.round((el.scrollTop - offset) / ITEM_H))
-  }
+  function renderTimerHistory() {
+      const wrap = $('fb-timer-history-wrap');
+      const list = $('fb-timer-history-list');
+      const ts = $('fb-timer-history-ts');
+      if (!wrap || !list) return;
 
-  // ── Update item highlight classes ──
-  function syncDrumHighlight(elId) {
-    const el = $(elId)
-    if (!el) return
-    const ITEM_H = 36, PADDING = 2, CONTAINER_H = 152
-    const offset = PADDING * ITEM_H - (CONTAINER_H / 2 - ITEM_H / 2) // = 14px
-    const center = (el.scrollTop - offset) / ITEM_H
-    el.querySelectorAll('.fb-drum-item').forEach((d, i) => {
-      const realIdx = i - 2  // account for 2 padding items
-      const dist = Math.abs(realIdx - center)
-      d.classList.remove('selected', 'near')
-      if (dist < 0.6) d.classList.add('selected')
-      else if (dist < 1.5) d.classList.add('near')
-    })
-  }
-
-  // ── Format drum values for display in recents ──
-  function fmtDrumTime(h, m, s) {
-    if (h > 0) return `${h}.${String(m).padStart(2, '0')}`
-    return `${m}.${String(s).padStart(2, '0')}`
-  }
-  function fmtDrumSub(h, m, s) {
-    const parts = []
-    if (h) parts.push(`${h} jam`)
-    if (m) parts.push(`${m} mnt`)
-    if (s) parts.push(`${s} dtk`)
-    return parts.join(', ') || '0 dtk'
-  }
-
-  // ── Render recent timers ──
-  function renderDrumRecents() {
-    const wrap = $('fb-drum-recents')
-    const list = $('fb-drum-recents-list')
-    if (!wrap || !list) return
-    if (!timerRecents.length) { wrap.style.display = 'none'; return }
-    wrap.style.display = 'block'
-    list.innerHTML = ''
-    timerRecents.slice(0, 5).forEach(r => {
-      const item = document.createElement('div')
-      item.className = 'fb-drum-recent-item'
-      item.innerHTML = `
-        <div>
-          <div class="fb-drum-recent-time">${fmtDrumTime(r.h, r.m, r.s)}</div>
-          <div class="fb-drum-recent-sub">${fmtDrumSub(r.h, r.m, r.s)}</div>
-        </div>
-        <button class="fb-drum-recent-play" title="Pakai lagi">▶ Mulai</button>`
-      item.querySelector('.fb-drum-recent-play').onclick = e => {
-        e.stopPropagation()
-        launchTimer(r.h * 3600 + r.m * 60 + r.s, r.label || 'Timer')
+      if (timerHistory.length === 0) {
+          wrap.style.display = 'none';
+          return;
       }
-      item.onclick = () => {
-        drumScrollTo('fb-drum-h-scroll', r.h, true)
-        drumScrollTo('fb-drum-m-scroll', r.m, true)
-        drumScrollTo('fb-drum-s-scroll', r.s, true)
-        drumH = r.h; drumM = r.m; drumS = r.s
-        syncDrumHighlight('fb-drum-h-scroll')
-        syncDrumHighlight('fb-drum-m-scroll')
-        syncDrumHighlight('fb-drum-s-scroll')
-        checkDrumStartBtn()
-      }
-      list.appendChild(item)
-    })
+      wrap.style.display = 'block';
+      const first = timerHistory[0];
+      if (ts) ts.textContent = `${first.date} \u00b7 ‎${first.ts}`;
+
+      list.innerHTML = timerHistory.map((h, i) => `
+          <div class="fb-timer-history-item">
+              <span class="fb-timer-history-icon">${getHistoryIcon(h.label)}</span>
+              <div class="fb-timer-history-info">
+                  <div class="fb-timer-history-title">${h.label}</div>
+                  <div class="fb-timer-history-dur">${formatDuration(h.durationMs)} \u00b7 ${h.date} ${h.ts}</div>
+              </div>
+              <div class="fb-timer-history-actions">
+                  <button class="fb-timer-history-restart" data-idx="${i}">Mulai Ulang</button>
+                  <button class="fb-timer-history-del" data-idx="${i}" title="Hapus">&times;</button>
+              </div>
+          </div>
+      `).join('');
+
+      list.querySelectorAll('.fb-timer-history-restart').forEach(btn => {
+          btn.addEventListener('click', () => {
+              if (isTimerRunning) return;
+              const idx = parseInt(btn.dataset.idx);
+              const entry = timerHistory[idx];
+              if (!entry) return;
+              if (hrsEl) hrsEl.value = entry.h.toString().padStart(2, '0');
+              if (minEl) minEl.value = entry.m.toString().padStart(2, '0');
+              if (secEl) secEl.value = entry.s.toString().padStart(2, '0');
+              if (labelInput) labelInput.value = entry.label;
+              root.querySelectorAll('.fb-timer-preset-btn').forEach(b => b.classList.remove('active'));
+              timerElapsedMs = 0;
+          });
+      });
+
+      list.querySelectorAll('.fb-timer-history-del').forEach(btn => {
+          btn.addEventListener('click', () => {
+              const idx = parseInt(btn.dataset.idx);
+              timerHistory.splice(idx, 1);
+              try { localStorage.setItem('fb_timer_history', JSON.stringify(timerHistory)); } catch(e) {}
+              renderTimerHistory();
+          });
+      });
   }
 
-  // ── Enable/disable start button when all zeros ──
-  function checkDrumStartBtn() {
-    const btn = $('fb-t-start-drum')
-    if (!btn) return
-    const zero = (drumH + drumM + drumS === 0)
-    btn.classList.toggle('zero', zero)
+  function saveTimerHistory(label, durationMs) {
+      const now = new Date();
+      const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+      const dateStr = `${now.getDate()} ${months[now.getMonth()]}`;
+      const tsStr = `${String(now.getHours()).padStart(2, '0')}.${String(now.getMinutes()).padStart(2, '0')}`;
+
+      const totalSec = Math.round(durationMs / 1000);
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+
+      timerHistory.unshift({
+          label: label || 'Timer',
+          durationMs,
+          date: dateStr,
+          ts: tsStr,
+          h, m, s
+      });
+      timerHistory = timerHistory.slice(0, 10);
+      try { localStorage.setItem('fb_timer_history', JSON.stringify(timerHistory)); } catch(e) {}
+      renderTimerHistory();
   }
 
-  // ── Initialize drum columns ──
-  function initDrumPicker() {
-    buildDrumScroll('fb-drum-h-scroll', 23, false)
-    buildDrumScroll('fb-drum-m-scroll', 59, true)
-    buildDrumScroll('fb-drum-s-scroll', 59, true)
-
-    // Set defaults: 0h 0m 0s
-    setTimeout(() => {
-      drumScrollTo('fb-drum-h-scroll', 0, false)
-      drumScrollTo('fb-drum-m-scroll', 0, false)
-      drumScrollTo('fb-drum-s-scroll', 0, false)
-      syncDrumHighlight('fb-drum-h-scroll')
-      syncDrumHighlight('fb-drum-m-scroll')
-      syncDrumHighlight('fb-drum-s-scroll')
-      checkDrumStartBtn()
-      renderDrumRecents()
-    }, 50)
-
-      // Scroll listeners
-      ;[
-        ['fb-drum-h-scroll', v => { drumH = v }],
-        ['fb-drum-m-scroll', v => { drumM = v }],
-        ['fb-drum-s-scroll', v => { drumS = v }],
-      ].forEach(([id, setter]) => {
-        const el = $(id)
-        if (!el) return
-        let scrollTimer = null
-        el.addEventListener('scroll', () => {
-          syncDrumHighlight(id)
-          clearTimeout(scrollTimer)
-          scrollTimer = setTimeout(() => {
-            const v = readDrum(id)
-            setter(v)
-            drumScrollTo(id, v, true)
-            syncDrumHighlight(id)
-            checkDrumStartBtn()
-          }, 120)
-        }, { passive: true })
-      })
+  function getTimerLabel() {
+      if (!labelInput) return 'Timer';
+      return labelInput.value.trim() || 'Timer';
   }
 
-  // ── Switch views ──
-  function showDrumView() {
-    const sv = $('fb-timer-set-view'), rv = $('fb-timer-run-view')
-    if (sv) sv.style.display = ''
-    if (rv) rv.style.display = 'none'
-  }
-  function showRunView() {
-    const sv = $('fb-timer-set-view'), rv = $('fb-timer-run-view')
-    if (sv) sv.style.display = 'none'
-    if (rv) rv.style.display = ''
+  function updateTimerDisplay(totalMs) {
+      const hours = Math.floor(Math.abs(totalMs) / 3600000);
+      const minutes = Math.floor((Math.abs(totalMs) % 3600000) / 60000);
+      const seconds = Math.floor((Math.abs(totalMs) % 60000) / 1000);
+      
+      if (hrsEl) hrsEl.value = hours.toString().padStart(2, '0');
+      if (minEl) minEl.value = minutes.toString().padStart(2, '0');
+      if (secEl) secEl.value = seconds.toString().padStart(2, '0');
   }
 
-  // ── Launch timer with given total seconds ──
-  function launchTimer(totalSec, lbl) {
-    clearInterval(timerIv)
-    timerMax = totalSec; timerSec = totalSec; timerLabel = lbl || 'Timer'
-    ctx.timerRunning = false
-    showRunView()
-    updateTimer()
-    // Auto-start
-    startRunTimer()
-  }
-
-  // ── Update ring / display in running view ──
-  function updateTimerStats() {
-    const sessEl = $('fb-tstat-sess')
-    const minEl = $('fb-tstat-min')
-    if (sessEl) sessEl.textContent = pomodoroSessions
-    if (minEl) minEl.textContent = focusMinutesTotal + 'm'
-  }
-
-  function updateTimer() {
-    const color = STATES[currentState].color
-    const totalM = Math.floor(timerSec / 60)
-    const h = Math.floor(totalM / 60)
-    const m = totalM % 60
-    const s = timerSec % 60
-    const disp = $('fb-tdisp')
-    const timeStr = h > 0
-      ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-      : `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-    if (disp && disp.textContent !== timeStr) {
-      disp.textContent = timeStr
-      disp.classList.remove('tick')
-      void disp.offsetWidth
-      disp.classList.add('tick')
-    }
-    const tlbl = $('fb-tlbl')
-    if (tlbl) { tlbl.textContent = timerLabel; tlbl.style.color = color }
-    const ring = $('fb-tring')
-    if (ring) { ring.style.strokeDashoffset = CIRC * (1 - timerSec / timerMax); ring.style.stroke = color }
-    const ringWrap = $('fb-timer-ring-wrap')
-    if (ringWrap) ringWrap.classList.toggle('running', ctx.timerRunning)
-    const pauseBtn = $('fb-t-pause')
-    if (pauseBtn) pauseBtn.innerHTML = ctx.timerRunning ? '⏸' : '▶'
-    root.style.setProperty('--tc', color)
-    updateTimerStats()
-  }
-
-  // ── Start the countdown ──
-  function startRunTimer() {
-    if (ctx.timerRunning) return
-    ctx.timerRunning = true
-    timerIv = setInterval(() => {
-      if (timerSec <= 0) {
-        clearInterval(timerIv); ctx.timerRunning = false; timerSec = 0
-        if (timerLabel === 'FOKUS') {
-          pomodoroSessions++
-          focusMinutesTotal += Math.round(timerMax / 60)
-          // Persist timer stats so they survive page navigation
-          chrome.storage.local.set({ fb3_timerStats: { sessions: pomodoroSessions, minutes: focusMinutesTotal } })
-          if (flowbeeUserId) {
-            window.__FB.fetch(`${FLOWBEE_API}/timer-complete`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userId: flowbeeUserId, durationMinutes: Math.round(timerMax / 60), label: timerLabel })
-            }).then(r => r.json())
-              .then(data => {
-                if (data.success && flowbeeUser) {
-                  flowbeeUser.points = (flowbeeUser.points || 0) + 20;
-                  try { chrome.storage.local.set({ flowbee_user: flowbeeUser }); } catch(e) {}
-                  updateIdentityUI();
-                }
-              })
-              .catch(() => { })
+  function handleTimerTick() {
+      const now = Date.now();
+      const delta = now - timerStartTime;
+      
+      if (timerMode === 'countdown') {
+          timerElapsedMs = timerTargetMs - delta;
+          if (timerElapsedMs <= 0) {
+              timerElapsedMs = 0;
+              stopTimer();
+              if (timerTargetMs > 0) saveTimerHistory(timerSessionLabel, timerTargetMs);
+              playChime(false); burst(); forceState('EXCITED', 5000);
+              currentState = 'EXCITED'; updateBuddySVG('EXCITED'); applyMood('EXCITED');
+              showToast('\u23f1 Timer Selesai!', `${timerSessionLabel} berakhir! \u{1F389}`);
+              
+              if (flowbeeUserId) {
+                  window.__FB.fetch(FLOWBEE_API + '/timer-complete', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ userId: flowbeeUserId, durationMinutes: Math.max(1, Math.round(timerTargetMs / 60000)), label: timerSessionLabel })
+                  }).then(r => r.json()).then(data => {
+                      if (data.success && typeof flowbeeUser !== 'undefined') {
+                          flowbeeUser.points = (flowbeeUser.points || 0) + 20;
+                          try { chrome.storage.local.set({ flowbee_user: flowbeeUser }); } catch(e) {}
+                          if (typeof updateIdentityUI === 'function') updateIdentityUI();
+                      }
+                  }).catch(() => {});
+              }
           }
-        }
-        const rw = $('fb-timer-ring-wrap')
-        if (rw) { rw.classList.add('complete'); setTimeout(() => rw.classList.remove('complete'), 700) }
-        playChime(true); burst(); forceState('EXCITED', 5000)
-        currentState = 'EXCITED'; updateBuddySVG('EXCITED'); applyMood('EXCITED')
-        showToast('⏱ Timer Selesai!', `${timerLabel} berakhir • +20 XP 🎉`)
-      } else timerSec--
-      updateTimer()
-    }, 1000)
-    updateTimer()
+      } else {
+          timerElapsedMs = delta;
+      }
+      updateTimerDisplay(timerElapsedMs);
   }
 
-  // ── Pause / resume ──
-  function pauseResumeTimer() {
-    if (ctx.timerRunning) {
-      clearInterval(timerIv); ctx.timerRunning = false; updateTimer()
-    } else {
-      startRunTimer()
-    }
+  function startTimer() {
+      let h = 0; let m = 0; let s = 0;
+      if (hrsEl) h = parseInt(hrsEl.value) || 0;
+      if (minEl) m = parseInt(minEl.value) || 0;
+      if (secEl) s = parseInt(secEl.value) || 0;
+      
+      const totalRequestedMs = (h * 3600 + m * 60 + s) * 1000;
+      
+      if (totalRequestedMs > 0) {
+          timerMode = 'countdown';
+          timerTargetMs = totalRequestedMs;
+      } else {
+          timerMode = 'stopwatch';
+          timerTargetMs = 0;
+      }
+      
+      if (timerElapsedMs === 0 || timerMode === 'countdown') {
+          if (timerMode === 'countdown' && timerElapsedMs > 0 && timerElapsedMs < timerTargetMs) {
+             timerTargetMs = timerElapsedMs;
+          }
+          timerStartTime = Date.now();
+      } else {
+          timerStartTime = Date.now() - timerElapsedMs;
+      }
+      
+      timerSessionLabel = getTimerLabel();
+      isTimerRunning = true;
+      ctx.timerRunning = true;
+      if (hrsEl) { hrsEl.readOnly = true; hrsEl.style.pointerEvents = 'none'; }
+      if (minEl) { minEl.readOnly = true; minEl.style.pointerEvents = 'none'; }
+      if (secEl) { secEl.readOnly = true; secEl.style.pointerEvents = 'none'; }
+      
+      if (btnStartStop) btnStartStop.classList.add('running');
+      if (textStartStop) textStartStop.textContent = 'Stop';
+      if (iconPlay) iconPlay.style.display = 'none';
+      if (iconStop) iconStop.style.display = 'block';
+      if (labelInput) { labelInput.disabled = true; labelInput.style.opacity = '0.7'; }
+      
+      timerInterval = setInterval(handleTimerTick, 100);
+      updateBuddySVG('FOCUS'); applyMood('FOCUS');
   }
 
-  // ── Wire up drum "Mulai" button ──
-  const drumStartBtn = $('fb-t-start-drum')
-  if (drumStartBtn) {
-    drumStartBtn.onclick = () => {
-      // Read fresh values directly from scroll position to avoid debounce lag
-      drumH = readDrum('fb-drum-h-scroll')
-      drumM = readDrum('fb-drum-m-scroll')
-      drumS = readDrum('fb-drum-s-scroll')
-      const total = drumH * 3600 + drumM * 60 + drumS
-      if (total <= 0) return
-      // Save to recents (deduplicate)
-      const lbl = $('fb-t-label-val') ? ($('fb-t-label-val').value || $('fb-t-label-val').textContent || 'Timer') : 'Timer'
-      timerRecents = timerRecents.filter(r => !(r.h === drumH && r.m === drumM && r.s === drumS))
-      timerRecents.unshift({ h: drumH, m: drumM, s: drumS, label: lbl })
-      timerRecents = timerRecents.slice(0, 5)
-      chrome.storage.local.set({ fb3_timerRecents: timerRecents })
-      launchTimer(total, lbl)
-    }
+  function stopTimer() {
+      isTimerRunning = false;
+      ctx.timerRunning = false;
+      clearInterval(timerInterval);
+      
+      if (hrsEl) { hrsEl.readOnly = false; hrsEl.style.pointerEvents = 'auto'; }
+      if (minEl) { minEl.readOnly = false; minEl.style.pointerEvents = 'auto'; }
+      if (secEl) { secEl.readOnly = false; secEl.style.pointerEvents = 'auto'; }
+      
+      if (btnStartStop) btnStartStop.classList.remove('running');
+      if (textStartStop) textStartStop.textContent = 'Mulai';
+      if (iconPlay) iconPlay.style.display = 'block';
+      if (iconStop) iconStop.style.display = 'none';
+      if (labelInput) { labelInput.disabled = false; labelInput.style.opacity = '1'; }
+      
+      applyMood(currentState);
   }
 
-  // ── Wire up "Batalkan" button ──
-  const cancelBtn = $('fb-t-cancel')
-  if (cancelBtn) {
-    cancelBtn.onclick = () => {
-      clearInterval(timerIv); ctx.timerRunning = false
-      showDrumView()
-      // reset drum to 0h 0m 0s
-      drumScrollTo('fb-drum-h-scroll', 0, true)
-      drumScrollTo('fb-drum-m-scroll', 0, true)
-      drumScrollTo('fb-drum-s-scroll', 0, true)
-      drumH = 0; drumM = 0; drumS = 0
-      checkDrumStartBtn()
-      applyMood(currentState)
-    }
+  function resetTimer() {
+      stopTimer();
+      timerElapsedMs = 0;
+      if (hrsEl) hrsEl.value = '00';
+      if (minEl) minEl.value = '25';
+      if (secEl) secEl.value = '00';
+      try { stopChime(); } catch(e) {}
   }
 
-  // ── Wire up running view pause/stop ──
-  const pauseBtn = $('fb-t-pause')
-  const stopBtn = $('fb-t-stop')
-  if (pauseBtn) pauseBtn.onclick = pauseResumeTimer
-  if (stopBtn) stopBtn.onclick = () => {
-    clearInterval(timerIv); ctx.timerRunning = false; timerSec = timerMax
-    stopChime()
-    showDrumView()
-    // Restore drum picker to the values that were set when timer was started
-    setTimeout(() => {
-      drumScrollTo('fb-drum-h-scroll', drumH, true)
-      drumScrollTo('fb-drum-m-scroll', drumM, true)
-      drumScrollTo('fb-drum-s-scroll', drumS, true)
-      syncDrumHighlight('fb-drum-h-scroll')
-      syncDrumHighlight('fb-drum-m-scroll')
-      syncDrumHighlight('fb-drum-s-scroll')
-      checkDrumStartBtn()
-    }, 60)
-    updateTimer(); applyMood(currentState)
+  if (btnStartStop) {
+      btnStartStop.addEventListener('click', () => {
+          if (isTimerRunning) stopTimer();
+          else startTimer();
+      });
   }
 
-  // Label is now an inline input field
+  if (btnReset) {
+      btnReset.addEventListener('click', resetTimer);
+  }
+  
+  [hrsEl, minEl, secEl].forEach(el => {
+      if (!el) return;
+      el.addEventListener('input', () => {
+          if (el.value.length > 2) el.value = el.value.slice(-2);
+          if (parseInt(el.value) < 0) el.value = '00';
+          root.querySelectorAll('.fb-timer-preset-btn').forEach(b => b.classList.remove('active'));
+      });
+      el.addEventListener('blur', () => {
+          if (!el.value) el.value = '00';
+          else el.value = el.value.padStart(2, '0');
+      });
+  });
 
-  // (Timer history removed — presets in Tersimpan section)
+  root.querySelectorAll('.fb-timer-preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+          if (isTimerRunning) return;
+          const h = parseInt(btn.dataset.h) || 0;
+          const m = parseInt(btn.dataset.m) || 0;
+          const s = parseInt(btn.dataset.s) || 0;
+          const label = btn.dataset.label || 'Timer';
+          
+          if (hrsEl) hrsEl.value = h.toString().padStart(2, '0');
+          if (minEl) minEl.value = m.toString().padStart(2, '0');
+          if (secEl) secEl.value = s.toString().padStart(2, '0');
+          if (labelInput) labelInput.value = label;
+          
+          root.querySelectorAll('.fb-timer-preset-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          timerElapsedMs = 0;
+      });
+  });
 
-  // ── Init ──
-  initDrumPicker()
-  chrome.storage.local.get(['fb3_timerRecents', 'fb3_timerStats'], r => {
-    if (r.fb3_timerRecents) timerRecents = r.fb3_timerRecents
-    if (r.fb3_timerStats) {
-      pomodoroSessions = r.fb3_timerStats.sessions || 0
-      focusMinutesTotal = r.fb3_timerStats.minutes || 0
-    }
-    renderDrumRecents()
-  })
-  chrome.storage.local.get('fb3_alarmHistory', r => {
-    if (r.fb3_alarmHistory) ctx.alarmHistory = r.fb3_alarmHistory
-    renderAlarmHistory()
-  })
-
-
+  renderTimerHistory();
+  // ═══════════════════════════════════════════════════════════════
+  
   // ═══════════════════════════════════════════════════════════════
   // MINI CALENDAR WIDGET
   // ═══════════════════════════════════════════════════════════════
@@ -7000,7 +6793,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       const item = document.createElement('div')
       item.className = 'fb-alarm-history-item'
       item.innerHTML = `
-        <span style="opacity:.4;font-size:15px">⏰</span>
+        <span style="opacity:.4;font-size:15px">&#9200;</span>
         <div>
           <div style="font-size:13px;font-weight:600;color:#fff">${esc(a.label)}</div>
           <div style="font-size:11px;opacity:.4">${hh}:${mm} · ${relTime(a.firedAt)}</div>
@@ -7020,7 +6813,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
     if (cntEl) cntEl.textContent = active.length || ''
     const list = $('fb-alarm-list')
     if (!active.length) {
-      list.innerHTML = `<div class="fb-al-empty"><span class="fb-al-empty-ico">🗓️</span>Belum ada agenda terdaftar</div>`
+      list.innerHTML = `<div class="fb-al-empty"><span class="fb-al-empty-ico">&#128197;&#65039;</span>Belum ada agenda terdaftar</div>`
       clearInterval(alarmCdIv); return
     }
     list.innerHTML = ''
@@ -7048,7 +6841,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
         </div>
         <div class="fb-alcard-right">
           <button class="fb-alcard-toggle ${enabled ? 'on' : 'off'}" title="${enabled ? 'Matikan' : 'Aktifkan'}">${enabled ? 'ON' : 'OFF'}</button>
-          <button class="fb-alcard-del" title="Hapus">✕</button>
+          <button class="fb-alcard-del" title="Hapus">&#10006;</button>
         </div>`
       card.querySelector('.fb-alcard-toggle').onclick = () => {
         alarm.enabled = !alarm.enabled; save(); renderAlarms()

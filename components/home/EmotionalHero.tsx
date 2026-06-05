@@ -31,7 +31,7 @@ export default function EmotionalHero({
           cursor: 'pointer',
           background: HP_TOKENS.card,
           border: `1px solid ${HP_TOKENS.line}`,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
+          boxShadow: '0 4px 12px rgba(26,29,35,0.02)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>

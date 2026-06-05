@@ -44,7 +44,7 @@ export default function FocusModal({ onClose }: FocusModalProps) {
       inset: 0, 
       zIndex: 100,
       background: `linear-gradient(180deg, ${HP_TOKENS.sage} 0%, #2D4F3A 100%)`,
-      color: '#fff', 
+      color: '#F4F7F9', 
       fontFamily: HP_FONT,
       display: 'flex', 
       flexDirection: 'column', 
@@ -52,7 +52,7 @@ export default function FocusModal({ onClose }: FocusModalProps) {
     }}>
       <div style={{ padding: '60px 20px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <button onClick={onClose} style={iconBtnStyle}>
-          <HPGlyph name="close" size={18} color="#fff"/>
+          <HPGlyph name="close" size={18} color="#F4F7F9"/>
         </button>
         <div style={{ ...HP_TEXT.small, color: 'rgba(255,255,255,0.7)', fontWeight: 700 }}>FOCUS MODE</div>
         <div style={{ width: 40 }}/>
@@ -61,7 +61,7 @@ export default function FocusModal({ onClose }: FocusModalProps) {
         {!started ? (
           <>
             <BeeMascot mood="happy" size={100} showSpeech="Ayo kita selesaikan ini!" />
-            <div style={{ ...HP_TEXT.display, fontSize: 28, color: '#fff', marginTop: 16 }}>Deep work tanpa gangguan</div>
+            <div style={{ ...HP_TEXT.display, fontSize: 28, color: '#F4F7F9', marginTop: 16 }}>Deep work tanpa gangguan</div>
             <div style={{ ...HP_TEXT.body, color: 'rgba(255,255,255,0.75)', marginTop: 8, maxWidth: 280 }}>
               Notifikasi off. Kita fokus selesaikan: <br/>
               <span style={{ fontWeight: 800 }}>"{focusTask}"</span>
@@ -126,7 +126,7 @@ export default function FocusModal({ onClose }: FocusModalProps) {
                 padding: '12px 28px', 
                 borderRadius: 99,
                 background: 'rgba(255,255,255,0.15)', 
-                color: '#fff', 
+                color: '#F4F7F9', 
                 border: '1px solid rgba(255,255,255,0.3)',
                 fontFamily: HP_FONT, 
                 fontWeight: 700, 

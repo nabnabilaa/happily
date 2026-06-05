@@ -236,7 +236,7 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
       fontFamily: HP_FONT,
       borderRadius: 24,
       overflow: 'hidden',
-      boxShadow: '0 10px 30px rgba(0,0,0,0.03)',
+      boxShadow: '0 10px 30px rgba(26,29,35,0.03)',
       border: `1px solid ${HP_TOKENS.line}`,
     }}>
       <style>{`
@@ -245,7 +245,7 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
           .chat-main { display: ${activeChannel ? 'flex' : 'none'} !important; }
         }
         @media (min-width: 768px) {
-          .chat-sidebar { width: 320px !important; border-right: 1px solid rgba(0,0,0,0.05) !important; }
+          .chat-sidebar { width: 320px !important; border-right: 1px solid rgba(26,29,35,0.05) !important; }
           .chat-main { display: flex !important; }
         }
       `}</style>
@@ -270,12 +270,12 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
           <button onClick={handleCreateDM} className="hp-tap" style={{
             padding: '8px 14px', borderRadius: 12,
             background: `linear-gradient(135deg, ${HP_TOKENS.blue}, #2B5F9E)`,
-            color: '#fff', border: 'none',
+            color: '#F4F7F9', border: 'none',
             fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: 6,
             boxShadow: `0 4px 12px ${HP_TOKENS.blue}30`,
           }}>
-            <HPGlyph name="plus" size={12} color="#fff" />
+            <HPGlyph name="plus" size={12} color="#F4F7F9" />
             Baru
           </button>
         </div>
@@ -358,7 +358,7 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
                         <div style={{
                           width: 16, height: 16, borderRadius: 8,
                           background: ch.type === 'broadcast' ? '#F59E0B' : '#3B82F6',
-                          color: '#fff',
+                          color: '#F4F7F9',
                           fontFamily: HP_FONT, fontWeight: 900, fontSize: 9,
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           marginLeft: 4, flexShrink: 0,
@@ -392,19 +392,19 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
               backdropFilter: 'blur(12px)',
               borderBottom: `1px solid ${HP_TOKENS.line}`,
               position: 'sticky', top: 0, zIndex: 10,
-              boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
+              boxShadow: '0 4px 20px rgba(26,29,35,0.02)',
             }}>
               <button
                 onClick={() => { setActiveChannel(null); if (pollRef.current) clearInterval(pollRef.current); fetchChannels(); }}
                 className="hp-tap"
                 style={{
-                  background: 'rgba(0, 0, 0, 0.04)', border: 'none', borderRadius: 12,
+                  background: 'rgba(26, 29, 35, 0.04)', border: 'none', borderRadius: 12,
                   width: 36, height: 36, cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   transition: 'background 0.2s',
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0, 0, 0, 0.08)')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(0, 0, 0, 0.04)')}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(26, 29, 35, 0.08)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(26, 29, 35, 0.04)')}
               >
                 <HPGlyph name="chevronLeft" size={16} color={HP_TOKENS.ink} />
               </button>
@@ -415,7 +415,7 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
                   : (activeChannel.type === 'dm' ? HP_TOKENS.yellowSoft : HP_TOKENS.blueSoft),
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 20, flexShrink: 0,
-                boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
+                boxShadow: '0 2px 6px rgba(26,29,35,0.05)',
               }}>
                 {activeChannel.type === 'dm' ? <HPAvatar name={activeChannel.name} size={38} /> : activeChannel.emoji}
               </div>
@@ -478,7 +478,7 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
                           border: isMe ? 'none' : `1px solid ${HP_TOKENS.line}`,
                           boxShadow: isMe
                             ? `0 4px 12px rgba(59, 130, 246, 0.2)`
-                            : '0 2px 6px rgba(0,0,0,0.02)',
+                            : '0 2px 6px rgba(26,29,35,0.02)',
                           transition: 'all 0.2s',
                         }}
                         onMouseEnter={(e) => {
@@ -551,7 +551,7 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
                 className="hp-tap"
                 style={{
                   width: 48, height: 48, borderRadius: 16,
-                  background: newMessage.trim() ? 'linear-gradient(135deg, #4F46E5 0%, #3B82F6 100%)' : 'rgba(0, 0, 0, 0.05)',
+                  background: newMessage.trim() ? 'linear-gradient(135deg, #4F46E5 0%, #3B82F6 100%)' : 'rgba(26, 29, 35, 0.05)',
                   border: 'none', cursor: newMessage.trim() ? 'pointer' : 'default',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   transition: 'all 0.2s',

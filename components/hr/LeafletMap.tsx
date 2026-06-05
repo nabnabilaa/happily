@@ -159,7 +159,7 @@ export default function LeafletMap({ offices, onAddOffice, onDeleteOffice, onUpd
   };
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '500px', background: '#fff', borderRadius: 20, overflow: 'hidden', border: `1px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT }}>
+    <div style={{ position: 'relative', width: '100%', height: '500px', background: HP_TOKENS.card, borderRadius: 20, overflow: 'hidden', border: `1px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT }}>
       
       {/* Search Bar Overlay */}
       <div style={{ position: 'absolute', top: 16, left: 56, zIndex: 1000, display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -176,7 +176,7 @@ export default function LeafletMap({ offices, onAddOffice, onDeleteOffice, onUpd
               style={{
                 padding: '10px 10px 10px 36px', borderRadius: 12, border: `1px solid ${HP_TOKENS.line}`,
                 fontFamily: HP_FONT, outline: 'none', width: 260, fontSize: 13,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
+                boxShadow: '0 4px 12px rgba(26,29,35,0.08)'
               }}
             />
           </div>
@@ -185,8 +185,8 @@ export default function LeafletMap({ offices, onAddOffice, onDeleteOffice, onUpd
         {/* Dropdown Recommendations */}
         {searchResults.length > 0 && (
           <div style={{
-            background: '#fff', borderRadius: 12, border: `1px solid ${HP_TOKENS.line}`,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.12)', overflow: 'hidden', width: 320,
+            background: HP_TOKENS.card, borderRadius: 12, border: `1px solid ${HP_TOKENS.line}`,
+            boxShadow: '0 8px 24px rgba(26,29,35,0.12)', overflow: 'hidden', width: 320,
             display: 'flex', flexDirection: 'column'
           }}>
             {searchResults.map((result, idx) => (
@@ -265,8 +265,8 @@ export default function LeafletMap({ offices, onAddOffice, onDeleteOffice, onUpd
       {draftLocation && (
         <div style={{
           position: 'absolute', top: 16, right: 16, zIndex: 1000,
-          background: '#fff', padding: 16, borderRadius: 16, width: 300,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.12)', border: `1px solid ${HP_TOKENS.line}`
+          background: HP_TOKENS.card, padding: 16, borderRadius: 16, width: 300,
+          boxShadow: '0 8px 32px rgba(26,29,35,0.12)', border: `1px solid ${HP_TOKENS.line}`
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
             <HPGlyph name="target" size={18} color={HP_TOKENS.blue} />
@@ -305,7 +305,7 @@ export default function LeafletMap({ offices, onAddOffice, onDeleteOffice, onUpd
               <button 
                 onClick={handleSaveDraft}
                 disabled={!draftName}
-                style={{ flex: 1, padding: '10px', background: HP_TOKENS.blue, color: '#fff', borderRadius: 10, border: 'none', fontFamily: HP_FONT, fontWeight: 800, cursor: 'pointer', opacity: draftName ? 1 : 0.5 }}
+                style={{ flex: 1, padding: '10px', background: HP_TOKENS.blue, color: '#F4F7F9', borderRadius: 10, border: 'none', fontFamily: HP_FONT, fontWeight: 800, cursor: 'pointer', opacity: draftName ? 1 : 0.5 }}
               >
                 Simpan
               </button>

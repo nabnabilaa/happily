@@ -20,6 +20,18 @@ const toneConfig: Record<string, { bg: string; soft: string; text: string }> = {
   lavender: { bg: HP_TOKENS.lavender, soft: HP_TOKENS.lavenderSoft, text: '#4A3A6E' },
 };
 
+const GLYPH_MAP: Record<string, string> = {
+  'Extra cuti 1 hari':     'tree',
+  'Voucher lunch 100k':    'heart',
+  'Workshop UX intensif':  'book',
+  'Donasi program sosial': 'leaf',
+  'Tiket bioskop 2x':      'star',
+  'Pulsa / e-wallet 50k':  'zap',
+  'Voucher belanja 200k':  'target',
+  'Kelas online premium':  'refresh',
+  'Sesi wellness 1:1':     'people',
+};
+
 export default function AllRewardsModal({ onClose }: AllRewardsModalProps) {
   const { state, updateState, updateUser, user } = useHP();
   const [view, setView] = useState<"available" | "history">("available");
@@ -126,7 +138,7 @@ export default function AllRewardsModal({ onClose }: AllRewardsModalProps) {
               style={{
                 flex: 1, padding: '8px 0', border: 'none', borderRadius: 9,
                 background: view === v ? '#fff' : 'transparent',
-                boxShadow: view === v ? '0 2px 8px rgba(0,0,0,0.05)' : 'none',
+                boxShadow: view === v ? '0 2px 8px rgba(26,29,35,0.05)' : 'none',
                 fontFamily: HP_FONT, fontWeight: 700, fontSize: 13,
                 color: view === v ? HP_TOKENS.ink : HP_TOKENS.inkMute,
                 cursor: 'pointer', transition: 'all 0.2s',
@@ -198,7 +210,7 @@ export default function AllRewardsModal({ onClose }: AllRewardsModalProps) {
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       flexShrink: 0,
                     }}>
-                      <HPGlyph name={reward.glyph} size={28} color={cfg.text} />
+                      <HPGlyph name={reward.glyph || GLYPH_MAP[reward.title] || 'sparkle'} size={28} color={cfg.text} />
                     </div>
 
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -207,8 +219,16 @@ export default function AllRewardsModal({ onClose }: AllRewardsModalProps) {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
                         <span style={{
                           padding: '3px 10px', borderRadius: 99, fontSize: 10, fontWeight: 800,
-                          background: cfg.bg, color: '#fff', fontFamily: HP_FONT,
+                          background: cfg.bg, color: '#F4F7F9', fontFamily: HP_FONT,
+                          display: 'flex', alignItems: 'center', gap: 4
                         }}>
+                          <div style={{
+                            width: 12, height: 12, borderRadius: '50%',
+                            background: 'linear-gradient(135deg, #FFEC99, #FFD43B)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            <HPGlyph name="star" size={6} color="#E67700" />
+                          </div>
                           {reward.points} POIN
                         </span>
                         <span style={{ 
@@ -220,21 +240,46 @@ export default function AllRewardsModal({ onClose }: AllRewardsModalProps) {
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => handleRedeem(reward)}
-                      disabled={!canAfford || reward.stock <= 0 || redeeming}
-                      style={{
-                        padding: '10px 14px', borderRadius: 14, border: 'none',
-                        background: (canAfford && reward.stock > 0) ? cfg.bg : HP_TOKENS.lineSoft,
-                        color: (canAfford && reward.stock > 0) ? '#fff' : HP_TOKENS.inkFade,
-                        fontFamily: HP_FONT, fontWeight: 800, fontSize: 12,
-                        cursor: (!canAfford || reward.stock <= 0 || redeeming) ? 'default' : 'pointer',
-                        transition: 'all 0.2s',
-                        whiteSpace: 'nowrap'
-                      }}
-                    >
-                      {reward.stock <= 0 ? 'Stok Habis' : redeeming ? 'Memproses...' : 'Tukar'}
-                    </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
+                      <div 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateState((s: any) => ({
+                            ...s,
+                            wishlistId: s.wishlistId === reward.id ? null : reward.id
+                          }));
+                        }}
+                        style={{
+                          width: 32, height: 32, borderRadius: '50%',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          background: state?.wishlistId === reward.id ? '#FFD43B' : HP_TOKENS.paper,
+                          border: `1.5px solid ${state?.wishlistId === reward.id ? '#FCC419' : HP_TOKENS.lineSoft}`,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          boxShadow: state?.wishlistId === reward.id ? '0 4px 10px rgba(252, 196, 25, 0.3)' : '0 2px 5px rgba(0,0,0,0.05)'
+                        }}
+                        title={state?.wishlistId === reward.id ? "Hapus dari Wishlist" : "Jadikan Wishlist"}
+                        className="hp-tap"
+                      >
+                        <HPGlyph name="star" size={16} color={state?.wishlistId === reward.id ? '#fff' : HP_TOKENS.inkFade} />
+                      </div>
+
+                      <button
+                        onClick={() => handleRedeem(reward)}
+                        disabled={!canAfford || reward.stock <= 0 || redeeming}
+                        style={{
+                          padding: '10px 14px', borderRadius: 14, border: 'none',
+                          background: (canAfford && reward.stock > 0) ? cfg.bg : HP_TOKENS.lineSoft,
+                          color: (canAfford && reward.stock > 0) ? '#fff' : HP_TOKENS.inkFade,
+                          fontFamily: HP_FONT, fontWeight: 800, fontSize: 12,
+                          cursor: (!canAfford || reward.stock <= 0 || redeeming) ? 'default' : 'pointer',
+                          transition: 'all 0.2s',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        {reward.stock <= 0 ? 'Stok Habis' : redeeming ? 'Memproses...' : 'Tukar'}
+                      </button>
+                    </div>
                   </div>
                 );
               })}
