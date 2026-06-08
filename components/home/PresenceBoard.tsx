@@ -297,7 +297,18 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
                 {u.id !== user?.id && (
                   <div style={{ display: 'flex', gap: 6, borderTop: `1px solid ${HP_TOKENS.lineSoft}`, paddingTop: 10, marginTop: -4 }}>
                     <button 
-                      onClick={() => showToast(`Kamu menyapa ${u.name.split(' ')[0]}! 👋`)}
+                      onClick={async () => {
+                        try {
+                          await fetch("/api/status/greet", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ senderId: user?.id, senderName: user?.name, receiverId: u.id, type: 'greet' })
+                          });
+                          showToast(`Kamu menyapa ${u.name.split(' ')[0]}! 👋`);
+                        } catch (e) {
+                          showToast("Gagal menyapa 😥");
+                        }
+                      }}
                       className="hp-tap"
                       style={{ 
                         flex: 1, padding: '6px', borderRadius: 8, background: HP_TOKENS.paper, 
@@ -318,7 +329,18 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
                     </button>
                     {(u.status === 'break' || u.status === 'away') && (
                       <button 
-                        onClick={() => showToast(`Ajakan ngopi terkirim ke ${u.name.split(' ')[0]}! ☕`)}
+                        onClick={async () => {
+                          try {
+                            await fetch("/api/status/greet", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ senderId: user?.id, senderName: user?.name, receiverId: u.id, type: 'coffee' })
+                            });
+                            showToast(`Ajakan ngopi terkirim ke ${u.name.split(' ')[0]}! ☕`);
+                          } catch (e) {
+                            showToast("Gagal mengajak ngopi 😥");
+                          }
+                        }}
                         className="hp-tap"
                         style={{ 
                           flex: 1, padding: '6px', borderRadius: 8, background: HP_TOKENS.yellowSoft, 

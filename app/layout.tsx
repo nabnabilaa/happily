@@ -4,6 +4,7 @@ import "./globals.css";
 import Shell from "@/components/layout/Shell";
 import PWARegistration from "@/components/pwa/PWARegistration";
 import InstallButton from "@/components/pwa/InstallButton";
+import DownloadExtensionBtn from "@/components/pwa/DownloadExtensionBtn";
 import OfflineToast from "@/components/pwa/OfflineToast";
 import { HPProvider } from "@/lib/HPContext";
 import Script from "next/script";
@@ -125,6 +126,7 @@ export default function RootLayout({
             <GlobalClickInterceptor />
             <PWARegistration />
             <InstallButton />
+            <DownloadExtensionBtn />
             <OfflineToast />
             <Shell>{children}</Shell>
           </HPProvider>

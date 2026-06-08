@@ -31,6 +31,7 @@ import TaskHarianWidget from "@/components/home/TaskHarianWidget";
 import DailyChallengeWidget from "@/components/home/DailyChallengeWidget";
 import SurveySection from "@/components/home/SurveySection";
 import PresenceBoard from "@/components/home/PresenceBoard";
+import LeaderboardWidget from "@/components/home/LeaderboardWidget";
 import MoodWall from "@/components/home/MoodWall";
 
 
@@ -817,6 +818,8 @@ export default function HomeScreen({ openModal }: any) {
           <PresenceBoard openModal={openModal} />
         </div>
 
+        {/* Leaderboard Tim */}
+        <LeaderboardWidget currentUserId={user.id} />
 
         {/* Daily Training Habits */}
         <div style={{ marginTop: 24 }}>
