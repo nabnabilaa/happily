@@ -83,7 +83,7 @@ interface HPContextType {
   refreshSurveys: () => Promise<void>;
   resetData: () => Promise<void>;
   syncSkillProgress: (source: string, amount: number) => void;
-  awardXP: (actionType: string, description?: string) => Promise<void>;
+  awardXP: (actionType: string, description?: string, amount?: number) => Promise<void>;
   toasts: any[];
   notify: (title: string, message?: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
   dismissToast: (id: string) => void;
@@ -91,40 +91,9 @@ interface HPContextType {
 
 const HPContext = createContext<HPContextType | undefined>(undefined);
 
-// ── Helpers (Moved outside to keep hooks order stable) ───────────────────────
-const calculateLevel = (points: number) => {
-  if (points < 0) return 1;
-  if (points < 1000) {
-    return Math.floor(points / 100) + 1;
-  }
-  if (points < 4000) {
-    const diff = points - 1000;
-    return 11 + Math.floor(diff / 300);
-  }
-  const diff = points - 4000;
-  return 21 + Math.floor(diff / 1000);
-};
+import { calculateLevel, calculateRank, calculateLevelProgress } from "@/lib/xp";
 
-const calculateRank = (level: number) => {
-  if (level <= 10) return 'E';
-  if (level <= 20) return 'D';
-  if (level <= 35) return 'C';
-  if (level <= 50) return 'B';
-  if (level <= 70) return 'A';
-  return 'S';
-};
-
-// Calculate progress within current level (0.0 - 1.0)
-export const calculateLevelProgress = (points: number) => {
-  if (points < 0) return 0;
-  if (points < 1000) {
-    return (points % 100) / 100;
-  }
-  if (points < 4000) {
-    return ((points - 1000) % 300) / 300;
-  }
-  return ((points - 4000) % 1000) / 1000;
-};
+export { calculateLevelProgress }; // Re-export for existing imports that relied on HPContext
 
 export function HPProvider({ children }: { children: React.ReactNode }) {
   // 1. ALL STATES FIRST
@@ -547,6 +516,10 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
           const pusher = new PusherClient(pusherKey, {
             cluster: pusherCluster,
             forceTLS: true,
+            authEndpoint: '/api/pusher/auth',
+            auth: {
+              params: { user_id: userId }
+            }
           });
 
           // Bind connection events for runtime limit/failure detection
@@ -576,9 +549,19 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
             handleRealtimeData(data);
           });
 
+          // Subscribe to global presence channel for active status tracking
+          const presenceChannelName = `presence-global`;
+          const presenceChannel = pusher.subscribe(presenceChannelName);
+          
+          presenceChannel.bind('pusher:subscription_succeeded', (members: any) => {
+            console.log('[Realtime] Successfully subscribed to presence channel. Members:', members.count);
+          });
+
           cleanupFn = () => {
             channel.unbind_all();
+            presenceChannel.unbind_all();
             pusher.unsubscribe(channelName);
+            pusher.unsubscribe(presenceChannelName);
             pusher.disconnect();
             stopSSE();
           };
@@ -600,7 +583,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
     };
   }, [user, fetchData, fetchDashboards, refreshSurveys, notify]);
 
-  const awardXP = useCallback(async (actionType: string, description?: string) => {
+  const awardXP = useCallback(async (actionType: string, description?: string, amount?: number) => {
     const currentUser = userRef.current;
     if (!currentUser) return;
     if (typeof window !== "undefined" && !navigator.onLine) {
@@ -611,7 +594,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch("/api/xp/award", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: currentUser.id, actionType, description }),
+        body: JSON.stringify({ userId: currentUser.id, actionType, description, customAmount: amount }),
       });
       const data = await res.json();
       if (data.success) {

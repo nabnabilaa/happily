@@ -166,7 +166,7 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit 
       boxShadow: state?.focusTaskId === p.id ? `0 8px 24px ${HP_TOKENS.yellow}20` : (p.done ? 'none' : '0 4px 12px rgba(26,29,35,0.02)'),
       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     }}>
-      {/* Floating +50 Poin */}
+      {/* Floating +30 Poin */}
       {showPoints && (
         <div style={{
           position: 'absolute', top: -10, right: 20,
@@ -177,7 +177,7 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit 
           pointerEvents: 'none', zIndex: 10,
           boxShadow: '0 4px 12px rgba(26,29,35,0.1)'
         }}>
-          +{p.points || 50} Point
+          +{p.points || 30} Point
         </div>
       )}
 

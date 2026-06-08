@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { calculateLevel, calculateRank } from "@/lib/xp";
 
 // ══════════════════════════════════════════════════════════════
 // XP Values — Spec v2 (Flowbee Feature Spec Revisi 2)
@@ -9,12 +10,12 @@ const XP_VALUES: Record<string, number> = {
   check_in_ontime: 10,        // Clock-in sebelum 08:00
   check_in_late_minor: 5,     // Terlambat 1–15 menit
   check_in_late: 0,           // Terlambat > 15 menit
-  check_out: 100,             // Clock-out (Tutup Hari) -> Match Guide
+  check_out: 10,              // Clock-out (Tutup Hari) -> Match Guide
 
   // Tasks
-  task_approved: 50,           // Task disetujui Manager -> Match Guide
-  task_revised_approved: 25,   // Task direvisi lalu disetujui
-  priority_complete: 50,       // Legacy alias -> Match Guide
+  task_approved: 30,           // Task disetujui Manager -> Match Guide
+  task_revised_approved: 15,   // Task direvisi lalu disetujui
+  priority_complete: 30,       // Legacy alias -> Match Guide
 
   // Wellbeing
   mood_checkin: 5,             // Isi Mood & Energy (1x per hari)
@@ -33,15 +34,15 @@ const XP_VALUES: Record<string, number> = {
   streak_30: 200,              // Legacy alias (keeping for compat)
 
   // Survey
-  survey_complete: 5,          // Per survey diisi
+  survey_complete: 20,         // Per survey diisi
 
   // Other (legacy)
-  habit_complete: 20,          // Match Guide
-  daily_reflection: 100,       // Match Guide
+  habit_complete: 15,          // Match Guide
+  daily_reflection: 20,        // Match Guide
   focus_session: 5,
   check_in: 10,                // Legacy fallback
   goal_complete: 150,          // Legacy fallback → maps to kpi_achieved
-  learning_complete: 100,      // Match Guide
+  learning_complete: 50,       // Match Guide
   training_graduated: 500,     // For fully completing a long term daily training habit
 };
 
@@ -52,7 +53,7 @@ const TASK_ACTION_TYPES = ['task_approved', 'task_revised_approved', 'priority_c
 
 export async function POST(request: Request) {
   try {
-    const { userId, actionType, description, targetUserId } = await request.json();
+    const { userId, actionType, description, targetUserId, customAmount } = await request.json();
 
     if (!userId || !actionType) {
       return NextResponse.json({ error: "UserId and ActionType required" }, { status: 400 });
@@ -61,7 +62,10 @@ export async function POST(request: Request) {
     // Determine who gets the XP (default: userId, but targetUserId for apresiasi_received)
     const recipientId = targetUserId || userId;
 
-    const amount = XP_VALUES[actionType] || 5;
+    let amount = XP_VALUES[actionType] || 5;
+    if (actionType === 'daily_challenge' && typeof customAmount === 'number') {
+      amount = customAmount;
+    }
 
     // ── Anti-Abuse: Global Daily XP/Point Cap ───────────────────────
     try {
@@ -160,21 +164,22 @@ async function awardXPInternal(
   const coinsAmount = amount; // 1:1 Ratio (Koin and Poin are the same)
   const txId = "tx_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
 
-  // 1. Log Transaction
+  // 1 & 2. Atomic Transaction: Log Ledger & Update User
   try {
-    await db.execute({
-      sql: "INSERT INTO xp_transactions (id, user_id, amount, action_type, description) VALUES (?, ?, ?, ?, ?)",
-      args: [txId, recipientId, amount, actionType, description || actionType]
+    await db.transaction(async (conn) => {
+      await conn.execute(
+        "INSERT INTO xp_transactions (id, user_id, amount, action_type, description) VALUES (?, ?, ?, ?, ?)",
+        [txId, recipientId, amount, actionType, description || actionType]
+      );
+      await conn.execute(
+        "UPDATE users SET points = points + ?, coins = coins + ? WHERE id = ?",
+        [amount, amount, recipientId]
+      );
     });
-  } catch (e) {
-    console.warn("Failed to log XP transaction:", e);
+  } catch (error) {
+    console.error("XP Transaction Failed:", error);
+    return NextResponse.json({ error: "Transaction failed" }, { status: 500 });
   }
-
-  // 2. Update User Points & Coins (coins=coins+amount, points=points+amount)
-  await db.execute({
-    sql: "UPDATE users SET points = points + ?, coins = coins + ? WHERE id = ?",
-    args: [amount, amount, recipientId]
-  });
 
   // 3. Fetch new totals
   const res = await db.execute({
@@ -227,8 +232,9 @@ async function awardXPInternal(
   }
 
   // ── Level-up notification ──
-  const { level: oldLevel } = calculateLevelAndRank(newPoints - amount);
-  const { level: newLevel, rank: newRank } = calculateLevelAndRank(newPoints);
+  const oldLevel = calculateLevel(newPoints - amount);
+  const newLevel = calculateLevel(newPoints);
+  const newRank = calculateRank(newLevel);
   if (newLevel > oldLevel) {
     try {
       // FIX GHOST BUG: Save new level and rank to the database
@@ -297,29 +303,4 @@ const LOGBOOK_META: Record<string, { title: string; type: string; emoji: string 
   training_graduated: { title: 'Lulus Training', type: 'activity', emoji: '🎓' },
 };
 
-// ── Spec v2 Level System ──────────────────────────────────────
-function calculateLevelAndRank(points: number): { level: number; rank: string } {
-  let level = 1;
-  if (points < 0) {
-    level = 1;
-  } else if (points < 1000) {
-    level = Math.floor(points / 100) + 1;
-  } else if (points < 4000) {
-    const diff = points - 1000;
-    level = 11 + Math.floor(diff / 300);
-  } else {
-    const diff = points - 4000;
-    level = 21 + Math.floor(diff / 1000);
-  }
-
-  let rank = 'E';
-  if (level <= 10) rank = 'E';
-  else if (level <= 20) rank = 'D';
-  else if (level <= 35) rank = 'C';
-  else if (level <= 50) rank = 'B';
-  else if (level <= 70) rank = 'A';
-  else rank = 'S';
-
-  return { level, rank };
-}
 

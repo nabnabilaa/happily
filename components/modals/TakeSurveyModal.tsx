@@ -89,7 +89,7 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
           fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: submitting ? 'default' : 'pointer',
           opacity: submitting ? 0.7 : 1
         }}>
-          {submitting ? "Memproses..." : "Saya sudah mengisi survey & Ambil 100 Point 🎁"}
+          {submitting ? "Memproses..." : "Saya sudah mengisi survey & Ambil 20 Poin 🎁"}
         </button>
       </Modal>
     );
@@ -105,7 +105,7 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
           <div style={{ ...HP_TEXT.body, color: HP_TOKENS.inkSoft, marginTop: 8, lineHeight: 1.5 }}>
             Terima kasih sudah mengisi survey <strong>{survey.title}</strong>. Jawabanmu akan membantu perusahaan menjadi lebih baik.
           </div>
-          <div style={{ ...HP_TEXT.small, color: HP_TOKENS.sage, fontWeight: 800, marginTop: 16 }}>+100 Point Earned 🎁</div>
+          <div style={{ ...HP_TEXT.small, color: HP_TOKENS.sage, fontWeight: 800, marginTop: 16 }}>+20 Poin Earned 🎁</div>
           <button onClick={onClose} className="hp-tap" style={{
             marginTop: 24, padding: '14px 40px', borderRadius: 99, border: 'none',
             background: HP_TOKENS.lavender, color: '#F4F7F9',
@@ -280,7 +280,7 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
           }}
         >
           <HPGlyph name="check" size={18} color={allRequiredFilled ? '#fff' : HP_TOKENS.inkMute} />
-          {submitting ? "Mengirim..." : "Kirim Jawaban & Ambil 100 Point 🎁"}
+          {submitting ? "Mengirim..." : "Kirim Jawaban & Ambil 20 Poin 🎁"}
         </button>
       </div>
     </Modal>

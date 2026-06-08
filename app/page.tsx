@@ -105,6 +105,7 @@ const NewChatModal = safeDynamic(() => import("@/components/modals/NewChatModal"
 const AppreciateModal = safeDynamic(() => import("@/components/modals/AppreciateModal"));
 const AnnouncementModal = safeDynamic(() => import("@/components/modals/AnnouncementModal"));
 const MascotGuideModal = safeDynamic(() => import("@/components/modals/MascotGuideModal"));
+const ExtensionGuideModal = safeDynamic(() => import("@/components/modals/ExtensionGuideModal"));
 import HPToastContainer from "@/components/ui/HPToastContainer";
 import ConfirmLogoutModal from "@/components/modals/ConfirmLogoutModal";
 import DailyGreetingModal, { needsDailyGreeting, markDailyGreeted } from "@/components/modals/DailyGreetingModal";
@@ -132,8 +133,15 @@ function AppContent() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const handleOpenReflect = () => openModal('reflect');
+    const handleOpenExtensionGuide = () => openModal('extension_guide');
+    
     window.addEventListener('hp_open_reflect', handleOpenReflect);
-    return () => window.removeEventListener('hp_open_reflect', handleOpenReflect);
+    window.addEventListener('hp_open_extension_guide', handleOpenExtensionGuide);
+    
+    return () => {
+      window.removeEventListener('hp_open_reflect', handleOpenReflect);
+      window.removeEventListener('hp_open_extension_guide', handleOpenExtensionGuide);
+    };
   }, [openModal]);
 
   // Handle direct actions from URL parameters
@@ -572,6 +580,7 @@ function AppContent() {
       {modal?.name === 'appreciate'       && <AppreciateModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'announcement'     && <AnnouncementModal onClose={closeModal} />}
       {modal?.name === 'mascot_guide'     && <MascotGuideModal onClose={closeModal} />}
+      {modal?.name === 'extension_guide'  && <ExtensionGuideModal onClose={closeModal} />}
       {modal?.name === 'confirm_logout'   && <ConfirmLogoutModal onClose={closeModal} onConfirm={logout} />}
 
       {/* Daily Greeting Modal */}

@@ -6,6 +6,7 @@ import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
 import Modal from "@/components/ui/Modal";
 import HPGlyph from "@/components/ui/HPGlyph";
 import { getMascotAnimated, toggleMascotAnimation } from "@/components/ui/BeeMascot";
+import IntegrationWizardModal from "./IntegrationWizardModal";
 
 interface ProfileEditorModalProps {
   onClose: () => void;
@@ -17,6 +18,7 @@ export default function ProfileEditorModal({ onClose }: ProfileEditorModalProps)
   const [preview, setPreview] = useState<string | null>(user?.avatarImage || null);
   const [name, setName] = useState(user?.name || "");
   const [midDayTime, setMidDayTime] = useState(state?.workSchedule?.midDayCheckInTime || "12:00");
+  const [showIntegrations, setShowIntegrations] = useState(false);
   const [mascotAnimated, setMascotAnimated] = useState(() => {
     if (typeof window !== "undefined") {
       return getMascotAnimated();
@@ -96,8 +98,10 @@ export default function ProfileEditorModal({ onClose }: ProfileEditorModalProps)
 
 
   return (
-    <Modal onClose={onClose} title="Profil & Pengaturan ⚙️">
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, marginTop: 20 }}>
+    <>
+      {showIntegrations && <IntegrationWizardModal onClose={() => setShowIntegrations(false)} />}
+      <Modal onClose={onClose} title="Profil & Pengaturan ⚙️">
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, marginTop: 20 }}>
         
         {/* Preview Area */}
         <div 
@@ -250,6 +254,26 @@ export default function ProfileEditorModal({ onClose }: ProfileEditorModalProps)
           </div>
         </div>
 
+        <div style={{ width: '100%' }}>
+          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 700, marginBottom: 8 }}>INTEGRASI EKSTERNAL</div>
+          <button 
+            onClick={() => setShowIntegrations(true)}
+            style={{
+              width: '100%', padding: '14px', borderRadius: 12,
+              background: '#F8FAFC', color: HP_TOKENS.ink,
+              border: `1px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontWeight: 700, fontSize: 14,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+            }}
+            className="hp-tap"
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <HPGlyph name="zap" size={18} color={HP_TOKENS.blue} />
+              <span>Chrome Extension & Google Calendar</span>
+            </div>
+            <HPGlyph name="chevron-right" size={16} color={HP_TOKENS.inkMute} />
+          </button>
+        </div>
+
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <button 
             onClick={handleSave}
@@ -288,6 +312,7 @@ export default function ProfileEditorModal({ onClose }: ProfileEditorModalProps)
 
 
       </div>
-    </Modal>
+      </Modal>
+    </>
   );
 }

@@ -40,20 +40,9 @@ export async function POST(request: Request) {
 
       // 2. Recalculate progress for the goal
       if (goalId) {
-        const allTasksRes = await db.execute({
-          sql: "SELECT is_verified FROM daily_priorities WHERE goal_id = ?",
-          args: [goalId]
-        });
-        
-        const totalTasks = allTasksRes.rows.length;
-        const verifiedTasks = allTasksRes.rows.filter(r => r.is_verified === 1).length;
-        
-        const newProgress = totalTasks > 0 ? Math.round((verifiedTasks / totalTasks) * 100) : 0;
-        
-        await db.execute({
-          sql: "UPDATE goals SET metric = ? WHERE id = ?",
-          args: [`${verifiedTasks}/${totalTasks} verified`, goalId]
-        });
+        // Trigger generic rollup which recalculates progress up the tree
+        const { triggerRollupForGoal } = await import('@/lib/rollup');
+        await triggerRollupForGoal(goalId);
       }
 
       // 3. Dispatch Notification to Employee

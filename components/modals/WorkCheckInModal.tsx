@@ -307,6 +307,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
 
 
 
+
       <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 900, fontSize: 10, letterSpacing: 1, marginBottom: 12 }}>DAFTAR TARGET HARI INI</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
         {priorities.map((p: any) => (

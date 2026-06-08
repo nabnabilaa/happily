@@ -2854,6 +2854,15 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   box-shadow:0 1px 4px rgba(0,0,0,.03) !important;
 }
 .fb-alarm-card.urgent { border-left-color:#E88B7D !important; }
+.fb-alcard-left { flex: 1 !important; display: flex !important; flex-direction: column !important; gap: 3px !important; overflow: hidden !important; }
+.fb-alcard-time-big { font-size: 15px !important; font-weight: 800 !important; color: var(--fb-ink) !important; line-height: 1.1 !important; }
+.fb-alcard-label { font-size: 13.5px !important; font-weight: 600 !important; color: var(--fb-ink) !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+.fb-alcard-repeat { font-size: 11px !important; font-weight: 500 !important; color: var(--fb-ink-mute) !important; }
+.fb-alcard-right { display: flex !important; align-items: center !important; gap: 6px !important; flex-shrink: 0 !important; }
+.fb-alcard-toggle { padding: 4px 8px !important; border-radius: 6px !important; font-size: 10px !important; font-weight: 800 !important; cursor: pointer !important; border: 1.5px solid var(--fb-line) !important; background: var(--fb-card) !important; color: var(--fb-ink-mute) !important; transition: all .2s !important; }
+.fb-alcard-toggle.on { background: rgba(134,192,169,0.15) !important; color: #4A7C59 !important; border-color: rgba(134,192,169,0.3) !important; }
+.fb-alcard-del { padding: 4px !important; border-radius: 6px !important; background: transparent !important; color: var(--fb-ink-mute) !important; border: none !important; cursor: pointer !important; font-size: 14px !important; transition: all .2s !important; display: flex !important; align-items: center !important; justify-content: center !important; }
+.fb-alcard-del:hover { background: rgba(255,68,68,0.1) !important; color: #FF4444 !important; }
 
 /* ── Overrides for inline/legacy hardcoded colors in HTML ── */
 #fb-task-in {
@@ -6970,9 +6979,17 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
           <div class="fb-alcard-repeat">${repeatStr} · ${fmtCountdown(ms)}</div>
         </div>
         <div class="fb-alcard-right">
+          <button class="fb-alcard-gcal" title="Simpan ke Google Calendar" style="padding:4px 6px;border-radius:6px;background:transparent;border:1.5px solid var(--fb-line);cursor:pointer;font-size:12px;transition:all 0.2s;color:var(--fb-ink);display:flex;align-items:center;">&#128197;</button>
           <button class="fb-alcard-toggle ${enabled ? 'on' : 'off'}" title="${enabled ? 'Matikan' : 'Aktifkan'}">${enabled ? 'ON' : 'OFF'}</button>
           <button class="fb-alcard-del" title="Hapus">&#10006;</button>
         </div>`
+      card.querySelector('.fb-alcard-gcal').onclick = () => {
+        const start = new Date(alarm.timestamp)
+        const end = new Date(alarm.timestamp + 60 * 60 * 1000) // Default 1 hour
+        const fmt = d => d.toISOString().replace(/-|:|\.\d\d\d/g, '')
+        const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(alarm.label)}&dates=${fmt(start)}/${fmt(end)}&details=Ditambahkan%20dari%20FocusBuddy`
+        window.open(url, '_blank')
+      }
       card.querySelector('.fb-alcard-toggle').onclick = () => {
         alarm.enabled = !alarm.enabled; save(); renderAlarms()
       }

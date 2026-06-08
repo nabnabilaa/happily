@@ -35,8 +35,7 @@ export async function POST(request: Request) {
     const args: any[] = [];
 
     if (updates.progress !== undefined) {
-      fields.push('progress = ?');
-      args.push(updates.progress);
+      return NextResponse.json({ error: 'Progress is computed automatically' }, { status: 403, headers: getCorsHeaders(request) });
     }
     if (updates.status !== undefined) {
       fields.push('status = ?');

@@ -28,9 +28,11 @@ import OvertimePromptModal from "@/components/modals/OvertimePromptModal";
 import WellbeingGauge from "@/components/home/WellbeingGauge";
 import AttendanceWidget from "@/components/home/AttendanceWidget";
 import TaskHarianWidget from "@/components/home/TaskHarianWidget";
+import DailyChallengeWidget from "@/components/home/DailyChallengeWidget";
 import SurveySection from "@/components/home/SurveySection";
 import PresenceBoard from "@/components/home/PresenceBoard";
 import NotificationBanner from "@/components/pwa/NotificationBanner";
+import LeaderboardWidget from "@/components/home/LeaderboardWidget";
 import MoodWall from "@/components/home/MoodWall";
 
 
@@ -861,8 +863,8 @@ export default function HomeScreen({ openModal }: any) {
           }} 
         />
 
-
-
+        {/* LAYER 3 — Daily Challenges */}
+        <DailyChallengeWidget />
 
         {/* Survey Section — Smart targeting + internal questions */}
         <SurveySection openModal={openModal} />
@@ -873,6 +875,8 @@ export default function HomeScreen({ openModal }: any) {
           <PresenceBoard openModal={openModal} />
         </div>
 
+        {/* Leaderboard Tim */}
+        <LeaderboardWidget currentUserId={user.id} />
 
         {/* Daily Training Habits */}
         <div style={{ marginTop: 24 }}>

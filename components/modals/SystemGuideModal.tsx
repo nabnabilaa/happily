@@ -20,13 +20,14 @@ export default function SystemGuideModal({ onClose }: SystemGuideModalProps) {
           <div style={{ ...HP_TEXT.h, fontSize: 16, marginBottom: 12, color: HP_TOKENS.sage }}>Cara Mendapatkan Poin</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             {[
-              { label: 'Daily Quest', pts: '+50', icon: '🎯', desc: 'Selesaikan prioritas harian' },
-              { label: 'Tutup Hari', pts: '+100', icon: '🌙', desc: 'Refleksi & Clock Out' },
-              { label: 'Training Quest', pts: '+20', icon: '🌿', desc: 'Selesaikan latihan habit' },
+              { label: 'Daily Quest', pts: '+30', icon: '🎯', desc: 'Selesaikan prioritas harian' },
+              { label: 'Tutup Hari', pts: '+20', icon: '🌙', desc: 'Refleksi Harian' },
+              { label: 'Absensi', pts: '+10', icon: '📍', desc: 'Check-in / Check-out tepat waktu' },
+              { label: 'Training Quest', pts: '+15', icon: '🌿', desc: 'Selesaikan latihan habit' },
               { label: 'Apresiasi', pts: '+20', icon: '👏', desc: 'Dapat kudos dari tim' },
+              { label: 'Survey HR', pts: '+20', icon: '📋', desc: 'Isi survei berkala' },
               { label: 'Box Breathing', pts: '+5', icon: '🧘‍♂️', desc: 'Latihan jeda tenang 1m' },
               { label: 'Isi Mood', pts: '+5', icon: '😊', desc: 'Check-in mood harian' },
-              { label: 'Isi Survey', pts: '+5', icon: '📋', desc: 'Isi survei berkala HR' },
             ].map(item => (
               <div key={item.label} style={{ 
                 padding: 12, borderRadius: 16, background: HP_TOKENS.card, 
@@ -39,6 +40,9 @@ export default function SystemGuideModal({ onClose }: SystemGuideModalProps) {
                 <div style={{ ...HP_TEXT.small, color: HP_TOKENS.sage, fontWeight: 900, fontSize: 13, marginTop: 'auto' }}>{item.pts} Poin</div>
               </div>
             ))}
+          </div>
+          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.coral, marginTop: 16, textAlign: 'center', fontWeight: 800 }}>
+            💡 Maksimal 300 Poin per hari dari seluruh aktivitas.
           </div>
         </section>
 
