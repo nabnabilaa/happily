@@ -52,12 +52,12 @@ export default function CoachModal({ onClose }: CoachModalProps) {
       joy: 'Senang', calm: 'Tenang', neutral: 'Biasa Saja',
       tired: 'Lelah', stress: 'Stres', burnout: 'Burnout',
     };
-    const moodDescription = moodMap[moodKey] || moodKey || 'belum dicek';
+    const moodDescription = (moodKey && moodMap[moodKey]) || moodKey || 'belum dicek';
 
     const energyMap: Record<string, string> = {
       low: 'rendah', mid: 'sedang', high: 'tinggi',
     };
-    const energyDescription = energyMap[energyKey] || energyKey || 'belum dicek';
+    const energyDescription = (energyKey && energyMap[energyKey]) || energyKey || 'belum dicek';
 
     // Build personalized greeting based on actual state
     const priorities = state?.priorities || [];

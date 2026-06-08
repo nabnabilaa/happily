@@ -65,7 +65,9 @@ export async function GET(request: Request) {
 
     // Today's status
     const todayRes = await db.execute({
-      sql: `SELECT id, check_in_at, check_out_at, duration_minutes, check_in_type, mood
+      sql: `SELECT id, DATE_FORMAT(check_in_at, '%Y-%m-%dT%H:%i:%sZ') as check_in_at, 
+            DATE_FORMAT(check_out_at, '%Y-%m-%dT%H:%i:%sZ') as check_out_at, 
+            duration_minutes, check_in_type, mood
             FROM attendance 
             WHERE user_id = ? AND DATE(CONVERT_TZ(check_in_at, '+00:00', '+07:00')) = DATE(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '+07:00'))
             ORDER BY check_in_at DESC LIMIT 1`,

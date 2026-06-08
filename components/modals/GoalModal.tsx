@@ -71,7 +71,7 @@ export default function GoalModal({ onClose, goal }: { onClose: () => void; goal
     
     try {
       // Validasi Duplikat: Jangan perbolehkan judul yang sama persis jika membuat baru, atau jika edit tapi judul diubah
-      const isDuplicate = state.goals?.some((g: any) => 
+      const isDuplicate = state?.goals?.some((g: any) => 
         g.title.toLowerCase().trim() === title.toLowerCase().trim() && 
         (!goal || String(g.id) !== String(goal.id))
       );

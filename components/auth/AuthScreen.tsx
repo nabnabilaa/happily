@@ -228,27 +228,48 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
               <HPGlyph name="download" size={16} color={HP_TOKENS.primary} />
             </div>
           </div>
-          <style dangerouslySetInnerHTML={{ __html: `.hp-install-btn { display: none !important; }` }} />
+          <style dangerouslySetInnerHTML={{ __html: `
+            .hp-install-btn { display: none !important; }
+            @media (max-width: 768px) {
+              .hp-auth-wrapper {
+                background: transparent !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+              }
+              .hp-auth-form-wrapper {
+                padding: 0 !important;
+              }
+              .hp-auth-form-card {
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                background: transparent !important;
+                padding-top: 6vh !important;
+              }
+            }
+          ` }} />
 
           {/* RIGHT SIDE: Form Card */}
-          <div style={{
-            flex: "1 1 400px",
-            padding: "32px",
+          <div className="hp-auth-form-wrapper" style={{
+            flex: "1 1 300px",
+            padding: "clamp(16px, 5vw, 32px)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             zIndex: 2,
+            boxSizing: "border-box",
+            width: "100%",
           }}>
-            <div style={{
+            <div className="hp-auth-form-card" style={{
               background: "#fff",
               width: "100%",
               maxWidth: 400,
               borderRadius: 24,
-              padding: "40px 32px",
+              padding: "clamp(24px, 5vw, 40px) clamp(20px, 5vw, 32px)",
               boxShadow: "0 20px 40px rgba(0,0,0,0.04)",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
+              boxSizing: "border-box",
             }}>
               <div style={{ marginBottom: 16 }}>
               </div>
@@ -334,7 +355,6 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                   cancel_on_tap_outside={false}
                   theme="outline"
                   size="large"
-                  width="330"
                   text="signin_with"
                   shape="pill"
                 />

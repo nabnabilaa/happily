@@ -219,13 +219,13 @@ function AppContent() {
             fontFamily: 'var(--hp-font-display)', fontSize: 42, fontWeight: 700, 
             color: 'var(--hp-ink)', letterSpacing: -1, animation: 'hpFadeUp 0.5s ease both' 
           }}>
-            Happi<span style={{ color: 'var(--hp-primary)' }}>ly</span> ✨
+            Flow<span style={{ color: 'var(--hp-primary)' }}>buddy</span> ✨
           </div>
           <div style={{ 
             fontSize: 14, color: 'var(--hp-ink-mute)', letterSpacing: 0.5, 
             marginTop: 6, fontWeight: 600, animation: 'hpFadeUp 0.5s 0.15s ease both' 
           }}>
-            Work Happily — Kerja Lebih Cerdas
+            Flowbuddy — Kerja Lebih Cerdas
           </div>
         </div>
 

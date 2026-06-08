@@ -50,6 +50,7 @@ interface HPState {
   companyValues?: string[];
   coachSuggestions?: string[];
   overtimeStatus?: string;
+  lastMoodCheckIn?: string;
 }
 
 export type UserRole = 'hr' | 'manager' | 'employee';

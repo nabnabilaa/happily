@@ -23,7 +23,7 @@ export default function ManageLearningModal({ onClose }: ManageLearningModalProp
     if (!title) return;
     
     // Validasi duplikat
-    const isDuplicate = state.learning?.some((l: any) => l.title.toLowerCase().trim() === title.toLowerCase().trim());
+    const isDuplicate = state?.learning?.some((l: any) => l.title.toLowerCase().trim() === title.toLowerCase().trim());
     if (isDuplicate) {
       notify("Gagal Menambah", "Judul materi ini sudah ada. Harap gunakan nama lain.", "error");
       return;

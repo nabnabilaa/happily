@@ -15,6 +15,8 @@ interface FocusModalProps {
   onClose: () => void;
 }
 
+declare var chrome: any;
+
 const iconBtnStyle: React.CSSProperties = {
   position: 'relative', width: 40, height: 40, borderRadius: 20, border: 'none',
   background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',

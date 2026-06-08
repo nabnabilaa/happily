@@ -87,8 +87,7 @@ export default function AttendanceWidget({ openModal }: AttendanceWidgetProps) {
           background: `linear-gradient(135deg, ${HP_TOKENS.coral}, #E03131)`, 
           color: '#F4F7F9', border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-          boxShadow: '0 4px 16px rgba(224,49,49,0.3)',
-          animation: 'hpPulse 2s infinite ease-in-out'
+          boxShadow: '0 4px 16px rgba(224,49,49,0.3)'
         }}
       >
         ⚠️ Belum Clock-in — Klik untuk absen

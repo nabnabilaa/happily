@@ -45,7 +45,7 @@ export default function TabNav({ tab, setTab, userRole }: TabNavProps) {
   return (
     <div className="hp-app-nav">
       {/* Desktop Brand Logo */}
-      <div className="hp-nav-brand" style={{ padding: '16px 16px 40px', display: 'flex', alignItems: 'center', gap: 14 }}>
+      <div className="hp-nav-brand">
         <div style={{ 
           position: 'relative', 
           width: 46, height: 46, 

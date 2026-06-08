@@ -244,7 +244,15 @@ export default function HomeScreen({ openModal }: any) {
       }
       
       const lastAct = rawState.lastActivityDate ? new Date(rawState.lastActivityDate) : now;
-      const hoursInactive = (now.getTime() - lastAct.getTime()) / (1000 * 60 * 60);
+      let lastActTime = lastAct.getTime();
+      if (todayAttendance?.checkInAt) {
+         const checkInTime = new Date(todayAttendance.checkInAt).getTime();
+         if (checkInTime > lastActTime) {
+            lastActTime = checkInTime;
+         }
+      }
+      
+      const hoursInactive = (now.getTime() - lastActTime) / (1000 * 60 * 60);
 
       // 1. Inactivity Check (> 3 hours)
       if (hoursInactive >= 3) {
@@ -280,7 +288,7 @@ export default function HomeScreen({ openModal }: any) {
     generateNudge();
     
     return () => clearInterval(interval);
-  }, [rawState, isClockedOut, isClockedIn]);
+  }, [rawState, isClockedOut, isClockedIn, todayAttendance]);
 
   // Auto-Popup Clock In
   useEffect(() => {

@@ -66,8 +66,7 @@ export default function RootLayout({
           __html: `
             try {
               var saved = localStorage.getItem('hp-theme');
-              var system = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-              var theme = saved || system;
+              var theme = saved || 'light';
               if (theme === 'dark') {
                 document.documentElement.classList.add('dark');
               } else {
