@@ -19,6 +19,24 @@ export async function GET(request: Request) {
       args: [userId, userId, userId]
     });
 
+    const eventIds = res.rows.map(r => r.id);
+    const attendeesMap: Record<string, any[]> = {};
+    if (eventIds.length > 0) {
+      const placeholders = eventIds.map(() => "?").join(",");
+      const attRes = await db.execute({
+        sql: `SELECT ca.event_id, ca.user_id, u.name, u.email 
+              FROM calendar_attendees ca 
+              JOIN users u ON ca.user_id = u.id 
+              WHERE ca.event_id IN (${placeholders})`,
+        args: eventIds
+      });
+      attRes.rows.forEach(r => {
+        const evId = String(r.event_id);
+        if (!attendeesMap[evId]) attendeesMap[evId] = [];
+        attendeesMap[evId].push({ id: r.user_id, name: r.name, email: r.email });
+      });
+    }
+
     const events = res.rows.map(r => ({
       id: r.id,
       creatorId: r.creator_id,
@@ -34,6 +52,7 @@ export async function GET(request: Request) {
       location: r.location || null,
       color: r.color || '#3B6FA0',
       isAllDay: r.is_all_day || false,
+      attendees: attendeesMap[r.id] || [],
     }));
 
     return NextResponse.json({ events });

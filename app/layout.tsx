@@ -53,13 +53,6 @@ export default function RootLayout({
   return (
     <html lang="id" className={`${nunito.variable} ${nunitoDisplay.variable}`} suppressHydrationWarning>
       <head>
-        {/* Fraunces for display headings */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,400&display=swap" rel="stylesheet" />
-        <style dangerouslySetInnerHTML={{ __html: `
-          :root { --hp-font-display: 'Fraunces', serif; }
-        `}} />
       </head>
       <body>
         <Script id="theme-loader" strategy="beforeInteractive" dangerouslySetInnerHTML={{

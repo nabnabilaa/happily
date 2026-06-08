@@ -22,6 +22,7 @@ interface CalEvent {
   recurrence: string | null;
   location: string | null;
   color: string;
+  attendees?: { id: string; name: string; email: string; }[];
 }
 
 interface Props { openModal: (name: string, props?: any) => void; }
@@ -52,9 +53,42 @@ function isLastWorkingDayOfMonth(date: Date): boolean {
   return date.getDate() === d.getDate() && date.getMonth() === d.getMonth();
 }
 
+const getGoogleCalendarUrl = (ev: CalEvent) => {
+  const start = new Date(ev.startTime.replace(' ', 'T'));
+  const end = new Date(ev.endTime.replace(' ', 'T'));
+  const formatGCalTime = (d: Date) => {
+    return d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+  };
+  const dates = `${formatGCalTime(start)}/${formatGCalTime(end)}`;
+  const text = encodeURIComponent(ev.title);
+  
+  let descText = ev.description || "";
+  if (ev.attendees && ev.attendees.length > 0) {
+    const guestNames = ev.attendees.map(a => `- ${a.name} (${a.email || "tidak ada email"})`).join("\n");
+    descText += `\n\n---\n👥 Undangan Flowbee:\n${guestNames}`;
+  }
+  const details = encodeURIComponent(descText);
+  const location = encodeURIComponent(ev.location || "");
+  
+  let recurParam = "";
+  if (ev.recurrence) {
+    if (ev.recurrence === 'daily') recurParam = "&recur=RRULE:FREQ=DAILY";
+    else if (ev.recurrence === 'weekly') recurParam = "&recur=RRULE:FREQ=WEEKLY";
+    else if (ev.recurrence === 'biweekly') recurParam = "&recur=RRULE:FREQ=WEEKLY;INTERVAL=2";
+    else if (ev.recurrence === 'monthly') recurParam = "&recur=RRULE:FREQ=MONTHLY";
+  }
+
+  const addParam = ev.attendees && ev.attendees.length > 0
+    ? `&add=${ev.attendees.map(a => a.email).filter(Boolean).join(",")}`
+    : "";
+
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${dates}&details=${details}&location=${location}${recurParam}${addParam}`;
+};
+
 export default function CalendarScreen({ openModal }: Props) {
   const { user, state, notify } = useHP();
   const [events, setEvents] = useState<CalEvent[]>([]);
+  const [syncEvent, setSyncEvent] = useState<CalEvent | null>(null);
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -209,7 +243,28 @@ export default function CalendarScreen({ openModal }: Props) {
         window.postMessage({ type: "FLOWBEE_WEBSITE_UPDATE" }, "*");
       }
 
-      notify('Agenda Dibuat', `"${title}" berhasil ditambahkan.`, 'success');
+      // Create a temporary event to generate Google Calendar URL
+      const tempEv: CalEvent = {
+        id: "temp",
+        creatorId: user?.id,
+        title,
+        description: desc,
+        startTime: `${date} ${timeStart}:00`,
+        endTime: `${endDT.getFullYear()}-${String(endDT.getMonth()+1).padStart(2,'0')}-${String(endDT.getDate()).padStart(2,'0')} ${String(endDT.getHours()).padStart(2,'0')}:${String(endDT.getMinutes()).padStart(2,'0')}:00`,
+        notificationOffsetMinutes: offset,
+        eventType: 'event',
+        attendeeStatus: 'going',
+        recurrence: recurrence || null,
+        location: location || null,
+        color: HP_TOKENS.blue,
+        attendees: attendeesToSave.map(uid => {
+          const u = users.find(x => String(x.id) === uid);
+          return u ? { id: u.id, name: u.name, email: u.email } : null;
+        }).filter(Boolean) as any[]
+      };
+      setSyncEvent(tempEv);
+
+      notify('Agenda Dibuat', `"${title}" berhasil ditambahkan ke Flowbee.`, 'success');
       setShowForm(false);
       resetForm();
       fetchData();
@@ -579,6 +634,54 @@ export default function CalendarScreen({ openModal }: Props) {
       )}
 
       {/* Events List */}
+      {syncEvent && (
+        <HPCard padding={16} style={{ marginBottom: 16, background: HP_TOKENS.yellowWash || '#FFF9E6', border: `1.5px solid ${HP_TOKENS.yellow}40` }}>
+          <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+            <div style={{ fontSize: 28 }}>⚠️</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.yellowDark || '#B28200' }}>Belum tersimpan di Google Calendar!</div>
+              <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkSoft, marginTop: 2 }}>
+                Agenda <strong>{syncEvent.title}</strong> sudah dibuat di Flowbee. 
+                {syncEvent.attendees && syncEvent.attendees.length > 0 ? (
+                  <span> Klik tombol di bawah agar undangan terkirim ke {syncEvent.attendees.length} peserta via email.</span>
+                ) : (
+                  <span> Klik tombol di bawah untuk menyinkronkan dengan kalender pribadimu.</span>
+                )}
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button
+                onClick={() => setSyncEvent(null)}
+                className="hp-tap"
+                style={{
+                  padding: '10px 16px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.yellow}60`,
+                  background: 'transparent', color: HP_TOKENS.yellowDark || '#B28200',
+                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
+                }}
+              >
+                Nanti Saja
+              </button>
+              <a
+                href={getGoogleCalendarUrl(syncEvent)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setSyncEvent(null)}
+                className="hp-tap"
+                style={{
+                  padding: '10px 16px', borderRadius: 10, border: 'none',
+                  background: HP_TOKENS.yellow, color: HP_TOKENS.ink,
+                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
+                  textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6
+                }}
+              >
+                <HPGlyph name="calendar" size={14} color={HP_TOKENS.ink} />
+                Sinkronkan Sekarang
+              </a>
+            </div>
+          </div>
+        </HPCard>
+      )}
+
       {loading ? (
         <div style={{ textAlign: 'center', padding: 40, color: HP_TOKENS.inkMute }}>Memuat kalender...</div>
       ) : eventsOnDate.length === 0 ? (
@@ -628,13 +731,35 @@ export default function CalendarScreen({ openModal }: Props) {
                           <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, marginTop: 4, fontStyle: 'italic' }}>"{ev.description}"</div>
                         )}
                       </div>
-                      {isOwner && (
-                        <button onClick={() => handleDelete(ev.id)} style={{
-                          background: 'none', border: 'none', cursor: 'pointer', padding: 4,
-                        }}>
-                          <HPGlyph name="close" size={14} color={HP_TOKENS.inkMute} />
-                        </button>
-                      )}
+                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                        <a
+                          href={getGoogleCalendarUrl(ev)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Tambahkan ke Google Calendar"
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            background: "none",
+                            border: "none",
+                            cursor: "pointer",
+                            padding: 4,
+                            borderRadius: 6,
+                            textDecoration: "none",
+                          }}
+                          className="hp-tap"
+                        >
+                          <HPGlyph name="calendar" size={14} color={HP_TOKENS.blue} />
+                        </a>
+                        {isOwner && (
+                          <button onClick={() => handleDelete(ev.id)} style={{
+                            background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+                          }}>
+                            <HPGlyph name="close" size={14} color={HP_TOKENS.inkMute} />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
