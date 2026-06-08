@@ -11,6 +11,7 @@ import Modal from "@/components/ui/Modal";
 import HPGlyph from "@/components/ui/HPGlyph";
 import HPBar from "@/components/ui/HPBar";
 import HPCard from "@/components/ui/HPCard";
+import TaskCompleteModal from "@/components/modals/TaskCompleteModal";
 
 interface WorkCheckInModalProps {
   onClose: () => void;
@@ -22,7 +23,8 @@ export default function WorkCheckInModal({ onClose }: WorkCheckInModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [notes, setNotes] = useState("");
   const [showNotes, setShowNotes] = useState(false);
-  const [selectedMood, setSelectedMood] = useState(state?.mood || 'neutral');
+  const [selectedMood, setSelectedMood] = useState(state?.mood || 'calm');
+  const [completingTask, setCompletingTask] = useState<any>(null);
 
   if (!state) return null;
 
@@ -58,39 +60,133 @@ Jawab dengan tone yang asik dan menyemangati.`,
   };
 
   const toggleTask = (id: number) => {
+    const priority = state?.priorities?.find((p: any) => p.id === id);
+    if (!priority) return;
+
+    if (!priority.done) {
+      setCompletingTask(priority);
+    } else {
+      updateState((s: any) => {
+        const newPriorities = s.priorities.map((p: any) => p.id === id ? { ...p, done: false } : p);
+        
+        // Recalculate goal progress for linked goals
+        const task = s.priorities.find((p: any) => p.id === id);
+        const targetId = task?.goal_id || task?.kpi_id;
+        const updatedGoals = s.goals.map((goal: any) => {
+          if (targetId && String(goal.id) === String(targetId)) {
+            const tasksForGoal = newPriorities.filter((p: any) => (p.goal_id && String(p.goal_id) === String(goal.id)) || (p.kpi_id && String(p.kpi_id) === String(goal.id)));
+            const doneCount = tasksForGoal.filter((p: any) => p.done).length;
+            const newProgress = tasksForGoal.length > 0 ? Math.round((doneCount / tasksForGoal.length) * 100) : goal.progress;
+            const newMetric = doneCount + "/" + tasksForGoal.length + " task selesai";
+            return { ...goal, progress: newProgress, metric: newMetric };
+          }
+          return goal;
+        });
+
+        return {
+          ...s,
+          priorities: newPriorities,
+          goals: updatedGoals
+        };
+      });
+    }
+  };
+
+  const confirmTaskComplete = React.useCallback((data: {
+    proofLinks: string[]; isProject: boolean; metricValue?: number; notes?: string;
+  }) => {
+    if (!completingTask) return;
+    const id = completingTask.id;
+
+    awardXP('priority_complete', `Selesaikan: ${completingTask.title}`);
+
     updateState((s: any) => {
-      const newPriorities = s.priorities.map((p: any) => p.id === id ? { ...p, done: !p.done } : p);
-      
-      // Recalculate goal progress for linked goals
-      const task = s.priorities.find((p: any) => p.id === id);
-      const targetId = task?.goal_id || task?.kpi_id;
+      const pIndex = s.priorities.findIndex((p: any) => p.id === id);
+      if (pIndex === -1) return s;
+
+      const newPriorities = [...s.priorities];
+      newPriorities[pIndex] = { 
+        ...newPriorities[pIndex], 
+        done: true,
+        proof_links: data.proofLinks,
+        is_project: data.isProject,
+        metric_value: data.metricValue || null,
+        completion_notes: data.notes || null,
+        completed_at: new Date().toISOString(),
+      };
+
+      const now = new Date();
+      const newLog = {
+        id: Date.now(),
+        type: 'quest_completion',
+        title: newPriorities[pIndex].title,
+        points: 50,
+        date: now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
+        day: now.toLocaleDateString('id-ID', { weekday: 'long' }),
+        time: now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+      };
+
+      if (data.metricValue && newPriorities[pIndex].kpi_id) {
+        fetch('/api/kpi/daily-input', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user?.id,
+            kpiId: newPriorities[pIndex].kpi_id,
+            date: new Date().toISOString().slice(0, 10),
+            value: data.metricValue,
+            notes: data.notes || newPriorities[pIndex].title,
+            proofLink: data.proofLinks[0] || null,
+          })
+        }).catch(e => console.error('KPI input failed:', e));
+      }
+
+      if (s.syncSkillProgress) s.syncSkillProgress(newPriorities[pIndex].title + " " + (newPriorities[pIndex].kpi_title || ""), 2);
+
+      const task = newPriorities[pIndex];
+      const targetId = task.goal_id || task.kpi_id;
       const updatedGoals = s.goals.map((goal: any) => {
         if (targetId && String(goal.id) === String(targetId)) {
-          const tasksForGoal = newPriorities.filter((p: any) => (p.goal_id && String(p.goal_id) === String(goal.id)) || (p.kpi_id && String(p.kpi_id) === String(goal.id)));
-          const doneCount = tasksForGoal.filter((p: any) => p.done).length;
-          const newProgress = tasksForGoal.length > 0 ? Math.round((doneCount / tasksForGoal.length) * 100) : goal.progress;
-          const newMetric = doneCount + "/" + tasksForGoal.length + " task selesai";
-          return { ...goal, progress: newProgress, metric: newMetric };
+          let total = 0;
+          let completed = 0;
+          const match = String(goal.metric || '').match(/^(\d+)\/(\d+)\s+task/);
+          if (match) {
+            completed = parseInt(match[1]);
+            total = parseInt(match[2]);
+          } else {
+            const todayTasks = newPriorities.filter((p: any) => (p.goal_id && String(p.goal_id) === String(goal.id)) || (p.kpi_id && String(p.kpi_id) === String(goal.id)));
+            total = todayTasks.length;
+            completed = todayTasks.filter((p: any) => p.done).length;
+          }
+
+          const newCompleted = Math.max(0, Math.min(total, completed + 1));
+          const newProgress = total > 0 ? Math.round((newCompleted / total) * 100) : goal.progress;
+          return { ...goal, progress: newProgress, metric: total > 0 ? `${newCompleted}/${total} task selesai` : goal.metric };
         }
         return goal;
       });
 
-      return {
-        ...s,
+      return { 
+        ...s, 
         priorities: newPriorities,
-        goals: updatedGoals
+        goals: updatedGoals,
+        logbook: [newLog, ...(s.logbook || [])],
+        lastActivityDate: now.toISOString(),
+        penaltyActive: false,
       };
     });
-  };
 
-  const updateFocusProgress = (val: number) => {
+    setCompletingTask(null);
+  }, [completingTask, updateState, awardXP, user]);
+
+
+  const updateTaskProgress = (taskId: number, val: number) => {
     updateState((s: any) => {
-      const newPriorities = s.priorities.map((p: any) => p.id === s.focusTaskId ? { ...p, progress: val } : p);
-      const updatedTask = s.focusTaskId ? newPriorities.find((p: any) => p.id === s.focusTaskId) : null;
+      const newPriorities = s.priorities.map((p: any) => p.id === taskId ? { ...p, progress: val } : p);
+      const updatedTask = newPriorities.find((p: any) => p.id === taskId);
       
       let newGoals = s.goals;
       
-      // Case 1: Linked via specific Task ID
       if (updatedTask?.goal_id && s.goals) {
         newGoals = s.goals.map((g: any) => {
           if (String(g.id) === String(updatedTask.goal_id)) {
@@ -110,19 +206,9 @@ Jawab dengan tone yang asik dan menyemangati.`,
           return g;
         });
       } 
-      // Case 2: Fallback - Match by intention title directly to a Goal (if no task linked)
-      else if (!s.focusTaskId && s.intention && s.goals) {
-        newGoals = s.goals.map((g: any) => {
-          if (g.title === s.intention) {
-            return { ...g, progress: val, metric: `Realisasi Fokus (${val}%)` };
-          }
-          return g;
-        });
-      }
 
       return {
         ...s,
-        focusProgress: val,
         priorities: newPriorities,
         goals: newGoals
       };
@@ -130,10 +216,11 @@ Jawab dengan tone yang asik dan menyemangati.`,
   };
 
   const saveRealisasi = async () => {
-    if (!state.focusTaskId) return;
-    const task = priorities.find((p: any) => p.id === state.focusTaskId);
-    
-    // Save to Logbook DB
+    const undoneTasks = priorities.filter((p: any) => !p.done);
+    const avgProgress = undoneTasks.length > 0 
+      ? Math.round(undoneTasks.reduce((sum: number, p: any) => sum + (p.progress || 0), 0) / undoneTasks.length) 
+      : 100;
+
     try {
       await fetch('/api/logbook', {
         method: 'POST',
@@ -141,13 +228,11 @@ Jawab dengan tone yang asik dan menyemangati.`,
         body: JSON.stringify({
           userId: user?.id,
           type: 'realization_check',
-          title: task?.title || "Focus Task",
+          title: "Mid-Day Check-In",
           content: notes,
           points: 0,
           metadata: { 
-            progress: state.focusProgress,
-            proof_link: task?.proof_link,
-            metric_value: task?.metric_value
+            progress: avgProgress
           }
         })
       });
@@ -155,19 +240,19 @@ Jawab dengan tone yang asik dan menyemangati.`,
       console.error("Failed to save logbook entry", e);
     }
 
-    awardXP('realization_check', 'Mid-Day Check-in Focus');
+    awardXP('realization_check', 'Mid-Day Check-in');
 
-    // Still update local state for immediate UI feedback if needed
     const log = {
       id: Date.now(),
       type: 'realization_check',
-      title: task?.title || "Focus Task",
-      progress: state.focusProgress,
+      title: "Mid-Day Check-In",
+      progress: avgProgress,
       notes: notes,
       date: new Date().toLocaleDateString('id-ID'),
       time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-      metadata_json: JSON.stringify({ progress: state.focusProgress })
+      metadata_json: JSON.stringify({ progress: avgProgress })
     };
+
     updateState((s: any) => ({
       ...s,
       mood: selectedMood,
@@ -177,7 +262,8 @@ Jawab dengan tone yang asik dan menyemangati.`,
     
     setShowNotes(false);
     setNotes("");
-    alert("Realisasi & Mood berhasil disimpan! ✨");
+    alert("Update siang ini & Mood berhasil disimpan! ✨");
+    onClose();
   };
 
   const getMoodColor = (mood: string) => {
@@ -219,137 +305,13 @@ Jawab dengan tone yang asik dan menyemangati.`,
         </div>
       </div>
 
-      {(state.focusTaskId || state.intention) ? (
-        <HPCard padding={20} style={{ 
-          marginBottom: 24, 
-          background: `linear-gradient(135deg, ${HP_TOKENS.yellowWash} 0%, ${HP_TOKENS.card} 100%)`, 
-          border: `1.5px solid ${HP_TOKENS.yellow}`,
-          boxShadow: '0 8px 24px rgba(253,185,19,0.1)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: HP_TOKENS.yellow, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <HPGlyph name="sparkle" size={18} color={HP_TOKENS.ink} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.ink, fontWeight: 900, letterSpacing: 0.5 }}>TARGET FOKUS SAAT INI</div>
-              <div style={{ ...HP_TEXT.h, fontSize: 16, color: HP_TOKENS.ink }}>
-                {state.focusTaskId 
-                  ? priorities.find((p: any) => p.id === state.focusTaskId)?.title 
-                  : state.intention}
-              </div>
-            </div>
-          </div>
-          
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, alignItems: 'center' }}>
-              <div style={{ ...HP_TEXT.small, fontWeight: 800, color: HP_TOKENS.ink }}>Realisasi: <span style={{ color: HP_TOKENS.yellow, fontSize: 18 }}>{state.focusProgress || 0}%</span></div>
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>Geser untuk update</div>
-            </div>
-            <input 
-              type="range" min="0" max="100" 
-              value={state.focusProgress || 0} 
-              onChange={(e) => updateFocusProgress(parseInt(e.target.value))}
-              style={{ 
-                width: '100%', 
-                height: 8,
-                borderRadius: 4,
-                accentColor: HP_TOKENS.yellow,
-                cursor: 'pointer'
-              }}
-            />
-          </div>
 
-          <div style={{ background: 'rgba(255,255,255,0.8)', padding: 16, borderRadius: 16, border: `1px solid ${HP_TOKENS.line}` }}>
-            <div style={{ ...HP_TEXT.small, fontWeight: 800, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <HPGlyph name="book" size={14} color={HP_TOKENS.ink} />
-              Catatan Progres (Realisasi)
-            </div>
-            
-            <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-              <input 
-                type="text"
-                placeholder="Link Bukti Kerja (Figma/Docs/dll) - Opsional"
-                value={state.focusTaskId ? priorities.find((p: any) => p.id === state.focusTaskId)?.proof_link || "" : ""}
-                onChange={e => updateState((s: any) => ({
-                  ...s, priorities: s.priorities.map((p: any) => p.id === s.focusTaskId ? { ...p, proof_link: e.target.value } : p)
-                }))}
-                style={{
-                  flex: 2, padding: '12px', borderRadius: 12, border: `1px solid ${HP_TOKENS.lineSoft}`,
-                  fontFamily: HP_FONT, fontSize: 13, boxSizing: 'border-box', outline: 'none'
-                }}
-              />
-              <input 
-                type="number"
-                placeholder="Nilai Metrik (Rp / Qty) - Opsional"
-                value={state.focusTaskId ? priorities.find((p: any) => p.id === state.focusTaskId)?.metric_value || "" : ""}
-                onChange={e => updateState((s: any) => ({
-                  ...s, priorities: s.priorities.map((p: any) => p.id === s.focusTaskId ? { ...p, metric_value: e.target.value } : p)
-                }))}
-                style={{
-                  flex: 1, padding: '12px', borderRadius: 12, border: `1px solid ${HP_TOKENS.lineSoft}`,
-                  fontFamily: HP_FONT, fontSize: 13, boxSizing: 'border-box', outline: 'none'
-                }}
-              />
-            </div>
-
-            <textarea 
-              placeholder="Ceritakan progresmu... Kenapa baru segini? Apa yang sudah selesai? Ada kendala apa? (misal: Nunggu feedback tim, butuh riset lebih dalam)"
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              style={{
-                width: '100%', padding: '12px', borderRadius: 12, border: `1px solid ${HP_TOKENS.lineSoft}`,
-                fontFamily: HP_FONT, fontSize: 13, minHeight: 80, boxSizing: 'border-box',
-                background: HP_TOKENS.card, outline: 'none', transition: '0.2s',
-                lineHeight: 1.5
-              }}
-            />
-
-            <div style={{ marginTop: 12 }}>
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 8 }}>MOOD SIANG INI:</div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                {['joy', 'calm', 'tired', 'stress'].map(m => (
-                  <button key={m} onClick={() => setSelectedMood(m)} style={{
-                    flex: 1, padding: '8px 0', borderRadius: 12,
-                    background: selectedMood === m ? `${getMoodColor(m)}20` : '#fff',
-                    border: selectedMood === m ? `1.5px solid ${getMoodColor(m)}` : `1.5px solid ${HP_TOKENS.lineSoft}`,
-                    fontSize: 20, cursor: 'pointer', transition: '0.2s'
-                  }}>
-                    {getMoodEmoji(m)}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <button 
-              onClick={saveRealisasi}
-              disabled={!notes.trim()}
-              className="hp-tap"
-              style={{ 
-                marginTop: 12, width: '100%', padding: '14px', borderRadius: 12,
-                background: notes.trim() ? HP_TOKENS.ink : HP_TOKENS.line, 
-                color: notes.trim() ? HP_TOKENS.yellow : HP_TOKENS.inkFade, 
-                border: 'none',
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: notes.trim() ? 'pointer' : 'default',
-                boxShadow: notes.trim() ? '0 4px 12px rgba(26,29,35,0.1)' : 'none'
-              }}
-            >
-              Simpan ke Logbook Activity
-            </button>
-          </div>
-        </HPCard>
-      ) : (
-        <HPCard padding={20} style={{ marginBottom: 24, textAlign: 'center', background: HP_TOKENS.paper, border: `1.5px dashed ${HP_TOKENS.line}` }}>
-          <div style={{ fontSize: 32, marginBottom: 12 }}>🎯</div>
-          <div style={{ ...HP_TEXT.h, fontSize: 15, color: HP_TOKENS.ink }}>Belum ada Task yang di-Set sebagai Fokus.</div>
-          <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, marginTop: 4 }}>Klik ikon ✨ pada daftar target di bawah untuk mulai fokus.</div>
-        </HPCard>
-      )}
 
       <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 900, fontSize: 10, letterSpacing: 1, marginBottom: 12 }}>DAFTAR TARGET HARI INI</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
         {priorities.map((p: any) => (
           <HPCard key={p.id} padding={14} style={{ 
-            background: p.done ? `${HP_TOKENS.sageWash}40` : '#fff',
+            background: p.done ? `${HP_TOKENS.sageWash}40` : HP_TOKENS.card,
             border: `1.5px solid ${p.done ? HP_TOKENS.sage : HP_TOKENS.line}`,
             opacity: p.done ? 0.7 : 1,
             transition: '0.2s'
@@ -389,6 +351,26 @@ Jawab dengan tone yang asik dan menyemangati.`,
                     </div>
                   );
                 })()}
+                {!p.done && (
+                  <div style={{ marginTop: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, alignItems: 'center' }}>
+                      <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>Progres:</div>
+                      <div style={{ ...HP_TEXT.small, fontWeight: 800, color: HP_TOKENS.yellow }}>{p.progress || 0}%</div>
+                    </div>
+                    <input 
+                      type="range" min="0" max="100" 
+                      value={p.progress || 0} 
+                      onChange={(e) => updateTaskProgress(p.id, parseInt(e.target.value))}
+                      style={{ 
+                        width: '100%', 
+                        height: 6,
+                        borderRadius: 3,
+                        accentColor: HP_TOKENS.yellow,
+                        cursor: 'pointer'
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </HPCard>
@@ -400,52 +382,57 @@ Jawab dengan tone yang asik dan menyemangati.`,
         )}
       </div>
 
-      {!aiResponse ? (
-        <button 
-          onClick={askAI}
-          disabled={isLoading}
-          className="hp-tap"
+      <div style={{ background: HP_TOKENS.card, padding: 16, borderRadius: 16, border: `1px solid ${HP_TOKENS.line}`, marginBottom: 24 }}>
+        <div style={{ ...HP_TEXT.small, fontWeight: 800, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <HPGlyph name="book" size={14} color={HP_TOKENS.ink} />
+          Catatan Mid-Day Jurnal
+        </div>
+        
+        <textarea 
+          placeholder="Ceritakan progres siang ini secara umum... Apa saja yang sudah dikerjakan? Ada kendala apa?"
+          value={notes}
+          onChange={e => setNotes(e.target.value)}
           style={{
-            width: '100%', padding: '16px', borderRadius: 20,
-            background: HP_TOKENS.blue, color: '#F4F7F9', border: 'none',
-            fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-            boxShadow: `0 8px 24px ${HP_TOKENS.blueSoft}`,
+            width: '100%', padding: '14px', borderRadius: 12, border: `1px solid ${HP_TOKENS.lineSoft}`,
+            fontFamily: HP_FONT, fontSize: 13, minHeight: 100, boxSizing: 'border-box',
+            background: HP_TOKENS.card, outline: 'none', transition: '0.2s',
+            lineHeight: 1.5, resize: 'vertical'
+          }}
+        />
+
+        <div style={{ marginTop: 12 }}>
+          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 8 }}>MOOD SIANG INI:</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {['joy', 'calm', 'tired', 'stress'].map(m => (
+              <button key={m} onClick={() => setSelectedMood(m)} style={{
+                flex: 1, padding: '8px 0', borderRadius: 12,
+                background: selectedMood === m ? `${getMoodColor(m)}20` : HP_TOKENS.paper,
+                border: selectedMood === m ? `1.5px solid ${getMoodColor(m)}` : `1.5px solid ${HP_TOKENS.lineSoft}`,
+                fontSize: 20, cursor: 'pointer', transition: '0.2s'
+              }}>
+                {getMoodEmoji(m)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <button 
+          onClick={saveRealisasi}
+          disabled={!notes.trim()}
+          className="hp-tap"
+          style={{ 
+            marginTop: 16, width: '100%', padding: '14px', borderRadius: 12,
+            background: notes.trim() ? HP_TOKENS.ink : HP_TOKENS.line, 
+            color: notes.trim() ? HP_TOKENS.yellow : HP_TOKENS.inkFade, 
+            border: 'none',
+            fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: notes.trim() ? 'pointer' : 'default',
+            boxShadow: notes.trim() ? '0 4px 12px rgba(26,29,35,0.1)' : 'none'
           }}
         >
-          {isLoading ? (
-            "Meminta saran Flow..."
-          ) : (
-            <>
-              <HPGlyph name="sparkle" size={18} color="#F4F7F9" />
-              Bantu Aku Fokus (AI)
-            </>
-          )}
+          Simpan Progres & Catatan
         </button>
-      ) : (
-        <HPCard padding={16} style={{ background: HP_TOKENS.blueWash, border: 'none', position: 'relative' }}>
-          <div style={{ display: 'flex', gap: 12 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 10, background: HP_TOKENS.blue, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <HPGlyph name="sparkle" size={16} color="#F4F7F9" />
-            </div>
-            <div style={{ ...HP_TEXT.body, fontSize: 13, lineHeight: 1.5, color: HP_TOKENS.ink }}>
-              {aiResponse}
-            </div>
-          </div>
-          <button 
-            onClick={() => setAiResponse(null)}
-            style={{ 
-              marginTop: 12, width: '100%', padding: '8px', borderRadius: 10, 
-              border: `1px solid ${HP_TOKENS.blue}`, background: 'transparent',
-              color: HP_TOKENS.blue, fontFamily: HP_FONT, fontWeight: 800, fontSize: 12,
-              cursor: 'pointer'
-            }}
-          >
-            Tanya lagi
-          </button>
-        </HPCard>
-      )}
-      
+      </div>
+
       <button 
         onClick={onClose}
         style={{
@@ -456,6 +443,14 @@ Jawab dengan tone yang asik dan menyemangati.`,
       >
         Lanjut kerja dulu
       </button>
+
+      {completingTask && (
+        <TaskCompleteModal 
+          task={completingTask}
+          onClose={() => setCompletingTask(null)}
+          onConfirm={confirmTaskComplete}
+        />
+      )}
     </Modal>
   );
 }

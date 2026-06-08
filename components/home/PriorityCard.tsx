@@ -157,7 +157,8 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit 
       position: 'relative',
       display: 'flex', 
       alignItems: 'center', 
-      gap: 16, 
+      flexWrap: 'wrap',
+      gap: '12px 16px', 
       padding: '18px',
       background: p.done ? HP_TOKENS.card : '#fff',
       border: `1.5px solid ${state?.focusTaskId === p.id ? HP_TOKENS.yellow : (p.done ? HP_TOKENS.line : HP_TOKENS.line)}`,
@@ -363,7 +364,7 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit 
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end', flexShrink: 0 }}>
+      <div className="hp-priority-actions">
         {!p.done && (
           <>
              <button 

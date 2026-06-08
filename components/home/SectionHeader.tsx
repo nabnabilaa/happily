@@ -20,7 +20,7 @@ export default function SectionHeader({
   onAction 
 }: SectionHeaderProps) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, padding: '24px 4px 12px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '24px 4px 12px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <div style={{ 
           width: 32, 
@@ -33,14 +33,16 @@ export default function SectionHeader({
         }}>
           <HPGlyph name={icon} size={16} color={HP_TOKENS.primary}/>
         </div>
-        <div style={{ ...HP_TEXT.h }}>{label}</div>
-        {count && <span style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 700 }}>({count})</span>}
+        <div style={{ ...HP_TEXT.h, whiteSpace: 'nowrap' }}>{label}</div>
+        {count && <span style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 700, whiteSpace: 'nowrap' }}>({count})</span>}
       </div>
       {action && (
         <button 
           onClick={onAction}
           className="hp-tap" 
           style={{ 
+            flexShrink: 0,
+            whiteSpace: 'nowrap',
             background: HP_TOKENS.primary, 
             borderRadius: 12,
             padding: '8px 16px',

@@ -17,7 +17,7 @@ export async function seedDemoData(userId: string, userName: string) {
 
   // ── 1. Points, Level, Rank ──────────────────────────────────────────────
   await db.execute({
-    sql: "UPDATE users SET points = 1500, coins = 1500, level = 6, `rank` = 'C', streak = 12, is_onboarded = 1 WHERE id = ?",
+    sql: "UPDATE users SET points = 1500, coins = 1500, level = 6, `rank` = 'C', streak = 12 WHERE id = ?",
     args: [userId]
   });
 

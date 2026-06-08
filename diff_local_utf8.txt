@@ -1,0 +1,1172 @@
+﻿diff --git a/app/layout.tsx b/app/layout.tsx
+index 51146b1..ebad7a8 100644
+--- a/app/layout.tsx
++++ b/app/layout.tsx
+@@ -3,7 +3,6 @@ import { Nunito } from "next/font/google";
+ import "./globals.css";
+ import Shell from "@/components/layout/Shell";
+ import PWARegistration from "@/components/pwa/PWARegistration";
+-import InstallButton from "@/components/pwa/InstallButton";
+ import OfflineToast from "@/components/pwa/OfflineToast";
+ import { HPProvider } from "@/lib/HPContext";
+ import Script from "next/script";
+@@ -124,7 +123,6 @@ export default function RootLayout({
+           <HPProvider>
+             <GlobalClickInterceptor />
+             <PWARegistration />
+-            <InstallButton />
+             <OfflineToast />
+             <Shell>{children}</Shell>
+           </HPProvider>
+diff --git a/app/page.tsx b/app/page.tsx
+index 021a93f..713861d 100644
+--- a/app/page.tsx
++++ b/app/page.tsx
+@@ -15,6 +15,7 @@ import BeeMascot from "@/components/ui/BeeMascot";
+ import TabNav from "@/components/layout/TabNav";
+ import ErrorBoundary from "@/components/ui/ErrorBoundary";
+ import ThemeSwitcher from "@/components/ui/ThemeSwitcher";
++import InstallButton from "@/components/pwa/InstallButton";
+ 
+ // ÔöÇÔöÇ Shared Screens ÔöÇÔöÇ
+ import CalendarScreen from "@/components/home/CalendarScreen";
+@@ -106,7 +107,6 @@ const AnnouncementModal = safeDynamic(() => import("@/components/modals/Announce
+ const MascotGuideModal = safeDynamic(() => import("@/components/modals/MascotGuideModal"));
+ import HPToastContainer from "@/components/ui/HPToastContainer";
+ import ConfirmLogoutModal from "@/components/modals/ConfirmLogoutModal";
+-import NotificationBanner from "@/components/pwa/NotificationBanner";
+ import DailyGreetingModal, { needsDailyGreeting, markDailyGreeted } from "@/components/modals/DailyGreetingModal";
+ 
+ 
+@@ -397,6 +397,7 @@ function AppContent() {
+           position: 'absolute', top: 16, right: 16, zIndex: 40,
+           display: 'flex', alignItems: 'center', gap: 8,
+         }}>
++          <InstallButton />
+           <ThemeSwitcher />
+ 
+           <button
+@@ -486,7 +487,6 @@ function AppContent() {
+         </div>
+ 
+         <div className="hp-screen-container">
+-          <NotificationBanner />
+           {renderScreen()}
+         </div>
+ 
+@@ -538,7 +538,7 @@ function AppContent() {
+       {modal?.name === 'schedule_coaching'&& <ScheduleCoachingModal onClose={closeModal} />}
+       {modal?.name === 'learning_detail'  && <LearningDetailModal onClose={closeModal} />}
+       {modal?.name === 'manage_programs'  && <ManageProgramsModal onClose={closeModal} />}
+-      {modal?.name === 'all_rewards'      && <AllRewardsModal onClose={closeModal} />}
++      {modal?.name === 'all_rewards'      && <AllRewardsModal onClose={closeModal} {...modal.props} />}
+       {modal?.name === 'logbook'          && <LogbookModal onClose={closeModal} {...modal.props} />}
+       {modal?.name === 'system_guide'     && <SystemGuideModal onClose={closeModal} />}
+       {modal?.name === 'profile_editor'   && <ProfileEditorModal onClose={closeModal} />}
+diff --git a/components/goals/GoalCard.tsx b/components/goals/GoalCard.tsx
+index 76492ea..a835810 100644
+--- a/components/goals/GoalCard.tsx
++++ b/components/goals/GoalCard.tsx
+@@ -146,101 +146,135 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
+       boxShadow: '0 4px 12px rgba(26,29,35,0.01)',
+       transition: 'all 0.2s ease',
+     }}>
+-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+-        <div style={{ flex: 1 }}>
+-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+-            <div style={{ 
+-              width: 24, height: 24, borderRadius: 8, 
+-              background: `${toneColor}15`, 
+-              display: 'flex', alignItems: 'center', justifyContent: 'center' 
+-            }}>
+-              <HPGlyph name="target" size={14} color={toneColor} />
++      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
++        <div style={{ 
++          width: 32, height: 32, borderRadius: 10, 
++          background: `${toneColor}15`, 
++          display: 'flex', alignItems: 'center', justifyContent: 'center',
++          flexShrink: 0
++        }}>
++          <HPGlyph name="target" size={16} color={toneColor} />
++        </div>
++        
++        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: 0 }}>
++          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
++            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
++              {g.status && (
++                <div style={{ 
++                  padding: '3px 8px', borderRadius: 6, 
++                  background: g.status === 'approved' ? HP_TOKENS.sageSoft : g.status === 'rejected' ? HP_TOKENS.coralSoft : g.status === 'revision' ? HP_TOKENS.yellowSoft : HP_TOKENS.yellowSoft, 
++                  color: g.status === 'approved' ? HP_TOKENS.sage : g.status === 'rejected' ? HP_TOKENS.coral : '#8A6814',
++                  fontSize: 10, fontWeight: 900, letterSpacing: 0.5
++                }}>
++                  {g.status === 'approved' ? 'ACCEPT' : g.status === 'revision' ? 'REVISI' : g.status === 'rejected' ? 'REJECT' : 'PENDING'}
++                </div>
++              )}
++              {displayProgress >= 100 && (
++                <div style={{ 
++                  padding: '3px 8px', borderRadius: 6, 
++                  background: HP_TOKENS.sageSoft, color: HP_TOKENS.sage,
++                  fontSize: 10, fontWeight: 900, letterSpacing: 0.5
++                }}>DONE</div>
++              )}
++              <HPChip tone={g.tone} size="sm">{g.alignment}% align</HPChip>
+             </div>
+-            <div style={{ ...HP_TEXT.h, fontSize: 16 }}>{g.title}</div>
+-            {g.status && (
+-              <div style={{ 
+-                padding: '2px 8px', borderRadius: 6, 
+-                background: g.status === 'approved' ? HP_TOKENS.sageSoft : g.status === 'rejected' ? HP_TOKENS.coralSoft : g.status === 'revision' ? HP_TOKENS.yellowSoft : HP_TOKENS.yellowSoft, 
+-                color: g.status === 'approved' ? HP_TOKENS.sage : g.status === 'rejected' ? HP_TOKENS.coral : '#8A6814',
+-                fontSize: 9, fontWeight: 900, letterSpacing: 0.5
+-              }}>
+-                {g.status === 'approved' ? 'ACCEPT' : g.status === 'revision' ? 'REVISI' : g.status === 'rejected' ? 'REJECT' : 'PENDING'}
+-              </div>
+-            )}
+-            {displayProgress >= 100 && (
+-              <div style={{ 
+-                padding: '2px 8px', borderRadius: 6, 
+-                background: HP_TOKENS.sageSoft, color: HP_TOKENS.sage,
+-                fontSize: 9, fontWeight: 900, letterSpacing: 0.5
+-              }}>DONE</div>
+-            )}
++            
+             {!isReadOnly && (
+               <button 
+                 onClick={(e) => { e.stopPropagation(); deleteGoal(); }}
+-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex' }}
++                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', flexShrink: 0 }}
+               >
+-                <div style={{ width: 14, height: 14, borderRadius: 7, background: HP_TOKENS.lineSoft, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+-                  <span style={{ fontSize: 10, color: HP_TOKENS.inkFade, fontWeight: 900 }}>├ù</span>
++                <div style={{ width: 18, height: 18, borderRadius: 9, background: HP_TOKENS.lineSoft, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
++                  <span style={{ fontSize: 12, color: HP_TOKENS.inkFade, fontWeight: 900, lineHeight: 1 }}>├ù</span>
+                 </div>
+               </button>
+             )}
+           </div>
++
++          <div style={{ ...HP_TEXT.h, fontSize: 16, lineHeight: 1.4, color: HP_TOKENS.ink, marginTop: 4 }}>
++            {g.title}
++          </div>
++
+           {parentGoal && (
+-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, marginLeft: 32 }}>
++            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+               <HPGlyph name="link" size={10} color={HP_TOKENS.blue} />
+-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 800, fontSize: 10 }}>
++              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 800, fontSize: 11 }}>
+                 Aligned to: {parentGoal.title}
+               </div>
+             </div>
+           )}
+-          <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, marginTop: 6, marginLeft: 32, fontSize: 12 }}>
+-             {hasChildren ? `${childGoals.length} Sub-KPI` : hasTodayTasks ? `${doneTaskCount}/${linkedTasks.length} task selesai` : (g.metric && String(g.metric).includes('task selesai')) ? g.metric : (displayProgress >= 100 ? 'Target Tercapai Ô£¿' : (g.metric || 'Progress'))} ┬À <span style={{ fontWeight: 700 }}>Due:</span> {g.due}
+-          </div>
+         </div>
+-        <HPChip tone={g.tone} size="sm">{g.alignment}% align</HPChip>
+       </div>
+ 
+-      <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+-        <div style={{ flex: 1 }}>
+-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+-             <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800 }}>PROGRESS</span>
+-             {editingProgress ? (
+-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }} onClick={(e) => e.stopPropagation()}>
+-                  <input
+-                    type="range" min="0" max="100"
+-                    value={tempProgress}
+-                    onChange={(e) => setTempProgress(e.target.value)}
+-                    style={{
+-                      flex: 1, accentColor: toneColor, cursor: 'pointer', height: 6
+-                    }}
+-                  />
+-                  <span style={{ fontSize: 13, fontWeight: 900, color: toneColor, minWidth: 35, textAlign: 'right' }}>
+-                    {tempProgress}%
+-                  </span>
+-                  <button
+-                    onClick={(e) => {
+-                      e.stopPropagation();
+-                      const val = Math.max(0, Math.min(100, Number(tempProgress)));
+-                      onEditProgress?.(val);
+-                      setEditingProgress(false);
+-                    }}
+-                    style={{
+-                      padding: '5px 12px', borderRadius: 8, border: 'none',
+-                      background: HP_TOKENS.sage, color: '#F4F7F9', fontSize: 11,
+-                      fontWeight: 900, cursor: 'pointer',
+-                      boxShadow: `0 2px 8px ${HP_TOKENS.sage}40`
+-                    }}
+-                  >Ô£ô Simpan</button>
+-                  <button
+-                    onClick={(e) => { e.stopPropagation(); setEditingProgress(false); }}
+-                    style={{
+-                      padding: '5px 8px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+-                      background: HP_TOKENS.card, color: HP_TOKENS.inkFade, fontSize: 11,
+-                      fontWeight: 900, cursor: 'pointer'
+-                    }}
+-                  >Ô£ò Batal</button>
+-                </div>
+-              ) : (
++      <div style={{ 
++        marginTop: 20, padding: 12, borderRadius: 12,
++        background: 'linear-gradient(to bottom, #F9FAFB, #F3F4F6)'
++      }}>
++        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
++          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
++            <HPGlyph name="calendar" size={12} color={HP_TOKENS.inkFade} />
++            <span style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.inkFade, fontSize: 11 }}>
++              Due: {g.due ? g.due.split(' ')[0] : '-'}
++            </span>
++          </div>
++          <div style={{ ...HP_TEXT.small, fontWeight: 800, color: HP_TOKENS.ink, fontSize: 12 }}>
++            {hasChildren 
++              ? `${childGoals.length} Sub-KPI` 
++              : hasTodayTasks 
++                ? `${doneTaskCount}/${linkedTasks.length} task selesai` 
++                : (g.metric && String(g.metric).includes('task selesai')) 
++                  ? String(g.metric) 
++                  : (displayProgress >= 100 ? 'Target Tercapai Ô£¿' : (g.metric || 'Progress'))
++            }
++          </div>
++        </div>
++
++        {/* Bar Row */}
++        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
++          <div style={{ flex: 1 }}>
++            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
++               <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800 }}>PROGRESS</span>
++               {editingProgress ? (
++                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }} onClick={(e) => e.stopPropagation()}>
++                    <input
++                      type="range" min="0" max="100"
++                      value={tempProgress}
++                      onChange={(e) => setTempProgress(e.target.value)}
++                      style={{
++                        flex: 1, accentColor: toneColor, cursor: 'pointer', height: 6
++                      }}
++                    />
++                    <span style={{ fontSize: 13, fontWeight: 900, color: toneColor, minWidth: 35, textAlign: 'right' }}>
++                      {tempProgress}%
++                    </span>
++                    <button
++                      onClick={(e) => {
++                        e.stopPropagation();
++                        const val = Math.max(0, Math.min(100, Number(tempProgress)));
++                        onEditProgress?.(val);
++                        setEditingProgress(false);
++                      }}
++                      style={{
++                        padding: '5px 12px', borderRadius: 8, border: 'none',
++                        background: HP_TOKENS.sage, color: '#F4F7F9', fontSize: 11,
++                        fontWeight: 900, cursor: 'pointer',
++                        boxShadow: `0 2px 8px ${HP_TOKENS.sage}40`
++                      }}
++                    >
++                      Ô£ô Simpan
++                    </button>
++                    <button
++                      onClick={(e) => { e.stopPropagation(); setEditingProgress(false); }}
++                      style={{
++                        padding: '5px 8px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
++                        background: HP_TOKENS.card, color: HP_TOKENS.inkFade, fontSize: 11,
++                        fontWeight: 900, cursor: 'pointer'
++                      }}
++                    >
++                      Ô£ò Batal
++                    </button>
++                  </div>
++               ) : (
+                 <div
+                   style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: onEditProgress ? 'pointer' : 'default' }}
+                   onClick={(e) => {
+@@ -260,9 +294,10 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
+                     }}>Ô£Å´©Å edit</span>
+                   )}
+                 </div>
+-              )}
++               )}
++            </div>
++            <HPBar value={displayProgress} tone={g.tone} height={8}/>
+           </div>
+-          <HPBar value={displayProgress} tone={g.tone} height={8}/>
+         </div>
+       </div>
+ 
+diff --git a/components/home/HomeScreen.tsx b/components/home/HomeScreen.tsx
+index 4216b74..e794cf7 100644
+--- a/components/home/HomeScreen.tsx
++++ b/components/home/HomeScreen.tsx
+@@ -30,6 +30,7 @@ import AttendanceWidget from "@/components/home/AttendanceWidget";
+ import TaskHarianWidget from "@/components/home/TaskHarianWidget";
+ import SurveySection from "@/components/home/SurveySection";
+ import PresenceBoard from "@/components/home/PresenceBoard";
++import NotificationBanner from "@/components/pwa/NotificationBanner";
+ import MoodWall from "@/components/home/MoodWall";
+ 
+ 
+@@ -530,8 +531,53 @@ export default function HomeScreen({ openModal }: any) {
+       <Confetti show={confetti}/>
+       <CelebrationOverlay show={celebrate} onComplete={() => setCelebrate(false)} />
+ 
+-      <div style={{ position: 'relative', zIndex: 1, padding: '0 16px' }} className="hp-stagger">
++      <div style={{ position: 'relative', zIndex: 1, padding: '0 16px', paddingTop: 72 }} className="hp-stagger">
+         
++        <NotificationBanner />
++
++        {/* ­ƒòø Mid-Day Check-In Banner (Topmost priority when active) */}
++        {(() => {
++          const now = new Date();
++          const currentMins = now.getHours() * 60 + now.getMinutes();
++          const isMidDayWindow = currentMins >= (11 * 60 + 30) && currentMins <= (13 * 60 + 30);
++          if (isMidDayWindow) {
++            return (
++              <div 
++                onClick={() => openModal('work_checkin')}
++                className="hp-tap"
++                style={{
++                  background: `linear-gradient(135deg, ${HP_TOKENS.yellowWash} 0%, ${HP_TOKENS.yellowSoft} 100%)`,
++                  border: `1.5px solid ${HP_TOKENS.yellow}60`,
++                  borderRadius: 20,
++                  padding: '16px',
++                  marginBottom: 16,
++                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
++                  cursor: 'pointer',
++                  boxShadow: `0 4px 16px ${HP_TOKENS.yellow}15`
++                }}
++              >
++                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
++                  <div style={{ 
++                    width: 44, height: 44, borderRadius: 14, 
++                    background: HP_TOKENS.yellow, display: 'flex', alignItems: 'center', justifyContent: 'center',
++                    boxShadow: '0 4px 12px rgba(26,29,35,0.02)'
++                  }}>
++                    <HPGlyph name="book" size={20} color={HP_TOKENS.ink} />
++                  </div>
++                  <div>
++                    <div style={{ ...HP_TEXT.h, fontSize: 15, color: HP_TOKENS.ink }}>Mid-Day Check-in Siap!</div>
++                    <div style={{ ...HP_TEXT.body, fontSize: 13, color: HP_TOKENS.inkSoft, marginTop: 2 }}>
++                      Catat progresmu di pertengahan hari.
++                    </div>
++                  </div>
++                </div>
++                <HPGlyph name="chevron-right" size={20} color={HP_TOKENS.inkSoft} />
++              </div>
++            );
++          }
++          return null;
++        })()}
++
+         {/* ­ƒîí´©Å Wellbeing Score (Advanced Feature) */}
+         <WellbeingGauge state={state} user={user} openModal={openModal} />
+ 
+@@ -549,10 +595,10 @@ export default function HomeScreen({ openModal }: any) {
+           <div 
+             onClick={() => openModal('profile_editor')}
+             className="hp-tap"
+-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, cursor: 'pointer' }}
++            style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, cursor: 'pointer' }}
+           >
+-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+-              <div style={{ position: 'relative' }}>
++            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
++              <div style={{ position: 'relative', flexShrink: 0 }}>
+                 <HPAvatar 
+                   name={user.name} 
+                   size={56} 
+@@ -560,22 +606,24 @@ export default function HomeScreen({ openModal }: any) {
+                   levelProgress={levelProgress} 
+                 />
+               </div>
+-              <div>
+-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+-                  <div style={{ ...HP_TEXT.h, fontSize: 20 }}>{user.name.split(' ')[0]}</div>
++              <div className="hp-profile-name-group">
++                <div style={{ ...HP_TEXT.h, fontSize: 18, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
++                  {user.name.split(' ')[0]}
++                </div>
++                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                   <div style={{ 
+                     background: '#FF6B35', color: '#fff', fontSize: 10, fontWeight: 900, 
+-                    padding: '3px 10px', borderRadius: 100, letterSpacing: 0.5 
++                    padding: '2px 8px', borderRadius: 100, letterSpacing: 0.5 
+                   }}>
+-                    Level {user.level}
++                    Lv.{user.level}
++                  </div>
++                  <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 800, fontSize: 11 }}>
++                    Class {user.rank || 'E'}
+                   </div>
+-                </div>
+-                <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 700, fontSize: 12, marginTop: 2 }}>
+-                  Class {user.rank || 'E'}
+                 </div>
+               </div>
+             </div>
+-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
++            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0, marginLeft: 12 }}>
+               <button 
+                 onClick={(e) => {
+                   e.stopPropagation();
+@@ -678,12 +726,21 @@ export default function HomeScreen({ openModal }: any) {
+ 
+         {/* HERO ÔÇö Emotional check-in */}
+         <div style={{ marginTop: 16 }}>
+-          <EmotionalHero 
+-            state={state} 
+-            moodObj={moodObj} 
+-            energyObj={energyObj} 
+-            onOpenCheckIn={() => openModal('checkin')}
+-          />
++          {(() => {
++            const now = new Date();
++            const currentMins = now.getHours() * 60 + now.getMinutes();
++            const isMidDayWindow = currentMins >= (11 * 60 + 30) && currentMins <= (13 * 60 + 30);
++            return (
++              <EmotionalHero 
++                state={state} 
++                moodObj={moodObj} 
++                energyObj={energyObj} 
++                onOpenCheckIn={() => openModal('checkin')}
++                showMidDay={isMidDayWindow}
++                onOpenMidDay={() => openModal('work_checkin')}
++              />
++            );
++          })()}
+         </div>
+ 
+         {/* Mindful Breathing Reset Card */}
+@@ -706,7 +763,7 @@ export default function HomeScreen({ openModal }: any) {
+               }}>
+                 ­ƒºÿÔÇìÔÖé´©Å
+               </div>
+-              <div style={{ flex: 1 }}>
++              <div style={{ flex: 1, minWidth: 240 }}>
+                 <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.ink }}>
+                   Butuh Jeda Sejenak?
+                 </div>
+@@ -716,7 +773,7 @@ export default function HomeScreen({ openModal }: any) {
+               </div>
+               <button 
+                 onClick={() => openModal('pause')}
+-                className="hp-tap"
++                className="hp-tap hp-btn-mobile-full"
+                 style={{
+                   padding: '10px 16px', borderRadius: 12, border: 'none',
+                   background: HP_TOKENS.sage, color: '#F4F7F9',
+@@ -898,7 +955,7 @@ export default function HomeScreen({ openModal }: any) {
+               </button>
+             </div>
+ 
+-            {!selectedHabitDay.isToday && (
++            {!selectedHabitDay.isToday && !selectedHabitDay.done && (
+               <div style={{
+                 background: HP_TOKENS.yellowSoft, padding: 12, borderRadius: 12, marginBottom: 16,
+                 border: `1px solid ${HP_TOKENS.yellow}`, display: 'flex', gap: 10, alignItems: 'flex-start'
+@@ -910,49 +967,78 @@ export default function HomeScreen({ openModal }: any) {
+               </div>
+             )}
+ 
+-            <div style={{ marginBottom: 16 }}>
+-              <label style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.inkMute, display: 'block', marginBottom: 8 }}>
+-                Catatan Harian (Opsional)
+-              </label>
+-              <textarea 
+-                value={habitNote}
+-                onChange={(e) => setHabitNote(e.target.value)}
+-                placeholder="Ada yang ingin dicatat untuk sesi ini?"
+-                style={{
+-                  width: '100%', padding: 12, borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
+-                  background: HP_TOKENS.card, color: HP_TOKENS.ink, fontFamily: HP_FONT, fontSize: 14, minHeight: 80, resize: 'vertical'
+-                }}
+-              />
+-              
+-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+-                {/* User requested to remove the default follow-up dummy tags */}
++            {selectedHabitDay.done ? (() => {
++              const targetDateStr = selectedHabitDay.date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
++              const log = state.logbook?.find((l: any) => 
++                l.type === 'habit_completion' && 
++                l.habitName === selectedHabitDay.name && 
++                l.date === targetDateStr && 
++                l.content !== 'Belum Selesai'
++              );
++              let pastNote = "";
++              if (log) {
++                try {
++                  const meta = JSON.parse(log.metadata_json || "{}");
++                  if (meta.notes) pastNote = meta.notes;
++                } catch (e) {}
++                if (!pastNote && log.content !== 'Selesai') pastNote = log.content;
++              }
++
++              return (
++                <div style={{ marginBottom: 16 }}>
++                  <div style={{ padding: 16, background: HP_TOKENS.yellowSoft, borderRadius: 16, border: `1.5px solid ${HP_TOKENS.yellow}` }}>
++                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
++                      <HPGlyph name="check" size={16} color={HP_TOKENS.ink} stroke={3} />
++                      <span style={{ ...HP_TEXT.h, fontSize: 15 }}>Selesai</span>
++                    </div>
++                    <div style={{ ...HP_TEXT.body, fontSize: 14, whiteSpace: 'pre-wrap' }}>
++                      {pastNote || "Tidak ada catatan untuk sesi ini."}
++                    </div>
++                  </div>
++                  <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end' }}>
++                    <button 
++                      onClick={() => {
++                        if (window.confirm("Yakin ingin membatalkan status selesai untuk hari ini?")) {
++                          saveHabitDay(false);
++                        }
++                      }}
++                      className="hp-tap"
++                      style={{ background: 'transparent', color: HP_TOKENS.coral, border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer' }}
++                    >
++                      Batalkan Status Selesai
++                    </button>
++                  </div>
++                </div>
++              );
++            })() : (
++              <div style={{ marginBottom: 16 }}>
++                <label style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.inkMute, display: 'block', marginBottom: 8 }}>
++                  Catatan Harian (Opsional)
++                </label>
++                <textarea 
++                  value={habitNote}
++                  onChange={(e) => setHabitNote(e.target.value)}
++                  placeholder="Ada yang ingin dicatat untuk sesi ini? (Sesi curhat / progres)"
++                  style={{
++                    width: '100%', padding: 12, borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
++                    background: HP_TOKENS.card, color: HP_TOKENS.ink, fontFamily: HP_FONT, fontSize: 14, minHeight: 80, resize: 'vertical'
++                  }}
++                />
++                <div style={{ marginTop: 16 }}>
++                  <button 
++                    onClick={() => saveHabitDay(true)}
++                    className="hp-tap"
++                    style={{
++                      width: '100%', padding: '16px', borderRadius: 14, border: 'none',
++                      background: HP_TOKENS.yellow, color: HP_TOKENS.ink,
++                      fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer'
++                    }}
++                  >
++                    Tandai Selesai
++                  </button>
++                </div>
+               </div>
+-            </div>
+-
+-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+-              <button 
+-                onClick={() => saveHabitDay(true)}
+-                className="hp-tap"
+-                style={{
+-                  padding: '16px', borderRadius: 14, border: 'none',
+-                  background: HP_TOKENS.yellow, color: HP_TOKENS.ink,
+-                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer'
+-                }}
+-              >
+-                Tandai Selesai
+-              </button>
+-              <button 
+-                onClick={() => saveHabitDay(false)}
+-                className="hp-tap"
+-                style={{
+-                  padding: '16px', borderRadius: 14, border: 'none',
+-                  background: HP_TOKENS.lineSoft, color: HP_TOKENS.inkMute,
+-                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer'
+-                }}
+-              >
+-                Belum Selesai
+-              </button>
+-            </div>
++            )}
+           </div>
+         </div>
+       )}
+diff --git a/components/home/PriorityCard.tsx b/components/home/PriorityCard.tsx
+index 2927d43..f42efe6 100644
+--- a/components/home/PriorityCard.tsx
++++ b/components/home/PriorityCard.tsx
+@@ -157,7 +157,8 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit
+       position: 'relative',
+       display: 'flex', 
+       alignItems: 'center', 
+-      gap: 16, 
++      flexWrap: 'wrap',
++      gap: '12px 16px', 
+       padding: '18px',
+       background: p.done ? HP_TOKENS.card : '#fff',
+       border: `1.5px solid ${state?.focusTaskId === p.id ? HP_TOKENS.yellow : (p.done ? HP_TOKENS.line : HP_TOKENS.line)}`,
+@@ -363,7 +364,7 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit
+         </div>
+       </div>
+ 
+-      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end', flexShrink: 0 }}>
++      <div className="hp-priority-actions">
+         {!p.done && (
+           <>
+              <button 
+diff --git a/components/modals/WorkCheckInModal.tsx b/components/modals/WorkCheckInModal.tsx
+index 9b3f4ad..48fab45 100644
+--- a/components/modals/WorkCheckInModal.tsx
++++ b/components/modals/WorkCheckInModal.tsx
+@@ -11,6 +11,7 @@ import Modal from "@/components/ui/Modal";
+ import HPGlyph from "@/components/ui/HPGlyph";
+ import HPBar from "@/components/ui/HPBar";
+ import HPCard from "@/components/ui/HPCard";
++import TaskCompleteModal from "@/components/modals/TaskCompleteModal";
+ 
+ interface WorkCheckInModalProps {
+   onClose: () => void;
+@@ -22,7 +23,8 @@ export default function WorkCheckInModal({ onClose }: WorkCheckInModalProps) {
+   const [isLoading, setIsLoading] = useState(false);
+   const [notes, setNotes] = useState("");
+   const [showNotes, setShowNotes] = useState(false);
+-  const [selectedMood, setSelectedMood] = useState(state?.mood || 'neutral');
++  const [selectedMood, setSelectedMood] = useState(state?.mood || 'calm');
++  const [completingTask, setCompletingTask] = useState<any>(null);
+ 
+   if (!state) return null;
+ 
+@@ -58,39 +60,133 @@ Jawab dengan tone yang asik dan menyemangati.`,
+   };
+ 
+   const toggleTask = (id: number) => {
++    const priority = state?.priorities?.find((p: any) => p.id === id);
++    if (!priority) return;
++
++    if (!priority.done) {
++      setCompletingTask(priority);
++    } else {
++      updateState((s: any) => {
++        const newPriorities = s.priorities.map((p: any) => p.id === id ? { ...p, done: false } : p);
++        
++        // Recalculate goal progress for linked goals
++        const task = s.priorities.find((p: any) => p.id === id);
++        const targetId = task?.goal_id || task?.kpi_id;
++        const updatedGoals = s.goals.map((goal: any) => {
++          if (targetId && String(goal.id) === String(targetId)) {
++            const tasksForGoal = newPriorities.filter((p: any) => (p.goal_id && String(p.goal_id) === String(goal.id)) || (p.kpi_id && String(p.kpi_id) === String(goal.id)));
++            const doneCount = tasksForGoal.filter((p: any) => p.done).length;
++            const newProgress = tasksForGoal.length > 0 ? Math.round((doneCount / tasksForGoal.length) * 100) : goal.progress;
++            const newMetric = doneCount + "/" + tasksForGoal.length + " task selesai";
++            return { ...goal, progress: newProgress, metric: newMetric };
++          }
++          return goal;
++        });
++
++        return {
++          ...s,
++          priorities: newPriorities,
++          goals: updatedGoals
++        };
++      });
++    }
++  };
++
++  const confirmTaskComplete = React.useCallback((data: {
++    proofLinks: string[]; isProject: boolean; metricValue?: number; notes?: string;
++  }) => {
++    if (!completingTask) return;
++    const id = completingTask.id;
++
++    awardXP('priority_complete', `Selesaikan: ${completingTask.title}`);
++
+     updateState((s: any) => {
+-      const newPriorities = s.priorities.map((p: any) => p.id === id ? { ...p, done: !p.done } : p);
+-      
+-      // Recalculate goal progress for linked goals
+-      const task = s.priorities.find((p: any) => p.id === id);
+-      const targetId = task?.goal_id || task?.kpi_id;
++      const pIndex = s.priorities.findIndex((p: any) => p.id === id);
++      if (pIndex === -1) return s;
++
++      const newPriorities = [...s.priorities];
++      newPriorities[pIndex] = { 
++        ...newPriorities[pIndex], 
++        done: true,
++        proof_links: data.proofLinks,
++        is_project: data.isProject,
++        metric_value: data.metricValue || null,
++        completion_notes: data.notes || null,
++        completed_at: new Date().toISOString(),
++      };
++
++      const now = new Date();
++      const newLog = {
++        id: Date.now(),
++        type: 'quest_completion',
++        title: newPriorities[pIndex].title,
++        points: 50,
++        date: now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
++        day: now.toLocaleDateString('id-ID', { weekday: 'long' }),
++        time: now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
++      };
++
++      if (data.metricValue && newPriorities[pIndex].kpi_id) {
++        fetch('/api/kpi/daily-input', {
++          method: 'POST',
++          headers: { 'Content-Type': 'application/json' },
++          body: JSON.stringify({
++            userId: user?.id,
++            kpiId: newPriorities[pIndex].kpi_id,
++            date: new Date().toISOString().slice(0, 10),
++            value: data.metricValue,
++            notes: data.notes || newPriorities[pIndex].title,
++            proofLink: data.proofLinks[0] || null,
++          })
++        }).catch(e => console.error('KPI input failed:', e));
++      }
++
++      if (s.syncSkillProgress) s.syncSkillProgress(newPriorities[pIndex].title + " " + (newPriorities[pIndex].kpi_title || ""), 2);
++
++      const task = newPriorities[pIndex];
++      const targetId = task.goal_id || task.kpi_id;
+       const updatedGoals = s.goals.map((goal: any) => {
+         if (targetId && String(goal.id) === String(targetId)) {
+-          const tasksForGoal = newPriorities.filter((p: any) => (p.goal_id && String(p.goal_id) === String(goal.id)) || (p.kpi_id && String(p.kpi_id) === String(goal.id)));
+-          const doneCount = tasksForGoal.filter((p: any) => p.done).length;
+-          const newProgress = tasksForGoal.length > 0 ? Math.round((doneCount / tasksForGoal.length) * 100) : goal.progress;
+-          const newMetric = doneCount + "/" + tasksForGoal.length + " task selesai";
+-          return { ...goal, progress: newProgress, metric: newMetric };
++          let total = 0;
++          let completed = 0;
++          const match = String(goal.metric || '').match(/^(\d+)\/(\d+)\s+task/);
++          if (match) {
++            completed = parseInt(match[1]);
++            total = parseInt(match[2]);
++          } else {
++            const todayTasks = newPriorities.filter((p: any) => (p.goal_id && String(p.goal_id) === String(goal.id)) || (p.kpi_id && String(p.kpi_id) === String(goal.id)));
++            total = todayTasks.length;
++            completed = todayTasks.filter((p: any) => p.done).length;
++          }
++
++          const newCompleted = Math.max(0, Math.min(total, completed + 1));
++          const newProgress = total > 0 ? Math.round((newCompleted / total) * 100) : goal.progress;
++          return { ...goal, progress: newProgress, metric: total > 0 ? `${newCompleted}/${total} task selesai` : goal.metric };
+         }
+         return goal;
+       });
+ 
+-      return {
+-        ...s,
++      return { 
++        ...s, 
+         priorities: newPriorities,
+-        goals: updatedGoals
++        goals: updatedGoals,
++        logbook: [newLog, ...(s.logbook || [])],
++        lastActivityDate: now.toISOString(),
++        penaltyActive: false,
+       };
+     });
+-  };
+ 
+-  const updateFocusProgress = (val: number) => {
++    setCompletingTask(null);
++  }, [completingTask, updateState, awardXP, user]);
++
++
++  const updateTaskProgress = (taskId: number, val: number) => {
+     updateState((s: any) => {
+-      const newPriorities = s.priorities.map((p: any) => p.id === s.focusTaskId ? { ...p, progress: val } : p);
+-      const updatedTask = s.focusTaskId ? newPriorities.find((p: any) => p.id === s.focusTaskId) : null;
++      const newPriorities = s.priorities.map((p: any) => p.id === taskId ? { ...p, progress: val } : p);
++      const updatedTask = newPriorities.find((p: any) => p.id === taskId);
+       
+       let newGoals = s.goals;
+       
+-      // Case 1: Linked via specific Task ID
+       if (updatedTask?.goal_id && s.goals) {
+         newGoals = s.goals.map((g: any) => {
+           if (String(g.id) === String(updatedTask.goal_id)) {
+@@ -110,19 +206,9 @@ Jawab dengan tone yang asik dan menyemangati.`,
+           return g;
+         });
+       } 
+-      // Case 2: Fallback - Match by intention title directly to a Goal (if no task linked)
+-      else if (!s.focusTaskId && s.intention && s.goals) {
+-        newGoals = s.goals.map((g: any) => {
+-          if (g.title === s.intention) {
+-            return { ...g, progress: val, metric: `Realisasi Fokus (${val}%)` };
+-          }
+-          return g;
+-        });
+-      }
+ 
+       return {
+         ...s,
+-        focusProgress: val,
+         priorities: newPriorities,
+         goals: newGoals
+       };
+@@ -130,10 +216,11 @@ Jawab dengan tone yang asik dan menyemangati.`,
+   };
+ 
+   const saveRealisasi = async () => {
+-    if (!state.focusTaskId) return;
+-    const task = priorities.find((p: any) => p.id === state.focusTaskId);
+-    
+-    // Save to Logbook DB
++    const undoneTasks = priorities.filter((p: any) => !p.done);
++    const avgProgress = undoneTasks.length > 0 
++      ? Math.round(undoneTasks.reduce((sum: number, p: any) => sum + (p.progress || 0), 0) / undoneTasks.length) 
++      : 100;
++
+     try {
+       await fetch('/api/logbook', {
+         method: 'POST',
+@@ -141,13 +228,11 @@ Jawab dengan tone yang asik dan menyemangati.`,
+         body: JSON.stringify({
+           userId: user?.id,
+           type: 'realization_check',
+-          title: task?.title || "Focus Task",
++          title: "Mid-Day Check-In",
+           content: notes,
+           points: 0,
+           metadata: { 
+-            progress: state.focusProgress,
+-            proof_link: task?.proof_link,
+-            metric_value: task?.metric_value
++            progress: avgProgress
+           }
+         })
+       });
+@@ -155,19 +240,19 @@ Jawab dengan tone yang asik dan menyemangati.`,
+       console.error("Failed to save logbook entry", e);
+     }
+ 
+-    awardXP('realization_check', 'Mid-Day Check-in Focus');
++    awardXP('realization_check', 'Mid-Day Check-in');
+ 
+-    // Still update local state for immediate UI feedback if needed
+     const log = {
+       id: Date.now(),
+       type: 'realization_check',
+-      title: task?.title || "Focus Task",
+-      progress: state.focusProgress,
++      title: "Mid-Day Check-In",
++      progress: avgProgress,
+       notes: notes,
+       date: new Date().toLocaleDateString('id-ID'),
+       time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+-      metadata_json: JSON.stringify({ progress: state.focusProgress })
++      metadata_json: JSON.stringify({ progress: avgProgress })
+     };
++
+     updateState((s: any) => ({
+       ...s,
+       mood: selectedMood,
+@@ -177,7 +262,8 @@ Jawab dengan tone yang asik dan menyemangati.`,
+     
+     setShowNotes(false);
+     setNotes("");
+-    alert("Realisasi & Mood berhasil disimpan! Ô£¿");
++    alert("Update siang ini & Mood berhasil disimpan! Ô£¿");
++    onClose();
+   };
+ 
+   const getMoodColor = (mood: string) => {
+@@ -219,137 +305,13 @@ Jawab dengan tone yang asik dan menyemangati.`,
+         </div>
+       </div>
+ 
+-      {(state.focusTaskId || state.intention) ? (
+-        <HPCard padding={20} style={{ 
+-          marginBottom: 24, 
+-          background: `linear-gradient(135deg, ${HP_TOKENS.yellowWash} 0%, ${HP_TOKENS.card} 100%)`, 
+-          border: `1.5px solid ${HP_TOKENS.yellow}`,
+-          boxShadow: '0 8px 24px rgba(253,185,19,0.1)'
+-        }}>
+-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+-            <div style={{ width: 36, height: 36, borderRadius: 10, background: HP_TOKENS.yellow, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+-              <HPGlyph name="sparkle" size={18} color={HP_TOKENS.ink} />
+-            </div>
+-            <div style={{ flex: 1 }}>
+-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.ink, fontWeight: 900, letterSpacing: 0.5 }}>TARGET FOKUS SAAT INI</div>
+-              <div style={{ ...HP_TEXT.h, fontSize: 16, color: HP_TOKENS.ink }}>
+-                {state.focusTaskId 
+-                  ? priorities.find((p: any) => p.id === state.focusTaskId)?.title 
+-                  : state.intention}
+-              </div>
+-            </div>
+-          </div>
+-          
+-          <div style={{ marginBottom: 20 }}>
+-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, alignItems: 'center' }}>
+-              <div style={{ ...HP_TEXT.small, fontWeight: 800, color: HP_TOKENS.ink }}>Realisasi: <span style={{ color: HP_TOKENS.yellow, fontSize: 18 }}>{state.focusProgress || 0}%</span></div>
+-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>Geser untuk update</div>
+-            </div>
+-            <input 
+-              type="range" min="0" max="100" 
+-              value={state.focusProgress || 0} 
+-              onChange={(e) => updateFocusProgress(parseInt(e.target.value))}
+-              style={{ 
+-                width: '100%', 
+-                height: 8,
+-                borderRadius: 4,
+-                accentColor: HP_TOKENS.yellow,
+-                cursor: 'pointer'
+-              }}
+-            />
+-          </div>
+-
+-          <div style={{ background: 'rgba(255,255,255,0.8)', padding: 16, borderRadius: 16, border: `1px solid ${HP_TOKENS.line}` }}>
+-            <div style={{ ...HP_TEXT.small, fontWeight: 800, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+-              <HPGlyph name="book" size={14} color={HP_TOKENS.ink} />
+-              Catatan Progres (Realisasi)
+-            </div>
+-            
+-            <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+-              <input 
+-                type="text"
+-                placeholder="Link Bukti Kerja (Figma/Docs/dll) - Opsional"
+-                value={state.focusTaskId ? priorities.find((p: any) => p.id === state.focusTaskId)?.proof_link || "" : ""}
+-                onChange={e => updateState((s: any) => ({
+-                  ...s, priorities: s.priorities.map((p: any) => p.id === s.focusTaskId ? { ...p, proof_link: e.target.value } : p)
+-                }))}
+-                style={{
+-                  flex: 2, padding: '12px', borderRadius: 12, border: `1px solid ${HP_TOKENS.lineSoft}`,
+-                  fontFamily: HP_FONT, fontSize: 13, boxSizing: 'border-box', outline: 'none'
+-                }}
+-              />
+-              <input 
+-                type="number"
+-                placeholder="Nilai Metrik (Rp / Qty) - Opsional"
+-                value={state.focusTaskId ? priorities.find((p: any) => p.id === state.focusTaskId)?.metric_value || "" : ""}
+-                onChange={e => updateState((s: any) => ({
+-                  ...s, priorities: s.priorities.map((p: any) => p.id === s.focusTaskId ? { ...p, metric_value: e.target.value } : p)
+-                }))}
+-                style={{
+-                  flex: 1, padding: '12px', borderRadius: 12, border: `1px solid ${HP_TOKENS.lineSoft}`,
+-                  fontFamily: HP_FONT, fontSize: 13, boxSizing: 'border-box', outline: 'none'
+-                }}
+-              />
+-            </div>
+ 
+-            <textarea 
+-              placeholder="Ceritakan progresmu... Kenapa baru segini? Apa yang sudah selesai? Ada kendala apa? (misal: Nunggu feedback tim, butuh riset lebih dalam)"
+-              value={notes}
+-              onChange={e => setNotes(e.target.value)}
+-              style={{
+-                width: '100%', padding: '12px', borderRadius: 12, border: `1px solid ${HP_TOKENS.lineSoft}`,
+-                fontFamily: HP_FONT, fontSize: 13, minHeight: 80, boxSizing: 'border-box',
+-                background: HP_TOKENS.card, outline: 'none', transition: '0.2s',
+-                lineHeight: 1.5
+-              }}
+-            />
+-
+-            <div style={{ marginTop: 12 }}>
+-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 8 }}>MOOD SIANG INI:</div>
+-              <div style={{ display: 'flex', gap: 8 }}>
+-                {['joy', 'calm', 'tired', 'stress'].map(m => (
+-                  <button key={m} onClick={() => setSelectedMood(m)} style={{
+-                    flex: 1, padding: '8px 0', borderRadius: 12,
+-                    background: selectedMood === m ? `${getMoodColor(m)}20` : '#fff',
+-                    border: selectedMood === m ? `1.5px solid ${getMoodColor(m)}` : `1.5px solid ${HP_TOKENS.lineSoft}`,
+-                    fontSize: 20, cursor: 'pointer', transition: '0.2s'
+-                  }}>
+-                    {getMoodEmoji(m)}
+-                  </button>
+-                ))}
+-              </div>
+-            </div>
+-
+-            <button 
+-              onClick={saveRealisasi}
+-              disabled={!notes.trim()}
+-              className="hp-tap"
+-              style={{ 
+-                marginTop: 12, width: '100%', padding: '14px', borderRadius: 12,
+-                background: notes.trim() ? HP_TOKENS.ink : HP_TOKENS.line, 
+-                color: notes.trim() ? HP_TOKENS.yellow : HP_TOKENS.inkFade, 
+-                border: 'none',
+-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: notes.trim() ? 'pointer' : 'default',
+-                boxShadow: notes.trim() ? '0 4px 12px rgba(26,29,35,0.1)' : 'none'
+-              }}
+-            >
+-              Simpan ke Logbook Activity
+-            </button>
+-          </div>
+-        </HPCard>
+-      ) : (
+-        <HPCard padding={20} style={{ marginBottom: 24, textAlign: 'center', background: HP_TOKENS.paper, border: `1.5px dashed ${HP_TOKENS.line}` }}>
+-          <div style={{ fontSize: 32, marginBottom: 12 }}>­ƒÄ»</div>
+-          <div style={{ ...HP_TEXT.h, fontSize: 15, color: HP_TOKENS.ink }}>Belum ada Task yang di-Set sebagai Fokus.</div>
+-          <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, marginTop: 4 }}>Klik ikon Ô£¿ pada daftar target di bawah untuk mulai fokus.</div>
+-        </HPCard>
+-      )}
+ 
+       <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 900, fontSize: 10, letterSpacing: 1, marginBottom: 12 }}>DAFTAR TARGET HARI INI</div>
+       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
+         {priorities.map((p: any) => (
+           <HPCard key={p.id} padding={14} style={{ 
+-            background: p.done ? `${HP_TOKENS.sageWash}40` : '#fff',
++            background: p.done ? `${HP_TOKENS.sageWash}40` : HP_TOKENS.card,
+             border: `1.5px solid ${p.done ? HP_TOKENS.sage : HP_TOKENS.line}`,
+             opacity: p.done ? 0.7 : 1,
+             transition: '0.2s'
+@@ -389,6 +351,26 @@ Jawab dengan tone yang asik dan menyemangati.`,
+                     </div>
+                   );
+                 })()}
++                {!p.done && (
++                  <div style={{ marginTop: 12 }}>
++                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, alignItems: 'center' }}>
++                      <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>Progres:</div>
++                      <div style={{ ...HP_TEXT.small, fontWeight: 800, color: HP_TOKENS.yellow }}>{p.progress || 0}%</div>
++                    </div>
++                    <input 
++                      type="range" min="0" max="100" 
++                      value={p.progress || 0} 
++                      onChange={(e) => updateTaskProgress(p.id, parseInt(e.target.value))}
++                      style={{ 
++                        width: '100%', 
++                        height: 6,
++                        borderRadius: 3,
++                        accentColor: HP_TOKENS.yellow,
++                        cursor: 'pointer'
++                      }}
++                    />
++                  </div>
++                )}
+               </div>
+             </div>
+           </HPCard>
+@@ -400,52 +382,57 @@ Jawab dengan tone yang asik dan menyemangati.`,
+         )}
+       </div>
+ 
+-      {!aiResponse ? (
++      <div style={{ background: HP_TOKENS.card, padding: 16, borderRadius: 16, border: `1px solid ${HP_TOKENS.line}`, marginBottom: 24 }}>
++        <div style={{ ...HP_TEXT.small, fontWeight: 800, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
++          <HPGlyph name="book" size={14} color={HP_TOKENS.ink} />
++          Catatan Mid-Day Jurnal
++        </div>
++        
++        <textarea 
++          placeholder="Ceritakan progres siang ini secara umum... Apa saja yang sudah dikerjakan? Ada kendala apa?"
++          value={notes}
++          onChange={e => setNotes(e.target.value)}
++          style={{
++            width: '100%', padding: '14px', borderRadius: 12, border: `1px solid ${HP_TOKENS.lineSoft}`,
++            fontFamily: HP_FONT, fontSize: 13, minHeight: 100, boxSizing: 'border-box',
++            background: HP_TOKENS.card, outline: 'none', transition: '0.2s',
++            lineHeight: 1.5, resize: 'vertical'
++          }}
++        />
++
++        <div style={{ marginTop: 12 }}>
++          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 8 }}>MOOD SIANG INI:</div>
++          <div style={{ display: 'flex', gap: 8 }}>
++            {['joy', 'calm', 'tired', 'stress'].map(m => (
++              <button key={m} onClick={() => setSelectedMood(m)} style={{
++                flex: 1, padding: '8px 0', borderRadius: 12,
++                background: selectedMood === m ? `${getMoodColor(m)}20` : HP_TOKENS.paper,
++                border: selectedMood === m ? `1.5px solid ${getMoodColor(m)}` : `1.5px solid ${HP_TOKENS.lineSoft}`,
++                fontSize: 20, cursor: 'pointer', transition: '0.2s'
++              }}>
++                {getMoodEmoji(m)}
++              </button>
++            ))}
++          </div>
++        </div>
++
+         <button 
+-          onClick={askAI}
+-          disabled={isLoading}
++          onClick={saveRealisasi}
++          disabled={!notes.trim()}
+           className="hp-tap"
+-          style={{
+-            width: '100%', padding: '16px', borderRadius: 20,
+-            background: HP_TOKENS.blue, color: '#F4F7F9', border: 'none',
+-            fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
+-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+-            boxShadow: `0 8px 24px ${HP_TOKENS.blueSoft}`,
++          style={{ 
++            marginTop: 16, width: '100%', padding: '14px', borderRadius: 12,
++            background: notes.trim() ? HP_TOKENS.ink : HP_TOKENS.line, 
++            color: notes.trim() ? HP_TOKENS.yellow : HP_TOKENS.inkFade, 
++            border: 'none',
++            fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: notes.trim() ? 'pointer' : 'default',
++            boxShadow: notes.trim() ? '0 4px 12px rgba(26,29,35,0.1)' : 'none'
+           }}
+         >
+-          {isLoading ? (
+-            "Meminta saran Flow..."
+-          ) : (
+-            <>
+-              <HPGlyph name="sparkle" size={18} color="#F4F7F9" />
+-              Bantu Aku Fokus (AI)
+-            </>
+-          )}
++          Simpan Progres & Catatan
+         </button>
+-      ) : (
+-        <HPCard padding={16} style={{ background: HP_TOKENS.blueWash, border: 'none', position: 'relative' }}>
+-          <div style={{ display: 'flex', gap: 12 }}>
+-            <div style={{ width: 32, height: 32, borderRadius: 10, background: HP_TOKENS.blue, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+-              <HPGlyph name="sparkle" size={16} color="#F4F7F9" />
+-            </div>
+-            <div style={{ ...HP_TEXT.body, fontSize: 13, lineHeight: 1.5, color: HP_TOKENS.ink }}>
+-              {aiResponse}
+-            </div>
+-          </div>
+-          <button 
+-            onClick={() => setAiResponse(null)}
+-            style={{ 
+-              marginTop: 12, width: '100%', padding: '8px', borderRadius: 10, 
+-              border: `1px solid ${HP_TOKENS.blue}`, background: 'transparent',
+-              color: HP_TOKENS.blue, fontFamily: HP_FONT, fontWeight: 800, fontSize: 12,
+-              cursor: 'pointer'
+-            }}
+-          >
+-            Tanya lagi
+-          </button>
+-        </HPCard>
+-      )}
+-      
++      </div>
++
+       <button 
+         onClick={onClose}
+         style={{
+@@ -456,6 +443,14 @@ Jawab dengan tone yang asik dan menyemangati.`,
+       >
+         Lanjut kerja dulu
+       </button>
++
++      {completingTask && (
++        <TaskCompleteModal 
++          task={completingTask}
++          onClose={() => setCompletingTask(null)}
++          onConfirm={confirmTaskComplete}
++        />
++      )}
+     </Modal>
+   );
+ }
+diff --git a/focusbuddy-v9/content.js b/focusbuddy-v9/content.js
+index fb546c9..5c387b5 100644
+--- a/focusbuddy-v9/content.js
++++ b/focusbuddy-v9/content.js
+@@ -4458,7 +4458,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
+   if (webBtn) {
+     webBtn.addEventListener('click', (e) => {
+       e.stopPropagation();
+-      window.open('https://happily-flowbee.vercel.app/', '_blank');
++      window.open('https://happily-flowbuddy.vercel.app/', '_blank');
+     });
+   }
+ 
+@@ -4466,7 +4466,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
+   if (lockedLoginBtn) {
+     lockedLoginBtn.addEventListener('click', (e) => {
+       e.stopPropagation();
+-      window.open('https://happily-flowbee.vercel.app/', '_blank');
++      window.open('https://happily-flowbuddy.vercel.app/', '_blank');
+     });
+   }
+ 

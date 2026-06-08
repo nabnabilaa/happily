@@ -1,0 +1,222 @@
+﻿diff --git a/app/layout.tsx b/app/layout.tsx
+index 51146b1..fa1fc79 100644
+--- a/app/layout.tsx
++++ b/app/layout.tsx
+@@ -4,6 +4,7 @@ import "./globals.css";
+ import Shell from "@/components/layout/Shell";
+ import PWARegistration from "@/components/pwa/PWARegistration";
+ import InstallButton from "@/components/pwa/InstallButton";
++import DownloadExtensionBtn from "@/components/pwa/DownloadExtensionBtn";
+ import OfflineToast from "@/components/pwa/OfflineToast";
+ import { HPProvider } from "@/lib/HPContext";
+ import Script from "next/script";
+@@ -125,6 +126,7 @@ export default function RootLayout({
+             <GlobalClickInterceptor />
+             <PWARegistration />
+             <InstallButton />
++            <DownloadExtensionBtn />
+             <OfflineToast />
+             <Shell>{children}</Shell>
+           </HPProvider>
+diff --git a/app/page.tsx b/app/page.tsx
+index 021a93f..55e1724 100644
+--- a/app/page.tsx
++++ b/app/page.tsx
+@@ -104,6 +104,7 @@ const NewChatModal = safeDynamic(() => import("@/components/modals/NewChatModal"
+ const AppreciateModal = safeDynamic(() => import("@/components/modals/AppreciateModal"));
+ const AnnouncementModal = safeDynamic(() => import("@/components/modals/AnnouncementModal"));
+ const MascotGuideModal = safeDynamic(() => import("@/components/modals/MascotGuideModal"));
++const ExtensionGuideModal = safeDynamic(() => import("@/components/modals/ExtensionGuideModal"));
+ import HPToastContainer from "@/components/ui/HPToastContainer";
+ import ConfirmLogoutModal from "@/components/modals/ConfirmLogoutModal";
+ import NotificationBanner from "@/components/pwa/NotificationBanner";
+@@ -132,8 +133,15 @@ function AppContent() {
+   useEffect(() => {
+     if (typeof window === "undefined") return;
+     const handleOpenReflect = () => openModal('reflect');
++    const handleOpenExtensionGuide = () => openModal('extension_guide');
++    
+     window.addEventListener('hp_open_reflect', handleOpenReflect);
+-    return () => window.removeEventListener('hp_open_reflect', handleOpenReflect);
++    window.addEventListener('hp_open_extension_guide', handleOpenExtensionGuide);
++    
++    return () => {
++      window.removeEventListener('hp_open_reflect', handleOpenReflect);
++      window.removeEventListener('hp_open_extension_guide', handleOpenExtensionGuide);
++    };
+   }, [openModal]);
+ 
+   // Handle direct actions from URL parameters
+@@ -572,6 +580,7 @@ function AppContent() {
+       {modal?.name === 'appreciate'       && <AppreciateModal onClose={closeModal} {...modal.props} />}
+       {modal?.name === 'announcement'     && <AnnouncementModal onClose={closeModal} />}
+       {modal?.name === 'mascot_guide'     && <MascotGuideModal onClose={closeModal} />}
++      {modal?.name === 'extension_guide'  && <ExtensionGuideModal onClose={closeModal} />}
+       {modal?.name === 'confirm_logout'   && <ConfirmLogoutModal onClose={closeModal} onConfirm={logout} />}
+ 
+       {/* Daily Greeting Modal */}
+diff --git a/components/goals/GoalCard.tsx b/components/goals/GoalCard.tsx
+index 76492ea..c66d68a 100644
+--- a/components/goals/GoalCard.tsx
++++ b/components/goals/GoalCard.tsx
+@@ -66,8 +66,12 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
+     ? Math.round(childGoals.reduce((acc, curr) => acc + (curr.progress || 0), 0) / childGoals.length)
+     : null;
+ 
+-  // Final display progress
+-  const displayProgress = g.progress || 0;
++  // Final display progress: prioritize auto-calculated from tasks/children
++  const displayProgress = hasTodayTasks && taskProgress !== null
++    ? taskProgress
++    : hasChildren && childrenProgress !== null
++      ? childrenProgress
++      : (g.progress || 0);
+ 
+   const deleteGoal = () => {
+     if (isReadOnly) return;
+diff --git a/components/home/HomeScreen.tsx b/components/home/HomeScreen.tsx
+index 4216b74..674a3a4 100644
+--- a/components/home/HomeScreen.tsx
++++ b/components/home/HomeScreen.tsx
+@@ -28,8 +28,10 @@ import OvertimePromptModal from "@/components/modals/OvertimePromptModal";
+ import WellbeingGauge from "@/components/home/WellbeingGauge";
+ import AttendanceWidget from "@/components/home/AttendanceWidget";
+ import TaskHarianWidget from "@/components/home/TaskHarianWidget";
++import DailyChallengeWidget from "@/components/home/DailyChallengeWidget";
+ import SurveySection from "@/components/home/SurveySection";
+ import PresenceBoard from "@/components/home/PresenceBoard";
++import LeaderboardWidget from "@/components/home/LeaderboardWidget";
+ import MoodWall from "@/components/home/MoodWall";
+ 
+ 
+@@ -804,8 +806,8 @@ export default function HomeScreen({ openModal }: any) {
+           }} 
+         />
+ 
+-
+-
++        {/* LAYER 3 ÔÇö Daily Challenges */}
++        <DailyChallengeWidget />
+ 
+         {/* Survey Section ÔÇö Smart targeting + internal questions */}
+         <SurveySection openModal={openModal} />
+@@ -816,6 +818,8 @@ export default function HomeScreen({ openModal }: any) {
+           <PresenceBoard openModal={openModal} />
+         </div>
+ 
++        {/* Leaderboard Tim */}
++        <LeaderboardWidget currentUserId={user.id} />
+ 
+         {/* Daily Training Habits */}
+         <div style={{ marginTop: 24 }}>
+diff --git a/components/home/PriorityCard.tsx b/components/home/PriorityCard.tsx
+index 2927d43..619442c 100644
+--- a/components/home/PriorityCard.tsx
++++ b/components/home/PriorityCard.tsx
+@@ -165,7 +165,7 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit
+       boxShadow: state?.focusTaskId === p.id ? `0 8px 24px ${HP_TOKENS.yellow}20` : (p.done ? 'none' : '0 4px 12px rgba(26,29,35,0.02)'),
+       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+     }}>
+-      {/* Floating +50 Poin */}
++      {/* Floating +30 Poin */}
+       {showPoints && (
+         <div style={{
+           position: 'absolute', top: -10, right: 20,
+@@ -176,7 +176,7 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit
+           pointerEvents: 'none', zIndex: 10,
+           boxShadow: '0 4px 12px rgba(26,29,35,0.1)'
+         }}>
+-          +{p.points || 50} Point
++          +{p.points || 30} Point
+         </div>
+       )}
+ 
+diff --git a/components/modals/WorkCheckInModal.tsx b/components/modals/WorkCheckInModal.tsx
+index 9b3f4ad..96f1590 100644
+--- a/components/modals/WorkCheckInModal.tsx
++++ b/components/modals/WorkCheckInModal.tsx
+@@ -259,7 +259,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
+             />
+           </div>
+ 
+-          <div style={{ background: 'rgba(255,255,255,0.8)', padding: 16, borderRadius: 16, border: `1px solid ${HP_TOKENS.line}` }}>
++          <div style={{ background: HP_TOKENS.paper, padding: 16, borderRadius: 16, border: `1px solid ${HP_TOKENS.line}` }}>
+             <div style={{ ...HP_TEXT.small, fontWeight: 800, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+               <HPGlyph name="book" size={14} color={HP_TOKENS.ink} />
+               Catatan Progres (Realisasi)
+@@ -275,7 +275,8 @@ Jawab dengan tone yang asik dan menyemangati.`,
+                 }))}
+                 style={{
+                   flex: 2, padding: '12px', borderRadius: 12, border: `1px solid ${HP_TOKENS.lineSoft}`,
+-                  fontFamily: HP_FONT, fontSize: 13, boxSizing: 'border-box', outline: 'none'
++                  fontFamily: HP_FONT, fontSize: 13, boxSizing: 'border-box', outline: 'none',
++                  background: 'transparent', color: HP_TOKENS.ink
+                 }}
+               />
+               <input 
+@@ -287,7 +288,8 @@ Jawab dengan tone yang asik dan menyemangati.`,
+                 }))}
+                 style={{
+                   flex: 1, padding: '12px', borderRadius: 12, border: `1px solid ${HP_TOKENS.lineSoft}`,
+-                  fontFamily: HP_FONT, fontSize: 13, boxSizing: 'border-box', outline: 'none'
++                  fontFamily: HP_FONT, fontSize: 13, boxSizing: 'border-box', outline: 'none',
++                  background: 'transparent', color: HP_TOKENS.ink
+                 }}
+               />
+             </div>
+@@ -299,7 +301,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
+               style={{
+                 width: '100%', padding: '12px', borderRadius: 12, border: `1px solid ${HP_TOKENS.lineSoft}`,
+                 fontFamily: HP_FONT, fontSize: 13, minHeight: 80, boxSizing: 'border-box',
+-                background: HP_TOKENS.card, outline: 'none', transition: '0.2s',
++                background: 'transparent', color: HP_TOKENS.ink, outline: 'none', transition: '0.2s',
+                 lineHeight: 1.5
+               }}
+             />
+@@ -310,7 +312,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
+                 {['joy', 'calm', 'tired', 'stress'].map(m => (
+                   <button key={m} onClick={() => setSelectedMood(m)} style={{
+                     flex: 1, padding: '8px 0', borderRadius: 12,
+-                    background: selectedMood === m ? `${getMoodColor(m)}20` : '#fff',
++                    background: selectedMood === m ? `${getMoodColor(m)}20` : HP_TOKENS.card,
+                     border: selectedMood === m ? `1.5px solid ${getMoodColor(m)}` : `1.5px solid ${HP_TOKENS.lineSoft}`,
+                     fontSize: 20, cursor: 'pointer', transition: '0.2s'
+                   }}>
+diff --git a/focusbuddy-v9/content.js b/focusbuddy-v9/content.js
+index fb546c9..3838cca 100644
+--- a/focusbuddy-v9/content.js
++++ b/focusbuddy-v9/content.js
+@@ -2854,6 +2854,15 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
+   box-shadow:0 1px 4px rgba(0,0,0,.03) !important;
+ }
+ .fb-alarm-card.urgent { border-left-color:#E88B7D !important; }
++.fb-alcard-left { flex: 1 !important; display: flex !important; flex-direction: column !important; gap: 3px !important; overflow: hidden !important; }
++.fb-alcard-time-big { font-size: 15px !important; font-weight: 800 !important; color: var(--fb-ink) !important; line-height: 1.1 !important; }
++.fb-alcard-label { font-size: 13.5px !important; font-weight: 600 !important; color: var(--fb-ink) !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
++.fb-alcard-repeat { font-size: 11px !important; font-weight: 500 !important; color: var(--fb-ink-mute) !important; }
++.fb-alcard-right { display: flex !important; align-items: center !important; gap: 6px !important; flex-shrink: 0 !important; }
++.fb-alcard-toggle { padding: 4px 8px !important; border-radius: 6px !important; font-size: 10px !important; font-weight: 800 !important; cursor: pointer !important; border: 1.5px solid var(--fb-line) !important; background: var(--fb-card) !important; color: var(--fb-ink-mute) !important; transition: all .2s !important; }
++.fb-alcard-toggle.on { background: rgba(134,192,169,0.15) !important; color: #4A7C59 !important; border-color: rgba(134,192,169,0.3) !important; }
++.fb-alcard-del { padding: 4px !important; border-radius: 6px !important; background: transparent !important; color: var(--fb-ink-mute) !important; border: none !important; cursor: pointer !important; font-size: 14px !important; transition: all .2s !important; display: flex !important; align-items: center !important; justify-content: center !important; }
++.fb-alcard-del:hover { background: rgba(255,68,68,0.1) !important; color: #FF4444 !important; }
+ 
+ /* ÔöÇÔöÇ Overrides for inline/legacy hardcoded colors in HTML ÔöÇÔöÇ */
+ #fb-task-in {
+@@ -6970,9 +6979,17 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
+           <div class="fb-alcard-repeat">${repeatStr} ┬À ${fmtCountdown(ms)}</div>
+         </div>
+         <div class="fb-alcard-right">
++          <button class="fb-alcard-gcal" title="Simpan ke Google Calendar" style="padding:4px 6px;border-radius:6px;background:transparent;border:1.5px solid var(--fb-line);cursor:pointer;font-size:12px;transition:all 0.2s;color:var(--fb-ink);display:flex;align-items:center;">&#128197;</button>
+           <button class="fb-alcard-toggle ${enabled ? 'on' : 'off'}" title="${enabled ? 'Matikan' : 'Aktifkan'}">${enabled ? 'ON' : 'OFF'}</button>
+           <button class="fb-alcard-del" title="Hapus">&#10006;</button>
+         </div>`
++      card.querySelector('.fb-alcard-gcal').onclick = () => {
++        const start = new Date(alarm.timestamp)
++        const end = new Date(alarm.timestamp + 60 * 60 * 1000) // Default 1 hour
++        const fmt = d => d.toISOString().replace(/-|:|\.\d\d\d/g, '')
++        const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(alarm.label)}&dates=${fmt(start)}/${fmt(end)}&details=Ditambahkan%20dari%20FocusBuddy`
++        window.open(url, '_blank')
++      }
+       card.querySelector('.fb-alcard-toggle').onclick = () => {
+         alarm.enabled = !alarm.enabled; save(); renderAlarms()
+       }

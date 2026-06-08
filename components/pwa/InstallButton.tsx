@@ -1,31 +1,24 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
+import { HP_TOKENS, HP_FONT, HP_TEXT } from '@/lib/constants';
 import HPGlyph from '@/components/ui/HPGlyph';
 
 export default function InstallButton() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState(false);
-  const [pos, setPos] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  
-  const dragRef = useRef<{ startX: number; startY: number; initialX: number; initialY: number } | null>(null);
 
   useEffect(() => {
-    // 1. Check standalone display mode
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsInstalled(true);
     }
 
-    // 2. Listen to beforeinstallprompt
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setIsInstalled(false); // If prompt is available, it is not installed yet
+      setIsInstalled(false);
     };
 
-    // 3. Listen to appinstalled (instant update when installed)
     const handleAppInstalled = () => {
       setIsInstalled(true);
       setDeferredPrompt(null);
@@ -41,7 +34,10 @@ export default function InstallButton() {
   }, []);
 
   const handleInstall = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      alert("💡 Tips: Untuk menginstall Flowbee, buka menu browser kamu (titik tiga di pojok atas) lalu pilih 'Add to Home screen' (Tambahkan ke Layar Utama) atau 'Install App'.");
+      return;
+    }
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
@@ -50,59 +46,29 @@ export default function InstallButton() {
     }
   };
 
-  // Draggable Handlers
-  const handlePointerDown = (e: React.PointerEvent) => {
-    dragRef.current = {
-      startX: e.clientX,
-      startY: e.clientY,
-      initialX: pos.x,
-      initialY: pos.y,
-    };
-    setIsDragging(false);
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-  };
-
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (!dragRef.current) return;
-    const dx = e.clientX - dragRef.current.startX;
-    const dy = e.clientY - dragRef.current.startY;
-    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-      setIsDragging(true);
-    }
-    setPos({
-      x: dragRef.current.initialX + dx,
-      y: dragRef.current.initialY + dy,
-    });
-  };
-
-  const handlePointerUp = (e: React.PointerEvent) => {
-    if (!isDragging && dragRef.current) {
-      handleInstall();
-    }
-    dragRef.current = null;
-  };
-
-  if (isInstalled || !deferredPrompt) return null;
+  if (isInstalled) return null;
 
   return (
-    <button
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      className="hp-install-btn"
-      id="install-button"
-      style={{
-        transform: `translate(${pos.x}px, ${pos.y}px)${!isDragging && isHovered ? ' translateY(-2px)' : ''}`,
-        touchAction: 'none',
-        cursor: isDragging ? 'grabbing' : 'pointer',
-        transition: isDragging ? 'none' : 'transform 0.2s ease, background 0.2s ease',
-        zIndex: 1001, // Higher than role badge (zIndex: 40)
-      }}
-    >
-      <HPGlyph name="bee" size={18} stroke={2.5} />
-      <span>Install App</span>
-    </button>
+    <div className="hp-desktop-hidden" style={{ display: 'flex', justifyContent: 'center' }}>
+      <button
+        onClick={handleInstall}
+        className="hp-tap"
+        title="Unduh Aplikasi"
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          padding: '6px 12px', borderRadius: 100,
+          background: 'rgba(245, 107, 42, 0.1)',
+          color: '#F56B2A', border: '1.5px solid rgba(245, 107, 42, 0.3)', cursor: 'pointer',
+          fontFamily: HP_FONT, fontWeight: 800, fontSize: 12,
+        }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        <span>Unduh</span>
+      </button>
+    </div>
   );
 }

@@ -177,11 +177,24 @@ export function calculateWellbeingScore(state: any, user: any): {
     }
   }
 
+  // Mid-Day Check-in — appears around 11:30 to 13:30
+  const currentMins = now.getHours() * 60 + now.getMinutes();
+  const isMidDayWindow = currentMins >= (11 * 60 + 30) && currentMins <= (13 * 60 + 30);
+  
+  if (isMidDayWindow) {
+    actions.push({
+      icon: '📖',
+      label: 'Isi Mid-Day Check-in',
+      description: 'Update progres kerja dan evaluasi ulang targetmu siang ini.',
+      modalTarget: 'work_checkin',
+      priority: 0, // Very high priority so it's at the top
+    });
+  }
+
   // "Tutup Hari" — only show within 30 mins of work end or past it
   if (state.workSchedule && state.workSchedule.end) {
     const [endH, endM] = state.workSchedule.end.split(':').map(Number);
     const endTimeMins = endH * 60 + endM;
-    const currentMins = now.getHours() * 60 + now.getMinutes();
     
     if (currentMins >= endTimeMins - 30) {
       actions.push({

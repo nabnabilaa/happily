@@ -4458,7 +4458,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   if (webBtn) {
     webBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      window.open('https://happily-flowbee.vercel.app/', '_blank');
+      window.open('https://happily-flowbuddy.vercel.app/', '_blank');
     });
   }
 
@@ -4466,7 +4466,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   if (lockedLoginBtn) {
     lockedLoginBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      window.open('https://happily-flowbee.vercel.app/', '_blank');
+      window.open('https://happily-flowbuddy.vercel.app/', '_blank');
     });
   }
 

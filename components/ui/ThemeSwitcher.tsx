@@ -51,7 +51,7 @@ export default function ThemeSwitcher() {
         borderRadius: "50%",
         border: `1.5px solid ${isDark ? "rgba(223, 184, 117, 0.25)" : "var(--hp-line)"}`,
         background: isDark ? "rgba(16, 22, 42, 0.65)" : "var(--hp-card)",
-        color: "var(--hp-yellow)",
+        color: isDark ? "var(--hp-yellow)" : "var(--hp-inkMute)",
         boxShadow: isDark
           ? "0 0 12px rgba(255, 215, 0, 0.15), 0 2px 10px rgba(26,29,35,0.2)"
           : "0 2px 10px rgba(26,29,35,0.06)",
@@ -68,7 +68,7 @@ export default function ThemeSwitcher() {
           alignItems: "center",
           gap: 20,
           transition: "transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
-          transform: isDark ? "translateY(14.5px)" : "translateY(-14.5px)",
+          transform: isDark ? "translateY(19px)" : "translateY(-19px)",
         }}
       >
         {/* Sun Icon (Light Mode active icon) */}

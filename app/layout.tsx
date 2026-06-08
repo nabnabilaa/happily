@@ -3,7 +3,6 @@ import { Nunito } from "next/font/google";
 import "./globals.css";
 import Shell from "@/components/layout/Shell";
 import PWARegistration from "@/components/pwa/PWARegistration";
-import InstallButton from "@/components/pwa/InstallButton";
 import OfflineToast from "@/components/pwa/OfflineToast";
 import { HPProvider } from "@/lib/HPContext";
 import Script from "next/script";
@@ -124,7 +123,6 @@ export default function RootLayout({
           <HPProvider>
             <GlobalClickInterceptor />
             <PWARegistration />
-            <InstallButton />
             <OfflineToast />
             <Shell>{children}</Shell>
           </HPProvider>

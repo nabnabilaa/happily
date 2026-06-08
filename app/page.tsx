@@ -15,6 +15,7 @@ import BeeMascot from "@/components/ui/BeeMascot";
 import TabNav from "@/components/layout/TabNav";
 import ErrorBoundary from "@/components/ui/ErrorBoundary";
 import ThemeSwitcher from "@/components/ui/ThemeSwitcher";
+import InstallButton from "@/components/pwa/InstallButton";
 
 // ── Shared Screens ──
 import CalendarScreen from "@/components/home/CalendarScreen";
@@ -106,7 +107,6 @@ const AnnouncementModal = safeDynamic(() => import("@/components/modals/Announce
 const MascotGuideModal = safeDynamic(() => import("@/components/modals/MascotGuideModal"));
 import HPToastContainer from "@/components/ui/HPToastContainer";
 import ConfirmLogoutModal from "@/components/modals/ConfirmLogoutModal";
-import NotificationBanner from "@/components/pwa/NotificationBanner";
 import DailyGreetingModal, { needsDailyGreeting, markDailyGreeted } from "@/components/modals/DailyGreetingModal";
 
 
@@ -397,6 +397,7 @@ function AppContent() {
           position: 'absolute', top: 16, right: 16, zIndex: 40,
           display: 'flex', alignItems: 'center', gap: 8,
         }}>
+          <InstallButton />
           <ThemeSwitcher />
 
           <button
@@ -486,7 +487,6 @@ function AppContent() {
         </div>
 
         <div className="hp-screen-container">
-          <NotificationBanner />
           {renderScreen()}
         </div>
 
@@ -538,7 +538,7 @@ function AppContent() {
       {modal?.name === 'schedule_coaching'&& <ScheduleCoachingModal onClose={closeModal} />}
       {modal?.name === 'learning_detail'  && <LearningDetailModal onClose={closeModal} />}
       {modal?.name === 'manage_programs'  && <ManageProgramsModal onClose={closeModal} />}
-      {modal?.name === 'all_rewards'      && <AllRewardsModal onClose={closeModal} />}
+      {modal?.name === 'all_rewards'      && <AllRewardsModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'logbook'          && <LogbookModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'system_guide'     && <SystemGuideModal onClose={closeModal} />}
       {modal?.name === 'profile_editor'   && <ProfileEditorModal onClose={closeModal} />}

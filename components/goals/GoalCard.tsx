@@ -146,101 +146,135 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
       boxShadow: '0 4px 12px rgba(26,29,35,0.01)',
       transition: 'all 0.2s ease',
     }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ 
-              width: 24, height: 24, borderRadius: 8, 
-              background: `${toneColor}15`, 
-              display: 'flex', alignItems: 'center', justifyContent: 'center' 
-            }}>
-              <HPGlyph name="target" size={14} color={toneColor} />
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+        <div style={{ 
+          width: 32, height: 32, borderRadius: 10, 
+          background: `${toneColor}15`, 
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0
+        }}>
+          <HPGlyph name="target" size={16} color={toneColor} />
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              {g.status && (
+                <div style={{ 
+                  padding: '3px 8px', borderRadius: 6, 
+                  background: g.status === 'approved' ? HP_TOKENS.sageSoft : g.status === 'rejected' ? HP_TOKENS.coralSoft : g.status === 'revision' ? HP_TOKENS.yellowSoft : HP_TOKENS.yellowSoft, 
+                  color: g.status === 'approved' ? HP_TOKENS.sage : g.status === 'rejected' ? HP_TOKENS.coral : '#8A6814',
+                  fontSize: 10, fontWeight: 900, letterSpacing: 0.5
+                }}>
+                  {g.status === 'approved' ? 'ACCEPT' : g.status === 'revision' ? 'REVISI' : g.status === 'rejected' ? 'REJECT' : 'PENDING'}
+                </div>
+              )}
+              {displayProgress >= 100 && (
+                <div style={{ 
+                  padding: '3px 8px', borderRadius: 6, 
+                  background: HP_TOKENS.sageSoft, color: HP_TOKENS.sage,
+                  fontSize: 10, fontWeight: 900, letterSpacing: 0.5
+                }}>DONE</div>
+              )}
+              <HPChip tone={g.tone} size="sm">{g.alignment}% align</HPChip>
             </div>
-            <div style={{ ...HP_TEXT.h, fontSize: 16 }}>{g.title}</div>
-            {g.status && (
-              <div style={{ 
-                padding: '2px 8px', borderRadius: 6, 
-                background: g.status === 'approved' ? HP_TOKENS.sageSoft : g.status === 'rejected' ? HP_TOKENS.coralSoft : g.status === 'revision' ? HP_TOKENS.yellowSoft : HP_TOKENS.yellowSoft, 
-                color: g.status === 'approved' ? HP_TOKENS.sage : g.status === 'rejected' ? HP_TOKENS.coral : '#8A6814',
-                fontSize: 9, fontWeight: 900, letterSpacing: 0.5
-              }}>
-                {g.status === 'approved' ? 'ACCEPT' : g.status === 'revision' ? 'REVISI' : g.status === 'rejected' ? 'REJECT' : 'PENDING'}
-              </div>
-            )}
-            {displayProgress >= 100 && (
-              <div style={{ 
-                padding: '2px 8px', borderRadius: 6, 
-                background: HP_TOKENS.sageSoft, color: HP_TOKENS.sage,
-                fontSize: 9, fontWeight: 900, letterSpacing: 0.5
-              }}>DONE</div>
-            )}
+            
             {!isReadOnly && (
               <button 
                 onClick={(e) => { e.stopPropagation(); deleteGoal(); }}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex' }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', flexShrink: 0 }}
               >
-                <div style={{ width: 14, height: 14, borderRadius: 7, background: HP_TOKENS.lineSoft, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ fontSize: 10, color: HP_TOKENS.inkFade, fontWeight: 900 }}>×</span>
+                <div style={{ width: 18, height: 18, borderRadius: 9, background: HP_TOKENS.lineSoft, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: 12, color: HP_TOKENS.inkFade, fontWeight: 900, lineHeight: 1 }}>×</span>
                 </div>
               </button>
             )}
           </div>
+
+          <div style={{ ...HP_TEXT.h, fontSize: 16, lineHeight: 1.4, color: HP_TOKENS.ink, marginTop: 4 }}>
+            {g.title}
+          </div>
+
           {parentGoal && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, marginLeft: 32 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
               <HPGlyph name="link" size={10} color={HP_TOKENS.blue} />
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 800, fontSize: 10 }}>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 800, fontSize: 11 }}>
                 Aligned to: {parentGoal.title}
               </div>
             </div>
           )}
-          <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, marginTop: 6, marginLeft: 32, fontSize: 12 }}>
-             {hasChildren ? `${childGoals.length} Sub-KPI` : hasTodayTasks ? `${doneTaskCount}/${linkedTasks.length} task selesai` : (g.metric && String(g.metric).includes('task selesai')) ? g.metric : (displayProgress >= 100 ? 'Target Tercapai ✨' : (g.metric || 'Progress'))} · <span style={{ fontWeight: 700 }}>Due:</span> {g.due}
-          </div>
         </div>
-        <HPChip tone={g.tone} size="sm">{g.alignment}% align</HPChip>
       </div>
 
-      <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-             <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800 }}>PROGRESS</span>
-             {editingProgress ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }} onClick={(e) => e.stopPropagation()}>
-                  <input
-                    type="range" min="0" max="100"
-                    value={tempProgress}
-                    onChange={(e) => setTempProgress(e.target.value)}
-                    style={{
-                      flex: 1, accentColor: toneColor, cursor: 'pointer', height: 6
-                    }}
-                  />
-                  <span style={{ fontSize: 13, fontWeight: 900, color: toneColor, minWidth: 35, textAlign: 'right' }}>
-                    {tempProgress}%
-                  </span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const val = Math.max(0, Math.min(100, Number(tempProgress)));
-                      onEditProgress?.(val);
-                      setEditingProgress(false);
-                    }}
-                    style={{
-                      padding: '5px 12px', borderRadius: 8, border: 'none',
-                      background: HP_TOKENS.sage, color: '#F4F7F9', fontSize: 11,
-                      fontWeight: 900, cursor: 'pointer',
-                      boxShadow: `0 2px 8px ${HP_TOKENS.sage}40`
-                    }}
-                  >✓ Simpan</button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setEditingProgress(false); }}
-                    style={{
-                      padding: '5px 8px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
-                      background: HP_TOKENS.card, color: HP_TOKENS.inkFade, fontSize: 11,
-                      fontWeight: 900, cursor: 'pointer'
-                    }}
-                  >✕ Batal</button>
-                </div>
-              ) : (
+      <div style={{ 
+        marginTop: 20, padding: 12, borderRadius: 12,
+        background: 'linear-gradient(to bottom, #F9FAFB, #F3F4F6)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <HPGlyph name="calendar" size={12} color={HP_TOKENS.inkFade} />
+            <span style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.inkFade, fontSize: 11 }}>
+              Due: {g.due ? g.due.split(' ')[0] : '-'}
+            </span>
+          </div>
+          <div style={{ ...HP_TEXT.small, fontWeight: 800, color: HP_TOKENS.ink, fontSize: 12 }}>
+            {hasChildren 
+              ? `${childGoals.length} Sub-KPI` 
+              : hasTodayTasks 
+                ? `${doneTaskCount}/${linkedTasks.length} task selesai` 
+                : (g.metric && String(g.metric).includes('task selesai')) 
+                  ? String(g.metric) 
+                  : (displayProgress >= 100 ? 'Target Tercapai ✨' : (g.metric || 'Progress'))
+            }
+          </div>
+        </div>
+
+        {/* Bar Row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+               <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800 }}>PROGRESS</span>
+               {editingProgress ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }} onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="range" min="0" max="100"
+                      value={tempProgress}
+                      onChange={(e) => setTempProgress(e.target.value)}
+                      style={{
+                        flex: 1, accentColor: toneColor, cursor: 'pointer', height: 6
+                      }}
+                    />
+                    <span style={{ fontSize: 13, fontWeight: 900, color: toneColor, minWidth: 35, textAlign: 'right' }}>
+                      {tempProgress}%
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const val = Math.max(0, Math.min(100, Number(tempProgress)));
+                        onEditProgress?.(val);
+                        setEditingProgress(false);
+                      }}
+                      style={{
+                        padding: '5px 12px', borderRadius: 8, border: 'none',
+                        background: HP_TOKENS.sage, color: '#F4F7F9', fontSize: 11,
+                        fontWeight: 900, cursor: 'pointer',
+                        boxShadow: `0 2px 8px ${HP_TOKENS.sage}40`
+                      }}
+                    >
+                      ✓ Simpan
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setEditingProgress(false); }}
+                      style={{
+                        padding: '5px 8px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                        background: HP_TOKENS.card, color: HP_TOKENS.inkFade, fontSize: 11,
+                        fontWeight: 900, cursor: 'pointer'
+                      }}
+                    >
+                      ✕ Batal
+                    </button>
+                  </div>
+               ) : (
                 <div
                   style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: onEditProgress ? 'pointer' : 'default' }}
                   onClick={(e) => {
@@ -260,9 +294,10 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
                     }}>✏️ edit</span>
                   )}
                 </div>
-              )}
+               )}
+            </div>
+            <HPBar value={displayProgress} tone={g.tone} height={8}/>
           </div>
-          <HPBar value={displayProgress} tone={g.tone} height={8}/>
         </div>
       </div>
 

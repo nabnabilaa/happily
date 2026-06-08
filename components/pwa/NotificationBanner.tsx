@@ -14,11 +14,7 @@ export default function NotificationBanner() {
 
     // Only show if permission is default (not allowed and not blocked yet)
     if (Notification.permission === 'default') {
-      // Check if user dismissed it for this session
-      const dismissed = sessionStorage.getItem('hp_notif_banner_dismissed');
-      if (!dismissed) {
-        setShowBanner(true);
-      }
+      setShowBanner(true);
     }
   }, []);
 
@@ -39,11 +35,6 @@ export default function NotificationBanner() {
     } catch (e) {
       console.error("Failed to request notification permission:", e);
     }
-  };
-
-  const handleDismiss = () => {
-    sessionStorage.setItem('hp_notif_banner_dismissed', 'true');
-    setShowBanner(false);
   };
 
   if (!showBanner) return null;
@@ -92,22 +83,6 @@ export default function NotificationBanner() {
       </div>
       
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-        <button
-          onClick={handleDismiss}
-          style={{
-            padding: '8px 14px',
-            borderRadius: 99,
-            border: 'none',
-            background: 'transparent',
-            color: HP_TOKENS.inkSoft,
-            fontFamily: HP_FONT,
-            fontWeight: 700,
-            fontSize: 12,
-            cursor: 'pointer',
-          }}
-        >
-          Nanti saja
-        </button>
         <button
           onClick={handleEnable}
           className="hp-tap"

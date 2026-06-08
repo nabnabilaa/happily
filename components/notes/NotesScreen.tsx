@@ -262,14 +262,14 @@ export default function NotesScreen() {
               AKSES & BAGIKAN CATATAN
             </div>
             
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
               <select
                 value={visibility}
                 onChange={(e) => {
                   setVisibility(e.target.value);
                   setSharedUsers([]);
                 }}
-                style={{ ...inputStyle, flex: 2, fontWeight: 700 }}
+                style={{ ...inputStyle, flex: '1 1 200px', fontWeight: 700 }}
               >
                 <option value="private">🔒 Pribadi (Hanya Saya)</option>
                 <option value="company">🏢 Seluruh Perusahaan</option>
@@ -280,7 +280,7 @@ export default function NotesScreen() {
                 <select
                   value={sharedPermission}
                   onChange={(e) => setSharedPermission(e.target.value)}
-                  style={{ ...inputStyle, flex: 1, fontWeight: 700, padding: '14px 10px', fontSize: 13 }}
+                  style={{ ...inputStyle, flex: '1 1 120px', fontWeight: 700, padding: '14px 10px', fontSize: 13 }}
                 >
                   <option value="view">👁️ Bisa Lihat</option>
                   <option value="edit">✏️ Bisa Ikut Edit</option>
@@ -386,7 +386,7 @@ export default function NotesScreen() {
                       );
                     })
                   )}
-                </div>
+                 </div>
               </div>
             )}
             
@@ -434,14 +434,16 @@ export default function NotesScreen() {
               <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 8, letterSpacing: 0.5 }}>
                 ISI CATATAN
               </div>
-              <div style={{ background: HP_TOKENS.card, borderRadius: 14, overflow: 'hidden' }}>
+              <div style={{ background: HP_TOKENS.card, borderRadius: 14, overflow: 'hidden', maxWidth: '100%' }}>
                 <Editor
                   tinymceScriptSrc="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js"
                   value={newNote}
                   onEditorChange={(content) => setNewNote(content)}
                   init={{
+                    width: '100%',
                     height: 300,
                     menubar: false,
+                    toolbar_mode: 'sliding',
                     plugins: [
                       'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
                       'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
@@ -460,7 +462,7 @@ export default function NotesScreen() {
           </div>
 
           {/* ACTIONS */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, flexWrap: 'wrap' }}>
             <button
               onClick={cancelForm}
               className="hp-tap"
@@ -497,14 +499,14 @@ export default function NotesScreen() {
     <div style={{ padding: '0 16px 120px', fontFamily: HP_FONT }}>
       <ScreenHeader title="Catatan" subtitle="Semua catatan meeting, ide, dan informasi." />
       
-      <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
         <input
           type="text"
           placeholder="🔍 Cari judul, isi, atau penulis..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           style={{
-            flex: 1, padding: '14px 16px', borderRadius: 16,
+            flex: '1 1 200px', padding: '14px 16px', borderRadius: 16,
             border: `1.5px solid ${HP_TOKENS.lineSoft}`, fontFamily: HP_FONT, fontSize: 14,
             outline: 'none', background: HP_TOKENS.card, boxSizing: 'border-box'
           }}
@@ -513,10 +515,11 @@ export default function NotesScreen() {
           onClick={() => setShowForm(true)}
           className="hp-tap"
           style={{
-            padding: '0 20px', borderRadius: 16, border: 'none',
+            flex: '1 1 auto',
+            padding: '14px 20px', borderRadius: 16, border: 'none',
             background: HP_TOKENS.card, color: HP_TOKENS.ink,
             fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, whiteSpace: 'nowrap',
             boxShadow: `0 4px 12px rgba(26,29,35,0.03)`,
             borderTop: `1px solid ${HP_TOKENS.lineSoft}`,
           }}
@@ -562,6 +565,10 @@ export default function NotesScreen() {
               transform: translateY(-2px);
               box-shadow: 0 8px 24px rgba(0,0,0,0.06);
             }
+            .note-card .tinymce-content {
+              word-break: break-word;
+              overflow-wrap: break-word;
+            }
             .note-card .tinymce-content p {
               margin: 0 0 8px 0;
             }
@@ -571,6 +578,7 @@ export default function NotesScreen() {
             .note-card .tinymce-content * {
               font-family: var(--hp-font) !important;
               font-size: 13px !important;
+              max-width: 100%;
             }
           `}</style>
           

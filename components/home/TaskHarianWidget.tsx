@@ -213,7 +213,7 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
         icon="target" 
         label="Task Harian" 
         count={`${done}/${total}`} 
-        action="+ Tambah Task"
+        action="+ Task"
         onAction={() => openModal('manage_priorities')}
       />
       

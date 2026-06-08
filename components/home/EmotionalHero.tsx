@@ -11,6 +11,8 @@ interface EmotionalHeroProps {
   moodObj?: any;
   energyObj?: any;
   onOpenCheckIn: () => void;
+  showMidDay?: boolean;
+  onOpenMidDay?: () => void;
 }
 
 export default function EmotionalHero({ 

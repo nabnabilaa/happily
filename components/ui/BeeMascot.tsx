@@ -122,16 +122,17 @@ const BeeMascot = React.memo(function BeeMascot({ mood = 'neutral', size = 80, s
     '--w1': activeObj.w1,
     '--w2': activeObj.w2,
     '--wp': activeObj.wp,
-    transform: `scale(${size / 100})`,
-    transformOrigin: 'top left',
-    width: size,
-    height: size,
+    width: typeof size === 'number' ? `${size}px` : size,
+    height: typeof size === 'number' ? `${size}px` : size,
     position: 'relative' as const,
     cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))'
   };
 
-  let svgContent = `<div id="fb-svg-wrap" className="state-idle">
+  let svgContent = `<div id="fb-svg-wrap" className="state-idle" style="width: 100%; height: 100%;">
     <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" width="100" height="100" overflow="visible">
       <defs>
         <radialGradient id="fb-grad-badan" cx="40%" cy="30%" r="70%">
@@ -531,11 +532,12 @@ const BeeMascot = React.memo(function BeeMascot({ mood = 'neutral', size = 80, s
 
   return (
     <div
-      className="hp-buddy-container"
+      className={`fb-mascot-container ${interactiveState || mood} ${isHovered ? 'hovered' : ''} ${!isAnimated ? 'paused' : ''}`}
       style={cssVars as React.CSSProperties}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={handleMouseLeave}
       onMouseMove={handleMouseMove}
+      onTouchMove={handleMouseMove}
       onClick={handlePet}
     >
       {showSpeech && (
@@ -560,7 +562,17 @@ const BeeMascot = React.memo(function BeeMascot({ mood = 'neutral', size = 80, s
           {showSpeech}
         </div>
       )}
-      <div dangerouslySetInnerHTML={{ __html: svgContent }} style={{ width: 100, height: 100, position: 'absolute', left: 0, top: 0 }} />
+      <div 
+        style={{ 
+          width: 100, 
+          height: 100, 
+          transform: `scale(${size / 100})`, 
+          transformOrigin: 'center',
+          flexShrink: 0
+        }}
+      >
+        <div dangerouslySetInnerHTML={{ __html: svgContent }} style={{ width: '100%', height: '100%' }} />
+      </div>
       <div className="hp-buddy-bayangan" style={{ bottom: '-15px' }} />
       {activeObj.svgState === 'sedih' && <div className="hp-buddy-genangan" style={{ bottom: '-20px' }} />}
     </div>

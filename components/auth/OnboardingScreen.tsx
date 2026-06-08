@@ -1,943 +1,553 @@
+// @ts-nocheck
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { HP_TOKENS, HP_FONT, HP_FONT_DISPLAY } from "@/lib/constants";
-import BeeMascot from "@/components/ui/BeeMascot";
+import React, { useEffect, useRef, useState } from 'react';
+import './OnboardingScreen.css';
+import BeeMascot from '@/components/ui/BeeMascot';
+import { useHP } from '@/lib/HPContext';
 
-interface OnboardingScreenProps {
-  onFinish: () => void;
-  userName: string;
+export default function OnboardingScreen({ userName, onFinish }: { userName?: string, onFinish?: () => void }) {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [buddyMood, setBuddyMood] = useState<'neutral'|'happy'|'sad'|'angry'>('neutral');
+    const [clickCount, setClickCount] = useState(0);
+    const [buddyMsg, setBuddyMsg] = useState('Hai! Senang ketemu kamu 🤜\nAku Buddy, bantu harimu lebih produktif!');
+    const [isHovering, setIsHovering] = useState(false);
+
+    useEffect(() => {
+        if (!containerRef.current) return;
+        
+        // Scope DOM selections to container
+        const $ = (id) => containerRef.current?.querySelector('#'+id);
+        const $$ = (sel) => containerRef.current?.querySelectorAll(sel);
+        
+        
+/* ══ UTILS ══ */
+
+const A=(el,kf,o)=>{ if(!el) return { onfinish: ()=>{} }; return el.animate(kf,{fill:'forwards',...o}); };
+const fu=(el,d=0,dur=450)=>A(el,[{opacity:0,transform:'translateY(16px)'},{opacity:1,transform:'none'}],{duration:dur,delay:d,easing:'cubic-bezier(.34,1.2,.64,1)'});
+const sc=(el,d=0,dur=550)=>A(el,[{opacity:0,transform:'scale(.3) rotate(-20deg)'},{opacity:1,transform:'scale(1) rotate(0)'}],{duration:dur,delay:d,easing:'cubic-bezier(.34,1.56,.64,1)'});
+const sli=(el,d=0)=>A(el,[{opacity:0,transform:'translateX(-22px)'},{opacity:1,transform:'none'}],{duration:380,delay:d,easing:'cubic-bezier(.34,1.2,.64,1)'});
+
+function wipeTransition(fn){
+  const w=$('wipe');
+  A(w,[{transform:'scaleX(0)',transformOrigin:'left'},{transform:'scaleX(1)',transformOrigin:'left'}],{duration:320,easing:'cubic-bezier(.7,0,.3,1)'}).onfinish=()=>{
+    fn();
+    A(w,[{transform:'scaleX(1)',transformOrigin:'right'},{transform:'scaleX(0)',transformOrigin:'right'}],{duration:320,delay:80,easing:'cubic-bezier(.7,0,.3,1)'});
+  };
 }
 
-// ── Confetti Particle Generator ─────────────────────────────────────────────
-function ConfettiLayer() {
-  const colors = ['#FF6B35', '#FFBE0B', '#2EC4B6', '#FF8C55', '#1D3557', '#F06595', '#845EF7', '#FFD43B'];
-  const particles = Array.from({ length: 40 }, (_, i) => ({
-    id: i,
-    color: colors[i % colors.length],
-    left: Math.random() * 100,
-    delay: Math.random() * 2.5,
-    duration: 2 + Math.random() * 2,
-    size: 6 + Math.random() * 8,
-    rotation: Math.random() * 360,
-    shape: i % 3, // 0=square, 1=circle, 2=triangle-strip
-  }));
-
-  return (
-    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
-      {particles.map(p => (
-        <div
-          key={p.id}
-          style={{
-            position: 'absolute',
-            left: `${p.left}%`,
-            top: '-20px',
-            width: p.shape === 1 ? p.size : p.size * 0.7,
-            height: p.size,
-            background: p.color,
-            borderRadius: p.shape === 1 ? '50%' : p.shape === 2 ? '2px' : '3px',
-            opacity: 0.9,
-            animation: `hpConfetti ${p.duration}s ${p.delay}s linear both`,
-            transform: `rotate(${p.rotation}deg)`,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-// ── Tap Ripple Effect ──────────────────────────────────────────────────────
-function TapRipple({ x, y }: { x: number; y: number }) {
-  return (
-    <div style={{
-      position: 'absolute',
-      left: x - 12, top: y - 12,
-      width: 24, height: 24,
-      borderRadius: '50%',
-      background: 'rgba(255,255,255,0.55)',
-      animation: 'hpRipple 0.55s ease-out forwards',
-      pointerEvents: 'none',
-    }} />
-  );
-}
-
-// ── Star Background (for tap game) ─────────────────────────────────────────
-function StarField() {
-  const stars = Array.from({ length: 30 }, (_, i) => ({
-    id: i,
-    x: Math.random() * 100,
-    y: Math.random() * 100,
-    size: 1 + Math.random() * 3,
-    delay: Math.random() * 3,
-    duration: 2 + Math.random() * 2,
-  }));
-
-  return (
-    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-      {stars.map(s => (
-        <div key={s.id} style={{
-          position: 'absolute',
-          left: `${s.x}%`,
-          top: `${s.y}%`,
-          width: s.size,
-          height: s.size,
-          borderRadius: '50%',
-          background: '#fff',
-          opacity: 0.15,
-          animation: `obStarBlink ${s.duration}s ${s.delay}s infinite`,
-        }} />
-      ))}
-    </div>
-  );
-}
-
-
-export default function OnboardingScreen({ onFinish, userName }: OnboardingScreenProps) {
-  const [step, setStep] = useState(0);
-  const [prevStep, setPrevStep] = useState(-1);
-  const [direction, setDirection] = useState<'forward' | 'back'>('forward');
-  const [isTransitioning, setIsTransitioning] = useState(false);
-
-  // Step data
-  const [inputName, setInputName] = useState(userName || "");
-  const [selectedJob, setSelectedJob] = useState<string | null>(null);
-  const [tapCount, setTapCount] = useState(0);
-  const [tapDone, setTapDone] = useState(false);
-  const [ripples, setRipples] = useState<{ id: number; x: number; y: number }[]>([]);
-  const [selectedMood, setSelectedMood] = useState<string | null>(null);
-  const [selectedCommit, setSelectedCommit] = useState<string | null>(null);
-  const [splashProgress, setSplashProgress] = useState(0);
-
-  const rippleIdRef = useRef(0);
-  const tapTargetRef = useRef<HTMLDivElement>(null);
-
-  // ── Splash auto-advance ──────────────────────────────────────────────────
-  useEffect(() => {
-    if (step !== 0) return;
-    const interval = setInterval(() => {
-      setSplashProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          return 100;
-        }
-        return prev + 2;
-      });
-    }, 40);
-    const timeout = setTimeout(() => goTo(1), 2200);
-    return () => { clearInterval(interval); clearTimeout(timeout); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // ── Tap game auto-advance ────────────────────────────────────────────────
-  const TAP_TARGET = 15;
-  useEffect(() => {
-    if (tapCount >= TAP_TARGET && !tapDone) {
-      setTapDone(true);
-      setTimeout(() => goTo(4), 800);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tapCount, tapDone]);
-
-  // ── Navigation ───────────────────────────────────────────────────────────
-  const goTo = useCallback((next: number) => {
-    if (isTransitioning) return;
-    setDirection(next > step ? 'forward' : 'back');
-    setPrevStep(step);
-    setIsTransitioning(true);
-    // Small delay to let exit animation start
-    setTimeout(() => {
-      setStep(next);
-      setTimeout(() => {
-        setIsTransitioning(false);
-        setPrevStep(-1);
-      }, 500);
-    }, 50);
-  }, [step, isTransitioning]);
-
-  // ── Tap handler ──────────────────────────────────────────────────────────
-  const handleTap = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (tapDone) return;
-    const rect = tapTargetRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const id = rippleIdRef.current++;
-    setRipples(prev => [...prev, { id, x, y }]);
-    setTimeout(() => setRipples(prev => prev.filter(r => r.id !== id)), 600);
-    setTapCount(prev => prev + 1);
-  };
-
-  // ── Constants ────────────────────────────────────────────────────────────
-  const TOTAL_STEPS = 8; // 0-7
-  const displayName = inputName || userName || "Sobat";
-
-  // Progress percentage (skip splash step 0 from display)
-  const progressPct = step === 0 ? 0 : Math.round((step / (TOTAL_STEPS - 1)) * 100);
-
-  const JOBS = [
-    { key: 'dev', icon: '💻', label: 'Developer / IT' },
-    { key: 'design', icon: '🎨', label: 'Desainer / Kreatif' },
-    { key: 'marketing', icon: '📊', label: 'Marketing / Sales' },
-    { key: 'manager', icon: '📋', label: 'Manajer / Tim Lead' },
-    { key: 'other', icon: '🏢', label: 'Lainnya' },
-  ];
-
-  const MOODS = [
-    { key: 'excited', icon: '🔥', label: 'Semangat & siap tempur!' },
-    { key: 'neutral', icon: '😊', label: 'Biasa aja, butuh dorongan' },
-    { key: 'tired', icon: '😴', label: 'Capek, tapi mau tetap coba' },
-    { key: 'stressed', icon: '🌀', label: 'Stres & butuh motivasi' },
-  ];
-
-  const COMMITS = [
-    { key: 'fullheart', icon: '💪', label: 'Aku akan kerja dengan sepenuh hati' },
-    { key: 'focus', icon: '🎯', label: 'Aku akan fokus satu hal dalam satu waktu' },
-    { key: 'grow', icon: '🌱', label: 'Aku akan bertumbuh sedikit demi sedikit' },
-    { key: 'today', icon: '☀️', label: 'Aku akan mulai hari ini, bukan besok' },
-  ];
-
-  const JOB_LABELS: Record<string, string> = {
-    dev: 'Developer / IT', design: 'Desainer / Kreatif',
-    marketing: 'Marketing / Sales', manager: 'Manajer / Tim Lead', other: 'Lainnya',
-  };
-
-  const MOOD_LABELS: Record<string, string> = {
-    excited: '🔥 Semangat', neutral: '😊 Biasa', tired: '😴 Capek', stressed: '🌀 Stres',
-  };
-
-  // ── Render helper for choice buttons ──────────────────────────────────────
-  const renderChoice = (
-    item: { key: string; icon: string; label: string },
-    selected: string | null,
-    onSelect: (key: string) => void,
-    subtitle?: string,
-  ) => {
-    const isOn = selected === item.key;
-    return (
-      <button
-        key={item.key}
-        onClick={() => onSelect(item.key)}
-        style={{
-          display: 'flex', alignItems: 'center', gap: 14,
-          padding: '16px 20px', borderRadius: 18,
-          border: `2.5px solid ${isOn ? 'var(--hp-primary)' : 'var(--hp-border)'}`,
-          background: isOn ? 'var(--hp-primary-soft)' : 'var(--hp-card)',
-          width: '100%', textAlign: 'left', cursor: 'pointer',
-          transition: 'border-color 0.2s, background 0.2s, transform 0.15s',
-          position: 'relative', overflow: 'hidden',
-        }}
-        className="hp-tap"
-      >
-        <span style={{ fontSize: 22, flexShrink: 0 }}>{item.icon}</span>
-        <div style={{ flex: 1 }}>
-          <span style={{
-            fontSize: 15, fontWeight: 700, color: 'var(--hp-ink)',
-            lineHeight: 1.35, display: 'block',
-          }}>
-            {item.label}
-          </span>
-          {subtitle && (
-            <span style={{ fontSize: 12, color: 'var(--hp-ink-mute)', fontWeight: 600, marginTop: 3, display: 'block', lineHeight: 1.4 }}>
-              {subtitle}
-            </span>
-          )}
-        </div>
-        {isOn && (
-          <div style={{
-            width: 26, height: 26, borderRadius: '50%',
-            background: 'var(--hp-primary)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontSize: 14, fontWeight: 800, flexShrink: 0,
-            animation: 'hpPopIn 0.25s cubic-bezier(.34,1.56,.64,1) both',
-          }}>
-            ✓
-          </div>
-        )}
-      </button>
-    );
-  };
-
-  // ── Screen wrapper with slide transitions ─────────────────────────────────
-  const screenStyle = (idx: number): React.CSSProperties => {
-    const isActive = idx === step;
-    const isExiting = idx === prevStep;
-
-    if (!isActive && !isExiting) {
-      return { display: 'none' };
-    }
-
-    if (isExiting) {
-      return {
-        position: 'absolute', inset: 0,
-        display: 'flex', flexDirection: 'column',
-        animation: direction === 'forward'
-          ? 'obSlideOutLeft 0.45s cubic-bezier(.34,.82,.2,1) forwards'
-          : 'obSlideOutRight 0.45s cubic-bezier(.34,.82,.2,1) forwards',
-        pointerEvents: 'none',
-        overflow: 'hidden',
-      };
-    }
-
-    return {
-      position: 'absolute', inset: 0,
-      display: 'flex', flexDirection: 'column',
-      animation: direction === 'forward'
-        ? 'obSlideInRight 0.5s cubic-bezier(.34,.82,.2,1) both'
-        : 'obSlideInLeft 0.5s cubic-bezier(.34,.82,.2,1) both',
-      overflow: 'hidden',
+function showScreen(id,useFade=false){
+  const curr=containerRef.current?.querySelector('.screen.active');
+  const next=$(id);
+  if(useFade){
+    A(curr,[{opacity:1},{opacity:0,transform:'scale(.96)'}],{duration:280,fill:'forwards'}).onfinish=()=>{
+      curr.classList.remove('active');next.classList.add('active');
+      A(next,[{opacity:0,transform:'scale(.96)'},{opacity:1,transform:'none'}],{duration:360,fill:'forwards'});
     };
-  };
+  } else {
+    wipeTransition(()=>{
+      curr.classList.remove('active');
+      next.classList.add('active');
+    });
+  }
+}
 
+/* ══ RIPPLE ══ */
+$$('.btn').forEach(b=>b.addEventListener('click',e=>{
+  const r=window.document.createElement('span');r.className='btn-ripple';
+  const rect=b.getBoundingClientRect();
+  r.style.cssText=`left:${e.clientX-rect.left-5}px;top:${e.clientY-rect.top-5}px`;
+  b.appendChild(r);setTimeout(()=>r.remove(),800);
+}));
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // RENDER
-  // ═══════════════════════════════════════════════════════════════════════════
-  return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 1000,
-      background: 'var(--hp-paper)',
-      overflow: 'hidden',
-    }}>
-      {/* Inline keyframes for onboarding-specific animations */}
-      <style>{`
-        @keyframes obSlideInRight {
-          from { transform: translateX(100%); opacity: 0; }
-          to   { transform: translateX(0);    opacity: 1; }
-        }
-        @keyframes obSlideOutLeft {
-          from { transform: translateX(0);     opacity: 1; }
-          to   { transform: translateX(-110%); opacity: 0; }
-        }
-        @keyframes obSlideInLeft {
-          from { transform: translateX(-100%); opacity: 0; }
-          to   { transform: translateX(0);     opacity: 1; }
-        }
-        @keyframes obSlideOutRight {
-          from { transform: translateX(0);    opacity: 1; }
-          to   { transform: translateX(110%); opacity: 0; }
-        }
-        @keyframes obStarBlink {
-          0%,100% { opacity: 0.15; transform: scale(0.6); }
-          50%     { opacity: 0.9;  transform: scale(1); }
-        }
-        @keyframes obBadgePop {
-          0%   { transform: scale(0) rotate(-15deg); }
-          60%  { transform: scale(1.2) rotate(5deg); }
-          100% { transform: scale(1) rotate(0); }
-        }
-        @keyframes obHeartbeat {
-          0%,100% { transform: scale(1); }
-          20%     { transform: scale(1.2); }
-          40%     { transform: scale(1); }
-        }
-        @keyframes obSplashBar {
-          from { width: 0; }
-          to   { width: 100%; }
-        }
-        @keyframes obGlowRing {
-          0%,100% { box-shadow: 0 0 0 0 rgba(255,107,53,0.4); }
-          50%     { box-shadow: 0 0 0 20px rgba(255,107,53,0); }
-        }
-        @keyframes obTapBounce {
-          0%   { transform: scale(1); }
-          50%  { transform: scale(0.9); }
-          100% { transform: scale(1); }
-        }
-        @keyframes obCountPop {
-          0%   { transform: scale(0.4); opacity: 0; }
-          60%  { transform: scale(1.25); }
-          100% { transform: scale(1); opacity: 1; }
-        }
-        @keyframes obWaveHero {
-          0%   { d: path("M0 60V28Q108 0 215 20Q322 40 430 10V60Z"); }
-          100% { d: path("M0 60V22Q108 8 215 28Q322 48 430 18V60Z"); }
-        }
-      `}</style>
+/* ══════════════════════════════
+   S1 — SPLASH
+══════════════════════════════ */
+function initS1(){
+  // Stars
+  const sf=$('s1stars'),sf2=$('s4stars');
+  [sf,sf2].forEach(s=>{
+    for(let i=0;i<55;i++){
+      const st=window.document.createElement('div');st.className='star';
+      const sz=Math.random()>.7?3:Math.random()>.4?2:1.5;
+      st.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;
+        --d:${2+Math.random()*4}s;--de:${Math.random()*6}s;--o:${.2+Math.random()*.6}`;
+      s.appendChild(st);
+    }
+  });
 
-      {/* ════════════════════════════════════════════════════════════════════
-           STEP 0: SPLASH
-         ════════════════════════════════════════════════════════════════════ */}
-      <div style={screenStyle(0)}>
-        <div style={{
-          flex: 1, display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center',
-          background: 'linear-gradient(155deg, #1D3557 0%, #0F1F33 100%)',
-          position: 'relative',
-        }}>
-          {/* Ambient circles */}
-          <div style={{ position: 'absolute', width: 300, height: 300, borderRadius: '50%', background: 'rgba(255,190,11,0.06)', top: -60, right: -80, pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,107,53,0.05)', bottom: 60, left: -40, pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', width: 160, height: 160, borderRadius: '50%', background: 'rgba(46,196,182,0.04)', top: '40%', left: '60%', pointerEvents: 'none' }} />
+  // Orbs
+  const ob=$('s1orbs');
+  [{bg:'#FF4D0040',w:280,h:280,t:-60,l:-40,bx:'30px',by:'-20px'},{bg:'#7C5CFC30',w:200,h:200,b:-60,r:-30,bx:'-20px',by:'30px'},{bg:'#FFD16625',w:160,h:160,b:'40%',l:-30,bx:'40px',by:'-40px'}].forEach(c=>{
+    const o=window.document.createElement('div');o.className='orb mesh-blob';
+    o.style.cssText=`background:${c.bg};width:${c.w}px;height:${c.h}px;${c.t!=null?`top:${c.t}px`:''};${c.b!=null?`bottom:${c.b}${typeof c.b==='number'?'px':''}`:''};${c.l!=null?`left:${c.l}px`:''};${c.r!=null?`right:${c.r}px`:''};--bd:${8+Math.random()*6}s;--bde:${Math.random()*3}s;--bx:${c.bx};--by:${c.by};--bs:${1.05+Math.random()*.1}`;
+    ob.appendChild(o);
+    A(o,[{opacity:0},{opacity:1}],{duration:800,delay:300,fill:'forwards'});
+  });
 
-          {/* Buddy */}
-          <div style={{ animation: 'hpFloat 2.8s ease-in-out infinite', zIndex: 2, marginBottom: 24 }}>
-            <BeeMascot mood="excited" size={110} />
-          </div>
+  // S4 blobs
+  const bl=$('s4blobs');
+  [{bg:'rgba(255,77,0,.15)',w:200,h:200,b:'15%',l:'10%'},{bg:'rgba(124,92,252,.12)',w:180,h:180,t:'20%',r:'5%'}].forEach(c=>{
+    const o=window.document.createElement('div');o.className='mesh-blob';
+    o.style.cssText=`background:${c.bg};width:${c.w}px;height:${c.h}px;border-radius:50%;filter:blur(60px);position:absolute;${c.b?`bottom:${c.b}`:''};${c.t?`top:${c.t}`:''};${c.l?`left:${c.l}`:''};${c.r?`right:${c.r}`:''};--bd:10s;--bde:${Math.random()*3}s;--bx:20px;--by:-30px;animation:blobDrift 10s ease-in-out infinite alternate`;
+    bl.appendChild(o);
+    A(o,[{opacity:0},{opacity:1}],{duration:600,fill:'forwards'});
+  });
 
-          {/* Logo */}
-          <div style={{
-            fontFamily: HP_FONT_DISPLAY, fontSize: 48, fontWeight: 700,
-            color: '#fff', letterSpacing: -1, zIndex: 2,
-            animation: 'hpFadeUp 0.5s ease both',
-          }}>
-            Flow<span style={{ color: '#FF6B35' }}>buddy</span> ✨
-          </div>
-          <div style={{
-            fontSize: 15, color: 'rgba(255,255,255,0.55)', zIndex: 2,
-            marginTop: 6, letterSpacing: 0.5, fontWeight: 600,
-            animation: 'hpFadeUp 0.5s 0.15s ease both',
-          }}>
-            Kerja Lebih Cerdas, Lebih Semangat
-          </div>
+  // Logo entrance
+  const center=$('s1center');
+  A(center,[{opacity:0,transform:'translateY(28px) scale(.92)'},{opacity:1,transform:'none'}],{duration:700,delay:400,fill:'forwards',easing:'cubic-bezier(.34,1.4,.64,1)'});
 
-          {/* Loading bar */}
-          <div style={{
-            width: 48, height: 4, background: 'rgba(255,255,255,0.15)',
-            borderRadius: 100, overflow: 'hidden', marginTop: 48, zIndex: 2,
-            animation: 'hpFadeUp 0.5s 0.3s ease both',
-          }}>
-            <div style={{
-              height: '100%', background: '#FF6B35', borderRadius: 100,
-              width: `${splashProgress}%`, transition: 'width 0.05s linear',
-            }} />
-          </div>
-        </div>
-      </div>
+  // Loading
+  setTimeout(()=>{
+    A($('loadBar'),[{width:'0%'},{width:'100%'}],{duration:2200,fill:'forwards',easing:'cubic-bezier(.4,0,.2,1)'}).onfinish=()=>{
+      setTimeout(()=>{showScreen('s2');initS2();},300);
+    };
+  },500);
+}
 
-      {/* ════════════════════════════════════════════════════════════════════
-           STEP 1: NAME INPUT
-         ════════════════════════════════════════════════════════════════════ */}
-      <div style={screenStyle(1)}>
-        {/* Hero area */}
-        <div style={{
-          background: 'linear-gradient(160deg, var(--hp-primary) 0%, #FF8C55 100%)',
-          flex: '0 0 52vh', display: 'flex', flexDirection: 'column',
-          alignItems: 'center', paddingTop: 52, position: 'relative',
-          overflow: 'hidden',
-        }}>
-          {/* Speech bubble */}
-          <div style={{
-            background: 'var(--hp-card)', borderRadius: 20, padding: '14px 20px',
-            boxShadow: 'var(--hp-shadow)', fontSize: 16, fontWeight: 700,
-            color: 'var(--hp-ink)', textAlign: 'center', lineHeight: 1.5,
-            position: 'relative', zIndex: 2, maxWidth: '90%',
-            marginBottom: 28,
-            animation: 'hpFadeUp 0.55s ease both',
-          }}>
-            Hai! Senang ketemu kamu 👋<br />Aku Buddy, di sini buat bantu harimu lebih teratur
-            {/* Down arrow */}
-            <div style={{
-              position: 'absolute', bottom: -12, left: '50%', transform: 'translateX(-50%)',
-              borderLeft: '11px solid transparent', borderRight: '11px solid transparent',
-              borderTop: '13px solid var(--hp-card)',
-            }} />
-          </div>
+/* ══════════════════════════════
+   S2 — GREET
+══════════════════════════════ */
+function initS2(){
+  const bub=$('s2bubble'),bud=$('s2buddy'),lbl=$('s2lbl'),inp=$('nameIn'),btn=$('s2btn');
+  setTimeout(()=>A(bub,[{opacity:0,transform:'translateY(-18px) scale(.92)'},{opacity:1,transform:'none'}],{duration:500,fill:'forwards',easing:'cubic-bezier(.34,1.4,.64,1)'}),80);
+  setTimeout(()=>{
+    sc(bud,0);
+    setTimeout(()=>{bud.classList.add('shown');spawnPring();},600);
+  },320);
+  setTimeout(()=>{fu(lbl,0);fu(inp,80);A(btn,[{opacity:0,transform:'translateY(12px)'},{opacity:1,transform:'none'}],{duration:450,delay:160,fill:'forwards',easing:'cubic-bezier(.34,1.2,.64,1)'});},680);
+}
 
-          {/* Buddy mascot */}
-          <div style={{ animation: 'hpFloat 2.8s ease-in-out infinite', zIndex: 2 }}>
-            <BeeMascot mood="happy" size={150} />
-          </div>
+function spawnPring(){
+  const ring=$('s2pring');ring.innerHTML='';
+  const colors=['#FF4D00','#FFD166','#00D68F','#7C5CFC','#FF6B9D'];
+  for(let i=0;i<8;i++){
+    const d=window.document.createElement('div');d.className='pring-dot';
+    const angle=(i/8)*360;const r=68;
+    const x=Math.cos(angle*Math.PI/180)*r;const y=Math.sin(angle*Math.PI/180)*r;
+    d.style.cssText=`left:calc(50% + ${x}px);top:calc(50% + ${y}px);transform:translate(-50%,-50%);background:${colors[i%colors.length]};opacity:.5;--d:${1.5+Math.random()}s;--del:${i*.15}s`;
+    ring.appendChild(d);
+  }
+}
 
-          {/* Wave */}
-          <svg
-            viewBox="0 0 430 60"
-            preserveAspectRatio="none"
-            style={{ position: 'absolute', bottom: -2, left: 0, right: 0, width: '100%', height: 60, zIndex: 3 }}
-          >
-            <path d="M0 60V28Q108 0 215 20Q322 40 430 10V60Z" fill="var(--hp-paper)" />
-          </svg>
-        </div>
+function goStep2(){
+  const name=$('nameIn').value.trim()||'Kamu';
+  window._name=name;showScreen('s3');initS3();
+}
+$('nameIn').addEventListener('keypress',e=>{if(e.key==='Enter')goStep2();});
+$('nameIn').addEventListener('input',()=>{
+  const v=$('nameIn').value.trim();
+  $('s2btn').textContent=v?`Halo ${v.split(' ')[0]}, siap! 👋`:'Halo, aku siap! 👋';
+});
 
-        {/* Bottom input area */}
-        <div style={{
-          background: 'var(--hp-paper)', flex: 1, display: 'flex',
-          flexDirection: 'column', alignItems: 'center',
-          padding: '32px 28px 44px', gap: 18,
-        }}>
-          <p style={{
-            fontSize: 16, fontWeight: 700, color: 'var(--hp-ink-mute)',
-            textAlign: 'center',
-            animation: 'hpFadeUp 0.55s ease both',
-          }}>
-            Siapa nama kamu?
-          </p>
-          <input
-            type="text"
-            value={inputName}
-            onChange={e => setInputName(e.target.value)}
-            placeholder="Tulis nama kamu..."
-            autoComplete="given-name"
-            maxLength={30}
-            style={{
-              width: '100%', padding: '18px 24px', borderRadius: 100,
-              border: '2.5px solid var(--hp-border)', background: 'var(--hp-card)',
-              fontSize: 17, color: 'var(--hp-ink)', fontWeight: 600,
-              outline: 'none', textAlign: 'center',
-              fontFamily: HP_FONT,
-              transition: 'border-color 0.2s, box-shadow 0.2s',
-              animation: 'hpFadeUp 0.55s 0.12s ease both',
-            }}
-            onFocus={e => {
-              e.target.style.borderColor = 'var(--hp-primary)';
-              e.target.style.boxShadow = '0 0 0 4px rgba(255,107,53,0.12)';
-            }}
-            onBlur={e => {
-              e.target.style.borderColor = 'var(--hp-border)';
-              e.target.style.boxShadow = 'none';
-            }}
-            autoFocus
-          />
-          <button
-            disabled={!inputName.trim()}
-            onClick={() => goTo(2)}
-            className="hp-tap"
-            style={{
-              background: inputName.trim() ? 'var(--hp-primary)' : 'var(--hp-border)',
-              color: inputName.trim() ? '#fff' : 'var(--hp-ink-fade)',
-              border: 'none', borderRadius: 100, padding: '17px 48px',
-              fontSize: 16, fontWeight: 800, letterSpacing: 0.3,
-              boxShadow: inputName.trim() ? 'var(--hp-shadow-orange)' : 'none',
-              cursor: inputName.trim() ? 'pointer' : 'not-allowed',
-              whiteSpace: 'nowrap',
-              transition: 'all 0.2s',
-              animation: 'hpFadeUp 0.55s 0.24s ease both',
-            }}
-          >
-            Halo, aku siap! 👋
-          </button>
-        </div>
-      </div>
+/* ══════════════════════════════
+   S3 — ONBOARD
+══════════════════════════════ */
+const STEPS=[
+  {tag:'⚡ LANGKAH 1 / 4',q:'Kamu di divisi apa?',hint:'Bantu aku sesuaikan pengalaman yang pas buatmu',
+   opts:[{e:'💻',bg:'#EAF4FD',l:'Developer / IT'},{e:'🎨',bg:'#FAF0FF',l:'Desainer / Kreatif'},{e:'📊',bg:'#EAFAF3',l:'Marketing / Sales'},{e:'📋',bg:'#FFF5EA',l:'Manajer / Tim Lead'},{e:'📚',bg:'#F5F3FF',l:'Lainnya'}]},
+  {tag:'🎯 LANGKAH 2 / 4',q:'Gimana mood kerjamu hari ini?',hint:'Cerita jujur aja, Buddy siap adaptasi buat kamu',
+   opts:[{e:'⚡',bg:'#FFFAEC',l:'Super Semangat!'},{e:'😊',bg:'#EAFAF3',l:'Oke-oke aja'},{e:'😴',bg:'#EEF0FF',l:'Agak Lelah'},{e:'😤',bg:'#FAEAEA',l:'Butuh Motivasi'}]},
+  {tag:'🔥 LANGKAH 3 / 4',q:'Apa tantangan terbesar kamu?',hint:'Pilih yang paling sering bikin kamu stuck',
+   opts:[{e:'⏰',bg:'#FFF5EA',l:'Susah Fokus'},{e:'📬',bg:'#EAF4FD',l:'Terlalu Banyak Task'},{e:'😴',bg:'#EEF0FF',l:'Gampang Procrastinate'},{e:'🤝',bg:'#EAFAF3',l:'Koordinasi Tim'}]},
+  {tag:'🚀 LANGKAH 4 / 4',q:'Mau mulai dari mana duluan?',hint:'Buddy akan siapkan workspace yang sesuai pilihanmu',
+   opts:[{e:'✅',bg:'#EAFAF3',l:'Atur To-Do List'},{e:'🎯',bg:'#FFF5EA',l:'Set Target Mingguan'},{e:'⏱️',bg:'#EEF0FF',l:'Mulai Pomodoro'},{e:'📊',bg:'#EAF4FD',l:'Lihat Dashboard'}]},
+];
+let obCur=0,obSel=null,obAns=[];
 
-      {/* ════════════════════════════════════════════════════════════════════
-           STEP 2: JOB SELECTION
-         ════════════════════════════════════════════════════════════════════ */}
-      <div style={screenStyle(2)}>
-        <div style={{ padding: '32px 24px 44px', flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-          {/* Progress */}
-          <div style={{ marginBottom: 8 }}>
-            <div style={{ height: 6, background: 'var(--hp-border)', borderRadius: 100, overflow: 'hidden' }}>
-              <div style={{ height: '100%', background: 'var(--hp-primary)', borderRadius: 100, width: '18%', transition: 'width 0.6s cubic-bezier(.4,0,.2,1)' }} />
-            </div>
-          </div>
+function initS3(){
+  const sb=$('stepbar');sb.innerHTML='';
+  STEPS.forEach((_,i)=>{
+    const d=window.document.createElement('div');d.className='stepdot';d.id=`sd${i}`;
+    d.innerHTML='<div class="stepdot-fill"></div>';sb.appendChild(d);
+  });
+  obCur=0;renderOb(true);
+}
 
-          <div style={{ padding: '8px 0 0' }}>
-            <p style={{ fontSize: 13, color: 'var(--hp-ink-mute)', fontWeight: 700, marginBottom: 4, animation: 'hpFadeUp 0.55s ease both' }}>
-              LANGKAH 1 / 6
-            </p>
-            <h2 style={{
-              fontSize: 25, fontWeight: 900, color: 'var(--hp-ink)', lineHeight: 1.25,
-              fontFamily: HP_FONT_DISPLAY, animation: 'hpFadeUp 0.55s 0.12s ease both',
-            }}>
-              Kamu kerja sebagai apa?
-            </h2>
-            <p style={{ fontSize: 14, color: 'var(--hp-ink-mute)', marginTop: 6, animation: 'hpFadeUp 0.55s 0.24s ease both' }}>
-              Ini bantu aku sesuaikan pengalaman yang paling pas buat kamu
-            </p>
-          </div>
+function renderOb(first=false){
+  const s=STEPS[obCur];obSel=null;
+  STEPS.forEach((_,i)=>{const d=$(`sd${i}`);if(i<obCur)d.classList.add('done');else d.classList.remove('done');});
 
-          <div style={{
-            display: 'flex', flexDirection: 'column', gap: 11,
-            flex: 1, marginTop: 20,
-            animation: 'hpFadeUp 0.55s 0.36s ease both',
-          }}>
-            {JOBS.map(j => renderChoice(j, selectedJob, setSelectedJob))}
-          </div>
+  const tag=$('obTag'),q=$('obQ'),hint=$('obHint');
+  tag.textContent=s.tag;q.textContent=s.q;hint.textContent=s.hint;
 
-          <div style={{ padding: '20px 0 0', display: 'flex', justifyContent: 'flex-end' }}>
-            <button
-              disabled={!selectedJob}
-              onClick={() => goTo(3)}
-              className="hp-tap"
-              style={{
-                background: selectedJob ? 'var(--hp-primary)' : 'var(--hp-border)',
-                color: selectedJob ? '#fff' : 'var(--hp-ink-fade)',
-                border: 'none', borderRadius: 100, padding: '17px 48px',
-                fontSize: 16, fontWeight: 800, letterSpacing: 0.3,
-                boxShadow: selectedJob ? 'var(--hp-shadow-orange)' : 'none',
-                cursor: selectedJob ? 'pointer' : 'not-allowed',
-                transition: 'all 0.2s',
-              }}
-            >
-              Lanjut →
-            </button>
-          </div>
-        </div>
-      </div>
+  if(first){fu(tag,50);fu(q,130);fu(hint,200);}
+  else{
+    [tag,q,hint].forEach((el,i)=>A(el,[{opacity:0,transform:'translateX(18px)'},{opacity:1,transform:'none'}],{duration:320,delay:i*55,fill:'forwards',easing:'cubic-bezier(.34,1.2,.64,1)'}));
+  }
 
-      {/* ════════════════════════════════════════════════════════════════════
-           STEP 3: TAP GAME
-         ════════════════════════════════════════════════════════════════════ */}
-      <div style={screenStyle(3)}>
-        <div style={{
-          flex: 1, display: 'flex', flexDirection: 'column',
-          background: 'linear-gradient(155deg, #1D3557 0%, #0F1F33 100%)',
-          position: 'relative',
-        }}>
-          <StarField />
+  const cont=$('obOpts');cont.innerHTML='';
+  s.opts.forEach((o,i)=>{
+    const card=window.document.createElement('div');card.className='opt';card.id=`o${i}`;
+    card.innerHTML=`<div class="opt-ico" style="background:${o.bg}">${o.e}</div><span class="opt-lbl">${o.l}</span><div class="opt-tick">✓</div>`;
+    card.onclick=()=>selectOpt(i,o.l);
+    card.addEventListener('mousemove',ev=>{
+      const r=card.getBoundingClientRect();
+      card.style.setProperty('--mx',((ev.clientX-r.left)/r.width*100)+'%');
+      card.style.setProperty('--my',((ev.clientY-r.top)/r.height*100)+'%');
+    });
+    cont.appendChild(card);
+    sli(card,(first?350:100)+i*65);
+  });
 
-          {/* Header */}
-          <div style={{ padding: '40px 24px 0', textAlign: 'center', position: 'relative', zIndex: 2 }}>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', fontWeight: 700, letterSpacing: 1 }}>
-              MINI GAME
-            </p>
-            <h2 style={{
-              fontFamily: HP_FONT_DISPLAY, fontSize: 24, fontWeight: 700,
-              color: '#fff', marginTop: 6,
-            }}>
-              Tap Buddy sebanyak mungkin!<br />Isi energimu sekarang ⚡
-            </h2>
-          </div>
+  const btn=$('obBtn');btn.disabled=true;btn.style.opacity='.35';btn.style.cursor='not-allowed';
+  btn.textContent=obCur<STEPS.length-1?'Lanjut →':'Selesai! ✨';
+  if(first)A(btn,[{opacity:0},{opacity:.35}],{duration:400,delay:500,fill:'forwards'});
+}
 
-          {/* Tap area */}
-          <div style={{
-            flex: 1, display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center',
-            padding: '32px 24px', position: 'relative', zIndex: 2,
-          }}>
-            {/* Progress dots */}
-            <div style={{ display: 'flex', gap: 7, marginBottom: 28 }}>
-              {Array.from({ length: TAP_TARGET }, (_, i) => (
-                <div key={i} style={{
-                  width: 9, height: 9, borderRadius: '50%',
-                  background: i < tapCount ? '#FFBE0B' : 'rgba(255,255,255,0.18)',
-                  transition: 'background 0.25s, transform 0.25s',
-                  transform: i < tapCount ? 'scale(1.2)' : 'scale(1)',
-                }} />
-              ))}
-            </div>
+function selectOpt(i,lbl){
+  $$('.opt').forEach((c,j)=>c.classList.toggle('sel',j===i));
+  obSel=lbl;
+  A($(`o${i}`),[{transform:'scale(1)'},{transform:'scale(1.04)'},{transform:'scale(1.02) translateX(6px)'}],{duration:280});
+  const btn=$('obBtn');btn.disabled=false;btn.style.cursor='pointer';
+  A(btn,[{opacity:0.35, transform:'scale(1)'},{opacity:1, transform:'scale(1.03)'},{opacity:1, transform:'scale(1)'}],{duration:260,fill:'forwards',easing:'cubic-bezier(.34,1.56,.64,1)'});
+}
 
-            {/* Tap target: outer ring */}
-            <div style={{
-              width: 180, height: 180, borderRadius: '50%',
-              background: 'rgba(255,190,11,0.1)',
-              border: '2px solid rgba(255,190,11,0.25)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              animation: tapDone ? '' : 'obGlowRing 2s ease infinite',
-            }}>
-              {/* Tap target: inner (Buddy) */}
-              <div
-                ref={tapTargetRef}
-                onClick={handleTap}
-                style={{
-                  width: 140, height: 140, borderRadius: '50%',
-                  background: 'linear-gradient(135deg, var(--hp-primary) 0%, #FF8C55 100%)',
-                  display: 'flex', flexDirection: 'column',
-                  alignItems: 'center', justifyContent: 'center',
-                  gap: 2, cursor: tapDone ? 'default' : 'pointer',
-                  userSelect: 'none', position: 'relative', overflow: 'hidden',
-                  transition: 'transform 0.1s',
-                }}
-              >
-                {/* Buddy inside the circle */}
-                <div style={{ 
-                  marginTop: -5,
-                  animation: tapCount > 0 ? 'obTapBounce 0.15s ease' : undefined,
-                  pointerEvents: 'none',
-                }}>
-                  <BeeMascot
-                    mood={tapDone ? 'happy' : tapCount > 10 ? 'excited' : tapCount > 5 ? 'happy' : 'neutral'}
-                    size={60}
-                    animated={true}
-                  />
-                </div>
-                <div style={{
-                  fontSize: 28, fontWeight: 900, color: '#fff',
-                  fontFamily: HP_FONT_DISPLAY, lineHeight: 1,
-                  animation: tapCount > 0 ? 'obCountPop 0.2s cubic-bezier(.34,1.56,.64,1)' : undefined,
-                  pointerEvents: 'none',
-                }}>
-                  {tapCount}
-                </div>
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', fontWeight: 700, pointerEvents: 'none' }}>
-                  {tapDone ? 'DONE!' : 'TAP!'}
-                </div>
+function obAdvance(){
+  if(!obSel)return;
+  obAns[obCur]=obSel;
+  if(obCur===0)window._job=obSel;
+  if(obCur===1)window._mood=obSel;
+  if(obCur<STEPS.length-1){obCur++;renderOb(false);}
+  else{showScreen('s4');initGame();}
+}
 
-                {/* Ripples */}
-                {ripples.map(r => <TapRipple key={r.id} x={r.x} y={r.y} />)}
-              </div>
-            </div>
+/* ══════════════════════════════
+   S4 — GAME
+══════════════════════════════ */
+const TAP=15;let taps=0,gameOn=false;
 
-            <p style={{
-              color: 'rgba(255,255,255,0.4)', fontSize: 13, fontWeight: 700, marginTop: 20,
-            }}>
-              {tapDone ? '🎉 Energi terisi penuh!' : `Target: ${TAP_TARGET} tap 🎯`}
-            </p>
-          </div>
-        </div>
-      </div>
+function initGame(){
+  taps=0;gameOn=true;$('tapNum').textContent='0';
+  const ef=$('eFill');if(ef)ef.style.width='0%';
+  const est=$('eSt');if(est)est.textContent='💤 Siap dimulai…';
+  const pd=$('pdots');pd.innerHTML='';
+  for(let i=0;i<TAP;i++){const d=window.document.createElement('div');d.className='pdot';d.id=`pd${i}`;pd.appendChild(d);}
+  A($('gameHd'),[{opacity:0,transform:'translateY(-22px)'},{opacity:1,transform:'none'}],{duration:550,delay:100,fill:'forwards',easing:'cubic-bezier(.34,1.4,.64,1)'});
+}
 
-      {/* ════════════════════════════════════════════════════════════════════
-           STEP 4: CELEBRATION
-         ════════════════════════════════════════════════════════════════════ */}
-      <div style={screenStyle(4)}>
-        <div style={{
-          flex: 1, display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center',
-          padding: '56px 24px 44px', position: 'relative', overflow: 'hidden',
-          background: 'var(--hp-paper)',
-        }}>
-          {step === 4 && <ConfettiLayer />}
+function doTap(ev){
+  if(!gameOn)return;taps++;
+  const numEl=$('tapNum');
+  numEl.textContent=taps;
+  numEl.classList.remove('bump');requestAnimationFrame(()=>requestAnimationFrame(()=>numEl.classList.add('bump')));
+  setTimeout(()=>numEl.classList.remove('bump'),200);
 
-          {/* Speech bubble */}
-          <div style={{
-            background: 'var(--hp-card)', borderRadius: 20, padding: '14px 20px',
-            boxShadow: 'var(--hp-shadow)', fontSize: 16, fontWeight: 700,
-            color: 'var(--hp-ink)', textAlign: 'center', lineHeight: 1.5,
-            position: 'relative', zIndex: 2, maxWidth: '90%',
-            marginBottom: 28,
-            animation: 'hpFadeUp 0.55s ease both',
-          }}>
-            Luar biasa, <span style={{ color: 'var(--hp-primary)' }}>{displayName}</span>! 🎉
-            <div style={{
-              position: 'absolute', bottom: -12, left: '50%', transform: 'translateX(-50%)',
-              borderLeft: '11px solid transparent', borderRight: '11px solid transparent',
-              borderTop: '13px solid var(--hp-card)',
-            }} />
-          </div>
+  // Shockwave
+  const sw=window.document.createElement('div');sw.className='shockwave';
+  const tb=$('tapBtn').getBoundingClientRect();const fr=containerRef.current?.querySelector('.frame').getBoundingClientRect();
+  sw.style.cssText=`width:220px;height:220px;left:${tb.left-fr.left}px;top:${tb.top-fr.top}px;`;
+  containerRef.current?.querySelector('.frame').appendChild(sw);setTimeout(()=>sw.remove(),600);
 
-          {/* Buddy bouncing */}
-          <div style={{ animation: 'hpBounce 1.9s ease-in-out infinite', zIndex: 2 }}>
-            <BeeMascot mood="happy" size={150} />
-          </div>
+  // Float label — varied messages, centered position
+  const msgs=['⚡ +1','+1 🔥','💪 +1','+1 💥','+1 🎯','🚀 +1','🔥 +1','+1 ✨'];
+  const fl=window.document.createElement('div');fl.className='tap-float-lbl';
+  fl.textContent=msgs[(taps-1)%msgs.length];
+  fl.style.left=(155+Math.random()*40-20)+'px';fl.style.top=(310+Math.random()*20-10)+'px';
+  containerRef.current?.querySelector('.frame').appendChild(fl);setTimeout(()=>fl.remove(),1000);
 
-          <p style={{
-            fontSize: 16, fontWeight: 700, color: 'var(--hp-ink-mute)',
-            textAlign: 'center', marginTop: 20, lineHeight: 1.65, zIndex: 2,
-            animation: 'hpFadeUp 0.55s 0.12s ease both',
-          }}>
-            Semangat itu nyata!<br />Sekarang yuk atur harimu bareng 🚀
-          </p>
+  // Energy bar + power status
+  const ef=$('eFill'),est=$('eSt');
+  if(ef)ef.style.width=Math.round((taps/TAP)*100)+'%';
+  if(est){const lvl=taps<2?'💤 Siap dimulai…':taps<5?'🌱 Mulai bergerak!':taps<9?'⚡ Makin panas!':taps<13?'🔥 On fire!':'💥 FULL POWER!!!';est.textContent=lvl;}
 
-          <button
-            onClick={() => goTo(5)}
-            className="hp-tap"
-            style={{
-              background: 'var(--hp-primary)', color: '#fff',
-              border: 'none', borderRadius: 100, padding: '17px 48px',
-              fontSize: 16, fontWeight: 800, letterSpacing: 0.3,
-              boxShadow: 'var(--hp-shadow-orange)',
-              cursor: 'pointer', zIndex: 2, marginTop: 20,
-              animation: 'hpFadeUp 0.55s 0.24s ease both',
-            }}
-          >
-            Lanjut ✨
-          </button>
-        </div>
-      </div>
+  // Dot
+  if(taps<=TAP){
+    const dot=$(`pd${taps-1}`);
+    if(dot){dot.classList.add('lit');A(dot,[{transform:'scale(1)'},{transform:'scale(2.4)'},{transform:'scale(1.6)'}],{duration:380,easing:'cubic-bezier(.34,1.56,.64,1)',fill:'forwards'});}
+  }
 
-      {/* ════════════════════════════════════════════════════════════════════
-           STEP 5: MOOD CHECK-IN
-         ════════════════════════════════════════════════════════════════════ */}
-      <div style={screenStyle(5)}>
-        <div style={{ padding: '32px 24px 44px', flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-          {/* Progress */}
-          <div style={{ marginBottom: 8 }}>
-            <div style={{ height: 6, background: 'var(--hp-border)', borderRadius: 100, overflow: 'hidden' }}>
-              <div style={{ height: '100%', background: 'var(--hp-primary)', borderRadius: 100, width: '55%', transition: 'width 0.6s cubic-bezier(.4,0,.2,1)' }} />
-            </div>
-          </div>
+  if(taps>=TAP){gameOn=false;setTimeout(()=>{showScreen('s5');initCeleb();},600);}
+}
 
-          <div style={{ padding: '16px 0 0' }}>
-            <p style={{ fontSize: 13, color: 'var(--hp-ink-mute)', fontWeight: 700, marginBottom: 4, animation: 'hpFadeUp 0.55s ease both' }}>
-              KONDISI KAMU
-            </p>
-            <h2 style={{
-              fontSize: 25, fontWeight: 900, color: 'var(--hp-ink)', lineHeight: 1.25,
-              fontFamily: HP_FONT_DISPLAY, animation: 'hpFadeUp 0.55s 0.12s ease both',
-            }}>
-              Gimana perasaanmu<br />hari ini?
-            </h2>
-            <p style={{ fontSize: 14, color: 'var(--hp-ink-mute)', marginTop: 6, animation: 'hpFadeUp 0.55s 0.24s ease both' }}>
-              Jujur aja, aku akan sesuaikan tampilan untukmu 💙
-            </p>
-          </div>
+/* ══════════════════════════════
+   S5 — CELEBRATION
+══════════════════════════════ */
+function initCeleb(){
+  const name=window._name||'Kamu';
+  $('cName').textContent=name;
+  $('cs1').querySelector('.cstat-num').textContent=TAP;
+  $('cs2').querySelector('.cstat-num').textContent=STEPS.length+'/'+STEPS.length;
 
-          <div style={{
-            display: 'flex', flexDirection: 'column', gap: 11,
-            flex: 1, marginTop: 16,
-            animation: 'hpFadeUp 0.55s 0.36s ease both',
-          }}>
-            {MOODS.map(m => renderChoice(m, selectedMood, setSelectedMood))}
-          </div>
+  // Confetti
+  const wrap=$('confwrap');wrap.innerHTML='';
+  const cols=['#FF4D00','#FFD166','#00D68F','#7C5CFC','#FF6B9D','#3EA6FF','#FF8040','#AEFF6E'];
+  for(let i=0;i<80;i++){
+    const c=window.document.createElement('div');c.className='conf';
+    const w=5+Math.random()*10;const isRect=Math.random()>.35;
+    c.style.cssText=`width:${w}px;height:${isRect?w*.45:w}px;background:${cols[i%cols.length]};--r:${isRect?'2px':'50%'};left:${Math.random()*100}%;--d:${2.5+Math.random()*2.5}s;--de:${Math.random()*1.8}s;--spin:${(Math.random()-.5)*720}deg`;
+    wrap.appendChild(c);
+  }
 
-          <div style={{ padding: '20px 0 0', display: 'flex', justifyContent: 'flex-end' }}>
-            <button
-              disabled={!selectedMood}
-              onClick={() => goTo(6)}
-              className="hp-tap"
-              style={{
-                background: selectedMood ? 'var(--hp-primary)' : 'var(--hp-border)',
-                color: selectedMood ? '#fff' : 'var(--hp-ink-fade)',
-                border: 'none', borderRadius: 100, padding: '17px 48px',
-                fontSize: 16, fontWeight: 800, letterSpacing: 0.3,
-                boxShadow: selectedMood ? 'var(--hp-shadow-orange)' : 'none',
-                cursor: selectedMood ? 'pointer' : 'not-allowed',
-                transition: 'all 0.2s',
-              }}
-            >
-              Lanjut →
-            </button>
-          </div>
-        </div>
-      </div>
+  sc($('cBuddy'),100,650);
+  setTimeout(()=>$('cBuddy').classList.add('shown'),800);
+  A($('cBadge'),[{opacity:0,transform:'scale(.7) translateY(10px)'},{opacity:1,transform:'none'}],{duration:500,delay:350,fill:'forwards',easing:'cubic-bezier(.34,1.56,.64,1)'});
+  A($('cTitle'),[{opacity:0,transform:'translateY(14px)'},{opacity:1,transform:'none'}],{duration:460,delay:550,fill:'forwards',easing:'cubic-bezier(.34,1.2,.64,1)'});
+  fu($('cSub'),700,400);
+  [$('cs1'),$('cs2'),$('cs3')].forEach((el,i)=>A(el,[{opacity:0,transform:'translateY(14px) scale(.9)'},{opacity:1,transform:'none'}],{duration:400,delay:900+i*80,fill:'forwards',easing:'cubic-bezier(.34,1.4,.64,1)'}));
+  A($('cBtn'),[{opacity:0,transform:'translateY(14px)'},{opacity:1,transform:'none'}],{duration:450,delay:1150,fill:'forwards',easing:'cubic-bezier(.34,1.3,.64,1)'});
+}
 
-      {/* ════════════════════════════════════════════════════════════════════
-           STEP 6: COMMITMENT
-         ════════════════════════════════════════════════════════════════════ */}
-      <div style={screenStyle(6)}>
-        <div style={{ padding: '32px 24px 44px', flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-          {/* Progress */}
-          <div style={{ marginBottom: 8 }}>
-            <div style={{ height: 6, background: 'var(--hp-border)', borderRadius: 100, overflow: 'hidden' }}>
-              <div style={{ height: '100%', background: 'var(--hp-primary)', borderRadius: 100, width: '78%', transition: 'width 0.6s cubic-bezier(.4,0,.2,1)' }} />
-            </div>
-          </div>
+/* ══════════════════════════════
+   S6 — PROFILE
+══════════════════════════════ */
+function goProfile(){showScreen('s6');initProfile();}
 
-          <div style={{ padding: '16px 0 0' }}>
-            <p style={{ fontSize: 13, color: 'var(--hp-ink-mute)', fontWeight: 700, marginBottom: 4, animation: 'hpFadeUp 0.55s ease both' }}>
-              JANJI HARIMU
-            </p>
-            <h2 style={{
-              fontSize: 25, fontWeight: 900, color: 'var(--hp-ink)', lineHeight: 1.25,
-              fontFamily: HP_FONT_DISPLAY, animation: 'hpFadeUp 0.55s 0.12s ease both',
-            }}>
-              Aku berjanji kepada<br />diriku sendiri…
-            </h2>
-            <p style={{ fontSize: 14, color: 'var(--hp-ink-mute)', marginTop: 6, animation: 'hpFadeUp 0.55s 0.24s ease both' }}>
-              Pilih janjimu untuk hari ini!
-            </p>
-          </div>
+function initProfile(){
+  const name=window._name||'Kamu';
+  const job=window._job||'Developer / IT';
+  const moodMap={'Super Semangat!':'🔥 Semangat','Oke-oke aja':'😊 Santai','Agak Lelah':'😴 Tired','Butuh Motivasi':'💪 Boost'};
+  const mood=moodMap[window._mood||'']||'🔥 Semangat';
+  $('s6name').textContent=`Semuanya siap, ${name}!`;
+  $('rNama').textContent=name;$('rTipe').textContent=job;$('rMood').textContent=mood;
 
-          <div style={{
-            display: 'flex', flexDirection: 'column', gap: 11,
-            flex: 1, marginTop: 16,
-            animation: 'hpFadeUp 0.55s 0.36s ease both',
-          }}>
-            {COMMITS.map(c => renderChoice(c, selectedCommit, setSelectedCommit))}
-          </div>
+  A($('s6av'),[{opacity:0,transform:'scale(.5) translateY(20px)'},{opacity:1,transform:'none'}],{duration:600,delay:120,fill:'forwards',easing:'cubic-bezier(.34,1.56,.64,1)'});
+  fu($('s6name'),350,460);fu($('s6sub'),440,420);
+  A($('s6card'),[{opacity:0,transform:'translateY(28px)'},{opacity:1,transform:'none'}],{duration:520,delay:560,fill:'forwards',easing:'cubic-bezier(.34,1.2,.64,1)'});
+  ['r1','r2','r3','r4'].forEach((id,i)=>sli($(id),760+i*90));
+  A($('s6btn'),[{opacity:0,transform:'translateY(14px)'},{opacity:1,transform:'none'}],{duration:460,delay:1180,fill:'forwards',easing:'cubic-bezier(.34,1.2,.64,1)'});
+}
 
-          <div style={{ padding: '20px 0 0', display: 'flex', justifyContent: 'center' }}>
-            <button
-              disabled={!selectedCommit}
-              onClick={() => goTo(7)}
-              className="hp-tap"
-              style={{
-                background: selectedCommit ? 'var(--hp-primary)' : 'var(--hp-border)',
-                color: selectedCommit ? '#fff' : 'var(--hp-ink-fade)',
-                border: 'none', borderRadius: 100, padding: '17px 48px',
-                fontSize: 16, fontWeight: 800, letterSpacing: 0.3,
-                boxShadow: selectedCommit ? 'var(--hp-shadow-orange)' : 'none',
-                cursor: selectedCommit ? 'pointer' : 'not-allowed',
-                transition: 'all 0.2s',
-              }}
-            >
-              Lanjut →
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* ════════════════════════════════════════════════════════════════════
-           STEP 7: FINAL — BADGE + SUMMARY
-         ════════════════════════════════════════════════════════════════════ */}
-      <div style={screenStyle(7)}>
-        <div style={{
-          flex: 1, display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center',
-          padding: '40px 24px', position: 'relative', overflow: 'hidden',
-          textAlign: 'center', background: 'var(--hp-paper)',
-        }}>
-          {step === 7 && <ConfettiLayer />}
-
-          {/* Badge ring */}
-          <div style={{
-            width: 160, height: 160, borderRadius: '50%',
-            background: 'linear-gradient(135deg, var(--hp-primary) 0%, #FFBE0B 100%)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 12px 48px rgba(255,107,53,0.45)',
-            animation: 'obBadgePop 0.7s cubic-bezier(.34,1.56,.64,1) both',
-            zIndex: 2,
-          }}>
-            <div style={{
-              width: 130, height: 130, borderRadius: '50%',
-              background: 'var(--hp-card)', display: 'flex',
-              alignItems: 'center', justifyContent: 'center',
-              animation: 'obHeartbeat 2.5s ease-in-out 1s infinite',
-            }}>
-              <BeeMascot mood="excited" size={80} />
-            </div>
-          </div>
-
-          {/* Title */}
-          <h2 style={{
-            fontSize: 28, fontWeight: 900, color: 'var(--hp-ink)',
-            marginTop: 22, fontFamily: HP_FONT_DISPLAY, zIndex: 2,
-            animation: 'hpFadeUp 0.55s 0.12s ease both',
-          }}>
-            Semuanya siap, {displayName}! 🎉
-          </h2>
-
-          <p style={{
-            fontSize: 15, color: 'var(--hp-ink-mute)', marginTop: 8,
-            lineHeight: 1.65, textAlign: 'center', padding: '0 16px', zIndex: 2,
-            animation: 'hpFadeUp 0.55s 0.24s ease both',
-          }}>
-            Hari pertamamu dimulai hari ini.<br />Satu langkah kecil sudah cukup untuk mulai 🌱
-          </p>
-
-          {/* Summary card */}
-          <div style={{
-            marginTop: 20, background: 'var(--hp-card)', borderRadius: 20,
-            padding: '18px 22px', width: '100%', maxWidth: 340,
-            boxShadow: 'var(--hp-shadow)', zIndex: 2,
-            animation: 'hpFadeUp 0.55s 0.36s ease both',
-          }}>
-            <div style={{
-              fontSize: 12, color: 'var(--hp-ink-mute)', fontWeight: 700,
-              marginBottom: 12, textAlign: 'center', letterSpacing: 0.5,
-            }}>
-              RANGKUMAN PROFILMU
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <SummaryRow label="Nama" value={displayName} />
-              <div style={{ height: 1, background: 'var(--hp-border)' }} />
-              <SummaryRow label="Tipe Kerja" value={JOB_LABELS[selectedJob || ''] || '—'} color="var(--hp-primary)" />
-              <div style={{ height: 1, background: 'var(--hp-border)' }} />
-              <SummaryRow label="Mood" value={MOOD_LABELS[selectedMood || ''] || '—'} color="var(--hp-primary)" />
-              <div style={{ height: 1, background: 'var(--hp-border)' }} />
-              <SummaryRow label="Level Awal" value="🌱 Lv.1 Pemula" color="#FFBE0B" />
-            </div>
-          </div>
-
-          {/* CTA */}
-          <button
-            onClick={onFinish}
-            className="hp-tap"
-            style={{
-              background: 'var(--hp-primary)', color: '#fff',
-              border: 'none', borderRadius: 100,
-              padding: '18px 64px', fontSize: 17, fontWeight: 800,
-              boxShadow: 'var(--hp-shadow-orange)',
-              cursor: 'pointer', zIndex: 2, marginTop: 24,
-              letterSpacing: 0.3,
-              animation: 'hpFadeUp 0.55s 0.48s ease both',
-            }}
-          >
-            Masuk ke App ⚡
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+function restart(){
+  A(containerRef.current?.querySelector('.frame'),[{transform:'scale(1)'},{transform:'scale(1.04)',filter:'brightness(1.15)'},{transform:'scale(.95)',filter:'brightness(.9)'},{transform:'scale(1)',filter:'none'}],{duration:600,easing:'cubic-bezier(.34,1.2,.64,1)'});
+  setTimeout(()=>{
+    window._name=null;window._job=null;window._mood=null;obAns=[];obCur=0;taps=0;
+    $$('.shockwave,.tap-float-lbl').forEach(e=>e.remove());
+    const curr=containerRef.current?.querySelector('.screen.active');curr.classList.remove('active');
+    const s1=$('s1');s1.classList.add('active');
+    A($('loadBar'),[{width:'100%'},{width:'0%'}],{duration:50,fill:'forwards'});
+    setTimeout(()=>{
+      A($('loadBar'),[{width:'0%'},{width:'100%'}],{duration:2200,fill:'forwards',easing:'cubic-bezier(.4,0,.2,1)'}).onfinish=()=>{
+        setTimeout(()=>{showScreen('s2',true);initS2();},300);
+      };
+    },200);
+  },2200);
 }
 
 
-// ── Summary Row Component ──────────────────────────────────────────────────
-function SummaryRow({ label, value, color }: { label: string; value: string; color?: string }) {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <span style={{ fontSize: 14, color: 'var(--hp-ink-mute)' }}>{label}</span>
-      <span style={{ fontSize: 14, fontWeight: 800, color: color || 'var(--hp-ink)' }}>{value}</span>
+        // Bind global functions to window so inline onClick works, or replace inline onClick
+        window.goStep2 = goStep2;
+        window.obAdvance = obAdvance;
+        window.doTap = doTap;
+        window.goProfile = goProfile;
+        
+        window.restart = async () => {
+            const btn = $('s6btn');
+            if (btn) btn.textContent = 'Memulai...';
+            if (onFinish) onFinish();
+        };
+
+        // Initialize
+        initS1();
+
+        return () => {
+            window.goStep2 = undefined;
+            window.obAdvance = undefined;
+            window.doTap = undefined;
+            window.goProfile = undefined;
+            window.restart = undefined;
+        };
+    }, []);
+
+    const handleBuddyClick = () => {
+        const newCount = clickCount + 1;
+        setClickCount(newCount);
+        if (newCount > 5) {
+            setBuddyMood('angry');
+            setBuddyMsg('Aduh! Jangan diklik terus, sakit tau! 😠');
+        } else if (newCount > 2) {
+            setBuddyMood('sad');
+            setBuddyMsg('Hei, pelan-pelan dong kliknya... 🥺');
+        } else {
+            setBuddyMood('happy');
+            setBuddyMsg('Hehe, geli! Senang deh kamu main sama aku! ✨');
+        }
+    };
+
+    const handleBuddyHover = (isHover) => {
+        setIsHovering(isHover);
+        if (isHover) {
+            setBuddyMood('happy');
+            setBuddyMsg('Wah, dielus! Nyaman banget... 😌✨');
+        } else {
+            if (clickCount > 5) {
+                setBuddyMood('angry');
+                setBuddyMsg('Aduh! Jangan diklik terus, sakit tau! 😠');
+            } else if (clickCount > 2) {
+                setBuddyMood('sad');
+                setBuddyMsg('Hei, pelan-pelan dong kliknya... 🥺');
+            } else {
+                setBuddyMood('neutral');
+                setBuddyMsg('Hai! Senang ketemu kamu 🤜\nAku Buddy, bantu harimu lebih produktif!');
+            }
+        }
+    };
+
+    return (
+        <div className="ob-wrapper" style={{ position: 'fixed', inset: 0, zIndex: 9999 }}>
+            <div id="ob-app" ref={containerRef}>
+                
+
+<div className="frame">
+
+
+<div className="transition-wipe" id="wipe"></div>
+
+
+<div className="screen active" id="s1">
+  <div className="s1-noise"></div>
+  <div className="s1-grid"></div>
+  <div className="s1-glow"></div>
+  <div className="s1-orbs" id="s1orbs"></div>
+  <div className="s1-starfield" id="s1stars"></div>
+
+  <div className="s1-center" id="s1center" style={{opacity: '0'}}>
+    <div className="logo-ring" id="logoRing">
+      <svg className="logo-ring-svg" viewBox="0 0 108 108" fill="none">
+        <circle cx="54" cy="54" r="50" stroke="url(#ringGrad)" strokeWidth="2" strokeDasharray="6 4" opacity=".6"/>
+        <defs><linearGradient id="ringGrad" x1="0" y1="0" x2="108" y2="108" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FF4D00"/>
+          <stop offset="50%" stopColor="#FFD166"/>
+          <stop offset="100%" stopColor="#FF4D00"/>
+        </linearGradient></defs>
+      </svg>
+      <div className="logo-inner" id="logoInner"><BeeMascot mood="neutral" size={60} animated /></div>
     </div>
-  );
+    <div className="logo-text">
+      <div className="logo-brand">Fl<span className="o">ow</span>buddy</div>
+      <div className="logo-tagline">Kerja Lebih Cerdas, Lebih Semangat</div>
+    </div>
+    <div className="s1-loader"><div className="s1-loader-fill" id="loadBar"></div></div>
+  </div>
+</div>
+
+
+<div className="screen" id="s2">
+  <div className="s2-top" id="s2top">
+    <div className="s2-top-shimmer"></div>
+    <div className="s2-bubble" id="s2bubble">{buddyMsg.split('\\n').map((line, i) => <React.Fragment key={i}>{line}<br/></React.Fragment>)}</div>
+    
+                <div 
+                    className="s2-buddy" 
+                    id="s2buddy"
+                    onMouseEnter={() => handleBuddyHover(true)}
+                    onMouseLeave={() => handleBuddyHover(false)}
+                    onTouchStart={() => handleBuddyHover(true)}
+                    onTouchEnd={() => handleBuddyHover(false)}
+                    onTouchCancel={() => handleBuddyHover(false)}
+                    style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
+                >
+                    <div className="s2-orbit-dot"></div>
+                    <div className="s2-orbit-dot reverse"></div>
+                    <div className="s2-orbit-dot fast"></div>
+                    <div className="buddy-aura"></div>
+                    <BeeMascot mood={buddyMood} size={135} animated onClick={handleBuddyClick} />
+                </div>
+                
+    <div className="particle-ring" id="s2pring"></div>
+  </div>
+  <div className="s2-bottom">
+    <div className="s2-label" id="s2lbl">SIAPA NAMA KAMU?</div>
+    <input className="s2-input" id="nameIn" type="text" placeholder="Ketik nama kamu..." defaultValue="Test User" autoComplete="off" />
+    <button className="btn" id="s2btn" onClick={() => window.goStep2()}>Halo, aku siap! 👋</button>
+  </div>
+</div>
+
+
+<div className="screen" id="s3">
+  <div className="s3-header">
+    <div className="stepbar" id="stepbar"></div>
+    <div className="ob-step-tag" id="obTag">⚡ LANGKAH 1 / 4</div>
+    <div className="ob-q" id="obQ">Kamu di divisi apa?</div>
+    <div className="ob-hint" id="obHint">Bantu aku sesuaikan pengalaman yang pas buatmu</div>
+  </div>
+  <div className="ob-opts" id="obOpts"></div>
+  <div className="ob-foot"><button className="btn" id="obBtn" onClick={() => window.obAdvance()} style={{opacity: '.35', cursor: 'not-allowed'}}>Lanjut →</button></div>
+</div>
+
+
+<div className="screen" id="s4">
+  <div className="s4-bg">
+    <div className="s1-starfield" id="s4stars"></div>
+    <div className="s4-aurora"></div>
+    <div className="bg-canvas" id="s4blobs"></div>
+  </div>
+
+  <div className="game-hd" id="gameHd">
+    <div className="game-badge">⚡ MINI GAME</div>
+    <div className="game-title">Tap Buddy sebanyak mungkin!<br />Isi <span className="hl">energimu</span> sekarang</div>
+  </div>
+
+  <div className="pdots" id="pdots"></div>
+
+  
+  <div className="energy-section">
+    <div className="energy-top">
+      <span className="energy-label-txt">⚡ ENERGY LEVEL</span>
+      <span className="energy-state" id="eSt">💤 Siap dimulai…</span>
+    </div>
+    <div className="energy-track"><div className="energy-fill" id="eFill"></div></div>
+  </div>
+
+  <div className="tap-arena">
+    <div className="tap-ring-outer">
+      <div className="tap-pulse-ring"></div>
+      <div className="tap-pulse-ring"></div>
+      <div className="tap-btn" id="tapBtn" onClick={(e) => window.doTap(e)}>
+        <div style={{textAlign: 'center'}}>
+          <div className="tap-count-num" id="tapNum">0</div>
+          <div className="tap-sub">TAP!</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div className="tap-target-txt">Target: <b id="tapTgt">15</b> tap 🎯</div>
+</div>
+
+
+<div className="screen" id="s5">
+  <div className="confwrap" id="confwrap"></div>
+  <div className="celeb-inner">
+    <div className="celeb-buddy" id="cBuddy"><BeeMascot mood="neutral" size={80} animated /></div>
+    <div className="celeb-badge" id="cBadge">🎉 Level 1 Terbuka!</div>
+    <div className="celeb-title" id="cTitle">Luar biasa,<br /><span className="name" id="cName">Test User</span>!</div>
+    <div className="celeb-sub" id="cSub">Semangatmu nyata banget!<br />Yuk mulai atur harimu 🚀</div>
+    <div className="celeb-stats" id="cStats">
+      <div className="cstat" id="cs1"><div className="cstat-num">15</div><div className="cstat-lbl">TAPS</div></div>
+      <div className="cstat" id="cs2"><div className="cstat-num">4/4</div><div className="cstat-lbl">LANGKAH</div></div>
+      <div className="cstat" id="cs3"><div className="cstat-num">Lv.1</div><div className="cstat-lbl">LEVEL</div></div>
+    </div>
+    <button className="btn" id="cBtn" onClick={() => window.goProfile()} style={{opacity: '0', transform: 'translateY(12px)'}}>Lihat Profilku ✨</button>
+  </div>
+</div>
+
+
+<div className="screen" id="s6">
+  <div className="s6-top">
+    <div className="s6-avatar" id="s6av">
+      <div className="s6-avatar-inner"><BeeMascot mood="neutral" size={60} animated /></div>
+      <div className="s6-avatar-badge">🎯</div>
+    </div>
+    <div className="s6-name" id="s6name">Semuanya siap, Test User!</div>
+    <div className="s6-sub" id="s6sub">Hari pertamamu dimulai hari ini.<br />Satu langkah kecil sudah cukup 🌱</div>
+  </div>
+  <div className="s6-card" id="s6card">
+    <div className="s6-card-hd">RANGKUMAN PROFILMU</div>
+    <div className="s6-row" id="r1"><span className="s6-row-key">Nama</span><span className="s6-row-val" id="rNama">Test User</span></div>
+    <div className="s6-row" id="r2"><span className="s6-row-key">Divisi</span><span className="s6-row-val orange" id="rTipe">Developer / IT</span></div>
+    <div className="s6-row" id="r3"><span className="s6-row-key">Mood</span><span className="s6-row-val"><span className="s6-chip" id="rMood">🔥 Semangat</span></span></div>
+    <div className="s6-row" id="r4"><span className="s6-row-key">Level Awal</span><span className="s6-row-val green">🌱 Lv.1 Pemula</span></div>
+  </div>
+  <div className="s6-foot"><button className="btn" id="s6btn" onClick={() => window.restart()} style={{opacity: '0', transform: 'translateY(14px)'}}>Masuk ke App 👉</button></div>
+</div>
+
+</div>
+
+
+
+            </div>
+        </div>
+    );
 }

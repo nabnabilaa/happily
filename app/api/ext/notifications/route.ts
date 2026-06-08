@@ -159,10 +159,13 @@ export async function PUT(request: Request) {
       );
     }
 
+    const id = crypto.randomUUID();
+
     await db.execute({
-      sql: `INSERT INTO notifications (user_id, title, message, type, reference_id, reference_type, is_read, created_at) 
-            VALUES (?, ?, ?, ?, ?, ?, 0, ?)`,
+      sql: `INSERT INTO notifications (id, user_id, title, message, type, reference_id, reference_type, is_read, created_at) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)`,
       args: [
+        id,
         userId,
         title,
         message || null,

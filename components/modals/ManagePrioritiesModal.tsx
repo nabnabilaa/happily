@@ -462,7 +462,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
             }}
           />
 
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <div className="hp-form-row">
             <div style={{ flex: 1, minWidth: 140 }}>
               <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 4 }}>
                 TANGGAL PELAKSANAAN

@@ -30,6 +30,7 @@ import AttendanceWidget from "@/components/home/AttendanceWidget";
 import TaskHarianWidget from "@/components/home/TaskHarianWidget";
 import SurveySection from "@/components/home/SurveySection";
 import PresenceBoard from "@/components/home/PresenceBoard";
+import NotificationBanner from "@/components/pwa/NotificationBanner";
 import MoodWall from "@/components/home/MoodWall";
 
 
@@ -530,8 +531,53 @@ export default function HomeScreen({ openModal }: any) {
       <Confetti show={confetti}/>
       <CelebrationOverlay show={celebrate} onComplete={() => setCelebrate(false)} />
 
-      <div style={{ position: 'relative', zIndex: 1, padding: '0 16px' }} className="hp-stagger">
+      <div style={{ position: 'relative', zIndex: 1, padding: '0 16px', paddingTop: 72 }} className="hp-stagger">
         
+        <NotificationBanner />
+
+        {/* 🕛 Mid-Day Check-In Banner (Topmost priority when active) */}
+        {(() => {
+          const now = new Date();
+          const currentMins = now.getHours() * 60 + now.getMinutes();
+          const isMidDayWindow = currentMins >= (11 * 60 + 30) && currentMins <= (13 * 60 + 30);
+          if (isMidDayWindow) {
+            return (
+              <div 
+                onClick={() => openModal('work_checkin')}
+                className="hp-tap"
+                style={{
+                  background: `linear-gradient(135deg, ${HP_TOKENS.yellowWash} 0%, ${HP_TOKENS.yellowSoft} 100%)`,
+                  border: `1.5px solid ${HP_TOKENS.yellow}60`,
+                  borderRadius: 20,
+                  padding: '16px',
+                  marginBottom: 16,
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  cursor: 'pointer',
+                  boxShadow: `0 4px 16px ${HP_TOKENS.yellow}15`
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <div style={{ 
+                    width: 44, height: 44, borderRadius: 14, 
+                    background: HP_TOKENS.yellow, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: '0 4px 12px rgba(26,29,35,0.02)'
+                  }}>
+                    <HPGlyph name="book" size={20} color={HP_TOKENS.ink} />
+                  </div>
+                  <div>
+                    <div style={{ ...HP_TEXT.h, fontSize: 15, color: HP_TOKENS.ink }}>Mid-Day Check-in Siap!</div>
+                    <div style={{ ...HP_TEXT.body, fontSize: 13, color: HP_TOKENS.inkSoft, marginTop: 2 }}>
+                      Catat progresmu di pertengahan hari.
+                    </div>
+                  </div>
+                </div>
+                <HPGlyph name="chevron-right" size={20} color={HP_TOKENS.inkSoft} />
+              </div>
+            );
+          }
+          return null;
+        })()}
+
         {/* 🌡️ Wellbeing Score (Advanced Feature) */}
         <WellbeingGauge state={state} user={user} openModal={openModal} />
 
@@ -549,10 +595,10 @@ export default function HomeScreen({ openModal }: any) {
           <div 
             onClick={() => openModal('profile_editor')}
             className="hp-tap"
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, cursor: 'pointer' }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ position: 'relative' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ position: 'relative', flexShrink: 0 }}>
                 <HPAvatar 
                   name={user.name} 
                   size={56} 
@@ -560,22 +606,24 @@ export default function HomeScreen({ openModal }: any) {
                   levelProgress={levelProgress} 
                 />
               </div>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ ...HP_TEXT.h, fontSize: 20 }}>{user.name.split(' ')[0]}</div>
+              <div className="hp-profile-name-group">
+                <div style={{ ...HP_TEXT.h, fontSize: 18, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {user.name.split(' ')[0]}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                   <div style={{ 
                     background: '#FF6B35', color: '#fff', fontSize: 10, fontWeight: 900, 
-                    padding: '3px 10px', borderRadius: 100, letterSpacing: 0.5 
+                    padding: '2px 8px', borderRadius: 100, letterSpacing: 0.5 
                   }}>
-                    Level {user.level}
+                    Lv.{user.level}
                   </div>
-                </div>
-                <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 700, fontSize: 12, marginTop: 2 }}>
-                  Class {user.rank || 'E'}
+                  <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 800, fontSize: 11 }}>
+                    Class {user.rank || 'E'}
+                  </div>
                 </div>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0, marginLeft: 12 }}>
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
@@ -678,12 +726,21 @@ export default function HomeScreen({ openModal }: any) {
 
         {/* HERO — Emotional check-in */}
         <div style={{ marginTop: 16 }}>
-          <EmotionalHero 
-            state={state} 
-            moodObj={moodObj} 
-            energyObj={energyObj} 
-            onOpenCheckIn={() => openModal('checkin')}
-          />
+          {(() => {
+            const now = new Date();
+            const currentMins = now.getHours() * 60 + now.getMinutes();
+            const isMidDayWindow = currentMins >= (11 * 60 + 30) && currentMins <= (13 * 60 + 30);
+            return (
+              <EmotionalHero 
+                state={state} 
+                moodObj={moodObj} 
+                energyObj={energyObj} 
+                onOpenCheckIn={() => openModal('checkin')}
+                showMidDay={isMidDayWindow}
+                onOpenMidDay={() => openModal('work_checkin')}
+              />
+            );
+          })()}
         </div>
 
         {/* Mindful Breathing Reset Card */}
@@ -706,7 +763,7 @@ export default function HomeScreen({ openModal }: any) {
               }}>
                 🧘‍♂️
               </div>
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, minWidth: 240 }}>
                 <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.ink }}>
                   Butuh Jeda Sejenak?
                 </div>
@@ -716,7 +773,7 @@ export default function HomeScreen({ openModal }: any) {
               </div>
               <button 
                 onClick={() => openModal('pause')}
-                className="hp-tap"
+                className="hp-tap hp-btn-mobile-full"
                 style={{
                   padding: '10px 16px', borderRadius: 12, border: 'none',
                   background: HP_TOKENS.sage, color: '#F4F7F9',
@@ -898,7 +955,7 @@ export default function HomeScreen({ openModal }: any) {
               </button>
             </div>
 
-            {!selectedHabitDay.isToday && (
+            {!selectedHabitDay.isToday && !selectedHabitDay.done && (
               <div style={{
                 background: HP_TOKENS.yellowSoft, padding: 12, borderRadius: 12, marginBottom: 16,
                 border: `1px solid ${HP_TOKENS.yellow}`, display: 'flex', gap: 10, alignItems: 'flex-start'
@@ -910,49 +967,78 @@ export default function HomeScreen({ openModal }: any) {
               </div>
             )}
 
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.inkMute, display: 'block', marginBottom: 8 }}>
-                Catatan Harian (Opsional)
-              </label>
-              <textarea 
-                value={habitNote}
-                onChange={(e) => setHabitNote(e.target.value)}
-                placeholder="Ada yang ingin dicatat untuk sesi ini?"
-                style={{
-                  width: '100%', padding: 12, borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
-                  background: HP_TOKENS.card, color: HP_TOKENS.ink, fontFamily: HP_FONT, fontSize: 14, minHeight: 80, resize: 'vertical'
-                }}
-              />
-              
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
-                {/* User requested to remove the default follow-up dummy tags */}
-              </div>
-            </div>
+            {selectedHabitDay.done ? (() => {
+              const targetDateStr = selectedHabitDay.date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+              const log = state.logbook?.find((l: any) => 
+                l.type === 'habit_completion' && 
+                l.habitName === selectedHabitDay.name && 
+                l.date === targetDateStr && 
+                l.content !== 'Belum Selesai'
+              );
+              let pastNote = "";
+              if (log) {
+                try {
+                  const meta = JSON.parse(log.metadata_json || "{}");
+                  if (meta.notes) pastNote = meta.notes;
+                } catch (e) {}
+                if (!pastNote && log.content !== 'Selesai') pastNote = log.content;
+              }
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <button 
-                onClick={() => saveHabitDay(true)}
-                className="hp-tap"
-                style={{
-                  padding: '16px', borderRadius: 14, border: 'none',
-                  background: HP_TOKENS.yellow, color: HP_TOKENS.ink,
-                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer'
-                }}
-              >
-                Tandai Selesai
-              </button>
-              <button 
-                onClick={() => saveHabitDay(false)}
-                className="hp-tap"
-                style={{
-                  padding: '16px', borderRadius: 14, border: 'none',
-                  background: HP_TOKENS.lineSoft, color: HP_TOKENS.inkMute,
-                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer'
-                }}
-              >
-                Belum Selesai
-              </button>
-            </div>
+              return (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ padding: 16, background: HP_TOKENS.yellowSoft, borderRadius: 16, border: `1.5px solid ${HP_TOKENS.yellow}` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                      <HPGlyph name="check" size={16} color={HP_TOKENS.ink} stroke={3} />
+                      <span style={{ ...HP_TEXT.h, fontSize: 15 }}>Selesai</span>
+                    </div>
+                    <div style={{ ...HP_TEXT.body, fontSize: 14, whiteSpace: 'pre-wrap' }}>
+                      {pastNote || "Tidak ada catatan untuk sesi ini."}
+                    </div>
+                  </div>
+                  <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end' }}>
+                    <button 
+                      onClick={() => {
+                        if (window.confirm("Yakin ingin membatalkan status selesai untuk hari ini?")) {
+                          saveHabitDay(false);
+                        }
+                      }}
+                      className="hp-tap"
+                      style={{ background: 'transparent', color: HP_TOKENS.coral, border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer' }}
+                    >
+                      Batalkan Status Selesai
+                    </button>
+                  </div>
+                </div>
+              );
+            })() : (
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.inkMute, display: 'block', marginBottom: 8 }}>
+                  Catatan Harian (Opsional)
+                </label>
+                <textarea 
+                  value={habitNote}
+                  onChange={(e) => setHabitNote(e.target.value)}
+                  placeholder="Ada yang ingin dicatat untuk sesi ini? (Sesi curhat / progres)"
+                  style={{
+                    width: '100%', padding: 12, borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
+                    background: HP_TOKENS.card, color: HP_TOKENS.ink, fontFamily: HP_FONT, fontSize: 14, minHeight: 80, resize: 'vertical'
+                  }}
+                />
+                <div style={{ marginTop: 16 }}>
+                  <button 
+                    onClick={() => saveHabitDay(true)}
+                    className="hp-tap"
+                    style={{
+                      width: '100%', padding: '16px', borderRadius: 14, border: 'none',
+                      background: HP_TOKENS.yellow, color: HP_TOKENS.ink,
+                      fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer'
+                    }}
+                  >
+                    Tandai Selesai
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

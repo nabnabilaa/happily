@@ -73,7 +73,7 @@ export default function Modal({ children, onClose, title, dark, noPadding }: Mod
             </button>
           </div>
         )}
-        <div style={{ flex: 1, overflowY: 'auto', padding: noPadding ? 0 : '0 20px 100px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: noPadding ? 0 : '0 20px 32px' }}>
           {children}
         </div>
       </div>

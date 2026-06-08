@@ -66,165 +66,192 @@ export default function DailyGreetingModal({ userName, streak, level, onClose, o
     <div
       style={{
         position: 'fixed', inset: 0, zIndex: 1100,
-        background: 'rgba(26,26,46,0.5)',
-        backdropFilter: 'blur(6px)',
-        WebkitBackdropFilter: 'blur(6px)',
+        background: 'rgba(5, 5, 10, 0.65)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: 20,
-        animation: phase === 'closing' ? 'dgFadeOut 0.35s ease forwards' : 'hpFadeIn 0.3s ease',
+        padding: 24,
+        animation: phase === 'closing' ? 'dgFadeOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'hpFadeIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)',
       }}
       onClick={handleClose}
     >
       <style>{`
         @keyframes dgCardIn {
-          from { transform: translateY(20px) scale(0.95); opacity: 0; }
-          to   { transform: translateY(0) scale(1); opacity: 1; }
+          0%   { transform: translateY(40px) scale(0.9) rotateX(10deg); opacity: 0; }
+          100% { transform: translateY(0) scale(1) rotateX(0deg); opacity: 1; }
         }
         @keyframes dgCardOut {
-          from { transform: translateY(0) scale(1); opacity: 1; }
-          to   { transform: translateY(20px) scale(0.95); opacity: 0; }
+          0%   { transform: translateY(0) scale(1); opacity: 1; }
+          100% { transform: translateY(30px) scale(0.95); opacity: 0; }
         }
         @keyframes dgFadeOut {
-          from { opacity: 1; }
-          to   { opacity: 0; }
+          from { opacity: 1; backdrop-filter: blur(12px); }
+          to   { opacity: 0; backdrop-filter: blur(0px); }
         }
-        @keyframes dgBubbleIn {
-          0% { transform: translateX(-50%) translateY(10px) scale(0.9); opacity: 0; }
-          60% { transform: translateX(-50%) translateY(-2px) scale(1.05); }
-          100% { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; }
+        @keyframes glowPulse {
+          0%, 100% { opacity: 0.5; transform: translateX(-50%) scale(1); }
+          50% { opacity: 0.8; transform: translateX(-50%) scale(1.1); }
         }
         .hp-tap-btn {
-          transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.15s;
+          transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
         .hp-tap-btn:active {
-          transform: scale(0.96);
+          transform: scale(0.95);
+        }
+        .hp-tap-btn:hover {
+          filter: brightness(1.1);
+        }
+        .dg-gradient-text {
+          background: linear-gradient(135deg, #FFBE0B 0%, #FF6B35 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
         }
       `}</style>
 
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          width: '100%', maxWidth: 380,
-          borderRadius: 28,
-          background: 'var(--hp-card)',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.06)',
-          overflow: 'hidden',
-          animation: phase === 'closing'
-            ? 'dgCardOut 0.35s ease forwards'
-            : 'dgCardIn 0.5s cubic-bezier(.32,.82,.26,1)',
+          width: '100%', maxWidth: 360,
+          borderRadius: 32,
+          background: 'linear-gradient(145deg, rgba(35, 35, 55, 0.9) 0%, rgba(20, 20, 35, 0.95) 100%)',
+          boxShadow: '0 30px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1), inset 0 0 20px rgba(255,255,255,0.02)',
+          border: '1px solid rgba(255,255,255,0.08)',
           position: 'relative',
+          padding: '48px 24px 32px',
+          animation: phase === 'closing'
+            ? 'dgCardOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards'
+            : 'dgCardIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',
         }}
       >
-        {/* Background glow yang lebih soft */}
+        {/* Glow Effects behind the card */}
         <div style={{
-          position: 'absolute', top: -50, left: '50%', transform: 'translateX(-50%)',
-          width: 250, height: 250, background: 'radial-gradient(circle, var(--hp-sage-soft) 0%, transparent 70%)',
-          pointerEvents: 'none', zIndex: 0, opacity: 0.8
+          position: 'absolute', top: '-20%', left: '50%',
+          width: 250, height: 250, borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(255,107,53,0.25) 0%, transparent 70%)',
+          pointerEvents: 'none', zIndex: 0,
+          animation: 'glowPulse 4s ease-in-out infinite'
         }} />
+        
+        {/* ── Peeking Buddy Mascot ────────────────────────────────────────── */}
+        <div style={{ 
+          position: 'absolute', top: -55, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 10, filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))'
+        }}>
+          <div style={{ animation: 'hpFloat 3.5s ease-in-out infinite' }}>
+            <BeeMascot mood={greeting.buddyMood as any} size={100} animated />
+          </div>
+        </div>
 
-        <div style={{ padding: '36px 24px 28px', position: 'relative', zIndex: 1, textAlign: 'center' }}>
+        <div style={{ position: 'relative', zIndex: 2, textAlign: 'center' }}>
           
-          <h2 style={{
-            fontFamily: HP_FONT_DISPLAY, fontSize: 26, fontWeight: 800,
-            color: 'var(--hp-ink)', lineHeight: 1.2, marginBottom: 6,
+          <h2 className="dg-gradient-text" style={{
+            fontFamily: HP_FONT_DISPLAY, fontSize: 28, fontWeight: 800,
+            lineHeight: 1.2, marginBottom: 8, letterSpacing: '-0.02em'
           }}>
-            Hai, {cleanName}! 👋
+            Hai, {cleanName}!
           </h2>
           <p style={{
-            fontSize: 14, color: 'var(--hp-ink-mute)', fontWeight: 600,
-            marginBottom: 36, lineHeight: 1.5
+            fontSize: 15, color: 'rgba(255,255,255,0.8)', fontWeight: 500,
+            marginBottom: 24, lineHeight: 1.5
           }}>
             {greeting.intro}
           </p>
 
-          {/* ── Speech Bubble (Normal Flow) ────────────────────────────────── */}
+          {/* ── Quote Box ─────────────────────────────────────────────────── */}
           <div style={{
-            background: 'var(--hp-ink)', padding: '16px 20px', borderRadius: 20,
-            boxShadow: 'var(--hp-shadow)', width: 'max-content', maxWidth: 280,
-            margin: '0 auto 16px', position: 'relative', zIndex: 10,
-            animation: 'dgBubbleIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both'
+            background: 'rgba(255,255,255,0.04)', borderRadius: 20,
+            padding: '16px 20px', marginBottom: 28,
+            border: '1px solid rgba(255,255,255,0.06)',
+            borderLeft: '4px solid #FFBE0B',
+            textAlign: 'left',
+            position: 'relative'
           }}>
-            <p style={{ fontSize: 13.5, fontWeight: 600, color: '#fff', lineHeight: 1.5, margin: 0 }}>
-              "{quote}"
-            </p>
-            {/* Segitiga pointer */}
-            <div style={{
-              position: 'absolute', bottom: -10, left: '50%', transform: 'translateX(-50%)',
-              borderLeft: '10px solid transparent', borderRight: '10px solid transparent',
-              borderTop: '10px solid var(--hp-ink)',
-            }} />
-          </div>
-
-          {/* ── Buddy ──────────────────────────────────────────────────────── */}
-          <div style={{ animation: 'hpFloat 3s ease-in-out infinite', marginBottom: 28 }}>
-            <BeeMascot mood={greeting.buddyMood as any} size={110} animated />
-          </div>
-
-          {/* ── Stats Row (Softer Colors) ─────────────────────────────────── */}
-          <div style={{
-            display: 'flex', gap: 12, marginBottom: 28,
-          }}>
-            {/* Streak - pakai warna lavender soft supaya lebih elegan */}
-            <div style={{
-              flex: 1, padding: '12px 14px', borderRadius: 16,
-              background: 'var(--hp-lavender-wash)',
-              border: '1px solid var(--hp-lavender-soft)',
-              textAlign: 'center',
+            <span style={{ 
+              position: 'absolute', top: -12, left: 16, fontSize: 24, 
+              color: '#FFBE0B', opacity: 0.8, fontFamily: 'serif', fontWeight: 900,
+              background: 'linear-gradient(145deg, rgba(35, 35, 55, 1) 0%, rgba(20, 20, 35, 1) 100%)',
+              padding: '0 4px', lineHeight: 1
             }}>
-              <div style={{ fontSize: 20, marginBottom: 4 }}>🔥</div>
-              <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--hp-ink)', fontFamily: HP_FONT_DISPLAY }}>
+              "
+            </span>
+            <p style={{ 
+              fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.9)', 
+              lineHeight: 1.6, margin: 0, fontStyle: 'italic'
+            }}>
+              {quote}
+            </p>
+          </div>
+
+          {/* ── Stats Row ─────────────────────────────────────────────────── */}
+          <div style={{
+            display: 'flex', gap: 12, marginBottom: 32,
+          }}>
+            {/* Streak */}
+            <div style={{
+              flex: 1, padding: '14px 12px', borderRadius: 20,
+              background: 'linear-gradient(145deg, rgba(255,107,53,0.1) 0%, rgba(255,107,53,0.02) 100%)',
+              border: '1px solid rgba(255,107,53,0.2)',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)',
+              display: 'flex', flexDirection: 'column', alignItems: 'center'
+            }}>
+              <div style={{ fontSize: 22, marginBottom: 6, filter: 'drop-shadow(0 2px 4px rgba(255,107,53,0.4))' }}>🔥</div>
+              <div style={{ fontSize: 22, fontWeight: 900, color: '#fff', fontFamily: HP_FONT_DISPLAY, lineHeight: 1 }}>
                 {streak}
               </div>
-              <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--hp-ink-mute)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                Hari streak
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 1, marginTop: 4 }}>
+                Streak
               </div>
             </div>
 
-            {/* Level - pakai warna sage soft */}
+            {/* Level */}
             <div style={{
-              flex: 1, padding: '12px 14px', borderRadius: 16,
-              background: 'var(--hp-sage-wash)',
-              border: '1px solid var(--hp-sage-soft)',
-              textAlign: 'center',
+              flex: 1, padding: '14px 12px', borderRadius: 20,
+              background: 'linear-gradient(145deg, rgba(46,196,182,0.1) 0%, rgba(46,196,182,0.02) 100%)',
+              border: '1px solid rgba(46,196,182,0.2)',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)',
+              display: 'flex', flexDirection: 'column', alignItems: 'center'
             }}>
-              <div style={{ fontSize: 20, marginBottom: 4 }}>⭐</div>
-              <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--hp-ink)', fontFamily: HP_FONT_DISPLAY }}>
+              <div style={{ fontSize: 22, marginBottom: 6, filter: 'drop-shadow(0 2px 4px rgba(46,196,182,0.4))' }}>⭐</div>
+              <div style={{ fontSize: 22, fontWeight: 900, color: '#fff', fontFamily: HP_FONT_DISPLAY, lineHeight: 1 }}>
                 Lv.{level}
               </div>
-              <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--hp-ink-mute)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                Level kamu
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 1, marginTop: 4 }}>
+                Level
               </div>
             </div>
           </div>
 
           {/* ── Buttons ───────────────────────────────────────────────────── */}
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <button
               onClick={handleCheckIn}
               className="hp-tap-btn"
               style={{
-                flex: 2, padding: '16px', borderRadius: 100,
+                width: '100%', padding: '16px', borderRadius: 16,
                 border: 'none',
-                background: 'var(--hp-ink)', color: '#fff',
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 15,
+                background: 'linear-gradient(135deg, #FFBE0B 0%, #FF6B35 100%)',
+                color: '#fff',
+                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16,
                 cursor: 'pointer',
-                boxShadow: 'var(--hp-shadow-sm)',
+                boxShadow: '0 8px 20px rgba(255,107,53,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
               }}
             >
-              Check-in Mood 🌱
+              <span>Check-in Mood</span>
+              <span style={{ fontSize: 18 }}>🌱</span>
             </button>
             <button
               onClick={handleClose}
               className="hp-tap-btn"
               style={{
-                flex: 1, padding: '16px', borderRadius: 100,
-                border: '1.5px solid var(--hp-border)',
-                background: 'var(--hp-card)', color: 'var(--hp-ink-mute)',
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 15,
+                width: '100%', padding: '14px', borderRadius: 16,
+                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.6)',
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 15,
                 cursor: 'pointer',
               }}
             >
-              Nanti
+              Nanti Saja
             </button>
           </div>
 

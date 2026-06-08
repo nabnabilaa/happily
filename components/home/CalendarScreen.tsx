@@ -464,7 +464,7 @@ export default function CalendarScreen({ openModal }: Props) {
             <input type="text" placeholder="Lokasi / Link meeting (opsional)" value={location} onChange={e => setLocation(e.target.value)} style={inputStyle} />
             <textarea placeholder="Catatan tambahan (opsional)" value={desc} onChange={e => setDesc(e.target.value)} style={{ ...inputStyle, minHeight: 60, resize: 'none' }} />
 
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div className="hp-form-row">
               <div style={{ flex: 1 }}>
                 <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 4 }}>TANGGAL</div>
                 <input type="date" value={date} onChange={e => setDate(e.target.value)} style={inputStyle} />
@@ -479,7 +479,7 @@ export default function CalendarScreen({ openModal }: Props) {
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div className="hp-form-row" style={{ marginTop: 4 }}>
               <div style={{ flex: 1 }}>
                 <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 4 }}>ULANGI</div>
                 <select value={recurrence} onChange={e => setRecurrence(e.target.value)} style={inputStyle}>
@@ -696,21 +696,28 @@ export default function CalendarScreen({ openModal }: Props) {
             const start = new Date(ev.startTime.replace(' ', 'T'));
             const end = new Date(ev.endTime.replace(' ', 'T'));
             const isOwner = String(ev.creatorId) === String(user?.id);
+            const isPast = end < new Date();
             return (
-              <HPCard key={ev.id} padding={0} style={{ overflow: 'hidden', border: `1.5px solid ${ev.color || HP_TOKENS.blue}20` }}>
+              <HPCard key={ev.id} padding={0} style={{ 
+                overflow: 'hidden', border: `1.5px solid ${ev.color || HP_TOKENS.blue}20`,
+                opacity: isPast ? 0.6 : 1,
+                filter: isPast ? 'grayscale(0.8)' : 'none'
+              }}>
                 <div style={{ display: 'flex' }}>
                   <div style={{ width: 4, background: ev.color || HP_TOKENS.blue, flexShrink: 0 }} />
                   <div style={{ flex: 1, padding: 16 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div style={{ flex: 1 }}>
-                        <div style={{ ...HP_TEXT.h, fontSize: 15 }}>{ev.title}</div>
+                        <div style={{ ...HP_TEXT.h, fontSize: 15, textDecoration: isPast ? 'line-through' : 'none' }}>{ev.title}</div>
                         <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
                           <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 800 }}>
                             {start.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} - {end.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                           </div>
-                          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>
-                            🔔 {ev.notificationOffsetMinutes}m sebelum
-                          </div>
+                          {!isPast && (
+                            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>
+                              🔔 {ev.notificationOffsetMinutes}m sebelum
+                            </div>
+                          )}
                           {ev.recurrence && (
                             <div style={{
                               ...HP_TEXT.tiny, padding: '1px 6px', borderRadius: 4,
