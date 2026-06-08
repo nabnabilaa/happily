@@ -30,13 +30,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Flowbee — Flow into Focus",
+  title: "Flowbuddy — Flow into Focus",
   description: "Human-Centered Productivity Platform",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Flowbee",
+    title: "Flowbuddy",
   },
   formatDetection: {
     telephone: false,

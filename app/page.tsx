@@ -107,6 +107,7 @@ const MascotGuideModal = safeDynamic(() => import("@/components/modals/MascotGui
 import HPToastContainer from "@/components/ui/HPToastContainer";
 import ConfirmLogoutModal from "@/components/modals/ConfirmLogoutModal";
 import NotificationBanner from "@/components/pwa/NotificationBanner";
+import DailyGreetingModal, { needsDailyGreeting, markDailyGreeted } from "@/components/modals/DailyGreetingModal";
 
 
 // ─── Role pill badge colors (Gercep Palette) ────────────────────────────────
@@ -122,6 +123,7 @@ function AppContent() {
   const [modal, setModal] = useState<{ name: string; props?: any } | null>(null);
   const [coachPos, setCoachPos] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [showDailyGreeting, setShowDailyGreeting] = useState(false);
   const dragRef = React.useRef<{ startX: number, startY: number, initialX: number, initialY: number } | null>(null);
 
   const openModal  = useCallback((name: string, props?: any) => setModal({ name, props }), []);
@@ -171,6 +173,19 @@ function AppContent() {
       }
     }
   }, [user, state?.onboarded, openModal]);
+
+  // ── Daily Greeting (once per day for onboarded users) ─────────────────────
+  useEffect(() => {
+    if (!user || !state?.onboarded || loading) return;
+    // Small delay so the app settles before showing greeting
+    const timer = setTimeout(() => {
+      if (needsDailyGreeting()) {
+        setShowDailyGreeting(true);
+        markDailyGreeted();
+      }
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [user, state?.onboarded, loading]);
 
   // ── Loading splash ─────────────────────────────────────────────────────────
   const [quote, setQuote] = useState("Mempersiapkan hari yang produktif... ✨");
@@ -558,6 +573,17 @@ function AppContent() {
       {modal?.name === 'announcement'     && <AnnouncementModal onClose={closeModal} />}
       {modal?.name === 'mascot_guide'     && <MascotGuideModal onClose={closeModal} />}
       {modal?.name === 'confirm_logout'   && <ConfirmLogoutModal onClose={closeModal} onConfirm={logout} />}
+
+      {/* Daily Greeting Modal */}
+      {showDailyGreeting && (
+        <DailyGreetingModal
+          userName={user?.name || 'Sobat'}
+          streak={user?.streak || 0}
+          level={user?.level || 1}
+          onClose={() => setShowDailyGreeting(false)}
+          onOpenCheckIn={() => openModal('checkin')}
+        />
+      )}
 
       <HPToastContainer />
     </div>
