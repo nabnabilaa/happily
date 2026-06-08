@@ -246,7 +246,7 @@ export default function CalendarScreen({ openModal }: Props) {
       // Create a temporary event to generate Google Calendar URL
       const tempEv: CalEvent = {
         id: "temp",
-        creatorId: user?.id,
+        creatorId: user?.id || "",
         title,
         description: desc,
         startTime: `${date} ${timeStart}:00`,
