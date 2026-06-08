@@ -42,7 +42,11 @@ export async function POST(request: Request) {
     const lmsData = await lmsRes.json();
 
     if (!lmsRes.ok) {
-      return NextResponse.json({ error: lmsData.error || "Gagal verifikasi Google dari Maxy LMS" }, { status: lmsRes.status });
+      let errStr = lmsData.error || "Gagal verifikasi Google dari Maxy LMS";
+      if (errStr.includes("Maxy") || errStr.includes("LMS") || errStr.includes("Akun tidak ditemukan")) {
+        errStr = "Akun tidak ditemukan. Silakan coba daftar menggunakan Google.";
+      }
+      return NextResponse.json({ error: errStr }, { status: lmsRes.status });
     }
 
     const lmsUser = lmsData.user;

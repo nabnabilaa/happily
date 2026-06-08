@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     const logsRes = await db.execute({
       sql: `SELECT check_in_at, check_out_at, duration_minutes, status, check_in_type
             FROM attendance 
-            WHERE user_id = ? AND MONTH(check_in_at) = ? AND YEAR(check_in_at) = ?
+            WHERE user_id = ? AND MONTH(CONVERT_TZ(check_in_at, '+00:00', '+07:00')) = ? AND YEAR(CONVERT_TZ(check_in_at, '+00:00', '+07:00')) = ?
             ORDER BY check_in_at ASC`,
       args: [viewUserId, Number(month), Number(year)]
     });
@@ -43,17 +43,31 @@ export async function GET(request: Request) {
     const monthNum = Number(month);
     const yearNum = Number(year);
     let workingDays = 0;
+    let passedWorkingDays = 0;
+    
+    // For comparing past days, we use local time approx
+    const now = new Date();
+    // Offset for UTC+7 (WIB)
+    now.setHours(now.getHours() + 7);
+    const currentMonth = now.getUTCMonth() + 1;
+    const currentYear = now.getUTCFullYear();
+    const currentDay = now.getUTCDate();
+
     const daysInMonth = new Date(yearNum, monthNum, 0).getDate();
     for (let d = 1; d <= daysInMonth; d++) {
       const day = new Date(yearNum, monthNum - 1, d).getDay();
-      if (day !== 0 && day !== 6) workingDays++;
+      const isPastOrToday = (yearNum < currentYear) || (yearNum === currentYear && monthNum < currentMonth) || (yearNum === currentYear && monthNum === currentMonth && d <= currentDay);
+      if (day !== 0 && day !== 6) {
+        workingDays++;
+        if (isPastOrToday) passedWorkingDays++;
+      }
     }
 
     // Today's status
     const todayRes = await db.execute({
       sql: `SELECT id, check_in_at, check_out_at, duration_minutes, check_in_type, mood
             FROM attendance 
-            WHERE user_id = ? AND DATE(check_in_at) = CURDATE()
+            WHERE user_id = ? AND DATE(CONVERT_TZ(check_in_at, '+00:00', '+07:00')) = DATE(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '+07:00'))
             ORDER BY check_in_at DESC LIMIT 1`,
       args: [viewUserId]
     });
@@ -71,7 +85,7 @@ export async function GET(request: Request) {
         presentDays,
         lateDays,
         earlyLeaveDays,
-        alphaDays: Math.max(0, workingDays - totalDays),
+        alphaDays: Math.max(0, passedWorkingDays - totalDays),
         totalMinutes,
         avgMinutesPerDay: avgMinutes,
         avgHoursFormatted: `${Math.floor(avgMinutes / 60)}j ${avgMinutes % 60}m`,
@@ -84,8 +98,8 @@ export async function GET(request: Request) {
       },
       today: todayRecord ? {
         status: todayStatus,
-        checkInAt: (todayRecord as any).check_in_at,
-        checkOutAt: (todayRecord as any).check_out_at,
+        checkInAt: typeof (todayRecord as any).check_in_at === 'string' && !(todayRecord as any).check_in_at.endsWith('Z') ? (todayRecord as any).check_in_at.replace(' ', 'T') + 'Z' : (todayRecord as any).check_in_at,
+        checkOutAt: (todayRecord as any).check_out_at ? (typeof (todayRecord as any).check_out_at === 'string' && !(todayRecord as any).check_out_at.endsWith('Z') ? (todayRecord as any).check_out_at.replace(' ', 'T') + 'Z' : (todayRecord as any).check_out_at) : null,
         duration: (todayRecord as any).duration_minutes,
         type: (todayRecord as any).check_in_type,
         mood: (todayRecord as any).mood,

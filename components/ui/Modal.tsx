@@ -35,15 +35,15 @@ export default function Modal({ children, onClose, title, dark, noPadding }: Mod
         className="hp-modal-content"
         onClick={e => e.stopPropagation()} 
         style={{
-          background: dark ? HP_TOKENS.ink : HP_TOKENS.paper,
+          background: dark ? '#1D3557' : HP_TOKENS.paper,
         }}
       >
-        <div className="hp-modal-handle" style={{ padding: '10px 16px 4px', display: 'flex', justifyContent: 'center' }}>
+        <div className="hp-modal-handle" style={{ padding: '12px 16px 4px', display: 'flex', justifyContent: 'center' }}>
           <div style={{ 
-            width: 36, 
-            height: 4, 
-            borderRadius: 2, 
-            background: dark ? 'rgba(255,255,255,0.2)' : HP_TOKENS.inkFade 
+            width: 40, 
+            height: 5, 
+            borderRadius: 100, 
+            background: dark ? 'rgba(255,255,255,0.2)' : 'var(--hp-border)' 
           }}/>
         </div>
         {title && (
@@ -73,7 +73,7 @@ export default function Modal({ children, onClose, title, dark, noPadding }: Mod
             </button>
           </div>
         )}
-        <div style={{ flex: 1, overflowY: 'auto', padding: noPadding ? 0 : '0 20px 30px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: noPadding ? 0 : '0 20px 100px' }}>
           {children}
         </div>
       </div>

@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     // Build date filter
     let dateFilter = "";
     if (month && year) {
-      dateFilter = ` AND MONTH(a.check_in_at) = ? AND YEAR(a.check_in_at) = ?`;
+      dateFilter = ` AND MONTH(CONVERT_TZ(a.check_in_at, '+00:00', '+07:00')) = ? AND YEAR(CONVERT_TZ(a.check_in_at, '+00:00', '+07:00')) = ?`;
     }
 
     if (role === 'hr' || role === 'manager') {

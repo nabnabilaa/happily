@@ -8,7 +8,7 @@ const globalForDb = globalThis as unknown as {
 };
 
 const poolOptions: mysql.PoolOptions = process.env.MYSQL_URI 
-  ? { uri: process.env.MYSQL_URI, waitForConnections: true, connectionLimit: 5, queueLimit: 0 }
+  ? { uri: process.env.MYSQL_URI, waitForConnections: true, connectionLimit: 5, queueLimit: 0, enableKeepAlive: true, keepAliveInitialDelay: 10000 }
   : {
       host: process.env.MYSQL_HOST || 'localhost',
       user: process.env.MYSQL_USER || 'root',
@@ -16,7 +16,9 @@ const poolOptions: mysql.PoolOptions = process.env.MYSQL_URI
       database: process.env.MYSQL_DATABASE || 'happily_productive',
       waitForConnections: true,
       connectionLimit: 5,
-      queueLimit: 0
+      queueLimit: 0,
+      enableKeepAlive: true,
+      keepAliveInitialDelay: 10000
     };
 
 const pool = globalForDb.mysqlPool ?? mysql.createPool(poolOptions);

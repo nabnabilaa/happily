@@ -103,16 +103,17 @@ const StatusInputModal = safeDynamic(() => import("@/components/modals/StatusInp
 const NewChatModal = safeDynamic(() => import("@/components/modals/NewChatModal"));
 const AppreciateModal = safeDynamic(() => import("@/components/modals/AppreciateModal"));
 const AnnouncementModal = safeDynamic(() => import("@/components/modals/AnnouncementModal"));
+const MascotGuideModal = safeDynamic(() => import("@/components/modals/MascotGuideModal"));
 import HPToastContainer from "@/components/ui/HPToastContainer";
 import ConfirmLogoutModal from "@/components/modals/ConfirmLogoutModal";
 import NotificationBanner from "@/components/pwa/NotificationBanner";
 
 
-// ─── Role pill badge colors ──────────────────────────────────────────────────
+// ─── Role pill badge colors (Gercep Palette) ────────────────────────────────
 const ROLE_META: Record<UserRole, { label: string; color: string; bg: string; glyph: string }> = {
-  employee: { label: 'Employee', color: HP_TOKENS.yellow, bg: HP_TOKENS.yellowSoft, glyph: 'target' },
-  manager:  { label: 'Manager',  color: HP_TOKENS.blue, bg: HP_TOKENS.blueSoft,  glyph: 'people' },
-  hr:       { label: 'HR',       color: '#7B6BB5',       bg: '#EDE8F5',           glyph: 'medal' },
+  employee: { label: 'Employee', color: '#FF6B35', bg: 'rgba(255,107,53,0.1)', glyph: 'target' },
+  manager:  { label: 'Manager',  color: '#1D3557', bg: 'rgba(29,53,87,0.08)',  glyph: 'people' },
+  hr:       { label: 'HR',       color: '#7B6BB5', bg: '#EDE8F5',              glyph: 'medal' },
 };
 
 function AppContent() {
@@ -132,6 +133,44 @@ function AppContent() {
     window.addEventListener('hp_open_reflect', handleOpenReflect);
     return () => window.removeEventListener('hp_open_reflect', handleOpenReflect);
   }, [openModal]);
+
+  // Handle direct actions from URL parameters
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const action = urlParams.get('action');
+    const autoLoginId = urlParams.get('autoLoginId');
+
+    // Auto-login from QR code
+    if (autoLoginId) {
+      const existingUserId = localStorage.getItem("hp_user_id");
+      if (existingUserId !== autoLoginId) {
+        localStorage.setItem("hp_user_id", autoLoginId);
+        // Clean up the URL but keep the action so it triggers the modal after load
+        window.location.href = `/?action=${action || 'focus'}`;
+        return;
+      } else {
+        // Already logged in as the same user. Just clean the URL parameter.
+        const url = new URL(window.location.href);
+        url.searchParams.delete('autoLoginId');
+        window.history.replaceState({}, '', url);
+      }
+    }
+
+    if (user && state?.onboarded) {
+      if (action === 'focus') {
+        // Delay to ensure the UI is fully mounted before popping modal
+        setTimeout(() => openModal('focus'), 500);
+        
+        // Remove param so it doesn't trigger again on refresh
+        const url = new URL(window.location.href);
+        url.searchParams.delete('action');
+        url.searchParams.delete('autoLoginId');
+        window.history.replaceState({}, '', url);
+      }
+    }
+  }, [user, state?.onboarded, openModal]);
 
   // ── Loading splash ─────────────────────────────────────────────────────────
   const [quote, setQuote] = useState("Mempersiapkan hari yang produktif... ✨");
@@ -159,30 +198,62 @@ function AppContent() {
         alignItems: 'center', 
         justifyContent: 'center', 
         background: 'var(--hp-paper)',
-        gap: 24,
-        fontFamily: HP_FONT
+        gap: 28,
+        fontFamily: HP_FONT,
+        position: 'relative',
+        overflow: 'hidden',
       }}>
-        <div style={{ animation: 'hpPulse 2s infinite ease-in-out' }}>
+        {/* Ambient background glows (using radial-gradient to prevent clipping artifacts) */}
+        <div style={{ position: 'absolute', width: '70vw', height: '70vw', background: 'radial-gradient(circle, rgba(255,107,53,0.1) 0%, rgba(255,107,53,0) 65%)', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', pointerEvents: 'none', zIndex: 0 }} />
+        <div style={{ position: 'absolute', width: '50vw', height: '50vw', background: 'radial-gradient(circle, rgba(255,212,59,0.08) 0%, rgba(255,212,59,0) 65%)', top: '0%', left: '0%', transform: 'translate(-30%, -30%)', pointerEvents: 'none', zIndex: 0 }} />
+        <div style={{ position: 'absolute', width: '80vw', height: '80vw', background: 'radial-gradient(circle, rgba(74,124,89,0.06) 0%, rgba(74,124,89,0) 60%)', bottom: '0%', right: '0%', transform: 'translate(20%, 20%)', pointerEvents: 'none', zIndex: 0 }} />
+
+        {/* Buddy Mascot */}
+        <div style={{ animation: 'hpFloat 2.8s ease-in-out infinite', zIndex: 2 }}>
           <BeeMascot mood="happy" size={100} showSpeech="" />
         </div>
+
+        {/* Logo */}
+        <div style={{ zIndex: 2, textAlign: 'center' }}>
+          <div style={{ 
+            fontFamily: 'var(--hp-font-display)', fontSize: 42, fontWeight: 700, 
+            color: 'var(--hp-ink)', letterSpacing: -1, animation: 'hpFadeUp 0.5s ease both' 
+          }}>
+            Happi<span style={{ color: 'var(--hp-primary)' }}>ly</span> ✨
+          </div>
+          <div style={{ 
+            fontSize: 14, color: 'var(--hp-ink-mute)', letterSpacing: 0.5, 
+            marginTop: 6, fontWeight: 600, animation: 'hpFadeUp 0.5s 0.15s ease both' 
+          }}>
+            Work Happily — Kerja Lebih Cerdas
+          </div>
+        </div>
+
+        {/* Rotating quote */}
         <div style={{ 
-          fontSize: 15, 
+          fontSize: 14, 
           fontWeight: 700, 
-          color: 'var(--hp-ink-mute)',
+          color: 'var(--hp-ink-fade)',
           textAlign: 'center',
-          maxWidth: 240,
-          lineHeight: 1.5,
-          animation: 'hpFadeIn 0.8s ease-out'
+          maxWidth: 260,
+          lineHeight: 1.55,
+          zIndex: 2,
+          animation: 'hpFadeUp 0.5s 0.3s ease both',
         }}>
           {quote}
         </div>
 
-        <style jsx global>{`
-          @keyframes hpPulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 0.8; }
-          }
-        `}</style>
+        {/* Loading bar */}
+        <div style={{ 
+          width: 48, height: 4, background: 'var(--hp-line)', 
+          borderRadius: 100, overflow: 'hidden', zIndex: 2,
+          animation: 'hpFadeUp 0.5s 0.4s ease both',
+        }}>
+          <div style={{ 
+            height: '100%', background: 'var(--hp-primary)', borderRadius: 100, 
+            animation: 'hpSplashBar 2s ease-in-out infinite',
+          }} />
+        </div>
       </div>
     );
   }
@@ -412,25 +483,25 @@ function AppContent() {
             style={{
               position: 'fixed', 
               right: 24 - coachPos.x, 
-              bottom: 106 - coachPos.y, // Keep safe distance from bottom nav on mobile
-              zIndex: 100, // High z-index to be above everything
+              bottom: 106 - coachPos.y,
+              zIndex: 100,
               width: 56, height: 56, borderRadius: 28, border: 'none',
-              background: currentRole === 'manager' ? HP_TOKENS.blue :
+              background: currentRole === 'manager' ? '#1D3557' :
                          currentRole === 'hr' ? '#7B6BB5' :
-                         HP_TOKENS.yellow,
+                         '#FF6B35',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: isDragging ? 'grabbing' : 'pointer',
-              touchAction: 'none', // Prevent scrolling while dragging
+              touchAction: 'none',
               boxShadow: `0 8px 24px ${
-                currentRole === 'manager' ? 'rgba(59,111,160,0.4)' :
+                currentRole === 'manager' ? 'rgba(29,53,87,0.45)' :
                 currentRole === 'hr' ? 'rgba(123,107,181,0.4)' :
-                'rgba(253,185,19,0.4)'
+                'rgba(255,107,53,0.45)'
               }`,
               transition: 'transform 0.1s ease-out',
               transform: isDragging ? 'scale(1.05)' : 'scale(1)',
             }}
           >
-            <HPGlyph name="sparkle" size={26} color={currentRole === 'employee' ? HP_TOKENS.ink : "#fff"} />
+            <HPGlyph name="sparkle" size={26} color="#fff" />
         </button>
       </div>
 
@@ -453,7 +524,7 @@ function AppContent() {
       {modal?.name === 'learning_detail'  && <LearningDetailModal onClose={closeModal} />}
       {modal?.name === 'manage_programs'  && <ManageProgramsModal onClose={closeModal} />}
       {modal?.name === 'all_rewards'      && <AllRewardsModal onClose={closeModal} />}
-      {modal?.name === 'logbook'          && <LogbookModal onClose={closeModal} />}
+      {modal?.name === 'logbook'          && <LogbookModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'system_guide'     && <SystemGuideModal onClose={closeModal} />}
       {modal?.name === 'profile_editor'   && <ProfileEditorModal onClose={closeModal} />}
       {modal?.name === 'manage_surveys'   && <ManageSurveysModal onClose={closeModal} openModal={openModal} {...modal.props} />}
@@ -485,6 +556,7 @@ function AppContent() {
       }} />}
       {modal?.name === 'appreciate'       && <AppreciateModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'announcement'     && <AnnouncementModal onClose={closeModal} />}
+      {modal?.name === 'mascot_guide'     && <MascotGuideModal onClose={closeModal} />}
       {modal?.name === 'confirm_logout'   && <ConfirmLogoutModal onClose={closeModal} onConfirm={logout} />}
 
       <HPToastContainer />

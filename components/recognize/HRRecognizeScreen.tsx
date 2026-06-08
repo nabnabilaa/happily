@@ -58,87 +58,36 @@ export default function HRRecognizeScreen({ openModal }: Props) {
     <div style={{ padding: '0 16px 120px', fontFamily: HP_FONT }}>
       <ScreenHeader title="Rewards" subtitle="Tukarkan poin atau pantau wishlist kamu" />
 
-      {/* Gamified Hero Banner */}
-      <HPCard 
-        style={{ 
-          background: `linear-gradient(135deg, ${HP_TOKENS.primaryLight}, ${HP_TOKENS.primary})`,
-          border: 'none', 
-          marginBottom: 24,
-          position: 'relative',
-          overflow: 'hidden'
-        }} 
-        padding={24}
-      >
-        <div style={{ position: 'absolute', right: -20, top: -40, width: 150, height: 150, background: 'rgba(255,255,255,0.1)', borderRadius: '50%', filter: 'blur(20px)' }} />
-        <div style={{ position: 'absolute', left: '20%', bottom: -30, width: 100, height: 100, background: 'rgba(255,255,255,0.1)', borderRadius: '50%', filter: 'blur(15px)' }} />
-
-        <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {wishlistReward ? (
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ ...HP_TEXT.display, color: '#fff', fontSize: 36, marginBottom: 4, textShadow: '0 4px 12px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{
-                    width: 32, height: 32, borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #FFEC99, #FFD43B)',
-                    border: '2px solid #F59F00',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: '0 4px 8px rgba(245, 159, 0, 0.4)'
-                  }}>
-                    <HPGlyph name="star" size={16} color="#E67700" />
-                  </div>
-                  <div>
-                    {userCoins.toLocaleString()} <span style={{ fontSize: 18, fontWeight: 700, opacity: 0.9 }}>poin</span>
-                  </div>
-                </div>
-                <div style={{ ...HP_TEXT.body, color: '#fff', opacity: 0.9 }}>
-                  {userCoins >= wishlistReward.points 
-                    ? `Selamat! Poin kamu cukup untuk menukar ${wishlistReward.title}!` 
-                    : `${(wishlistReward.points - userCoins).toLocaleString()} poin lagi menuju wishlist-mu! 🔥`}
-                </div>
-              </div>
-              <div style={{ 
-                width: 60, height: 60, borderRadius: 20, background: 'rgba(255,255,255,0.2)', 
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 8px 16px rgba(0,0,0,0.1)', backdropFilter: 'blur(10px)'
-              }}>
-                <HPGlyph name="star" size={32} color="#FFD43B" />
-              </div>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ ...HP_TEXT.display, color: '#fff', fontSize: 36, marginBottom: 4, textShadow: '0 4px 12px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{
-                    width: 32, height: 32, borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #FFEC99, #FFD43B)',
-                    border: '2px solid #F59F00',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: '0 4px 8px rgba(245, 159, 0, 0.4)'
-                  }}>
-                    <HPGlyph name="star" size={16} color="#E67700" />
-                  </div>
-                  <div>
-                    {userCoins.toLocaleString()} <span style={{ fontSize: 18, fontWeight: 700, opacity: 0.9 }}>poin</span>
-                  </div>
-                </div>
-                <div style={{ ...HP_TEXT.body, color: '#fff', opacity: 0.9 }}>
-                  Kumpulkan terus poinmu dan jadikan reward favorit sebagai Wishlist! 🎁
-                </div>
-              </div>
-              <div style={{ 
-                width: 60, height: 60, borderRadius: 20, background: 'rgba(255,255,255,0.2)', 
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 8px 16px rgba(0,0,0,0.1)', backdropFilter: 'blur(10px)'
-              }}>
-                <HPGlyph name="trophy" size={32} color="#FFD43B" />
-              </div>
-            </div>
-          )}
+      {/* Points badge */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16,
+        padding: '24px 20px', borderRadius: 24,
+        background: `linear-gradient(135deg, ${HP_TOKENS.primary}, #E65A20)`,
+        boxShadow: '0 12px 32px rgba(255, 107, 53, 0.25)',
+        marginBottom: 24,
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        {/* Decorative elements */}
+        <div style={{ position: 'absolute', right: -20, top: -40, width: 120, height: 120, background: 'rgba(255,255,255,0.15)', borderRadius: '50%', filter: 'blur(20px)' }} />
+        
+        <div style={{ 
+          width: 64, height: 64, borderRadius: 20, background: 'rgba(255,255,255,0.2)', 
+          display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)',
+          boxShadow: '0 8px 16px rgba(0,0,0,0.1)', zIndex: 1
+        }}>
+          <span style={{ fontSize: 36 }}>🏆</span>
         </div>
-      </HPCard>
+        <div style={{ display: 'flex', flexDirection: 'column', zIndex: 1 }}>
+          <div style={{ ...HP_TEXT.tiny, color: 'rgba(255,255,255,0.9)', letterSpacing: 1, fontWeight: 800 }}>POIN BELANJA</div>
+          <div style={{ ...HP_TEXT.display, fontSize: 36, color: '#fff', textShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+            {userCoins.toLocaleString()} <span style={{ fontSize: 20, fontWeight: 800, color: 'rgba(255,255,255,0.9)' }}>poin</span>
+          </div>
+        </div>
+      </div>
 
       {/* Tukar Poin Section */}
-      <SectionHeader icon="trophy" label="Tukar Poin" action="Semua" onAction={() => openModal('all_rewards')} />
+      <SectionHeader icon="trophy" label="Tukar Poin" />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16, marginBottom: 24 }}>
         {(() => {
           const itemsPerPage = 6;

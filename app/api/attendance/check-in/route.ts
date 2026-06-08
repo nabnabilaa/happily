@@ -93,7 +93,7 @@ export async function POST(request: Request) {
     let streak = 1;
     try {
       const streakRes = await db.execute({
-        sql: `SELECT DISTINCT DATE(check_in_at) as d 
+        sql: `SELECT DISTINCT DATE(CONVERT_TZ(check_in_at, '+00:00', '+07:00')) as d 
               FROM attendance WHERE user_id = ? 
               ORDER BY d DESC LIMIT 60`,
         args: [userId]

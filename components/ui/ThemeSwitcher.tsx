@@ -8,10 +8,9 @@ export default function ThemeSwitcher() {
 
   useEffect(() => {
     setMounted(true);
-    // Detect theme on mount
+    // Detect theme on mount, defaulting to light instead of system preference
     const savedTheme = localStorage.getItem("hp-theme") as "light" | "dark" | null;
-    const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    const initialTheme = savedTheme || systemTheme;
+    const initialTheme = savedTheme || "light";
     setTheme(initialTheme);
     if (initialTheme === "dark") {
       document.documentElement.classList.add("dark");

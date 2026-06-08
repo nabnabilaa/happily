@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useHP } from "@/lib/HPContext";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
 import Modal from "@/components/ui/Modal";
@@ -12,13 +12,18 @@ interface OvertimePromptModalProps {
 
 export default function OvertimePromptModal({ onClose }: OvertimePromptModalProps) {
   const { updateState } = useHP();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleLembur = () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     updateState((s: any) => ({ ...s, overtimeStatus: 'overtime' }));
     onClose();
   };
 
   const handleLupaAbsen = () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     updateState((s: any) => ({ ...s, overtimeStatus: 'forgot_clockout' }));
     // Pemicu buka modal clock-out
     window.dispatchEvent(new Event('hp_open_reflect'));
@@ -38,11 +43,13 @@ export default function OvertimePromptModal({ onClose }: OvertimePromptModalProp
         <button 
           onClick={handleLembur}
           className="hp-tap"
+          disabled={isSubmitting}
           style={{
             width: '100%', padding: '16px', borderRadius: 16,
             background: HP_TOKENS.yellowWash, border: `1.5px solid ${HP_TOKENS.yellow}`,
             color: HP_TOKENS.ink, fontFamily: HP_FONT, fontWeight: 800, fontSize: 14,
-            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12
+            cursor: isSubmitting ? 'default' : 'pointer', display: 'flex', alignItems: 'center', gap: 12,
+            opacity: isSubmitting ? 0.7 : 1
           }}
         >
           <span style={{ fontSize: 24 }}>💪</span>
@@ -55,11 +62,13 @@ export default function OvertimePromptModal({ onClose }: OvertimePromptModalProp
         <button 
           onClick={handleLupaAbsen}
           className="hp-tap"
+          disabled={isSubmitting}
           style={{
             width: '100%', padding: '16px', borderRadius: 16,
             background: HP_TOKENS.sageWash, border: `1.5px solid ${HP_TOKENS.sage}`,
             color: HP_TOKENS.sage, fontFamily: HP_FONT, fontWeight: 800, fontSize: 14,
-            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12
+            cursor: isSubmitting ? 'default' : 'pointer', display: 'flex', alignItems: 'center', gap: 12,
+            opacity: isSubmitting ? 0.7 : 1
           }}
         >
           <span style={{ fontSize: 24 }}>😅</span>

@@ -65,8 +65,13 @@ export default function AttendanceHistoryModal({ onClose, targetUserId, targetUs
   // Map logs by date
   const logsByDate: Record<string, any> = {};
   logs.forEach(l => {
-    const d = new Date(l.check_in_at).toISOString().slice(0, 10);
-    logsByDate[d] = l;
+    const checkInStr = typeof l.check_in_at === 'string' && !l.check_in_at.endsWith('Z') ? l.check_in_at.replace(' ', 'T') + 'Z' : l.check_in_at;
+    const d = new Date(checkInStr).toLocaleDateString('en-CA'); // 'YYYY-MM-DD' in local time
+    logsByDate[d] = {
+      ...l,
+      check_in_at: checkInStr,
+      check_out_at: l.check_out_at ? (typeof l.check_out_at === 'string' && !l.check_out_at.endsWith('Z') ? l.check_out_at.replace(' ', 'T') + 'Z' : l.check_out_at) : null
+    };
   });
 
   const calendarDays: (number | null)[] = [];

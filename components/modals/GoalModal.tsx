@@ -17,7 +17,7 @@ interface GoalModalProps {
 }
 
 export default function GoalModal({ onClose, goal }: { onClose: () => void; goal?: any }) {
-  const { state, updateState, user } = useHP();
+  const { state, updateState, user, notify } = useHP();
   const [title, setTitle] = useState(goal?.title || "");
 
   // Parse due date: handle ISO, or Indonesian display format ("31 Mei 2026 06.05")
@@ -50,6 +50,7 @@ export default function GoalModal({ onClose, goal }: { onClose: () => void; goal
   const [isKpi, setIsKpi] = useState(goal?.is_kpi || false);
   const [selectedOwnerIds, setSelectedOwnerIds] = useState<string[]>(goal?.ownerId ? [String(goal.ownerId)] : []);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const allEmployees = state?.hrData?.members || state?.managerData?.members || [];
   const filteredEmployees = allEmployees.filter((e: any) => 
@@ -65,9 +66,23 @@ export default function GoalModal({ onClose, goal }: { onClose: () => void; goal
 
 
   const save = async () => {
-    if (!title || !due) return;
+    if (!title || !due || isSubmitting) return;
+    setIsSubmitting(true);
     
-    // Format due date for display if it's ISO
+    try {
+      // Validasi Duplikat: Jangan perbolehkan judul yang sama persis jika membuat baru, atau jika edit tapi judul diubah
+      const isDuplicate = state.goals?.some((g: any) => 
+        g.title.toLowerCase().trim() === title.toLowerCase().trim() && 
+        (!goal || String(g.id) !== String(goal.id))
+      );
+
+      if (isDuplicate) {
+        notify("Gagal Menyimpan", "OKR/Goals dengan judul ini sudah ada. Harap gunakan nama lain.", "error");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Format due date for display if it's ISO
     let displayDue = due;
     try {
       const d = new Date(due);
@@ -132,8 +147,11 @@ export default function GoalModal({ onClose, goal }: { onClose: () => void; goal
         ]
       }));
     }
-
+    notify("OKR Berhasil Disimpan 🎉", "Strategi dan target telah diperbarui.", "success");
     onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const scopes = [
@@ -319,19 +337,19 @@ export default function GoalModal({ onClose, goal }: { onClose: () => void; goal
 
         <button 
           onClick={save} 
-          disabled={!title || !due || (scope === 'employee' && selectedOwnerIds.length === 0)}
+          disabled={!title || !due || (scope === 'employee' && selectedOwnerIds.length === 0) || isSubmitting}
           style={{
             width: '100%', marginTop: 32, padding: '18px', borderRadius: 99,
             background: HP_TOKENS.sage, color: '#F4F7F9', border: 'none',
-            fontFamily: HP_FONT, fontWeight: 900, fontSize: 16, cursor: 'pointer',
-            opacity: (!title || !due || (scope === 'employee' && selectedOwnerIds.length === 0)) ? 0.4 : 1,
+            fontFamily: HP_FONT, fontWeight: 900, fontSize: 16, cursor: isSubmitting ? 'default' : 'pointer',
+            opacity: (!title || !due || (scope === 'employee' && selectedOwnerIds.length === 0) || isSubmitting) ? 0.4 : 1,
             boxShadow: `0 10px 25px ${HP_TOKENS.sageSoft}`,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10
           }}
           className="hp-tap"
         >
           <HPGlyph name="sparkle" size={20} color="#F4F7F9" />
-          {scope === 'employee' ? `Assign OKR ke ${selectedOwnerIds.length} Orang` : 'Simpan & Publikasikan OKR'}
+          {isSubmitting ? "Memproses..." : (scope === 'employee' ? `Assign OKR ke ${selectedOwnerIds.length} Orang` : 'Simpan & Publikasikan OKR')}
         </button>
       </div>
     </Modal>

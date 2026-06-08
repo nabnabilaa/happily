@@ -12,12 +12,12 @@ interface AllRewardsModalProps {
 
 const CATEGORIES = ["Semua", "Wellbeing", "Lifestyle", "Growth", "Impact"];
 
-const toneConfig: Record<string, { bg: string; soft: string; text: string }> = {
-  sage:     { bg: HP_TOKENS.sage,   soft: HP_TOKENS.sageWash,   text: '#2D5A3D' },
-  yellow:   { bg: HP_TOKENS.yellow, soft: HP_TOKENS.yellowWash,  text: '#7A5F10' },
-  blue:     { bg: HP_TOKENS.blue,   soft: HP_TOKENS.blueWash,    text: '#234A72' },
-  coral:    { bg: HP_TOKENS.coral,  soft: '#FEF0ED',             text: '#8B3A2F' },
-  lavender: { bg: HP_TOKENS.lavender, soft: HP_TOKENS.lavenderSoft, text: '#4A3A6E' },
+const TONE_CONFIG: Record<string, any> = {
+  blue:   { bg: HP_TOKENS.blueWash,   accent: HP_TOKENS.blue,   text: '#00558A', glow: 'rgba(77,168,218,0.12)' },
+  yellow: { bg: HP_TOKENS.yellowWash, accent: HP_TOKENS.yellow, text: '#7A5F10', glow: 'rgba(255,190,11,0.12)' },
+  sage:   { bg: HP_TOKENS.sageWash,   accent: HP_TOKENS.sage,   text: '#2D5A3D', glow: 'rgba(74,124,89,0.12)' },
+  coral:  { bg: '#FEF0ED',            accent: HP_TOKENS.coral,  text: '#8B3A2F', glow: 'rgba(232,139,125,0.15)' },
+  lavender: { bg: HP_TOKENS.lavenderSoft, accent: HP_TOKENS.lavender, text: '#4A3A6E', glow: 'rgba(123,104,238,0.12)' },
 };
 
 const GLYPH_MAP: Record<string, string> = {
@@ -33,11 +33,12 @@ const GLYPH_MAP: Record<string, string> = {
 };
 
 export default function AllRewardsModal({ onClose }: AllRewardsModalProps) {
-  const { state, updateState, updateUser, user } = useHP();
+  const { state, updateState, updateUser, user, notify } = useHP();
   const [view, setView] = useState<"available" | "history">("available");
   const [activeCategory, setActiveCategory] = useState("Semua");
   const [currentPageAvailable, setCurrentPageAvailable] = useState(1);
   const [currentPageHistory, setCurrentPageHistory] = useState(1);
+  const [confirmReward, setConfirmReward] = useState<any>(null);
 
   const rewards = state?.rewards || [];
   const history = state?.rewardHistory || [];
@@ -64,69 +65,123 @@ export default function AllRewardsModal({ onClose }: AllRewardsModalProps) {
 
   const [redeeming, setRedeeming] = useState(false);
 
-  const handleRedeem = async (reward: any) => {
+  const requestRedeem = (reward: any) => {
     if (!state || !user) return;
     if (reward.stock <= 0) {
-      alert(`Maaf, stok "${reward.title}" sedang habis. 🌱`);
+      notify('Stok Habis', `Maaf, stok "${reward.title}" sedang habis. 🌱`, 'warning');
       return;
     }
     if (state.points < reward.points) {
-      alert(`Poin tidak cukup! Kamu butuh ${reward.points} poin, tapi baru punya ${state.points} poin. 🌱`);
+      notify('Poin Tidak Cukup', `Kamu butuh ${reward.points} poin, tapi baru punya ${state.points} poin. 🌱`, 'warning');
       return;
     }
+    setConfirmReward(reward);
+  };
+
+  const executeRedeem = async () => {
+    if (!state || !user || !confirmReward) return;
+    const reward = confirmReward;
     
-    if (confirm(`Tukar ${reward.points} poin dengan "${reward.title}"?`)) {
-      setRedeeming(true);
-      try {
-        const res = await fetch('/api/rewards/redeem', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: user.id,
-            userName: user.name,
-            rewardId: reward.id,
-            rewardTitle: reward.title,
-            rewardPoints: reward.points,
-            rewardType: reward.category
-          })
-        });
+    setRedeeming(true);
+    try {
+      const res = await fetch('/api/rewards/redeem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          userName: user.name,
+          rewardId: reward.id,
+          rewardTitle: reward.title,
+          rewardPoints: reward.points,
+          rewardType: reward.category
+        })
+      });
 
-        const data = await res.json();
-        if (!res.ok) {
-          alert(data.error || 'Gagal menukar reward');
-          setRedeeming(false);
-          return;
-        }
-
-        // Update local state to reflect the change
-        updateState((s: any) => ({
-          ...s,
-          points: data.pointsRemaining,
-          coins: data.pointsRemaining,
-          rewards: s.rewards.map((r: any) => r.id === reward.id ? { ...r, stock: r.stock - 1 } : r),
-          rewardHistory: [
-            ...history,
-            { id: Date.now(), title: reward.title, points: reward.points, date: new Date().toLocaleDateString('id-ID'), glyph: reward.glyph || 'trophy' }
-          ]
-        }));
-        updateUser({ points: data.pointsRemaining, coins: data.pointsRemaining });
-        
-        alert(`Berhasil! "${reward.title}" telah ditambahkan ke riwayat reward kamu. HR akan segera memprosesnya. 🎉`);
-      } catch (e) {
-        console.error(e);
-        alert('Gagal menghubungi server.');
-      } finally {
+      const data = await res.json();
+      if (!res.ok) {
+        notify('Gagal', data.error || 'Gagal menukar reward', 'error');
         setRedeeming(false);
+        setConfirmReward(null);
+        return;
       }
+
+      // Update local state to reflect the change
+      updateState((s: any) => ({
+        ...s,
+        points: data.pointsRemaining,
+        coins: data.pointsRemaining,
+        rewards: s.rewards.map((r: any) => r.id === reward.id ? { ...r, stock: r.stock - 1 } : r),
+        rewardHistory: [
+          ...history,
+          { id: Date.now(), title: reward.title, points: reward.points, date: new Date().toLocaleDateString('id-ID'), glyph: reward.glyph || 'trophy' }
+        ]
+      }));
+      updateUser({ points: data.pointsRemaining, coins: data.pointsRemaining });
+      
+      notify('Reward Ditukar! 🎁', `Kamu berhasil menukarkan "${reward.title}". HR akan segera memprosesnya.`, 'success');
+    } catch (e) {
+      console.error(e);
+      notify('Gagal', 'Gagal menghubungi server.', 'error');
+    } finally {
+      setRedeeming(false);
+      setConfirmReward(null);
     }
   };
 
   return (
     <Modal title="Semua Reward" onClose={onClose}>
       <div style={{ position: 'relative' }}>
-
-
-        {/* View Toggle */}
+        {confirmReward && (
+          <div style={{
+            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(4px)',
+            zIndex: 10, display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            borderRadius: 16, padding: 24, textAlign: 'center',
+            border: `1.5px solid ${HP_TOKENS.lineSoft}`,
+          }}>
+            <div style={{ 
+              width: 64, height: 64, borderRadius: 20, 
+              background: (TONE_CONFIG[confirmReward.tone] || TONE_CONFIG.blue).bg,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              marginBottom: 16, border: `2px solid ${(TONE_CONFIG[confirmReward.tone] || TONE_CONFIG.blue).accent}30`
+            }}>
+              <HPGlyph name={confirmReward.glyph || GLYPH_MAP[confirmReward.title] || 'sparkle'} size={32} color={(TONE_CONFIG[confirmReward.tone] || TONE_CONFIG.blue).accent} />
+            </div>
+            <div style={{ ...HP_TEXT.title, fontSize: 20, marginBottom: 8 }}>Konfirmasi Tukar</div>
+            <div style={{ ...HP_TEXT.body, marginBottom: 24, lineHeight: 1.5 }}>
+              Tukar <strong style={{ color: HP_TOKENS.ink }}>{confirmReward.points} poin</strong> dengan <br/>
+              <strong style={{ color: HP_TOKENS.ink }}>&quot;{confirmReward.title}&quot;</strong>?
+            </div>
+            <div style={{ display: 'flex', gap: 12, width: '100%' }}>
+              <button
+                onClick={() => setConfirmReward(null)}
+                disabled={redeeming}
+                style={{
+                  flex: 1, padding: '12px', borderRadius: 14, border: `1.5px solid ${HP_TOKENS.line}`,
+                  background: HP_TOKENS.paper, color: HP_TOKENS.inkSoft,
+                  fontFamily: HP_FONT, fontWeight: 700, fontSize: 14,
+                  cursor: redeeming ? 'default' : 'pointer'
+                }}
+              >
+                Batal
+              </button>
+              <button
+                onClick={executeRedeem}
+                disabled={redeeming}
+                style={{
+                  flex: 1, padding: '12px', borderRadius: 14, border: 'none',
+                  background: HP_TOKENS.blue, color: '#fff',
+                  fontFamily: HP_FONT, fontWeight: 700, fontSize: 14,
+                  cursor: redeeming ? 'default' : 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
+                }}
+              >
+                {redeeming ? 'Memproses...' : 'Ya, Tukar'}
+              </button>
+            </div>
+          </div>
+        )}        {/* View Toggle */}
         <div style={{
           display: 'flex', background: HP_TOKENS.lineSoft,
           padding: 4, borderRadius: 12, marginBottom: 20
@@ -191,7 +246,7 @@ export default function AllRewardsModal({ onClose }: AllRewardsModalProps) {
             {/* Rewards grid */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {paginatedAvailable.map(reward => {
-                const cfg = toneConfig[reward.tone] ?? toneConfig.sage;
+                const cfg = TONE_CONFIG[reward.tone] ?? TONE_CONFIG.blue;
                 const canAfford = userCoins >= reward.points;
 
                 return (
@@ -200,17 +255,18 @@ export default function AllRewardsModal({ onClose }: AllRewardsModalProps) {
                     style={{
                       display: 'flex', alignItems: 'center', gap: 14,
                       padding: '14px 16px', borderRadius: 18,
-                      background: cfg.soft,
+                      background: cfg.bg,
                       border: `1.5px solid ${HP_TOKENS.line}`,
+                      boxShadow: `0 4px 12px ${cfg.glow}`,
                     }}
                   >
                     <div style={{
                       width: 56, height: 56, borderRadius: 16,
-                      background: `${cfg.bg}22`,
+                      background: `${cfg.accent}22`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       flexShrink: 0,
                     }}>
-                      <HPGlyph name={reward.glyph || GLYPH_MAP[reward.title] || 'sparkle'} size={28} color={cfg.text} />
+                      <HPGlyph name={reward.glyph || GLYPH_MAP[reward.title] || 'sparkle'} size={28} color={cfg.accent} />
                     </div>
 
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -219,7 +275,7 @@ export default function AllRewardsModal({ onClose }: AllRewardsModalProps) {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
                         <span style={{
                           padding: '3px 10px', borderRadius: 99, fontSize: 10, fontWeight: 800,
-                          background: cfg.bg, color: '#F4F7F9', fontFamily: HP_FONT,
+                          background: cfg.accent, color: '#F4F7F9', fontFamily: HP_FONT,
                           display: 'flex', alignItems: 'center', gap: 4
                         }}>
                           <div style={{
@@ -265,19 +321,23 @@ export default function AllRewardsModal({ onClose }: AllRewardsModalProps) {
                       </div>
 
                       <button
-                        onClick={() => handleRedeem(reward)}
+                        onClick={() => requestRedeem(reward)}
                         disabled={!canAfford || reward.stock <= 0 || redeeming}
                         style={{
                           padding: '10px 14px', borderRadius: 14, border: 'none',
-                          background: (canAfford && reward.stock > 0) ? cfg.bg : HP_TOKENS.lineSoft,
+                          background: (canAfford && reward.stock > 0) ? cfg.accent : HP_TOKENS.lineSoft,
                           color: (canAfford && reward.stock > 0) ? '#fff' : HP_TOKENS.inkFade,
                           fontFamily: HP_FONT, fontWeight: 800, fontSize: 12,
                           cursor: (!canAfford || reward.stock <= 0 || redeeming) ? 'default' : 'pointer',
                           transition: 'all 0.2s',
-                          whiteSpace: 'nowrap'
+                          whiteSpace: 'nowrap',
+                          boxShadow: (canAfford && reward.stock > 0) ? `0 4px 12px ${cfg.glow}` : 'none',
+                          display: 'flex', alignItems: 'center', gap: 6
                         }}
+                        className={(canAfford && reward.stock > 0 && !redeeming) ? 'hp-tap' : ''}
                       >
-                        {reward.stock <= 0 ? 'Stok Habis' : redeeming ? 'Memproses...' : 'Tukar'}
+                        {reward.stock <= 0 ? 'Stok Habis' : 'Tukar Sekarang'}
+                        {canAfford && reward.stock > 0 && <HPGlyph name="sparkle" size={12} color="#fff" />}
                       </button>
                     </div>
                   </div>

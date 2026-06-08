@@ -144,7 +144,7 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
       ${kpiData.length > 0 ? `<h2>🎯 KPI Performance</h2>${kpiHTML}` : ''}
       ${report?.kpiScore ? `<p><b>Skor KPI Tertimbang: ${report.kpiScore}/100</b></p>` : ''}
       ${report?.managerSummary ? `<h2>📝 Catatan Manager</h2><p>${report.managerSummary}</p>` : ''}
-      <hr/><small>Dicetak dari Flowbee pada ${new Date().toLocaleDateString('id-ID')}</small>
+      <hr/><small>Dicetak dari FlowBuddy pada ${new Date().toLocaleDateString('id-ID')}</small>
       </body></html>
     `);
     printWindow.document.close();

@@ -132,7 +132,7 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
         id: Date.now(),
         type: 'quest_completion',
         title: newPriorities[pIndex].title,
-        points: 15, // Spec v2: task_approved = 15 XP
+        points: 50, // Updated to match actual backend task_approved reward
         date: now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
         day: now.toLocaleDateString('id-ID', { weekday: 'long' }),
         time: now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
@@ -208,7 +208,7 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
   }, [priorities, currentPage]);
 
   return (
-    <div style={{ marginTop: 24 }}>
+    <div id="task-harian-section" style={{ marginTop: 24 }}>
       <SectionHeader 
         icon="target" 
         label="Task Harian" 
@@ -220,28 +220,28 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
       {/* Realization Progress Card */}
       <HPCard padding={20} style={{ 
         marginBottom: 20, 
-        background: `linear-gradient(135deg, ${HP_TOKENS.sageWash} 0%, ${HP_TOKENS.card} 100%)`, 
-        border: `1.5px solid ${HP_TOKENS.sage}20`,
+        background: `linear-gradient(135deg, ${HP_TOKENS.primaryWash} 0%, ${HP_TOKENS.card} 100%)`, 
+        border: `1.5px solid ${HP_TOKENS.primary}20`,
         boxShadow: '0 10px 30px rgba(26,29,35,0.03)',
         position: 'relative',
         overflow: 'hidden'
       }}>
         <div style={{ 
           position: 'absolute', right: -20, top: -20, width: 100, height: 100, 
-          borderRadius: 50, background: `${HP_TOKENS.sage}10`, zIndex: 0 
+          borderRadius: 50, background: `${HP_TOKENS.primary}10`, zIndex: 0 
         }} />
 
         <div style={{ position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 16 }}>
             <div>
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 900, letterSpacing: 1, marginBottom: 4 }}>PROGRESS TASK HARI INI</div>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.primary, fontWeight: 900, letterSpacing: 1, marginBottom: 4 }}>PROGRESS TASK HARI INI</div>
               <div style={{ ...HP_TEXT.h, fontSize: 28, color: HP_TOKENS.ink }}>
                 {total > 0 ? Math.round((done / total) * 100) : 0}% 
                 <span style={{ fontSize: 14, color: HP_TOKENS.inkFade, fontWeight: 600, marginLeft: 8 }}>Tercapai</span>
               </div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ ...HP_TEXT.h, fontSize: 18, color: HP_TOKENS.sage }}>{done}/{total}</div>
+              <div style={{ ...HP_TEXT.h, fontSize: 18, color: HP_TOKENS.primary }}>{done}/{total}</div>
               <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>Task Selesai</div>
             </div>
           </div>
@@ -250,10 +250,10 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
             <div style={{ 
                width: `${total > 0 ? (done / total) * 100 : 0}%`, 
                height: '100%', 
-               background: `linear-gradient(to right, ${HP_TOKENS.sage}, #4ADE80)`, 
+               background: `linear-gradient(to right, ${HP_TOKENS.primary}, #FF8C00)`, 
                borderRadius: 6,
                transition: '1s cubic-bezier(0.2, 0.8, 0.2, 1)',
-               boxShadow: `0 0 12px ${HP_TOKENS.sage}40`
+               boxShadow: `0 0 12px ${HP_TOKENS.primary}40`
             }} />
           </div>
 
@@ -350,7 +350,7 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
             color: '#F4F7F9', cursor: 'pointer', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
             marginTop: 8,
-            boxShadow: `0 8px 24px ${HP_TOKENS.sage}30`
+            boxShadow: `0 8px 24px ${HP_TOKENS.sage}40`
           }}>
             <HPGlyph name="sparkle" size={20} color={HP_TOKENS.yellow}/>
             <span>Mulai Sesi Fokus Deep Work</span>

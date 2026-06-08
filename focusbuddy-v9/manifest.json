@@ -1,17 +1,27 @@
 {
   "manifest_version": 3,
   "name": "FocusBuddy",
-  "version": "7.0.0",
-  "description": "Teman produktivitas dengan karakter animasi - tugas, catatan, timer, alarm. Bisa digeser ke mana saja! v7.0",
+  "version": "7.1.0",
+  "description": "Teman produktivitas dengan karakter animasi - tugas, catatan, timer, alarm, focus mode. v7.1",
   "permissions": [
     "storage",
     "alarms",
     "notifications",
-    "tabs"
+    "tabs",
+    "declarativeNetRequest"
   ],
   "host_permissions": [
     "<all_urls>"
   ],
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "focus_block",
+        "enabled": false,
+        "path": "rules/focus_block_rules.json"
+      }
+    ]
+  },
   "background": {
     "service_worker": "background.js"
   },
@@ -41,7 +51,8 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "icons/*"
+        "icons/*",
+        "focus_blocked.html"
       ],
       "matches": [
         "<all_urls>"

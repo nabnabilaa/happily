@@ -9,6 +9,14 @@ import HPGlyph from "@/components/ui/HPGlyph";
 import ScreenHeader from "@/components/ui/ScreenHeader";
 import HPAvatar from "@/components/ui/HPAvatar";
 
+const NOTE_THEMES = [
+  { id: 'yellow', bg: '#FFF9E6', border: '#F59F00', blob: '#FFE8A1', label: 'Kuning' },
+  { id: 'blue', bg: '#EBF5FF', border: '#339AF0', blob: '#A5D8FF', label: 'Biru' },
+  { id: 'green', bg: '#EBFBEE', border: '#51CF66', blob: '#B2F2BB', label: 'Hijau' },
+  { id: 'purple', bg: '#F3F0FF', border: '#845EF7', blob: '#D0BFFF', label: 'Ungu' },
+  { id: 'pink', bg: '#FFF0F6', border: '#F06595', blob: '#FCC2D7', label: 'Pink' },
+];
+
 export default function NotesScreen() {
   const { user } = useHP();
   
@@ -28,6 +36,7 @@ export default function NotesScreen() {
   const [sharedPermission, setSharedPermission] = useState('view');
   const [sharedUsers, setSharedUsers] = useState<string[]>([]);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [noteColor, setNoteColor] = useState('yellow');
 
   // Users & Search State
   const [searchQuery, setSearchQuery] = useState('');
@@ -42,6 +51,7 @@ export default function NotesScreen() {
         userId: user?.id,
         title: noteTitle.trim() || undefined,
         content: newNote,
+        color: noteColor,
       };
       
       if (visibility === 'private' || visibility === 'company') {
@@ -103,6 +113,7 @@ export default function NotesScreen() {
     setEditingNoteId(note.id);
     setNoteTitle(note.title || '');
     setNewNote(note.content);
+    setNoteColor(note.color || 'yellow');
     setSharedPermission(note.sharedPermission || 'view');
     
     if (note.visibility === 'custom' || note.visibility === 'division') {
@@ -139,6 +150,7 @@ export default function NotesScreen() {
     setEditingNoteId(null);
     setNoteTitle('');
     setNewNote('');
+    setNoteColor('yellow');
     setVisibility('private');
     setSharedPermission('view');
     setSharedUsers([]);
@@ -377,6 +389,29 @@ export default function NotesScreen() {
                 </div>
               </div>
             )}
+            
+            <div style={{ marginTop: 24 }}>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 8, letterSpacing: 0.5 }}>
+                TEMA WARNA
+              </div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                {NOTE_THEMES.map(theme => (
+                  <div
+                    key={theme.id}
+                    onClick={() => setNoteColor(theme.id)}
+                    className="hp-tap"
+                    style={{
+                      width: 32, height: 32, borderRadius: 16, background: theme.bg,
+                      border: `2.5px solid ${noteColor === theme.id ? theme.border : 'transparent'}`,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      boxShadow: noteColor === theme.id ? `0 4px 12px ${theme.border}40` : 'none'
+                    }}
+                    title={theme.label}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
 
           <div style={{ width: '100%', height: 1.5, background: HP_TOKENS.lineSoft, margin: '20px 0' }} />
@@ -443,11 +478,11 @@ export default function NotesScreen() {
               className="hp-tap"
               style={{
                 padding: '14px 24px', borderRadius: 14, border: 'none',
-                background: (!newNote.trim() || (visibility === 'custom' && sharedUsers.length === 0)) ? HP_TOKENS.lineSoft : HP_TOKENS.blue,
-                color: (!newNote.trim() || (visibility === 'custom' && sharedUsers.length === 0)) ? HP_TOKENS.inkMute : '#fff',
+                background: (!newNote.trim() || (visibility === 'custom' && sharedUsers.length === 0)) ? HP_TOKENS.lineSoft : HP_TOKENS.primaryWash,
+                color: (!newNote.trim() || (visibility === 'custom' && sharedUsers.length === 0)) ? HP_TOKENS.inkMute : HP_TOKENS.primary,
                 fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, 
                 cursor: (!newNote.trim() || (visibility === 'custom' && sharedUsers.length === 0)) ? 'default' : 'pointer',
-                boxShadow: (!newNote.trim() || (visibility === 'custom' && sharedUsers.length === 0)) ? 'none' : `0 8px 24px ${HP_TOKENS.blue}40`
+                boxShadow: 'none'
               }}
             >
               {editingNoteId ? '✓ Simpan Perubahan' : '✓ Buat Catatan'}
@@ -479,13 +514,14 @@ export default function NotesScreen() {
           className="hp-tap"
           style={{
             padding: '0 20px', borderRadius: 16, border: 'none',
-            background: HP_TOKENS.blue, color: '#F4F7F9',
+            background: HP_TOKENS.card, color: HP_TOKENS.ink,
             fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap',
-            boxShadow: `0 4px 16px ${HP_TOKENS.blue}40`
+            boxShadow: `0 4px 12px rgba(26,29,35,0.03)`,
+            borderTop: `1px solid ${HP_TOKENS.lineSoft}`,
           }}
         >
-          <HPGlyph name="plus" size={16} color="#F4F7F9" />
+          <HPGlyph name="plus" size={16} color={HP_TOKENS.ink} />
           Tambah Catatan
         </button>
       </div>
@@ -502,110 +538,112 @@ export default function NotesScreen() {
           <div style={{ ...HP_TEXT.small, marginTop: 4 }}>Klik "Tambah Catatan" untuk mulai menulis!</div>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-          {(Object.entries(groupedNotes) as [string, any[]][]).map(([dateStr, dayNotes]) => (
-            <div key={dateStr}>
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 12, letterSpacing: 1 }}>
-                {dateStr.toUpperCase()}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {dayNotes.map(note => (
-                  <div key={note.id} style={{ 
-                    background: HP_TOKENS.card, borderRadius: 20, padding: 20, 
-                    border: `1.5px solid ${HP_TOKENS.line}`,
-                    boxShadow: '0 4px 12px rgba(26,29,35,0.02)'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                      <div>
-                        <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontSize: 11, fontWeight: 700 }}>
-                          {new Date(note.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                          {note.title && (
-                            <div style={{ ...HP_TEXT.h, fontSize: 16, color: HP_TOKENS.ink }}>
-                              {note.title}
-                            </div>
-                          )}
-                          {isNoteLocked(note) && (
-                            <div style={{ fontSize: 9, fontWeight: 800, background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, padding: '4px 8px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
-                              <HPGlyph name="edit" size={10} color={HP_TOKENS.coral} /> SEDANG DIEDIT OLEH {note.lockedByName?.split(' ')[0].toUpperCase()}
-                            </div>
-                          )}
-                        </div>
-                        <div style={{ 
-                          display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 8,
-                          padding: '4px 8px', borderRadius: 6, 
-                          background: note.visibility === 'private' ? HP_TOKENS.lineSoft : 
-                                      note.visibility === 'company' ? HP_TOKENS.sageSoft : HP_TOKENS.blueWash,
-                          color: note.visibility === 'private' ? HP_TOKENS.inkMute : 
-                                 note.visibility === 'company' ? HP_TOKENS.sage : HP_TOKENS.blue,
-                        }}>
-                          <HPGlyph 
-                            name={note.visibility === 'private' ? 'lock' : note.visibility === 'custom' ? 'settings' : 'people'} 
-                            size={10} 
-                            color={note.visibility === 'private' ? HP_TOKENS.inkMute : 
-                                   note.visibility === 'company' ? HP_TOKENS.sage : HP_TOKENS.blue} 
-                          />
-                          <span style={{ fontSize: 10, fontWeight: 800 }}>
-                            {note.visibility === 'custom' ? 'KUSTOM' : note.visibility.toUpperCase()}
-                          </span>
-                        </div>
-                        {note.visibility === 'custom' && (note.sharedWithDivisions?.length > 0 || note.sharedWithUsers?.length > 0) && (
-                          <div style={{ marginTop: 6, ...HP_TEXT.tiny, color: HP_TOKENS.inkSoft, fontSize: 11, fontWeight: 600 }}>
-                            Dibagikan ke: 
-                            {note.sharedWithDivisions?.length > 0 && ` Divisi (${note.sharedWithDivisions.join(', ')})`}
-                            {note.sharedWithDivisions?.length > 0 && note.sharedWithUsers?.length > 0 && ' • '}
-                            {note.sharedWithUsers?.length > 0 && ` ${note.sharedWithUsers.length} Orang`}
-                          </div>
-                        )}
-                      </div>
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        {(String(note.userId) === String(user?.id) || note.sharedPermission === 'edit') && !isNoteLocked(note) && (
-                          <button 
-                            onClick={() => startEdit(note)}
-                            className="hp-tap"
-                            style={{ background: HP_TOKENS.lineSoft, border: 'none', borderRadius: 10, cursor: 'pointer', padding: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            title="Edit Catatan"
-                          >
-                            <HPGlyph name="edit" size={14} color={HP_TOKENS.inkSoft} />
-                          </button>
-                        )}
-                        {String(note.userId) === String(user?.id) && (
-                          <button 
-                            onClick={() => deleteNote(note.id)}
-                            className="hp-tap"
-                            style={{ background: HP_TOKENS.coralWash, border: 'none', borderRadius: 10, cursor: 'pointer', padding: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            title="Hapus Catatan"
-                          >
-                            <HPGlyph name="close" size={14} color={HP_TOKENS.coral} />
-                          </button>
-                        )}
-                      </div>
+        <>
+          <style>{`
+            .notes-grid {
+              column-count: 2;
+              column-gap: 16px;
+            }
+            @media (max-width: 768px) {
+              .notes-grid {
+                column-count: 1;
+              }
+            }
+            .note-card {
+              break-inside: avoid;
+              margin-bottom: 16px;
+              border-radius: 16px;
+              padding: 20px;
+              position: relative;
+              overflow: hidden;
+              transition: transform 0.2s, box-shadow 0.2s;
+            }
+            .note-card:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+            }
+            .note-card .tinymce-content p {
+              margin: 0 0 8px 0;
+            }
+            .note-card .tinymce-content p:last-child {
+              margin-bottom: 0;
+            }
+            .note-card .tinymce-content * {
+              font-family: var(--hp-font) !important;
+              font-size: 13px !important;
+            }
+          `}</style>
+          
+          <div className="notes-grid">
+            {paginatedNotes.map(note => {
+              const theme = NOTE_THEMES.find(t => t.id === note.color) || NOTE_THEMES.find(t => {
+                let hash = 0;
+                const id = String(note.id);
+                for (let i = 0; i < id.length; i++) hash += id.charCodeAt(i);
+                return t.id === NOTE_THEMES[hash % NOTE_THEMES.length].id;
+              }) || NOTE_THEMES[0];
+
+              return (
+                <div key={note.id} className="note-card" style={{ background: theme.bg, border: `1.5px solid transparent` }}>
+                  <div style={{ position: 'absolute', top: -20, right: -20, width: 80, height: 80, borderRadius: '50%', background: theme.blob, opacity: 0.6 }} />
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12, position: 'relative', zIndex: 2 }}>
+                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      📝 CATATAN
                     </div>
                     
-                    <div 
-                      className="tinymce-content"
-                      style={{ ...HP_TEXT.body, fontSize: 14, whiteSpace: 'pre-wrap', lineHeight: 1.6, marginTop: 12, padding: 0 }}
-                      dangerouslySetInnerHTML={{ __html: note.content }}
-                    />
-
-                    <div style={{ 
-                      marginTop: 20, paddingTop: 12, borderTop: `1px dashed ${HP_TOKENS.line}`,
-                      ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, display: 'flex', alignItems: 'center', gap: 8
-                    }}>
-                      <div style={{ width: 20, height: 20, borderRadius: 10, background: HP_TOKENS.lineSoft, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <HPGlyph name="people" size={10} color={HP_TOKENS.inkSoft} />
-                      </div>
-                      <span style={{ fontWeight: 600 }}>Ditulis oleh {note.authorName} ({note.authorDepartment})</span>
-                      {note.sharedPermission === 'view' && String(note.userId) !== String(user?.id) && (
-                        <span style={{ marginLeft: 'auto', background: HP_TOKENS.lineSoft, padding: '4px 8px', borderRadius: 6, fontSize: 9, fontWeight: 900, color: HP_TOKENS.inkSoft }}>VIEW ONLY</span>
-                      )}
+                    <div style={{ display: 'flex', gap: 6 }}>
+                       {(String(note.userId) === String(user?.id) || note.sharedPermission === 'edit') && !isNoteLocked(note) && (
+                         <button onClick={() => startEdit(note)} className="hp-tap" style={{ background: '#fff', border: `1px solid ${theme.blob}`, borderRadius: 8, cursor: 'pointer', padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Edit">
+                           <HPGlyph name="edit" size={12} color={theme.border} />
+                         </button>
+                       )}
+                       {String(note.userId) === String(user?.id) && (
+                         <button onClick={() => deleteNote(note.id)} className="hp-tap" style={{ background: '#fff', border: `1px solid ${theme.blob}`, borderRadius: 8, cursor: 'pointer', padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Hapus">
+                           <HPGlyph name="close" size={12} color={HP_TOKENS.coral} />
+                         </button>
+                       )}
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          ))}
+
+                  {isNoteLocked(note) && (
+                    <div style={{ position: 'relative', zIndex: 2, marginBottom: 8, fontSize: 9, fontWeight: 800, background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, padding: '4px 8px', borderRadius: 8, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      <HPGlyph name="edit" size={10} color={HP_TOKENS.coral} /> SEDANG DIEDIT OLEH {note.lockedByName?.split(' ')[0].toUpperCase()}
+                    </div>
+                  )}
+
+                  <div style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 18, color: theme.border, marginBottom: 8, position: 'relative', zIndex: 2 }}>
+                    {note.title || 'Catatan Tanpa Judul'}
+                  </div>
+
+                  <div 
+                    className="tinymce-content"
+                    style={{ ...HP_TEXT.body, fontSize: 13, whiteSpace: 'pre-wrap', lineHeight: 1.5, color: HP_TOKENS.inkSoft, position: 'relative', zIndex: 2, marginBottom: 16 }}
+                    dangerouslySetInnerHTML={{ __html: note.content }}
+                  />
+
+                  <div style={{ 
+                    marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', zIndex: 2 
+                  }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: theme.border }}>
+                      {new Date(note.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                    </div>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {note.visibility !== 'private' && (
+                        <div style={{ padding: '4px 8px', borderRadius: 8, fontSize: 9, fontWeight: 800, background: '#fff', color: theme.border, border: `1px solid ${theme.blob}` }}>
+                          {note.visibility === 'custom' ? 'KUSTOM' : note.visibility.toUpperCase()}
+                        </div>
+                      )}
+                      <div style={{ fontSize: 11, fontWeight: 700, color: HP_TOKENS.inkMute }}>
+                        oleh {note.authorName?.split(' ')[0] || 'SAYA'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
           
           {/* Pagination Controls */}
           {totalPagesNotes > 1 && (
@@ -644,13 +682,13 @@ export default function NotesScreen() {
             </div>
           )}
           
-          {Object.keys(groupedNotes).length === 0 && searchQuery && (
+          {paginatedNotes.length === 0 && searchQuery && (
             <div style={{ textAlign: 'center', padding: 40, color: HP_TOKENS.inkMute }}>
               <div style={{ fontSize: 32, marginBottom: 12 }}>🔍</div>
               <div style={{ ...HP_TEXT.h, fontSize: 14 }}>Pencarian tidak ditemukan.</div>
             </div>
           )}
-        </div>
+        </>
       )}
     </div>
   );

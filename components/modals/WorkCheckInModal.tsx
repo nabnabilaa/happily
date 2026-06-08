@@ -44,7 +44,7 @@ export default function WorkCheckInModal({ onClose }: WorkCheckInModalProps) {
 2. Kasih 1 saran spesifik supaya saya tetap fokus (deep work).
 3. Jika saya merasa "belum kerja beneran", ingatkan saya apa yang sudah saya capai.
 Jawab dengan tone yang asik dan menyemangati.`,
-          systemPrompt: "You are Flow, a fun and supportive productivity coach."
+          systemPrompt: "You are Flow, a fun and supportive productivity coach. IMPORTANT: You MUST ALWAYS communicate in Indonesian (Bahasa Indonesia) regardless of the user's language."
         })
       });
       const data = await res.json();
@@ -68,10 +68,9 @@ Jawab dengan tone yang asik dan menyemangati.`,
         if (targetId && String(goal.id) === String(targetId)) {
           const tasksForGoal = newPriorities.filter((p: any) => (p.goal_id && String(p.goal_id) === String(goal.id)) || (p.kpi_id && String(p.kpi_id) === String(goal.id)));
           const doneCount = tasksForGoal.filter((p: any) => p.done).length;
-          const newProgress = tasksForGoal.length > 0 
-            ? Math.round((doneCount / tasksForGoal.length) * 100) 
-            : goal.progress;
-          return { ...goal, progress: newProgress, metric: `${doneCount}/${tasksForGoal.length} task selesai` };
+          const newProgress = tasksForGoal.length > 0 ? Math.round((doneCount / tasksForGoal.length) * 100) : goal.progress;
+          const newMetric = doneCount + "/" + tasksForGoal.length + " task selesai";
+          return { ...goal, progress: newProgress, metric: newMetric };
         }
         return goal;
       });

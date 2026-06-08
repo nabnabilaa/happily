@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Nunito, JetBrains_Mono } from "next/font/google";
+import { Nunito } from "next/font/google";
 import "./globals.css";
 import Shell from "@/components/layout/Shell";
 import PWARegistration from "@/components/pwa/PWARegistration";
@@ -7,6 +7,7 @@ import InstallButton from "@/components/pwa/InstallButton";
 import OfflineToast from "@/components/pwa/OfflineToast";
 import { HPProvider } from "@/lib/HPContext";
 import Script from "next/script";
+import GlobalClickInterceptor from "@/components/ui/GlobalClickInterceptor";
 
 const nunito = Nunito({
   subsets: ["latin"],
@@ -20,14 +21,8 @@ const nunitoDisplay = Nunito({
   variable: "--hp-font-display",
 });
 
-const jetbrains = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  variable: "--hp-font-mono",
-});
-
 export const viewport: Viewport = {
-  themeColor: "#04050a",
+  themeColor: "#0F1F33",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -35,13 +30,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Bee Flow",
-  description: "Flow into Focus — Human-Centered Platform",
+  title: "Flowbee — Flow into Focus",
+  description: "Human-Centered Productivity Platform",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Bee Flow",
+    title: "Flowbee",
   },
   formatDetection: {
     telephone: false,
@@ -56,8 +51,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className={`${nunito.variable} ${nunitoDisplay.variable} ${jetbrains.variable}`} suppressHydrationWarning>
+    <html lang="id" className={`${nunito.variable} ${nunitoDisplay.variable}`} suppressHydrationWarning>
       <head>
+        {/* Fraunces for display headings */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,400&display=swap" rel="stylesheet" />
+        <style dangerouslySetInnerHTML={{ __html: `
+          :root { --hp-font-display: 'Fraunces', serif; }
+        `}} />
       </head>
       <body>
         <Script id="theme-loader" strategy="beforeInteractive" dangerouslySetInnerHTML={{
@@ -128,6 +130,7 @@ export default function RootLayout({
         }} />
         <SWRProvider>
           <HPProvider>
+            <GlobalClickInterceptor />
             <PWARegistration />
             <InstallButton />
             <OfflineToast />

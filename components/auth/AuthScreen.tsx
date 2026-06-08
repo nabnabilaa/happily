@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
+import { HP_TOKENS, HP_FONT, HP_FONT_DISPLAY, HP_TEXT } from "@/lib/constants";
 import HPGlyph from "@/components/ui/HPGlyph";
+import BeeMascot from "@/components/ui/BeeMascot";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
+import Image from "next/image";
 
 // Intercept and suppress Google Sign-In / FedCM AbortErrors immediately on module load
 if (typeof window !== "undefined") {
@@ -65,7 +67,6 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "DUMMY_CLIENT_ID.apps.googleusercontent.com";
 
   // Cancel any pending Google FedCM / One Tap requests when this component unmounts
-  // (e.g. after a successful login when AuthScreen is replaced by the main app)
   useEffect(() => {
     return () => {
       try {
@@ -137,182 +138,209 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
   return (
     <GoogleOAuthProvider clientId={clientId}>
       <div style={{
-        minHeight: "100vh",
-        background: HP_TOKENS.paper,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "24px",
-        fontFamily: HP_FONT
+        height: "100dvh",
+        width: "100%",
+        overflowY: "auto",
+        background: "#F4F7F9",
+        fontFamily: HP_FONT,
       }}>
-        <div style={{ width: "100%", maxWidth: 400, textAlign: "center" }}>
-          <div style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 64,
-            height: 64,
-            borderRadius: 20,
-            background: HP_TOKENS.yellow,
-            marginBottom: 24,
-            boxShadow: `0 8px 24px ${HP_TOKENS.yellow}40`
+        <div style={{
+          minHeight: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "4vh 24px",
+        }}>
+          <div className="hp-auth-wrapper" style={{
+            display: "flex",
+            flexDirection: "row",
+            flexWrap: "wrap",
+            width: "100%",
+            maxWidth: 960,
+            background: `linear-gradient(160deg, ${HP_TOKENS.primaryWash} 0%, #FFE6D6 100%)`,
+            borderRadius: 32,
+            boxShadow: "0 20px 60px rgba(255, 107, 53, 0.15)",
+            overflow: "hidden",
+            position: "relative"
           }}>
-            <HPGlyph name="sparkle" size={32} color={HP_TOKENS.ink} />
-          </div>
-
-          <h1 style={{ ...HP_TEXT.display, fontSize: 32, marginBottom: 8 }}>
-            Welcome Back
-          </h1>
-          <p style={{ ...HP_TEXT.body, color: HP_TOKENS.inkMute, marginBottom: 32 }}>
-            Masuk menggunakan akun Maxy LMS Anda.
-          </p>
-
-          {error && (
-            <div style={{
-              padding: "12px",
-              borderRadius: 12,
-              background: HP_TOKENS.coral + "15",
-              color: HP_TOKENS.coral,
-              fontSize: 13,
-              fontWeight: 700,
-              marginBottom: 20,
-              border: `1px solid ${HP_TOKENS.coral}30`
-            }}>
-              {error}
+          {/* LEFT SIDE: Hero */}
+          <div className="hp-auth-hero" style={{
+            flex: "1 1 400px",
+            padding: "48px 40px",
+            display: "flex",
+            flexDirection: "column",
+            position: "relative",
+            zIndex: 1,
+            overflow: "hidden"
+          }}>
+            {/* Background Image Optimized */}
+            <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, opacity: 1 }}>
+              <Image src="/bg-login.png" alt="Background" fill style={{ objectFit: 'cover', objectPosition: 'center bottom' }} priority quality={90} />
             </div>
-          )}
 
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <input
-              type="email"
-              placeholder="Email Address"
-              required
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              style={inputStyle}
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              required
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              style={inputStyle}
-            />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <div style={{
+                fontFamily: HP_FONT_DISPLAY, fontSize: 36, fontWeight: 700, color: HP_TOKENS.ink, letterSpacing: -1,
+              }}>
+                Focus<span style={{ color: HP_TOKENS.primary }}>Buddy</span> ✨
+              </div>
+              <div style={{ fontSize: 13, color: HP_TOKENS.inkSoft, fontWeight: 600, marginTop: 4, letterSpacing: 0.5 }}>
+                Flow into Focus — Kerja Lebih Cerdas
+              </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                ...buttonStyle,
-                background: loading ? HP_TOKENS.line : HP_TOKENS.ink,
-                color: loading ? HP_TOKENS.inkFade : HP_TOKENS.yellow,
-                cursor: loading ? "not-allowed" : "pointer"
+              <div style={{ marginTop: 60 }}>
+                <h1 style={{ fontSize: 28, fontWeight: 800, color: HP_TOKENS.ink, margin: 0 }}>Selamat datang kembali!</h1>
+                <div style={{ width: 40, height: 4, background: HP_TOKENS.primary, borderRadius: 2, marginTop: 12, marginBottom: 16 }} />
+                <p style={{ fontSize: 15, color: HP_TOKENS.inkMute, lineHeight: 1.6, fontWeight: 500 }}>
+                  Masuk ke akunmu dan lanjutkan<br/>perjalanan produktifmu bersama FocusBuddy ✨
+                </p>
+              </div>
+            </div>
+
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", minHeight: 200, zIndex: 1 }}>
+              {/* Mascot */}
+              <div style={{ animation: 'hpFloat 3s ease-in-out infinite', zIndex: 2, marginTop: 20 }}>
+                <BeeMascot mood="happy" size={140} showSpeech="" />
+              </div>
+            </div>
+
+            {/* Install App small widget */}
+            <div 
+              onClick={() => {
+                const btn = document.getElementById('install-button');
+                if (btn) btn.click();
               }}
               className="hp-tap"
+              style={{
+                display: "flex", alignItems: "center", gap: 12, background: "rgba(255,255,255,0.6)",
+                padding: "12px 16px", borderRadius: 16, width: "max-content", marginTop: 20, position: 'relative', zIndex: 1,
+                cursor: 'pointer'
+              }}
             >
-              {loading ? "Processing..." : "Login"}
-            </button>
-          </form>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 16, margin: "24px 0" }}>
-            <div style={{ flex: 1, height: 1, background: HP_TOKENS.line }}></div>
-            <div style={{ fontSize: 13, color: HP_TOKENS.inkMute, fontWeight: 600 }}>OR</div>
-            <div style={{ flex: 1, height: 1, background: HP_TOKENS.line }}></div>
+              <div style={{ width: 32, height: 32, background: "#111", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 800 }}>
+                N
+              </div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: HP_TOKENS.primary }}>Install App</div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: HP_TOKENS.inkMute }}>Nikmati pengalaman<br/>FocusBuddy di desktop</div>
+              </div>
+              <HPGlyph name="download" size={16} color={HP_TOKENS.primary} />
+            </div>
           </div>
+          <style dangerouslySetInnerHTML={{ __html: `.hp-install-btn { display: none !important; }` }} />
 
-          <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={handleGoogleError}
-              useOneTap={process.env.NODE_ENV !== "development"}
-              auto_select={false}
-              cancel_on_tap_outside={false}
-              theme="outline"
-              size="large"
-              width="400"
-              text="signin_with"
-              shape="pill"
-            />
-          </div>
-
-          {process.env.NODE_ENV === "development" && (
+          {/* RIGHT SIDE: Form Card */}
+          <div style={{
+            flex: "1 1 400px",
+            padding: "32px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 2,
+          }}>
             <div style={{
-              marginTop: 24,
-              padding: 16,
-              borderRadius: 16,
-              background: "#f8f9fa",
-              border: `1.5px dashed ${HP_TOKENS.line}`,
+              background: "#fff",
+              width: "100%",
+              maxWidth: 400,
+              borderRadius: 24,
+              padding: "40px 32px",
+              boxShadow: "0 20px 40px rgba(0,0,0,0.04)",
               display: "flex",
               flexDirection: "column",
-              gap: 8,
-              textAlign: "left"
+              alignItems: "center",
             }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: HP_TOKENS.inkMute, display: "flex", alignItems: "center", gap: 6 }}>
-                🛠️ <span>Developer Auto-fill Login</span>
+              <div style={{ marginBottom: 16 }}>
               </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              
+              <h2 style={{ fontSize: 20, fontWeight: 800, color: HP_TOKENS.ink, marginBottom: 32 }}>
+                Masuk ke akun kamu
+              </h2>
+
+              <form onSubmit={handleSubmit} style={{ width: "100%", display: "flex", flexDirection: "column", gap: 16 }}>
+                {error && (
+                  <div style={{ padding: "12px", borderRadius: 12, background: "#FFF0F0", color: "#F44", fontWeight: 700, textAlign: "center", fontSize: 13 }}>
+                    {error}
+                  </div>
+                )}
+                
+                <div style={{ position: "relative" }}>
+                  <div style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: HP_TOKENS.inkSoft }}>
+                    <HPGlyph name="mail" size={18} />
+                  </div>
+                  <input
+                    type="email"
+                    placeholder="Email Address"
+                    required
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    style={{ ...inputStyle, paddingLeft: 46, textAlign: "left" }}
+                  />
+                </div>
+
+                <div style={{ position: "relative" }}>
+                  <div style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: HP_TOKENS.inkSoft }}>
+                    <HPGlyph name="lock" size={18} />
+                  </div>
+                  <input
+                    type="password"
+                    placeholder="Password"
+                    required
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    style={{ ...inputStyle, paddingLeft: 46, textAlign: "left" }}
+                  />
+                  <div style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", color: HP_TOKENS.inkSoft, cursor: "pointer" }}>
+                    <HPGlyph name="eye" size={18} />
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, fontWeight: 600, color: HP_TOKENS.inkMute, marginTop: 4, marginBottom: 8 }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                    <input type="checkbox" style={{ accentColor: HP_TOKENS.primary, width: 16, height: 16 }} defaultChecked />
+                    Ingat saya
+                  </label>
+                  <a href="#" style={{ color: HP_TOKENS.primary, textDecoration: "none" }}>Lupa password?</a>
+                </div>
+
                 <button
-                  type="button"
-                  onClick={() => setForm({ email: "employee@gmail.com", password: "employee123" })}
-                  style={{
-                    padding: "8px 12px",
-                    borderRadius: 8,
-                    border: `1px solid ${HP_TOKENS.line}`,
-                    background: HP_TOKENS.card,
-                    color: HP_TOKENS.ink,
-                    fontWeight: 600,
-                    fontSize: 11,
-                    cursor: "pointer",
-                    transition: "all 0.2s"
-                  }}
+                  type="submit"
+                  disabled={loading}
                   className="hp-tap"
-                >
-                  Employee
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setForm({ email: "manager@gmail.com", password: "manager123" })}
                   style={{
-                    padding: "8px 12px",
-                    borderRadius: 8,
-                    border: `1px solid ${HP_TOKENS.line}`,
-                    background: HP_TOKENS.card,
-                    color: HP_TOKENS.ink,
-                    fontWeight: 600,
-                    fontSize: 11,
-                    cursor: "pointer",
-                    transition: "all 0.2s"
+                    width: '100%', padding: '16px', borderRadius: 100, border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15,
+                    background: loading ? HP_TOKENS.lineSoft : `linear-gradient(135deg, ${HP_TOKENS.primary}, #FF8C00)`,
+                    color: loading ? HP_TOKENS.inkMute : '#fff', cursor: loading ? 'not-allowed' : 'pointer',
+                    boxShadow: loading ? 'none' : `0 8px 24px rgba(255,107,53,0.3)`, transition: 'all 0.2s',
                   }}
-                  className="hp-tap"
                 >
-                  Manager
+                  {loading ? "Processing..." : "Login 🚀"}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setForm({ email: "hr@gmail.com", password: "hr123" })}
-                  style={{
-                    padding: "8px 12px",
-                    borderRadius: 8,
-                    border: `1px solid ${HP_TOKENS.line}`,
-                    background: HP_TOKENS.card,
-                    color: HP_TOKENS.ink,
-                    fontWeight: 600,
-                    fontSize: 11,
-                    cursor: "pointer",
-                    transition: "all 0.2s"
-                  }}
-                  className="hp-tap"
-                >
-                  HR
-                </button>
+              </form>
+
+              {/* Divider */}
+              <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 24, marginBottom: 24, width: "100%" }}>
+                <div style={{ flex: 1, height: 1, background: HP_TOKENS.line }} />
+                <div style={{ fontSize: 10, color: HP_TOKENS.inkMute, fontWeight: 700, letterSpacing: 1 }}>ATAU</div>
+                <div style={{ flex: 1, height: 1, background: HP_TOKENS.line }} />
+              </div>
+
+              <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  useOneTap={process.env.NODE_ENV !== "development"}
+                  auto_select={false}
+                  cancel_on_tap_outside={false}
+                  theme="outline"
+                  size="large"
+                  width="330"
+                  text="signin_with"
+                  shape="pill"
+                />
               </div>
             </div>
-          )}
-
-          <div style={{ marginTop: 24, ...HP_TEXT.small, color: HP_TOKENS.inkMute }}>
-            Login terintegrasi dengan LMS Maxy Academy.
+          </div>
           </div>
         </div>
       </div>
@@ -323,23 +351,16 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
-  padding: "16px",
-  borderRadius: 14,
-  border: `1.5px solid ${HP_TOKENS.line}`,
-  fontFamily: HP_FONT,
-  fontSize: 15,
-  outline: "none",
-  transition: "border-color 0.2s",
-  background: HP_TOKENS.card,
-};
-
-const buttonStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "16px",
-  borderRadius: 16,
-  border: "none",
-  fontFamily: HP_FONT,
-  fontWeight: 800,
+  padding: "16px 22px",
+  borderRadius: 100,
+  border: `2px solid ${HP_TOKENS.line}`,
+  fontFamily: "var(--hp-font)",
   fontSize: 16,
-  transition: "all 0.2s",
+  fontWeight: 600,
+  color: "var(--hp-ink)",
+  outline: "none",
+  transition: "border-color 0.2s, box-shadow 0.2s",
+  background: "var(--hp-card)",
+  textAlign: "center",
+  boxShadow: 'inset 0 2px 6px rgba(26,29,35,0.02)'
 };

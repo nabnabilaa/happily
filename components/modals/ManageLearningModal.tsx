@@ -15,12 +15,20 @@ interface ManageLearningModalProps {
 }
 
 export default function ManageLearningModal({ onClose }: ManageLearningModalProps) {
-  const { state, updateState } = useHP();
+  const { state, updateState, notify } = useHP();
   const [title, setTitle] = useState("");
   const [tag, setTag] = useState("Leadership");
 
   const addLearning = () => {
     if (!title) return;
+    
+    // Validasi duplikat
+    const isDuplicate = state.learning?.some((l: any) => l.title.toLowerCase().trim() === title.toLowerCase().trim());
+    if (isDuplicate) {
+      notify("Gagal Menambah", "Judul materi ini sudah ada. Harap gunakan nama lain.", "error");
+      return;
+    }
+
     const newItem = {
       id: Date.now(),
       title,
@@ -33,6 +41,7 @@ export default function ManageLearningModal({ onClose }: ManageLearningModalProp
       ...s,
       learning: [...(s.learning || []), newItem]
     }));
+    notify("Berhasil Dibuat 🎉", `Materi "${title}" telah ditambahkan.`, "success");
     setTitle("");
   };
 
@@ -84,7 +93,7 @@ export default function ManageLearningModal({ onClose }: ManageLearningModalProp
               fontFamily: HP_FONT, fontSize: 14, background: HP_TOKENS.card, outline: 'none'
             }}
           />
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {['Leadership', 'Design Systems', 'Storytelling'].map(t => (
               <button
                 key={t}

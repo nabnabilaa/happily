@@ -32,6 +32,7 @@ export default function ManageHabitsModal({ onClose }: ManageHabitsModalProps) {
       target: 7,
       done: false,
       glyph: glyph,
+      created_at: new Date().toISOString(),
     };
     updateState((s: any) => ({
       ...s,

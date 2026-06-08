@@ -78,12 +78,18 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
         <div style={{ width: '100%', height: '60vh', marginTop: 10, borderRadius: 16, overflow: 'hidden', background: '#f0f0f0' }}>
           <iframe src={survey.url} width="100%" height="100%" frameBorder="0" title={survey.title}>Loading…</iframe>
         </div>
-        <button onClick={() => { awardXP('survey_complete', `Survey: ${survey.title}`); onClose(); }} className="hp-tap" style={{
+        <button onClick={() => { 
+          if (submitting) return;
+          setSubmitting(true);
+          awardXP('survey_complete', `Survey: ${survey.title}`); 
+          onClose(); 
+        }} className="hp-tap" disabled={submitting} style={{
           width: '100%', padding: '16px', borderRadius: 16, marginTop: 16,
           background: HP_TOKENS.lavender, color: '#F4F7F9', border: 'none',
-          fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
+          fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: submitting ? 'default' : 'pointer',
+          opacity: submitting ? 0.7 : 1
         }}>
-          Saya sudah mengisi survey & Ambil 100 Point 🎁
+          {submitting ? "Memproses..." : "Saya sudah mengisi survey & Ambil 100 Point 🎁"}
         </button>
       </Modal>
     );

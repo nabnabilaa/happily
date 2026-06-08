@@ -21,7 +21,7 @@ import EmotionalHero from "@/components/home/EmotionalHero";
 import SectionHeader from "@/components/home/SectionHeader";
 import InsightCard from "@/components/home/InsightCard";
 import HabitCell from "@/components/home/HabitCell";
-import BeeMascot from "@/components/ui/BeeMascot";
+import BeeMascot, { getMoodColor } from "@/components/ui/BeeMascot";
 import CelebrationOverlay from "@/components/ui/CelebrationOverlay";
 import TaskCompleteModal from "@/components/modals/TaskCompleteModal";
 import OvertimePromptModal from "@/components/modals/OvertimePromptModal";
@@ -54,6 +54,42 @@ export default function HomeScreen({ openModal }: any) {
   const [completingTask, setCompletingTask] = useState<any>(null);
   const [selectedHabitDay, setSelectedHabitDay] = useState<{ name: string, date: Date, isToday: boolean, done: boolean } | null>(null);
   const [habitNote, setHabitNote] = useState("");
+  const [todayAttendance, setTodayAttendance] = useState<any>(null);
+
+  // Fetch Attendance for absolute truth on clock-out
+  useEffect(() => {
+    if (!rawUser?.id) return;
+    const fetchAtt = () => {
+      fetch(`/api/attendance/summary?userId=${rawUser.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.today) setTodayAttendance(data.today);
+          else setTodayAttendance({}); // Set empty object if no check-in yet, to differentiate from null (loading)
+        })
+        .catch(err => console.warn("Failed to fetch attendance for HomeScreen:", err));
+    };
+    fetchAtt();
+    window.addEventListener('hp_db_update', fetchAtt);
+    return () => window.removeEventListener('hp_db_update', fetchAtt);
+  }, [rawUser?.id]);
+
+  const isClockedIn = useMemo(() => {
+    return !!todayAttendance?.checkInAt;
+  }, [todayAttendance]);
+
+  const isClockedOut = useMemo(() => {
+    // 1. Check API attendance truth
+    if (todayAttendance?.checkOutAt) return true;
+    
+    // 2. Fallback to local logbook check
+    if (!rawState || !rawState.logbook) return false;
+    const now = new Date();
+    return rawState.logbook.some((l: any) => {
+      if (l.type !== 'daily_reflection') return false;
+      const d = new Date(l.created_at || l.id);
+      return d.toDateString() === now.toDateString();
+    });
+  }, [rawState, todayAttendance]);
 
   const notifiedBreakDay = useRef<string>("");
   const notifiedClockoutDay = useRef<string>("");
@@ -132,7 +168,7 @@ export default function HomeScreen({ openModal }: any) {
             "reminder"
           );
         }
-      } else if (currentMins >= workEnd - 15 && currentMins < workEnd) {
+      } else if (currentMins >= workEnd - 15 && currentMins < workEnd && !rawState?.todayAttendance?.checkOut) {
         setReminder({ type: 'clockout', mins: workEnd - currentMins });
 
         if (notifiedClockoutDay.current !== todayStr) {
@@ -167,11 +203,46 @@ export default function HomeScreen({ openModal }: any) {
     checkTime();
     const interval = setInterval(checkTime, 60000);
 
-    // AI Nudge Logic (Duolingo Style)
+    // AI Coach Nudge Logic
     const generateNudge = () => {
-      if (!rawState) return;
+      if (!rawState || !rawState.workSchedule) return;
       
       const now = new Date();
+      const currentMins = now.getHours() * 60 + now.getMinutes();
+      const parseTime = (t: string) => {
+        const [hh, mm] = t.split(':').map(Number);
+        return hh * 60 + mm;
+      };
+      
+      const breakStart = parseTime(rawState.workSchedule.breakStart || "12:00");
+      const breakEnd = parseTime(rawState.workSchedule.breakEnd || "13:00");
+      const workStart = parseTime(rawState.workSchedule.start || "08:00");
+      
+      if (isClockedOut) {
+        setCoachNudge({
+          text: "Kamu sudah selesai hari ini! Selamat istirahat dan pulihkan energimu. 🌙",
+          type: 'cheer'
+        });
+        return;
+      }
+      
+      if (!isClockedIn) {
+         if (currentMins < workStart - 60) {
+            setCoachNudge({ text: "Selamat pagi! Jam kerjamu belum dimulai, santai dulu ya! 🌅", type: 'cheer' });
+         } else {
+            setCoachNudge({ text: "Halo! Kamu belum clock-in nih. Yuk segera absen biar waktumu mulai dihitung! ⏰", type: 'warning' });
+         }
+         return;
+      }
+
+      if (currentMins >= breakStart && currentMins < breakEnd) {
+         setCoachNudge({
+            text: "Sekarang waktunya istirahat! Tinggalkan pekerjaan sejenak dan nikmati makan siangmu. 🥪",
+            type: 'cheer'
+         });
+         return;
+      }
+      
       const lastAct = rawState.lastActivityDate ? new Date(rawState.lastActivityDate) : now;
       const hoursInactive = (now.getTime() - lastAct.getTime()) / (1000 * 60 * 60);
 
@@ -197,7 +268,7 @@ export default function HomeScreen({ openModal }: any) {
       const cheerMessages = [
         "Progress KPI kamu keren hari ini! Pertahankan ritmenya. ✨",
         "Kecil tapi rutin itu lebih baik. Terus melangkah ya! 🌱",
-        "Kamu luar biasa! Sudah 12 hari streak check-in tanpa putus. 🔥",
+        "Semangat! Jangan lupa minum air yang cukup hari ini. 💧",
         "Jangan lupa bernapas dalam-dalam. Kamu memegang kendali hari ini. 🧘‍♂️"
       ];
       setCoachNudge({
@@ -209,7 +280,35 @@ export default function HomeScreen({ openModal }: any) {
     generateNudge();
     
     return () => clearInterval(interval);
-  }, [rawState?.workSchedule, rawState?.mood, rawState?.lastActivityDate]);
+  }, [rawState, isClockedOut, isClockedIn]);
+
+  // Auto-Popup Clock In
+  useEffect(() => {
+    if (!rawState || !rawUser || !rawState.workSchedule) return;
+    if (todayAttendance === null) return; // wait for fetch
+    if (isClockedIn || isClockedOut) return;
+
+    const now = new Date();
+    const currentMins = now.getHours() * 60 + now.getMinutes();
+    const parseTime = (t: string) => {
+      const [hh, mm] = t.split(':').map(Number);
+      return hh * 60 + mm;
+    };
+    const workStart = parseTime(rawState.workSchedule.start || "08:00");
+
+    if (currentMins >= workStart - 30) {
+      const todayStr = now.toDateString();
+      const lastPopupStr = localStorage.getItem('lastAutoClockInPrompt');
+      
+      if (lastPopupStr !== todayStr) {
+        localStorage.setItem('lastAutoClockInPrompt', todayStr);
+        const timer = setTimeout(() => {
+          openModal('attendance_scanner');
+        }, 1200);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [rawState, rawUser, isClockedIn, isClockedOut, todayAttendance, openModal]);
 
   // Auto-Popup Coach for Critical Wellbeing
   useEffect(() => {
@@ -236,14 +335,29 @@ export default function HomeScreen({ openModal }: any) {
   const beeMood = useMemo(() => {
     if (!rawState) return 'happy';
     const now = new Date();
+    
+    if (isClockedOut) return 'idle';
+    if (!isClockedIn) return 'idle';
+
+    const parseTime = (t: string) => {
+      const [hh, mm] = t.split(':').map(Number);
+      return hh * 60 + mm;
+    };
+    
+    if (rawState.workSchedule) {
+      const currentMins = now.getHours() * 60 + now.getMinutes();
+      const breakStart = parseTime(rawState.workSchedule.breakStart || "12:00");
+      const breakEnd = parseTime(rawState.workSchedule.breakEnd || "13:00");
+      if (currentMins >= breakStart && currentMins < breakEnd) return 'eating'; // lunch time buddy
+    }
+
     const lastAct = rawState.lastActivityDate ? new Date(rawState.lastActivityDate) : now;
     const hoursInactive = (now.getTime() - lastAct.getTime()) / (1000 * 60 * 60);
 
-    if (hoursInactive > 4) return 'sad';
+    if (hoursInactive >= 3) return 'sad';
     if (rawState.mood === 'tired' || rawState.mood === 'burnout') return 'sleepy';
-    if (rawState.mood === 'stress' || rawState.mood === 'anxious') return 'surprised';
-    return 'happy';
-  }, [rawState]);
+    return 'idle';
+  }, [rawState, isClockedOut, isClockedIn]);
 
 
 
@@ -309,7 +423,7 @@ export default function HomeScreen({ openModal }: any) {
         content: note || (newDone ? 'Selesai' : 'Belum Selesai'),
         habitName: name,
         glyph: habit.glyph,
-        points: newDone && !wasDone ? 30 : 0,
+        points: newDone && !wasDone ? 20 : 0,
         date: date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
         day: date.toLocaleDateString('id-ID', { weekday: 'long' }),
         time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
@@ -404,14 +518,14 @@ export default function HomeScreen({ openModal }: any) {
 
   return (
     <div style={{ position: 'relative', minHeight: '100%', paddingBottom: 120, fontFamily: HP_FONT }}>
-      <BlobBackground colors={[HP_TOKENS.yellowWash, '#fff', HP_TOKENS.paper]}/>
+      <BlobBackground colors={[HP_TOKENS.primaryWash, HP_TOKENS.card, HP_TOKENS.paper]}/>
       <Confetti show={confetti}/>
       <CelebrationOverlay show={celebrate} onComplete={() => setCelebrate(false)} />
 
       <div style={{ position: 'relative', zIndex: 1, padding: '0 16px' }} className="hp-stagger">
         
         {/* 🌡️ Wellbeing Score (Advanced Feature) */}
-        <WellbeingGauge state={state} user={user} />
+        <WellbeingGauge state={state} user={user} openModal={openModal} />
 
         {/* Top Card - Profile & Level */}
         <div style={{ 
@@ -420,8 +534,9 @@ export default function HomeScreen({ openModal }: any) {
           padding: '24px',
           marginTop: 16,
           border: `1px solid ${HP_TOKENS.line}`,
-          boxShadow: '0 8px 24px rgba(26,29,35,0.02)',
+          boxShadow: 'var(--hp-shadow-sm)',
           position: 'relative',
+          overflow: 'hidden',
         }}>
           <div 
             onClick={() => openModal('profile_editor')}
@@ -441,8 +556,8 @@ export default function HomeScreen({ openModal }: any) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ ...HP_TEXT.h, fontSize: 20 }}>{user.name.split(' ')[0]}</div>
                   <div style={{ 
-                    background: HP_TOKENS.yellow, color: HP_TOKENS.ink, fontSize: 10, fontWeight: 900, 
-                    padding: '2px 8px', borderRadius: 6, letterSpacing: 0.5 
+                    background: '#FF6B35', color: '#fff', fontSize: 10, fontWeight: 900, 
+                    padding: '3px 10px', borderRadius: 100, letterSpacing: 0.5 
                   }}>
                     Level {user.level}
                   </div>
@@ -468,11 +583,11 @@ export default function HomeScreen({ openModal }: any) {
                 <HPGlyph name="book" size={16} color={HP_TOKENS.blue} />
               </button>
               <div className="hp-tap" style={{
-                display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 12,
-                background: HP_TOKENS.yellowSoft, fontFamily: HP_FONT, fontWeight: 900, fontSize: 14, color: HP_TOKENS.ink,
-                border: `1px solid ${HP_TOKENS.yellow}`,
+                display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 100,
+                background: 'rgba(255,107,53,0.08)', fontFamily: HP_FONT, fontWeight: 900, fontSize: 14, color: '#FF6B35',
+                border: '1.5px solid rgba(255,107,53,0.25)',
               }}>
-                <HPGlyph name="zap" size={14} color={HP_TOKENS.ink} />
+                <HPGlyph name="zap" size={14} color="#FF6B35" />
                 <span>{user.streak}</span>
               </div>
             </div>
@@ -481,10 +596,11 @@ export default function HomeScreen({ openModal }: any) {
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 20, marginBottom: 16 }}>
             <div style={{ flex: 1 }}>
               <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 4 }}>Level Progress</div>
-              <div style={{ width: '100%', height: 6, background: HP_TOKENS.lineSoft, borderRadius: 3, overflow: 'hidden' }}>
+              <div style={{ width: '100%', height: 6, background: 'var(--hp-border)', borderRadius: 100, overflow: 'hidden' }}>
                 <div style={{ 
                   width: `${levelProgress * 100}%`, height: '100%', 
-                  background: HP_TOKENS.yellow, 
+                  background: 'linear-gradient(90deg, #FF6B35, #FFBE0B)', 
+                  borderRadius: 100,
                   transition: '1s cubic-bezier(0.2, 0.8, 0.2, 1)',
                 }} />
               </div>
@@ -494,23 +610,41 @@ export default function HomeScreen({ openModal }: any) {
               <div style={{ ...HP_TEXT.h, fontSize: 24 }}>{user.points.toLocaleString()}</div>
             </div>
           </div>
+        </div>
 
-          {/* AI Coach Nudge with Bee Mascot */}
-          <div style={{ 
-            background: HP_TOKENS.blueWash,
+        {/* AI Coach Nudge with Bee Mascot */}
+        <div 
+          style={{ 
+            background: coachNudge.type === 'warning' ? HP_TOKENS.yellowWash : coachNudge.type === 'cheer' ? HP_TOKENS.primaryWash : HP_TOKENS.sageWash,
+            border: `1.5px solid ${coachNudge.type === 'warning' ? HP_TOKENS.yellow : coachNudge.type === 'cheer' ? HP_TOKENS.primary : HP_TOKENS.sage}40`,
             borderRadius: 20,
             padding: '16px 20px',
-            border: `1px solid ${HP_TOKENS.blue}30`,
-            marginBottom: 20,
+            marginTop: 16,
             display: 'flex',
             alignItems: 'center',
             gap: 20
-          }}>
+        }}>
+          <div style={{ flexShrink: 0 }}>
             <BeeMascot mood={beeMood} size={60} showSpeech="" />
-            <div style={{ ...HP_TEXT.body, fontSize: 13, fontWeight: 700, lineHeight: 1.5, color: HP_TOKENS.ink }}>
+          </div>
+          <div 
+            onClick={() => openModal('mascot_guide')}
+            className="hp-tap"
+            style={{ flex: 1, cursor: 'pointer', padding: '4px 0' }}
+          >
+            <div style={{ ...HP_TEXT.body, fontSize: 13, fontWeight: 800, lineHeight: 1.5, color: HP_TOKENS.ink }}>
               {coachNudge.text}
             </div>
           </div>
+        </div>
+
+        {/* Attendance & Schedule Card */}
+        <HPCard padding={20} style={{ marginTop: 16, border: `1.5px solid ${HP_TOKENS.lineSoft}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+            <HPGlyph name="calendar" size={18} color={HP_TOKENS.inkSoft} />
+            <div style={{ ...HP_TEXT.h, fontSize: 16 }}>Jadwal & Kehadiran</div>
+          </div>
+          
           <div style={{ 
             display: 'flex', gap: 12, padding: '12px 16px', borderRadius: 16, 
             background: HP_TOKENS.paper, border: `1px solid ${HP_TOKENS.line}`,
@@ -519,7 +653,7 @@ export default function HomeScreen({ openModal }: any) {
             <div style={{ flex: 1 }}>
               <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 2 }}>JAM KERJA</div>
               <div style={{ ...HP_TEXT.body, fontSize: 13, fontWeight: 800 }}>
-                {state.todayAttendance?.checkIn || state.workSchedule?.start} - {state.todayAttendance?.checkOut || state.workSchedule?.end}
+                {state.workSchedule?.start || '08:00'} - {state.workSchedule?.end || '17:00'}
               </div>
             </div>
             <div style={{ width: 1, background: HP_TOKENS.line }} />
@@ -531,12 +665,8 @@ export default function HomeScreen({ openModal }: any) {
             </div>
           </div>
 
-
-          {/* Attendance Widget — Smart: Clock-in / Clock-out / Done */}
-          <div style={{ marginTop: 12 }}>
-            <AttendanceWidget openModal={openModal} />
-          </div>
-        </div>
+          <AttendanceWidget openModal={openModal} />
+        </HPCard>
 
         {/* HERO — Emotional check-in */}
         <div style={{ marginTop: 16 }}>
@@ -560,7 +690,7 @@ export default function HomeScreen({ openModal }: any) {
               overflow: 'hidden'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
               <div style={{ 
                 width: 44, height: 44, borderRadius: 14, 
                 background: HP_TOKENS.card, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -716,24 +846,16 @@ export default function HomeScreen({ openModal }: any) {
 
         {/* Closing actions */}
         <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <button onClick={() => openModal('reflect')} className="hp-tap" style={{
-            width: '100%', padding: '18px', borderRadius: 16,
-            background: HP_TOKENS.yellow, color: HP_TOKENS.ink,
-            border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
-            fontFamily: HP_FONT, fontWeight: 800, fontSize: 15,
-          }}>
-            <HPGlyph name="moon" size={20} color={HP_TOKENS.ink} />
-            <span>Evening Reflection</span>
-          </button>
+
 
           <button onClick={() => openModal('logbook')} className="hp-tap" style={{
-            width: '100%', padding: '16px', borderRadius: 16,
+            width: '100%', padding: '16px', borderRadius: 100,
             background: 'transparent', color: HP_TOKENS.inkMute,
-            border: `1.5px solid ${HP_TOKENS.line}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+            border: `2px solid var(--hp-border)`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
             fontFamily: HP_FONT, fontWeight: 700, fontSize: 14,
           }}>
             <HPGlyph name="book" size={18} color={HP_TOKENS.inkMute}/>
-            <span>View Activity Logbook</span>
+            <span>Lihat Riwayat & Logbook Calendar</span>
           </button>
 
         </div>
@@ -795,27 +917,7 @@ export default function HomeScreen({ openModal }: any) {
               />
               
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
-                {[
-                  { title: "Follow Up Meeting", content: "Melakukan diskusi terkait kebutuhan sistem pelaporan penjualan bulanan. Klien meminta penambahan fitur filter berdasarkan wilayah dan kategori produk. Tindak lanjut: tim development melakukan analisis kebutuhan dan estimasi waktu pengerjaan." },
-                  { title: "Evaluasi Progress", content: "Progress pengembangan modul autentikasi dan dashboard telah mencapai 80%. Ditemukan beberapa kendala pada integrasi API eksternal. Dibutuhkan proses pengujian tambahan sebelum tahap deployment." },
-                  { title: "Review Uji Coba", content: "Pengujian fungsi utama aplikasi berjalan sesuai kebutuhan. Ditemukan bug minor pada fitur pencarian data dan validasi input formulir. Perbaikan dijadwalkan pada sprint berikutnya." },
-                  { title: "Rencana Fitur Baru", content: "Direncanakan penambahan fitur notifikasi otomatis untuk pengguna terkait aktivitas sistem dan pengingat tugas. Tahapan berikutnya adalah pembuatan desain antarmuka dan penyesuaian database." },
-                  { title: "Monitoring Tim", content: "Seluruh anggota tim telah menyelesaikan tugas prioritas minggu ini. Fokus pekerjaan selanjutnya adalah optimalisasi performa aplikasi dan penyempurnaan pengalaman pengguna." },
-                  { title: "Analisis Kebutuhan", content: "Berdasarkan hasil wawancara, pengguna membutuhkan tampilan data yang lebih ringkas dan mudah dipahami. Direkomendasikan penambahan grafik visual serta fitur ekspor laporan." }
-                ].map(dummy => (
-                  <button 
-                    key={dummy.title}
-                    onClick={() => setHabitNote(dummy.content)}
-                    className="hp-tap"
-                    style={{
-                      padding: '6px 12px', borderRadius: 20, border: `1px solid ${HP_TOKENS.lineSoft}`,
-                      background: HP_TOKENS.card, color: HP_TOKENS.inkFade, fontFamily: HP_FONT, fontSize: 11,
-                      cursor: 'pointer', transition: '0.2s'
-                    }}
-                  >
-                    {dummy.title}
-                  </button>
-                ))}
+                {/* User requested to remove the default follow-up dummy tags */}
               </div>
             </div>
 

@@ -301,18 +301,22 @@ export default function CalendarScreen({ openModal }: Props) {
       <HPCard padding={0} style={{ marginBottom: 16, overflow: 'hidden' }}>
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '14px 20px', background: `linear-gradient(135deg, ${HP_TOKENS.blue}, #2B5A8C)`,
+          padding: '14px 20px', borderBottom: `1px solid ${HP_TOKENS.lineSoft}`
         }}>
-          <button onClick={prevMonth} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 8 }}>
-            <HPGlyph name="arrow" size={18} color="#F4F7F9" />
+          <button onClick={prevMonth} className="hp-tap" style={{ background: HP_TOKENS.paper, border: `1px solid ${HP_TOKENS.line}`, borderRadius: 12, cursor: 'pointer', padding: 8, display: 'flex' }}>
+            <div style={{ transform: 'rotate(180deg)', display: 'flex' }}>
+              <HPGlyph name="arrow" size={16} color={HP_TOKENS.inkMute} />
+            </div>
           </button>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ color: '#F4F7F9', fontWeight: 900, fontSize: 16, fontFamily: HP_FONT }}>
+            <div style={{ color: HP_TOKENS.ink, fontWeight: 900, fontSize: 16, fontFamily: HP_FONT }}>
               {MONTHS[viewMonth]} {viewYear}
             </div>
           </div>
-          <button onClick={nextMonth} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 8, transform: 'rotate(180deg)' }}>
-            <HPGlyph name="arrow" size={18} color="#F4F7F9" />
+          <button onClick={nextMonth} className="hp-tap" style={{ background: HP_TOKENS.paper, border: `1px solid ${HP_TOKENS.line}`, borderRadius: 12, cursor: 'pointer', padding: 8, display: 'flex' }}>
+            <div style={{ display: 'flex' }}>
+              <HPGlyph name="arrow" size={16} color={HP_TOKENS.inkMute} />
+            </div>
           </button>
         </div>
 
@@ -334,14 +338,15 @@ export default function CalendarScreen({ openModal }: Props) {
               onClick={() => day && setSelectedDate(new Date(viewYear, viewMonth, day))}
               disabled={!day}
               style={{
-                background: day && isSelected(day) ? HP_TOKENS.blue
-                  : day && isToday(day) ? HP_TOKENS.blueSoft
+                background: day && isSelected(day) ? HP_TOKENS.primaryWash
+                  : day && isToday(day) ? HP_TOKENS.lineSoft
                   : 'transparent',
-                color: day && isSelected(day) ? '#fff'
-                  : day && isToday(day) ? HP_TOKENS.blue
+                color: day && isSelected(day) ? HP_TOKENS.primary
+                  : day && isToday(day) ? HP_TOKENS.ink
                   : day ? HP_TOKENS.ink : 'transparent',
-                border: 'none', borderRadius: 10, padding: '10px 0',
-                fontSize: 13, fontWeight: isToday(day!) ? 900 : 600,
+                border: day && isSelected(day) ? `1.5px solid ${HP_TOKENS.primary}` : '1.5px solid transparent',
+                borderRadius: 12, padding: '10px 0',
+                fontSize: 13, fontWeight: isToday(day!) || isSelected(day!) ? 900 : 600,
                 fontFamily: HP_FONT, cursor: day ? 'pointer' : 'default',
                 position: 'relative', transition: 'all 0.15s',
               }}
@@ -351,14 +356,14 @@ export default function CalendarScreen({ openModal }: Props) {
               {day && eventDays.has(day) && (
                 <div style={{
                   position: 'absolute', bottom: 3, left: '50%', transform: 'translateX(-50%)',
-                  width: 4, height: 4, borderRadius: 2, background: isSelected(day) ? '#fff' : HP_TOKENS.blue,
+                  width: 4, height: 4, borderRadius: 2, background: HP_TOKENS.primary,
                 }} />
               )}
               {/* Task deadline dot */}
               {day && taskDeadlines.has(day) && !eventDays.has(day) && (
                 <div style={{
                   position: 'absolute', bottom: 3, left: '50%', transform: 'translateX(-50%)',
-                  width: 4, height: 4, borderRadius: 2, background: HP_TOKENS.coral,
+                  width: 4, height: 4, borderRadius: 2, background: HP_TOKENS.yellow,
                 }} />
               )}
             </button>
@@ -384,12 +389,14 @@ export default function CalendarScreen({ openModal }: Props) {
           className="hp-tap"
           style={{
             padding: '10px 16px', borderRadius: 12, border: 'none',
-            background: HP_TOKENS.blue, color: '#F4F7F9',
+            background: HP_TOKENS.card, color: HP_TOKENS.ink,
             fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: 6,
+            boxShadow: `0 4px 12px rgba(26,29,35,0.03)`,
+            borderTop: `1px solid ${HP_TOKENS.lineSoft}`,
           }}
         >
-          <HPGlyph name="plus" size={14} color="#F4F7F9" />
+          <HPGlyph name="plus" size={14} color={HP_TOKENS.ink} />
           Buat Agenda
         </button>
       </div>

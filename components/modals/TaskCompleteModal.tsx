@@ -25,6 +25,7 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
   const [notes, setNotes] = useState('');
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
   const [myKpis, setMyKpis] = useState<any[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Load KPI info for metric hint
   useEffect(() => {
@@ -69,14 +70,21 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
     setProofLinks(proofLinks.filter((_, i) => i !== index));
   };
 
-  const handleConfirm = () => {
-    const cleanLinks = proofLinks.filter(l => l.trim().length > 0);
-    onConfirm({
-      proofLinks: cleanLinks,
-      isProject,
-      metricValue: metricValue ? parseFloat(metricValue) : undefined,
-      notes: notes || undefined,
-    });
+  const handleConfirm = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const cleanLinks = proofLinks.filter(l => l.trim().length > 0);
+      await onConfirm({
+        proofLinks: cleanLinks,
+        isProject,
+        metricValue: metricValue ? parseFloat(metricValue) : undefined,
+        notes: notes || undefined,
+      });
+    } finally {
+      // In case the modal is not unmounted by parent immediately
+      setIsSubmitting(false);
+    }
   };
 
   const inputStyle: React.CSSProperties = {
@@ -259,16 +267,24 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
             Batal
           </button>
           <button 
+            disabled={isSubmitting}
             onClick={handleConfirm}
             style={{
               flex: 2, padding: 14, borderRadius: 12, border: 'none',
               background: HP_TOKENS.sage, color: '#F4F7F9',
-              fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer',
+              fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: isSubmitting ? 'default' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              opacity: isSubmitting ? 0.7 : 1,
             }}
           >
-            <HPGlyph name="check" size={16} color="#F4F7F9" />
-            Selesai ✓
+            {isSubmitting ? (
+               "Memproses..."
+            ) : (
+              <>
+                <HPGlyph name="check" size={16} color="#F4F7F9" />
+                Selesai ✓
+              </>
+            )}
           </button>
         </div>
       </div>

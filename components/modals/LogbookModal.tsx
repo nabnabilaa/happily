@@ -9,6 +9,8 @@ import HPCard from "@/components/ui/HPCard";
 
 interface LogbookModalProps {
   onClose: () => void;
+  targetUserId?: string;
+  targetUserName?: string;
 }
 
 interface DaySummary {
@@ -56,16 +58,23 @@ const MOOD_EMOJI: Record<string, string> = {
   joy: '😊', calm: '😌', focus: '🎯', stress: '😰', sad: '😢', angry: '😤',
 };
 
-export default function LogbookModal({ onClose }: LogbookModalProps) {
+export default function LogbookModal({ onClose, targetUserId, targetUserName }: LogbookModalProps) {
   const { user } = useHP();
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
   const [days, setDays] = useState<DaySummary[]>([]);
   const [summary, setSummary] = useState<any>(null);
+  const [attSummary, setAttSummary] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [selectedDay, setSelectedDay] = useState<string | null>(() => {
+    const d = new Date();
+    d.setHours(d.getHours() + 7);
+    return d.toISOString().split('T')[0];
+  });
   const [dayDetail, setDayDetail] = useState<DayDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+
+  const viewUserId = targetUserId || user?.id;
 
   useEffect(() => {
     fetchMonth();
@@ -74,21 +83,48 @@ export default function LogbookModal({ onClose }: LogbookModalProps) {
   const fetchMonth = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/logbook/daily-summary?userId=${user?.id}&month=${month}&year=${year}`);
-      const data = await res.json();
+      const params = new URLSearchParams({
+        userId: user?.id || '',
+        month: String(month),
+        year: String(year)
+      });
+      if (targetUserId) params.set('targetUserId', targetUserId);
+
+      const [logbookRes, attRes] = await Promise.all([
+        fetch(`/api/logbook/daily-summary?${params}`),
+        fetch(`/api/attendance/summary?${params}`)
+      ]);
+      const data = await logbookRes.json();
+      const attData = await attRes.json();
+      
       setDays(data.days || []);
       setSummary(data.summary || null);
+      setAttSummary(attData.summary || null);
     } catch (e) {
       console.error("Failed to fetch logbook:", e);
     }
     setLoading(false);
   };
 
+  useEffect(() => {
+    // If the modal was just opened (or month loaded) and we have a selectedDay but no dayDetail, fetch it automatically.
+    // Also only fetch if the days array actually contains this date (to avoid fetching future/invalid dates)
+    if (selectedDay && !dayDetail && days.find(d => d.date === selectedDay)) {
+      fetchDayDetail(selectedDay);
+    }
+  }, [days, selectedDay]);
+
   const fetchDayDetail = async (date: string) => {
     setSelectedDay(date);
     setDetailLoading(true);
     try {
-      const res = await fetch(`/api/logbook/daily-summary?userId=${user?.id}&date=${date}`);
+      const params = new URLSearchParams({
+        userId: user?.id || '',
+        date
+      });
+      if (targetUserId) params.set('targetUserId', targetUserId);
+
+      const res = await fetch(`/api/logbook/daily-summary?${params}`);
       const data = await res.json();
       setDayDetail(data);
     } catch (e) {
@@ -185,7 +221,7 @@ export default function LogbookModal({ onClose }: LogbookModalProps) {
   };
 
   return (
-    <Modal onClose={onClose} title="📅 Logbook Calendar">
+    <Modal onClose={onClose} title={targetUserName ? `📅 Riwayat & Logbook — ${targetUserName}` : "📅 Riwayat & Logbook"}>
       {/* Month navigation */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -210,14 +246,67 @@ export default function LogbookModal({ onClose }: LogbookModalProps) {
         </button>
       </div>
 
-      {/* Monthly summary chips */}
+      {attSummary && (
+        <div style={{ marginBottom: 16 }}>
+          {/* Summary Stats */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12 }}>
+            <div style={{
+              padding: '12px 10px', borderRadius: 14, background: HP_TOKENS.sageWash,
+              border: `1px solid ${HP_TOKENS.sage}20`, textAlign: 'center'
+            }}>
+              <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 22, color: HP_TOKENS.sage }}>
+                {attSummary.totalDays}
+              </div>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>Hadir</div>
+            </div>
+            <div style={{
+              padding: '12px 10px', borderRadius: 14, background: HP_TOKENS.coralSoft,
+              border: `1px solid ${HP_TOKENS.coral}20`, textAlign: 'center'
+            }}>
+              <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 22, color: HP_TOKENS.coral }}>
+                {attSummary.alphaDays}
+              </div>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>Alpha</div>
+            </div>
+            <div style={{
+              padding: '12px 10px', borderRadius: 14, background: HP_TOKENS.blueSoft,
+              border: `1px solid ${HP_TOKENS.blue}20`, textAlign: 'center'
+            }}>
+              <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 16, color: HP_TOKENS.blue }}>
+                {attSummary.avgHoursFormatted}
+              </div>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>Rata-rata</div>
+            </div>
+          </div>
+
+          {/* Completion Rate Bar */}
+          <div style={{ padding: '12px 16px', borderRadius: 14, background: HP_TOKENS.card, border: `1px solid ${HP_TOKENS.line}` }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>KEHADIRAN BULAN INI</div>
+              <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 14, color: HP_TOKENS.sage }}>{attSummary.completionRate}%</div>
+            </div>
+            <div style={{ height: 6, borderRadius: 3, background: HP_TOKENS.lineSoft, overflow: 'hidden' }}>
+              <div style={{
+                width: `${attSummary.completionRate}%`, height: '100%',
+                background: attSummary.completionRate >= 80 ? HP_TOKENS.sage : attSummary.completionRate >= 50 ? HP_TOKENS.yellow : HP_TOKENS.coral,
+                borderRadius: 3, transition: '0.5s ease'
+              }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade }}>WFO: {attSummary.wfoDays} · WFA: {attSummary.wfaDays} · Dinas: {attSummary.dinasDays}</div>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade }}>{attSummary.totalDays}/{attSummary.workingDays} hari</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Monthly summary chips (Optional logic for logbook specific stats) */}
       {summary && (
         <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
           {[
-            { label: 'Hadir', value: summary.present, color: '#2D8A4E', bg: '#E8F5E9' },
-            { label: 'Absen', value: summary.absent, color: '#E03131', bg: '#FFEBEE' },
             { label: 'Sakit', value: summary.sick, color: '#E03131', bg: '#FFF3E0' },
             { label: 'Izin', value: summary.izin, color: '#7B6BB5', bg: '#EDE7F6' },
+            { label: 'Cuti', value: summary.cuti, color: '#2196F3', bg: '#E3F2FD' },
             { label: 'EXP', value: `+${summary.totalXP}`, color: HP_TOKENS.sage, bg: HP_TOKENS.sageWash },
           ].map(s => (
             <div key={s.label} style={{
@@ -288,12 +377,12 @@ export default function LogbookModal({ onClose }: LogbookModalProps) {
                     <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>KEHADIRAN</div>
                     <div style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, color: HP_TOKENS.sage }}>
                       {dayDetail.attendance.check_in_at
-                        ? new Date(dayDetail.attendance.check_in_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+                        ? new Date(typeof dayDetail.attendance.check_in_at === 'string' && !dayDetail.attendance.check_in_at.endsWith('Z') ? dayDetail.attendance.check_in_at.replace(' ', 'T') + 'Z' : dayDetail.attendance.check_in_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
                         : '-'
                       }
                       {dayDetail.attendance.check_out_at && (
                         <span style={{ color: HP_TOKENS.inkMute }}> → {
-                          new Date(dayDetail.attendance.check_out_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+                          new Date(typeof dayDetail.attendance.check_out_at === 'string' && !dayDetail.attendance.check_out_at.endsWith('Z') ? dayDetail.attendance.check_out_at.replace(' ', 'T') + 'Z' : dayDetail.attendance.check_out_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
                         }</span>
                       )}
                     </div>
@@ -322,12 +411,12 @@ export default function LogbookModal({ onClose }: LogbookModalProps) {
                   background: HP_TOKENS.yellowSoft, border: `1px solid ${HP_TOKENS.yellow}20`,
                 }}>
                   <div style={{ fontSize: 18 }}>
-                    {MOOD_EMOJI[dayDetail.mood.mood] || '🙂'}
+                    {MOOD_EMOJI[dayDetail.mood.mood_key] || '🙂'}
                   </div>
                   <div>
                     <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>MOOD & ENERGY</div>
                     <div style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, color: HP_TOKENS.ink }}>
-                      {dayDetail.mood.mood} · Energi: {dayDetail.mood.energy || '-'}
+                      {dayDetail.mood.mood_key} · Energi: {dayDetail.mood.energy_key || '-'}
                     </div>
                   </div>
                 </div>
@@ -372,11 +461,19 @@ export default function LogbookModal({ onClose }: LogbookModalProps) {
                       padding: 10, borderRadius: 10, background: HP_TOKENS.blueWash,
                       border: `1px solid ${HP_TOKENS.blue}15`, marginBottom: 6,
                     }}>
-                      <div style={{ ...HP_TEXT.small, fontWeight: 700, fontSize: 12, color: HP_TOKENS.ink }}>
-                        {entry.title}
-                      </div>
-                      {entry.content && (
-                        <div style={{ ...HP_TEXT.small, fontSize: 11, color: HP_TOKENS.inkSoft, marginTop: 4 }}>
+                      {entry.title ? (
+                        <>
+                          <div style={{ ...HP_TEXT.small, fontWeight: 700, fontSize: 12, color: HP_TOKENS.ink }}>
+                            {entry.title}
+                          </div>
+                          {entry.content && (
+                            <div style={{ ...HP_TEXT.small, fontSize: 11, color: HP_TOKENS.inkSoft, marginTop: 4 }}>
+                              {entry.content}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div style={{ ...HP_TEXT.small, fontWeight: 700, fontSize: 12, color: HP_TOKENS.ink }}>
                           {entry.content}
                         </div>
                       )}
@@ -386,7 +483,7 @@ export default function LogbookModal({ onClose }: LogbookModalProps) {
               )}
 
               {/* Empty state */}
-              {!dayDetail.attendance && !dayDetail.mood && dayDetail.xpBreakdown.length === 0 && (
+              {!dayDetail.attendance && !dayDetail.mood && dayDetail.xpBreakdown.length === 0 && dayDetail.logbookEntries.length === 0 && (
                 <div style={{ textAlign: 'center', padding: 20, color: HP_TOKENS.inkMute }}>
                   <div style={{ fontSize: 24, marginBottom: 6 }}>🌙</div>
                   <div style={{ ...HP_TEXT.small }}>Tidak ada aktivitas pada hari ini</div>

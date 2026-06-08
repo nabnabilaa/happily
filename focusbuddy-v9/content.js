@@ -45,16 +45,16 @@
   // STATE MACHINE  (FocusBuddy state → SVG state mapping)
   // ═══════════════════════════════════════════════════════════════
   const STATES = {
-    IDLE: { color: '#4d9fff', badge: 'Halo! 👋', svgState: 'idle', w1: '#dbe4ff', w2: '#5c8ee8', wp: '#ffc9c9', mouth: 'M 90 125 Q 100 130 110 125' },
-    HAPPY: { color: '#00e87a', badge: 'Yeay! 🎉', svgState: 'senang', w1: '#d3f9d8', w2: '#51cf66', wp: '#8ce99a', mouth: 'M 80 125 Q 100 155 120 125' },
-    SAD: { color: '#7b7bff', badge: 'Sedih nih… 😢', svgState: 'sedih', w1: '#e9ecef', w2: '#adb5bd', wp: '#ced4da', mouth: 'M 85 135 Q 100 115 115 135' },
-    SLEEPY: { color: '#9b8fcc', badge: 'Zzzz… 😴', svgState: 'ngantuk', w1: '#a5d8ff', w2: '#3b5bdb', wp: '#5c7cfa', mouth: 'M 95 130 Q 100 132 105 130' },
-    FOCUS: { color: '#ff9a1a', badge: 'Fokus bareng! 🔥', svgState: 'fokus', w1: '#e5dbff', w2: '#845ef7', wp: '#b197fc', mouth: 'M 92 128 L 108 128' },
-    EATING: { color: '#ff6b6b', badge: 'Makan dulu! 🍱', svgState: 'makan', w1: '#ffe8cc', w2: '#ffa94d', wp: '#ffc078', mouth: 'M 85 125 Q 100 155 115 125' },
-    STRETCHING: { color: '#4ecdc4', badge: 'Stretching~ 🤸', svgState: 'olahraga', w1: '#ffc9c9', w2: '#ff8787', wp: '#ff6b6b', mouth: 'M 85 125 Q 100 115 115 125' },
-    EXCITED: { color: '#ffd93d', badge: 'Luar biasa!!! \u2728', svgState: 'semangat', w1: '#ffec99', w2: '#fcc419', wp: '#ffd43b', mouth: 'M 75 120 Q 100 180 125 120' },
-    ANNOYED: { color: '#ff4757', badge: 'Jangan digangguin! 😤', svgState: 'kesal', w1: '#ffc9c9', w2: '#fa5252', wp: '#c92a2a', mouth: 'M 85 135 Q 100 115 115 135' },
-    WAITING: { color: '#a8edea', badge: 'Menunggu… ⏳', svgState: 'menunggu', w1: '#c3fae8', w2: '#20c997', wp: '#63e6be', mouth: 'M 95 125 A 5 5 0 1 1 105 125 A 5 5 0 1 1 95 125' },
+    IDLE: { color: '#3B82F6', badge: 'Halo! 👋', svgState: 'idle', w1: '#D6E4FF', w2: '#3B82F6', wp: '#93C5FD', mouth: 'M 90 125 Q 100 130 110 125' },
+    HAPPY: { color: '#4A7C59', badge: 'Yeay! 🎉', svgState: 'senang', w1: '#E1EFE6', w2: '#4A7C59', wp: '#8FB39B', mouth: 'M 80 125 Q 100 155 120 125' },
+    SAD: { color: '#7A92A8', badge: 'Sedih nih… 😢', svgState: 'sedih', w1: '#E5E9F0', w2: '#7A92A8', wp: '#B8C6D6', mouth: 'M 85 135 Q 100 115 115 135' },
+    SLEEPY: { color: '#A89BC9', badge: 'Zzzz… 😴', svgState: 'ngantuk', w1: '#EAE6F4', w2: '#A89BC9', wp: '#D3CCEB', mouth: 'M 95 130 Q 100 132 105 130' },
+    FOCUS: { color: '#FFBE0B', badge: 'Fokus bareng! 🔥', svgState: 'fokus', w1: '#FFF8CC', w2: '#FFBE0B', wp: '#FFDCA8', mouth: 'M 92 128 L 108 128' },
+    EATING: { color: '#FF6B35', badge: 'Makan dulu! 🍱', svgState: 'makan', w1: '#FFE6D6', w2: '#FF6B35', wp: '#FFB899', mouth: 'M 85 125 Q 100 155 115 125' },
+    STRETCHING: { color: '#20C997', badge: 'Stretching~ 🤸', svgState: 'olahraga', w1: '#E6FCF5', w2: '#20C997', wp: '#96F2D7', mouth: 'M 85 125 Q 100 115 115 125' },
+    EXCITED: { color: '#F59F00', badge: 'Luar biasa!!! ✨', svgState: 'semangat', w1: '#FFF3BF', w2: '#F59F00', wp: '#FFD43B', mouth: 'M 75 120 Q 100 180 125 120' },
+    ANNOYED: { color: '#FF4444', badge: 'Jangan digangguin! 😤', svgState: 'kesal', w1: '#FFE5E5', w2: '#FF4444', wp: '#FFAAAA', mouth: 'M 85 135 Q 100 115 115 135' },
+    WAITING: { color: '#0CA678', badge: 'Menunggu… ⏳', svgState: 'menunggu', w1: '#E6FCF5', w2: '#0CA678', wp: '#63E6BE', mouth: 'M 95 125 A 5 5 0 1 1 105 125 A 5 5 0 1 1 95 125' },
   }
 
   const ctx = {

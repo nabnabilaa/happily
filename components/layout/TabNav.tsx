@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { HP_TOKENS, HP_FONT } from "@/lib/constants";
+import { HP_TOKENS, HP_FONT, HP_FONT_DISPLAY } from "@/lib/constants";
 import { UserRole } from "@/lib/HPContext";
 import HPGlyph from "@/components/ui/HPGlyph";
 import BeeMascot from "@/components/ui/BeeMascot";
@@ -45,9 +45,44 @@ export default function TabNav({ tab, setTab, userRole }: TabNavProps) {
   return (
     <div className="hp-app-nav">
       {/* Desktop Brand Logo */}
-      <div className="hp-nav-brand">
-        <BeeMascot mood="happy" size={32} />
-        <div style={{ fontWeight: 900, fontSize: 20, color: HP_TOKENS.ink, fontFamily: HP_FONT }}>Flowbee</div>
+      <div className="hp-nav-brand" style={{ padding: '16px 16px 40px', display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div style={{ 
+          position: 'relative', 
+          width: 46, height: 46, 
+          borderRadius: 14, 
+          background: `linear-gradient(135deg, ${HP_TOKENS.primaryWash}, ${HP_TOKENS.coralWash})`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: `0 4px 16px rgba(255,107,53,0.15)`,
+          flexShrink: 0
+        }}>
+          <BeeMascot mood="happy" size={36} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <div style={{ 
+            fontFamily: HP_FONT_DISPLAY, 
+            fontWeight: 900, 
+            fontSize: 22, 
+            letterSpacing: -0.5,
+            display: 'flex',
+            alignItems: 'center'
+          }}>
+            <span style={{ color: HP_TOKENS.ink }}>Flow</span>
+            <span style={{ color: HP_TOKENS.primary }}>Buddy</span>
+          </div>
+          <div style={{ 
+            fontFamily: HP_FONT, 
+            fontSize: 10, 
+            fontWeight: 800, 
+            color: HP_TOKENS.inkFade,
+            letterSpacing: 1,
+            textTransform: 'uppercase',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4
+          }}>
+            Workspace <HPGlyph name="sparkle" size={10} color={HP_TOKENS.yellow} />
+          </div>
+        </div>
       </div>
 
       {tabs.map(t => {
@@ -56,7 +91,7 @@ export default function TabNav({ tab, setTab, userRole }: TabNavProps) {
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className="hp-nav-btn hp-tap"
+            className={`hp-nav-btn hp-tap${active ? ' active' : ''}`}
             style={{
               color: active ? HP_TOKENS.primary : HP_TOKENS.inkMute,
               background: active ? HP_TOKENS.primarySoft : 'transparent',

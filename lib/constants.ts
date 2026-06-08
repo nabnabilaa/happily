@@ -1,34 +1,41 @@
 export const HP_TOKENS = {
   // ── Theme-reactive tokens (resolve via CSS custom properties) ──
-  // These return `var(--hp-*)` strings, so inline styles automatically
-  // respond to light/dark mode changes without any component-level edits.
   primary: 'var(--hp-primary)',
+  primaryDark: 'var(--hp-primary-dark)',
   primaryLight: 'var(--hp-primary-light)',
   primarySoft: 'var(--hp-primary-soft)',
   primaryWash: 'var(--hp-primary-wash)',
 
-  // Brand: Yellow (Kept temporarily to avoid TS errors, mapped to primary in CSS)
+  // Brand: Yellow / Gold (Accent)
   yellow: 'var(--hp-yellow)',
+  yellowDark: 'var(--hp-yellow-dark)',
   yellowLight: 'var(--hp-yellow-light)',
   yellowSoft: 'var(--hp-yellow-soft)',
   yellowWash: 'var(--hp-yellow-wash)',
 
-  // Brand: Blue
+  // Brand: Navy / Blue
   blue: 'var(--hp-blue)',
   blueLight: 'var(--hp-blue-light)',
   blueSoft: 'var(--hp-blue-soft)',
   blueWash: 'var(--hp-blue-wash)',
 
-  // Semantic colors — static (don't shift between themes)
+  // Brand: Teal (Success)
+  teal: 'var(--hp-teal)',
+  tealLight: 'var(--hp-teal-light)',
+  tealSoft: 'var(--hp-teal-soft)',
+
+  // Semantic: Sage (Calm)
   sage: '#4A7C59',
   sageLight: '#8FB39B',
   sageSoft: 'var(--hp-sage-soft)',
   sageWash: 'var(--hp-sage-wash)',
 
-  coral: '#E88B7D',
+  // Semantic: Coral (Warning)
+  coral: '#FF4444',
   coralSoft: 'var(--hp-coral-soft)',
   coralWash: 'var(--hp-coral-wash)',
 
+  // Semantic: Lavender (Info)
   lavender: '#A89BC9',
   lavenderSoft: 'var(--hp-lavender-soft)',
   lavenderWash: 'var(--hp-lavender-wash)',
@@ -42,18 +49,27 @@ export const HP_TOKENS = {
   card: 'var(--hp-card)',
   line: 'var(--hp-line)',
   lineSoft: 'var(--hp-line-soft)',
+  border: 'var(--hp-border)',
+
+  // Layout
+  radius: 'var(--hp-radius)',
+  radiusSm: 'var(--hp-radius-sm)',
+  radiusPill: 'var(--hp-radius-pill)',
+  shadow: 'var(--hp-shadow)',
+  shadowSm: 'var(--hp-shadow-sm)',
+  shadowOrange: 'var(--hp-shadow-orange)',
 };
 
 export const HP_FONT = "var(--hp-font)";
 export const HP_FONT_DISPLAY = "var(--hp-font-display)";
 
 export const HP_TEXT = {
-  display: { fontFamily: HP_FONT_DISPLAY, fontWeight: 800, fontSize: 34, lineHeight: 1.15, color: HP_TOKENS.ink, letterSpacing: -0.8 },
-  title: { fontFamily: HP_FONT_DISPLAY, fontWeight: 800, fontSize: 26, lineHeight: 1.2, color: HP_TOKENS.ink, letterSpacing: -0.4 },
-  h: { fontFamily: HP_FONT_DISPLAY, fontWeight: 800, fontSize: 20, lineHeight: 1.25, color: HP_TOKENS.ink },
-  body: { fontFamily: HP_FONT, fontWeight: 500, fontSize: 16, lineHeight: 1.45, color: HP_TOKENS.inkSoft },
-  small: { fontFamily: HP_FONT, fontWeight: 600, fontSize: 14, lineHeight: 1.4, color: HP_TOKENS.inkMute },
-  tiny: { fontFamily: 'var(--hp-font-mono)', fontWeight: 700, fontSize: 11, lineHeight: 1.2, color: HP_TOKENS.inkMute, letterSpacing: 0.5, textTransform: 'uppercase' as const },
+  display: { fontFamily: HP_FONT_DISPLAY, fontWeight: 800, fontSize: 'clamp(26px, 6.5vw, 34px)', lineHeight: 1.15, color: HP_TOKENS.ink, letterSpacing: -0.8 },
+  title: { fontFamily: HP_FONT_DISPLAY, fontWeight: 800, fontSize: 'clamp(20px, 5vw, 26px)', lineHeight: 1.2, color: HP_TOKENS.ink, letterSpacing: -0.4 },
+  h: { fontFamily: HP_FONT_DISPLAY, fontWeight: 800, fontSize: 'clamp(18px, 4vw, 20px)', lineHeight: 1.25, color: HP_TOKENS.ink },
+  body: { fontFamily: HP_FONT, fontWeight: 500, fontSize: 'clamp(14px, 3.5vw, 16px)', lineHeight: 1.45, color: HP_TOKENS.inkSoft },
+  small: { fontFamily: HP_FONT, fontWeight: 600, fontSize: 'clamp(12px, 3vw, 14px)', lineHeight: 1.4, color: HP_TOKENS.inkMute },
+  tiny: { fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: HP_TOKENS.inkMute, letterSpacing: 0.7, textTransform: 'uppercase' as const },
 };
 
 export const HP_MOODS = [
@@ -80,4 +96,3 @@ export const HP_COACH_SUGGESTIONS = [
   'Kasih ide untuk 1-on-1 besok',
   'Refleksikan minggu ini',
 ];
-

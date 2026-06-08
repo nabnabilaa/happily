@@ -175,7 +175,7 @@ export default function ProfileEditorModal({ onClose }: ProfileEditorModalProps)
 
         {/* 🐝 Mascot Animation Mode Control */}
         <div style={{ width: '100%' }}>
-          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 700, marginBottom: 8 }}>MODE MASKOT (FLOWBEE)</div>
+          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 700, marginBottom: 8 }}>MODE MASKOT (FLOWBUDDY)</div>
           <div style={{ 
             display: 'grid', 
             gridTemplateColumns: '1fr 1fr', 

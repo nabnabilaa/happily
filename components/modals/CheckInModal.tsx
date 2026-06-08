@@ -37,10 +37,14 @@ export default function CheckInModal({ onClose }: CheckInModalProps) {
   const [energy, setEnergy] = useState(state?.energy || null);
   const [tag, setTag] = useState(state?.tag || null);
   const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const save = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
     // 1. Update client context state immediately so UI changes without delay
-    updateState({ mood, energy, tag });
+    updateState({ mood, energy, tag, lastMoodCheckIn: new Date().toISOString() });
 
     if (typeof window !== "undefined" && !navigator.onLine) {
       // Offline mode: Queue check-in and XP locally
@@ -49,6 +53,7 @@ export default function CheckInModal({ onClose }: CheckInModalProps) {
         await queueOfflineXP(user.id, 'mood_checkin', 'Daily mood check-in');
         notify("Offline Check-In", "Tersimpan lokal. Akan disinkronkan otomatis saat online.", "warning");
       }
+      setIsSubmitting(false);
       onClose();
       return;
     }
@@ -62,10 +67,17 @@ export default function CheckInModal({ onClose }: CheckInModalProps) {
       });
       
       if (!response.ok) {
-        throw new Error("API checkin error");
+        // API returned error — fallback to offline queue instead of crashing
+        console.warn("API checkin returned non-OK status:", response.status);
+        if (user?.id) {
+          await queueOfflineCheckIn(user.id, mood!, energy, tag);
+          await queueOfflineXP(user.id, 'mood_checkin', 'Daily mood check-in');
+        }
+        notify("Check-In Tersimpan", "Tersimpan lokal karena kendala server. Akan disinkronkan otomatis.", "warning");
+      } else {
+        await awardXP('mood_checkin', 'Daily mood check-in');
+        notify("Check-In Berhasil 🎉", "Mood dan energimu hari ini sudah dicatat!", "success");
       }
-
-      await awardXP('mood_checkin', 'Daily mood check-in');
     } catch (e) {
       console.error('Failed to save mood, queuing offline:', e);
       if (user?.id) {
@@ -73,6 +85,8 @@ export default function CheckInModal({ onClose }: CheckInModalProps) {
         await queueOfflineXP(user.id, 'mood_checkin', 'Daily mood check-in');
         notify("Check-In Tersimpan", "Tersimpan lokal karena kendala koneksi server.", "warning");
       }
+    } finally {
+      setIsSubmitting(false);
     }
 
     onClose();
@@ -164,13 +178,13 @@ export default function CheckInModal({ onClose }: CheckInModalProps) {
         <div style={{ display: 'flex', gap: 10, marginTop: 32 }}>
           {step > 1 && <button onClick={() => setStep(step - 1)} style={{ ...ghostBtn, flex: 1 }}>Kembali</button>}
           <button
-            disabled={step === 1 ? !mood : step === 2 ? !energy : false}
+            disabled={(step === 1 && !mood) || (step === 2 && !energy) || isSubmitting}
             onClick={() => step < 3 ? setStep(step + 1) : save()}
             style={{
               ...primaryBtn, flex: 2,
-              opacity: (step === 1 && !mood) || (step === 2 && !energy) ? 0.4 : 1,
+              opacity: (step === 1 && !mood) || (step === 2 && !energy) || isSubmitting ? 0.4 : 1,
             }}>
-            {step < 3 ? 'Lanjut' : 'Selesai'}
+            {step < 3 ? 'Lanjut' : isSubmitting ? 'Menyimpan...' : 'Selesai'}
           </button>
         </div>
       </div>

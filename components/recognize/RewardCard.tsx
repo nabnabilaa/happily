@@ -16,8 +16,9 @@ interface RewardCardProps {
 }
 
 const TONE_CONFIG: Record<string, any> = {
-  blue:   { bg: HP_TOKENS.primaryWash,   accent: HP_TOKENS.primary,   text: '#00558A', glow: 'rgba(77,168,218,0.12)' },
-  yellow: { bg: HP_TOKENS.primaryWash,   accent: HP_TOKENS.primary,   text: '#00558A', glow: 'rgba(77,168,218,0.12)' },
+  primary: { bg: HP_TOKENS.primaryWash, accent: HP_TOKENS.primary, text: '#8A2B00', glow: 'rgba(255,107,53,0.15)' },
+  blue:   { bg: HP_TOKENS.blueWash,   accent: HP_TOKENS.blue,   text: '#00558A', glow: 'rgba(77,168,218,0.12)' },
+  yellow: { bg: HP_TOKENS.yellowWash, accent: HP_TOKENS.yellow, text: '#7A5F10', glow: 'rgba(255,190,11,0.12)' },
   sage:   { bg: HP_TOKENS.sageWash,   accent: HP_TOKENS.sage,   text: '#2D5A3D', glow: 'rgba(74,124,89,0.12)' },
   coral:  { bg: '#FEF0ED',            accent: HP_TOKENS.coral,  text: '#8B3A2F', glow: 'rgba(232,139,125,0.15)' },
   lavender: { bg: HP_TOKENS.lavenderSoft, accent: HP_TOKENS.lavender, text: '#4A3A6E', glow: 'rgba(123,104,238,0.12)' },
@@ -73,119 +74,97 @@ export default function RewardCard({ title, points, tone, glyph, isWishlist, onT
 
   return (
     <div
-      onClick={handleRedeem}
       style={{
-        position: 'relative',
-        borderRadius: 24,
-        background: isLocked ? HP_TOKENS.paper : cfg.bg,
-        border: `1.5px solid ${isLocked ? HP_TOKENS.lineSoft : cfg.accent + '30'}`,
-        padding: '16px',
-        cursor: isLocked ? 'default' : 'pointer',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        opacity: isLocked ? 0.7 : 1,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 12,
-        boxShadow: isLocked ? 'none' : `0 10px 20px ${cfg.glow}`,
-        overflow: 'hidden',
+        display: 'flex', alignItems: 'center', gap: 14,
+        padding: '14px 16px', borderRadius: 18,
+        background: isLocked ? HP_TOKENS.card : cfg.bg,
+        border: `1.5px solid ${HP_TOKENS.line}`,
+        boxShadow: isLocked ? 'none' : `0 4px 12px ${cfg.glow}`,
+        marginBottom: 16,
+        opacity: isLocked ? 0.8 : 1,
       }}
-      className={isLocked ? "" : "hp-tap"}
     >
-      {/* Background decoration */}
       <div style={{
-        position: 'absolute', right: -10, top: -10, width: 60, height: 60,
-        borderRadius: 30, background: isLocked ? HP_TOKENS.lineSoft : `${cfg.accent}15`, zIndex: 0
-      }} />
+        width: 56, height: 56, borderRadius: 16,
+        background: isLocked ? HP_TOKENS.lineSoft : `${cfg.accent}22`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexShrink: 0,
+      }}>
+        <HPGlyph name={isLocked ? "lock" : icon} size={28} color={isLocked ? HP_TOKENS.inkFade : cfg.accent} />
+      </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', zIndex: 1 }}>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <div style={{ 
-            width: 50, height: 50, borderRadius: 16, 
-            background: isLocked ? HP_TOKENS.paper : HP_TOKENS.paper,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: isLocked ? 'inset 0 2px 4px rgba(0,0,0,0.05)' : '0 6px 12px rgba(26,29,35,0.08)',
-            border: isLocked ? `1.5px solid ${HP_TOKENS.lineSoft}` : 'none'
-          }}>
-            <HPGlyph name={isLocked ? "lock" : icon} size={26} color={isLocked ? HP_TOKENS.inkFade : cfg.accent} />
-          </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ ...HP_TEXT.h, fontSize: 14, color: isLocked ? HP_TOKENS.ink : cfg.text }}>{title}</div>
+        <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, marginTop: 2, fontSize: 11, lineHeight: 1.3 }}>
+          {/* Simulated description */}
+          {title.includes('Voucher') ? `Voucher digital senilai ${points/20} ribu rupiah.` : `Satu buah ${title.toLowerCase()} eksklusif.`}
         </div>
-        
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-          <div style={{ 
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '6px 12px', borderRadius: 12,
-            background: isLocked ? HP_TOKENS.lineSoft : cfg.accent,
-            color: isLocked ? HP_TOKENS.inkMute : HP_TOKENS.paper,
-            fontFamily: HP_FONT, fontWeight: 900, fontSize: 13,
-            letterSpacing: 0.5,
-            boxShadow: isLocked ? 'none' : '0 4px 8px rgba(0,0,0,0.1)'
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+          <span style={{
+            padding: '4px 12px', borderRadius: 99, fontSize: 11, fontWeight: 900,
+            background: isLocked ? HP_TOKENS.lineSoft : 'linear-gradient(135deg, #FFD43B, #F59F00)', 
+            color: isLocked ? HP_TOKENS.inkFade : '#fff', 
+            boxShadow: isLocked ? 'none' : '0 4px 10px rgba(245, 159, 0, 0.3)',
+            fontFamily: HP_FONT,
+            display: 'flex', alignItems: 'center', gap: 4
           }}>
             <div style={{
-              width: 16, height: 16, borderRadius: '50%',
-              background: 'linear-gradient(135deg, #FFEC99, #FFD43B)',
-              border: '1.5px solid #F59F00',
+              width: 12, height: 12, borderRadius: '50%',
+              background: isLocked ? 'transparent' : '#fff',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 2px 4px rgba(245, 159, 0, 0.3)',
-              filter: isLocked ? 'grayscale(100%) opacity(0.6)' : 'none'
             }}>
-              <HPGlyph name="star" size={8} color="#E67700" />
+              <HPGlyph name="star" size={8} color={isLocked ? HP_TOKENS.inkFade : "#E67700"} />
             </div>
-            {points.toLocaleString()} <span style={{ opacity: 0.9, fontWeight: 800 }}>poin</span>
-          </div>
-          
-          {onToggleWishlist && (
-            <div 
-              onClick={onToggleWishlist}
-              style={{
-                width: 32, height: 32, borderRadius: '50%',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: isWishlist ? '#FFD43B' : HP_TOKENS.paper,
-                border: `1.5px solid ${isWishlist ? '#FCC419' : HP_TOKENS.lineSoft}`,
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                boxShadow: isWishlist ? '0 4px 10px rgba(252, 196, 25, 0.3)' : 'none'
-              }}
-              title={isWishlist ? "Hapus dari Wishlist" : "Jadikan Wishlist"}
-              className="hp-tap"
-            >
-              <HPGlyph name="star" size={16} color={isWishlist ? '#fff' : HP_TOKENS.inkFade} />
-            </div>
-          )}
+            {points.toLocaleString()} POIN
+          </span>
+          <span style={{ 
+            fontSize: 10, fontWeight: 900, 
+            color: HP_TOKENS.sage 
+          }}>
+            STOK: 100
+          </span>
         </div>
       </div>
 
-      <div style={{ position: 'relative', zIndex: 1 }}>
-        <div style={{ 
-          ...HP_TEXT.h, fontSize: 16, color: isLocked ? HP_TOKENS.inkMute : cfg.text, 
-          lineHeight: 1.3, marginBottom: 8, minHeight: 44, display: 'flex', alignItems: 'center'
-        }}>
-          {title}
-        </div>
-        
-        {isLocked ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 700 }}>Progres Kamu</span>
-              <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkSoft, fontWeight: 800 }}>{points - userCoins} poin lagi!</span>
-            </div>
-            <div style={{ width: '100%', height: 8, background: HP_TOKENS.lineSoft, borderRadius: 4, overflow: 'hidden' }}>
-              <div style={{ width: `${Math.min(100, (userCoins / points) * 100)}%`, height: '100%', background: HP_TOKENS.inkFade, borderRadius: 4, transition: 'width 0.5s ease-out' }} />
-            </div>
-          </div>
-        ) : (
-          <button style={{ 
-            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 4,
-            background: cfg.accent, color: '#fff', border: 'none', borderRadius: 14,
-            padding: '12px', fontWeight: 800, fontSize: 13, fontFamily: HP_FONT,
-            cursor: 'pointer', transition: 'all 0.2s',
-            boxShadow: `0 4px 12px ${cfg.glow}`
-          }}
-          className="hp-tap"
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
+        {onToggleWishlist ? (
+          <div 
+            onClick={onToggleWishlist}
+            style={{
+              width: 32, height: 32, borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: isWishlist ? '#FFD43B' : HP_TOKENS.paper,
+              border: `1.5px solid ${isWishlist ? '#FCC419' : HP_TOKENS.lineSoft}`,
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              boxShadow: isWishlist ? '0 4px 10px rgba(252, 196, 25, 0.3)' : '0 2px 5px rgba(0,0,0,0.05)'
+            }}
+            title={isWishlist ? "Hapus dari Wishlist" : "Jadikan Wishlist"}
+            className="hp-tap"
           >
-            Tukar Sekarang
-            <HPGlyph name="sparkle" size={14} color="#fff" />
-          </button>
-        )}
+            <HPGlyph name="star" size={16} color={isWishlist ? '#fff' : HP_TOKENS.inkFade} />
+          </div>
+        ) : <div />}
+
+        <button
+          onClick={handleRedeem}
+          disabled={isLocked}
+          style={{
+            padding: '10px 14px', borderRadius: 14, border: 'none',
+            background: isLocked ? HP_TOKENS.lineSoft : cfg.accent,
+            color: isLocked ? HP_TOKENS.inkFade : '#fff',
+            fontFamily: HP_FONT, fontWeight: 800, fontSize: 12,
+            cursor: isLocked ? 'default' : 'pointer',
+            transition: 'all 0.2s',
+            whiteSpace: 'nowrap',
+            boxShadow: isLocked ? 'none' : `0 4px 12px ${cfg.glow}`,
+            display: 'flex', alignItems: 'center', gap: 6
+          }}
+          className={isLocked ? "" : "hp-tap"}
+        >
+          {isLocked ? "Poin Kurang" : "Tukar Sekarang"}
+          {!isLocked && <HPGlyph name="sparkle" size={12} color="#fff" />}
+        </button>
       </div>
     </div>
   );

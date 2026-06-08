@@ -122,7 +122,7 @@ export default function CalendarModal({ onClose }: Props) {
     <Modal onClose={onClose} title="🗓️ Kalender Kerja Serbaguna">
       <div style={{ marginTop: 8 }}>
         <div style={{ ...HP_TEXT.body, fontSize: 13, color: HP_TOKENS.inkMute, marginBottom: 20 }}>
-          Atur alarm, jadwal meeting klien, hingga ajak kolaborasi antar divisi. Semua notifikasi akan tersinkronisasi ke Ekstensi Flowbee!
+          Atur alarm, jadwal meeting klien, hingga ajak kolaborasi antar divisi. Semua notifikasi akan tersinkronisasi ke Ekstensi FlowBuddy!
         </div>
 
         {showForm ? (

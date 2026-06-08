@@ -29,6 +29,9 @@ export default function HabitCell({ h, onToggle, onQuickComplete, onFinish }: Ha
   
   const streak = h.streak || 0;
   
+  const habitCreatedAt = h.created_at ? new Date(h.created_at) : new Date('2020-01-01');
+  habitCreatedAt.setHours(0, 0, 0, 0);
+
   const totalCells = 42; // 6 rows of 7 days
   const calendarCells = Array(totalCells).fill(0).map((_, i) => {
     const isCurrentMonth = i >= startDay && i < startDay + daysInMonth;
@@ -211,7 +214,9 @@ export default function HabitCell({ h, onToggle, onQuickComplete, onFinish }: Ha
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
           {calendarCells.map((cell, i) => {
-            const isClickable = !cell.future && cell.isCurrentMonth && cell.daysAgo <= 2;
+            const cellTime = cell.date.getTime();
+            const createdTime = habitCreatedAt.getTime();
+            const isClickable = !cell.future && cell.isCurrentMonth && cell.daysAgo <= 2 && cellTime >= createdTime;
             return (
               <div
                 key={i}
@@ -283,9 +288,8 @@ export default function HabitCell({ h, onToggle, onQuickComplete, onFinish }: Ha
                 onQuickComplete?.(todayCell.date, true, true, false);
               }
             } else {
-              onQuickComplete?.(todayCell.date, true, false, true);
-              setShowPoints(true);
-              setTimeout(() => setShowPoints(false), 1200);
+              // Instead of instant complete, we open the modal like when clicking a cell
+              onToggle?.(todayCell.date, true, false);
             }
           }
         }}

@@ -8,6 +8,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
+    const targetUserId = searchParams.get('targetUserId');
     const month = parseInt(searchParams.get('month') || String(new Date().getMonth() + 1));
     const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
     const specificDate = searchParams.get('date'); // optional: get one day's detail
@@ -16,9 +17,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "userId required" }, { status: 400 });
     }
 
+    const viewUserId = targetUserId || userId;
+
     // If requesting a specific date detail
     if (specificDate) {
-      return await getDayDetail(userId, specificDate);
+      return await getDayDetail(viewUserId, specificDate);
     }
 
     // Monthly overview: one summary per day
@@ -27,38 +30,38 @@ export async function GET(request: Request) {
 
     // 1. Attendance data
     const attendanceRes = await db.execute({
-      sql: `SELECT DATE(check_in_at) as d, 
+      sql: `SELECT DATE(CONVERT_TZ(check_in_at, '+00:00', '+07:00')) as d, 
                    check_in_at, check_out_at, check_in_type, duration_minutes, status, mood
             FROM attendance 
-            WHERE user_id = ? AND DATE(check_in_at) BETWEEN ? AND ?
+            WHERE user_id = ? AND DATE(CONVERT_TZ(check_in_at, '+00:00', '+07:00')) BETWEEN ? AND ?
             ORDER BY check_in_at ASC`,
-      args: [userId, startDate, endDate]
+      args: [viewUserId, startDate, endDate]
     });
 
     // 2. Mood check-ins
     const moodRes = await db.execute({
-      sql: `SELECT DATE(created_at) as d, mood, energy
+      sql: `SELECT DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) as d, mood_key as mood, energy_key as energy
             FROM mood_checkins 
-            WHERE user_id = ? AND DATE(created_at) BETWEEN ? AND ?`,
-      args: [userId, startDate, endDate]
+            WHERE user_id = ? AND DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) BETWEEN ? AND ?`,
+      args: [viewUserId, startDate, endDate]
     });
 
     // 3. XP transactions
     const xpRes = await db.execute({
-      sql: `SELECT DATE(created_at) as d, SUM(amount) as total_xp, COUNT(*) as action_count
+      sql: `SELECT DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) as d, SUM(amount) as total_xp, COUNT(*) as action_count
             FROM xp_transactions 
-            WHERE user_id = ? AND DATE(created_at) BETWEEN ? AND ?
-            GROUP BY DATE(created_at)`,
-      args: [userId, startDate, endDate]
+            WHERE user_id = ? AND DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) BETWEEN ? AND ?
+            GROUP BY DATE(CONVERT_TZ(created_at, '+00:00', '+07:00'))`,
+      args: [viewUserId, startDate, endDate]
     });
 
     // 4. Logbook entries count per day
     const logbookRes = await db.execute({
-      sql: `SELECT DATE(created_at) as d, COUNT(*) as entry_count
+      sql: `SELECT DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) as d, COUNT(*) as entry_count
             FROM logbook_entries 
-            WHERE user_id = ? AND DATE(created_at) BETWEEN ? AND ?
-            GROUP BY DATE(created_at)`,
-      args: [userId, startDate, endDate]
+            WHERE user_id = ? AND DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) BETWEEN ? AND ?
+            GROUP BY DATE(CONVERT_TZ(created_at, '+00:00', '+07:00'))`,
+      args: [viewUserId, startDate, endDate]
     });
 
     // Build day-by-day map
@@ -161,27 +164,27 @@ export async function GET(request: Request) {
 async function getDayDetail(userId: string, date: string) {
   // 1. Attendance
   const attRes = await db.execute({
-    sql: `SELECT * FROM attendance WHERE user_id = ? AND DATE(check_in_at) = ?`,
+    sql: `SELECT * FROM attendance WHERE user_id = ? AND DATE(CONVERT_TZ(check_in_at, '+00:00', '+07:00')) = ?`,
     args: [userId, date]
   });
 
   // 2. Mood
   const moodRes = await db.execute({
-    sql: `SELECT * FROM mood_checkins WHERE user_id = ? AND DATE(created_at) = ?`,
+    sql: `SELECT * FROM mood_checkins WHERE user_id = ? AND DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) = ?`,
     args: [userId, date]
   });
 
   // 3. XP breakdown
   const xpRes = await db.execute({
     sql: `SELECT action_type, amount, description, created_at 
-          FROM xp_transactions WHERE user_id = ? AND DATE(created_at) = ?
+          FROM xp_transactions WHERE user_id = ? AND DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) = ?
           ORDER BY created_at ASC`,
     args: [userId, date]
   });
 
   // 4. Logbook entries
   const logRes = await db.execute({
-    sql: `SELECT * FROM logbook_entries WHERE user_id = ? AND DATE(created_at) = ?
+    sql: `SELECT * FROM logbook_entries WHERE user_id = ? AND DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) = ?
           ORDER BY created_at ASC`,
     args: [userId, date]
   });

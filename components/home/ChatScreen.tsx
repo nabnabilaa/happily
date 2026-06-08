@@ -269,13 +269,14 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
           </div>
           <button onClick={handleCreateDM} className="hp-tap" style={{
             padding: '8px 14px', borderRadius: 12,
-            background: `linear-gradient(135deg, ${HP_TOKENS.blue}, #2B5F9E)`,
-            color: '#F4F7F9', border: 'none',
+            background: HP_TOKENS.card,
+            color: HP_TOKENS.ink, border: 'none',
             fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: 6,
-            boxShadow: `0 4px 12px ${HP_TOKENS.blue}30`,
+            boxShadow: `0 4px 12px rgba(26,29,35,0.03)`,
+            borderTop: `1px solid ${HP_TOKENS.lineSoft}`,
           }}>
-            <HPGlyph name="plus" size={12} color="#F4F7F9" />
+            <HPGlyph name="plus" size={12} color={HP_TOKENS.ink} />
             Baru
           </button>
         </div>
@@ -303,8 +304,8 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
                     display: 'flex', alignItems: 'center', gap: 10,
                     padding: '10px 12px', borderRadius: 14,
                     background: activeChannel?.id === ch.id
-                      ? HP_TOKENS.blueSoft
-                      : (ch.unreadCount > 0 ? HP_TOKENS.lineSoft : 'transparent'),
+                      ? HP_TOKENS.lineSoft
+                      : (ch.unreadCount > 0 ? 'transparent' : 'transparent'),
                     border: 'none',
                     cursor: 'pointer', width: '100%', textAlign: 'left',
                     transition: 'all 0.2s',
@@ -472,13 +473,11 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
                           maxWidth: '75%', padding: '12px 16px',
                           borderRadius: isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
                           background: isMe
-                            ? `linear-gradient(135deg, ${HP_TOKENS.blue}, #1e40af)`
+                            ? HP_TOKENS.primaryWash
                             : HP_TOKENS.card,
-                          color: isMe ? '#fff' : HP_TOKENS.ink,
-                          border: isMe ? 'none' : `1px solid ${HP_TOKENS.line}`,
-                          boxShadow: isMe
-                            ? `0 4px 12px rgba(59, 130, 246, 0.2)`
-                            : '0 2px 6px rgba(26,29,35,0.02)',
+                          color: isMe ? HP_TOKENS.primary : HP_TOKENS.ink,
+                          border: isMe ? `1.5px solid ${HP_TOKENS.primary}15` : `1.5px solid ${HP_TOKENS.lineSoft}`,
+                          boxShadow: 'none',
                           transition: 'all 0.2s',
                         }}
                         onMouseEnter={(e) => {
@@ -551,14 +550,14 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
                 className="hp-tap"
                 style={{
                   width: 48, height: 48, borderRadius: 16,
-                  background: newMessage.trim() ? 'linear-gradient(135deg, #4F46E5 0%, #3B82F6 100%)' : 'rgba(26, 29, 35, 0.05)',
+                  background: newMessage.trim() ? HP_TOKENS.primaryWash : HP_TOKENS.lineSoft,
                   border: 'none', cursor: newMessage.trim() ? 'pointer' : 'default',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   transition: 'all 0.2s',
-                  boxShadow: newMessage.trim() ? `0 4px 12px rgba(59, 130, 246, 0.3)` : 'none',
+                  boxShadow: 'none',
                 }}
               >
-                <HPGlyph name="arrow" size={20} color={newMessage.trim() ? '#fff' : '#94A3B8'} />
+                <HPGlyph name="arrow" size={20} color={newMessage.trim() ? HP_TOKENS.primary : HP_TOKENS.inkMute} />
               </button>
             </div>
           </>

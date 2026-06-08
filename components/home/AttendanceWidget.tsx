@@ -58,6 +58,26 @@ export default function AttendanceWidget({ openModal }: AttendanceWidgetProps) {
 
   // Not checked in - urgent CTA
   if (status === 'not_checked_in') {
+    const isBeforeClockInTime = state?.workSchedule?.start 
+      ? (new Date().getHours() * 60 + new Date().getMinutes() < parseInt(state.workSchedule.start.split(':')[0]) * 60 + parseInt(state.workSchedule.start.split(':')[1]) - 60)
+      : false;
+
+    if (isBeforeClockInTime) {
+      return (
+        <div style={{ 
+          padding: '16px', borderRadius: 20, 
+          background: HP_TOKENS.paper, 
+          border: `1.5px dashed ${HP_TOKENS.line}`,
+          color: HP_TOKENS.inkMute, 
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          fontFamily: HP_FONT, fontSize: 13, fontWeight: 700 
+        }}>
+          <HPGlyph name="lock" size={16} color={HP_TOKENS.line} />
+          <span>Absen aktif mulai 1 jam sebelum jadwal</span>
+        </div>
+      );
+    }
+
     return (
       <button 
         onClick={() => openModal('attendance_scanner')}
@@ -111,24 +131,25 @@ export default function AttendanceWidget({ openModal }: AttendanceWidgetProps) {
           
           {/* Clock-out button */}
           <button 
-            onClick={() => openModal('reflect')}
-            className="hp-tap"
+            onClick={() => !checkOutTime && openModal('reflect')}
+            className={checkOutTime ? "" : "hp-tap"}
+            disabled={!!checkOutTime}
             style={{
-              padding: '14px 20px', border: 'none', cursor: 'pointer',
-              background: `linear-gradient(135deg, ${HP_TOKENS.sage}, #2D7A4E)`,
-              color: '#F4F7F9', fontFamily: HP_FONT, fontWeight: 800, fontSize: 12,
+              padding: '14px 20px', border: 'none', cursor: checkOutTime ? 'default' : 'pointer',
+              background: checkOutTime ? HP_TOKENS.lineSoft : `linear-gradient(135deg, ${HP_TOKENS.sage}, #2D7A4E)`,
+              color: checkOutTime ? HP_TOKENS.inkFade : '#F4F7F9', fontFamily: HP_FONT, fontWeight: 800, fontSize: 12,
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
-              borderLeft: `1px solid ${HP_TOKENS.sage}40`,
+              borderLeft: `1px solid ${checkOutTime ? 'transparent' : HP_TOKENS.sage + '40'}`,
             }}
           >
-            <HPGlyph name="moon" size={16} color="#F4F7F9" />
-            Clock Out
+            <HPGlyph name={checkOutTime ? "check" : "moon"} size={16} color={checkOutTime ? HP_TOKENS.inkFade : "#F4F7F9"} />
+            {checkOutTime ? "Selesai" : "Clock Out"}
           </button>
         </div>
 
         {/* History link */}
         <button
-          onClick={() => openModal('attendance_history')}
+          onClick={() => openModal('logbook')}
           className="hp-tap"
           style={{
             width: '100%', padding: '8px', borderTop: `1px solid ${HP_TOKENS.lineSoft}`,
@@ -138,7 +159,7 @@ export default function AttendanceWidget({ openModal }: AttendanceWidgetProps) {
           }}
         >
           <HPGlyph name="calendar" size={12} color={HP_TOKENS.inkMute} />
-          Lihat Riwayat Kehadiran
+          Lihat Riwayat & Logbook
         </button>
       </HPCard>
     );
@@ -176,7 +197,7 @@ export default function AttendanceWidget({ openModal }: AttendanceWidgetProps) {
         </div>
       </div>
       <button
-        onClick={() => openModal('attendance_history')}
+        onClick={() => openModal('logbook')}
         className="hp-tap"
         style={{
           width: '100%', padding: '8px', borderTop: `1px solid ${HP_TOKENS.lineSoft}`,
@@ -186,7 +207,7 @@ export default function AttendanceWidget({ openModal }: AttendanceWidgetProps) {
         }}
       >
         <HPGlyph name="calendar" size={12} color={HP_TOKENS.inkMute} />
-        Lihat Riwayat Kehadiran
+        Lihat Riwayat & Logbook
       </button>
     </HPCard>
   );

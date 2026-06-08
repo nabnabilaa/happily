@@ -15,7 +15,7 @@ interface HPCardProps {
 export default function HPCard({ 
   children, 
   style = {}, 
-  padding = 16, 
+  padding = 18, 
   onClick, 
   soft = false,
   className
@@ -26,11 +26,12 @@ export default function HPCard({
       className={className}
       style={{
         background: soft ? HP_TOKENS.lineSoft : HP_TOKENS.card,
-        borderRadius: 20,
+        borderRadius: 24,
         padding,
         border: `1px solid ${HP_TOKENS.line}`,
-        boxShadow: soft ? 'none' : '0 1px 2px rgba(44,42,40,0.03), 0 2px 8px rgba(44,42,40,0.02)',
+        boxShadow: soft ? 'none' : 'var(--hp-shadow-sm)',
         cursor: onClick ? 'pointer' : 'default',
+        transition: 'transform 0.2s, box-shadow 0.2s',
         ...style,
       }}
     >

@@ -1,0 +1,2166 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>Gercep – Kerja Lebih Cerdas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,400&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --c1:#FF6B35;--c1l:#FFD0BC;--c1p:#FFF3EE;
+  --c2:#1D3557;--c2l:#457B9D;
+  --c3:#2EC4B6;--c3l:#C5F5F1;
+  --c4:#FFBE0B;--c4l:#FFF3C0;
+  --bg:#FBF7F4;--bg2:#F2ECE7;
+  --dk:#1A1A2E;--gray:#8A8A9A;--lgray:#E5DDD8;--white:#fff;
+  --ff-head:'Fraunces',serif;--ff-body:'Nunito',sans-serif;
+  --radius:24px;
+  --shadow:0 8px 32px rgba(29,53,87,.12);
+  --shadow-o:0 8px 28px rgba(255,107,53,.38);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--ff-body);background:#EAE4DF;overflow:hidden;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+input,button,select,textarea{font-family:inherit}
+input::placeholder,textarea::placeholder{color:#C0B8B2}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+
+#app{position:relative;width:100%;max-width:430px;height:100dvh;height:-webkit-fill-available;margin:0 auto;overflow:hidden;background:var(--bg);box-shadow:0 0 60px rgba(0,0,0,.2)}
+
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;pointer-events:none;opacity:0;transform:translateX(100%);transition:transform .5s cubic-bezier(.34,.82,.2,1),opacity .4s ease;will-change:transform,opacity}
+.screen.active{pointer-events:all;opacity:1;transform:translateX(0)}
+.screen.exit{pointer-events:none;opacity:0;transform:translateX(-110%)}
+
+.prog-wrap{padding:0 24px;margin-bottom:8px}
+.prog-track{height:6px;background:var(--lgray);border-radius:100px;overflow:hidden}
+.prog-fill{height:100%;background:var(--c1);border-radius:100px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+
+.btn-primary{background:var(--c1);color:#fff;border:none;border-radius:100px;padding:17px 48px;font-size:16px;font-weight:800;letter-spacing:.3px;box-shadow:var(--shadow-o);transition:transform .15s,box-shadow .15s,background .15s;white-space:nowrap}
+.btn-primary:active{transform:scale(.95);box-shadow:0 3px 12px rgba(255,107,53,.3)}
+.btn-primary:disabled{background:var(--lgray);color:#B8B0A8;box-shadow:none;cursor:not-allowed;transform:none}
+
+.bubble{background:#fff;border-radius:20px;padding:14px 20px;box-shadow:var(--shadow);font-size:16px;font-weight:700;color:var(--dk);text-align:center;line-height:1.5;position:relative;z-index:2;max-width:90%}
+.bubble.down::after{content:'';position:absolute;bottom:-12px;left:50%;transform:translateX(-50%);border-left:11px solid transparent;border-right:11px solid transparent;border-top:13px solid #fff}
+
+.choice{display:flex;align-items:center;gap:14px;padding:16px 20px;border-radius:18px;border:2.5px solid var(--lgray);background:#fff;width:100%;text-align:left;transition:border-color .2s,background .2s,transform .15s;position:relative;overflow:hidden}
+.choice:active{transform:scale(.98)}
+.choice.on{border-color:var(--c1);background:var(--c1p)}
+.choice .ico{font-size:22px;flex-shrink:0}
+.choice .lbl{font-size:15px;font-weight:600;color:var(--dk);flex:1;line-height:1.35}
+.choice .chk{width:26px;height:26px;border-radius:50%;background:var(--c1);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:800;flex-shrink:0;animation:popIn .25s cubic-bezier(.34,1.56,.64,1) both}
+
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes bounce{0%,100%{transform:translateY(0) scale(1)}40%{transform:translateY(-14px) scale(1.05)}70%{transform:translateY(-4px) scale(.98)}}
+@keyframes popIn{0%{transform:scale(0) rotate(-10deg);opacity:0}60%{transform:scale(1.15) rotate(3deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@keyframes confetti{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(115vh) rotate(580deg);opacity:0}}
+@keyframes glowPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,107,53,.4)}50%{box-shadow:0 0 0 16px rgba(255,107,53,0)}}
+@keyframes countPop{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.25)}100%{transform:scale(1);opacity:1}}
+@keyframes ripple{0%{transform:scale(0);opacity:.7}100%{transform:scale(4.5);opacity:0}}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes streakIn{0%{transform:scale(.3) translateY(30px);opacity:0}60%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+@keyframes starBlink{0%,100%{opacity:.15;transform:scale(.6)}50%{opacity:.9;transform:scale(1)}}
+@keyframes badgePop{0%{transform:scale(0) rotate(-15deg)}60%{transform:scale(1.2) rotate(5deg)}100%{transform:scale(1) rotate(0)}}
+@keyframes heartbeat{0%,100%{transform:scale(1)}20%{transform:scale(1.2)}40%{transform:scale(1)}}
+@keyframes checkIn{0%{transform:scale(0);opacity:0}50%{transform:scale(1.2)}100%{transform:scale(1);opacity:1}}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes noteDrop{0%{opacity:0;transform:translateY(-12px) scale(.96)}100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes appIntro{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+@keyframes taskSlide{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:translateX(0)}}
+@keyframes ping{0%{transform:scale(1);opacity:1}75%,100%{transform:scale(2.2);opacity:0}}
+@keyframes xpFloat{0%{transform:translateY(0) scale(.8);opacity:0}20%{opacity:1;transform:translateY(-10px) scale(1)}80%{opacity:1;transform:translateY(-60px) scale(1)}100%{opacity:0;transform:translateY(-90px) scale(.9)}}
+@keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+@keyframes bossIn{0%{transform:translateY(40px);opacity:0}60%{transform:translateY(-8px)}100%{transform:translateY(0);opacity:1}}
+@keyframes pepIn{from{transform:translateY(16px) scale(.95);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
+@keyframes xpPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,190,11,.4)}60%{box-shadow:0 0 0 10px rgba(255,190,11,0)}}
+
+.af{animation:float 2.8s ease-in-out infinite}
+.ab{animation:bounce 1.9s ease-in-out infinite}
+.a1{animation:fadeUp .55s ease both}
+.a2{animation:fadeUp .55s .12s ease both}
+.a3{animation:fadeUp .55s .24s ease both}
+.a4{animation:fadeUp .55s .36s ease both}
+.a5{animation:fadeUp .55s .48s ease both}
+.a6{animation:fadeUp .55s .60s ease both}
+
+/* ── ONBOARDING SCREENS ── */
+#s0{background:var(--c2);align-items:center;justify-content:center}
+.splash-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.splash-circle{position:absolute;border-radius:50%;background:rgba(255,190,11,.06)}
+.splash-logo{font-family:var(--ff-head);font-size:52px;font-weight:700;color:#fff;letter-spacing:-1px;z-index:2}
+.splash-logo span{color:var(--c1)}
+.splash-tag{font-size:15px;color:rgba(255,255,255,.55);z-index:2;margin-top:6px;letter-spacing:.5px}
+.splash-loader{width:48px;height:4px;background:rgba(255,255,255,.15);border-radius:100px;overflow:hidden;margin-top:48px;z-index:2}
+.splash-bar{height:100%;background:var(--c1);border-radius:100px;width:0;transition:width .05s linear}
+
+#s1{background:var(--bg)}
+.s1-hero{background:linear-gradient(160deg,var(--c1) 0%,#FF8C55 100%);flex:0 0 58vh;display:flex;flex-direction:column;align-items:center;padding:52px 24px 0;position:relative;overflow:hidden}
+.s1-wave{position:absolute;bottom:-2px;left:0;right:0;width:100%;height:60px}
+.s1-bottom{background:var(--bg);flex:1;display:flex;flex-direction:column;align-items:center;padding:32px 28px 44px;gap:18px}
+.s1-input{width:100%;padding:18px 24px;border-radius:100px;border:2.5px solid var(--lgray);background:#fff;font-size:17px;color:var(--dk);font-weight:600;outline:none;transition:border-color .2s,box-shadow .2s;text-align:center}
+.s1-input:focus{border-color:var(--c1);box-shadow:0 0 0 4px rgba(255,107,53,.12)}
+
+#s2,#s6,#s7{background:var(--bg);padding:32px 24px 44px}
+#s3{background:linear-gradient(155deg,#1D3557 0%,#0F1F33 100%)}
+.tap-arena{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;position:relative;z-index:2}
+.tap-stars{position:absolute;inset:0;pointer-events:none}
+.tap-star{position:absolute;border-radius:50%;background:#fff}
+.tap-outer{width:180px;height:180px;border-radius:50%;background:rgba(255,190,11,.1);border:2px solid rgba(255,190,11,.25);display:flex;align-items:center;justify-content:center}
+.tap-inner{width:130px;height:130px;border-radius:50%;background:linear-gradient(135deg,var(--c1) 0%,#FF8C55 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;user-select:none;transition:transform .1s;position:relative;overflow:hidden}
+.tap-inner:active{transform:scale(.9)}
+.tap-num{font-size:42px;font-weight:900;color:#fff;font-family:var(--ff-head);line-height:1}
+.tap-hint{font-size:13px;color:rgba(255,255,255,.8);font-weight:700}
+.tap-ripple{position:absolute;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.55);transform:scale(0);animation:ripple .55s ease-out forwards;pointer-events:none}
+.tap-dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.18);transition:background .25s,transform .25s}
+.tap-dot.lit{background:var(--c4);transform:scale(1.2)}
+
+#s4{background:var(--bg);align-items:center;padding:56px 24px 44px;position:relative;overflow:hidden}
+.confetti-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+
+#s5{background:var(--bg);position:relative;overflow:hidden}
+.quote-card{position:absolute;bottom:0;left:0;right:0;background:var(--c2);border-radius:28px 28px 0 0;padding:28px 24px 52px;transform:translateY(100%);transition:transform .5s cubic-bezier(.32,.82,.26,1)}
+.quote-card.open{transform:translateY(0)}
+
+#s8{background:var(--bg);align-items:center;padding:56px 24px 44px}
+.streak-big{font-family:var(--ff-head);font-size:100px;font-weight:700;color:var(--c1);line-height:1;letter-spacing:-4px;animation:streakIn .7s cubic-bezier(.34,1.56,.64,1) both}
+.streak-sub{font-size:22px;font-weight:900;color:var(--c1);letter-spacing:6px}
+.week-row{display:flex;gap:9px}
+.week-day{display:flex;flex-direction:column;align-items:center;gap:6px}
+.week-day span{font-size:11px;color:var(--gray);font-weight:700}
+.week-dot{width:36px;height:36px;border-radius:50%;background:var(--lgray);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;transition:all .3s}
+.week-dot.on{background:var(--c1);color:#fff;box-shadow:0 4px 14px rgba(255,107,53,.45)}
+
+#s9{background:var(--bg);padding:52px 24px 44px;gap:20px}
+.uname-wrap{background:#fff;border:2.5px solid var(--lgray);border-radius:18px;padding:16px 20px;display:flex;align-items:center;gap:10px;transition:border-color .2s}
+.uname-wrap:focus-within{border-color:var(--c1);box-shadow:0 0 0 4px rgba(255,107,53,.1)}
+.uname-input{border:none;outline:none;font-size:17px;font-weight:600;color:var(--dk);flex:1;background:transparent}
+.uname-chip{padding:9px 16px;border-radius:100px;border:2px solid var(--lgray);background:#fff;font-size:13px;font-weight:700;color:var(--dk);transition:all .18s}
+.uname-chip:active{border-color:var(--c1);background:var(--c1p)}
+
+#s10{background:var(--bg);padding:36px 24px 44px;overflow-y:auto}
+.feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.feat-card{border-radius:20px;padding:18px 14px;display:flex;flex-direction:column;gap:7px;min-height:138px;cursor:pointer;transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden}
+.feat-card:active{transform:scale(.96)}
+.feat-tag{align-self:flex-start;padding:7px 13px;border-radius:100px;font-size:11px;font-weight:800;border:1.5px solid rgba(0,0,0,.12);background:rgba(255,255,255,.22);margin-top:auto}
+
+#s11{background:var(--bg);align-items:center;justify-content:center;padding:40px 24px;position:relative;overflow:hidden;text-align:center}
+.badge-ring{width:160px;height:160px;border-radius:50%;background:linear-gradient(135deg,var(--c1) 0%,var(--c4) 100%);display:flex;align-items:center;justify-content:center;box-shadow:0 12px 48px rgba(255,107,53,.45);animation:badgePop .7s cubic-bezier(.34,1.56,.64,1) both}
+.badge-inner{width:130px;height:130px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:58px;animation:heartbeat 2.5s ease-in-out 1s infinite}
+
+/* ── MAIN APP ── */
+#main-app{position:absolute;inset:0;display:none;flex-direction:column;background:var(--bg)}
+#tab-area{flex:1;position:relative;overflow:hidden}
+.tab-pane{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none}
+.tab-pane.active{display:block}
+#pane-chat.active{display:flex;flex-direction:column}
+
+.tab-bar{display:flex;align-items:stretch;background:#fff;border-top:1px solid var(--lgray);padding:0;flex-shrink:0;box-shadow:0 -4px 20px rgba(0,0,0,.06)}
+.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:10px 4px max(10px,env(safe-area-inset-bottom));background:none;border:none;font-size:10px;font-weight:800;color:var(--gray);transition:color .2s,transform .15s;position:relative}
+.tab-btn .t-ico{font-size:22px;transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
+.tab-btn.active{color:var(--c1)}
+.tab-btn.active .t-ico{transform:scale(1.18)}
+.tab-btn:active{transform:scale(.88)}
+.tab-notif{position:absolute;top:8px;right:calc(50% - 16px);width:16px;height:16px;background:#FF4444;border-radius:50%;border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:#fff}
+.tab-notif.ping::before{content:'';position:absolute;inset:0;border-radius:50%;background:#FF4444;animation:ping 1.2s ease infinite}
+
+/* ── HOME TAB ── */
+.home-header{background:linear-gradient(160deg,var(--c1) 0%,#FF8C55 100%);padding:52px 24px 48px;position:relative;overflow:hidden}
+.home-header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:32px;background:var(--bg);border-radius:32px 32px 0 0}
+.home-decor-1{position:absolute;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.08);top:-50px;right:-40px}
+.home-decor-2{position:absolute;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.06);bottom:50px;left:10px}
+.h-greet{font-size:13px;color:rgba(255,255,255,.7);font-weight:700;position:relative;z-index:2}
+.h-name{font-family:var(--ff-head);font-size:28px;color:#fff;font-weight:700;margin-top:4px;position:relative;z-index:2}
+.h-streak{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.2);padding:7px 14px;border-radius:100px;margin-top:10px;position:relative;z-index:2}
+.h-streak span{color:#fff;font-size:13px;font-weight:800}
+
+/* XP BAR IN HEADER */
+.h-xp-row{display:flex;align-items:center;gap:8px;margin-top:10px;position:relative;z-index:2}
+.h-level-tag{font-size:11px;font-weight:900;color:rgba(255,255,255,.95);background:rgba(0,0,0,.2);border-radius:100px;padding:4px 10px;white-space:nowrap;flex-shrink:0}
+.h-xp-track{flex:1;height:7px;background:rgba(255,255,255,.25);border-radius:100px;overflow:hidden}
+.h-xp-fill{height:100%;background:var(--c4);border-radius:100px;transition:width 1s cubic-bezier(.4,0,.2,1);animation:xpPulse 2s ease infinite}
+.h-xp-num{font-size:10px;font-weight:800;color:rgba(255,255,255,.75);white-space:nowrap}
+
+/* MOOD REACTIVE CARD */
+.mood-card{margin:-20px 16px 14px;border-radius:22px;border:2px solid rgba(255,107,53,.2);padding:16px;display:flex;align-items:center;gap:12px;box-shadow:0 6px 24px rgba(0,0,0,.1);position:relative;z-index:3;background:var(--c1p);animation:fadeUp .5s .1s ease both;overflow:hidden}
+.mood-mascot-wrap{flex-shrink:0;width:64px;height:64px;display:flex;align-items:center;justify-content:center;animation:float 3s ease-in-out infinite}
+.mood-content{flex:1;min-width:0}
+.mood-tag-lbl{font-size:10px;font-weight:900;letter-spacing:.8px;color:var(--c1);margin-bottom:4px;text-transform:uppercase}
+.mood-msg-txt{font-size:13px;font-weight:700;color:var(--dk);line-height:1.5;margin-bottom:10px}
+.mood-cta-btn{display:inline-flex;align-items:center;gap:4px;padding:9px 16px;border-radius:100px;border:none;background:var(--c1);color:#fff;font-size:12px;font-weight:800;cursor:pointer;transition:transform .15s,opacity .15s;box-shadow:0 4px 14px rgba(255,107,53,.3)}
+.mood-cta-btn:active{transform:scale(.94)}
+.mood-change-btn{position:absolute;top:10px;right:10px;background:none;border:none;font-size:10px;font-weight:700;color:var(--gray);padding:4px 8px;border-radius:8px}
+
+/* DAILY CHALLENGES */
+.h-card{background:#fff;border-radius:20px;padding:18px 20px;box-shadow:var(--shadow);margin:0 16px 14px}
+.h-card-label{font-size:11px;font-weight:800;color:var(--gray);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px}
+
+.chal-header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.chal-title-txt{font-size:11px;font-weight:800;color:var(--gray);text-transform:uppercase;letter-spacing:.7px}
+.chal-total-badge{font-size:11px;font-weight:900;color:#805c00;background:var(--c4l);padding:3px 10px;border-radius:100px;border:1.5px solid rgba(255,190,11,.3)}
+.chal-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--lgray);transition:opacity .3s}
+.chal-item:last-child{border-bottom:none}
+.chal-item.done{opacity:.65}
+.chal-ico{font-size:20px;flex-shrink:0;width:30px;text-align:center}
+.chal-body{flex:1;min-width:0}
+.chal-label{font-size:13px;font-weight:700;color:var(--dk)}
+.chal-item.done .chal-label{text-decoration:line-through;color:var(--gray)}
+.chal-prog-wrap{height:5px;background:var(--lgray);border-radius:100px;overflow:hidden;margin:5px 0 3px}
+.chal-prog-fill{height:100%;background:linear-gradient(90deg,var(--c1),var(--c4));border-radius:100px;transition:width .6s ease}
+.chal-sub{font-size:10px;font-weight:700;color:var(--gray)}
+.chal-xp-badge{font-size:11px;font-weight:900;color:var(--c1);background:var(--c1p);padding:4px 9px;border-radius:100px;white-space:nowrap;flex-shrink:0}
+.chal-xp-badge.earned{color:var(--c3);background:var(--c3l)}
+
+/* PROCRASTINATION CARD */
+.proc-card{margin:0 16px 14px;border-radius:18px;padding:14px 16px;display:none;align-items:center;gap:12px;animation:fadeUp .4s ease}
+.proc-card.visible{display:flex}
+.proc-card.info{background:var(--c3l);border:1.5px solid rgba(46,196,182,.35)}
+.proc-card.warn{background:var(--c4l);border:1.5px solid rgba(255,190,11,.45)}
+.proc-card.urgent{background:#FFF0F0;border:1.5px solid rgba(255,68,68,.3)}
+.proc-ico{font-size:26px;flex-shrink:0}
+.proc-body{flex:1;min-width:0}
+.proc-body strong{font-size:13px;font-weight:800;color:var(--dk);display:block;margin-bottom:2px}
+.proc-body p{font-size:11px;color:var(--gray);line-height:1.45;font-weight:600}
+.proc-btn{padding:9px 13px;border-radius:13px;border:none;background:var(--c1);color:#fff;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0;box-shadow:0 3px 10px rgba(255,107,53,.3)}
+
+/* TASK PROGRESS RING */
+.ring-wrap{position:relative;width:80px;height:80px}
+.ring-wrap svg{transform:rotate(-90deg)}
+.ring-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-num{font-family:var(--ff-head);font-size:20px;font-weight:700;color:var(--c1)}
+.ring-sub{font-size:9px;font-weight:800;color:var(--gray)}
+.quick-add{display:flex;align-items:center;gap:10px;width:100%;padding:14px 18px;background:var(--c1p);border:2px dashed rgba(255,107,53,.35);border-radius:14px;color:var(--c1);font-size:14px;font-weight:700;transition:background .2s;margin-top:14px}
+.quick-add:active{background:var(--c1l)}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:0 16px 14px}
+.stat-card{background:#fff;border-radius:18px;padding:14px;text-align:center;box-shadow:var(--shadow)}
+.stat-ico{font-size:22px}
+.stat-num{font-family:var(--ff-head);font-size:20px;font-weight:700;margin-top:4px}
+.stat-lbl{font-size:11px;color:var(--gray);font-weight:700}
+
+/* QUOTE CARD HOME */
+.home-quote-card{background:var(--c2);border-radius:20px;margin:0 16px 24px;padding:20px;position:relative;overflow:hidden}
+.hqc-decor{position:absolute;right:-10px;top:-10px;font-size:64px;opacity:.08}
+.hqc-label{font-size:10px;font-weight:800;color:rgba(255,255,255,.4);letter-spacing:1.2px;margin-bottom:8px}
+.hqc-text{font-family:var(--ff-head);font-size:15px;color:#fff;line-height:1.75;font-style:italic}
+.hqc-action{margin-top:14px;display:flex;align-items:center;gap:8px}
+.hqc-btn{padding:8px 16px;border-radius:100px;border:1.5px solid rgba(255,255,255,.25);background:transparent;color:rgba(255,255,255,.8);font-size:12px;font-weight:700;cursor:pointer;transition:all .2s}
+.hqc-btn:active{background:rgba(255,255,255,.1)}
+
+/* ── TASKS TAB ── */
+.tasks-top{padding:20px 20px 0}
+.tasks-date{font-size:13px;color:var(--gray);font-weight:700}
+.tasks-row{display:flex;align-items:center;justify-content:space-between;margin-top:4px}
+.tasks-title{font-family:var(--ff-head);font-size:26px;font-weight:700;color:var(--dk)}
+.add-fab{width:40px;height:40px;background:var(--c1);border:none;border-radius:13px;font-size:22px;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(255,107,53,.4);transition:transform .15s}
+.add-fab:active{transform:scale(.88)}
+
+.task-prog-wrap{padding:14px 20px 0}
+.task-prog-row{display:flex;justify-content:space-between;margin-bottom:6px}
+.task-prog-lbl{font-size:12px;color:var(--gray);font-weight:700}
+.task-prog-val{font-size:12px;font-weight:800;color:var(--c1)}
+.task-track{height:8px;background:var(--lgray);border-radius:100px;overflow:hidden}
+.task-fill{height:100%;background:linear-gradient(90deg,var(--c1),var(--c4));border-radius:100px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+
+.filter-row{display:flex;gap:8px;padding:14px 20px 6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.filter-row::-webkit-scrollbar{display:none}
+.filter-chip{padding:7px 15px;border-radius:100px;border:2px solid var(--lgray);background:#fff;font-size:12px;font-weight:700;color:var(--gray);white-space:nowrap;transition:all .2s}
+.filter-chip.on{border-color:var(--c1);background:var(--c1p);color:var(--c1)}
+
+.task-list{padding:8px 16px 120px;display:flex;flex-direction:column;gap:10px}
+.task-item{background:#fff;border-radius:18px;padding:16px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 12px rgba(29,53,87,.07);transition:opacity .3s,transform .3s;animation:taskSlide .35s ease both;position:relative;overflow:hidden}
+.task-item.done{opacity:.55}
+.t-check{width:28px;height:28px;border-radius:50%;border:2.5px solid var(--lgray);background:#fff;flex-shrink:0;transition:all .25s;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.t-check.on{background:var(--c1);border-color:var(--c1);animation:checkIn .3s cubic-bezier(.34,1.56,.64,1)}
+.t-check.on::after{content:'✓';color:#fff;font-size:13px;font-weight:800}
+.t-content{flex:1;min-width:0}
+.t-name{font-size:15px;font-weight:700;color:var(--dk);position:relative;display:inline-block;transition:color .3s}
+.task-item.done .t-name{text-decoration:line-through;color:var(--gray)}
+.t-meta{display:flex;align-items:center;gap:8px;margin-top:4px}
+.t-cat{font-size:11px;font-weight:700;color:var(--gray)}
+.t-prio{font-size:10px;font-weight:800;padding:2px 8px;border-radius:100px}
+.t-prio.high{background:#FFF0F0;color:#FF4444}
+.t-prio.med{background:var(--c4l);color:#805c00}
+.t-prio.low{background:var(--c3l);color:var(--c3)}
+.t-time{font-size:11px;color:var(--gray);font-weight:600}
+.t-delete{background:#FFF0F0;border:none;border-radius:10px;padding:6px 10px;font-size:16px;color:#FF4444;flex-shrink:0;transition:transform .15s}
+.t-delete:active{transform:scale(.88)}
+.task-empty{padding:60px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+.task-empty-ico{font-size:48px;animation:float 3s ease-in-out infinite}
+.task-empty-title{font-size:17px;font-weight:800;color:var(--dk)}
+.task-empty-sub{font-size:13px;color:var(--gray);line-height:1.55;font-weight:600}
+
+/* XP FLOATING ANIMATION */
+.xp-float{position:absolute;top:8px;right:8px;font-size:13px;font-weight:900;color:var(--c4);background:var(--c2);border-radius:100px;padding:4px 10px;pointer-events:none;animation:xpFloat 1.8s ease forwards;z-index:10}
+
+/* ── NOTES TAB ── */
+.notes-top{padding:20px 20px 14px;background:var(--bg);position:sticky;top:0;z-index:10}
+.notes-hrow{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.notes-title{font-family:var(--ff-head);font-size:26px;font-weight:700;color:var(--dk)}
+.notes-fab{width:40px;height:40px;background:var(--c2);border:none;border-radius:13px;font-size:22px;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(29,53,87,.3);transition:transform .15s}
+.notes-fab:active{transform:scale(.88)}
+.notes-search{display:flex;align-items:center;gap:10px;background:#fff;border:2px solid var(--lgray);border-radius:14px;padding:11px 16px}
+.notes-search-inp{border:none;outline:none;font-size:14px;font-weight:600;color:var(--dk);flex:1;background:transparent}
+.notes-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:4px 16px 120px}
+.note-card{border-radius:18px;padding:16px;min-height:120px;cursor:pointer;transition:transform .2s,box-shadow .2s;animation:noteDrop .35s ease both;display:flex;flex-direction:column;gap:6px;position:relative}
+.note-card:active{transform:scale(.96)}
+.note-card.clr-yellow{background:#FFF9D0;border:1.5px solid rgba(255,190,11,.25)}
+.note-card.clr-teal{background:var(--c3l);border:1.5px solid rgba(46,196,182,.25)}
+.note-card.clr-orange{background:var(--c1p);border:1.5px solid rgba(255,107,53,.2)}
+.note-card.clr-navy{background:var(--c2);border:none}
+.note-card.clr-pink{background:#FFE5F0;border:1.5px solid rgba(255,100,150,.2)}
+.note-card.clr-green{background:#E5F5E0;border:1.5px solid rgba(40,167,69,.2)}
+.note-title{font-size:14px;font-weight:800;color:var(--dk);line-height:1.3}
+.note-card.clr-navy .note-title{color:#fff}
+.note-body{font-size:12px;color:var(--gray);line-height:1.55;flex:1;overflow:hidden}
+.note-card.clr-navy .note-body{color:rgba(255,255,255,.6)}
+.note-time{font-size:10px;font-weight:700;color:var(--gray);margin-top:auto}
+.note-card.clr-navy .note-time{color:rgba(255,255,255,.4)}
+.notes-empty{padding:60px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;grid-column:1/-1}
+.notes-empty-ico{font-size:48px;animation:float 3s ease-in-out infinite}
+
+/* ── CHAT TAB ── */
+.chat-hdr{display:flex;align-items:center;gap:12px;padding:16px 20px;background:#fff;border-bottom:1px solid var(--lgray);box-shadow:0 2px 8px rgba(0,0,0,.04);flex-shrink:0}
+.avatars{display:flex}
+.av-circle{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;margin-left:-8px;border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.1);flex-shrink:0}
+.avatars .av-circle:first-child{margin-left:0}
+.chat-info{flex:1;min-width:0}
+.chat-room{font-size:15px;font-weight:800;color:var(--dk)}
+.chat-online{font-size:12px;color:var(--c3);font-weight:700;display:flex;align-items:center;gap:4px}
+.chat-online::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--c3);flex-shrink:0}
+.chat-msgs{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 8px;display:flex;flex-direction:column;gap:14px}
+.msg-group{display:flex;flex-direction:column;gap:4px}
+.msg-group.me{align-items:flex-end}
+.msg-group.them{align-items:flex-start}
+.msg-sender{font-size:11px;font-weight:800;color:var(--gray);margin-bottom:2px;padding:0 8px}
+.msg-bubble{max-width:78%;padding:11px 15px;border-radius:18px;font-size:14px;font-weight:600;line-height:1.5;animation:msgIn .3s ease}
+.msg-group.me .msg-bubble{background:var(--c1);color:#fff;border-bottom-right-radius:5px}
+.msg-group.them .msg-bubble{background:#fff;color:var(--dk);border-bottom-left-radius:5px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.msg-time{font-size:10px;color:var(--gray);font-weight:700;padding:0 8px}
+.chat-input-bar{padding:10px 16px max(12px,env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--lgray);display:flex;align-items:flex-end;gap:10px;flex-shrink:0}
+.chat-inp{flex:1;padding:10px 16px;border-radius:20px;border:2px solid var(--lgray);background:var(--bg);font-size:14px;font-weight:600;color:var(--dk);outline:none;resize:none;max-height:100px;transition:border-color .2s;line-height:1.5}
+.chat-inp:focus{border-color:var(--c1)}
+.send-btn{width:42px;height:42px;border-radius:50%;background:var(--c1);border:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px rgba(255,107,53,.35);transition:transform .15s}
+.send-btn:active{transform:scale(.88)}
+
+/* ── CALENDAR TAB ── */
+.cal-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:var(--bg);position:sticky;top:0;z-index:10}
+.cal-nav{display:flex;align-items:center;gap:12px}
+.cal-arrow{background:#fff;border:1.5px solid var(--lgray);border-radius:12px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--dk);font-weight:700}
+.cal-mth{font-family:var(--ff-head);font-size:20px;font-weight:700;color:var(--dk)}
+.cal-add{width:38px;height:38px;background:var(--c1);border:none;border-radius:13px;font-size:22px;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(255,107,53,.35);transition:transform .15s}
+.cal-add:active{transform:scale(.88)}
+.cal-members{display:flex;gap:8px;padding:0 20px 12px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.cal-members::-webkit-scrollbar{display:none}
+.mem-chip{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:100px;background:#fff;border:2px solid var(--lgray);font-size:12px;font-weight:700;color:var(--gray);white-space:nowrap;transition:all .2s;cursor:pointer}
+.mem-chip.on{border-color:var(--c1);color:var(--c1);background:var(--c1p)}
+.mem-pip{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.cal-dow-row{display:grid;grid-template-columns:repeat(7,1fr);padding:0 12px;margin-bottom:4px}
+.cal-dow{font-size:11px;font-weight:800;color:var(--gray);text-align:center;padding:4px 0}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);padding:0 12px;gap:2px}
+.cal-cell{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border-radius:12px;cursor:pointer;transition:background .2s;min-height:52px}
+.cal-cell:active{background:var(--lgray)}
+.cal-dn{font-size:15px;font-weight:700;color:var(--dk)}
+.cal-cell.other .cal-dn{color:var(--lgray)}
+.cal-cell.today .cal-dn{color:var(--c1);font-weight:900}
+.cal-cell.sel{background:var(--c1)}
+.cal-cell.sel .cal-dn{color:#fff}
+.cal-dots{display:flex;gap:2px}
+.cal-dot{width:5px;height:5px;border-radius:50%}
+.ev-panel{margin:12px 12px 0;background:#fff;border-radius:20px;padding:16px;box-shadow:var(--shadow)}
+.ev-panel-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.ev-panel-date{font-size:14px;font-weight:800;color:var(--dk)}
+.ev-panel-add{padding:7px 14px;border-radius:100px;background:var(--c1p);border:none;color:var(--c1);font-size:12px;font-weight:800}
+.ev-list{display:flex;flex-direction:column;gap:10px}
+.ev-item{display:flex;align-items:center;gap:12px;padding:10px;background:var(--bg);border-radius:14px}
+.ev-dot-lg{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.ev-info{flex:1;min-width:0}
+.ev-name{font-size:14px;font-weight:700;color:var(--dk)}
+.ev-time{font-size:12px;color:var(--gray);font-weight:600;margin-top:2px}
+.ev-host-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.ev-empty{font-size:14px;color:var(--gray);text-align:center;padding:20px;font-weight:600}
+
+/* ── OVERLAYS & SHEETS ── */
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:100;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .35s ease}
+.overlay.open{opacity:1;pointer-events:all}
+.sheet{background:var(--bg);border-radius:28px 28px 0 0;padding:20px 20px 44px;width:100%;max-height:90vh;overflow-y:auto;transform:translateY(100%);transition:transform .4s cubic-bezier(.32,.82,.26,1)}
+.overlay.open .sheet{transform:translateY(0)}
+.sheet-hdl{width:40px;height:5px;background:var(--lgray);border-radius:100px;margin:0 auto 18px}
+.sheet-title{font-family:var(--ff-head);font-size:20px;font-weight:700;color:var(--dk);margin-bottom:16px}
+.sh-lbl{display:block;font-size:12px;font-weight:800;color:var(--gray);margin-bottom:7px;text-transform:uppercase;letter-spacing:.5px}
+.sh-inp{width:100%;padding:14px 16px;border-radius:14px;border:2px solid var(--lgray);background:#fff;font-size:15px;font-weight:600;color:var(--dk);outline:none;transition:border-color .2s}
+.sh-inp:focus{border-color:var(--c1)}
+.sh-area{width:100%;padding:14px 16px;border-radius:14px;border:2px solid var(--lgray);background:#fff;font-size:14px;font-weight:600;color:var(--dk);outline:none;resize:none;min-height:100px;transition:border-color .2s}
+.sh-area:focus{border-color:var(--c1)}
+.prio-btns{display:flex;gap:8px}
+.prio-btn{flex:1;padding:10px;border-radius:13px;border:2px solid var(--lgray);background:#fff;font-size:12px;font-weight:700;transition:all .2s}
+.prio-btn.sel.high{border-color:#FF4444;background:#FFF0F0;color:#FF4444}
+.prio-btn.sel.med{border-color:var(--c4);background:var(--c4l);color:#805c00}
+.prio-btn.sel.low{border-color:var(--c3);background:var(--c3l);color:var(--c3)}
+.color-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.col-btn{width:34px;height:34px;border-radius:50%;border:2.5px solid transparent;cursor:pointer;transition:border-color .2s,transform .15s}
+.col-btn.sel{border-color:var(--dk);transform:scale(1.12)}
+.col-btn:active{transform:scale(.9)}
+.inv-list{display:flex;flex-direction:column;gap:8px;max-height:180px;overflow-y:auto}
+.inv-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:14px;background:#fff;border:1.5px solid var(--lgray);transition:all .2s;cursor:pointer}
+.inv-item.on{border-color:var(--c3);background:var(--c3l)}
+.inv-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.inv-name{flex:1;font-size:13px;font-weight:700;color:var(--dk)}
+.inv-status{font-size:12px;font-weight:700}
+.team-item{display:flex;align-items:center;gap:12px;padding:12px;border-radius:16px;background:#fff;margin-bottom:8px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.team-av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.team-info{flex:1;min-width:0}
+.team-name{font-size:15px;font-weight:800;color:var(--dk)}
+.team-uname{font-size:12px;color:var(--gray);font-weight:600}
+.team-online{width:10px;height:10px;border-radius:50%;border:2px solid #fff;flex-shrink:0}
+.note-detail{background:var(--bg);border-radius:28px 28px 0 0;padding:20px 20px 44px;width:100%;max-height:92vh;overflow-y:auto;transform:translateY(100%);transition:transform .4s cubic-bezier(.32,.82,.26,1)}
+.overlay.open .note-detail{transform:translateY(0)}
+.nd-title-inp{font-size:20px;font-weight:800;color:var(--dk);border:none;outline:none;background:transparent;width:100%;font-family:var(--ff-head)}
+.nd-body-inp{width:100%;border:none;outline:none;background:transparent;font-size:14px;font-weight:600;color:var(--gray);resize:none;min-height:200px;line-height:1.7}
+
+/* ── XP POPUP ── */
+.xp-popup{position:absolute;top:50%;left:50%;transform:translate(-50%,-120%) scale(.7);z-index:9999;background:var(--c2);color:#fff;border-radius:100px;padding:8px 20px;text-align:center;opacity:0;transition:all .35s cubic-bezier(.34,1.56,.64,1);pointer-events:none;white-space:nowrap;box-shadow:0 8px 32px rgba(29,53,87,.35)}
+.xp-popup.show{opacity:1;transform:translate(-50%,-220%) scale(1)}
+.xp-popup .xp-amt{font-size:18px;font-weight:900;font-family:var(--ff-head);color:var(--c4)}
+.xp-popup .xp-rsn{font-size:11px;font-weight:700;color:rgba(255,255,255,.65)}
+
+/* ── BOSS DEFEAT OVERLAY ── */
+#bossSheet .sheet{background:linear-gradient(155deg,var(--c2) 0%,#0F2035 100%)}
+.boss-badge-wrap{display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.boss-badge-ring{width:130px;height:130px;border-radius:50%;background:linear-gradient(135deg,var(--c4) 0%,var(--c1) 100%);display:flex;align-items:center;justify-content:center;font-size:54px;box-shadow:0 16px 48px rgba(255,190,11,.45);animation:badgePop .7s cubic-bezier(.34,1.56,.64,1) both}
+.boss-title{font-family:var(--ff-head);font-size:26px;font-weight:700;color:#fff;text-align:center;margin-bottom:8px}
+.boss-sub{font-size:14px;color:rgba(255,255,255,.6);text-align:center;line-height:1.65;margin-bottom:20px}
+.boss-xp-chip{display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(255,190,11,.2);color:var(--c4);font-size:22px;font-weight:900;padding:14px;border-radius:18px;margin-bottom:24px;border:1.5px solid rgba(255,190,11,.3)}
+.boss-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px}
+.boss-stat{background:rgba(255,255,255,.08);border-radius:16px;padding:12px;text-align:center}
+.boss-stat-num{font-family:var(--ff-head);font-size:22px;font-weight:700;color:#fff}
+.boss-stat-lbl{font-size:11px;color:rgba(255,255,255,.5);font-weight:700;margin-top:2px}
+
+/* ── PEP TALK BUBBLE ── */
+.pep-bubble{position:absolute;bottom:80px;left:16px;right:16px;background:var(--c2);border-radius:18px 18px 18px 5px;padding:14px 40px 14px 16px;z-index:90;box-shadow:0 8px 28px rgba(29,53,87,.25);transform:translateY(24px);opacity:0;transition:all .4s cubic-bezier(.32,.82,.26,1);pointer-events:none;display:flex;align-items:center;gap:10px}
+.pep-bubble.show{transform:translateY(0);opacity:1;pointer-events:all}
+.pep-mascot-ico{font-size:24px;flex-shrink:0;animation:bounce 2s ease-in-out infinite}
+.pep-msg-txt{font-size:13px;font-weight:700;color:#fff;line-height:1.5;flex:1}
+.pep-close{position:absolute;top:8px;right:12px;background:none;border:none;color:rgba(255,255,255,.4);font-size:18px;cursor:pointer;padding:2px}
+
+/* ── DAILY MOOD CHECKIN ── */
+#checkinSheet .sheet{background:var(--bg)}
+.checkin-card{background:var(--c2);border-radius:20px;padding:20px;margin-bottom:18px}
+.checkin-tag{font-size:11px;font-weight:800;color:rgba(255,255,255,.5);letter-spacing:1px;margin-bottom:6px}
+.checkin-q{font-family:var(--ff-head);font-size:20px;font-weight:700;color:#fff;margin-bottom:16px;line-height:1.3}
+.checkin-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.checkin-opt{padding:12px 10px;border-radius:16px;border:2px solid rgba(255,255,255,.15);background:rgba(255,255,255,.07);color:#fff;font-size:12px;font-weight:700;text-align:center;cursor:pointer;transition:all .2s;line-height:1.4}
+.checkin-opt:active,.checkin-opt.sel{background:var(--c1);border-color:var(--c1);color:#fff}
+.checkin-opt .copt-ico{display:block;font-size:22px;margin-bottom:6px}
+
+/* ── TOAST ── */
+.toast{position:absolute;bottom:90px;left:50%;transform:translateX(-50%);background:var(--dk);color:#fff;border-radius:100px;padding:12px 22px;font-size:14px;font-weight:700;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:999;animation:fadeUp .3s ease;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ════ SPLASH ════ -->
+<div class="screen active" id="s0" style="background:var(--c2);align-items:center;justify-content:center">
+  <div class="splash-bg" id="splashBg"></div>
+  <div class="splash-logo" style="animation:fadeUp .5s ease">Ger<span>cep</span> ⚡</div>
+  <div class="splash-tag" style="animation:fadeUp .5s .15s ease both">Kerja Lebih Cerdas, Lebih Semangat</div>
+  <div class="splash-loader" style="animation:fadeUp .5s .3s ease both"><div class="splash-bar" id="splashBar"></div></div>
+</div>
+
+<!-- ════ S1: NAMA ════ -->
+<div class="screen" id="s1">
+  <div class="s1-hero">
+    <div class="bubble down a1" style="margin-bottom:28px">Hai! Senang ketemu kamu 👋<br/>Aku di sini buat bantu harimu lebih teratur</div>
+    <div style="animation:float 2.8s ease-in-out infinite">
+      <svg viewBox="0 0 120 160" width="150" height="150" style="overflow:visible">
+        <ellipse cx="60" cy="90" rx="38" ry="32" fill="#FFD0BC"/>
+        <path d="M24 98 Q22 130 60 132 Q98 130 96 98 L83 90 Q70 100 60 100 Q50 100 37 90 Z" fill="white"/>
+        <rect x="42" y="100" width="36" height="34" rx="4" fill="#FF6B35"/>
+        <line x1="60" y1="100" x2="60" y2="134" stroke="#E55B2A" stroke-width="1.5"/>
+        <circle cx="60" cy="58" r="34" fill="#FFD0BC"/>
+        <circle cx="42" cy="66" r="8" fill="#FFB8A0" opacity=".5"/>
+        <circle cx="78" cy="66" r="8" fill="#FFB8A0" opacity=".5"/>
+        <ellipse cx="50" cy="55" rx="7" ry="8" fill="white"/>
+        <ellipse cx="70" cy="55" rx="7" ry="8" fill="white"/>
+        <circle cx="51.5" cy="56" r="5" fill="#1A1A2E"/>
+        <circle cx="71.5" cy="56" r="5" fill="#1A1A2E"/>
+        <circle cx="53" cy="54" r="2" fill="white"/>
+        <circle cx="73" cy="54" r="2" fill="white"/>
+        <path d="M46 66 Q60 80 74 66" stroke="#C87050" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M28 50 Q34 26 60 24 Q86 26 92 50 Q85 38 60 36 Q35 38 28 50Z" fill="#3D2B1F"/>
+        <ellipse cx="10" cy="75" rx="12" ry="8" fill="#FFD0BC" transform="rotate(-55 10 75)"/>
+        <ellipse cx="110" cy="75" rx="12" ry="8" fill="#FFD0BC" transform="rotate(55 110 75)"/>
+        <ellipse cx="47" cy="123" rx="13" ry="9" fill="#2C3E50"/>
+        <ellipse cx="73" cy="123" rx="13" ry="9" fill="#2C3E50"/>
+      </svg>
+    </div>
+    <svg class="s1-wave" viewBox="0 0 430 60" preserveAspectRatio="none"><path d="M0 60V28Q108 0 215 20Q322 40 430 10V60Z" fill="#FBF7F4"/></svg>
+  </div>
+  <div class="s1-bottom">
+    <p class="a1" style="font-size:16px;font-weight:700;color:var(--gray);text-align:center">Siapa nama kamu?</p>
+    <input type="text" class="s1-input a2" id="nameInp" placeholder="Tulis nama kamu..." autocomplete="given-name" maxlength="30" oninput="document.getElementById('s1Btn').disabled=!this.value.trim()"/>
+    <button class="btn-primary a3" id="s1Btn" disabled onclick="ST.name=document.getElementById('nameInp').value.trim();nav(2)">Halo, aku siap! 👋</button>
+  </div>
+</div>
+
+<!-- ════ S2: PEKERJAAN ════ -->
+<div class="screen" id="s2" style="background:var(--bg);padding:32px 24px 44px">
+  <div class="prog-wrap"><div class="prog-track"><div class="prog-fill" style="width:18%"></div></div></div>
+  <div style="padding:8px 0 0">
+    <p class="a1" style="font-size:13px;color:var(--gray);font-weight:700;margin-bottom:4px">LANGKAH 1 / 6</p>
+    <h2 class="a2" style="font-size:25px;font-weight:900;color:var(--dk);line-height:1.25;font-family:var(--ff-head)">Kamu kerja sebagai apa?</h2>
+    <p class="a3" style="font-size:14px;color:var(--gray);margin-top:6px">Ini bantu aku sesuaikan pengalaman yang paling pas buat kamu</p>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:11px;flex:1;margin-top:20px" class="a4">
+    <button class="choice" data-g="job" onclick="pick(this)"><span class="ico">💻</span><span class="lbl">Developer / IT</span></button>
+    <button class="choice" data-g="job" onclick="pick(this)"><span class="ico">🎨</span><span class="lbl">Desainer / Kreatif</span></button>
+    <button class="choice" data-g="job" onclick="pick(this)"><span class="ico">📊</span><span class="lbl">Marketing / Sales</span></button>
+    <button class="choice" data-g="job" onclick="pick(this)"><span class="ico">📋</span><span class="lbl">Manajer / Tim Lead</span></button>
+    <button class="choice" data-g="job" onclick="pick(this)"><span class="ico">🏢</span><span class="lbl">Lainnya</span></button>
+  </div>
+  <div style="padding:20px 0 0;display:flex;justify-content:flex-end"><button class="btn-primary" id="s2Btn" disabled onclick="nav(3)">Lanjut →</button></div>
+</div>
+
+<!-- ════ S3: TAP GAME ════ -->
+<div class="screen" id="s3" style="background:linear-gradient(155deg,#1D3557 0%,#0F1F33 100%)">
+  <div class="tap-stars" id="tapStars"></div>
+  <div style="padding:40px 24px 0;text-align:center;position:relative;z-index:2">
+    <p style="font-size:13px;color:rgba(255,255,255,.5);font-weight:700;letter-spacing:1px">MINI GAME</p>
+    <h2 style="font-family:var(--ff-head);font-size:24px;font-weight:700;color:#fff;margin-top:6px">Tap sebanyak mungkin!<br/>Isi energimu sekarang ⚡</h2>
+  </div>
+  <div class="tap-arena">
+    <div style="display:flex;gap:7px;margin-bottom:28px" id="tapDots"></div>
+    <div class="tap-outer"><div class="tap-inner" id="tapBtn" onclick="doTap(event)">
+      <div class="tap-num" id="tapNum">0</div>
+      <div class="tap-hint">TAP!</div>
+    </div></div>
+    <p style="color:rgba(255,255,255,.4);font-size:13px;font-weight:700;margin-top:20px" id="tapSub">Target: 20 tap 🎯</p>
+  </div>
+</div>
+
+<!-- ════ S4: SELAMAT ════ -->
+<div class="screen" id="s4" style="background:var(--bg);align-items:center;padding:56px 24px 44px;position:relative;overflow:hidden">
+  <div class="confetti-layer" id="conf4"></div>
+  <div class="bubble down a1" style="margin-bottom:28px">Luar biasa, <span id="s4Name" style="color:var(--c1)">Sobat</span>! 🎉</div>
+  <div style="animation:bounce 1.9s ease-in-out infinite">
+    <svg viewBox="0 0 120 160" width="145" height="145" style="overflow:visible">
+      <ellipse cx="60" cy="90" rx="38" ry="32" fill="#FFD0BC"/>
+      <path d="M24 98 Q22 130 60 132 Q98 130 96 98 L83 90 Q70 100 60 100 Q50 100 37 90 Z" fill="white"/>
+      <path d="M57 100 L60 107 L63 100 L61 115 L60 120 L59 115 Z" fill="#FF6B35"/>
+      <circle cx="60" cy="58" r="34" fill="#FFD0BC"/>
+      <circle cx="42" cy="66" r="8" fill="#FFB8A0" opacity=".5"/>
+      <circle cx="78" cy="66" r="8" fill="#FFB8A0" opacity=".5"/>
+      <ellipse cx="50" cy="55" rx="7" ry="8" fill="white"/>
+      <ellipse cx="70" cy="55" rx="7" ry="8" fill="white"/>
+      <circle cx="51.5" cy="56" r="5" fill="#1A1A2E"/>
+      <circle cx="71.5" cy="56" r="5" fill="#1A1A2E"/>
+      <circle cx="53" cy="54" r="2" fill="white"/>
+      <circle cx="73" cy="54" r="2" fill="white"/>
+      <path d="M46 68 Q60 84 74 68" stroke="#C87050" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      <path d="M28 50 Q34 26 60 24 Q86 26 92 50 Q85 38 60 36 Q35 38 28 50Z" fill="#3D2B1F"/>
+      <ellipse cx="10" cy="75" rx="12" ry="8" fill="#FFD0BC" transform="rotate(-55 10 75)"/>
+      <ellipse cx="110" cy="75" rx="12" ry="8" fill="#FFD0BC" transform="rotate(55 110 75)"/>
+      <ellipse cx="47" cy="123" rx="13" ry="9" fill="#2C3E50"/>
+      <ellipse cx="73" cy="123" rx="13" ry="9" fill="#2C3E50"/>
+    </svg>
+  </div>
+  <p class="a2" style="font-size:16px;font-weight:700;color:var(--gray);text-align:center;margin-top:20px;line-height:1.65">Semangat itu nyata!<br/>Sekarang yuk atur harimu bareng 🚀</p>
+  <button class="btn-primary a3" onclick="nav(5)">Lanjut ✨</button>
+</div>
+
+<!-- ════ S5: KUTIPAN ════ -->
+<div class="screen" id="s5" style="position:relative;overflow:hidden">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;padding:52px 24px 200px">
+    <div class="a1" style="font-size:13px;font-weight:700;color:var(--gray);text-align:center;margin-bottom:14px">💡 Pesan Untukmu</div>
+    <div style="flex:1;display:flex;align-items:center">
+      <svg viewBox="0 0 120 160" width="175" height="175" style="overflow:visible" class="af">
+        <ellipse cx="60" cy="90" rx="38" ry="32" fill="#FFD0BC"/>
+        <path d="M24 98 Q22 130 60 132 Q98 130 96 98 L83 90 Q70 100 60 100 Q50 100 37 90 Z" fill="white"/>
+        <rect x="18" y="108" width="44" height="30" rx="4" fill="#1D3557"/>
+        <line x1="40" y1="108" x2="40" y2="138" stroke="#0A1F40" stroke-width="1.5"/>
+        <ellipse cx="14" cy="116" rx="12" ry="7" fill="#FFD0BC" transform="rotate(-20 14 116)"/>
+        <ellipse cx="94" cy="116" rx="12" ry="7" fill="#FFD0BC" transform="rotate(20 94 116)"/>
+        <circle cx="60" cy="58" r="34" fill="#FFD0BC"/>
+        <circle cx="42" cy="66" r="8" fill="#FFB8A0" opacity=".5"/>
+        <circle cx="78" cy="66" r="8" fill="#FFB8A0" opacity=".5"/>
+        <path d="M40 56 Q47 50 54 56" stroke="#1A1A2E" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M66 56 Q73 50 80 56" stroke="#1A1A2E" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M50 69 Q60 75 70 69" stroke="#C87050" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M28 50 Q34 26 60 24 Q86 26 92 50 Q85 38 60 36 Q35 38 28 50Z" fill="#3D2B1F"/>
+      </svg>
+    </div>
+    <div style="align-self:flex-end"><button class="btn-primary" onclick="nav(6)">Lanjut →</button></div>
+  </div>
+  <div class="quote-card" id="quoteCard">
+    <p style="font-size:11px;color:rgba(255,255,255,.5);text-align:center;margin-bottom:10px;letter-spacing:1px">💬 BUAT HARI INI</p>
+    <p style="font-size:18px;font-weight:700;color:#fff;text-align:center;line-height:1.65;font-family:var(--ff-head);font-style:italic">"Kamu tidak harus sempurna dulu untuk mulai. Cukup mulai — sisanya akan mengikuti."</p>
+    <p style="font-size:13px;color:rgba(255,255,255,.45);text-align:center;margin-top:12px">— Prinsip produktivitas yang terbukti 🌟</p>
+  </div>
+</div>
+
+<!-- ════ S6: PERASAAN ════ -->
+<div class="screen" id="s6" style="background:var(--bg);padding:32px 24px 44px">
+  <div class="prog-wrap"><div class="prog-track"><div class="prog-fill" style="width:55%"></div></div></div>
+  <div style="padding:16px 0 0">
+    <p class="a1" style="font-size:13px;color:var(--gray);font-weight:700;margin-bottom:4px">KONDISI KAMU</p>
+    <h2 class="a2" style="font-size:25px;font-weight:900;color:var(--dk);line-height:1.25;font-family:var(--ff-head)">Gimana perasaanmu<br/>hari ini?</h2>
+    <p class="a3" style="font-size:14px;color:var(--gray);margin-top:6px">Jujur aja, aku akan sesuaikan tampilan untukmu 💙</p>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:11px;flex:1;margin-top:16px" class="a4">
+    <button class="choice" data-g="r" data-mood="excited" onclick="pick(this)"><span class="ico">🔥</span><span class="lbl">Semangat & siap tempur!</span></button>
+    <button class="choice" data-g="r" data-mood="neutral" onclick="pick(this)"><span class="ico">😊</span><span class="lbl">Biasa aja, butuh dorongan</span></button>
+    <button class="choice" data-g="r" data-mood="tired" onclick="pick(this)"><span class="ico">😴</span><span class="lbl">Capek, tapi mau tetap coba</span></button>
+    <button class="choice" data-g="r" data-mood="stressed" onclick="pick(this)"><span class="ico">🌀</span><span class="lbl">Stres & butuh motivasi</span></button>
+  </div>
+  <div style="padding:20px 0 0;display:flex;justify-content:flex-end">
+    <button class="btn-primary" id="s6Btn" disabled onclick="nav(7)">Lanjut →</button>
+  </div>
+</div>
+
+<!-- ════ S7: KOMITMEN ════ -->
+<div class="screen" id="s7" style="background:var(--bg);padding:32px 24px 44px">
+  <div class="prog-wrap"><div class="prog-track"><div class="prog-fill" style="width:78%"></div></div></div>
+  <div style="padding:16px 0 0">
+    <p class="a1" style="font-size:13px;color:var(--gray);font-weight:700;margin-bottom:4px">JANJI HARIMU</p>
+    <h2 class="a2" style="font-size:25px;font-weight:900;color:var(--dk);line-height:1.25;font-family:var(--ff-head)">Aku berjanji kepada<br/>diriku sendiri…</h2>
+    <p class="a3" style="font-size:14px;color:var(--gray);margin-top:6px" id="commitSub">Pilih janjimu untuk hari ini!</p>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:11px;flex:1;margin-top:16px" class="a4">
+    <button class="choice" data-g="k" onclick="pick(this)"><span class="ico">💪</span><span class="lbl">Aku akan kerja dengan sepenuh hati</span></button>
+    <button class="choice" data-g="k" onclick="pick(this)"><span class="ico">🎯</span><span class="lbl">Aku akan fokus satu hal dalam satu waktu</span></button>
+    <button class="choice" data-g="k" onclick="pick(this)"><span class="ico">🌱</span><span class="lbl">Aku akan bertumbuh sedikit demi sedikit</span></button>
+    <button class="choice" data-g="k" onclick="pick(this)"><span class="ico">☀️</span><span class="lbl">Aku akan mulai hari ini, bukan besok</span></button>
+  </div>
+  <div style="padding:20px 0 0;display:flex;justify-content:center">
+    <button class="btn-primary" id="s7Btn" disabled onclick="nav(8)">Lanjut →</button>
+  </div>
+</div>
+
+<!-- ════ S8: STREAK ════ -->
+<div class="screen" id="s8" style="background:var(--bg);align-items:center;padding:56px 24px 44px">
+  <div style="animation:float 2.8s ease-in-out infinite">
+    <svg viewBox="0 0 120 160" width="145" height="145" style="overflow:visible">
+      <line x1="60" y1="55" x2="130" y2="55" stroke="#FFBE0B" stroke-width="8" stroke-linecap="round" style="animation:starBlink 2s infinite 0s"/>
+      <line x1="60" y1="55" x2="108" y2="7" stroke="#FFBE0B" stroke-width="8" stroke-linecap="round" style="animation:starBlink 2s infinite .25s"/>
+      <line x1="60" y1="55" x2="60" y2="-15" stroke="#FFBE0B" stroke-width="8" stroke-linecap="round" style="animation:starBlink 2s infinite .5s"/>
+      <line x1="60" y1="55" x2="12" y2="7" stroke="#FFBE0B" stroke-width="8" stroke-linecap="round" style="animation:starBlink 2s infinite .75s"/>
+      <line x1="60" y1="55" x2="-10" y2="55" stroke="#FFBE0B" stroke-width="8" stroke-linecap="round" style="animation:starBlink 2s infinite 1s"/>
+      <ellipse cx="60" cy="90" rx="38" ry="32" fill="#FFD0BC"/>
+      <path d="M24 98 Q22 130 60 132 Q98 130 96 98 L83 90 Q70 100 60 100 Q50 100 37 90 Z" fill="white"/>
+      <path d="M57 100 L60 107 L63 100 L61 115 L60 120 L59 115 Z" fill="#FF6B35"/>
+      <circle cx="60" cy="58" r="34" fill="#FFD0BC"/>
+      <circle cx="42" cy="66" r="8" fill="#FFB8A0" opacity=".5"/>
+      <circle cx="78" cy="66" r="8" fill="#FFB8A0" opacity=".5"/>
+      <ellipse cx="50" cy="55" rx="7" ry="8" fill="white"/>
+      <ellipse cx="70" cy="55" rx="7" ry="8" fill="white"/>
+      <circle cx="51.5" cy="56" r="5" fill="#1A1A2E"/>
+      <circle cx="71.5" cy="56" r="5" fill="#1A1A2E"/>
+      <circle cx="53" cy="54" r="2" fill="white"/>
+      <circle cx="73" cy="54" r="2" fill="white"/>
+      <path d="M50 68 Q60 77 70 68" stroke="#C87050" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M28 50 Q34 26 60 24 Q86 26 92 50 Q85 38 60 36 Q35 38 28 50Z" fill="#3D2B1F"/>
+      <ellipse cx="47" cy="123" rx="13" ry="9" fill="#2C3E50"/>
+      <ellipse cx="73" cy="123" rx="13" ry="9" fill="#2C3E50"/>
+    </svg>
+  </div>
+  <div style="text-align:center;margin:10px 0 20px">
+    <div class="streak-big">1</div>
+    <div class="streak-sub">HARI BERTURUT</div>
+  </div>
+  <div class="week-row a3" style="margin-bottom:16px">
+    <div class="week-day"><span>Sen</span><div class="week-dot on">🔥</div></div>
+    <div class="week-day"><span>Sel</span><div class="week-dot"></div></div>
+    <div class="week-day"><span>Rab</span><div class="week-dot"></div></div>
+    <div class="week-day"><span>Kam</span><div class="week-dot"></div></div>
+    <div class="week-day"><span>Jum</span><div class="week-dot"></div></div>
+    <div class="week-day"><span>Sab</span><div class="week-dot"></div></div>
+    <div class="week-day"><span>Min</span><div class="week-dot"></div></div>
+  </div>
+  <p class="a4" style="font-size:14px;color:var(--gray);text-align:center;line-height:1.6;margin-bottom:32px;font-weight:600">Konsisten setiap hari — itulah<br/>kunci produktivitas sejati 🔑</p>
+  <button class="btn-primary a5" onclick="nav(9)">Lanjut →</button>
+</div>
+
+<!-- ════ S9: GAYA KERJA ════ -->
+<div class="screen" id="s9" style="background:var(--bg);padding:32px 24px 44px">
+  <div class="prog-wrap"><div class="prog-track"><div class="prog-fill" style="width:85%"></div></div></div>
+  <div style="padding:8px 0 0">
+    <p class="a1" style="font-size:13px;color:var(--gray);font-weight:700;margin-bottom:4px">LANGKAH 5 / 6</p>
+    <h2 class="a2" style="font-size:25px;font-weight:900;color:var(--dk);line-height:1.25;font-family:var(--ff-head)">Gimana gaya kerjamu?</h2>
+    <p class="a3" style="font-size:14px;color:var(--gray);margin-top:6px;line-height:1.55">Pilih yang paling terasa seperti kamu — ga ada yang salah 😊</p>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:11px;flex:1;margin-top:20px" class="a4">
+    <button class="choice" data-g="arch" data-arch="hunter" onclick="pick(this)">
+      <span class="ico">🦅</span>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:800;color:var(--dk)">Pemburu Target</div>
+        <div style="font-size:12px;color:var(--gray);font-weight:600;margin-top:3px;line-height:1.4">Suka selesaikan tugas satu per satu — checklist is life ✅</div>
+      </div>
+    </button>
+    <button class="choice" data-g="arch" data-arch="planner" onclick="pick(this)">
+      <span class="ico">🗓️</span>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:800;color:var(--dk)">Si Perencana</div>
+        <div style="font-size:12px;color:var(--gray);font-weight:600;margin-top:3px;line-height:1.4">Harus ada struktur jelas dulu sebelum gas 📋</div>
+      </div>
+    </button>
+    <button class="choice" data-g="arch" data-arch="creative" onclick="pick(this)">
+      <span class="ico">🎨</span>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:800;color:var(--dk)">Si Kreatif</div>
+        <div style="font-size:12px;color:var(--gray);font-weight:600;margin-top:3px;line-height:1.4">Ide datang tiba-tiba, perlu catat cepat sebelum lupa 💡</div>
+      </div>
+    </button>
+    <button class="choice" data-g="arch" data-arch="team" onclick="pick(this)">
+      <span class="ico">🤝</span>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:800;color:var(--dk)">Tim Player</div>
+        <div style="font-size:12px;color:var(--gray);font-weight:600;margin-top:3px;line-height:1.4">Kerja paling nendang kalau ada teman diskusi 💬</div>
+      </div>
+    </button>
+  </div>
+  <div style="padding:20px 0 0;display:flex;justify-content:flex-end">
+    <button class="btn-primary" id="s9Btn" disabled onclick="nav(10)">Lanjut →</button>
+  </div>
+</div>
+
+<!-- ════ S10: FITUR ════ -->
+<div class="screen" id="s10" style="background:var(--bg);padding:36px 24px 44px;overflow-y:auto">
+  <h2 class="a1" style="font-size:28px;font-weight:900;color:var(--c1);line-height:1.2;font-family:var(--ff-head)">Semua tools kerjamu<br/>ada di sini 🚀</h2>
+  <p class="a2" style="font-size:14px;color:var(--gray);margin-top:6px;margin-bottom:20px">4 fitur untuk kerja maksimal setiap hari</p>
+  <div class="feat-grid">
+    <div class="feat-card a2" style="background:var(--c4l)"><span style="font-size:28px">✅</span><p style="font-size:13px;font-weight:800;color:var(--dk);flex:1">Task Harian</p><p style="font-size:11px;color:var(--gray);line-height:1.4">Buat & selesaikan tugasmu dengan prioritas</p><span class="feat-tag" style="color:#805c00">To-Do</span></div>
+    <div class="feat-card a3" style="background:var(--c2)"><span style="font-size:28px">📝</span><p style="font-size:13px;font-weight:800;color:#fff;flex:1">Catatan Cepat</p><p style="font-size:11px;color:rgba(255,255,255,.6);line-height:1.4">Simpan ide & info penting kapan saja</p><span class="feat-tag" style="color:#fff;border-color:rgba(255,255,255,.25)">Notes</span></div>
+    <div class="feat-card a4" style="background:var(--c1p)"><span style="font-size:28px">💬</span><p style="font-size:13px;font-weight:800;color:var(--dk);flex:1">Chat Tim</p><p style="font-size:11px;color:var(--gray);line-height:1.4">Diskusi real-time bareng rekan kerja</p><span class="feat-tag" style="color:var(--c1);border-color:rgba(255,107,53,.25)">Chat</span></div>
+    <div class="feat-card a5" style="background:var(--c3l)"><span style="font-size:28px">📅</span><p style="font-size:13px;font-weight:800;color:var(--dk);flex:1">Kalender Bersama</p><p style="font-size:11px;color:var(--gray);line-height:1.4">Jadwalkan acara & undang timmu</p><span class="feat-tag" style="color:var(--c3);border-color:rgba(46,196,182,.3)">Calendar</span></div>
+  </div>
+  <div style="margin-top:20px;background:#fff;border-radius:18px;padding:16px;border:1.5px solid var(--c4l);display:flex;align-items:center;gap:12px" class="a6">
+    <span style="font-size:28px">⚡</span>
+    <div><p style="font-size:13px;font-weight:800;color:var(--dk)">Sistem XP & Level!</p><p style="font-size:12px;color:var(--gray);margin-top:2px">Selesaikan tugas → dapatkan XP → naik level!</p></div>
+  </div>
+  <div style="padding:20px 0 0;display:flex;justify-content:center">
+    <button class="btn-primary a6" onclick="nav(11)" style="font-size:16px;padding:18px 52px">Mulai Sekarang! 💪</button>
+  </div>
+</div>
+
+<!-- ════ S11: SELESAI ════ -->
+<div class="screen" id="s11" style="background:var(--bg);align-items:center;justify-content:center;padding:40px 24px;position:relative;overflow:hidden;text-align:center">
+  <div class="confetti-layer" id="conf11"></div>
+  <div style="z-index:1;display:flex;flex-direction:column;align-items:center;width:100%">
+    <div class="badge-ring"><div class="badge-inner">⚡</div></div>
+    <h2 class="a2" style="font-size:28px;font-weight:900;color:var(--dk);margin-top:22px;font-family:var(--ff-head)" id="doneTitle">Semuanya siap, Sobat! 🎉</h2>
+    <p class="a3" style="font-size:15px;color:var(--gray);margin-top:8px;line-height:1.65;text-align:center;padding:0 16px">Hari pertamamu dimulai hari ini.<br/>Satu langkah kecil sudah cukup untuk mulai 🌱</p>
+    <div class="a4" style="margin-top:20px;background:#fff;border-radius:20px;padding:18px 22px;width:100%;max-width:340px;box-shadow:var(--shadow)">
+      <div style="font-size:12px;color:var(--gray);font-weight:700;margin-bottom:12px;text-align:center;letter-spacing:.5px">RANGKUMAN PROFILMU</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;color:var(--gray)">Nama</span><span style="font-size:14px;font-weight:800;color:var(--dk)" id="sumName">—</span></div>
+        <div style="height:1px;background:var(--lgray)"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;color:var(--gray)">Tipe Kerja</span><span style="font-size:14px;font-weight:800;color:var(--c1)" id="sumUname">—</span></div>
+        <div style="height:1px;background:var(--lgray)"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;color:var(--gray)">Streak</span><span style="font-size:14px;font-weight:800;color:var(--c1)">🔥 1 hari</span></div>
+        <div style="height:1px;background:var(--lgray)"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;color:var(--gray)">Level Awal</span><span style="font-size:14px;font-weight:800;color:var(--c4)">🌱 Lv.1 Pemula</span></div>
+      </div>
+    </div>
+    <button class="btn-primary a5" style="margin-top:24px;padding:18px 64px;font-size:17px" onclick="startApp()">Masuk ke App ⚡</button>
+  </div>
+</div>
+
+<!-- ════════ MAIN APPLICATION ════════ -->
+<div id="main-app">
+  <div id="tab-area">
+
+    <!-- ── HOME TAB ── -->
+    <div class="tab-pane active" id="pane-home">
+      <div class="home-header">
+        <div class="home-decor-1"></div><div class="home-decor-2"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;position:relative;z-index:2">
+          <div>
+            <div class="h-greet" id="homeGreet">Selamat pagi! 🌅</div>
+            <div class="h-name" id="homeName">Sobat</div>
+          </div>
+          <button onclick="openOverlay('checkinSheet')" style="background:rgba(255,255,255,.2);border:none;border-radius:14px;padding:8px 12px;color:#fff;font-size:11px;font-weight:800;cursor:pointer;position:relative;z-index:2">Mood ✏️</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px;position:relative;z-index:2">
+          <div class="h-streak"><span>🔥</span><span id="homeStreak">1 hari berturut</span></div>
+        </div>
+        <div class="h-xp-row">
+          <div class="h-level-tag" id="xpLevel">Lv.1 Pemula 🌱</div>
+          <div class="h-xp-track"><div class="h-xp-fill" id="xpFill" style="width:25%"></div></div>
+          <div class="h-xp-num" id="xpText">75 XP</div>
+        </div>
+      </div>
+
+      <!-- MOOD REACTIVE CARD -->
+      <div class="mood-card" id="moodCard">
+        <div class="mood-mascot-wrap" id="moodMascotWrap">
+          <svg viewBox="0 0 60 60" width="60" height="60" id="moodMascotSvg">
+            <circle cx="30" cy="30" r="28" fill="#FFD0BC"/>
+            <ellipse cx="22" cy="32" rx="5" ry="6" fill="white"/>
+            <ellipse cx="38" cy="32" rx="5" ry="6" fill="white"/>
+            <circle cx="23" cy="32" r="3.5" fill="#1A1A2E"/>
+            <circle cx="39" cy="32" r="3.5" fill="#1A1A2E"/>
+            <circle cx="24" cy="31" r="1.2" fill="white"/>
+            <circle cx="40" cy="31" r="1.2" fill="white"/>
+            <path d="M21 40 Q30 47 39 40" stroke="#C87050" stroke-width="2" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="mood-content">
+          <div class="mood-tag-lbl" id="moodTag">🔥 SEMANGAT HARI INI!</div>
+          <div class="mood-msg-txt" id="moodMsg">Yuk atur semua harimu sekarang! Kalau ditunda, makin numpuk kerjanya 💪</div>
+          <button class="mood-cta-btn" id="moodCta" onclick="switchTab('tasks')">Mulai Kerja! ⚡</button>
+        </div>
+        <button class="mood-change-btn" onclick="openOverlay('checkinSheet')">Ganti mood</button>
+      </div>
+
+      <!-- DAILY CHALLENGES -->
+      <div class="h-card" style="animation:fadeUp .5s .2s ease both">
+        <div class="chal-header-row">
+          <div class="chal-title-txt">⚡ Tantangan Harian</div>
+          <div class="chal-total-badge" id="chalTotalBadge">+100 XP</div>
+        </div>
+        <div id="challengeList">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <!-- TASK PROGRESS CARD -->
+      <div class="h-card" style="animation:fadeUp .5s .3s ease both">
+        <div class="h-card-label">Tugas Hari Ini</div>
+        <div style="display:flex;align-items:center;gap:16px">
+          <div class="ring-wrap">
+            <svg width="80" height="80" viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r="32" fill="none" stroke="var(--lgray)" stroke-width="8"/>
+              <circle id="ring" cx="40" cy="40" r="32" fill="none" stroke="var(--c1)" stroke-width="8" stroke-linecap="round" stroke-dasharray="201" stroke-dashoffset="201" style="transition:stroke-dashoffset 1s ease"/>
+            </svg>
+            <div class="ring-text"><div class="ring-num" id="ringNum">0</div><div class="ring-sub">DONE</div></div>
+          </div>
+          <div style="flex:1">
+            <div style="font-family:var(--ff-head);font-size:24px;font-weight:700;color:var(--dk)" id="homeTaskStat">0 / 0</div>
+            <div style="font-size:13px;color:var(--gray);margin-top:2px">tugas diselesaikan</div>
+            <button class="quick-add" onclick="openTaskSheet()"><span>＋</span><span>Tambah tugas baru...</span></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROCRASTINATION CARD -->
+      <div class="proc-card" id="procCard"></div>
+
+      <!-- STATS -->
+      <div class="stat-grid" style="animation:fadeUp .5s .4s ease both">
+        <div class="stat-card">
+          <div class="stat-ico">📝</div>
+          <div class="stat-num" id="homeNotes" style="color:var(--c2)">0</div>
+          <div class="stat-lbl">Catatan</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-ico">💬</div>
+          <div class="stat-num" id="homeMsgs" style="color:var(--c3)">5</div>
+          <div class="stat-lbl">Pesan</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-ico">📅</div>
+          <div class="stat-num" id="homeEvts" style="color:var(--c4)">2</div>
+          <div class="stat-lbl">Agenda</div>
+        </div>
+      </div>
+
+      <!-- QUOTE CARD -->
+      <div class="home-quote-card" style="animation:fadeUp .5s .5s ease both">
+        <div class="hqc-decor">💡</div>
+        <div class="hqc-label">MOTIVASI HARI INI</div>
+        <div class="hqc-text" id="homeQuote">"Mulai dari yang kamu bisa, gunakan apa yang kamu punya."</div>
+        <div class="hqc-action">
+          <button class="hqc-btn" onclick="nextQuote()">Quote berikutnya →</button>
+          <button class="hqc-btn" onclick="switchTab('tasks')" style="background:rgba(255,255,255,.1)">Kerja Sekarang! ⚡</button>
+        </div>
+      </div>
+
+      <div style="height:24px"></div>
+    </div>
+
+    <!-- ── TASKS TAB ── -->
+    <div class="tab-pane" id="pane-tasks">
+      <div class="tasks-top">
+        <div class="tasks-date" id="taskDate"></div>
+        <div class="tasks-row">
+          <div class="tasks-title">Tugasku</div>
+          <button class="add-fab" onclick="openTaskSheet()">＋</button>
+        </div>
+      </div>
+      <div class="task-prog-wrap">
+        <div class="task-prog-row">
+          <span class="task-prog-lbl">Progress Hari Ini</span>
+          <span class="task-prog-val" id="progText">0/0</span>
+        </div>
+        <div class="task-track"><div class="task-fill" id="progFill" style="width:0%"></div></div>
+      </div>
+      <!-- Motivasi task strip -->
+      <div id="taskMotiStrip" style="margin:10px 20px 0;border-radius:14px;padding:10px 14px;background:var(--c4l);border:1.5px solid rgba(255,190,11,.3);display:none">
+        <p style="font-size:12px;font-weight:700;color:#805c00;line-height:1.5" id="taskMotiText"></p>
+      </div>
+      <div class="filter-row">
+        <button class="filter-chip on" onclick="filterTask('semua',this)">Semua</button>
+        <button class="filter-chip" onclick="filterTask('pekerjaan',this)">💼 Pekerjaan</button>
+        <button class="filter-chip" onclick="filterTask('pribadi',this)">🏠 Pribadi</button>
+        <button class="filter-chip" onclick="filterTask('meeting',this)">🤝 Meeting</button>
+      </div>
+      <div class="task-list" id="taskList"></div>
+    </div>
+
+    <!-- ── NOTES TAB ── -->
+    <div class="tab-pane" id="pane-notes">
+      <div class="notes-top">
+        <div class="notes-hrow">
+          <div class="notes-title">Catatanku</div>
+          <button class="notes-fab" onclick="openNoteSheet()">＋</button>
+        </div>
+        <div class="notes-search"><span style="font-size:16px">🔍</span><input class="notes-search-inp" type="text" placeholder="Cari catatan..." id="noteSearch" oninput="renderNotes()"/></div>
+      </div>
+      <div class="notes-grid" id="notesGrid"></div>
+    </div>
+
+    <!-- ── CHAT TAB ── -->
+    <div class="tab-pane" id="pane-chat">
+      <div class="chat-hdr">
+        <div class="avatars" id="chatAvatars"></div>
+        <div class="chat-info">
+          <div class="chat-room">#tim-gercep</div>
+          <div class="chat-online" id="onlineCount">3 online</div>
+        </div>
+        <button style="background:none;border:none;font-size:22px;color:var(--gray)" onclick="openTeamSheet()">👥</button>
+      </div>
+      <div class="chat-msgs" id="chatMsgs"></div>
+      <div class="chat-input-bar">
+        <textarea class="chat-inp" id="chatInp" placeholder="Ketik pesan..." rows="1" onkeydown="chatKey(event)" oninput="autoGrow(this)"></textarea>
+        <button class="send-btn" onclick="sendMsg()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── CALENDAR TAB ── -->
+    <div class="tab-pane" id="pane-cal">
+      <div class="cal-hdr">
+        <div class="cal-nav">
+          <button class="cal-arrow" onclick="calPrev()">‹</button>
+          <div class="cal-mth" id="calMth"></div>
+          <button class="cal-arrow" onclick="calNext()">›</button>
+        </div>
+        <button class="cal-add" onclick="openEventSheet()">＋</button>
+      </div>
+      <div class="cal-members" id="calMembers"></div>
+      <div class="cal-dow-row">
+        <div class="cal-dow">Min</div><div class="cal-dow">Sen</div><div class="cal-dow">Sel</div>
+        <div class="cal-dow">Rab</div><div class="cal-dow">Kam</div><div class="cal-dow">Jum</div><div class="cal-dow">Sab</div>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="ev-panel">
+        <div class="ev-panel-hdr">
+          <div class="ev-panel-date" id="evDate">Pilih tanggal</div>
+          <button class="ev-panel-add" onclick="openEventSheet()">＋ Tambah</button>
+        </div>
+        <div class="ev-list" id="evList"></div>
+      </div>
+      <div style="height:100px"></div>
+    </div>
+  </div>
+
+  <!-- TAB BAR -->
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tb-home" onclick="switchTab('home')"><span class="t-ico">🏠</span><span>Home</span></button>
+    <button class="tab-btn" id="tb-tasks" onclick="switchTab('tasks')"><span class="t-ico">✅</span><span>Tugas</span></button>
+    <button class="tab-btn" id="tb-notes" onclick="switchTab('notes')"><span class="t-ico">📝</span><span>Catatan</span></button>
+    <button class="tab-btn" id="tb-chat" onclick="switchTab('chat')"><span class="t-ico">💬</span><span>Chat</span><div class="tab-notif ping" id="chatBadge">5</div></button>
+    <button class="tab-btn" id="tb-cal" onclick="switchTab('cal')"><span class="t-ico">📅</span><span>Kalender</span></button>
+  </div>
+</div>
+
+<!-- ════ OVERLAYS ════ -->
+
+<!-- Task Sheet -->
+<div class="overlay" id="taskSheet">
+  <div class="sheet">
+    <div class="sheet-hdl"></div>
+    <div class="sheet-title">Tambah Tugas ✅</div>
+    <div style="margin-bottom:15px"><label class="sh-lbl">Nama Tugas</label><input class="sh-inp" id="taskNameInp" type="text" placeholder="Apa yang perlu dikerjakan?" autocomplete="off"/></div>
+    <div style="margin-bottom:15px"><label class="sh-lbl">Kategori</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="filter-chip on" data-c="pekerjaan" onclick="selCat(this)">💼 Pekerjaan</button>
+        <button class="filter-chip" data-c="pribadi" onclick="selCat(this)">🏠 Pribadi</button>
+        <button class="filter-chip" data-c="meeting" onclick="selCat(this)">🤝 Meeting</button>
+      </div>
+    </div>
+    <div style="margin-bottom:15px"><label class="sh-lbl">Prioritas</label>
+      <div class="prio-btns">
+        <button class="prio-btn high sel" data-p="high" onclick="selPrio(this)">🔴 Urgent</button>
+        <button class="prio-btn med" data-p="med" onclick="selPrio(this)">🟡 Normal</button>
+        <button class="prio-btn low" data-p="low" onclick="selPrio(this)">🟢 Santai</button>
+      </div>
+    </div>
+    <div style="margin-bottom:22px"><label class="sh-lbl">Waktu (Opsional)</label><input class="sh-inp" id="taskTimeInp" type="time"/></div>
+    <button class="btn-primary" style="width:100%;padding:17px" onclick="addTask()">Tambah Tugas ✅</button>
+  </div>
+</div>
+
+<!-- Note Sheet -->
+<div class="overlay" id="noteSheet">
+  <div class="sheet">
+    <div class="sheet-hdl"></div>
+    <div class="sheet-title">Catatan Baru 📝</div>
+    <div style="margin-bottom:15px"><label class="sh-lbl">Judul</label><input class="sh-inp" id="noteTitleInp" type="text" placeholder="Judul catatan..." autocomplete="off"/></div>
+    <div style="margin-bottom:15px"><label class="sh-lbl">Isi Catatan</label><textarea class="sh-area" id="noteBodyInp" placeholder="Tulis catatanmu di sini..."></textarea></div>
+    <div style="margin-bottom:22px"><label class="sh-lbl">Warna</label>
+      <div class="color-row">
+        <button class="col-btn sel" style="background:#FFF9D0" data-col="yellow" onclick="selNoteCol(this)"></button>
+        <button class="col-btn" style="background:var(--c3l)" data-col="teal" onclick="selNoteCol(this)"></button>
+        <button class="col-btn" style="background:var(--c1p)" data-col="orange" onclick="selNoteCol(this)"></button>
+        <button class="col-btn" style="background:var(--c2)" data-col="navy" onclick="selNoteCol(this)"></button>
+        <button class="col-btn" style="background:#FFE5F0" data-col="pink" onclick="selNoteCol(this)"></button>
+        <button class="col-btn" style="background:#E5F5E0" data-col="green" onclick="selNoteCol(this)"></button>
+      </div>
+    </div>
+    <button class="btn-primary" style="width:100%;padding:17px" onclick="addNote()">Simpan Catatan 📝</button>
+  </div>
+</div>
+
+<!-- Note Detail -->
+<div class="overlay" id="noteDetailOverlay">
+  <div class="note-detail">
+    <div class="sheet-hdl"></div>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
+      <input class="nd-title-inp" id="ndTitle" placeholder="Judul..."/>
+      <button style="background:#FFF0F0;border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:800;color:#FF4444;flex-shrink:0;margin-left:10px" onclick="deleteNote()">Hapus</button>
+    </div>
+    <textarea class="nd-body-inp" id="ndBody" placeholder="Isi catatan..."></textarea>
+    <button class="btn-primary" style="width:100%;padding:17px;margin-top:18px" onclick="saveNote()">Simpan ✓</button>
+  </div>
+</div>
+
+<!-- Event Sheet -->
+<div class="overlay" id="eventSheet">
+  <div class="sheet">
+    <div class="sheet-hdl"></div>
+    <div class="sheet-title">Tambah Agenda 📅</div>
+    <div style="margin-bottom:15px"><label class="sh-lbl">Nama Acara</label><input class="sh-inp" id="evNameInp" type="text" placeholder="Nama agenda..." autocomplete="off"/></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:15px">
+      <div><label class="sh-lbl">Tanggal</label><input class="sh-inp" id="evDateInp" type="date"/></div>
+      <div><label class="sh-lbl">Waktu</label><input class="sh-inp" id="evTimeInp" type="time"/></div>
+    </div>
+    <div style="margin-bottom:15px"><label class="sh-lbl">Warna Agenda</label>
+      <div class="color-row">
+        <button class="col-btn sel" style="background:#FF6B35" data-col="orange" onclick="selEvCol(this)"></button>
+        <button class="col-btn" style="background:var(--c2)" data-col="navy" onclick="selEvCol(this)"></button>
+        <button class="col-btn" style="background:var(--c3)" data-col="teal" onclick="selEvCol(this)"></button>
+        <button class="col-btn" style="background:var(--c4)" data-col="yellow" onclick="selEvCol(this)"></button>
+        <button class="col-btn" style="background:#A855F7" data-col="purple" onclick="selEvCol(this)"></button>
+      </div>
+    </div>
+    <div style="margin-bottom:22px"><label class="sh-lbl">Undang Tim (Opsional)</label><div class="inv-list" id="invList"></div></div>
+    <button class="btn-primary" style="width:100%;padding:17px" onclick="addEvent()">Simpan Agenda 📅</button>
+  </div>
+</div>
+
+<!-- Team Sheet -->
+<div class="overlay" id="teamSheet">
+  <div class="sheet">
+    <div class="sheet-hdl"></div>
+    <div class="sheet-title">Anggota Tim 👥</div>
+    <p style="font-size:14px;color:var(--gray);margin-bottom:16px;font-weight:600">Orang-orang di ruang kerja ini</p>
+    <div id="teamList"></div>
+  </div>
+</div>
+
+<!-- Boss Defeat Sheet -->
+<div class="overlay" id="bossSheet">
+  <div class="sheet" style="background:linear-gradient(155deg,var(--c2) 0%,#0F2035 100%);padding:28px 24px 48px">
+    <div class="confetti-layer" id="bossConf"></div>
+    <div class="sheet-hdl" style="background:rgba(255,255,255,.2)"></div>
+    <div class="boss-badge-wrap"><div class="boss-badge-ring">🏆</div></div>
+    <div class="boss-title">BOSS DIKALAHKAN!</div>
+    <div class="boss-sub">Semua tugas hari ini selesai!<br/>Kamu LUAR BIASA hari ini! 🌟</div>
+    <div class="boss-xp-chip"><span>+100 XP BONUS!</span></div>
+    <div class="boss-stats">
+      <div class="boss-stat"><div class="boss-stat-num" id="bssDone">0</div><div class="boss-stat-lbl">Tugas Selesai</div></div>
+      <div class="boss-stat"><div class="boss-stat-num" id="bssXP">0</div><div class="boss-stat-lbl">XP Didapat</div></div>
+    </div>
+    <button class="btn-primary" style="width:100%;background:var(--c4);color:var(--dk);box-shadow:0 8px 24px rgba(255,190,11,.4)" onclick="closeOverlay('bossSheet')">Mantap sekali! 💪</button>
+  </div>
+</div>
+
+<!-- Daily Mood Check-in Sheet -->
+<div class="overlay" id="checkinSheet">
+  <div class="sheet">
+    <div class="sheet-hdl"></div>
+    <div class="checkin-card">
+      <div class="checkin-tag">MOOD CHECK-IN</div>
+      <div class="checkin-q">Gimana perasaanmu<br/>sekarang?</div>
+      <div class="checkin-opts" id="checkinOpts">
+        <button class="checkin-opt" data-mood="excited" onclick="selectCheckinMood(this)"><span class="copt-ico">🔥</span>Semangat!</button>
+        <button class="checkin-opt" data-mood="neutral" onclick="selectCheckinMood(this)"><span class="copt-ico">😊</span>Biasa aja</button>
+        <button class="checkin-opt" data-mood="tired" onclick="selectCheckinMood(this)"><span class="copt-ico">😴</span>Capek nih</button>
+        <button class="checkin-opt" data-mood="stressed" onclick="selectCheckinMood(this)"><span class="copt-ico">🌀</span>Stres dikit</button>
+      </div>
+    </div>
+    <div id="moodResponseCard" style="margin-bottom:16px;display:none"></div>
+    <button class="btn-primary" style="width:100%;padding:16px" onclick="confirmCheckin()">Simpan & Mulai Kerja! ⚡</button>
+  </div>
+</div>
+
+<!-- Pep Talk Bubble -->
+<div class="pep-bubble" id="pepBubble">
+  <div class="pep-mascot-ico">⚡</div>
+  <div class="pep-msg-txt" id="pepMsg">Semangat! Kamu bisa selesaikan satu tugas lagi!</div>
+  <button class="pep-close" onclick="hidePepTalk()">×</button>
+</div>
+
+</div><!-- #app -->
+<script>
+/* ══════════════════════════════════════════
+   STATE & CONSTANTS
+══════════════════════════════════════════ */
+const ST = {
+  cur:0, name:'', uname:'', tapCount:0, tapGoal:20,
+  tasks:[], notes:[], events:[],
+  taskFilter:'semua', noteCurId:null,
+  noteCol:'yellow', evCol:'orange', taskCat:'pekerjaan', taskPrio:'high',
+  calY:new Date().getFullYear(), calM:new Date().getMonth(), calSel:new Date().getDate(),
+  invited:[],
+  xp:0, lastLevel:1, moodKey:'neutral', arch:'hunter',
+  challenges:[], chatSent:0, bossDefeated:false,
+  quoteIdx:0, pepTimeout:null,
+};
+
+const LEVELS=[
+  {min:0,   max:100,  lv:1, name:'Pemula',      badge:'🌱'},
+  {min:100, max:250,  lv:2, name:'Pemula+',      badge:'⭐'},
+  {min:250, max:500,  lv:3, name:'Siap Tempur',  badge:'💪'},
+  {min:500, max:800,  lv:4, name:'Pejuang',      badge:'⚔️'},
+  {min:800, max:1200, lv:5, name:'Pro Worker',   badge:'🚀'},
+  {min:1200,max:1700, lv:6, name:'Senior Pro',   badge:'💎'},
+  {min:1700,max:99999,lv:7, name:'Legenda',      badge:'🏆'},
+];
+
+const MOOD_DATA = {
+  excited:{
+    emoji:'🔥', tag:'LAGI ON FIRE!',
+    msg:'WOW, energimu lagi MAX! Ini saatnya gas habis-habisan dan selesaikan semua tugasmu! 💪',
+    cta:'Gas Sekarang! 🔥', ctaBg:'var(--c1)',
+    mascotEyes:'⭐', bgColor:'var(--c1p)', tagColor:'var(--c1)',
+    peps:[
+      'Kamu lagi di zona terbaik! Manfaatkan momentum ini sekarang! 🔥',
+      'Semangat kamu hari ini LUAR BIASA! Gas terus, jangan berhenti! ⚡',
+      'Ini waktunya! Selesaikan 1 tugas lagi — kamu pasti bisa! 💪',
+    ]
+  },
+  neutral:{
+    emoji:'😊', tag:'BUTUH DORONGAN?',
+    msg:'Belum mood penuh? Coba mulai SATU tugas kecil dulu — momentum itu menular! 💡',
+    cta:'Mulai Satu Tugas! ⚡', ctaBg:'var(--c4)',
+    mascotEyes:'😊', bgColor:'var(--c4l)', tagColor:'#805c00',
+    peps:[
+      'Gimana kalau kita mulai dari yang paling mudah dulu? Satu langkah sudah cukup! 😊',
+      'Belum mood? That\'s okay! Coba 5 menit dulu — biasanya langsung masuk zona! ⏱️',
+      'Setiap produktivitas dimulai dari satu langkah kecil. Yuk mulai sekarang! 🌱',
+    ]
+  },
+  tired:{
+    emoji:'😴', tag:'CAPEK? ITU WAJAR!',
+    msg:'Capek itu tanda kamu sudah berjuang keras. Tapi satu tugas kecil saja dulu — perasaan lega-nya luar biasa! 🌟',
+    cta:'Coba Satu Saja! 💪', ctaBg:'var(--c2l)',
+    mascotEyes:'😴', bgColor:'#EEF4FF', tagColor:'var(--c2l)',
+    peps:[
+      'Kamu capek? Sangat wajar. Tapi ingat — kamu sudah LUAR BIASA sampai di sini! 💙',
+      'Istirahat itu penting. Tapi sebelum itu, satu tugas kecil dulu yuk... 🌸',
+      'Capek bukan alasan untuk berhenti, tapi alasan untuk lebih cerdas! Pilih tugas yang paling mudah dulu 😌',
+    ]
+  },
+  stressed:{
+    emoji:'🌀', tag:'TARIK NAPAS DULU',
+    msg:'Stres itu tanda kamu peduli. Jangan lihat semua sekaligus — pilih SATU hal dan selesaikan. Sisanya nanti! 🌊',
+    cta:'Fokus 1 Hal Dulu! 🎯', ctaBg:'var(--c3)',
+    mascotEyes:'😤', bgColor:'var(--c3l)', tagColor:'var(--c3)',
+    peps:[
+      'Overwhelming? Ayo pecah jadi kecil-kecil. Pilih SATU tugas dan fokus di situ! 🎯',
+      'Tarik napas... sekarang pilih satu tugas paling kecil dan selesaikan! 🌊',
+      'Stres itu wajar. Yang penting kamu mulai — satu langkah kecil sekarang! 💫',
+    ]
+  }
+};
+
+const QUOTES=[
+  '"Yuk atur harimu sekarang! Semakin cepat dimulai, makin lega rasanya 🌟"',
+  '"Kalau ditunda, tugasnya gak ilang — malah NAMBAH! Ayo hadapi satu per satu 💪"',
+  '"Hari ini adalah hari yang tepat untuk produktif! Jangan biarkan besok lebih berat."',
+  '"Kerjaanmu hari ini = bebanmu yang lebih ringan besok. Investasi terbaik!"',
+  '"5 menit untuk mulai mengalahkan 5 jam menunda. Yuk gas sekarang! ⚡"',
+  '"Produktivitas bukan tentang sibuk, tapi tentang hasil yang nyata."',
+  '"Setiap tugas yang selesai adalah kemenangan kecil yang patut dirayakan! 🎉"',
+  '"Kamu tidak harus sempurna. Kamu hanya perlu memulai."',
+  '"Konsistensi kecil setiap hari mengalahkan usaha besar yang sporadis."',
+  '"Jangan tunggu mood yang tepat. Mulai saja — mood-nya akan menyusul!"',
+];
+
+const TEAM=[
+  {id:'sarah',name:'Sarah',uname:'@sarah_dev',emoji:'😊',color:'#FFD0BC',online:true},
+  {id:'budi', name:'Budi', uname:'@budi_kerja',emoji:'🎯',color:'#C5F5F1',online:true},
+  {id:'citra',name:'Citra',uname:'@citra99',  emoji:'⚡',color:'#FFF3C0',online:false},
+  {id:'rizal',name:'Rizal',uname:'@si_rizal', emoji:'🌟',color:'#E5E0FF',online:true},
+];
+
+const BOT_POOL=[
+  {from:'sarah',texts:['Siap! Lagi ngerjain itu juga 😊','Noted ya, thanks!','Mantap! 🔥','Gas langsung!','Ok, kuupdate nanti ya','Wah bener banget tuh! 💪']},
+  {from:'budi', texts:['👍 Oke siap','Semangat!','Sudah dari tadi hehe','Nanti kutambah di kalender','Produktif banget kamu hari ini!']},
+  {from:'rizal',texts:['🚀 Gas terus!','Siap bos!','Sudah kukerjakan nih','Nice! Ditunggu hasilnya','Produktif banget hari ini!']},
+];
+
+const COL_HEX={orange:'#FF6B35',navy:'#1D3557',teal:'#2EC4B6',yellow:'#FFBE0B',purple:'#A855F7'};
+const MTH_NAMES=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+let chatLog=[];
+
+/* ══════════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════════ */
+function nav(to){
+  if(to===ST.cur) return;
+  const from=document.getElementById('s'+ST.cur);
+  const toEl=document.getElementById('s'+to);
+  from.classList.remove('active'); from.classList.add('exit');
+  toEl.style.transform='translateX(100%)'; toEl.style.opacity='0';
+  toEl.offsetHeight;
+  requestAnimationFrame(()=>{
+    toEl.style.transform=''; toEl.style.opacity='';
+    toEl.classList.add('active'); ST.cur=to;
+    setTimeout(()=>from.classList.remove('exit'),520);
+    setTimeout(()=>onEnter(to),100);
+  });
+}
+
+function onEnter(s){
+  if(s===3) initTap();
+  if(s===4){ spawnConf('conf4'); document.getElementById('s4Name').textContent=ST.name||'Sobat'; }
+  if(s===5) setTimeout(()=>document.getElementById('quoteCard').classList.add('open'),400);
+  if(s===7) { if(ST.name) document.getElementById('commitSub').textContent=`Ayo, ${ST.name}! Pilih janjimu!`; }
+  if(s===9) { /* archetype picker — no JS setup needed, pick() handles it */ }
+  if(s===11){
+    spawnConf('conf11');
+    document.getElementById('doneTitle').textContent=`Siap memulai, ${ST.name||'Sobat'}! 🎉`;
+    document.getElementById('sumName').textContent=ST.name||'—';
+    const archL={hunter:'🦅 Pemburu Target',planner:'🗓️ Si Perencana',creative:'🎨 Si Kreatif',team:'🤝 Tim Player'};
+    document.getElementById('sumUname').textContent=archL[ST.arch]||'🦅 Pemula';
+  }
+}
+
+/* ══════════════════════════════════════════
+   SPLASH
+══════════════════════════════════════════ */
+(function(){
+  const bg=document.getElementById('splashBg');
+  [[300,300,'50%','50%'],[150,150,'10%','20%'],[200,200,'70%','70%'],[100,100,'80%','10%']].forEach(([w,h,t,l])=>{
+    const d=document.createElement('div'); d.className='splash-circle';
+    d.style.cssText=`width:${w}px;height:${h}px;top:${t};left:${l};transform:translate(-50%,-50%)`;
+    bg.appendChild(d);
+  });
+  const bar=document.getElementById('splashBar'); let p=0;
+  const iv=setInterval(()=>{ p+=2+Math.random()*4; if(p>=100){p=100;clearInterval(iv);setTimeout(()=>nav(1),320);} bar.style.width=p+'%'; },55);
+})();
+
+/* ══════════════════════════════════════════
+   ONBOARDING PICK
+══════════════════════════════════════════ */
+function pick(btn){
+  const grp=btn.dataset.g;
+  document.querySelectorAll(`.choice[data-g="${grp}"]`).forEach(b=>{
+    b.classList.remove('on');
+    const c=b.querySelector('.chk'); if(c) c.remove();
+  });
+  btn.classList.add('on');
+  const chk=document.createElement('div'); chk.className='chk'; chk.textContent='✓';
+  btn.appendChild(chk);
+
+  // Capture mood or archetype
+  if(grp==='r' && btn.dataset.mood){
+    ST.moodKey=btn.dataset.mood;
+  }
+  if(grp==='arch' && btn.dataset.arch){
+    ST.arch=btn.dataset.arch;
+  }
+
+  // Enable next button
+  const btns={r:'s6Btn',k:'s7Btn',job:'s2Btn',arch:'s9Btn'};
+  if(btns[grp]){ const b=document.getElementById(btns[grp]); if(b) b.disabled=false; }
+}
+
+/* ══════════════════════════════════════════
+   TAP GAME
+══════════════════════════════════════════ */
+function initTap(){
+  ST.tapCount=0;
+  document.getElementById('tapNum').textContent='0';
+  document.getElementById('tapSub').textContent='Target: '+ST.tapGoal+' tap 🎯';
+  const dots=document.getElementById('tapDots'); dots.innerHTML='';
+  for(let i=0;i<ST.tapGoal;i++){const d=document.createElement('div');d.className='tap-dot';dots.appendChild(d);}
+  const stars=document.getElementById('tapStars'); stars.innerHTML='';
+  for(let i=0;i<18;i++){
+    const s=document.createElement('div'); s.className='tap-star';
+    const sz=1+Math.random()*3;
+    s.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;opacity:${.1+Math.random()*.4};animation:starBlink ${1.5+Math.random()*2}s ${Math.random()*2}s ease-in-out infinite`;
+    stars.appendChild(s);
+  }
+}
+
+function doTap(e){
+  if(ST.tapCount>=ST.tapGoal) return;
+  ST.tapCount++;
+  const btn=document.getElementById('tapBtn');
+  const num=document.getElementById('tapNum');
+  const sub=document.getElementById('tapSub');
+  num.textContent=ST.tapCount;
+  num.style.animation='none'; num.offsetHeight; num.style.animation='countPop .2s ease';
+
+  // Ripple
+  const r=document.createElement('div'); r.className='tap-ripple';
+  const rect=btn.getBoundingClientRect();
+  const touch=e.touches?e.touches[0]:e;
+  r.style.left=(touch.clientX-rect.left-12)+'px';
+  r.style.top=(touch.clientY-rect.top-12)+'px';
+  btn.appendChild(r); setTimeout(()=>r.remove(),560);
+
+  // Dots
+  const dots=document.getElementById('tapDots').children;
+  if(dots[ST.tapCount-1]) dots[ST.tapCount-1].classList.add('lit');
+
+  // Encouragement messages
+  const msgs=['Bagus!','Gas!','Terus!','Keren!','Yes!','Mantap!','WOW!'];
+  if(ST.tapCount<=5||ST.tapCount%5===0){
+    sub.textContent=msgs[Math.floor(Math.random()*msgs.length)]+' '+(ST.tapGoal-ST.tapCount)+' lagi! 🎯';
+  }
+
+  if(ST.tapCount>=ST.tapGoal){
+    sub.textContent='MANTAP! Energi penuh! 🔥🔥🔥';
+    setTimeout(()=>nav(4),700);
+  }
+}
+
+/* ══════════════════════════════════════════
+   USERNAME
+══════════════════════════════════════════ */
+function setupUname(){
+  const base=(ST.name||'sobat').toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
+  const suggs=[base,base+'_gercep',base+'_work',base+'_pro',base+'123'];
+  document.getElementById('unameSugg').innerHTML=suggs.slice(0,4).map(s=>`<button class="uname-chip" onclick="applyUname('${s}')">${s}</button>`).join('');
+  const inp=document.getElementById('unameInp');
+  inp.oninput=function(){
+    const v=this.value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
+    this.value=v;
+    const ok=v.length>=3;
+    document.getElementById('unameSt').textContent=ok?'✓':'';
+    document.getElementById('s9Btn').disabled=!ok;
+    if(ok) ST.uname=v;
+  };
+}
+function applyUname(s){
+  document.getElementById('unameInp').value=s; ST.uname=s;
+  document.getElementById('unameSt').textContent='✓';
+  document.getElementById('s9Btn').disabled=false;
+}
+
+/* ══════════════════════════════════════════
+   CONFETTI
+══════════════════════════════════════════ */
+function spawnConf(id){
+  const el=document.getElementById(id); if(!el) return; el.innerHTML='';
+  const colors=['#FF6B35','#FFBE0B','#2EC4B6','#FF4444','#A855F7','#fff'];
+  for(let i=0;i<50;i++){
+    const c=document.createElement('div');
+    const sz=6+Math.random()*8;
+    c.style.cssText=`position:absolute;width:${sz}px;height:${sz}px;border-radius:${Math.random()>.5?'50%':'3px'};background:${colors[Math.floor(Math.random()*colors.length)]};left:${Math.random()*100}%;top:-20px;animation:confetti ${1.8+Math.random()*1.5}s ${Math.random()*1}s ease forwards`;
+    el.appendChild(c);
+  }
+}
+
+/* ══════════════════════════════════════════
+   START APP
+══════════════════════════════════════════ */
+function startApp(){
+  document.getElementById('s'+ST.cur).classList.remove('active');
+  const app=document.getElementById('main-app');
+  app.style.display='flex'; app.style.animation='appIntro .5s ease';
+
+  // Seed starter data then init
+  seedData();
+  gainXP(50,'Selamat bergabung!');
+  setupChallenges();
+  initChatLog();
+  updateHome();
+  renderTasks();
+  renderNotes();
+  renderCal();
+  renderMoodCard();
+  setTaskDate();
+  schedulePepTalk();
+}
+
+/* ══════════════════════════════════════════
+   SEED STARTER DATA
+══════════════════════════════════════════ */
+function seedData(){
+  const now=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  const fmtD=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const today=fmtD(now), ts=Date.now();
+  const tom=fmtD(new Date(now.getTime()+86400000));
+  const d2=fmtD(new Date(now.getTime()+86400000*3));
+
+  ST.tasks=[
+    {id:1,name:'Standup meeting tim',cat:'meeting',prio:'high',time:'09:00',done:true},
+    {id:2,name:'Review proposal klien baru',cat:'pekerjaan',prio:'high',time:'10:30',done:false},
+    {id:3,name:'Update progress di board tim',cat:'pekerjaan',prio:'med',time:'',done:false},
+    {id:4,name:'Balas 3 email pending',cat:'pekerjaan',prio:'high',time:'13:00',done:false},
+    {id:5,name:'Makan siang 🍜',cat:'pribadi',prio:'low',time:'12:00',done:true},
+  ];
+
+  ST.notes=[
+    {id:1,title:'💡 Ide fitur minggu ini',body:'Dashboard analytics yang lebih intuitif. Tambahkan notifikasi deadline otomatis agar user ga kelewat tugas penting.',col:'yellow',ts:ts-3600000},
+    {id:2,title:'Sprint Planning Notes',body:'• Selesaikan backlog modul laporan\n• Deploy ke staging Rabu\n• QA testing Kamis-Jumat\n• Demo ke klien Senin',col:'teal',ts:ts-86400000},
+    {id:3,title:'Kontak Penting 📞',body:'Klien PT Maju: pak.andi@ptmaju.co.id\nVendor design: 0812-3456-7890\nDev lead: budi@company.com',col:'navy',ts:ts-172800000},
+  ];
+
+  ST.events=[
+    {id:1,name:'Standup Tim',date:today,time:'09:00',col:'orange',hex:'#FF6B35',host:'me',inv:['sarah']},
+    {id:2,name:'Review Sprint',date:today,time:'14:00',col:'navy',hex:'#1D3557',host:'sarah',inv:['budi']},
+    {id:3,name:'Team Lunch 🍜',date:tom,time:'12:00',col:'teal',hex:'#2EC4B6',host:'budi',inv:[]},
+    {id:4,name:'1-on-1 dengan Manajer',date:d2,time:'16:00',col:'yellow',hex:'#FFBE0B',host:'me',inv:[]},
+  ];
+
+  ST.calSel=now.getDate();
+}
+
+/* ══════════════════════════════════════════
+══════════════════════════════════════════ */
+function getLevelInfo(xp){
+  for(let i=LEVELS.length-1;i>=0;i--) if(xp>=LEVELS[i].min) return LEVELS[i];
+  return LEVELS[0];
+}
+
+function gainXP(amount,reason){
+  const prevInfo=getLevelInfo(ST.xp);
+  ST.xp+=amount;
+  const newInfo=getLevelInfo(ST.xp);
+  showXPPopup(amount,reason);
+  updateXPBar();
+  if(newInfo.lv>prevInfo.lv){
+    setTimeout(()=>showLevelUp(newInfo),600);
+    ST.lastLevel=newInfo.lv;
+  }
+}
+
+function showXPPopup(amount,reason){
+  const p=document.createElement('div');
+  p.className='xp-popup';
+  p.innerHTML=`<div class="xp-amt">+${amount} XP</div><div class="xp-rsn">${reason}</div>`;
+  document.getElementById('app').appendChild(p);
+  setTimeout(()=>p.classList.add('show'),30);
+  setTimeout(()=>{ p.classList.remove('show'); setTimeout(()=>p.remove(),400); },2200);
+}
+
+function updateXPBar(){
+  const info=getLevelInfo(ST.xp);
+  const next=LEVELS.find(l=>l.lv===info.lv+1);
+  const pct=next?Math.min(100,((ST.xp-info.min)/(next.min-info.min))*100):100;
+  const fill=document.getElementById('xpFill');
+  const text=document.getElementById('xpText');
+  const level=document.getElementById('xpLevel');
+  if(fill) fill.style.width=pct+'%';
+  if(text) text.textContent=next?`${next.min-ST.xp} XP lagi`:'MAX! 🏆';
+  if(level) level.textContent=`Lv.${info.lv} ${info.name} ${info.badge}`;
+}
+
+function showLevelUp(info){
+  toast(`🎉 LEVEL UP! Kamu sekarang ${info.badge} ${info.name}! Lv.${info.lv}`);
+}
+
+/* ══════════════════════════════════════════
+   DAILY CHALLENGES
+══════════════════════════════════════════ */
+function setupChallenges(){
+  const doneSeed=ST.tasks.filter(t=>t.done).length;
+  ST.challenges=[
+    {id:'tasks3',type:'tasks',goal:3+doneSeed,label:'Selesaikan 3 tugas hari ini',xp:50,emoji:'✅',done:false},
+    {id:'note1',type:'notes',goal:ST.notes.length+1,label:'Tulis 1 catatan baru',xp:30,emoji:'📝',done:false},
+    {id:'chat1',type:'chat',goal:1,label:'Sapa rekan tim di chat',xp:20,emoji:'💬',done:false},
+  ];
+  renderChallenges();
+}
+
+function getChallengeProgress(c){
+  if(c.type==='tasks') return ST.tasks.filter(t=>t.done).length;
+  if(c.type==='notes') return ST.notes.length;
+  if(c.type==='chat')  return ST.chatSent;
+  return 0;
+}
+
+function renderChallenges(){
+  const el=document.getElementById('challengeList'); if(!el) return;
+  const total=ST.challenges.reduce((a,c)=>a+c.xp,0);
+  const earned=ST.challenges.filter(c=>c.done).reduce((a,c)=>a+c.xp,0);
+  const badge=document.getElementById('chalTotalBadge');
+  if(badge) badge.textContent=`${earned}/${total} XP`;
+
+  el.innerHTML=ST.challenges.map(c=>{
+    const prog=getChallengeProgress(c);
+    const pct=Math.min(100,(prog/c.goal)*100);
+    return`<div class="chal-item${c.done?' done':''}">
+      <div class="chal-ico">${c.done?'✅':c.emoji}</div>
+      <div class="chal-body">
+        <div class="chal-label">${c.label}</div>
+        <div class="chal-prog-wrap"><div class="chal-prog-fill" style="width:${pct}%"></div></div>
+        <div class="chal-sub">${prog}/${c.goal} ${c.done?'— Selesai! 🎉':''}</div>
+      </div>
+      <div class="chal-xp-badge${c.done?' earned':''}">+${c.xp} XP</div>
+    </div>`;
+  }).join('');
+}
+
+function checkChallenge(type){
+  ST.challenges.forEach(c=>{
+    if(c.type===type&&!c.done&&getChallengeProgress(c)>=c.goal){
+      c.done=true;
+      gainXP(c.xp,'Tantangan selesai!');
+      toast(`🏆 Tantangan selesai! ${c.emoji} +${c.xp} XP!`);
+      renderChallenges();
+      if(ST.challenges.every(ch=>ch.done)) setTimeout(showAllChallengesDone,800);
+    }
+  });
+}
+
+function showAllChallengesDone(){
+  toast('🎊 SEMUA TANTANGAN HARIAN SELESAI! Luar biasa!');
+}
+
+/* ══════════════════════════════════════════
+   MOOD CARD
+══════════════════════════════════════════ */
+function renderMoodCard(){
+  const cfg=MOOD_DATA[ST.moodKey]||MOOD_DATA.neutral;
+  const card=document.getElementById('moodCard'); if(!card) return;
+  card.style.background=cfg.bgColor;
+  const tag=document.getElementById('moodTag');
+  const msg=document.getElementById('moodMsg');
+  const cta=document.getElementById('moodCta');
+  if(tag){ tag.textContent=cfg.emoji+' '+cfg.tag; tag.style.color=cfg.tagColor; }
+  if(msg) msg.textContent=cfg.msg;
+  if(cta){ cta.textContent=cfg.cta; cta.style.background=cfg.ctaBg; }
+  // Update mascot face
+  renderMascotFace(cfg.mascotEyes);
+}
+
+function renderMascotFace(mood){
+  const svg=document.getElementById('moodMascotSvg'); if(!svg) return;
+  const faces={
+    '⭐':'<path d="M19 29 Q23 24 27 29" stroke="#1A1A2E" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M33 29 Q37 24 41 29" stroke="#1A1A2E" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M21 40 Q30 49 39 40" stroke="#C87050" stroke-width="2.5" fill="none" stroke-linecap="round"/>',
+    '😊':'<circle cx="23" cy="32" r="4" fill="#1A1A2E"/><circle cx="37" cy="32" r="4" fill="#1A1A2E"/><circle cx="25" cy="30" r="1.5" fill="white"/><circle cx="39" cy="30" r="1.5" fill="white"/><path d="M21 40 Q30 47 39 40" stroke="#C87050" stroke-width="2" fill="none" stroke-linecap="round"/>',
+    '😴':'<path d="M19 31 Q23 34 27 31" stroke="#1A1A2E" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M33 31 Q37 34 41 31" stroke="#1A1A2E" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M24 40 Q30 43 36 40" stroke="#C87050" stroke-width="2" fill="none" stroke-linecap="round"/><text x="42" y="22" font-size="10">💤</text>',
+    '😤':'<path d="M19 28 Q23 32 27 28" stroke="#1A1A2E" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M33 28 Q37 32 41 28" stroke="#1A1A2E" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M24 42 Q30 38 36 42" stroke="#C87050" stroke-width="2" fill="none" stroke-linecap="round"/>',
+  };
+  svg.innerHTML=`<circle cx="30" cy="30" r="28" fill="#FFD0BC"/>
+    <ellipse cx="21" cy="32" rx="5" ry="6" fill="white"/>
+    <ellipse cx="39" cy="32" rx="5" ry="6" fill="white"/>
+    ${faces[mood]||faces['😊']}
+    <circle cx="18" cy="28" r="5" fill="#FFB8A0" opacity=".4"/>
+    <circle cx="42" cy="28" r="5" fill="#FFB8A0" opacity=".4"/>`;
+}
+
+/* ══════════════════════════════════════════
+   MOOD CHECK-IN
+══════════════════════════════════════════ */
+function selectCheckinMood(btn){
+  document.querySelectorAll('.checkin-opt').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  const mood=btn.dataset.mood;
+  const cfg=MOOD_DATA[mood];
+  const resp=document.getElementById('moodResponseCard');
+  resp.style.display='block';
+  resp.innerHTML=`<div style="background:${cfg.bgColor};border-radius:16px;padding:14px 16px;border:1.5px solid rgba(0,0,0,.06)">
+    <p style="font-size:11px;font-weight:900;color:${cfg.tagColor};letter-spacing:.5px;margin-bottom:6px">${cfg.emoji} ${cfg.tag}</p>
+    <p style="font-size:13px;font-weight:700;color:var(--dk);line-height:1.5">${cfg.msg}</p>
+  </div>`;
+  resp.style.animation='fadeUp .3s ease';
+  ST.moodKey=mood;
+}
+
+function confirmCheckin(){
+  closeOverlay('checkinSheet');
+  renderMoodCard();
+  updateTaskMotiStrip();
+  toast('Mood disimpan! '+MOOD_DATA[ST.moodKey].emoji);
+}
+
+/* ══════════════════════════════════════════
+   PROCRASTINATION DETECTOR
+══════════════════════════════════════════ */
+function checkProcrastination(){
+  const pending=ST.tasks.filter(t=>!t.done).length;
+  const card=document.getElementById('procCard'); if(!card) return;
+
+  if(ST.tasks.length===0){
+    card.className='proc-card info visible';
+    card.innerHTML=`<div class="proc-ico">📋</div>
+      <div class="proc-body"><strong>Mau rencanakan hari ini?</strong><p>Tambah satu tugas kecil dulu — sisanya nanti.</p></div>
+      <button class="proc-btn" onclick="openTaskSheet()">Mulai ✏️</button>`;
+  } else if(pending>=5){
+    card.className='proc-card urgent visible';
+    card.innerHTML=`<div class="proc-ico">🎯</div>
+      <div class="proc-body"><strong>${pending} tugas belum selesai</strong><p>Pilih satu yang paling penting dulu — jangan lihat semuanya sekaligus.</p></div>
+      <button class="proc-btn" onclick="switchTab('tasks')">Pilih Satu 💪</button>`;
+  } else if(pending>=3){
+    card.className='proc-card warn visible';
+    card.innerHTML=`<div class="proc-ico">⚡</div>
+      <div class="proc-body"><strong>${pending} tugas masih berjalan</strong><p>Masih ada waktu — mana yang mau diselesaikan dulu?</p></div>
+      <button class="proc-btn" onclick="switchTab('tasks')">Lihat Tugas 🎯</button>`;
+  } else {
+    card.className='proc-card'; card.innerHTML='';
+  }
+}
+
+/* ══════════════════════════════════════════
+   BOSS DEFEAT
+══════════════════════════════════════════ */
+function checkBossDefeat(){
+  if(ST.tasks.length>0&&ST.tasks.every(t=>t.done)&&!ST.bossDefeated){
+    ST.bossDefeated=true;
+    gainXP(100,'Semua tugas selesai!');
+    const done=ST.tasks.length;
+    document.getElementById('bssDone').textContent=done;
+    document.getElementById('bssXP').textContent=done*20+100;
+    spawnConf('bossConf');
+    setTimeout(()=>openOverlay('bossSheet'),900);
+  }
+  if(ST.tasks.some(t=>!t.done)) ST.bossDefeated=false;
+}
+
+/* ══════════════════════════════════════════
+   PEP TALK
+══════════════════════════════════════════ */
+function schedulePepTalk(){
+  if(ST.pepTimeout) clearTimeout(ST.pepTimeout);
+  ST.pepTimeout=setTimeout(showPepTalk, 90000); // 90s after launch
+}
+
+function showPepTalk(){
+  const cfg=MOOD_DATA[ST.moodKey]||MOOD_DATA.neutral;
+  const msg=cfg.peps[Math.floor(Math.random()*cfg.peps.length)];
+  document.getElementById('pepMsg').textContent=msg;
+  document.getElementById('pepBubble').classList.add('show');
+  setTimeout(hidePepTalk, 8000);
+  // Schedule next
+  ST.pepTimeout=setTimeout(showPepTalk, 180000);
+}
+
+function hidePepTalk(){
+  document.getElementById('pepBubble').classList.remove('show');
+}
+
+/* ══════════════════════════════════════════
+   TASK MOTIVATION STRIP
+══════════════════════════════════════════ */
+function updateTaskMotiStrip(){
+  const strip=document.getElementById('taskMotiStrip');
+  const txt=document.getElementById('taskMotiText');
+  if(!strip||!txt) return;
+  const motiLines={
+    excited:['Kamu lagi ON FIRE! Selesaikan semua tugas hari ini! 🔥','Semangat max! Jangan biarkan satu tugas pun tersisa! ⚡'],
+    neutral:['Mulai dari yang paling mudah dulu — momentum itu menular! 💡','Yuk, satu langkah kecil sekarang. Besok kamu akan berterima kasih pada dirimu! 😊'],
+    tired:['Capek itu wajar. Pilih 1 tugas yang paling kecil dulu yuk 💙','Kamu sudah sampai sejauh ini. Satu langkah lagi — pasti bisa! 🌸'],
+    stressed:['Jangan lihat semua sekaligus. PILIH SATU dan fokus di situ! 🎯','Breathe in... breathe out... sekarang pilih tugas pertama dan mulai! 🌊'],
+  };
+  const lines=motiLines[ST.moodKey]||motiLines.neutral;
+  txt.textContent=lines[Math.floor(Math.random()*lines.length)];
+  strip.style.display='block';
+}
+
+/* ══════════════════════════════════════════
+   HOME UPDATE
+══════════════════════════════════════════ */
+function updateHome(){
+  const now=new Date();
+  const h=now.getHours();
+  const greetings=[
+    [0,5,'Masih malam nih 🌙'],
+    [5,10,'Selamat pagi! ☀️'],
+    [10,14,'Selamat siang! 🌤️'],
+    [14,18,'Selamat sore! 🌇'],
+    [18,21,'Selamat malam! 🌆'],
+    [21,24,'Udah malam nih 🌙'],
+  ];
+  const greet=greetings.find(([a,b])=>h>=a&&h<b)||greetings[4];
+  document.getElementById('homeGreet').textContent=greet[2];
+  document.getElementById('homeName').textContent=ST.name||'Sobat';
+  document.getElementById('homeStreak').textContent='1 hari berturut';
+
+  const done=ST.tasks.filter(t=>t.done).length;
+  const total=ST.tasks.length;
+  document.getElementById('ringNum').textContent=done;
+  document.getElementById('homeTaskStat').textContent=`${done} / ${total}`;
+  const pct=total?done/total:0;
+  document.getElementById('ring').style.strokeDashoffset=201-(201*pct);
+  document.getElementById('homeNotes').textContent=ST.notes.length;
+  document.getElementById('homeMsgs').textContent=chatLog.length;
+  document.getElementById('homeEvts').textContent=ST.events.length+2;
+  document.getElementById('homeQuote').textContent=QUOTES[ST.quoteIdx];
+  updateXPBar();
+  renderChallenges();
+  checkProcrastination();
+}
+
+function nextQuote(){
+  ST.quoteIdx=(ST.quoteIdx+1)%QUOTES.length;
+  const el=document.getElementById('homeQuote');
+  el.style.opacity='0'; el.style.transform='translateY(6px)';
+  setTimeout(()=>{ el.textContent=QUOTES[ST.quoteIdx]; el.style.transition='all .35s ease'; el.style.opacity='1'; el.style.transform='translateY(0)'; },200);
+}
+
+/* ══════════════════════════════════════════
+   TABS
+══════════════════════════════════════════ */
+function switchTab(id){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pane-'+id).classList.add('active');
+  document.getElementById('tb-'+id).classList.add('active');
+  if(id==='home'){ updateHome(); renderMoodCard(); }
+  if(id==='tasks'){ renderTasks(); updateTaskMotiStrip(); }
+  if(id==='notes') renderNotes();
+  if(id==='chat'){
+    renderChat();
+    const b=document.getElementById('chatBadge'); if(b) b.style.display='none';
+  }
+  if(id==='cal') renderCal();
+}
+
+/* ══════════════════════════════════════════
+   TASKS
+══════════════════════════════════════════ */
+function setTaskDate(){
+  const d=new Date();
+  document.getElementById('taskDate').textContent=d.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long'});
+}
+
+function openTaskSheet(){
+  document.getElementById('taskNameInp').value='';
+  document.getElementById('taskTimeInp').value='';
+  ST.taskCat='pekerjaan'; ST.taskPrio='high';
+  document.querySelectorAll('#taskSheet .filter-chip').forEach(b=>b.classList.toggle('on',b.dataset.c==='pekerjaan'));
+  document.querySelectorAll('.prio-btn').forEach(b=>b.classList.toggle('sel',b.dataset.p==='high'));
+  openOverlay('taskSheet');
+  setTimeout(()=>document.getElementById('taskNameInp').focus(),380);
+}
+
+function selCat(btn){
+  document.querySelectorAll('#taskSheet .filter-chip').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on'); ST.taskCat=btn.dataset.c;
+}
+
+function selPrio(btn){
+  document.querySelectorAll('.prio-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel'); ST.taskPrio=btn.dataset.p;
+}
+
+function addTask(){
+  const name=document.getElementById('taskNameInp').value.trim();
+  if(!name) return;
+  ST.tasks.unshift({
+    id:Date.now(),name,cat:ST.taskCat,prio:ST.taskPrio,
+    time:document.getElementById('taskTimeInp').value||'',done:false
+  });
+  closeOverlay('taskSheet');
+  renderTasks(); updateHome();
+  gainXP(5,'Tugas ditambahkan!');
+  checkChallenge('tasks');
+  ST.bossDefeated=false;
+  toast('Tugas ditambahkan! ✅ +5 XP');
+}
+
+function filterTask(f,btn){
+  ST.taskFilter=f;
+  document.querySelectorAll('.filter-chip').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderTasks();
+}
+
+function renderTasks(){
+  const list=document.getElementById('taskList'); if(!list) return;
+  let tasks=ST.tasks;
+  if(ST.taskFilter!=='semua') tasks=tasks.filter(t=>t.cat===ST.taskFilter);
+  const done=ST.tasks.filter(t=>t.done).length;
+  const total=ST.tasks.length;
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById('progText').textContent=`${done}/${total}`;
+  document.getElementById('progFill').style.width=pct+'%';
+
+  if(!tasks.length){
+    const moodEmoji=MOOD_DATA[ST.moodKey]?.emoji||'😊';
+    list.innerHTML=`<div class="task-empty">
+      <div class="task-empty-ico">${moodEmoji}</div>
+      <div class="task-empty-title">Belum ada tugas nih</div>
+      <div class="task-empty-sub">Tambah satu dulu — mulai dari yang kecil juga oke 👍</div>
+      <button class="btn-primary" style="margin-top:16px;padding:14px 32px" onclick="openTaskSheet()">＋ Tambah Tugas</button>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML=tasks.map((t,i)=>`
+    <div class="task-item${t.done?' done':''}" id="ti-${t.id}" style="animation-delay:${i*0.05}s">
+      <div class="t-check${t.done?' on':''}" onclick="toggleTask(${t.id},this)"></div>
+      <div class="t-content">
+        <div class="t-name">${t.name}</div>
+        <div class="t-meta">
+          <span class="t-cat">${t.cat==='pekerjaan'?'💼':t.cat==='pribadi'?'🏠':'🤝'} ${t.cat}</span>
+          <span class="t-prio ${t.prio}">${t.prio==='high'?'🔴 Urgent':t.prio==='med'?'🟡 Normal':'🟢 Santai'}</span>
+          ${t.time?`<span class="t-time">⏰ ${t.time}</span>`:''}
+        </div>
+      </div>
+      <button class="t-delete" onclick="deleteTask(${t.id})">🗑</button>
+    </div>`).join('');
+}
+
+function toggleTask(id,el){
+  const task=ST.tasks.find(t=>t.id===id); if(!task) return;
+  task.done=!task.done;
+  el.classList.toggle('on',task.done);
+  const item=document.getElementById('ti-'+id);
+  if(item) item.classList.toggle('done',task.done);
+
+  if(task.done){
+    gainXP(20,'Tugas selesai! ✅');
+    // XP float on task item
+    if(item){
+      const xf=document.createElement('div'); xf.className='xp-float'; xf.textContent='+20 XP';
+      item.appendChild(xf); setTimeout(()=>xf.remove(),1800);
+    }
+    checkChallenge('tasks');
+    checkBossDefeat();
+    // Random encouragement
+    const encouragements=[
+      'Satu selesai! 🎉','Mantap, terus ya! 💪',
+      'Keren banget! ⚡','Progres nyata! 🌟','Jalan terus! 🔥'
+    ];
+    setTimeout(()=>toast(encouragements[Math.floor(Math.random()*encouragements.length)]),300);
+  }
+  updateHome(); renderTasks();
+}
+
+function deleteTask(id){
+  ST.tasks=ST.tasks.filter(t=>t.id!==id);
+  renderTasks(); updateHome();
+  ST.bossDefeated=false;
+}
+
+/* ══════════════════════════════════════════
+   NOTES
+══════════════════════════════════════════ */
+function openNoteSheet(){
+  document.getElementById('noteTitleInp').value='';
+  document.getElementById('noteBodyInp').value='';
+  ST.noteCol='yellow';
+  document.querySelectorAll('#noteSheet .col-btn').forEach(b=>b.classList.toggle('sel',b.dataset.col==='yellow'));
+  openOverlay('noteSheet');
+  setTimeout(()=>document.getElementById('noteTitleInp').focus(),380);
+}
+
+function selNoteCol(btn){
+  document.querySelectorAll('#noteSheet .col-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel'); ST.noteCol=btn.dataset.col;
+}
+
+function addNote(){
+  const t=document.getElementById('noteTitleInp').value.trim();
+  const b=document.getElementById('noteBodyInp').value.trim();
+  if(!t&&!b) return;
+  ST.notes.unshift({id:Date.now(),title:t||'Catatan',body:b,col:ST.noteCol,ts:Date.now()});
+  closeOverlay('noteSheet');
+  renderNotes(); updateHome();
+  gainXP(10,'Catatan baru!');
+  checkChallenge('notes');
+  toast('Catatan disimpan! 📝 +10 XP');
+}
+
+function renderNotes(){
+  const grid=document.getElementById('notesGrid'); if(!grid) return;
+  const q=(document.getElementById('noteSearch')?.value||'').toLowerCase();
+  const notes=ST.notes.filter(n=>!q||n.title.toLowerCase().includes(q)||n.body.toLowerCase().includes(q));
+  if(!notes.length){
+    grid.innerHTML=`<div class="notes-empty"><div class="notes-empty-ico">📝</div><p style="font-size:15px;font-weight:800;color:var(--dk)">Belum ada catatan</p><p style="font-size:13px;color:var(--gray);margin-top:4px;font-weight:600">Simpan idemu sekarang!</p></div>`;
+    return;
+  }
+  const d=new Date();
+  grid.innerHTML=notes.map((n,i)=>`
+    <div class="note-card clr-${n.col}" style="animation-delay:${i*0.05}s" onclick="openNote(${n.id})">
+      <div class="note-title">${n.title}</div>
+      <div class="note-body">${n.body.slice(0,80)}${n.body.length>80?'…':''}</div>
+      <div class="note-time">${timeSince(n.ts)}</div>
+    </div>`).join('');
+}
+
+function timeSince(ts){
+  const s=Math.floor((Date.now()-ts)/1000);
+  if(s<60) return 'Baru saja';
+  if(s<3600) return Math.floor(s/60)+' mnt lalu';
+  if(s<86400) return Math.floor(s/3600)+' jam lalu';
+  return Math.floor(s/86400)+' hari lalu';
+}
+
+function openNote(id){
+  const n=ST.notes.find(x=>x.id===id); if(!n) return;
+  ST.noteCurId=id;
+  document.getElementById('ndTitle').value=n.title;
+  document.getElementById('ndBody').value=n.body;
+  openOverlay('noteDetailOverlay');
+}
+
+function saveNote(){
+  const n=ST.notes.find(x=>x.id===ST.noteCurId); if(!n) return;
+  n.title=document.getElementById('ndTitle').value;
+  n.body=document.getElementById('ndBody').value;
+  n.ts=Date.now();
+  closeOverlay('noteDetailOverlay');
+  renderNotes(); updateHome();
+  toast('Catatan disimpan! ✓');
+}
+
+function deleteNote(){
+  ST.notes=ST.notes.filter(n=>n.id!==ST.noteCurId);
+  closeOverlay('noteDetailOverlay');
+  renderNotes(); updateHome();
+  toast('Catatan dihapus 🗑');
+}
+
+/* ══════════════════════════════════════════
+   CHAT
+══════════════════════════════════════════ */
+function initChatLog(){
+  const now=new Date();
+  const t=`${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+  chatLog=[
+    {from:'sarah',text:`Halo ${ST.name||'teman baru'}! Senang banget ada kamu di sini! 🎉`,time:'08:00'},
+    {from:'budi',text:'Halo! Siap kerja bareng hari ini? 💪',time:'08:02'},
+    {from:'rizal',text:'Gas! Hari ini kita produktif bareng 🚀',time:'08:05'},
+    {from:'sarah',text:'Jangan lupa update progress tugasmu ya!',time:'08:10'},
+    {from:'budi',text:`${ST.name||'Hei'}, kalau ada yang perlu didiskusiin, langsung gas aja ya! 💬`,time:t},
+  ];
+  renderChat();
+  const avatars=document.getElementById('chatAvatars');
+  if(avatars) avatars.innerHTML=TEAM.map(m=>`<div class="av-circle" style="background:${m.color}">${m.emoji}</div>`).join('');
+}
+
+function renderChat(){
+  const msgs=document.getElementById('chatMsgs'); if(!msgs) return;
+  msgs.innerHTML=chatLog.map(m=>{
+    const me=m.from==='me';
+    const member=TEAM.find(t=>t.id===m.from);
+    const name=me?(ST.name||'Kamu'):member?.name||m.from;
+    return`<div class="msg-group ${me?'me':'them'}">
+      ${!me?`<div class="msg-sender">${member?.emoji||'👤'} ${name}</div>`:''}
+      <div class="msg-bubble">${m.text}</div>
+      <div class="msg-time">${m.time}</div>
+    </div>`;
+  }).join('');
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+function sendMsg(){
+  const inp=document.getElementById('chatInp');
+  const text=inp.value.trim(); if(!text) return;
+  const now=new Date();
+  const t=`${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+  chatLog.push({from:'me',text,time:t});
+  inp.value=''; inp.style.height='';
+  ST.chatSent++;
+  renderChat();
+  gainXP(5,'Pesan terkirim!');
+  checkChallenge('chat');
+  updateHome();
+  // Bot reply
+  setTimeout(()=>{
+    const pool=BOT_POOL[Math.floor(Math.random()*BOT_POOL.length)];
+    const reply=pool.texts[Math.floor(Math.random()*pool.texts.length)];
+    chatLog.push({from:pool.from,text:reply,time:t});
+    renderChat(); updateHome();
+    if(!document.getElementById('pane-chat').classList.contains('active')) showChatBadge();
+  },1200+Math.random()*1200);
+}
+
+function chatKey(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();} }
+function autoGrow(el){ el.style.height=''; el.style.height=Math.min(el.scrollHeight,100)+'px'; }
+
+function showChatBadge(){
+  const b=document.getElementById('chatBadge'); if(b){ b.style.display='flex'; b.classList.add('ping'); }
+}
+
+/* ══════════════════════════════════════════
+   CALENDAR
+══════════════════════════════════════════ */
+function renderCal(){
+  const y=ST.calY,m=ST.calM;
+  document.getElementById('calMth').textContent=`${MTH_NAMES[m]} ${y}`;
+  const first=new Date(y,m,1).getDay();
+  const last=new Date(y,m+1,0).getDate();
+  const prevLast=new Date(y,m,0).getDate();
+  const today=new Date();
+  const cells=[];
+  for(let i=first-1;i>=0;i--) cells.push({d:prevLast-i,other:true});
+  for(let d=1;d<=last;d++) cells.push({d,other:false});
+  while(cells.length<42) cells.push({d:cells.length-last-first+2,other:true});
+
+  const evByDate={};
+  ST.events.forEach(e=>{ evByDate[e.date]=(evByDate[e.date]||[]); evByDate[e.date].push(e); });
+  // Sample events
+  const sampleDate=`${y}-${String(m+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  if(!evByDate[sampleDate]) evByDate[sampleDate]=[{hex:'#FF6B35'},{hex:'#2EC4B6'}];
+
+  document.getElementById('calGrid').innerHTML=cells.map(c=>{
+    const isToday=!c.other&&c.d===today.getDate()&&m===today.getMonth()&&y===today.getFullYear();
+    const isSel=!c.other&&c.d===ST.calSel;
+    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(c.d).padStart(2,'0')}`;
+    const evs=evByDate[ds]||[];
+    const dots=evs.slice(0,3).map(e=>`<div class="cal-dot" style="background:${isSel?'#fff':e.hex}"></div>`).join('');
+    return`<div class="cal-cell${c.other?' other':''}${isToday?' today':''}${isSel?' sel':''}" onclick="selDay(${c.d},${c.other})">
+      <div class="cal-dn">${c.d}</div>
+      ${evs.length?`<div class="cal-dots">${dots}</div>`:''}
+    </div>`;
+  }).join('');
+
+  const mem=document.getElementById('calMembers');
+  if(mem) mem.innerHTML=`<div class="mem-chip on" onclick="filterMem(this,'all')"><div class="mem-pip" style="background:var(--c1)"></div>Semua</div>`+
+    TEAM.map(m=>`<div class="mem-chip" onclick="filterMem(this,'${m.id}')"><div class="mem-pip" style="background:${m.color}"></div>${m.name}</div>`).join('');
+  renderEvList();
+}
+
+function selDay(d,other){ if(other)return; ST.calSel=d; renderCal(); }
+function calPrev(){ if(ST.calM===0){ST.calM=11;ST.calY--;}else ST.calM--; renderCal(); }
+function calNext(){ if(ST.calM===11){ST.calM=0;ST.calY++;}else ST.calM++; renderCal(); }
+function filterMem(btn){ document.querySelectorAll('.mem-chip').forEach(b=>b.classList.remove('on')); btn.classList.add('on'); }
+
+function renderEvList(){
+  const today=new Date();
+  const ds=`${ST.calY}-${String(ST.calM+1).padStart(2,'0')}-${String(ST.calSel||today.getDate()).padStart(2,'0')}`;
+  document.getElementById('evDate').textContent=`${ST.calSel||today.getDate()} ${MTH_NAMES[ST.calM]} ${ST.calY}`;
+  const dayEvs=ST.events.filter(e=>e.date===ds);
+  const el=document.getElementById('evList');
+  if(!dayEvs.length){
+    // Show sample events for today
+    if(ds===`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`){
+      el.innerHTML=`
+        <div class="ev-item"><div class="ev-dot-lg" style="background:#FF6B35"></div><div class="ev-info"><div class="ev-name">Standup Tim</div><div class="ev-time">⏰ 09:00 · 4 peserta</div></div><div class="ev-host-av" style="background:#FFD0BC">😊</div></div>
+        <div class="ev-item"><div class="ev-dot-lg" style="background:#2EC4B6"></div><div class="ev-info"><div class="ev-name">Review Sprint</div><div class="ev-time">⏰ 14:00 · 3 peserta</div></div><div class="ev-host-av" style="background:#C5F5F1">🎯</div></div>`;
+      return;
+    }
+    el.innerHTML=`<div class="ev-empty">Tidak ada agenda 📭 — <button onclick="openEventSheet()" style="background:none;border:none;color:var(--c1);font-weight:700;cursor:pointer">Tambah?</button></div>`;
+    return;
+  }
+  el.innerHTML=dayEvs.map(e=>{
+    const mem=TEAM.find(t=>t.id===e.host);
+    const inv=e.inv&&e.inv.length?` · ${e.inv.length+1} peserta`:'';
+    return`<div class="ev-item">
+      <div class="ev-dot-lg" style="background:${e.hex}"></div>
+      <div class="ev-info"><div class="ev-name">${e.name}</div><div class="ev-time">⏰ ${e.time}${inv}</div></div>
+      <div class="ev-host-av" style="background:${mem?mem.color:'var(--c1)'};">${mem?mem.emoji:'⚡'}</div>
+    </div>`;
+  }).join('');
+}
+
+function openEventSheet(){
+  document.getElementById('evNameInp').value=''; document.getElementById('evTimeInp').value='';
+  const ds=`${ST.calY}-${String(ST.calM+1).padStart(2,'0')}-${String(ST.calSel||new Date().getDate()).padStart(2,'0')}`;
+  document.getElementById('evDateInp').value=ds;
+  ST.evCol='orange'; ST.invited=[];
+  document.querySelectorAll('#eventSheet .col-btn').forEach(b=>b.classList.toggle('sel',b.dataset.col==='orange'));
+  document.getElementById('invList').innerHTML=TEAM.map(m=>`
+    <div class="inv-item" id="inv-${m.id}" onclick="togInv('${m.id}',this)">
+      <div class="inv-av" style="background:${m.color}">${m.emoji}</div>
+      <div class="inv-name">${m.name} <span style="font-size:12px;color:var(--gray)">${m.uname}</span></div>
+      <div class="inv-status" id="invst-${m.id}" style="color:var(--gray)">+ Undang</div>
+    </div>`).join('');
+  openOverlay('eventSheet');
+  setTimeout(()=>document.getElementById('evNameInp').focus(),380);
+}
+
+function selEvCol(btn){
+  document.querySelectorAll('#eventSheet .col-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel'); ST.evCol=btn.dataset.col;
+}
+
+function togInv(id,el){
+  const idx=ST.invited.indexOf(id),st=document.getElementById('invst-'+id);
+  if(idx>=0){ST.invited.splice(idx,1);el.classList.remove('on');st.textContent='+ Undang';st.style.color='var(--gray)';}
+  else{ST.invited.push(id);el.classList.add('on');st.textContent='✓ Diundang';st.style.color='var(--c3)';}
+}
+
+function addEvent(){
+  const name=document.getElementById('evNameInp').value.trim(),date=document.getElementById('evDateInp').value;
+  if(!name||!date) return;
+  const hex=COL_HEX[ST.evCol]||'#FF6B35';
+  ST.events.push({id:Date.now(),name,date,time:document.getElementById('evTimeInp').value||'00:00',col:ST.evCol,hex,host:'me',inv:[...ST.invited]});
+  closeOverlay('eventSheet'); renderCal(); updateHome();
+  gainXP(10,'Agenda baru!');
+  toast('Agenda ditambahkan! 📅 +10 XP');
+  if(ST.invited.length){
+    const now=new Date();
+    const t=`${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+    setTimeout(()=>{
+      chatLog.push({from:'sarah',text:`Sudah kuterima undangan "${name}" 📅 Siap hadir!`,time:t});
+      if(document.getElementById('pane-chat').classList.contains('active')) renderChat();
+      else showChatBadge();
+    },1400);
+  }
+}
+
+/* ══════════════════════════════════════════
+   TEAM SHEET
+══════════════════════════════════════════ */
+function openTeamSheet(){
+  document.getElementById('teamList').innerHTML=TEAM.map(m=>`
+    <div class="team-item">
+      <div class="team-av" style="background:${m.color}">${m.emoji}</div>
+      <div class="team-info"><div class="team-name">${m.name}</div><div class="team-uname">${m.uname}</div></div>
+      <div class="team-online" style="background:${m.online?'#2EC4B6':'var(--lgray)'}"></div>
+    </div>`).join('');
+  openOverlay('teamSheet');
+}
+
+/* ══════════════════════════════════════════
+   OVERLAY HELPERS
+══════════════════════════════════════════ */
+function openOverlay(id){ document.getElementById(id).classList.add('open'); }
+function closeOverlay(id){ document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.overlay').forEach(ov=>{
+  ov.addEventListener('click',e=>{
+    if(e.target===ov) closeOverlay(ov.id);
+  });
+  // Stop clicks inside sheet from bubbling to overlay
+  const inner=ov.querySelector('.sheet,.note-detail');
+  if(inner) inner.addEventListener('click',e=>e.stopPropagation());
+});
+
+/* ══════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════ */
+function toast(msg){
+  const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.getElementById('app').appendChild(t);
+  setTimeout(()=>{ t.style.transition='all .3s ease'; t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(8px)'; setTimeout(()=>t.remove(),300); },2200);
+}
+
+/* ══════════════════════════════════════════
+   MISC
+══════════════════════════════════════════ */
+document.addEventListener('touchmove',e=>{
+  if(!e.target.closest('.screen')&&!e.target.closest('.tab-pane')&&!e.target.closest('.sheet')&&!e.target.closest('.note-detail')&&!e.target.closest('.chat-msgs'))
+    e.preventDefault();
+},{passive:false});
+
+// Init XP bar visually
+setTimeout(updateXPBar, 100);
+</script>
+</body>
+</html>

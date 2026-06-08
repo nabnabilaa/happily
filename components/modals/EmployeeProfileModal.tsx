@@ -252,12 +252,12 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
                   <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>tepat waktu</div>
                 </div>
               </div>
-              <button onClick={() => openModal?.('attendance_history', { targetUserId: employeeId, targetUserName: u.name })} className="hp-tap" style={{
+              <button onClick={() => openModal?.('logbook', { targetUserId: employeeId, targetUserName: u.name })} className="hp-tap" style={{
                 width: '100%', marginTop: 10, padding: '8px', borderRadius: 10,
                 background: HP_TOKENS.paper, border: `1px solid ${HP_TOKENS.lineSoft}`,
                 fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, color: HP_TOKENS.blue, cursor: 'pointer',
               }}>
-                Lihat Detail Kalender →
+                Lihat Detail Kalender & Logbook →
               </button>
             </HPCard>
 
@@ -344,13 +344,13 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
         {/* ── ATTENDANCE TAB ── */}
         {activeTab === 'attendance' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <button onClick={() => openModal?.('attendance_history', { targetUserId: employeeId, targetUserName: u.name })} className="hp-tap" style={{
-              width: '100%', padding: '12px', borderRadius: 14, marginBottom: 8,
-              background: HP_TOKENS.blueSoft, border: `1.5px solid ${HP_TOKENS.blue}30`,
-              fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, color: HP_TOKENS.blue, cursor: 'pointer',
-            }}>
-              📅 Buka Kalender Lengkap
-            </button>
+              <button onClick={() => openModal?.('logbook', { targetUserId: employeeId, targetUserName: u.name })} className="hp-tap" style={{
+                width: '100%', padding: '12px', borderRadius: 14, marginBottom: 8,
+                background: HP_TOKENS.blueSoft, border: `1.5px solid ${HP_TOKENS.blue}30`,
+                fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, color: HP_TOKENS.blue, cursor: 'pointer',
+              }}>
+                📅 Buka Kalender & Logbook Lengkap
+              </button>
             {attendance.length === 0 ? (
               <div style={{ textAlign: 'center', padding: 30, color: HP_TOKENS.inkMute }}>Belum ada data kehadiran bulan ini</div>
             ) : (

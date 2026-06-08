@@ -8,7 +8,7 @@ import HPCard from "@/components/ui/HPCard";
 import HPAvatar from "@/components/ui/HPAvatar";
 import SectionHeader from "@/components/home/SectionHeader";
 import BlobBackground from "@/components/home/BlobBackground";
-import BeeMascot from "@/components/ui/BeeMascot";
+import BeeMascot, { getMoodColor } from "@/components/ui/BeeMascot";
 import AttendanceWidget from "@/components/home/AttendanceWidget";
 import SurveySection from "@/components/home/SurveySection";
 import PresenceBoard from "@/components/home/PresenceBoard";
@@ -604,10 +604,10 @@ export default function ManagerHomeScreen({ openModal }: Props) {
         {/* AI Coach for Manager - with Bee Mascot */}
         <div style={{ 
           marginTop: 16, 
-          background: `linear-gradient(135deg, ${HP_TOKENS.blue}, #2B5286)`, 
+          background: getMoodColor('happy'), 
           borderRadius: 22,
           padding: '16px 20px',
-          boxShadow: '0 8px 22px rgba(59,111,160,0.3)',
+          boxShadow: `0 8px 22px ${getMoodColor('happy')}40`,
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',

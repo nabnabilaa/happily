@@ -41,6 +41,7 @@ export async function GET(request: Request) {
       sharedWithDivisions: r.shared_with_divisions ? JSON.parse(r.shared_with_divisions as string) : [],
       sharedWithUsers: r.shared_with_users ? JSON.parse(r.shared_with_users as string) : [],
       sharedPermission: r.shared_permission || 'view',
+      color: r.color || 'yellow',
       source: r.source,
       relatedEventId: r.related_event_id,
       createdAt: r.created_at,
@@ -61,7 +62,7 @@ export async function GET(request: Request) {
 // POST: Create a note
 export async function POST(request: Request) {
   try {
-    const { userId, title, content, visibility, sharedWithDivisions, sharedWithUsers, sharedPermission, source, relatedEventId } = await request.json();
+    const { userId, title, content, visibility, sharedWithDivisions, sharedWithUsers, sharedPermission, color, source, relatedEventId } = await request.json();
     if (!userId || !content) {
       return NextResponse.json({ error: "userId and content required" }, { status: 400 });
     }
@@ -69,14 +70,15 @@ export async function POST(request: Request) {
     const noteId = "note_" + uuidv4().substring(0, 8);
 
     await db.execute({
-      sql: `INSERT INTO notes (id, user_id, title, content, visibility, shared_with_divisions, shared_with_users, shared_permission, source, related_event_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      sql: `INSERT INTO notes (id, user_id, title, content, visibility, shared_with_divisions, shared_with_users, shared_permission, color, source, related_event_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
         noteId, userId, title || null, content,
         visibility || 'private',
         sharedWithDivisions ? JSON.stringify(sharedWithDivisions) : null,
         sharedWithUsers ? JSON.stringify(sharedWithUsers) : null,
         sharedPermission || 'view',
+        color || 'yellow',
         source || 'web',
         relatedEventId || null
       ]
@@ -106,7 +108,7 @@ export async function POST(request: Request) {
 // PATCH: Update or Lock/Unlock a note
 export async function PATCH(request: Request) {
   try {
-    const { noteId, userId, action, title, content, visibility, sharedWithDivisions, sharedWithUsers, sharedPermission } = await request.json();
+    const { noteId, userId, action, title, content, visibility, sharedWithDivisions, sharedWithUsers, sharedPermission, color } = await request.json();
     if (!noteId || !userId) return NextResponse.json({ error: "noteId and userId required" }, { status: 400 });
 
     if (action === 'lock') {
@@ -126,7 +128,7 @@ export async function PATCH(request: Request) {
     }
 
     await db.execute({
-      sql: `UPDATE notes SET title = ?, content = ?, visibility = ?, shared_with_divisions = ?, shared_with_users = ?, shared_permission = ?, locked_by = NULL, locked_at = NULL
+      sql: `UPDATE notes SET title = ?, content = ?, visibility = ?, shared_with_divisions = ?, shared_with_users = ?, shared_permission = ?, color = ?, locked_by = NULL, locked_at = NULL
             WHERE id = ?`,
       args: [
         title || null, content || '',
@@ -134,6 +136,7 @@ export async function PATCH(request: Request) {
         sharedWithDivisions ? JSON.stringify(sharedWithDivisions) : null,
         sharedWithUsers ? JSON.stringify(sharedWithUsers) : null,
         sharedPermission || 'view',
+        color || 'yellow',
         noteId
       ]
     });

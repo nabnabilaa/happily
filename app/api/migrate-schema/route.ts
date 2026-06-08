@@ -357,6 +357,7 @@ export async function POST() {
     { desc: "notes.id_to_varchar", sql: "ALTER TABLE notes MODIFY COLUMN id VARCHAR(255)" },
     { desc: "notes.related_event_id", sql: "ALTER TABLE notes ADD COLUMN related_event_id VARCHAR(255)" },
     { desc: "notes.source", sql: "ALTER TABLE notes ADD COLUMN source VARCHAR(50) DEFAULT 'web'" },
+    { desc: "notes.color", sql: "ALTER TABLE notes ADD COLUMN color VARCHAR(50)" },
 
     // ── XP Transactions table ──
     { desc: "xp_transactions.id_to_varchar", sql: "ALTER TABLE xp_transactions MODIFY COLUMN id VARCHAR(255)" },

@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     // Find today's open attendance record
     const todayRecord = await db.execute({
       sql: `SELECT id, check_in_at FROM attendance 
-            WHERE user_id = ? AND DATE(check_in_at) = CURDATE() AND check_out_at IS NULL
+            WHERE user_id = ? AND DATE(CONVERT_TZ(check_in_at, '+00:00', '+07:00')) = DATE(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '+07:00')) AND check_out_at IS NULL
             ORDER BY check_in_at DESC LIMIT 1`,
       args: [userId]
     });
@@ -23,26 +23,26 @@ export async function POST(request: Request) {
     }
 
     const record = todayRecord.rows[0] as any;
-    const checkInAt = new Date(record.check_in_at);
-    const checkOutAt = new Date();
-    const durationMinutes = Math.round((checkOutAt.getTime() - checkInAt.getTime()) / 60000);
-
-    // Determine status based on duration and work schedule
-    let status = 'present';
-    if (durationMinutes < 240) { // Less than 4 hours
-      status = 'early_leave';
-    }
-
-    // Update attendance record with check-out time, duration, and mood
+    // Update attendance record with check-out time, duration, and mood using DB time
     await db.execute({
       sql: `UPDATE attendance 
-            SET check_out_at = NOW(), 
-                duration_minutes = ?,
-                status = ?,
+            SET check_out_at = UTC_TIMESTAMP(), 
+                duration_minutes = TIMESTAMPDIFF(MINUTE, check_in_at, UTC_TIMESTAMP()),
+                status = CASE WHEN TIMESTAMPDIFF(MINUTE, check_in_at, UTC_TIMESTAMP()) < 240 THEN 'early_leave' ELSE 'present' END,
                 mood = COALESCE(?, mood)
             WHERE id = ?`,
-      args: [durationMinutes, status, mood || null, record.id]
+      args: [mood || null, record.id]
     });
+
+    const updated = await db.execute({
+      sql: `SELECT check_out_at, duration_minutes, status FROM attendance WHERE id = ?`,
+      args: [record.id]
+    });
+
+    const checkOutAtStr = updated.rows[0].check_out_at as string;
+    const checkOutAt = new Date(checkOutAtStr.endsWith('Z') ? checkOutAtStr : checkOutAtStr.replace(' ', 'T') + 'Z');
+    const durationMinutes = Number(updated.rows[0].duration_minutes);
+    let status = updated.rows[0].status as string;
 
     // Award XP for completing the workday — Spec v2: +5 XP
     try {
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
       const xpRes = await db.execute({
         sql: `SELECT COALESCE(SUM(amount), 0) as total 
               FROM xp_transactions 
-              WHERE user_id = ? AND DATE(created_at) = CURDATE()`,
+              WHERE user_id = ? AND DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) = DATE(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '+07:00'))`,
         args: [userId]
       });
       todayXP = Number(xpRes.rows[0]?.total) || 0;
@@ -83,7 +83,7 @@ export async function POST(request: Request) {
     try {
       const existingLog = await db.execute({
         sql: `SELECT id FROM logbook_entries 
-              WHERE user_id = ? AND type = 'daily_summary' AND DATE(created_at) = CURDATE()`,
+              WHERE user_id = ? AND type = 'daily_summary' AND DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) = DATE(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '+07:00'))`,
         args: [userId]
       });
       

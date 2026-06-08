@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useHP } from "@/lib/HPContext";
 import { 
   HP_TOKENS, 
@@ -9,14 +9,18 @@ import {
 } from "@/lib/constants";
 import HPGlyph from "@/components/ui/HPGlyph";
 import Modal from "@/components/ui/Modal";
+import TaskCompleteModal from "@/components/modals/TaskCompleteModal";
 
 export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask }: { onClose: () => void; initialGoalId?: string; editTask?: any }) {
-  const { state, updateState, user, notify } = useHP();
+  const { state, updateState, user, notify, awardXP, syncSkillProgress } = useHP();
+  const [editingTaskId, setEditingTaskId] = useState<number | null>(editTask?.id || null);
   const [newTitle, setNewTitle] = useState(editTask?.title || "");
   const [newDescription, setNewDescription] = useState(editTask?.description || "");
   const [targetDate, setTargetDate] = useState<string>(editTask?.targetDate || (() => new Date().toISOString().split('T')[0]));
   const [selectedKpiId, setSelectedKpiId] = useState<string>(editTask?.kpi_id || initialGoalId || "");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [completingTask, setCompletingTask] = useState<any>(null);
 
   // Fetch KPIs from API (manager monthly_kpis + personal_kpis tables) — only once
   const [apiKpis, setApiKpis] = useState<any[]>([]);
@@ -81,6 +85,133 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
     return [...combinedManager, ...combinedPersonal];
   }, [apiKpis, state?.goals, user?.id]);
 
+  const togglePriority = useCallback((id: number) => {
+    const priority = state?.priorities?.find((p: any) => p.id === id);
+    if (!priority) return;
+    
+    if (!priority.done) {
+      setCompletingTask(priority);
+    } else {
+      updateState((s: any) => {
+        const newPriorities = s.priorities.map((p: any) => 
+          p.id === id ? { ...p, done: false } : p
+        );
+
+        const task = s.priorities.find((p: any) => p.id === id);
+        const targetId = task?.goal_id || task?.kpi_id;
+        const updatedGoals = s.goals.map((goal: any) => {
+          if (targetId && String(goal.id) === String(targetId)) {
+            let total = 0;
+            let completed = 0;
+            const match = String(goal.metric || '').match(/^(\d+)\/(\d+)\s+task/);
+            if (match) {
+              completed = parseInt(match[1]);
+              total = parseInt(match[2]);
+            } else {
+              const todayTasks = newPriorities.filter((p: any) => (p.goal_id && String(p.goal_id) === String(goal.id)) || (p.kpi_id && String(p.kpi_id) === String(goal.id)));
+              total = todayTasks.length;
+              completed = todayTasks.filter((p: any) => p.done).length;
+            }
+
+            const newCompleted = Math.max(0, completed - 1);
+            const newProgress = total > 0 ? Math.round((newCompleted / total) * 100) : goal.progress;
+            return { ...goal, progress: newProgress, metric: total > 0 ? `${newCompleted}/${total} task selesai` : goal.metric };
+          }
+          return goal;
+        });
+
+        return { ...s, priorities: newPriorities, goals: updatedGoals };
+      });
+    }
+  }, [state, updateState]);
+
+  const confirmTaskComplete = useCallback((data: {
+    proofLinks: string[]; isProject: boolean; metricValue?: number; notes?: string;
+  }) => {
+    if (!completingTask) return;
+    const id = completingTask.id;
+
+    awardXP('priority_complete', `Selesaikan: ${completingTask.title}`);
+
+    updateState((s: any) => {
+      const pIndex = s.priorities.findIndex((p: any) => p.id === id);
+      if (pIndex === -1) return s;
+
+      const newPriorities = [...s.priorities];
+      newPriorities[pIndex] = { 
+        ...newPriorities[pIndex], 
+        done: true,
+        proof_links: data.proofLinks,
+        is_project: data.isProject,
+        metric_value: data.metricValue || null,
+        completion_notes: data.notes || null,
+        completed_at: new Date().toISOString(),
+      };
+
+      const now = new Date();
+      const newLog = {
+        id: Date.now(),
+        type: 'quest_completion',
+        title: newPriorities[pIndex].title,
+        points: 50,
+        date: now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
+        day: now.toLocaleDateString('id-ID', { weekday: 'long' }),
+        time: now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+      };
+
+      if (data.metricValue && newPriorities[pIndex].kpi_id) {
+        fetch('/api/kpi/daily-input', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user?.id,
+            kpiId: newPriorities[pIndex].kpi_id,
+            date: new Date().toISOString().slice(0, 10),
+            value: data.metricValue,
+            notes: data.notes || newPriorities[pIndex].title,
+            proofLink: data.proofLinks[0] || null,
+          })
+        }).catch(e => console.error('KPI input failed:', e));
+      }
+
+      syncSkillProgress(newPriorities[pIndex].title + " " + (newPriorities[pIndex].kpi_title || ""), 2);
+
+      const task = newPriorities[pIndex];
+      const targetId = task.goal_id || task.kpi_id;
+      const updatedGoals = s.goals.map((goal: any) => {
+        if (targetId && String(goal.id) === String(targetId)) {
+          let total = 0;
+          let completed = 0;
+          const match = String(goal.metric || '').match(/^(\d+)\/(\d+)\s+task/);
+          if (match) {
+            completed = parseInt(match[1]);
+            total = parseInt(match[2]);
+          } else {
+            const todayTasks = newPriorities.filter((p: any) => (p.goal_id && String(p.goal_id) === String(goal.id)) || (p.kpi_id && String(p.kpi_id) === String(goal.id)));
+            total = todayTasks.length;
+            completed = todayTasks.filter((p: any) => p.done).length;
+          }
+
+          const newCompleted = Math.max(0, Math.min(total, completed + 1));
+          const newProgress = total > 0 ? Math.round((newCompleted / total) * 100) : goal.progress;
+          return { ...goal, progress: newProgress, metric: total > 0 ? `${newCompleted}/${total} task selesai` : goal.metric };
+        }
+        return goal;
+      });
+
+      return { 
+        ...s, 
+        priorities: newPriorities,
+        goals: updatedGoals,
+        logbook: [newLog, ...(s.logbook || [])],
+        lastActivityDate: now.toISOString(),
+        penaltyActive: false,
+      };
+    });
+
+    setCompletingTask(null);
+  }, [completingTask, updateState, awardXP, syncSkillProgress, user]);
+
   if (!state) return null;
 
   // Anti-abuse: minimum characters for task title
@@ -88,15 +219,30 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
   const titleTooShort = newTitle.length > 0 && newTitle.length < MIN_TASK_CHARS;
   const canAdd = newTitle.length >= MIN_TASK_CHARS;
 
-  const savePriority = () => {
-    if (!canAdd) return;
-    const selectedKpi = myKpis.find((k: any) => String(k.id) === String(selectedKpiId));
+  const savePriority = async () => {
+    if (!canAdd || isSubmitting) return;
+    setIsSubmitting(true);
     
-    if (editTask) {
+    try {
+      const selectedKpi = myKpis.find((k: any) => String(k.id) === String(selectedKpiId));
+      
+      // Validasi Duplikat: Jangan perbolehkan judul yang sama persis jika membuat baru, atau jika edit tapi judul diubah
+      const isDuplicate = state.priorities?.some((p: any) => 
+        p.title.toLowerCase().trim() === newTitle.toLowerCase().trim() && 
+        p.id !== editingTaskId
+      );
+      
+      if (isDuplicate) {
+        notify("Gagal Menyimpan", "Task dengan judul ini sudah ada. Harap gunakan nama lain.", "error");
+        setIsSubmitting(false);
+        return;
+      }
+      
+      if (editingTaskId) {
       // Edit mode
       updateState((s: any) => {
         const newPriorities = s.priorities.map((p: any) => {
-          if (p.id === editTask.id) {
+          if (p.id === editingTaskId) {
             return {
               ...p,
               title: newTitle,
@@ -113,7 +259,10 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
         return { ...s, priorities: newPriorities };
       });
       notify("Task Berhasil Diperbarui", `${newTitle} diperbarui pada ${targetDate}`, "success");
-      onClose();
+      setEditingTaskId(null);
+      setNewTitle("");
+      setNewDescription("");
+      setSelectedKpiId("");
       return;
     }
 
@@ -182,11 +331,14 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
       };
     });
     
-    notify("Task Berhasil Ditambahkan", `${newTitle} dijadwalkan pada ${targetDate}`, "success");
-    
-    setNewTitle("");
-    setNewDescription("");
-    setSelectedKpiId("");
+      notify("Task Berhasil Ditambahkan", `${newTitle} dijadwalkan pada ${targetDate}`, "success");
+      
+      setNewTitle("");
+      setNewDescription("");
+      setSelectedKpiId("");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const deletePriority = (id: number) => {
@@ -250,7 +402,22 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
       <div style={{ marginTop: 4 }}>
         
         {/* Add/Edit task form */}
-        <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 8 }}>{editTask ? "EDIT TASK" : "TAMBAH TASK BARU"}</div>
+        <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 8 }}>
+          {editingTaskId ? "EDIT TASK" : "TAMBAH TASK BARU"}
+          {editingTaskId && (
+            <button 
+              onClick={() => {
+                setEditingTaskId(null);
+                setNewTitle("");
+                setNewDescription("");
+                setSelectedKpiId("");
+              }}
+              style={{ background: 'none', border: 'none', color: HP_TOKENS.blue, fontWeight: 800, cursor: 'pointer', marginLeft: 8 }}
+            >
+              (Batal Edit)
+            </button>
+          )}
+        </div>
         <div style={{ 
           display: 'flex', flexDirection: 'column', gap: 10, 
           padding: 16, borderRadius: 16, background: HP_TOKENS.paper, border: `1.5px solid ${HP_TOKENS.line}`,
@@ -295,8 +462,8 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
             }}
           />
 
-          <div style={{ display: 'flex', gap: 12 }}>
-            <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <div style={{ flex: 1, minWidth: 140 }}>
               <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 4 }}>
                 TANGGAL PELAKSANAAN
               </div>
@@ -304,11 +471,11 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                 type="date" 
                 value={targetDate}
                 onChange={(e) => setTargetDate(e.target.value)}
-                style={inputStyle}
+                style={{ ...inputStyle, height: 48 }}
               />
             </div>
             
-            <div style={{ flex: 2 }}>
+            <div style={{ flex: 2, minWidth: 200 }}>
               <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 4 }}>
                 TERKAIT KPI MANA?
               </div>
@@ -316,7 +483,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                 <select 
                   value={selectedKpiId}
                   onChange={(e) => setSelectedKpiId(e.target.value)}
-                  style={inputStyle}
+                  style={{ ...inputStyle, height: 48 }}
                 >
                   <option value="">Umum (tidak terkait KPI spesifik)</option>
                   {myKpis.filter((k: any) => k.source === 'manager').length > 0 && (
@@ -370,16 +537,16 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
 
           <button 
             onClick={savePriority}
-            disabled={!canAdd}
+            disabled={!canAdd || isSubmitting}
             style={{
               padding: 14, borderRadius: 12, border: 'none',
               background: HP_TOKENS.sage, color: '#F4F7F9',
-              fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: canAdd ? 'pointer' : 'default',
-              opacity: !canAdd ? 0.5 : 1,
+              fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: canAdd && !isSubmitting ? 'pointer' : 'default',
+              opacity: (!canAdd || isSubmitting) ? 0.5 : 1,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}
           >
-            {editTask ? "Simpan Perubahan" : "+ Tambah Task"}
+            {isSubmitting ? "Menyimpan..." : (editingTaskId ? "Simpan Perubahan" : "+ Tambah Task")}
           </button>
         </div>
 
@@ -401,14 +568,17 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                   border: `1.5px solid ${p.done ? HP_TOKENS.sage + '30' : HP_TOKENS.line}`,
                 }}
               >
-                <div style={{ 
-                  width: 22, height: 22, borderRadius: 11, flexShrink: 0,
-                  background: p.done ? HP_TOKENS.sage : 'transparent',
-                  border: `2px solid ${p.done ? HP_TOKENS.sage : HP_TOKENS.line}`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }}>
+                <button 
+                  onClick={() => togglePriority(p.id)}
+                  style={{ 
+                    width: 22, height: 22, borderRadius: 11, flexShrink: 0,
+                    background: p.done ? HP_TOKENS.sage : 'transparent',
+                    border: `2px solid ${p.done ? HP_TOKENS.sage : HP_TOKENS.line}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', padding: 0
+                  }}>
                   {p.done && <HPGlyph name="check" size={12} color="#F4F7F9"/>}
-                </div>
+                </button>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ 
                     ...HP_TEXT.body, fontSize: 13, fontWeight: 600, 
@@ -483,12 +653,26 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                   )}
                 </div>
                 {!p.done && (
-                  <button 
-                    onClick={() => deletePriority(p.id)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, flexShrink: 0 }}
-                  >
-                    <HPGlyph name="close" size={14} color={HP_TOKENS.coral}/>
-                  </button>
+                  <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                    <button 
+                      onClick={() => {
+                        setNewTitle(p.title);
+                        setNewDescription(p.description || "");
+                        setTargetDate(p.targetDate || new Date().toISOString().split('T')[0]);
+                        setSelectedKpiId(p.kpi_id || p.goal_id || "");
+                        setEditingTaskId(p.id);
+                      }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
+                    >
+                      <HPGlyph name="edit" size={14} color={HP_TOKENS.inkFade}/>
+                    </button>
+                    <button 
+                      onClick={() => deletePriority(p.id)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
+                    >
+                      <HPGlyph name="close" size={14} color={HP_TOKENS.coral}/>
+                    </button>
+                  </div>
                 )}
               </div>
             ))
@@ -532,6 +716,13 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
           </div>
         )}
       </div>
+      {completingTask && (
+        <TaskCompleteModal 
+          task={completingTask}
+          onClose={() => setCompletingTask(null)}
+          onConfirm={confirmTaskComplete}
+        />
+      )}
     </Modal>
   );
 }

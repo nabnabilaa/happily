@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useHP } from "@/lib/HPContext";
 import { 
   HP_TOKENS, 
@@ -10,9 +10,30 @@ import {
 } from "@/lib/constants";
 import HPGlyph from "@/components/ui/HPGlyph";
 import Modal from "@/components/ui/Modal";
+import { calculateWellbeingScore } from "@/lib/wellbeingEngine";
 
 interface CoachModalProps {
   onClose: () => void;
+}
+
+// ── Off-topic keyword detection (client-side guardrail) ──
+const OFF_TOPIC_PATTERNS = [
+  // Programming
+  /\b(coding|code|program|javascript|python|react|html|css|java|typescript|php|sql|api|git|debug|compile|algorithm|function\s*\(|variable|class\s+\w|import\s+\w|console\.log)\b/i,
+  // Politics
+  /\b(politi[kc]|partai|pemilu|caleg|calon\s+presiden|pilkada|kampanye|demo(krasi)?|parlemen|oposisi|koalisi)\b/i,
+  // Religion
+  /\b(agama|sekte|kafir|sesat|dakwah|jihad|atheis)\b/i,
+  // Random/off-topic
+  /\b(resep\s+masak|crypto|bitcoin|forex|trading|saham|investasi|judi|taruhan|betting)\b/i,
+  // Harmful
+  /\b(bunuh|mati|narkoba|drugs|senjata|hack|exploit|crack)\b/i,
+];
+
+const OFF_TOPIC_RESPONSE = "Hmm, topik itu di luar area keahlianku 😅 Aku lebih jago bantu soal mood, produktivitas, dan task management kamu di Flowbee.\n\nAda yang bisa aku bantu soal kerjaan atau perasaanmu hari ini? 🌱";
+
+function isOffTopic(text: string): boolean {
+  return OFF_TOPIC_PATTERNS.some(pattern => pattern.test(text));
 }
 
 export default function CoachModal({ onClose }: CoachModalProps) {
@@ -27,92 +48,156 @@ export default function CoachModal({ onClose }: CoachModalProps) {
     const moodKey = state?.mood;
     const energyKey = state?.energy;
 
-    let moodDescription = "Tenang";
-    if (moodKey) {
-      if (moodKey === 'joy') moodDescription = "Senang";
-      else if (moodKey === 'calm') moodDescription = "Tenang";
-      else if (moodKey === 'neutral') moodDescription = "Biasa Saja";
-      else if (moodKey === 'tired') moodDescription = "Lelah";
-      else if (moodKey === 'stress') moodDescription = "Stres";
-      else moodDescription = moodKey;
+    const moodMap: Record<string, string> = {
+      joy: 'Senang', calm: 'Tenang', neutral: 'Biasa Saja',
+      tired: 'Lelah', stress: 'Stres', burnout: 'Burnout',
+    };
+    const moodDescription = moodMap[moodKey] || moodKey || 'belum dicek';
+
+    const energyMap: Record<string, string> = {
+      low: 'rendah', mid: 'sedang', high: 'tinggi',
+    };
+    const energyDescription = energyMap[energyKey] || energyKey || 'belum dicek';
+
+    // Build personalized greeting based on actual state
+    const priorities = state?.priorities || [];
+    const unfinished = priorities.filter((p: any) => !p.done).length;
+    const { score, status } = calculateWellbeingScore(state, user);
+
+    let greeting = `Hai ${userName} 👋`;
+
+    if (!moodKey) {
+      greeting += `\n\nKamu belum check-in mood hari ini. Gimana perasaanmu sekarang?`;
+    } else if (moodKey === 'tired' || moodKey === 'stress' || moodKey === 'burnout') {
+      greeting += `\n\nAku lihat mood kamu lagi "${moodDescription}" dan energi ${energyDescription}. Wajar banget kalau capek — tapi aku di sini buat bantu kamu tetap bisa jalan, pelan-pelan.`;
+    } else {
+      greeting += `\n\nMood kamu "${moodDescription}" dan energi ${energyDescription}. Senang dengarnya!`;
     }
 
-    let energyDescription = "sedang";
-    if (energyKey) {
-      if (energyKey === 'low') energyDescription = "rendah";
-      else if (energyKey === 'mid') energyDescription = "sedang";
-      else if (energyKey === 'high') energyDescription = "tinggi";
-      else energyDescription = energyKey;
+    if (unfinished > 0) {
+      greeting += `\n\nKamu punya ${unfinished} task yang belum selesai hari ini. Mau aku bantu susun strategi menyelesaikannya?`;
     }
 
-    const moodStatus = moodKey 
-      ? `mood kamu "${moodDescription}" dan energi ${energyDescription}`
-      : `kamu belum melakukan check-in mood hari ini`;
+    if (status === 'critical') {
+      greeting += `\n\n⚠️ Wellbeing Score kamu ${score}/100. Aku khawatir sama kesehatanmu. Yuk kita bicarain apa yang bisa diringankan.`;
+    }
 
-    const greeting = `Hai ${userName} 🌱 — selamat pagi. Aku lihat ${moodStatus}. Mau aku bantu susun prioritas hari ini?`;
-    
-    setMessages([
-      { from: 'ai', text: greeting }
-    ]);
+    setMessages([{ from: 'ai', text: greeting }]);
   }, [user, state?.mood, state?.energy]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, typing]);
 
-  const send = async (text?: string) => {
+  const send = useCallback(async (text?: string) => {
+    if (typing) return;
     const msg = text || input;
     if (!msg.trim()) return;
     
     const newUserMsg = { from: 'user' as const, text: msg };
     setMessages(m => [...m, newUserMsg]);
     setInput('');
+
+    // ── Client-side guardrail: off-topic check (zero tokens!) ──
+    if (isOffTopic(msg)) {
+      setTimeout(() => {
+        setMessages(m => [...m, { from: 'ai', text: OFF_TOPIC_RESPONSE }]);
+      }, 400);
+      return;
+    }
+
     setTyping(true);
 
     try {
-      // Get recent coaching logs
-      const coachingLogs = (state?.logbook || [])
-        .filter((l: any) => l.content && l.content.includes('GROW Coaching Session'))
-        .slice(0, 3)
-        .map((l: any) => `- ${l.date}: ${l.content.replace(/\n/g, ' ')}`)
-        .join('\n');
-
-      // Gather rich context about the user's current state
-      const moodHistory = state?.moods || [];
-      const currentMood = state?.mood || 'neutral';
-      const currentEnergy = state?.energy || 'mid';
+      // ── Build rich, personalized context ──
+      const currentMood = state?.mood || 'belum check-in';
+      const currentEnergy = state?.energy || 'belum check-in';
       const streak = user?.streak || 0;
       
-      const pendingTasks = (state?.priorities || [])
+      const priorities = state?.priorities || [];
+      const pendingTasks = priorities
         .filter((p: any) => !p.done)
-        .map((p: any) => `- ${p.title} (due: ${p.due || 'today'})`)
+        .map((p: any) => `- ${p.title}${p.due ? ` (deadline: ${p.due})` : ''}`)
+        .join('\n');
+      const completedCount = priorities.filter((p: any) => p.done).length;
+      const totalCount = priorities.length;
+
+      // Mood history summary (last 5 entries)
+      const moodHistory = (state?.moods || []).slice(-5)
+        .map((m: any) => `${m.date || '?'}: ${m.mood}`)
+        .join(', ');
+
+      // Recent logbook entries
+      const recentLogs = (state?.logbook || []).slice(0, 3)
+        .map((l: any) => `- ${l.date}: ${l.title || l.content?.substring(0, 50)}`)
         .join('\n');
 
-      const completedTasksCount = (state?.priorities || []).filter((p: any) => p.done).length;
-      const totalTasksCount = (state?.priorities || []).length;
+      // Wellbeing score
+      const { score, status, actions } = calculateWellbeingScore(state, user);
+      const actionsSummary = actions.slice(0, 3).map((a: any) => `- ${a.label}: ${a.description}`).join('\n');
 
-      const sysPrompt = `You are Flow, a friendly, empathetic AI coach for "Flow Productivity". Users are employees. Your tone is humanist, supportive, and clear. Help users achieve their state of flow. Avoid corporate jargon.
-      
-### USER'S CURRENT CONTEXT:
-- Name: ${user?.name || 'Rekan Kerja'}
-- Role: ${user?.role || 'Employee'}
-- Current Mood: ${currentMood}
-- Current Energy: ${currentEnergy}
-- Check-in Streak: ${streak} days
-- Task Progress Today: ${completedTasksCount}/${totalTasksCount} completed
+      // Coaching logs
+      const coachingLogs = (state?.logbook || [])
+        .filter((l: any) => l.content && l.content.includes('GROW Coaching Session'))
+        .slice(0, 2)
+        .map((l: any) => `- ${l.date}: ${l.content.replace(/\n/g, ' ').substring(0, 100)}`)
+        .join('\n');
 
-### PENDING TASKS:
-${pendingTasks || 'No pending tasks right now.'}
+      const sysPrompt = `Kamu adalah Buddy, AI Coach pribadi di platform Flowbee. Kamu BUKAN chatbot general — kamu HANYA membahas topik terkait:
+- Mood & kesehatan mental karyawan
+- Produktivitas & manajemen task
+- Work-life balance & burnout prevention
+- Motivasi & pengembangan diri dalam konteks kerja
+- Fitur-fitur Flowbee (task harian, focus session, box breathing, refleksi, dll)
 
-### GUIDING PRINCIPLES:
-1. Burnout Prevention: If the user says they are tired or stressed (or their mood is 'tired'/'stress'), validate their feelings first. Acknowledge that it's okay to be tired.
-2. Anti-Procrastination: If they have pending tasks, gently suggest tackling the smallest one to break the inertia, instead of just telling them to rest or work harder. "Capek itu valid. Tapi menunda pekerjaan justru menambah beban."
-3. Actionable Advice: Break down big problems into micro-steps.
+KAMU WAJIB SELALU BERKOMUNIKASI DALAM BAHASA INDONESIA.
 
-### PREVIOUS COACHING NOTES:
-${coachingLogs || 'No recent coaching commitments.'}`;
+ATURAN KETAT:
+1. TOLAK dengan sopan pertanyaan tentang: programming/coding, politik, agama, gosip, investasi, kripto, atau hal random yang tidak terkait produktivitas kerja. Katakan: "Topik itu di luar keahlianku. Aku lebih bisa bantu soal mood dan produktivitasmu."
+2. JANGAN pernah memberikan saran medis, diagnosis, atau menyuruh minum obat. Jika user menunjukkan tanda-tanda depresi berat, sarankan untuk bicara dengan profesional (psikolog/konselor).
+3. SELALU arahkan pembicaraan kembali ke: mood, wellbeing, task, fokus, work-life balance.
 
-      // Map history for OpenAI format
+KEPRIBADIAN:
+- Empatis tapi tegas. Kamu peduli, tapi kamu juga push mereka untuk tidak menyerah.
+- Pesan inti: "Semakin kamu kabur, pekerjaan hanya akan menumpuk. Tapi semakin kamu melangkah, semakin ringan terasa."
+- Selalu semangati. Jangan biarkan mereka merasa sendirian.
+- Gunakan bahasa kasual Indonesia, bukan formal/kaku.
+- Emoji boleh tapi jangan berlebihan (max 2-3 per pesan).
+
+STRATEGI COACHING:
+- Jika user mengeluh banyak kerjaan → Tawarkan pecah task ("Coba kita pecah jadi yang lebih kecil. Task mana yang paling gampang?")
+- Jika user bilang capek/stres → Validasi dulu ("Wajar banget capek"), lalu dorong aksi kecil ("Tapi coba selesain 1 task kecil dulu, biar momentum mulai jalan")
+- Jika user bilang mau nyerah → Motivasi keras ("Kamu udah sejauh ini. Menyerah sekarang berarti sia-sia. Yuk kita hadapin bareng")
+- Jika user inaktif lama → "Kamu udah lama ga check-in. Aku khawatir. Gimana kabar?"
+- Jika wellbeing rendah → Sarankan Box Breathing atau Focus Session
+
+### KONTEKS USER SAAT INI:
+- Nama: ${user?.name || 'Rekan Kerja'}
+- Role: ${user?.role || 'Employee'}  
+- Mood: ${currentMood}
+- Energi: ${currentEnergy}
+- Streak Check-in: ${streak} hari
+- Wellbeing Score: ${score}/100 (${status})
+- Task Progress: ${completedCount}/${totalCount} selesai
+
+### TASK YANG BELUM SELESAI:
+${pendingTasks || 'Tidak ada task pending.'}
+
+### REKOMENDASI WELLBEING SAAT INI:
+${actionsSummary || 'Tidak ada rekomendasi khusus.'}
+
+### RIWAYAT MOOD (5 terakhir):
+${moodHistory || 'Belum ada data.'}
+
+### AKTIVITAS TERKINI:
+${recentLogs || 'Belum ada aktivitas tercatat.'}
+
+### CATATAN COACHING SEBELUMNYA:
+${coachingLogs || 'Belum ada sesi coaching.'}
+
+Respons kamu harus SINGKAT (max 3-4 paragraf pendek). Jangan bertele-tele. Langsung ke inti.`;
+
+      // Map history for API format
       const history = messages.map(m => ({
         role: m.from === 'ai' ? 'assistant' : 'user',
         content: m.text
@@ -130,84 +215,149 @@ ${coachingLogs || 'No recent coaching commitments.'}`;
       if (data.text) {
         setMessages(m => [...m, { from: 'ai', text: data.text }]);
       } else {
-        setMessages(m => [...m, { from: 'ai', text: "Maaf, aku lagi agak lambat merespons. Bisa coba lagi? 🌱 (Error: " + (data.error || 'Unknown') + ")" }]);
+        setMessages(m => [...m, { from: 'ai', text: "Maaf, aku lagi agak lambat. Bisa coba lagi? 🌱" }]);
       }
     } catch (error) {
       setTyping(false);
       setMessages(m => [...m, { from: 'ai', text: "Koneksiku terputus sejenak. Kabari aku lagi ya! 🌿" }]);
     }
-  };
+  }, [input, typing, messages, state, user]);
+
+  // Dynamic suggestions based on state
+  const dynamicSuggestions = React.useMemo(() => {
+    const suggestions: string[] = [];
+    const priorities = state?.priorities || [];
+    const unfinished = priorities.filter((p: any) => !p.done).length;
+
+    if (unfinished > 3) suggestions.push("Aku banyak kerjaan, bantu pecah task 📋");
+    if (state?.mood === 'tired' || state?.mood === 'stress') suggestions.push("Aku capek banget hari ini 😩");
+    if (!state?.mood) suggestions.push("Bantu aku check-in mood 💬");
+    if (unfinished > 0) suggestions.push("Mana task yang harus aku duluin? 🎯");
+    suggestions.push("Kasih aku semangat dong 💪");
+    
+    return suggestions.slice(0, 4);
+  }, [state]);
 
   return (
-    <Modal onClose={onClose}>
-      <div style={{ height: '75vh', display: 'flex', flexDirection: 'column', margin: '0 -20px' }}>
+    <Modal onClose={onClose} noPadding={true}>
+      <div style={{ height: '80vh', display: 'flex', flexDirection: 'column', background: '#FAFCFC', overflow: 'hidden' }}>
+        {/* Header */}
         <div style={{ 
-          padding: '0 20px 14px', 
+          padding: '16px 24px', 
           display: 'flex', 
           alignItems: 'center', 
-          gap: 12, 
-          borderBottom: `1px solid ${HP_TOKENS.line}` 
+          justifyContent: 'space-between',
+          background: '#FFFFFF',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
+          zIndex: 10
         }}>
-          <div style={{ 
-            width: 44, 
-            height: 44, 
-            borderRadius: 16, 
-            background: `linear-gradient(135deg, ${HP_TOKENS.sage}, ${HP_TOKENS.blue})`, 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center' 
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ 
+              width: 48, 
+              height: 48, 
+              borderRadius: 24, 
+              background: `linear-gradient(135deg, ${HP_TOKENS.sage}, ${HP_TOKENS.blue})`, 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              boxShadow: `0 4px 12px ${HP_TOKENS.sage}40`
+            }}>
+              <HPGlyph name="sparkle" size={24} color="#F4F7F9"/>
+            </div>
+            <div>
+              <div style={{ ...HP_TEXT.h, fontSize: 18, color: HP_TOKENS.ink }}>Buddy, Coach AI-mu</div>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                <div style={{ width: 8, height: 8, borderRadius: 4, background: HP_TOKENS.sage, animation: 'hpPulse 2s infinite' }} />
+                Online & Memahami Konteksmu
+              </div>
+            </div>
+          </div>
+          <button onClick={onClose} style={{
+            width: 36, height: 36, borderRadius: 18, border: 'none', background: 'rgba(0,0,0,0.04)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'
           }}>
-            <HPGlyph name="sparkle" size={22} color="#F4F7F9"/>
-          </div>
-          <div>
-            <div style={{ ...HP_TEXT.h, fontSize: 16 }}>Flow, AI coach kamu</div>
-            <div style={{ ...HP_TEXT.small, color: HP_TOKENS.sage, fontWeight: 700 }}>🟢 Online · memahami konteks kamu</div>
-          </div>
+            <HPGlyph name="close" size={16} color={HP_TOKENS.inkMute}/>
+          </button>
         </div>
 
+        {/* Chat Area */}
         <div 
           ref={scrollRef} 
           style={{ 
             flex: 1, 
             overflowY: 'auto', 
-            padding: '14px 20px', 
+            padding: '24px', 
             display: 'flex', 
             flexDirection: 'column', 
-            gap: 10 
+            gap: 16 
           }}
         >
           {messages.map((m, i) => (
             <div key={i} style={{
               alignSelf: m.from === 'ai' ? 'flex-start' : 'flex-end',
-              maxWidth: '82%',
-              padding: '12px 14px', borderRadius: 18,
-              background: m.from === 'ai' ? HP_TOKENS.sageWash : HP_TOKENS.blue,
-              color: m.from === 'ai' ? HP_TOKENS.ink : '#fff',
-              fontFamily: HP_FONT, fontSize: 14, fontWeight: 500, lineHeight: 1.45,
-              borderTopLeftRadius: m.from === 'ai' ? 4 : 18,
-              borderTopRightRadius: m.from === 'ai' ? 18 : 4,
+              maxWidth: '85%',
+              padding: '16px 20px', 
+              borderRadius: 20,
+              background: m.from === 'ai' ? '#FFFFFF' : `linear-gradient(135deg, ${HP_TOKENS.sage}, #3e7054)`,
+              color: m.from === 'ai' ? HP_TOKENS.ink : '#FFFFFF',
+              fontFamily: HP_FONT, fontSize: 15, fontWeight: m.from === 'ai' ? 500 : 600, lineHeight: 1.6,
+              borderTopLeftRadius: m.from === 'ai' ? 4 : 20,
+              borderTopRightRadius: m.from === 'ai' ? 20 : 4,
+              boxShadow: m.from === 'ai' ? '0 4px 20px rgba(0,0,0,0.04)' : '0 4px 20px rgba(62,112,84,0.3)',
               whiteSpace: 'pre-wrap',
             }}>
               {m.text}
             </div>
           ))}
+
+          {/* Suggestions - Now inside scrollable area! */}
+          {messages.length < 3 && (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+              {dynamicSuggestions.map(s => (
+                <button 
+                  key={s} 
+                  onClick={() => send(s)} 
+                  disabled={typing}
+                  style={{
+                    padding: '10px 16px', borderRadius: 99,
+                    background: '#FFFFFF', 
+                    border: `1.5px solid ${HP_TOKENS.sage}30`, 
+                    color: HP_TOKENS.sage,
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, 
+                    cursor: typing ? 'default' : 'pointer',
+                    opacity: typing ? 0.5 : 1,
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
+                    transition: 'all 0.2s',
+                  }}
+                  className="hp-tap"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
+
           {typing && (
             <div style={{ 
               alignSelf: 'flex-start', 
-              padding: '12px 14px', 
-              borderRadius: 18, 
-              background: HP_TOKENS.sageWash, 
+              padding: '16px 20px', 
+              borderRadius: 20, 
+              background: '#FFFFFF', 
+              boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
               borderTopLeftRadius: 4, 
               display: 'flex', 
-              gap: 4 
+              gap: 6,
+              alignItems: 'center',
+              height: 24,
+              marginTop: 8
             }}>
               {[0, 1, 2].map(i => (
                 <div 
                   key={i} 
                   style={{ 
-                    width: 6, 
-                    height: 6, 
-                    borderRadius: 3, 
+                    width: 8, 
+                    height: 8, 
+                    borderRadius: 4, 
                     background: HP_TOKENS.sage, 
                     animation: `hpDot 1.2s ${i * 0.2}s infinite` 
                   }}
@@ -217,53 +367,43 @@ ${coachingLogs || 'No recent coaching commitments.'}`;
           )}
         </div>
 
-        {messages.length < 3 && (
-          <div style={{ padding: '0 20px 10px', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {(state?.coachSuggestions || HP_COACH_SUGGESTIONS).map(s => (
-              <button 
-                key={s} 
-                onClick={() => send(s)} 
-                style={{
-                  padding: '8px 12px', borderRadius: 99,
-                  background: '#FFFFFF', border: `1px solid ${HP_TOKENS.sageSoft}`, color: HP_TOKENS.sage,
-                  fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, cursor: 'pointer',
-                }}
-                className="hp-tap"
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        )}
-
+        {/* Input Area */}
         <div style={{ 
-          padding: '10px 20px 20px', 
-          borderTop: `1px solid ${HP_TOKENS.line}`, 
+          padding: '16px 24px 24px', 
+          background: '#FFFFFF',
+          boxShadow: '0 -4px 20px rgba(0,0,0,0.03)',
           display: 'flex', 
-          gap: 8, 
+          gap: 12, 
           alignItems: 'center', 
-          background: HP_TOKENS.paper 
+          zIndex: 10
         }}>
           <input
             value={input} 
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && send()}
-            placeholder="Curhat, tanya, atau minta saran..."
+            disabled={typing}
+            placeholder="Ketik balasanmu di sini..."
             style={{
-              flex: 1, padding: '12px 16px', borderRadius: 99,
-              border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 14,
-              outline: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink,
+              flex: 1, padding: '16px 20px', borderRadius: 99,
+              border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 15,
+              outline: 'none', background: '#F8FAFC', color: HP_TOKENS.ink,
+              transition: 'border-color 0.2s'
             }}
+            onFocus={(e) => e.target.style.borderColor = HP_TOKENS.sage}
+            onBlur={(e) => e.target.style.borderColor = HP_TOKENS.line}
           />
           <button 
             onClick={() => send()} 
+            disabled={typing}
             style={{
-              width: 44, height: 44, borderRadius: 22, border: 'none', background: HP_TOKENS.sage,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0,
+              width: 52, height: 52, borderRadius: 26, border: 'none', background: HP_TOKENS.sage,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: typing ? 'default' : 'pointer', flexShrink: 0,
+              opacity: typing ? 0.6 : 1,
+              boxShadow: `0 4px 16px ${HP_TOKENS.sage}50`,
             }}
             className="hp-tap"
           >
-            <HPGlyph name="send" size={18} color="#F4F7F9"/>
+            <HPGlyph name="send" size={20} color="#F4F7F9"/>
           </button>
         </div>
       </div>
