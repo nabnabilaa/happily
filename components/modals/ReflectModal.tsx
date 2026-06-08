@@ -179,9 +179,10 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div style={{ ...HP_TEXT.h, fontSize: 15 }}>Target vs Realisasi</div>
             <div style={{ 
+              ...HP_TEXT.small,
               background: done.length === totalCount && totalCount > 0 ? HP_TOKENS.sage : HP_TOKENS.sageWash, 
               color: done.length === totalCount && totalCount > 0 ? '#fff' : HP_TOKENS.sage, 
-              padding: '4px 10px', borderRadius: 100, ...HP_TEXT.small, fontWeight: 800, fontSize: 12 
+              padding: '4px 10px', borderRadius: 100, fontWeight: 800, fontSize: 12 
             }}>
               {totalCount > 0 ? Math.round((done.length / totalCount) * 100) : 0}% Selesai
             </div>
