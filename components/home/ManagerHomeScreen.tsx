@@ -13,6 +13,8 @@ import AttendanceWidget from "@/components/home/AttendanceWidget";
 import SurveySection from "@/components/home/SurveySection";
 import PresenceBoard from "@/components/home/PresenceBoard";
 import TaskHarianWidget from "@/components/home/TaskHarianWidget";
+import { generateAIInsights } from "@/lib/aiInsights";
+import InsightCard from "@/components/home/InsightCard";
 
 interface Props { openModal: (name: string, props?: any) => void; }
 
@@ -32,6 +34,8 @@ export default function ManagerHomeScreen({ openModal }: Props) {
   const managerData = state?.managerData || { members: [], goals: [], approvals: [], teamTasks: [] };
   const { members, goals, approvals = [], teamTasks = [] } = managerData;
   const avgProgress = goals.length > 0 ? Math.round(goals.reduce((a: number, b: any) => a + Number(b.progress), 0) / goals.length) : 0;
+
+  const aiInsights = React.useMemo(() => generateAIInsights(state, user), [state, user]);
 
   const [currentPageApprovals, setCurrentPageApprovals] = useState(1);
   const [currentPagePendingTasks, setCurrentPagePendingTasks] = useState(1);
@@ -289,6 +293,16 @@ export default function ManagerHomeScreen({ openModal }: Props) {
 
         {/* Task Harian Widget for Manager (as an employee) */}
         <TaskHarianWidget openModal={openModal} />
+
+        {/* Professional Growth / AI Coach Insights */}
+        <div style={{ marginTop: 24 }}>
+          <SectionHeader icon="heart" label="AI Coach Insights" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {aiInsights.map((ins, i) => (
+              <InsightCard key={i} ins={ins} idx={i} />
+            ))}
+          </div>
+        </div>
 
         {/* Pending Approvals Widget */}
         {approvals.length > 0 && (

@@ -284,6 +284,38 @@ export async function POST() {
         FOREIGN KEY (user_id) REFERENCES users(id),
         UNIQUE(user_id, endpoint(255))
       )`
+    },
+    {
+      desc: "Create calendar_events table",
+      sql: `CREATE TABLE IF NOT EXISTS calendar_events (
+        id VARCHAR(100) PRIMARY KEY,
+        creator_id VARCHAR(100) NOT NULL,
+        title VARCHAR(500) NOT NULL,
+        description TEXT,
+        start_time DATETIME NOT NULL,
+        end_time DATETIME NOT NULL,
+        notification_offset_minutes INT DEFAULT 15,
+        recurrence VARCHAR(50),
+        recurrence_end DATETIME,
+        location VARCHAR(500),
+        event_type VARCHAR(50) DEFAULT 'event',
+        color VARCHAR(50) DEFAULT '#3B6FA0',
+        is_all_day BOOLEAN DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (creator_id) REFERENCES users(id)
+      )`
+    },
+    {
+      desc: "Create calendar_attendees table",
+      sql: `CREATE TABLE IF NOT EXISTS calendar_attendees (
+        event_id VARCHAR(100) NOT NULL,
+        user_id VARCHAR(100) NOT NULL,
+        status VARCHAR(20) DEFAULT 'pending',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (event_id, user_id),
+        FOREIGN KEY (event_id) REFERENCES calendar_events(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )`
     }
   ];
 

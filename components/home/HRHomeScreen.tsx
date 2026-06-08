@@ -12,6 +12,8 @@ import SurveySection from "@/components/home/SurveySection";
 import BurnoutAlertCard from "@/components/home/BurnoutAlertCard";
 import HRWellbeingDashboard from "@/components/home/HRWellbeingDashboard";
 import TaskHarianWidget from "@/components/home/TaskHarianWidget";
+import { generateAIInsights } from "@/lib/aiInsights";
+import InsightCard from "@/components/home/InsightCard";
 
 
 interface Props { openModal: (name: string, props?: any) => void; }
@@ -60,6 +62,8 @@ export default function HRHomeScreen({ openModal }: Props) {
 
   const { metrics: m, atRiskEmployees, deptPulse } = state.hrData;
   const levelProgress = calculateLevelProgress(user.points || 0);
+
+  const aiInsights = React.useMemo(() => generateAIInsights(state, user), [state, user]);
 
   return (
     <div style={{ position: 'relative', minHeight: '100%', paddingBottom: 120, fontFamily: HP_FONT }}>
@@ -177,6 +181,16 @@ export default function HRHomeScreen({ openModal }: Props) {
 
         {/* Task Harian Widget for HR (as an employee) */}
         <TaskHarianWidget openModal={openModal} />
+
+        {/* Professional Growth / AI Coach Insights */}
+        <div style={{ marginTop: 24 }}>
+          <SectionHeader icon="heart" label="AI Coach Insights" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {aiInsights.map((ins, i) => (
+              <InsightCard key={i} ins={ins} idx={i} />
+            ))}
+          </div>
+        </div>
 
         {/* Survey Section — for HR too (they are employees) */}
         <SurveySection openModal={openModal} />
