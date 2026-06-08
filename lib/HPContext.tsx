@@ -83,7 +83,7 @@ interface HPContextType {
   refreshSurveys: () => Promise<void>;
   resetData: () => Promise<void>;
   syncSkillProgress: (source: string, amount: number) => void;
-  awardXP: (actionType: string, description?: string) => Promise<void>;
+  awardXP: (actionType: string, description?: string, amount?: number) => Promise<void>;
   toasts: any[];
   notify: (title: string, message?: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
   dismissToast: (id: string) => void;
@@ -600,7 +600,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
     };
   }, [user, fetchData, fetchDashboards, refreshSurveys, notify]);
 
-  const awardXP = useCallback(async (actionType: string, description?: string) => {
+  const awardXP = useCallback(async (actionType: string, description?: string, amount?: number) => {
     const currentUser = userRef.current;
     if (!currentUser) return;
     if (typeof window !== "undefined" && !navigator.onLine) {
@@ -611,7 +611,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch("/api/xp/award", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: currentUser.id, actionType, description }),
+        body: JSON.stringify({ userId: currentUser.id, actionType, description, customAmount: amount }),
       });
       const data = await res.json();
       if (data.success) {

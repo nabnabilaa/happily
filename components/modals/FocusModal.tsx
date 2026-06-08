@@ -418,7 +418,7 @@ export default function FocusModal({ onClose }: FocusModalProps) {
                       <span>🧩</span> Ekstensi Belum Terpasang!
                     </div>
                     <ol style={{ ...HP_TEXT.body, fontSize: 12, color: 'rgba(255,255,255,0.85)', paddingLeft: 18, margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <li><a href="/focusbuddy-v9.zip" download style={{ color: HP_TOKENS.yellow, textDecoration: 'none', fontWeight: 800 }}>Download Extension (ZIP)</a></li>
+                      <li><a href="/focusbuddy.zip" download style={{ color: HP_TOKENS.yellow, textDecoration: 'none', fontWeight: 800 }}>Download Extension (ZIP)</a></li>
                       <li>Ekstrak file ZIP tersebut ke sebuah folder.</li>
                       <li>Buka <strong>chrome://extensions/</strong> di browser Chrome/Edge.</li>
                       <li>Aktifkan <strong>Developer mode</strong> di pojok kanan atas.</li>

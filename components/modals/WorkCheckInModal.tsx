@@ -259,7 +259,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
             />
           </div>
 
-          <div style={{ background: 'rgba(255,255,255,0.8)', padding: 16, borderRadius: 16, border: `1px solid ${HP_TOKENS.line}` }}>
+          <div style={{ background: HP_TOKENS.paper, padding: 16, borderRadius: 16, border: `1px solid ${HP_TOKENS.line}` }}>
             <div style={{ ...HP_TEXT.small, fontWeight: 800, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
               <HPGlyph name="book" size={14} color={HP_TOKENS.ink} />
               Catatan Progres (Realisasi)
@@ -275,7 +275,8 @@ Jawab dengan tone yang asik dan menyemangati.`,
                 }))}
                 style={{
                   flex: 2, padding: '12px', borderRadius: 12, border: `1px solid ${HP_TOKENS.lineSoft}`,
-                  fontFamily: HP_FONT, fontSize: 13, boxSizing: 'border-box', outline: 'none'
+                  fontFamily: HP_FONT, fontSize: 13, boxSizing: 'border-box', outline: 'none',
+                  background: 'transparent', color: HP_TOKENS.ink
                 }}
               />
               <input 
@@ -287,7 +288,8 @@ Jawab dengan tone yang asik dan menyemangati.`,
                 }))}
                 style={{
                   flex: 1, padding: '12px', borderRadius: 12, border: `1px solid ${HP_TOKENS.lineSoft}`,
-                  fontFamily: HP_FONT, fontSize: 13, boxSizing: 'border-box', outline: 'none'
+                  fontFamily: HP_FONT, fontSize: 13, boxSizing: 'border-box', outline: 'none',
+                  background: 'transparent', color: HP_TOKENS.ink
                 }}
               />
             </div>
@@ -299,7 +301,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
               style={{
                 width: '100%', padding: '12px', borderRadius: 12, border: `1px solid ${HP_TOKENS.lineSoft}`,
                 fontFamily: HP_FONT, fontSize: 13, minHeight: 80, boxSizing: 'border-box',
-                background: HP_TOKENS.card, outline: 'none', transition: '0.2s',
+                background: 'transparent', color: HP_TOKENS.ink, outline: 'none', transition: '0.2s',
                 lineHeight: 1.5
               }}
             />
@@ -310,7 +312,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
                 {['joy', 'calm', 'tired', 'stress'].map(m => (
                   <button key={m} onClick={() => setSelectedMood(m)} style={{
                     flex: 1, padding: '8px 0', borderRadius: 12,
-                    background: selectedMood === m ? `${getMoodColor(m)}20` : '#fff',
+                    background: selectedMood === m ? `${getMoodColor(m)}20` : HP_TOKENS.card,
                     border: selectedMood === m ? `1.5px solid ${getMoodColor(m)}` : `1.5px solid ${HP_TOKENS.lineSoft}`,
                     fontSize: 20, cursor: 'pointer', transition: '0.2s'
                   }}>

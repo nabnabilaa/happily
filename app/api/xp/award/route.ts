@@ -52,7 +52,7 @@ const TASK_ACTION_TYPES = ['task_approved', 'task_revised_approved', 'priority_c
 
 export async function POST(request: Request) {
   try {
-    const { userId, actionType, description, targetUserId } = await request.json();
+    const { userId, actionType, description, targetUserId, customAmount } = await request.json();
 
     if (!userId || !actionType) {
       return NextResponse.json({ error: "UserId and ActionType required" }, { status: 400 });
@@ -61,7 +61,10 @@ export async function POST(request: Request) {
     // Determine who gets the XP (default: userId, but targetUserId for apresiasi_received)
     const recipientId = targetUserId || userId;
 
-    const amount = XP_VALUES[actionType] || 5;
+    let amount = XP_VALUES[actionType] || 5;
+    if (actionType === 'daily_challenge' && typeof customAmount === 'number') {
+      amount = customAmount;
+    }
 
     // ── Anti-Abuse: Global Daily XP/Point Cap ───────────────────────
     try {

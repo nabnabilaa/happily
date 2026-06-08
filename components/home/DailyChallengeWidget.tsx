@@ -94,7 +94,7 @@ export default function DailyChallengeWidget() {
     const today = new Date().toISOString().slice(0, 10);
     localStorage.setItem(`hp_challenges_${today}`, JSON.stringify([...newClaimed]));
 
-    awardXP('daily_challenge', `Tantangan: ${challenge.title}`);
+    awardXP('daily_challenge', `Tantangan: ${challenge.title}`, challenge.points);
     notify('Tantangan Selesai! 🎉', `+${challenge.points} poin dari "${challenge.title}"`, 'success');
   };
 
