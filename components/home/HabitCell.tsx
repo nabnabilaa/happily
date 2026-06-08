@@ -111,7 +111,7 @@ export default function HabitCell({ h, onToggle, onQuickComplete, onFinish }: Ha
       }}
     >
 
-      {/* Floating +20 Poin */}
+      {/* Floating +15 Poin */}
       {showPoints && (
         <div style={{
           position: 'absolute', top: 10, right: 14,
@@ -121,7 +121,7 @@ export default function HabitCell({ h, onToggle, onQuickComplete, onFinish }: Ha
           animation: 'hpRise 1.2s ease-out forwards',
           pointerEvents: 'none', zIndex: 10,
         }}>
-          +20
+          +15
         </div>
       )}
 

@@ -14,14 +14,15 @@ import Modal from "@/components/ui/Modal";
 
 interface AppreciateModalProps {
   onClose: () => void;
+  toUser?: any;
 }
 
-export default function AppreciateModal({ onClose }: AppreciateModalProps) {
+export default function AppreciateModal({ onClose, toUser }: AppreciateModalProps) {
   const { state, updateState, user } = useHP();
-  const [to, setTo] = useState<any>(null);
+  const [to, setTo] = useState<any>(toUser || null);
   const [value, setValue] = useState<string | null>(null);
   const [msg, setMsg] = useState('');
-  const [people, setPeople] = useState<any[]>([]);
+  const [people, setPeople] = useState<any[]>(toUser ? [toUser] : []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -35,14 +36,20 @@ export default function AppreciateModal({ onClose }: AppreciateModalProps) {
         const data = await res.json();
         if (data.users) {
           // Filter out current user (can't appreciate yourself)
-          setPeople(data.users.filter((u: any) => String(u.id) !== String(user?.id)));
+          const filtered = data.users.filter((u: any) => String(u.id) !== String(user?.id));
+          setPeople(filtered);
+          
+          if (toUser) {
+            const match = filtered.find((u: any) => String(u.id) === String(toUser.id));
+            if (match) setTo(match);
+          }
         }
       } catch (e) {
         console.error('Failed to fetch users:', e);
       }
     }
     fetchUsers();
-  }, [user?.id]);
+  }, [user?.id, toUser]);
 
   const send = async () => {
     if (!to || !value || !msg || !state || !user) return;

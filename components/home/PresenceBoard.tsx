@@ -18,6 +18,8 @@ interface UserStatus {
   avatarImage: string | null;
   role: string;
   team: string;
+  points: number;
+  level: number;
   status: string;
   statusLabel: string;
   statusEmoji: string;
@@ -54,6 +56,12 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [showAll, setShowAll] = useState(false);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 3000);
+  };
 
   const fetchPresence = useCallback(async () => {
     if (typeof window !== "undefined" && !navigator.onLine) return;
@@ -125,7 +133,18 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
   }
 
   return (
-    <div>
+    <div style={{ position: 'relative' }}>
+      {toastMsg && (
+        <div style={{
+          position: 'fixed', bottom: 100, left: '50%', transform: 'translateX(-50%)',
+          background: 'rgba(26,29,35,0.9)', color: '#fff', padding: '12px 20px',
+          borderRadius: 100, fontFamily: HP_FONT, fontSize: 13, fontWeight: 700,
+          zIndex: 9999, animation: 'hpSlideUp 0.3s ease', boxShadow: '0 8px 24px rgba(0,0,0,0.15)'
+        }}>
+          {toastMsg}
+        </div>
+      )}
+
       {/* Summary Bar */}
       {summary && (
         <div style={{
@@ -199,72 +218,118 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
               border: `1.5px solid ${u.id === user?.id ? `${HP_TOKENS.yellow}40` : HP_TOKENS.line}`,
               background: u.id === user?.id ? HP_TOKENS.yellowSoft + '20' : HP_TOKENS.card,
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                {/* Avatar with status dot */}
-                <div style={{ position: 'relative', flexShrink: 0 }}>
-                  <HPAvatar name={u.name} size={44} />
-                  <div style={{
-                    position: 'absolute', bottom: -1, right: -1,
-                    width: 14, height: 14, borderRadius: 7,
-                    background: getStatusDotColor(u.status),
-                    border: '2.5px solid #fff',
-                    boxShadow: '0 1px 3px rgba(26,29,35,0.15)',
-                  }} />
-                </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  {/* Avatar with status dot */}
+                  <div style={{ position: 'relative', flexShrink: 0 }}>
+                    <HPAvatar name={u.name} size={44} />
+                    <div style={{
+                      position: 'absolute', bottom: -1, right: -1,
+                      width: 14, height: 14, borderRadius: 7,
+                      background: getStatusDotColor(u.status),
+                      border: '2.5px solid #fff',
+                      boxShadow: '0 1px 3px rgba(26,29,35,0.15)',
+                    }} />
+                  </div>
 
-                {/* Info */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <div style={{ ...HP_TEXT.h, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {u.name}
-                    </div>
-                    {u.id === user?.id && (
+                  {/* Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      <div style={{ ...HP_TEXT.h, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {u.name}
+                      </div>
                       <div style={{
                         padding: '1px 6px', borderRadius: 4, fontSize: 8, fontWeight: 800,
-                        background: HP_TOKENS.yellowSoft, color: '#8A6814', fontFamily: HP_FONT,
-                      }}>KAMU</div>
+                        background: '#FF6B3515', color: '#FF6B35', fontFamily: HP_FONT, border: '1px solid #FF6B3530'
+                      }}>
+                        Lv {u.level} • {u.points} pts
+                      </div>
+                      {u.id === user?.id && (
+                        <div style={{
+                          padding: '1px 6px', borderRadius: 4, fontSize: 8, fontWeight: 800,
+                          background: HP_TOKENS.yellowSoft, color: '#8A6814', fontFamily: HP_FONT,
+                        }}>KAMU</div>
+                      )}
+                    </div>
+                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 1 }}>
+                      {u.jobTitle || u.team}
+                    </div>
+                    {u.reason && (
+                      <div style={{
+                        ...HP_TEXT.tiny, color: HP_TOKENS.inkSoft, marginTop: 3,
+                        fontStyle: 'italic', fontSize: 10,
+                      }}>
+                        "{u.reason}"
+                      </div>
                     )}
                   </div>
-                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 1 }}>
-                    {u.jobTitle || u.team}
-                  </div>
-                  {u.reason && (
+
+                  {/* Status badge */}
+                  <div style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4,
+                    flexShrink: 0,
+                  }}>
                     <div style={{
-                      ...HP_TEXT.tiny, color: HP_TOKENS.inkSoft, marginTop: 3,
-                      fontStyle: 'italic', fontSize: 10,
+                      padding: '4px 10px', borderRadius: 8,
+                      background: `${getStatusDotColor(u.status)}15`,
+                      border: `1px solid ${getStatusDotColor(u.status)}30`,
+                      display: 'flex', alignItems: 'center', gap: 4,
                     }}>
-                      "{u.reason}"
+                      <span style={{ fontSize: 11 }}>{u.statusEmoji}</span>
+                      <span style={{
+                        fontFamily: HP_FONT, fontWeight: 800, fontSize: 10,
+                        color: getStatusDotColor(u.status),
+                      }}>
+                        {u.statusLabel}
+                      </span>
                     </div>
-                  )}
+                    {u.checkInType && u.todayCheckin && (
+                      <div style={{
+                        ...HP_TEXT.tiny, fontSize: 9, color: HP_TOKENS.inkFade,
+                      }}>
+                        {u.checkInType} · {new Date(u.todayCheckin).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {/* Status badge */}
-                <div style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4,
-                  flexShrink: 0,
-                }}>
-                  <div style={{
-                    padding: '4px 10px', borderRadius: 8,
-                    background: `${getStatusDotColor(u.status)}15`,
-                    border: `1px solid ${getStatusDotColor(u.status)}30`,
-                    display: 'flex', alignItems: 'center', gap: 4,
-                  }}>
-                    <span style={{ fontSize: 11 }}>{u.statusEmoji}</span>
-                    <span style={{
-                      fontFamily: HP_FONT, fontWeight: 800, fontSize: 10,
-                      color: getStatusDotColor(u.status),
-                    }}>
-                      {u.statusLabel}
-                    </span>
+                {/* Quick Actions (Only for other users) */}
+                {u.id !== user?.id && (
+                  <div style={{ display: 'flex', gap: 6, borderTop: `1px solid ${HP_TOKENS.lineSoft}`, paddingTop: 10, marginTop: -4 }}>
+                    <button 
+                      onClick={() => showToast(`Kamu menyapa ${u.name.split(' ')[0]}! 👋`)}
+                      className="hp-tap"
+                      style={{ 
+                        flex: 1, padding: '6px', borderRadius: 8, background: HP_TOKENS.paper, 
+                        border: `1px solid ${HP_TOKENS.line}`, color: HP_TOKENS.ink, fontSize: 11,
+                        fontFamily: HP_FONT, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
+                      }}>
+                      💬 Sapa
+                    </button>
+                    <button 
+                      onClick={() => openModal('appreciate', { toUser: u })}
+                      className="hp-tap"
+                      style={{ 
+                        flex: 1, padding: '6px', borderRadius: 8, background: HP_TOKENS.sageWash, 
+                        border: `1px solid ${HP_TOKENS.sage}40`, color: HP_TOKENS.sage, fontSize: 11,
+                        fontFamily: HP_FONT, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
+                      }}>
+                      🌱 Apresiasi
+                    </button>
+                    {(u.status === 'break' || u.status === 'away') && (
+                      <button 
+                        onClick={() => showToast(`Ajakan ngopi terkirim ke ${u.name.split(' ')[0]}! ☕`)}
+                        className="hp-tap"
+                        style={{ 
+                          flex: 1, padding: '6px', borderRadius: 8, background: HP_TOKENS.yellowSoft, 
+                          border: `1px solid ${HP_TOKENS.yellow}40`, color: '#8A6814', fontSize: 11,
+                          fontFamily: HP_FONT, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
+                        }}>
+                        ☕ Ajak Ngopi
+                      </button>
+                    )}
                   </div>
-                  {u.checkInType && u.todayCheckin && (
-                    <div style={{
-                      ...HP_TEXT.tiny, fontSize: 9, color: HP_TOKENS.inkFade,
-                    }}>
-                      {u.checkInType} · {new Date(u.todayCheckin).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
             </HPCard>
           ))

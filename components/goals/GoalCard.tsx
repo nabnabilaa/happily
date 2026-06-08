@@ -66,8 +66,12 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
     ? Math.round(childGoals.reduce((acc, curr) => acc + (curr.progress || 0), 0) / childGoals.length)
     : null;
 
-  // Final display progress
-  const displayProgress = g.progress || 0;
+  // Final display progress: prioritize auto-calculated from tasks/children
+  const displayProgress = hasTodayTasks && taskProgress !== null
+    ? taskProgress
+    : hasChildren && childrenProgress !== null
+      ? childrenProgress
+      : (g.progress || 0);
 
   const deleteGoal = () => {
     if (isReadOnly) return;

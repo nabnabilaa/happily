@@ -195,13 +195,22 @@ export default function FocusModal({ onClose }: FocusModalProps) {
     return () => clearInterval(id);
   }, [started, syncStatus, isMobile, user?.id]);
 
-  // Mobile Start
-  const handleMobileStart = useCallback(async () => {
+  // Start Focus Session (Desktop or Mobile)
+  const handleStart = useCallback(async () => {
     if (!user?.id) return;
     setStarted(true);
     setSecs(duration * 60);
     setSyncStatus('running');
     
+    if (!isMobile) {
+      setBlocking(true);
+      await sendToExtension('FB_FOCUS_START', { 
+        durationMins: duration,
+        sitesToBlock: selectedSites 
+      });
+      localStorage.setItem('fb_focus_active', 'true');
+    }
+
     await fetch('/api/focus/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -212,7 +221,7 @@ export default function FocusModal({ onClose }: FocusModalProps) {
         startedAt: Date.now()
       })
     });
-  }, [duration, user?.id]);
+  }, [duration, user?.id, isMobile, selectedSites]);
 
   const handleFocusEnd = useCallback(async () => {
     setSyncStatus('completed');
@@ -332,7 +341,7 @@ export default function FocusModal({ onClose }: FocusModalProps) {
             <div style={{ ...HP_TEXT.body, color: 'rgba(255,255,255,0.75)', marginTop: 8, maxWidth: 320, lineHeight: 1.5 }}>
               {isMobile 
                 ? "Layar HP ini akan mengunci fokusmu. Jangan buka tab atau aplikasi lain selama sesi berjalan!" 
-                : "Buka Flowbee di HP kamu untuk mengunci perangkat, atau scan QR code di bawah ini jika belum di-pin."}
+                : "Mulai sesi dari Desktop, atau scan QR code di bawah ini untuk memulai dari HP (Layar HP akan terkunci saat digunakan)."}
             </div>
 
             {/* Desktop Only: QR Code & Site Settings */}
@@ -402,54 +411,68 @@ export default function FocusModal({ onClose }: FocusModalProps) {
                   <div style={{ width: 8, height: 8, borderRadius: 4, background: HP_TOKENS.yellow }} />
                   Menunggu kamu memulai sesi di HP...
                 </div>
+
+                {!extensionAvailable && (
+                  <div style={{ marginTop: 24, padding: 16, background: 'rgba(0,0,0,0.2)', borderRadius: 12, textAlign: 'left', maxWidth: 340, width: '100%', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <div style={{ ...HP_TEXT.h, fontSize: 14, color: '#F4F7F9', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span>🧩</span> Ekstensi Belum Terpasang!
+                    </div>
+                    <ol style={{ ...HP_TEXT.body, fontSize: 12, color: 'rgba(255,255,255,0.85)', paddingLeft: 18, margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <li><a href="/focusbuddy-v9.zip" download style={{ color: HP_TOKENS.yellow, textDecoration: 'none', fontWeight: 800 }}>Download Extension (ZIP)</a></li>
+                      <li>Ekstrak file ZIP tersebut ke sebuah folder.</li>
+                      <li>Buka <strong>chrome://extensions/</strong> di browser Chrome/Edge.</li>
+                      <li>Aktifkan <strong>Developer mode</strong> di pojok kanan atas.</li>
+                      <li>Klik <strong>Load unpacked</strong> dan pilih folder hasil ekstrak tadi.</li>
+                      <li>Muat ulang (Refresh) halaman ini.</li>
+                    </ol>
+                  </div>
+                )}
               </>
             )}
 
-            {/* Mobile Only: Duration Selector & Start Button */}
-            {isMobile && (
-              <>
-                <div style={{ display: 'flex', gap: 10, marginTop: 36 }}>
-                  {[25, 45, 90].map(d => (
-                    <button 
-                      key={d} 
-                      onClick={() => { setDuration(d); setSecs(d * 60); }} 
-                      style={{
-                        padding: '14px 22px', 
-                        borderRadius: 99,
-                        background: duration === d ? '#fff' : 'rgba(255,255,255,0.15)',
-                        color: duration === d ? HP_TOKENS.sage : '#fff',
-                        border: 'none', 
-                        fontFamily: HP_FONT, 
-                        fontWeight: 800, 
-                        fontSize: 15, 
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {d} min
-                    </button>
-                  ))}
-                </div>
+            {/* Duration Selector & Start Button */}
+            <div style={{ display: 'flex', gap: 10, marginTop: 36 }}>
+              {[25, 45, 90].map(d => (
                 <button 
-                  onClick={handleMobileStart} 
+                  key={d} 
+                  onClick={() => { setDuration(d); setSecs(d * 60); }} 
                   style={{
-                    marginTop: 28, 
-                    padding: '16px 40px', 
+                    padding: '14px 22px', 
                     borderRadius: 99,
-                    background: HP_TOKENS.yellow, 
-                    color: HP_TOKENS.ink, 
-                    border: 'none',
+                    background: duration === d ? '#fff' : 'rgba(255,255,255,0.15)',
+                    color: duration === d ? HP_TOKENS.sage : '#fff',
+                    border: 'none', 
                     fontFamily: HP_FONT, 
                     fontWeight: 800, 
-                    fontSize: 16, 
+                    fontSize: 15, 
                     cursor: 'pointer',
-                    boxShadow: '0 6px 20px rgba(245,200,66,0.4)',
                   }}
-                  className="hp-tap"
                 >
-                  🔒 Mulai Fokus
+                  {d} min
                 </button>
-              </>
-            )}
+              ))}
+            </div>
+            <button 
+              onClick={handleStart} 
+              disabled={!isMobile && !extensionAvailable}
+              style={{
+                marginTop: 28, 
+                padding: '16px 40px', 
+                borderRadius: 99,
+                background: (!isMobile && !extensionAvailable) ? 'rgba(255,255,255,0.2)' : HP_TOKENS.yellow, 
+                color: (!isMobile && !extensionAvailable) ? 'rgba(255,255,255,0.5)' : HP_TOKENS.ink, 
+                border: 'none',
+                fontFamily: HP_FONT, 
+                fontWeight: 800, 
+                fontSize: 16, 
+                cursor: (!isMobile && !extensionAvailable) ? 'not-allowed' : 'pointer',
+                boxShadow: (!isMobile && !extensionAvailable) ? 'none' : '0 6px 20px rgba(245,200,66,0.4)',
+                transition: 'all 0.2s',
+              }}
+              className="hp-tap"
+            >
+              {isMobile ? "🔒 Mulai Fokus di HP" : "🧩 Kunci via Ekstensi"}
+            </button>
           </>
         ) : (
           <>

@@ -29,7 +29,7 @@ export async function GET(request: Request) {
 
     let query = `
       SELECT 
-        u.id, u.name, u.job_title, u.avatar_image, u.role,
+        u.id, u.name, u.job_title, u.avatar_image, u.role, u.points, u.level,
         t.name as team_name,
         us.status, us.reason, us.attachment_url, us.updated_at as status_since,
         a.check_in_at as today_checkin, a.check_out_at as today_checkout, a.check_in_type
@@ -82,6 +82,8 @@ export async function GET(request: Request) {
         jobTitle: r.job_title,
         avatarImage: r.avatar_image,
         role: r.role,
+        points: r.points || 0,
+        level: r.level || 1,
         team: r.team_name || 'Unassigned',
         status: effectiveStatus,
         statusLabel: meta.label,

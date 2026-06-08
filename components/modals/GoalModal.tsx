@@ -51,6 +51,33 @@ export default function GoalModal({ onClose, goal }: { onClose: () => void; goal
   const [selectedOwnerIds, setSelectedOwnerIds] = useState<string[]>(goal?.ownerId ? [String(goal.ownerId)] : []);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [managerKpis, setManagerKpis] = useState<any[]>([]);
+
+  // Fetch Manager KPIs for parent alignment options
+  React.useEffect(() => {
+    async function fetchManagerKpis() {
+      if (!user?.id) return;
+      try {
+        const m = new Date().getMonth() + 1;
+        const y = new Date().getFullYear();
+        const res = await fetch(`/api/kpi?userId=${user.id}&role=employee&month=${m}&year=${y}`);
+        const data = await res.json();
+        setManagerKpis((data.kpis || []).map((k: any) => ({
+          id: String(k.id),
+          title: k.title,
+          scope: 'assigned',
+          source: 'manager_kpi',
+        })));
+      } catch (e) { console.error(e); }
+    }
+    fetchManagerKpis();
+  }, [user?.id]);
+
+  // Check if this goal has linked tasks (auto-progress)
+  const linkedTaskCount = goal ? (state?.priorities || []).filter(
+    (p: any) => (p.goal_id && String(p.goal_id) === String(goal.id)) || (p.kpi_id && String(p.kpi_id) === String(goal.id))
+  ).length : 0;
+  const hasLinkedTasks = linkedTaskCount > 0;
 
   const allEmployees = state?.hrData?.members || state?.managerData?.members || [];
   const filteredEmployees = allEmployees.filter((e: any) => 
@@ -161,12 +188,24 @@ export default function GoalModal({ onClose, goal }: { onClose: () => void; goal
     (user?.role === 'hr') && { key: 'company', label: 'Company', desc: 'Visi besar organisasi', icon: 'leaf' },
   ].filter(Boolean) as any[];
 
-  const parentOptions = state?.goals.filter((g: any) => {
-    if (scope === 'personal') return g.scope === 'team' || g.scope === 'company' || g.scope === 'assigned';
-    if (scope === 'employee') return g.scope === 'team' || g.scope === 'company';
-    if (scope === 'team') return g.scope === 'company';
-    return false;
-  }) || [];
+  const parentOptions = React.useMemo(() => {
+    const goalsFromState = (state?.goals || []).filter((g: any) => {
+      if (scope === 'personal') return g.scope === 'team' || g.scope === 'company' || g.scope === 'assigned';
+      if (scope === 'employee') return g.scope === 'team' || g.scope === 'company';
+      if (scope === 'team') return g.scope === 'company';
+      return false;
+    }).map((g: any) => ({ ...g, source: g.scope === 'assigned' ? 'assigned_okr' : g.scope }));
+
+    // Merge Manager KPIs as parent options for personal goals
+    if (scope === 'personal') {
+      for (const kpi of managerKpis) {
+        if (!goalsFromState.some((g: any) => String(g.id) === String(kpi.id) || g.title?.toLowerCase() === kpi.title?.toLowerCase())) {
+          goalsFromState.push(kpi);
+        }
+      }
+    }
+    return goalsFromState;
+  }, [state?.goals, scope, managerKpis]);
 
   return (
     <Modal onClose={onClose} title={goal ? "Edit OKR" : "Set Strategi OKR"}>
@@ -210,16 +249,28 @@ export default function GoalModal({ onClose, goal }: { onClose: () => void; goal
             <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 700 }}>PROGRESS (%)</div>
             <div style={{ ...HP_TEXT.h, fontSize: 16, color: HP_TOKENS.sage }}>{progress}%</div>
           </div>
-          <input 
-            type="range" 
-            min="0" 
-            max="100" 
-            value={progress} 
-            onChange={e => setProgress(parseInt(e.target.value))}
-            style={{
-              width: '100%', marginTop: 12, accentColor: HP_TOKENS.sage, cursor: 'pointer'
-            }}
-          />
+          {hasLinkedTasks ? (
+            <div style={{ 
+              marginTop: 12, padding: '10px 14px', background: HP_TOKENS.sageWash, borderRadius: 10,
+              border: `1px solid ${HP_TOKENS.sage}20`, display: 'flex', alignItems: 'center', gap: 8
+            }}>
+              <HPGlyph name="target" size={14} color={HP_TOKENS.sage} />
+              <div style={{ ...HP_TEXT.small, color: HP_TOKENS.sage, fontWeight: 700, fontSize: 12 }}>
+                Progress dihitung otomatis dari {linkedTaskCount} task harian yang terhubung.
+              </div>
+            </div>
+          ) : (
+            <input 
+              type="range" 
+              min="0" 
+              max="100" 
+              value={progress} 
+              onChange={e => setProgress(parseInt(e.target.value))}
+              style={{
+                width: '100%', marginTop: 12, accentColor: HP_TOKENS.sage, cursor: 'pointer'
+              }}
+            />
+          )}
         </div>
 
         {(goal?.status === 'revision' || goal?.status === 'rejected') && (
@@ -328,9 +379,27 @@ export default function GoalModal({ onClose, goal }: { onClose: () => void; goal
               }}
             >
               <option value="">-- Berdiri Sendiri --</option>
-              {parentOptions.map((p: any) => (
-                <option key={p.id} value={p.id}>{p.title} ({p.scope})</option>
-              ))}
+              {parentOptions.filter((p: any) => p.source === 'manager_kpi').length > 0 && (
+                <optgroup label="📋 KPI dari Manager">
+                  {parentOptions.filter((p: any) => p.source === 'manager_kpi').map((p: any) => (
+                    <option key={p.id} value={p.id}>{p.title}</option>
+                  ))}
+                </optgroup>
+              )}
+              {parentOptions.filter((p: any) => p.source === 'assigned_okr').length > 0 && (
+                <optgroup label="🎯 OKR Assigned">
+                  {parentOptions.filter((p: any) => p.source === 'assigned_okr').map((p: any) => (
+                    <option key={p.id} value={p.id}>{p.title}</option>
+                  ))}
+                </optgroup>
+              )}
+              {parentOptions.filter((p: any) => p.source === 'team' || p.source === 'company').length > 0 && (
+                <optgroup label="🏢 OKR Tim / Perusahaan">
+                  {parentOptions.filter((p: any) => p.source === 'team' || p.source === 'company').map((p: any) => (
+                    <option key={p.id} value={p.id}>{p.title} ({p.scope})</option>
+                  ))}
+                </optgroup>
+              )}
             </select>
           </div>
         )}

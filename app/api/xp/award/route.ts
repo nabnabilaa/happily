@@ -9,12 +9,12 @@ const XP_VALUES: Record<string, number> = {
   check_in_ontime: 10,        // Clock-in sebelum 08:00
   check_in_late_minor: 5,     // Terlambat 1–15 menit
   check_in_late: 0,           // Terlambat > 15 menit
-  check_out: 100,             // Clock-out (Tutup Hari) -> Match Guide
+  check_out: 10,              // Clock-out (Tutup Hari) -> Match Guide
 
   // Tasks
-  task_approved: 50,           // Task disetujui Manager -> Match Guide
-  task_revised_approved: 25,   // Task direvisi lalu disetujui
-  priority_complete: 50,       // Legacy alias -> Match Guide
+  task_approved: 30,           // Task disetujui Manager -> Match Guide
+  task_revised_approved: 15,   // Task direvisi lalu disetujui
+  priority_complete: 30,       // Legacy alias -> Match Guide
 
   // Wellbeing
   mood_checkin: 5,             // Isi Mood & Energy (1x per hari)
@@ -33,15 +33,15 @@ const XP_VALUES: Record<string, number> = {
   streak_30: 200,              // Legacy alias (keeping for compat)
 
   // Survey
-  survey_complete: 5,          // Per survey diisi
+  survey_complete: 20,         // Per survey diisi
 
   // Other (legacy)
-  habit_complete: 20,          // Match Guide
-  daily_reflection: 100,       // Match Guide
+  habit_complete: 15,          // Match Guide
+  daily_reflection: 20,        // Match Guide
   focus_session: 5,
   check_in: 10,                // Legacy fallback
   goal_complete: 150,          // Legacy fallback → maps to kpi_achieved
-  learning_complete: 100,      // Match Guide
+  learning_complete: 50,       // Match Guide
   training_graduated: 500,     // For fully completing a long term daily training habit
 };
 
