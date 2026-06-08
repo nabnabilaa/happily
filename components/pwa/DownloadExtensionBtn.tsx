@@ -1,14 +1,28 @@
 'use client';
 
 import HPGlyph from '@/components/ui/HPGlyph';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useHP } from '@/lib/HPContext';
 
 export default function DownloadExtensionBtn() {
   const [isHovered, setIsHovered] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const { user, loading } = useHP();
 
-  if (loading || !user) return null;
+  useEffect(() => {
+    // Detect mobile device
+    const checkMobile = () => {
+      const userAgent = typeof window !== 'undefined' ? navigator.userAgent : '';
+      const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+      setIsMobile(mobileRegex.test(userAgent) || window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  if (loading || !user || isMobile) return null;
 
   return (
     <button
