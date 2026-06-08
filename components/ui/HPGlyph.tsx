@@ -214,13 +214,13 @@ export default function HPGlyph({ name, size = 24, color = "currentColor", strok
         <path d="M3 3v5h5" /><polyline points="12 7 12 12 16 14" />
       </svg>
     ),
-    edit: (
+    pencil: (
       <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
         <path d="m15 5 4 4" />
       </svg>
     ),
-    trash: (
+    delete: (
       <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
         <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
