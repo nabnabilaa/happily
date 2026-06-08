@@ -144,7 +144,7 @@ function StepItem({ num, text }: { num: number, text: React.ReactNode }) {
       }}>
         {num}
       </div>
-      <div style={{ ...HP_TEXT.base, color: HP_TOKENS.ink, lineHeight: 1.5, paddingTop: 4 }}>
+      <div style={{ ...HP_TEXT.body, color: HP_TOKENS.ink, lineHeight: 1.5, paddingTop: 4 }}>
         {text}
       </div>
     </div>
