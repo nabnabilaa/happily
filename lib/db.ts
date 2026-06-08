@@ -46,20 +46,27 @@ export const db = {
     try {
       const [rows] = await pool.execute(sqlString, sqlArgs);
       
-      // AUTO-EVENT TRIGGER
-      // REMOVED: Auto-emitting on every query causes infinite broadcast loops.
-      // Use manual hpEventEmitter.emit in specific route handlers instead.
-      // const isMutation = /^(INSERT|UPDATE|DELETE|REPLACE)\b/i.test(sqlString.trim());
-      // if (isMutation) {
-      //    import('@/lib/events').then(m => m.hpEventEmitter.emit('db_update', { type: 'refresh', timestamp: Date.now() })).catch(e => console.error("Event emit failed", e));
-      // }
-
       return {
         rows: Array.isArray(rows) ? rows : []
       };
     } catch (error) {
       console.error("Database query error:", error);
       throw error;
+    }
+  },
+  
+  transaction: async <T>(callback: (connection: mysql.PoolConnection) => Promise<T>): Promise<T> => {
+    const connection = await pool.getConnection();
+    await connection.beginTransaction();
+    try {
+      const result = await callback(connection);
+      await connection.commit();
+      return result;
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
     }
   }
 };

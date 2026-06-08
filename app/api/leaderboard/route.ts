@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 export async function GET() {
   try {
     const res = await db.execute(`
-      SELECT u.id, u.name, 
+      SELECT u.id, u.name, u.department as team_name,
              COALESCE(SUM(x.amount), 0) as points, 
              u.level, u.rank, u.avatar_image, u.avatar_config_json 
       FROM users u
@@ -13,15 +13,16 @@ export async function GET() {
         AND x.action_type != 'reward_redeem' 
         AND MONTH(x.created_at) = MONTH(CURRENT_DATE())
         AND YEAR(x.created_at) = YEAR(CURRENT_DATE())
-      GROUP BY u.id, u.name, u.level, u.rank, u.avatar_image, u.avatar_config_json
+      GROUP BY u.id, u.name, u.department, u.level, u.rank, u.avatar_image, u.avatar_config_json
       ORDER BY points DESC 
-      LIMIT 10
+      LIMIT 50
     `);
 
     const leaderboard = res.rows.map((r, index) => ({
       rank: index + 1,
       id: r.id,
       name: r.name,
+      team: r.team_name,
       points: r.points,
       level: r.level,
       tier: r.rank,

@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     
     // Fetch task and employee details for notification
     const taskRes = await db.execute({
-      sql: "SELECT user_id, title FROM daily_priorities WHERE id = ?",
+      sql: "SELECT user_id, title, goal_id FROM daily_priorities WHERE id = ?",
       args: [taskId]
     });
     const taskRow = taskRes.rows[0];
@@ -25,6 +25,7 @@ export async function POST(request: Request) {
 
     const employeeId = taskRow.user_id;
     const taskTitle = taskRow.title;
+    const goalId = taskRow.goal_id;
 
     let managerName = "Manager";
     if (managerId) {
@@ -42,6 +43,12 @@ export async function POST(request: Request) {
       sql: "UPDATE daily_priorities SET is_verified = 0, is_done = 0, status = ? WHERE id = ?",
       args: [action, taskId]
     });
+
+    // Recalculate progress for the goal
+    if (goalId) {
+      const { triggerRollupForGoal } = await import('@/lib/rollup');
+      await triggerRollupForGoal(goalId);
+    }
 
     const notifType = action === 'reject' ? 'task_rejected' : 'task_revision';
     await dispatchNotification(employeeId, notifType, {

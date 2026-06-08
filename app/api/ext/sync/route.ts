@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { hpEventEmitter } from "@/lib/events";
+import { triggerRollupForGoal } from "@/lib/rollup";
 
 function getCorsHeaders(request: Request) {
   const origin = request.headers.get("origin") || "*";
@@ -52,6 +53,7 @@ export async function POST(request: Request) {
 
     // ── TASKS SYNC ──
     if (tasks && Array.isArray(tasks)) {
+      const affectedGoalIds = new Set<string>();
       for (const t of tasks) {
         if (!t.id || !t.title) continue;
 
@@ -64,6 +66,8 @@ export async function POST(request: Request) {
           });
           if (goalExists.rows.length === 0) {
             verifiedGoalId = null;
+          } else {
+            affectedGoalIds.add(String(verifiedGoalId));
           }
         }
 
@@ -88,6 +92,11 @@ export async function POST(request: Request) {
           ]
         });
         tasksSynced++;
+      }
+      
+      // Trigger rollup for all affected goals
+      for (const gid of Array.from(affectedGoalIds)) {
+        await triggerRollupForGoal(gid);
       }
     }
 

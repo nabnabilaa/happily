@@ -185,14 +185,12 @@ export default function GoalModal({ onClose, goal }: { onClose: () => void; goal
     { key: 'personal', label: 'Personal', desc: 'Hanya untuk progres kamu', icon: 'sparkle' },
     (user?.role === 'manager' || user?.role === 'hr') && { key: 'employee', label: 'Assign', desc: 'Berikan OKR ke anggota tim', icon: 'people' },
     (user?.role === 'manager' || user?.role === 'hr') && { key: 'team', label: 'Team', desc: 'Target bersama satu divisi', icon: 'target' },
-    (user?.role === 'hr') && { key: 'company', label: 'Company', desc: 'Visi besar organisasi', icon: 'leaf' },
   ].filter(Boolean) as any[];
 
   const parentOptions = React.useMemo(() => {
     const goalsFromState = (state?.goals || []).filter((g: any) => {
-      if (scope === 'personal') return g.scope === 'team' || g.scope === 'company' || g.scope === 'assigned';
-      if (scope === 'employee') return g.scope === 'team' || g.scope === 'company';
-      if (scope === 'team') return g.scope === 'company';
+      if (scope === 'personal') return g.scope === 'team' || g.scope === 'assigned';
+      if (scope === 'employee') return g.scope === 'team';
       return false;
     }).map((g: any) => ({ ...g, source: g.scope === 'assigned' ? 'assigned_okr' : g.scope }));
 
@@ -393,10 +391,10 @@ export default function GoalModal({ onClose, goal }: { onClose: () => void; goal
                   ))}
                 </optgroup>
               )}
-              {parentOptions.filter((p: any) => p.source === 'team' || p.source === 'company').length > 0 && (
-                <optgroup label="🏢 OKR Tim / Perusahaan">
-                  {parentOptions.filter((p: any) => p.source === 'team' || p.source === 'company').map((p: any) => (
-                    <option key={p.id} value={p.id}>{p.title} ({p.scope})</option>
+              {parentOptions.filter((p: any) => p.source === 'team').length > 0 && (
+                <optgroup label="🏢 OKR Tim">
+                  {parentOptions.filter((p: any) => p.source === 'team').map((p: any) => (
+                    <option key={p.id} value={p.id}>{p.title}</option>
                   ))}
                 </optgroup>
               )}

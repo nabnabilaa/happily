@@ -286,6 +286,23 @@ export async function POST() {
       )`
     },
     {
+      desc: "Create active_challenges table",
+      sql: `CREATE TABLE IF NOT EXISTS active_challenges (
+        id VARCHAR(100) PRIMARY KEY,
+        user_id VARCHAR(100) NOT NULL,
+        title VARCHAR(500) NOT NULL,
+        description TEXT,
+        points INT DEFAULT 50,
+        progress INT DEFAULT 0,
+        target INT DEFAULT 1,
+        status VARCHAR(50) DEFAULT 'active',
+        expires_at DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_challenges_user (user_id),
+        INDEX idx_challenges_status (status)
+      )`
+    },
+    {
       desc: "Create calendar_events table",
       sql: `CREATE TABLE IF NOT EXISTS calendar_events (
         id VARCHAR(100) PRIMARY KEY,

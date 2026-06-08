@@ -143,6 +143,14 @@ export default function CoachModal({ onClose }: CoachModalProps) {
         .map((l: any) => `- ${l.date}: ${l.content.replace(/\n/g, ' ').substring(0, 100)}`)
         .join('\n');
 
+      // Format goals/OKRs
+      const goals = state?.goals || [];
+      const okrs = goals
+        .filter((g: any) => g.status === 'pending')
+        .slice(0, 3)
+        .map((g: any) => `- ${g.title} (Progress: ${g.progress}%)`)
+        .join('\n');
+
       const sysPrompt = `Kamu adalah Buddy, AI Coach pribadi di platform Flowbee. Kamu BUKAN chatbot general — kamu HANYA membahas topik terkait:
 - Mood & kesehatan mental karyawan
 - Produktivitas & manajemen task
@@ -173,12 +181,16 @@ STRATEGI COACHING:
 
 ### KONTEKS USER SAAT INI:
 - Nama: ${user?.name || 'Rekan Kerja'}
-- Role: ${user?.role || 'Employee'}  
+- Role: ${user?.role || 'Employee'}
+- Level Gamifikasi: ${user?.level || 1} (Total Poin: ${user?.points || 0})
 - Mood: ${currentMood}
 - Energi: ${currentEnergy}
 - Streak Check-in: ${streak} hari
 - Wellbeing Score: ${score}/100 (${status})
 - Task Progress: ${completedCount}/${totalCount} selesai
+
+### TARGET / OKR AKTIF:
+${okrs || 'Tidak ada target OKR aktif.'}
 
 ### TASK YANG BELUM SELESAI:
 ${pendingTasks || 'Tidak ada task pending.'}

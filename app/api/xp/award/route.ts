@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { calculateLevel, calculateRank } from "@/lib/xp";
 
 // ══════════════════════════════════════════════════════════════
 // XP Values — Spec v2 (Flowbee Feature Spec Revisi 2)
@@ -163,21 +164,22 @@ async function awardXPInternal(
   const coinsAmount = amount; // 1:1 Ratio (Koin and Poin are the same)
   const txId = "tx_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
 
-  // 1. Log Transaction
+  // 1 & 2. Atomic Transaction: Log Ledger & Update User
   try {
-    await db.execute({
-      sql: "INSERT INTO xp_transactions (id, user_id, amount, action_type, description) VALUES (?, ?, ?, ?, ?)",
-      args: [txId, recipientId, amount, actionType, description || actionType]
+    await db.transaction(async (conn) => {
+      await conn.execute(
+        "INSERT INTO xp_transactions (id, user_id, amount, action_type, description) VALUES (?, ?, ?, ?, ?)",
+        [txId, recipientId, amount, actionType, description || actionType]
+      );
+      await conn.execute(
+        "UPDATE users SET points = points + ?, coins = coins + ? WHERE id = ?",
+        [amount, amount, recipientId]
+      );
     });
-  } catch (e) {
-    console.warn("Failed to log XP transaction:", e);
+  } catch (error) {
+    console.error("XP Transaction Failed:", error);
+    return NextResponse.json({ error: "Transaction failed" }, { status: 500 });
   }
-
-  // 2. Update User Points & Coins (coins=coins+amount, points=points+amount)
-  await db.execute({
-    sql: "UPDATE users SET points = points + ?, coins = coins + ? WHERE id = ?",
-    args: [amount, amount, recipientId]
-  });
 
   // 3. Fetch new totals
   const res = await db.execute({
@@ -230,8 +232,9 @@ async function awardXPInternal(
   }
 
   // ── Level-up notification ──
-  const { level: oldLevel } = calculateLevelAndRank(newPoints - amount);
-  const { level: newLevel, rank: newRank } = calculateLevelAndRank(newPoints);
+  const oldLevel = calculateLevel(newPoints - amount);
+  const newLevel = calculateLevel(newPoints);
+  const newRank = calculateRank(newLevel);
   if (newLevel > oldLevel) {
     try {
       // FIX GHOST BUG: Save new level and rank to the database
@@ -300,29 +303,4 @@ const LOGBOOK_META: Record<string, { title: string; type: string; emoji: string 
   training_graduated: { title: 'Lulus Training', type: 'activity', emoji: '🎓' },
 };
 
-// ── Spec v2 Level System ──────────────────────────────────────
-function calculateLevelAndRank(points: number): { level: number; rank: string } {
-  let level = 1;
-  if (points < 0) {
-    level = 1;
-  } else if (points < 1000) {
-    level = Math.floor(points / 100) + 1;
-  } else if (points < 4000) {
-    const diff = points - 1000;
-    level = 11 + Math.floor(diff / 300);
-  } else {
-    const diff = points - 4000;
-    level = 21 + Math.floor(diff / 1000);
-  }
-
-  let rank = 'E';
-  if (level <= 10) rank = 'E';
-  else if (level <= 20) rank = 'D';
-  else if (level <= 35) rank = 'C';
-  else if (level <= 50) rank = 'B';
-  else if (level <= 70) rank = 'A';
-  else rank = 'S';
-
-  return { level, rank };
-}
 
