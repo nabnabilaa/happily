@@ -301,6 +301,9 @@ div, section, article, aside, nav, header, footer, main {
 
 /* AuthScreen Mobile Responsive */
 @media (max-width: 768px) {
+  .hp-mobile-hidden {
+    display: none !important;
+  }
   .hp-auth-hero { display: none !important; }
   .hp-auth-wrapper { flex-direction: column !important; }
   .hp-auth-wrapper ~ .hp-install-btn { display: none !important; }
@@ -441,6 +444,10 @@ div, section, article, aside, nav, header, footer, main {
 @media (min-width: 768px) {
   .hp-desktop-hidden {
     display: none !important;
+  }
+  
+  .hp-mobile-hidden {
+    display: flex !important;
   }
 
   .hp-app-container {

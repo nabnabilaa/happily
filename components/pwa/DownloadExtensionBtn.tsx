@@ -31,17 +31,25 @@ export default function DownloadExtensionBtn() {
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="hp-install-btn hp-tap"
+      className="hp-tap"
       style={{
-        bottom: 150, // Higher than install button
-        textDecoration: 'none',
-        transform: isHovered ? 'translateY(-2px)' : 'none',
-        transition: 'transform 0.2s ease, background 0.2s ease',
-        zIndex: 1001,
-        background: '#FF6B35',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        width: '100%',
+        padding: '12px 16px',
+        borderRadius: 14,
+        background: 'linear-gradient(135deg, var(--hp-yellow-light), var(--hp-yellow-dark))',
         color: '#fff',
         border: 'none',
-        cursor: 'pointer'
+        cursor: 'pointer',
+        textDecoration: 'none',
+        transform: isHovered ? 'translateY(-2px)' : 'none',
+        transition: 'all 0.2s ease',
+        boxShadow: isHovered ? '0 4px 12px var(--hp-yellow-soft)' : 'none',
+        fontWeight: 800,
+        fontSize: 13
       }}
     >
       <HPGlyph name="sparkle" size={18} stroke={2.5} color="#fff" />

@@ -4972,8 +4972,6 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
           <div class="fb-task-card-txt">${esc(task.text)}</div>
           <div class="fb-task-card-meta">
             ${task.kpiTitle ? `<span class="fb-task-kpi-tag">🎯 ${esc(task.kpiTitle)}</span>` : ''}
-            <span class="fb-task-pri-tag fb-pri-${task.priority}">${pcfg.label.replace(/🔴|🟡|🟢/, '').trim()}</span>
-            <span class="fb-task-time-tag">${relTimeTask(task.id)}</span>
             ${(task.timeTracked > 0 || task.timerStartedAt) ? `
               <span style="color:var(--fb-line); font-size:10px;">•</span>
               <span style="font-size:11px;">&#9201;&#65039;</span>
@@ -7400,6 +7398,11 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       if (event.data?.type === 'FLOWBEE_WEBSITE_UPDATE') {
         flowbeeSyncAll(true);
       }
+      if (event.data?.type === 'FLOWBEE_NUDGE') {
+        try {
+          chrome.storage.local.set({ fb_nudge: { title: event.data.title, message: event.data.message, ts: Date.now() } });
+        } catch (e) { /* silent */ }
+      }
       // ── Bridge website chat → ALL extension tabs via chrome.storage ──
       // Website fires FLOWBEE_CHAT_UPDATE after sending a message.
       // content.js on the website tab catches it here and writes to chrome.storage,
@@ -7523,6 +7526,35 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
                 ts: update.ts,
               }, '*');
             } catch (e) { /* silent */ }
+          }
+
+          // ── NUDGE ANIMATION ACROSS TABS ──
+          if (changes.fb_nudge && changes.fb_nudge.newValue) {
+            const nudge = changes.fb_nudge.newValue;
+            const badge = root.querySelector('#fb-badge');
+            const wrap = root.querySelector('#fb-svg-wrap');
+            if (badge && wrap) {
+              badge.textContent = nudge.message || nudge.title || 'Seseorang menyenggolmu! 👀';
+              badge.style.opacity = '1';
+              badge.style.transform = 'translateY(0) scale(1.1)';
+              badge.style.backgroundColor = 'rgba(74, 144, 226, 0.97)';
+              badge.style.color = '#fff';
+              badge.style.zIndex = '999999';
+              
+              const origAnim = wrap.style.animation;
+              wrap.style.animation = 'lompatRoket 0.4s ease-in-out 5 alternate';
+              
+              setTimeout(() => {
+                badge.style.opacity = '';
+                badge.style.transform = '';
+                badge.style.backgroundColor = '';
+                badge.style.color = '';
+                badge.style.zIndex = '';
+                wrap.style.animation = origAnim;
+                const cfg = STATES[currentState] || STATES.IDLE;
+                badge.textContent = cfg.badge;
+              }, 5000);
+            }
           }
           
           if (needsRenderTasks && typeof renderTasks === 'function') renderTasks();

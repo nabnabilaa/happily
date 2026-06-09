@@ -9,7 +9,7 @@ const genAI = new GoogleGenerativeAI(apiKey);
 
 export async function GET() {
   try {
-    const result = await db.execute(`SELECT * FROM mood_wall_posts ORDER BY created_at DESC LIMIT 50`);
+    const result = await db.execute(`SELECT * FROM mood_wall_posts WHERE DATE(created_at) = CURDATE() ORDER BY created_at DESC LIMIT 50`);
     return NextResponse.json({ posts: result.rows });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

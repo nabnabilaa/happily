@@ -21,6 +21,7 @@ import InstallButton from "@/components/pwa/InstallButton";
 import CalendarScreen from "@/components/home/CalendarScreen";
 import NotesScreen from "@/components/notes/NotesScreen";
 import ChatScreen from "@/components/home/ChatScreen";
+import TeamScreen from "@/components/team/TeamScreen";
 
 // ── Employee Screens ──
 import HomeScreen from "@/components/home/HomeScreen";
@@ -95,6 +96,7 @@ const EditUserModal = safeDynamic(() => import("@/components/modals/EditUserModa
 const CreateUserModal = safeDynamic(() => import("@/components/modals/CreateUserModal"));
 const DepartmentManagerModal = safeDynamic(() => import("@/components/modals/DepartmentManagerModal"));
 const MemberLogbookModal = safeDynamic(() => import("@/components/modals/MemberLogbookModal"));
+const MemberTaskModal = safeDynamic(() => import("@/components/modals/MemberTaskModal"));
 const ManageKPIModal = safeDynamic(() => import("@/components/modals/ManageKPIModal"));
 const WeeklyReviewModal = safeDynamic(() => import("@/components/modals/WeeklyReviewModal"));
 const MonthlyReportModal = safeDynamic(() => import("@/components/modals/MonthlyReportModal"));
@@ -307,7 +309,7 @@ function AppContent() {
     } catch (e) {
       console.error("Failed to sync onboarding status:", e);
     }
-    openModal('checkin');
+    // We don't open 'checkin' manually here anymore; the 800ms useEffect for DailyGreetingModal will handle the morning mood validation.
   };
 
   // ── Onboarding ──
@@ -331,6 +333,7 @@ function AppContent() {
     if (tab === 'calendar') return <CalendarScreen openModal={openModal} />;
     // Chat tab is shared across all roles
     if (tab === 'chat') return <ChatScreen openModal={openModal} />;
+    if (tab === 'team') return <TeamScreen openModal={openModal} />;
 
     // Employee
     if (currentRole === 'employee') {
@@ -539,7 +542,7 @@ function AppContent() {
       {modal?.name === 'notifications'    && <NotificationsModal onClose={closeModal} openModal={openModal} />}
 
       {modal?.name === 'new_goal'         && <GoalModal onClose={closeModal} {...modal.props} />}
-      {modal?.name === 'work_checkin'     && <WorkCheckInModal onClose={closeModal} {...modal.props} />}
+      {modal?.name === 'work_checkin'     && <WorkCheckInModal onClose={closeModal} openModal={openModal} {...modal.props} />}
       {modal?.name === 'manage_priorities'&& <ManagePrioritiesModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'manage_habits'    && <ManageHabitsModal onClose={closeModal} />}
       {modal?.name === 'manage_learning'  && <ManageLearningModal onClose={closeModal} />}
@@ -564,6 +567,7 @@ function AppContent() {
       {modal?.name === 'create_user'     && <CreateUserModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'manage_depts'    && <DepartmentManagerModal onClose={closeModal} />}
       {modal?.name === 'member_logbook'  && <MemberLogbookModal onClose={closeModal} {...modal.props} />}
+      {modal?.name === 'member_tasks'    && <MemberTaskModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'manage_kpi'      && <ManageKPIModal onClose={closeModal} />}
       {modal?.name === 'weekly_review'    && <WeeklyReviewModal onClose={closeModal} />}
       {modal?.name === 'monthly_report'   && <MonthlyReportModal onClose={closeModal} {...modal.props} />}

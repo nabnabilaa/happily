@@ -373,6 +373,7 @@ export async function POST() {
     { desc: "users.focus_task_id", sql: "ALTER TABLE users ADD COLUMN focus_task_id VARCHAR(255) DEFAULT NULL" },
     { desc: "users.focus_progress", sql: "ALTER TABLE users ADD COLUMN focus_progress INTEGER DEFAULT 0" },
     { desc: "users.focus_intention", sql: "ALTER TABLE users ADD COLUMN focus_intention TEXT DEFAULT NULL" },
+    { desc: "users.mood_key", sql: "ALTER TABLE users ADD COLUMN mood_key VARCHAR(50) DEFAULT NULL" },
 
     // ── Goals table ──
     { desc: "goals.parent_id", sql: "ALTER TABLE goals ADD COLUMN parent_id TEXT" },

@@ -119,6 +119,7 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
       working: '#2D8A4E', meeting: '#3B6FA0', break: '#D4A017',
       sick: '#E03131', izin: '#7B6BB5', cuti: '#2196F3',
       away: '#8A8A8A', offline: '#CCCCCC',
+      deep_work: '#5C3C92', stuck: '#E03131'
     };
     return map[status] || '#CCCCCC';
   };
@@ -217,7 +218,8 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
             <HPCard key={u.id} padding={12} style={{
               border: `1.5px solid ${u.id === user?.id ? `${HP_TOKENS.yellow}40` : HP_TOKENS.line}`,
               background: u.id === user?.id ? HP_TOKENS.yellowSoft + '20' : HP_TOKENS.card,
-            }}>
+              cursor: 'pointer'
+            }} onClick={() => openModal('member_tasks', { targetUserId: u.id, targetUserName: u.name })}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   {/* Avatar with status dot */}
@@ -256,8 +258,10 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
                     </div>
                     {u.reason && (
                       <div style={{
-                        ...HP_TEXT.tiny, color: HP_TOKENS.inkSoft, marginTop: 3,
+                        ...HP_TEXT.tiny, color: u.status === 'stuck' ? HP_TOKENS.coral : HP_TOKENS.inkSoft, marginTop: 3,
                         fontStyle: 'italic', fontSize: 10,
+                        background: u.status === 'stuck' ? HP_TOKENS.coralSoft : 'transparent',
+                        padding: u.status === 'stuck' ? '4px 6px' : 0, borderRadius: 4
                       }}>
                         "{u.reason}"
                       </div>
@@ -297,7 +301,8 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
                 {u.id !== user?.id && (
                   <div style={{ display: 'flex', gap: 6, borderTop: `1px solid ${HP_TOKENS.lineSoft}`, paddingTop: 10, marginTop: -4 }}>
                     <button 
-                      onClick={async () => {
+                      onClick={async (e) => {
+                        e.stopPropagation();
                         try {
                           await fetch("/api/status/greet", {
                             method: "POST",
@@ -315,10 +320,13 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
                         border: `1px solid ${HP_TOKENS.line}`, color: HP_TOKENS.ink, fontSize: 11,
                         fontFamily: HP_FONT, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
                       }}>
-                      💬 Sapa
+                      👀 Senggol
                     </button>
                     <button 
-                      onClick={() => openModal('appreciate', { toUser: u })}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openModal('appreciate', { toUser: u })
+                        }}
                       className="hp-tap"
                       style={{ 
                         flex: 1, padding: '6px', borderRadius: 8, background: HP_TOKENS.sageWash, 
@@ -329,7 +337,8 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
                     </button>
                     {(u.status === 'break' || u.status === 'away') && (
                       <button 
-                        onClick={async () => {
+                        onClick={async (e) => {
+                          e.stopPropagation();
                           try {
                             await fetch("/api/status/greet", {
                               method: "POST",
@@ -348,6 +357,30 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
                           fontFamily: HP_FONT, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
                         }}>
                         ☕ Ajak Ngopi
+                      </button>
+                    )}
+                    {u.status === 'stuck' && (
+                      <button 
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          try {
+                            await fetch("/api/status/greet", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ senderId: user?.id, senderName: user?.name, receiverId: u.id, type: 'help' })
+                            });
+                            showToast(`Bantuan ditawarkan ke ${u.name.split(' ')[0]}! 🤝`);
+                          } catch (err) {
+                            showToast("Gagal menawarkan bantuan 😥");
+                          }
+                        }}
+                        className="hp-tap"
+                        style={{ 
+                          flex: 1, padding: '6px', borderRadius: 8, background: HP_TOKENS.coral, 
+                          border: `1px solid ${HP_TOKENS.coral}`, color: '#fff', fontSize: 11,
+                          fontFamily: HP_FONT, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
+                        }}>
+                        🤝 Tawarkan Bantuan
                       </button>
                     )}
                   </div>

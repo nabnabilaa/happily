@@ -5,6 +5,7 @@ import { HP_TOKENS, HP_FONT, HP_FONT_DISPLAY } from "@/lib/constants";
 import { UserRole } from "@/lib/HPContext";
 import HPGlyph from "@/components/ui/HPGlyph";
 import BeeMascot from "@/components/ui/BeeMascot";
+import DownloadExtensionBtn from "@/components/pwa/DownloadExtensionBtn";
 
 interface TabNavProps {
   tab: string;
@@ -17,6 +18,7 @@ const TAB_CONFIG: Record<UserRole, Array<{ key: string; label: string; icon: str
     { key: 'home',      label: 'Home',       icon: 'home' },
     { key: 'calendar',  label: 'Calendar',   icon: 'calendar' },
     { key: 'goals',     label: 'Goals',      icon: 'target' },
+    { key: 'team',      label: 'Tim',        icon: 'people' },
     { key: 'recognize', label: 'Rewards',    icon: 'trophy' },
     { key: 'chat',      label: 'Chat',       icon: 'activity' },
     { key: 'notes',     label: 'Catatan',    icon: 'book' },
@@ -25,6 +27,7 @@ const TAB_CONFIG: Record<UserRole, Array<{ key: string; label: string; icon: str
     { key: 'home',      label: 'Dashboard',  icon: 'home' },
     { key: 'calendar',  label: 'Calendar',   icon: 'calendar' },
     { key: 'goals',     label: 'Tim & KPI',  icon: 'target' },
+    { key: 'team',      label: 'Tim',        icon: 'people' },
     { key: 'recognize', label: 'Rewards',    icon: 'trophy' },
     { key: 'chat',      label: 'Chat',       icon: 'activity' },
     { key: 'notes',     label: 'Catatan',    icon: 'book' },
@@ -33,6 +36,7 @@ const TAB_CONFIG: Record<UserRole, Array<{ key: string; label: string; icon: str
     { key: 'home',      label: 'Dashboard',  icon: 'home' },
     { key: 'calendar',  label: 'Calendar',   icon: 'calendar' },
     { key: 'goals',     label: 'People',     icon: 'people' },
+    { key: 'team',      label: 'Tim',        icon: 'people' },
     { key: 'recognize', label: 'Rewards',    icon: 'trophy' },
     { key: 'chat',      label: 'Chat',       icon: 'activity' },
     { key: 'notes',     label: 'Catatan',    icon: 'book' },
@@ -111,6 +115,11 @@ export default function TabNav({ tab, setTab, userRole }: TabNavProps) {
           </button>
         );
       })}
+
+      <div className="hp-mobile-hidden" style={{ flex: 1 }} />
+      <div className="hp-mobile-hidden" style={{ padding: '0 12px 16px 12px', width: '100%', boxSizing: 'border-box' }}>
+        <DownloadExtensionBtn />
+      </div>
     </div>
   );
 }

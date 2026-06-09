@@ -11,7 +11,7 @@ import BlobBackground from "@/components/home/BlobBackground";
 import BeeMascot, { getMoodColor } from "@/components/ui/BeeMascot";
 import AttendanceWidget from "@/components/home/AttendanceWidget";
 import SurveySection from "@/components/home/SurveySection";
-import PresenceBoard from "@/components/home/PresenceBoard";
+
 import TaskHarianWidget from "@/components/home/TaskHarianWidget";
 import { generateAIInsights } from "@/lib/aiInsights";
 import InsightCard from "@/components/home/InsightCard";
@@ -605,10 +605,7 @@ export default function ManagerHomeScreen({ openModal }: Props) {
           </div>
         )}
 
-        <div style={{ marginTop: 16 }}>
-          <SectionHeader icon="people" label="Status Tim" count={`${members.length} orang`} />
-          <PresenceBoard openModal={openModal} />
-        </div>
+
 
 
 

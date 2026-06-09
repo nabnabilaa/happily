@@ -478,6 +478,15 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         }
         // Internal UI Notification
         notify(data.title || "Pesan Baru", data.text, "info");
+
+        // Broadcast to extension to trigger Mascot Nudge across tabs
+        if (typeof window !== "undefined") {
+          window.postMessage({
+            type: "FLOWBEE_NUDGE",
+            title: data.title,
+            message: data.text
+          }, "*");
+        }
       }
     };
 
@@ -597,6 +606,9 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ userId: currentUser.id, actionType, description, customAmount: amount }),
       });
       const data = await res.json();
+      if (data.capped) {
+        notify("Batas Poin", data.message, "warning");
+      }
       if (data.success) {
         updateUser({ points: data.newTotal, coins: data.newTotal });
         updateState((s: any) => ({ ...s, points: data.newTotal, coins: data.newTotal }));
@@ -613,7 +625,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         console.error("Failed to award XP:", e);
       }
     }
-  }, [updateUser, updateState]);
+  }, [updateUser, updateState, notify]);
 
   const refresh = useCallback(async () => {
     if (userRef.current?.id) {

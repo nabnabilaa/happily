@@ -30,9 +30,8 @@ import AttendanceWidget from "@/components/home/AttendanceWidget";
 import TaskHarianWidget from "@/components/home/TaskHarianWidget";
 import DailyChallengeWidget from "@/components/home/DailyChallengeWidget";
 import SurveySection from "@/components/home/SurveySection";
-import PresenceBoard from "@/components/home/PresenceBoard";
-import NotificationBanner from "@/components/pwa/NotificationBanner";
 import LeaderboardWidget from "@/components/home/LeaderboardWidget";
+import NotificationBanner from "@/components/pwa/NotificationBanner";
 import MoodWall from "@/components/home/MoodWall";
 
 
@@ -869,14 +868,7 @@ export default function HomeScreen({ openModal }: any) {
         {/* Survey Section — Smart targeting + internal questions */}
         <SurveySection openModal={openModal} />
 
-        {/* Presence Board — Team status */}
-        <div style={{ marginTop: 24 }}>
-          <SectionHeader icon="people" label="Status Tim" />
-          <PresenceBoard openModal={openModal} />
-        </div>
 
-        {/* Leaderboard Tim */}
-        <LeaderboardWidget currentUserId={user.id} />
 
         {/* Daily Training Habits */}
         <div style={{ marginTop: 24 }}>
@@ -910,8 +902,7 @@ export default function HomeScreen({ openModal }: any) {
           </div>
         </div>
 
-        {/* Anonymous Mood Wall */}
-        {/* <MoodWall /> */}
+
 
         {/* Closing actions */}
         <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', gap: 12 }}>

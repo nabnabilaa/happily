@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { HP_TOKENS, HP_FONT, HP_FONT_DISPLAY } from "@/lib/constants";
+import { HP_TOKENS, HP_FONT, HP_FONT_DISPLAY, HP_MOODS } from "@/lib/constants";
 import BeeMascot from "@/components/ui/BeeMascot";
+import HPGlyph from "@/components/ui/HPGlyph";
+import { useHP } from "@/lib/HPContext";
 
 interface DailyGreetingModalProps {
   userName: string;
@@ -35,8 +37,8 @@ const QUOTES = [
 ];
 
 export default function DailyGreetingModal({ userName, streak, level, onClose, onOpenCheckIn }: DailyGreetingModalProps) {
+  const { updateState } = useHP();
   const [phase, setPhase] = useState<'greet' | 'closing'>('greet');
-  const [quote] = useState(() => QUOTES[Math.floor(Math.random() * QUOTES.length)]);
   const greeting = getGreeting();
 
   // Bersihkan nama dari "(Emp)" dsb
@@ -54,8 +56,11 @@ export default function DailyGreetingModal({ userName, streak, level, onClose, o
     setTimeout(onClose, 350);
   };
 
-  const handleCheckIn = () => {
+  const handleCheckIn = (selectedMood?: string) => {
     setPhase('closing');
+    if (selectedMood) {
+      updateState({ mood: selectedMood });
+    }
     setTimeout(() => {
       onClose();
       onOpenCheckIn?.();
@@ -66,9 +71,9 @@ export default function DailyGreetingModal({ userName, streak, level, onClose, o
     <div
       style={{
         position: 'fixed', inset: 0, zIndex: 1100,
-        background: 'rgba(5, 5, 10, 0.65)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+        background: 'rgba(26,26,46,0.45)', // standard modal overlay
+        backdropFilter: 'blur(4px)',
+        WebkitBackdropFilter: 'blur(4px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: 24,
         animation: phase === 'closing' ? 'dgFadeOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'hpFadeIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)',
@@ -112,142 +117,80 @@ export default function DailyGreetingModal({ userName, streak, level, onClose, o
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: 360,
-          borderRadius: 32,
-          background: 'linear-gradient(145deg, rgba(35, 35, 55, 0.9) 0%, rgba(20, 20, 35, 0.95) 100%)',
-          boxShadow: '0 30px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1), inset 0 0 20px rgba(255,255,255,0.02)',
-          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 24,
+          background: 'var(--hp-card)',
+          boxShadow: '0 8px 32px rgba(29,53,87,0.12)',
+          border: '1px solid var(--hp-border)',
           position: 'relative',
-          padding: '48px 24px 32px',
+          padding: '40px 20px 24px',
           animation: phase === 'closing'
             ? 'dgCardOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards'
             : 'dgCardIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',
         }}
       >
-        {/* Glow Effects behind the card */}
+        {/* Glow Effects behind the mascot */}
         <div style={{
-          position: 'absolute', top: '-20%', left: '50%',
-          width: 250, height: 250, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,107,53,0.25) 0%, transparent 70%)',
+          position: 'absolute', top: '-15%', left: '50%',
+          width: 200, height: 200, borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(255,107,53,0.15) 0%, transparent 70%)',
           pointerEvents: 'none', zIndex: 0,
           animation: 'glowPulse 4s ease-in-out infinite'
         }} />
         
         {/* ── Peeking Buddy Mascot ────────────────────────────────────────── */}
         <div style={{ 
-          position: 'absolute', top: -55, left: '50%', transform: 'translateX(-50%)',
-          zIndex: 10, filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))'
+          position: 'absolute', top: -45, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 10, filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.1))'
         }}>
           <div style={{ animation: 'hpFloat 3.5s ease-in-out infinite' }}>
-            <BeeMascot mood={greeting.buddyMood as any} size={100} animated />
+            <BeeMascot mood={greeting.buddyMood as any} size={85} animated />
           </div>
         </div>
 
         <div style={{ position: 'relative', zIndex: 2, textAlign: 'center' }}>
           
-          <h2 className="dg-gradient-text" style={{
-            fontFamily: HP_FONT_DISPLAY, fontSize: 28, fontWeight: 800,
-            lineHeight: 1.2, marginBottom: 8, letterSpacing: '-0.02em'
+          <h2 style={{
+            fontFamily: HP_FONT_DISPLAY, fontSize: 24, fontWeight: 800,
+            lineHeight: 1.2, marginBottom: 8, letterSpacing: '-0.02em',
+            color: 'var(--hp-ink)'
           }}>
             Hai, {cleanName}!
           </h2>
           <p style={{
-            fontSize: 15, color: 'rgba(255,255,255,0.8)', fontWeight: 500,
-            marginBottom: 24, lineHeight: 1.5
+            fontSize: 14, color: 'var(--hp-ink-soft)', fontWeight: 500,
+            marginBottom: 20, lineHeight: 1.5
           }}>
-            {greeting.intro}
+            Yuk, isi sebentar untuk tahu bagaimana kondisimu pagi ini 🌱
           </p>
 
-          {/* ── Quote Box ─────────────────────────────────────────────────── */}
-          <div style={{
-            background: 'rgba(255,255,255,0.04)', borderRadius: 20,
-            padding: '16px 20px', marginBottom: 28,
-            border: '1px solid rgba(255,255,255,0.06)',
-            borderLeft: '4px solid #FFBE0B',
-            textAlign: 'left',
-            position: 'relative'
-          }}>
-            <span style={{ 
-              position: 'absolute', top: -12, left: 16, fontSize: 24, 
-              color: '#FFBE0B', opacity: 0.8, fontFamily: 'serif', fontWeight: 900,
-              background: 'linear-gradient(145deg, rgba(35, 35, 55, 1) 0%, rgba(20, 20, 35, 1) 100%)',
-              padding: '0 4px', lineHeight: 1
-            }}>
-              "
-            </span>
-            <p style={{ 
-              fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.9)', 
-              lineHeight: 1.6, margin: 0, fontStyle: 'italic'
-            }}>
-              {quote}
-            </p>
-          </div>
-
-          {/* ── Stats Row ─────────────────────────────────────────────────── */}
-          <div style={{
-            display: 'flex', gap: 12, marginBottom: 32,
-          }}>
-            {/* Streak */}
-            <div style={{
-              flex: 1, padding: '14px 12px', borderRadius: 20,
-              background: 'linear-gradient(145deg, rgba(255,107,53,0.1) 0%, rgba(255,107,53,0.02) 100%)',
-              border: '1px solid rgba(255,107,53,0.2)',
-              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)',
-              display: 'flex', flexDirection: 'column', alignItems: 'center'
-            }}>
-              <div style={{ fontSize: 22, marginBottom: 6, filter: 'drop-shadow(0 2px 4px rgba(255,107,53,0.4))' }}>🔥</div>
-              <div style={{ fontSize: 22, fontWeight: 900, color: '#fff', fontFamily: HP_FONT_DISPLAY, lineHeight: 1 }}>
-                {streak}
-              </div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 1, marginTop: 4 }}>
-                Streak
-              </div>
-            </div>
-
-            {/* Level */}
-            <div style={{
-              flex: 1, padding: '14px 12px', borderRadius: 20,
-              background: 'linear-gradient(145deg, rgba(46,196,182,0.1) 0%, rgba(46,196,182,0.02) 100%)',
-              border: '1px solid rgba(46,196,182,0.2)',
-              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)',
-              display: 'flex', flexDirection: 'column', alignItems: 'center'
-            }}>
-              <div style={{ fontSize: 22, marginBottom: 6, filter: 'drop-shadow(0 2px 4px rgba(46,196,182,0.4))' }}>⭐</div>
-              <div style={{ fontSize: 22, fontWeight: 900, color: '#fff', fontFamily: HP_FONT_DISPLAY, lineHeight: 1 }}>
-                Lv.{level}
-              </div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 1, marginTop: 4 }}>
-                Level
-              </div>
-            </div>
+          {/* ── Mood Selector ──────────────────────────────────────────────── */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6, marginBottom: 24 }}>
+            {HP_MOODS.map(m => (
+              <button key={m.key} onClick={() => handleCheckIn(m.key)} className="hp-tap-btn" style={{
+                flex: 1, padding: '12px 4px', borderRadius: 16,
+                background: 'var(--hp-card)',
+                border: '1.5px solid var(--hp-line)',
+                cursor: 'pointer', fontFamily: HP_FONT, display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center',
+                transition: 'all 180ms',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <HPGlyph name={m.glyph} size={26} color={HP_TOKENS[m.tone as keyof typeof HP_TOKENS] || 'var(--hp-ink)'} />
+                </div>
+                <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--hp-ink-soft)' }}>{m.label}</div>
+              </button>
+            ))}
           </div>
 
           {/* ── Buttons ───────────────────────────────────────────────────── */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <button
-              onClick={handleCheckIn}
-              className="hp-tap-btn"
-              style={{
-                width: '100%', padding: '16px', borderRadius: 16,
-                border: 'none',
-                background: 'linear-gradient(135deg, #FFBE0B 0%, #FF6B35 100%)',
-                color: '#fff',
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16,
-                cursor: 'pointer',
-                boxShadow: '0 8px 20px rgba(255,107,53,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
-              }}
-            >
-              <span>Check-in Mood</span>
-              <span style={{ fontSize: 18 }}>🌱</span>
-            </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <button
               onClick={handleClose}
               className="hp-tap-btn"
               style={{
-                width: '100%', padding: '14px', borderRadius: 16,
-                border: '1px solid rgba(255,255,255,0.1)',
-                background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.6)',
-                fontFamily: HP_FONT, fontWeight: 700, fontSize: 15,
+                width: '100%', padding: '12px', borderRadius: 16,
+                border: '1px solid var(--hp-line)',
+                background: 'transparent', color: 'var(--hp-ink-fade)',
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 14,
                 cursor: 'pointer',
               }}
             >

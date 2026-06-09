@@ -15,9 +15,10 @@ import TaskCompleteModal from "@/components/modals/TaskCompleteModal";
 
 interface WorkCheckInModalProps {
   onClose: () => void;
+  openModal?: (name: string, props?: any) => void;
 }
 
-export default function WorkCheckInModal({ onClose }: WorkCheckInModalProps) {
+export default function WorkCheckInModal({ onClose, openModal }: WorkCheckInModalProps) {
   const { state, updateState, user, awardXP } = useHP();
   const [aiResponse, setAiResponse] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -377,8 +378,23 @@ Jawab dengan tone yang asik dan menyemangati.`,
           </HPCard>
         ))}
         {totalCount === 0 && (
-          <div style={{ textAlign: 'center', padding: '20px', color: HP_TOKENS.inkMute }}>
-            Belum ada target untuk hari ini.
+          <div style={{ textAlign: 'center', padding: '24px 20px', color: HP_TOKENS.inkMute, background: HP_TOKENS.card, borderRadius: 16, border: `1.5px dashed ${HP_TOKENS.line}` }}>
+            <div style={{ marginBottom: 16, fontSize: 14, fontWeight: 500 }}>Belum ada target untuk hari ini.</div>
+            <button 
+              onClick={() => {
+                onClose();
+                openModal?.('manage_priorities');
+              }}
+              className="hp-tap"
+              style={{
+                padding: '12px 24px', borderRadius: 99,
+                background: 'var(--hp-primary)', color: '#fff',
+                border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 13,
+                cursor: 'pointer', boxShadow: '0 4px 12px rgba(255,107,53,0.3)'
+              }}
+            >
+              + Tambah Task
+            </button>
           </div>
         )}
       </div>
