@@ -4,75 +4,139 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FocusBuddy Extension</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="app-container">
+    <div id="app" class="app-container">
         <!-- Header -->
-        <header class="header">
-            <h1 class="logo">FocusBuddy</h1>
-            <button class="icon-button" aria-label="Settings">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="3"></circle>
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                </svg>
-            </button>
-        </header>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Attendance / Clock-in Section -->
-            <div class="attendance-section">
-                <div class="schedule-card">
-                    <div class="schedule-col">
-                        <span class="schedule-label">JAM KERJA</span>
-                        <span class="schedule-time">08:00 - 17:00</span>
-                    </div>
-                    <div class="schedule-col">
-                        <span class="schedule-label">ISTIRAHAT</span>
-                        <span class="schedule-time">12:00 - 13:00</span>
-                    </div>
+        <header class="app-header">
+            <!-- Idle Header (Inbox) -->
+            <div class="header-left" id="header-left-idle">
+                <div class="avatar-circle focus-avatar">
+                    <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Focus" alt="Profile" />
                 </div>
-                <button class="clock-in-btn">
-                    ⚠️ Belum Clock-in — Klik untuk absen
-                </button>
-            </div>
-
-            <div class="status-section">
-                <h2 class="status-title">Ready to Focus</h2>
-                <p class="status-desc">Minimize distractions and boost productivity.</p>
+                <div class="header-text">
+                    <span class="header-title">FocusBuddy</span>
+                    <span class="badge">EMPLOYEE</span>
+                </div>
             </div>
             
-            <div class="timer-card">
-                <div class="timer-display">
-                    <span id="timer-min">00</span>
-                    <span class="timer-colon">:</span>
-                    <span id="timer-sec">00</span>
-                    <span class="timer-dot">.</span>
-                    <span id="timer-ms">00</span>
+            <!-- Active Chat Header -->
+            <div class="header-left hidden" id="header-left-chat">
+                <button id="btn-back" class="icon-btn back-btn">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <div class="avatar-circle ac-avatar">AC</div>
+                <div class="header-text">
+                    <span class="header-title">Alice Cooper</span>
+                    <span class="status-text">Online</span>
                 </div>
-                
-                <div class="timer-actions">
-                    <button id="btn-reset" class="btn-timer btn-reset">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-9.21l5.25 5.25"/></svg>
-                        Reset
-                    </button>
-                    <button id="btn-start-stop" class="btn-timer btn-start">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="icon-play"><path d="M5 3l14 9-14 9V3z"/></svg>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="icon-stop" style="display:none;"><path d="M6 6h12v12H6z"/></svg>
-                        <span id="start-stop-text">Start</span>
-                    </button>
+            </div>
+
+            <!-- Idle Actions -->
+            <div class="header-actions" id="header-actions-idle">
+                <button class="icon-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+                <button class="icon-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg></button>
+            </div>
+            
+            <!-- Chat Actions -->
+            <div class="header-actions hidden" id="header-actions-chat">
+                <button class="icon-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></button>
+                <button class="icon-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></button>
+            </div>
+        </header>
+
+        <!-- Main Content: Inbox View -->
+        <main class="app-content" id="view-inbox">
+            <div class="chat-list">
+                <div class="chat-item" data-chat-id="1">
+                    <div class="avatar-circle bg-rose text-rose">AC</div>
+                    <div class="chat-info">
+                        <div class="chat-header-info">
+                            <h3 class="chat-name">Alice Cooper</h3>
+                            <span class="chat-time">10:42 AM</span>
+                        </div>
+                        <p class="chat-preview">Hey, are we still on for the meeting later?</p>
+                    </div>
+                    <div class="unread-badge">2</div>
+                </div>
+                <div class="chat-item" data-chat-id="2">
+                    <div class="avatar-circle bg-emerald text-emerald">BS</div>
+                    <div class="chat-info">
+                        <div class="chat-header-info">
+                            <h3 class="chat-name">Bob Smith</h3>
+                            <span class="chat-time">Yesterday</span>
+                        </div>
+                        <p class="chat-preview">I sent the design assets to your email. Let me know what you think.</p>
+                    </div>
+                </div>
+                <div class="chat-item" data-chat-id="3">
+                    <div class="avatar-circle bg-indigo text-indigo">DT</div>
+                    <div class="chat-info">
+                        <div class="chat-header-info">
+                            <h3 class="chat-name">Design Team</h3>
+                            <span class="chat-time">Yesterday</span>
+                        </div>
+                        <p class="chat-preview">Review the new FocusBuddy UI changes when you can.</p>
+                    </div>
                 </div>
             </div>
         </main>
 
-        <!-- Footer / Controls -->
-        <footer class="footer">
-            <button class="primary-button">Start Session</button>
+        <!-- Main Content: Chat View -->
+        <main class="app-content hidden" id="view-chat">
+            <div class="chat-messages" id="chat-messages-container">
+                <div class="date-divider">Today</div>
+                
+                <div class="message incoming">
+                    <div class="bubble">
+                        Hey, are we still on for the meeting later?
+                        <div class="msg-time">10:40 AM</div>
+                    </div>
+                </div>
+                
+                <div class="message outgoing">
+                    <div class="bubble">
+                        Yes! I will be there in 5 minutes.
+                        <div class="msg-time">10:41 AM</div>
+                    </div>
+                </div>
+                
+                <div class="message incoming">
+                    <div class="bubble">
+                        Great, see you then.
+                        <div class="msg-time">10:42 AM</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer: Navigation Tabs -->
+        <footer class="app-footer" id="footer-tabs">
+            <div class="tabs-container">
+                <button class="tab-btn active" data-tab="inbox">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                </button>
+                <button class="tab-btn" data-tab="contacts">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                </button>
+                <button class="tab-btn" data-tab="settings">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                </button>
+            </div>
+        </footer>
+
+        <!-- Footer: Input Area -->
+        <footer class="app-footer hidden" id="footer-input">
+            <div class="input-container">
+                <input type="text" placeholder="Type a message..." class="chat-input" id="chat-input-field" />
+                <button class="send-btn" id="send-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                </button>
+            </div>
         </footer>
     </div>
-    
-    <!-- Link to JavaScript Logic -->
     <script src="script.js"></script>
 </body>
 </html>

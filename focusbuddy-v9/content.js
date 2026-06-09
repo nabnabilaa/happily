@@ -1391,12 +1391,13 @@
   background:var(--fb-card) !important; border:1.5px solid var(--fb-line) !important;
   color:var(--fb-ink) !important; padding:12px 14px !important; border-radius:12px !important;
   font-size:13px !important; outline:none !important; transition:all .2s;
+  color-scheme: light;
 }
 .fb-in::placeholder { color:var(--fb-ink-mute) !important }
 .fb-in:focus { border-color:var(--fb-blue) !important; background:var(--fb-card) !important; box-shadow:0 0 0 3px rgba(0,229,255,0.15) !important; }
 textarea.fb-in { resize:none; min-height:88px !important; line-height:1.6 !important }
-input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !important; cursor:pointer !important }
-#fb-root.dark input[type="date"].fb-in, #fb-root.dark input[type="time"].fb-in { color-scheme:dark !important }
+input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
+#fb-root.dark .fb-in { color-scheme:dark !important }
 
 .fb-select {
   width:100% !important; box-sizing:border-box !important;
@@ -1410,9 +1411,16 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   background-size:12px !important;
   transition:all .2s !important;
   display:block !important;
+  color-scheme: light;
+}
+.fb-select option {
+  background-color: var(--fb-card) !important;
+  color: var(--fb-ink) !important;
+  padding: 12px !important;
 }
 #fb-root.dark .fb-select {
   background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%238ca0b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m3 5 3 3 3-3'/%3E%3C/svg%3E") !important;
+  color-scheme: dark !important;
 }
 .fb-select:hover { border-color:var(--fb-blue) !important }
 .fb-select:focus { border-color:var(--fb-blue) !important; box-shadow:0 0 0 3px rgba(0,229,255,0.15) !important }
@@ -1666,7 +1674,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   display: none;
   background: var(--fb-card) !important;
   border-top: 1px solid var(--fb-line) !important;
-  padding: 14px !important;
+  padding: 20px !important;
   animation: fbSlideDown 0.2s ease-out !important;
 }
 .fb-task-drawer.open {
@@ -1699,8 +1707,8 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
 }
 .fb-task-drawer-row {
   display: flex !important;
-  gap: 12px !important;
-  margin-bottom: 14px !important;
+  gap: 16px !important;
+  margin-bottom: 20px !important;
 }
 .fb-task-drawer-col {
   flex: 1 !important;
@@ -1719,7 +1727,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
 }
 .fb-task-actions-row {
   display: flex !important;
-  gap: 10px !important;
+  gap: 12px !important;
 }
 .fb-task-btn {
   padding: 10px 16px !important;
@@ -2624,19 +2632,23 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
     flex-direction: column;
     gap: 12px;
     width: 100%;
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 4px;
+    scrollbar-width: thin;
 }
 .fb-timer-history-item {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 16px 20px;
-    border-radius: 16px;
-    background: var(--fb-line-soft);
-    border: 1px solid var(--fb-line);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    box-sizing: border-box;
-    width: 100%;
+    display: flex !important;
+    align-items: center !important;
+    gap: 16px !important;
+    padding: 16px 20px !important;
+    border-radius: 16px !important;
+    background: var(--fb-line-soft) !important;
+    border: 1px solid var(--fb-line) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
 }
 .fb-timer-history-item:hover { 
     border-color: var(--fb-blue); 
@@ -2905,23 +2917,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
 #fb-chat-active-name {
   color: var(--fb-ink) !important;
 }
-#fb-chat-input {
-  color: var(--fb-ink) !important;
-  background: var(--fb-card) !important;
-  border: 1.5px solid var(--fb-line) !important;
-  border-radius: 12px !important;
-}
-#fb-chat-input:focus {
-  border-color: var(--fb-blue) !important;
-}
-#fb-chat-send-btn {
-  border-radius: 12px !important;
-  background: var(--fb-blue) !important;
-}
-#fb-chat-back-btn {
-  color: var(--fb-ink) !important;
-  border-radius: 6px !important;
-}
+/* chat UI uses inline styles */
 .fb-settings-user-name {
   color: var(--fb-ink) !important;
 }
@@ -3108,11 +3104,11 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
     <div id="fb-login-msg">Login di website untuk sinkronisasi data</div>
   </div>
   <div id="fb-tabs">
-    <button class="fb-tab act" data-tab="tasks"><span class="ti">✅</span>Tugas</button>
-    <button class="fb-tab"     data-tab="notes"><span class="ti">📝</span>Catatan</button>
-    <button class="fb-tab"     data-tab="timer"><span class="ti">&#9201;</span>Timer</button>
-    <button class="fb-tab"     data-tab="alarm"><span class="ti">🗓️</span>Kalender</button>
-    <button class="fb-tab"     data-tab="chat"><span class="ti">💬</span>Chat</button>
+    <button class="fb-tab act" data-tab="tasks"><span class="ti"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>Tugas</button>
+    <button class="fb-tab"     data-tab="notes"><span class="ti"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>Catatan</button>
+    <button class="fb-tab"     data-tab="timer"><span class="ti"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14" r="8"/><polyline points="12 10 12 14 14 16"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="10" y1="2" x2="14" y2="2"/></svg></span>Timer</button>
+    <button class="fb-tab"     data-tab="alarm"><span class="ti"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>Kalender</button>
+    <button class="fb-tab"     data-tab="chat"><span class="ti"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>Chat</button>
   </div>
   <div id="fb-body">
 
@@ -3190,13 +3186,13 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
               <div class="fb-task-field-label">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Tanggal
               </div>
-              <input type="date" id="fb-task-date" class="fb-in" style="width:100% !important; box-sizing:border-box !important; padding:8px 10px !important; font-size:12px !important; display:block !important;" />
+              <input type="date" id="fb-task-date" class="fb-in" style="width:100% !important; box-sizing:border-box !important; padding:12px 14px !important; font-size:12.5px !important; display:block !important;" />
             </div>
             <div class="fb-task-drawer-col">
               <div class="fb-task-field-label">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> KPI Terkait
               </div>
-              <select id="fb-task-kpi" class="fb-select" style="width:100% !important; box-sizing:border-box !important; padding:8px 24px 8px 10px !important; font-size:12px !important; display:block !important;">
+              <select id="fb-task-kpi" class="fb-select" style="width:100% !important; box-sizing:border-box !important; padding:12px 32px 12px 14px !important; font-size:12.5px !important; display:block !important;">
                 <option value="">Umum (Tidak ada KPI)</option>
               </select>
             </div>
@@ -3347,56 +3343,59 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       <!-- Composer (collapsible) -->
       <div id="fb-note-composer-wrap" style="display:none; margin-bottom:22px;">
         <div class="fb-note-composer" style="border-radius:12px; background:var(--fb-card); border:1px solid var(--fb-line); overflow:hidden;">
-          <!-- Row: Access + Permission -->
-          <div style="padding:14px 16px; border-bottom:1px solid var(--fb-line); background:var(--fb-card);">
-            <div style="font-size:9.5px; font-weight:800; color:var(--fb-ink-mute); letter-spacing:.8px; text-transform:uppercase; margin-bottom:6px;">Akses & Bagikan Catatan</div>
-            <div style="display:flex; gap:10px; align-items:center;">
-              <select id="fb-note-vis" class="fb-select"
-                style="flex:2; box-sizing:border-box !important; padding:9px 10px !important; display:block !important;">
-                <option value="private">🔒 Pribadi (Hanya Saya)</option>
-                <option value="company">🏢 Seluruh Perusahaan</option>
-                <option value="custom">👥 Pilih Anggota Spesifik...</option>
-              </select>
-              <select id="fb-note-perm" class="fb-select"
-                style="flex:1; box-sizing:border-box !important; padding:9px 10px !important; display:none !important;">
-                <option value="view">👁️ Bisa Lihat</option>
-                <option value="edit">✏️ Bisa Edit</option>
-              </select>
+          <div style="padding:16px; display:flex; flex-direction:column; gap:14px;">
+            <!-- Row: Access + Permission -->
+            <div>
+              <div style="font-size:10px; font-weight:700; color:var(--fb-ink-mute); letter-spacing:.5px; text-transform:uppercase; margin-bottom:6px;">Akses & Bagikan Catatan</div>
+              <div style="display:flex; gap:12px; align-items:center;">
+                <select id="fb-note-vis" class="fb-select"
+                  style="flex:2; box-sizing:border-box !important; padding:12px 32px 12px 14px !important; font-size:13.5px !important; display:block !important;">
+                  <option value="private">🔒 Pribadi (Hanya Saya)</option>
+                  <option value="company">🏢 Seluruh Perusahaan</option>
+                  <option value="custom">👥 Pilih Anggota Spesifik...</option>
+                </select>
+                <select id="fb-note-perm" class="fb-select"
+                  style="flex:1; box-sizing:border-box !important; padding:12px 32px 12px 14px !important; font-size:13.5px !important; display:none !important;">
+                  <option value="view">👁️ Bisa Lihat</option>
+                  <option value="edit">✏️ Bisa Edit</option>
+                </select>
+              </div>
             </div>
-          </div>
-          <!-- Member Picker (hidden by default) -->
-          <div id="fb-note-member-picker" style="display:none; padding:12px 16px; border-bottom:1px solid var(--fb-line); background:var(--fb-card);">
-            <div id="fb-note-member-tags" style="display:none; gap:5px; flex-wrap:wrap; padding:8px 10px; border-radius:10px; background:rgba(74,144,226,.08); margin-bottom:10px;"></div>
-            <input type="text" id="fb-note-member-search" placeholder="🔍 Cari nama atau departemen..." class="fb-in"
-              style="width:100% !important; box-sizing:border-box !important; padding:9px 12px !important; margin-bottom:8px !important; border-radius:10px !important;" />
-            <div id="fb-note-member-list" style="max-height:180px; overflow-y:auto; display:flex; flex-direction:column; gap:3px;"></div>
-          </div>
-          <!-- Title field -->
-          <div style="padding:14px 16px; border-bottom:1px solid var(--fb-line);">
-            <div style="font-size:9.5px; font-weight:800; color:var(--fb-ink-mute); letter-spacing:.8px; text-transform:uppercase; margin-bottom:6px;">Judul Catatan</div>
-            <input class="fb-note-title-in fb-in" id="fb-note-title" placeholder="Rapat Mingguan, Ide Kreatif, dll." maxlength="80" style="width:100% !important; box-sizing:border-box !important; padding:9px 12px !important; display:block !important;" />
-          </div>
-          <!-- Rich text editor -->
-          <div style="padding:12px 16px 0;">
-            <div style="font-size:9.5px; font-weight:800; color:var(--fb-ink-mute); letter-spacing:.8px; text-transform:uppercase; margin-bottom:5px;">Isi Catatan</div>
-            <div id="fb-note-toolbar" style="display:flex; gap:4px; padding:6px 8px; border:1px solid var(--fb-line); border-bottom:none; border-radius:8px 8px 0 0; background:var(--fb-card);">
-              <button type="button" class="fb-rte-btn" data-cmd="bold" title="Bold (Ctrl+B)" style="font-weight:800;">B</button>
-              <button type="button" class="fb-rte-btn" data-cmd="italic" title="Italic (Ctrl+I)" style="font-style:italic;">I</button>
-              <span style="width:1px; background:var(--fb-line); margin:0 4px;"></span>
-              <button type="button" class="fb-rte-btn" data-cmd="insertUnorderedList" title="Bullet List">&bull;</button>
-              <button type="button" class="fb-rte-btn" data-cmd="insertOrderedList" title="Numbered List">1.</button>
-              <span style="width:1px; background:var(--fb-line); margin:0 4px;"></span>
-              <button type="button" class="fb-rte-btn" data-cmd="removeFormat" title="Clear Format" style="font-size:11px;">&#10006;</button>
+            <!-- Member Picker (hidden by default) -->
+            <div id="fb-note-member-picker" style="display:none;">
+              <div id="fb-note-member-tags" style="display:none; gap:5px; flex-wrap:wrap; padding:8px 10px; border-radius:10px; background:rgba(74,144,226,.08); margin-bottom:10px;"></div>
+              <input type="text" id="fb-note-member-search" placeholder="🔍 Cari nama atau departemen..." class="fb-in"
+                style="width:100% !important; box-sizing:border-box !important; font-size:13.5px !important; margin-bottom:10px !important;" />
+              <div id="fb-note-member-list" style="max-height:180px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; padding-right:4px;"></div>
             </div>
-            <div id="fb-note-in" contenteditable="true" class="fb-in fb-rte-editor" 
-              style="width:100% !important; min-height:100px !important; max-height:200px !important; overflow-y:auto !important; padding:12px !important; line-height:1.6 !important; box-sizing:border-box !important; border:1px solid var(--fb-line) !important; border-radius:0 0 8px 8px !important; outline:none !important;"
-              data-placeholder="Tuliskan semua idemu di sini..."></div>
+            <!-- Title field -->
+            <div>
+              <div style="font-size:10px; font-weight:700; color:var(--fb-ink-mute); letter-spacing:.5px; text-transform:uppercase; margin-bottom:6px;">Judul Catatan</div>
+              <input class="fb-note-title-in fb-in" id="fb-note-title" placeholder="Rapat Mingguan, Ide Kreatif, dll." maxlength="80" 
+                style="width:100% !important; box-sizing:border-box !important; font-size:14px !important; font-weight:600 !important;" />
+            </div>
+            <!-- Rich text editor -->
+            <div>
+              <div style="font-size:10px; font-weight:700; color:var(--fb-ink-mute); letter-spacing:.5px; text-transform:uppercase; margin-bottom:6px;">Isi Catatan</div>
+              <div id="fb-note-toolbar" style="display:flex; gap:4px; padding:6px 8px; border:1px solid var(--fb-line) !important; border-bottom:none !important; border-radius:8px 8px 0 0 !important; background:var(--fb-bg) !important;">
+                <button type="button" class="fb-rte-btn" data-cmd="bold" title="Bold (Ctrl+B)" style="font-weight:800;">B</button>
+                <button type="button" class="fb-rte-btn" data-cmd="italic" title="Italic (Ctrl+I)" style="font-style:italic;">I</button>
+                <span style="width:1px; background:var(--fb-line); margin:0 4px;"></span>
+                <button type="button" class="fb-rte-btn" data-cmd="insertUnorderedList" title="Bullet List">&bull;</button>
+                <button type="button" class="fb-rte-btn" data-cmd="insertOrderedList" title="Numbered List">1.</button>
+                <span style="width:1px; background:var(--fb-line); margin:0 4px;"></span>
+                <button type="button" class="fb-rte-btn" data-cmd="removeFormat" title="Clear Format" style="font-size:11px;">&#10006;</button>
+              </div>
+              <div id="fb-note-in" contenteditable="true" class="fb-in fb-rte-editor" 
+                style="width:100% !important; min-height:100px !important; max-height:200px !important; overflow-y:auto !important; line-height:1.6 !important; box-sizing:border-box !important; border-radius:0 0 12px 12px !important; font-size:13.5px !important;"
+                data-placeholder="Tuliskan semua idemu di sini..."></div>
+            </div>
           </div>
           <!-- Footer bar -->
-          <div style="display:flex; align-items:center; justify-content:flex-end; padding:12px 16px 14px;">
-            <div style="display:flex; gap:8px; align-items:center;">
-              <button id="fb-note-cancel" style="padding:8px 14px !important; border-radius:8px !important; border:1px solid var(--fb-line) !important; background:transparent !important; color:var(--fb-ink-mute) !important; font-size:12px !important; font-weight:700 !important; cursor:pointer !important; font-family:inherit !important; transition:all .2s !important;">Batal</button>
-              <button id="fb-note-save" style="padding:8px 16px !important; border-radius:8px !important; border:none !important; background:var(--fb-blue) !important; color:#fff !important; font-size:12px !important; font-weight:800 !important; cursor:pointer !important; font-family:inherit !important; transition:all .2s !important; box-shadow:none !important;">Simpan Catatan</button>
+          <div style="display:flex; align-items:center; justify-content:flex-end; padding:0 16px 16px;">
+            <div style="display:flex; gap:10px; align-items:center;">
+              <button id="fb-note-cancel" style="padding:10px 16px !important; border-radius:8px !important; border:1px solid var(--fb-line) !important; background:transparent !important; color:var(--fb-ink-mute) !important; font-size:12.5px !important; font-weight:700 !important; cursor:pointer !important; font-family:inherit !important; transition:all .2s !important;">Batal</button>
+              <button id="fb-note-save" style="padding:10px 18px !important; border-radius:8px !important; border:none !important; background:var(--fb-blue) !important; color:#fff !important; font-size:12.5px !important; font-weight:800 !important; cursor:pointer !important; font-family:inherit !important; transition:all .2s !important; box-shadow:0 2px 4px rgba(0,0,0,.1) !important;">Simpan Catatan</button>
             </div>
           </div>
         </div>
@@ -3417,23 +3416,30 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       <!-- Messages View (Hidden initially) -->
       <div id="fb-chat-messages-view" style="display:none; flex-direction:column; height:370px; padding:0 4px;">
         <!-- Header -->
-        <div style="display:flex;align-items:center;gap:12px;padding-bottom:14px;border-bottom:1.5px solid var(--fb-line);margin-bottom:14px;">
-          <button id="fb-chat-back-btn" style="background:none;border:none;color:var(--fb-ink);cursor:pointer;font-size:18px;padding:4px;border-radius:8px;transition:background 0.2s;">←</button>
-          <div style="flex:1;">
-            <div id="fb-chat-active-name" style="color:var(--fb-ink);font-weight:800;font-size:15px;letter-spacing:-0.2px;">Nama</div>
-            <div style="color:var(--fb-ink-mute);font-size:11.5px;font-weight:500;">Aktif</div>
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0 14px;border-bottom:1px solid var(--fb-line);margin-bottom:10px;">
+          <button id="fb-chat-back-btn" style="background:none;border:none;color:#8b5cf6;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:4px;border-radius:8px;transition:background 0.2s;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg, #e0e7ff, #c7d2fe);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;color:#1f2937;">👤</div>
+          <div style="flex:1;display:flex;flex-direction:column;justify-content:center;">
+            <div id="fb-chat-active-name" style="color:var(--fb-ink);font-weight:700;font-size:15px;line-height:1.2;">Nama</div>
           </div>
+          <button style="background:none;border:none;color:#8b5cf6;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:4px;border-radius:8px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          </button>
         </div>
 
         <!-- Messages Area -->
-        <div id="fb-chat-msgs" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-right:6px;scrollbar-width:none;"></div>
+        <div id="fb-chat-msgs" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:18px;padding-right:6px;padding-bottom:10px;scrollbar-width:none;background:transparent;"></div>
 
         <!-- Composer -->
-        <div style="display:flex;gap:10px;margin-top:14px;align-items:flex-end;">
-          <textarea id="fb-chat-input" placeholder="Tulis pesan..." style="flex:1 !important;background:var(--fb-card) !important;border:1.5px solid var(--fb-line) !important;border-radius:10px !important;color:var(--fb-ink) !important;padding:12px 14px !important;font-size:13.5px !important;resize:none !important;min-height:44px !important;max-height:80px !important;font-family:inherit !important;outline:none !important;transition:border 0.2s !important;box-shadow:0 2px 10px rgba(0,0,0,0.03) !important;box-sizing:border-box !important;margin:0 !important;"></textarea>
-          <button id="fb-chat-send-btn" style="background:linear-gradient(135deg,var(--fb-blue),#5ea8e8) !important;color:white !important;border:none !important;border-radius:10px !important;width:44px !important;height:44px !important;display:flex !important;align-items:center !important;justify-content:center !important;cursor:pointer !important;flex-shrink:0 !important;transition:all 0.2s !important;box-shadow:0 3px 10px rgba(74,144,226,.25) !important;padding:0 !important;margin:0 !important;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform:translateX(-1px) translateY(1px)"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2z"/></svg>
-          </button>
+        <div style="display:flex;gap:10px;margin-top:10px;align-items:center;padding:4px 0;">
+          <div style="flex:1;display:flex;align-items:center;background:var(--fb-card);border:1.5px solid var(--fb-line);border-radius:12px;padding:2px 8px;">
+            <input id="fb-chat-input" placeholder="Tulis pesan..." style="flex:1;background:transparent;border:none;color:var(--fb-ink);padding:12px 14px;font-size:13.5px;font-family:inherit;outline:none;box-sizing:border-box;margin:0;color-scheme:light dark;"/>
+            <button id="fb-chat-send-btn" style="background:transparent;color:var(--fb-blue);border:none;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0;margin:0;transition:opacity 0.2s;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform:translateX(-1px) translateY(1px)"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2z"/></svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -3526,43 +3532,46 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
           <span id="fb-cal-form-arrow" style="font-size:16px; color:var(--fb-ink-mute); transition:transform .2s; line-height:1; flex-shrink:0; pointer-events:none;">›</span>
         </button>
         <div id="fb-cal-form-body" style="display:none; background:var(--fb-card); border:1.5px solid var(--fb-line); border-top:none; border-radius:0 0 12px 12px; overflow:hidden;">
-          <!-- Event name -->
-          <div style="padding:12px 14px 10px;">
-            <div style="font-size:9px; color:var(--fb-ink-mute); margin-bottom:5px; font-weight:700; letter-spacing:.6px; text-transform:uppercase;">Nama acara</div>
-            <input id="fb-cal-title" class="fb-in" placeholder="Nama acara…" maxlength="50"
-              style="width:100% !important; box-sizing:border-box !important; padding:8px 10px !important; display:block !important; font-size:14px !important; font-weight:600 !important;" />
-          </div>
-          <!-- Date + Visibility -->
-          <div style="display:flex; gap:10px; padding:12px 14px; border-top:1px solid var(--fb-line); background:var(--fb-card);">
-            <div style="flex:1; min-width:0; overflow:hidden;">
-              <div style="font-size:10px; color:var(--fb-ink-mute); margin-bottom:6px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; display:flex; align-items:center; gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Tanggal</div>
-              <input type="date" id="fb-cal-date" class="fb-in"
-                style="width:100% !important; box-sizing:border-box !important; padding:8px 10px !important; display:block !important;" />
+          <div style="padding:16px; display:flex; flex-direction:column; gap:14px;">
+            <!-- Event name -->
+            <div>
+              <div style="font-size:10px; color:var(--fb-ink-mute); margin-bottom:6px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;">Nama acara</div>
+              <input id="fb-cal-title" class="fb-in" placeholder="Nama acara…" maxlength="50"
+                style="width:100% !important; box-sizing:border-box !important; font-size:14px !important; font-weight:600 !important;" />
             </div>
-            <div style="flex:1; min-width:0; overflow:hidden;">
-              <div style="font-size:10px; color:var(--fb-ink-mute); margin-bottom:6px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; display:flex; align-items:center; gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Visibilitas</div>
-              <select id="fb-cal-vis" class="fb-select"
-                style="width:100% !important; box-sizing:border-box !important; padding:8px 10px !important; display:block !important;">
-                <option value="private">🔒 Pribadi</option>
-                <option value="company">🏢 Publik</option>
-              </select>
+            <!-- Date + Visibility -->
+            <div style="display:flex; gap:12px;">
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:10px; color:var(--fb-ink-mute); margin-bottom:6px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; display:flex; align-items:center; gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Tanggal</div>
+                <input type="date" id="fb-cal-date" class="fb-in"
+                  style="width:100% !important; box-sizing:border-box !important; font-size:13.5px !important;" />
+              </div>
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:10px; color:var(--fb-ink-mute); margin-bottom:6px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; display:flex; align-items:center; gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Visibilitas</div>
+                <select id="fb-cal-vis" class="fb-select"
+                  style="width:100% !important; box-sizing:border-box !important; padding:12px 32px 12px 14px !important; font-size:13.5px !important; display:block !important;">
+                  <option value="private">🔒 Pribadi</option>
+                  <option value="company">🏢 Publik</option>
+                </select>
+              </div>
             </div>
-          </div>
-          <div style="display:flex; gap:10px; padding:0 14px 12px; background:var(--fb-card);">
-            <div style="flex:1; min-width:0; overflow:hidden;">
-              <div style="font-size:10px; color:var(--fb-ink-mute); margin-bottom:6px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; display:flex; align-items:center; gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Mulai</div>
-              <input type="time" id="fb-cal-start" class="fb-in"
-                style="width:100% !important; box-sizing:border-box !important; padding:8px 10px !important; display:block !important;" />
-            </div>
-            <div style="flex:1; min-width:0; overflow:hidden;">
-              <div style="font-size:10px; color:var(--fb-ink-mute); margin-bottom:6px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; display:flex; align-items:center; gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Selesai</div>
-              <input type="time" id="fb-cal-end" class="fb-in"
-                style="width:100% !important; box-sizing:border-box !important; padding:8px 10px !important; display:block !important;" />
+            <!-- Start + End -->
+            <div style="display:flex; gap:12px;">
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:10px; color:var(--fb-ink-mute); margin-bottom:6px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; display:flex; align-items:center; gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Mulai</div>
+                <input type="time" id="fb-cal-start" class="fb-in"
+                  style="width:100% !important; box-sizing:border-box !important; font-size:13.5px !important;" />
+              </div>
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:10px; color:var(--fb-ink-mute); margin-bottom:6px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; display:flex; align-items:center; gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Selesai</div>
+                <input type="time" id="fb-cal-end" class="fb-in"
+                  style="width:100% !important; box-sizing:border-box !important; font-size:13.5px !important;" />
+              </div>
             </div>
           </div>
           <!-- Add button -->
           <button id="fb-cal-add-btn"
-            style="width:100% !important; box-sizing:border-box !important; padding:14px !important; border:none !important; border-top:1px solid rgba(31,29,27,.07) !important; cursor:pointer !important;
+            style="width:100% !important; box-sizing:border-box !important; padding:16px !important; border:none !important; border-top:1px solid rgba(31,29,27,.07) !important; cursor:pointer !important;
             background:linear-gradient(135deg,#86C0A9,#4A90E2) !important; color:#fff !important; font-size:13.5px !important; font-weight:800 !important; letter-spacing:.3px !important;
             transition:all .2s cubic-bezier(.34,1.56,.64,1) !important; display:flex !important; align-items:center !important; justify-content:center !important; gap:7px !important; border-radius:0 0 13px 13px !important;"
             onmouseover="this.style.setProperty('transform','translateY(-1px)','important');this.style.setProperty('filter','brightness(1.05)','important')" onmouseout="this.style.setProperty('transform','translateY(0)','important');this.style.setProperty('filter','none','important')">
@@ -3692,7 +3701,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       <!-- Tipe Kehadiran Selector -->
       <div style="flex-shrink: 0 !important;">
         <div style="font-size: 11.5px !important; font-weight: 800 !important; color: var(--fb-ink) !important; margin-bottom: 6px !important;">Tipe Kehadiran</div>
-        <select id="fb-clockin-type" class="fb-select" style="width: 100% !important; box-sizing: border-box !important; padding: 10px !important; font-size: 12.5px !important; display: block !important;">
+        <select id="fb-clockin-type" class="fb-select" style="width: 100% !important; box-sizing: border-box !important; padding: 12px 32px 12px 14px !important; font-size: 12.5px !important; display: block !important;">
           <option value="WFO">Work From Office (WFO)</option>
           <option value="WFA">Work From Anywhere (WFA)</option>
           <option value="DINAS">Perjalanan Dinas (DINAS)</option>
@@ -3702,7 +3711,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       <!-- Lokasi Kantor (WFO Only) -->
       <div id="fb-clockin-office-container" style="flex-shrink: 0 !important;">
         <div style="font-size: 11.5px !important; font-weight: 800 !important; color: var(--fb-ink) !important; margin-bottom: 6px !important;">Lokasi Kantor</div>
-        <select id="fb-clockin-office" class="fb-select" style="width: 100% !important; box-sizing: border-box !important; padding: 10px !important; font-size: 12.5px !important; display: block !important;">
+        <select id="fb-clockin-office" class="fb-select" style="width: 100% !important; box-sizing: border-box !important; padding: 12px 32px 12px 14px !important; font-size: 12.5px !important; display: block !important;">
           <option value="">Memuat kantor...</option>
         </select>
       </div>
@@ -6321,9 +6330,14 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
   let timerSessionLabel = 'Timer';
 
   let timerHistory = [];
+  let timerHistoryPage = 1;
   try {
-      const saved = localStorage.getItem('fb_timer_history');
-      if (saved) timerHistory = JSON.parse(saved);
+      chrome.storage.local.get(['fb_timer_history'], (res) => {
+          if (res.fb_timer_history) {
+              timerHistory = res.fb_timer_history;
+              renderTimerHistory();
+          }
+      });
   } catch(e) {}
 
   const hrsEl = $('fb-timer-hrs');
@@ -6373,7 +6387,15 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       const first = timerHistory[0];
       if (ts) ts.textContent = `${first.date} \u00b7 ‎${first.ts}`;
 
-      list.innerHTML = timerHistory.map((h, i) => `
+      const ITEMS_PER_PAGE = 2;
+      const totalPages = Math.ceil(timerHistory.length / ITEMS_PER_PAGE);
+      if (timerHistoryPage > totalPages) timerHistoryPage = totalPages;
+      if (timerHistoryPage < 1) timerHistoryPage = 1;
+
+      const startIdx = (timerHistoryPage - 1) * ITEMS_PER_PAGE;
+      const pageItems = timerHistory.slice(startIdx, startIdx + ITEMS_PER_PAGE);
+
+      let html = pageItems.map((h, i) => `
           <div class="fb-timer-history-item">
               <span class="fb-timer-history-icon">${getHistoryIcon(h.label)}</span>
               <div class="fb-timer-history-info">
@@ -6381,11 +6403,28 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
                   <div class="fb-timer-history-dur">${formatDuration(h.durationMs)} \u00b7 ${h.date} ${h.ts}</div>
               </div>
               <div class="fb-timer-history-actions">
-                  <button class="fb-timer-history-restart" data-idx="${i}">Mulai Ulang</button>
-                  <button class="fb-timer-history-del" data-idx="${i}" title="Hapus">&times;</button>
+                  <button class="fb-timer-history-restart" data-idx="${startIdx + i}">Mulai Ulang</button>
+                  <button class="fb-timer-history-del" data-idx="${startIdx + i}" title="Hapus">&times;</button>
               </div>
           </div>
       `).join('');
+
+      if (totalPages > 1) {
+          html += `
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; padding:0 4px;">
+                  <button id="fb-timer-prev" style="background:var(--fb-line-soft); border:1px solid var(--fb-line); color:var(--fb-ink); padding:6px 12px; border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; opacity:${timerHistoryPage === 1 ? '0.5' : '1'}; pointer-events:${timerHistoryPage === 1 ? 'none' : 'auto'}; transition:all 0.2s;">&lt; Prev</button>
+                  <span style="font-size:12px; color:var(--fb-ink-mute); font-weight:600;">Hal ${timerHistoryPage} / ${totalPages}</span>
+                  <button id="fb-timer-next" style="background:var(--fb-line-soft); border:1px solid var(--fb-line); color:var(--fb-ink); padding:6px 12px; border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; opacity:${timerHistoryPage === totalPages ? '0.5' : '1'}; pointer-events:${timerHistoryPage === totalPages ? 'none' : 'auto'}; transition:all 0.2s;">Next &gt;</button>
+              </div>
+          `;
+      }
+
+      list.innerHTML = html;
+
+      const btnPrev = list.querySelector('#fb-timer-prev');
+      const btnNext = list.querySelector('#fb-timer-next');
+      if (btnPrev) btnPrev.addEventListener('click', () => { timerHistoryPage--; renderTimerHistory(); });
+      if (btnNext) btnNext.addEventListener('click', () => { timerHistoryPage++; renderTimerHistory(); });
 
       list.querySelectorAll('.fb-timer-history-restart').forEach(btn => {
           btn.addEventListener('click', () => {
@@ -6406,7 +6445,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
           btn.addEventListener('click', () => {
               const idx = parseInt(btn.dataset.idx);
               timerHistory.splice(idx, 1);
-              try { localStorage.setItem('fb_timer_history', JSON.stringify(timerHistory)); } catch(e) {}
+              try { chrome.storage.local.set({fb_timer_history: timerHistory}); } catch(e) {}
               renderTimerHistory();
           });
       });
@@ -6430,8 +6469,9 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
           ts: tsStr,
           h, m, s
       });
-      timerHistory = timerHistory.slice(0, 10);
-      try { localStorage.setItem('fb_timer_history', JSON.stringify(timerHistory)); } catch(e) {}
+      timerHistory = timerHistory.slice(0, 50);
+      timerHistoryPage = 1;
+      try { chrome.storage.local.set({fb_timer_history: timerHistory}); } catch(e) {}
       renderTimerHistory();
   }
 
@@ -7077,9 +7117,9 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
     list.innerHTML = '';
     channels.forEach(ch => {
       const div = document.createElement('div');
-      div.style.cssText = 'padding:12px 10px;border-bottom:1px solid rgba(31,29,27,0.06);cursor:pointer;display:flex;gap:12px;align-items:center;transition:background 0.2s;border-radius:0;';
-      div.onmouseover = () => div.style.background = 'rgba(31,29,27,0.03)';
-      div.onmouseout = () => div.style.background = 'transparent';
+      div.style.cssText = 'padding:14px; margin-bottom:12px; background:var(--fb-card); border:1px solid var(--fb-line); border-radius:12px; cursor:pointer; display:flex; gap:14px; align-items:center; transition:all 0.2s ease; box-shadow:0 2px 4px rgba(0,0,0,0.02);';
+      div.onmouseover = () => { div.style.borderColor = 'var(--fb-blue)'; div.style.transform = 'translateY(-1px)'; div.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)'; };
+      div.onmouseout = () => { div.style.borderColor = 'var(--fb-line)'; div.style.transform = 'none'; div.style.boxShadow = '0 2px 4px rgba(0,0,0,0.02)'; };
       
       let dName = ch.name;
       if (!dName || String(dName).toLowerCase() === 'null') {
@@ -7087,12 +7127,14 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       }
 
       div.innerHTML = `
-        <div style="font-size:24px;line-height:1;">${ch.emoji || '💬'}</div>
-        <div style="flex:1;overflow:hidden;">
-          <div style="color:var(--fb-ink);font-weight:700;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;">${esc(dName)}</div>
-          <div style="color:var(--fb-ink-mute);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(ch.lastMessage || 'Mulai percakapan')}</div>
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--fb-line-soft);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">
+          ${ch.emoji || '💬'}
         </div>
-        ${ch.unreadCount ? `<div style="background:#FA5252;color:white;font-size:10px;font-weight:bold;padding:2px 8px;border-radius:4px;">${ch.unreadCount}</div>` : ''}
+        <div style="flex:1;overflow:hidden;">
+          <div style="color:var(--fb-ink);font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px;">${esc(dName)}</div>
+          <div style="color:var(--fb-ink-mute);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(ch.lastMessage || 'Mulai percakapan')}</div>
+        </div>
+        ${ch.unreadCount ? `<div style="background:#8b5cf6;color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;">${ch.unreadCount > 99 ? '99+' : ch.unreadCount}</div>` : ''}
       `;
       div.onclick = () => {
         chatActiveChannelId = ch.id;
@@ -7177,26 +7219,38 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
       } else {
         msgs.forEach(m => {
           const isMe = m.sender_id === flowbeeUserId;
+          const timeStr = new Date(m.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
           const d = document.createElement('div');
-          d.style.cssText = `max-width:85% !important; padding:10px 14px !important; border-radius:0 !important; margin-bottom:6px !important; font-size:13px !important; line-height:1.45 !important; word-break:break-word !important; overflow-wrap:break-word !important; box-sizing:border-box !important;`;
+          d.style.cssText = `display:flex; flex-direction:column; width:100%; font-family:inherit;`;
+          
           if (isMe) {
-            d.style.setProperty('align-self', 'flex-end', 'important');
-            d.style.setProperty('background', 'linear-gradient(135deg, #4A90E2, #5ea8e8)', 'important');
-            d.style.setProperty('color', 'white', 'important');
-            d.style.setProperty('border-bottom-right-radius', '0', 'important');
-            d.style.setProperty('box-shadow', '0 3px 10px rgba(74,144,226,.2)', 'important');
+            d.innerHTML = `
+              <div style="display:flex; justify-content:flex-end; align-items:flex-end; gap:8px;">
+                <div style="font-size:10px; color:var(--fb-ink-mute); display:flex; align-items:center; gap:4px; margin-bottom:4px; flex-shrink:0;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  ${timeStr}
+                </div>
+                <div style="background:#8b5cf6 !important; color:white !important; padding:12px 16px !important; border-radius:18px 18px 4px 18px !important; font-size:13.5px !important; line-height:1.55 !important; max-width:75% !important; word-wrap:break-word !important; box-sizing:border-box !important; text-align:left !important;">
+                  ${esc(m.content)}
+                </div>
+              </div>
+            `;
           } else {
-            d.style.setProperty('align-self', 'flex-start', 'important');
-            d.style.setProperty('background', '#F0F2F5', 'important');
-            d.style.setProperty('color', '#1F1D1B', 'important');
-            d.style.setProperty('border-bottom-left-radius', '0', 'important');
-            d.style.setProperty('border', '1px solid rgba(31,29,27,0.06)', 'important');
+            d.innerHTML = `
+              <div style="display:flex; flex-direction:column; align-items:flex-start; margin-left:42px; margin-bottom:4px;">
+                <div style="font-size:11px; color:var(--fb-ink-mute); font-weight:600;">${esc(m.sender_name)}</div>
+              </div>
+              <div style="display:flex; justify-content:flex-start; align-items:flex-end; gap:8px;">
+                <div style="width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg, #e0e7ff, #c7d2fe); color:#1f2937; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; margin-bottom:2px;">
+                  👤
+                </div>
+                <div style="background:var(--fb-line-soft) !important; color:var(--fb-ink) !important; border:1px solid var(--fb-line) !important; padding:12px 16px !important; border-radius:18px 18px 18px 4px !important; font-size:13.5px !important; line-height:1.55 !important; max-width:75% !important; word-wrap:break-word !important; box-sizing:border-box !important; text-align:left !important;">
+                  ${esc(m.content)}
+                </div>
+                <div style="font-size:10px; color:var(--fb-ink-mute); margin-bottom:4px; flex-shrink:0;">${timeStr}</div>
+              </div>
+            `;
           }
-          d.innerHTML = `
-            ${!isMe ? `<div style="font-size:10.5px;color:#8A837C;margin-bottom:4px;font-weight:600;">${esc(m.sender_name)}</div>` : ''}
-            <div>${esc(m.content)}</div>
-            <div style="font-size:10px;opacity:${isMe ? '0.85' : '0.6'};text-align:right;margin-top:6px;">${new Date(m.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</div>
-          `;
           msgWrap.appendChild(d);
         });
       }
@@ -7224,8 +7278,15 @@ input[type="date"].fb-in, input[type="time"].fb-in { color-scheme:light !importa
 
       const msgWrap = $('fb-chat-msgs');
       const d = document.createElement('div');
-      d.style.cssText = `max-width:85%;padding:8px 12px;border-radius:0;margin-bottom:4px;font-size:12.5px;line-height:1.4;word-wrap:break-word;align-self:flex-end;background:#4d9fff;color:white;border-bottom-right-radius:0;opacity:0.7;`;
-      d.innerHTML = `<div>${esc(txt)}</div><div style="font-size:9px;opacity:0.5;text-align:right;margin-top:4px;">Mengirim...</div>`;
+      d.style.cssText = `display:flex; flex-direction:column; width:100%; font-family:inherit; opacity:0.7;`;
+      d.innerHTML = `
+        <div style="display:flex; justify-content:flex-end; align-items:flex-end; gap:8px;">
+          <div style="font-size:10px; color:var(--fb-ink-mute); margin-bottom:4px; flex-shrink:0;">Mengirim...</div>
+          <div style="background:#8b5cf6 !important; color:white !important; padding:12px 16px !important; border-radius:18px 18px 4px 18px !important; font-size:13.5px !important; line-height:1.55 !important; max-width:75% !important; word-wrap:break-word !important; box-sizing:border-box !important; text-align:left !important;">
+            ${esc(txt)}
+          </div>
+        </div>
+      `;
       msgWrap.appendChild(d);
       msgWrap.scrollTop = msgWrap.scrollHeight;
 
