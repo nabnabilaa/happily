@@ -1,100 +1,115 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // === Clock-in Logic ===
-    const clockInBtn = document.querySelector('.clock-in-btn');
+    // DOM Elements
+    const viewInbox = document.getElementById('view-inbox');
+    const viewChat = document.getElementById('view-chat');
     
-    if (clockInBtn) {
-        clockInBtn.addEventListener('click', () => {
-            // 1. Ubah tampilan tombol secara visual (State: Success)
-            clockInBtn.style.backgroundColor = '#40C057'; // Warna Hijau Flat (Success)
-            clockInBtn.style.color = '#FFFFFF';
-            clockInBtn.innerHTML = '✅ Berhasil Clock-in (08:00)';
+    const headerIdle = document.getElementById('header-left-idle');
+    const headerChat = document.getElementById('header-left-chat');
+    
+    const headerActionsIdle = document.getElementById('header-actions-idle');
+    const headerActionsChat = document.getElementById('header-actions-chat');
+    
+    const footerTabs = document.getElementById('footer-tabs');
+    const footerInput = document.getElementById('footer-input');
+    
+    const btnBack = document.getElementById('btn-back');
+    const chatItems = document.querySelectorAll('.chat-item');
+    const tabBtns = document.querySelectorAll('.tab-btn');
+
+    // Navigation Logic
+    function openChat(chatId) {
+        // Hide Inbox view elements
+        viewInbox.classList.add('hidden');
+        headerIdle.classList.add('hidden');
+        headerActionsIdle.classList.add('hidden');
+        footerTabs.classList.add('hidden');
+
+        // Show Chat view elements
+        viewChat.classList.remove('hidden');
+        headerChat.classList.remove('hidden');
+        headerActionsChat.classList.remove('hidden');
+        footerInput.classList.remove('hidden');
+        
+        // Scroll to bottom of chat
+        viewChat.scrollTop = viewChat.scrollHeight;
+    }
+
+    function openInbox() {
+        // Hide Chat view elements
+        viewChat.classList.add('hidden');
+        headerChat.classList.add('hidden');
+        headerActionsChat.classList.add('hidden');
+        footerInput.classList.add('hidden');
+
+        // Show Inbox view elements
+        viewInbox.classList.remove('hidden');
+        headerIdle.classList.remove('hidden');
+        headerActionsIdle.classList.remove('hidden');
+        footerTabs.classList.remove('hidden');
+    }
+
+    // Attach listeners to chat items
+    chatItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const chatId = item.getAttribute('data-chat-id');
+            // Mock: Set header name based on clicked item
+            const name = item.querySelector('.chat-name').textContent;
+            const initials = item.querySelector('.avatar-circle').textContent;
             
-            // 2. Nonaktifkan tombol agar tidak diklik berkali-kali
-            clockInBtn.style.pointerEvents = 'none';
-            clockInBtn.style.cursor = 'default';
-            
-            // =================================================================
-            // TODO untuk Developer (Backend Integration):
-            // Di sinilah Anda memasukkan kode untuk mengirim data ke server/database
-            // Contoh menggunakan Fetch API:
-            // 
-            // fetch('https://api.websiteanda.com/absen', {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify({ userId: 123, action: 'clock-in', timestamp: new Date() })
-            // }).then(response => {
-            //     console.log('Absen tersimpan!');
-            // }).catch(err => {
-            //     console.error('Gagal absen', err);
-            // });
-            // =================================================================
+            const headerAvatar = document.querySelector('.ac-avatar');
+            headerAvatar.textContent = initials;
+            document.querySelector('#header-left-chat .header-title').textContent = name;
+
+            openChat(chatId);
         });
+    });
+
+    if (btnBack) {
+        btnBack.addEventListener('click', openInbox);
     }
 
-    // === Stopwatch Timer Logic ===
-    let startTime;
-    let timerInterval;
-    let isRunning = false;
-    let elapsedMs = 0;
-    
-    const minEl = document.getElementById('timer-min');
-    const secEl = document.getElementById('timer-sec');
-    const msEl = document.getElementById('timer-ms');
-    const btnReset = document.getElementById('btn-reset');
-    const btnStartStop = document.getElementById('btn-start-stop');
-    const startStopText = document.getElementById('start-stop-text');
-    const iconPlay = document.querySelector('.icon-play');
-    const iconStop = document.querySelector('.icon-stop');
+    // Tab switching logic
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Remove active class from all
+            tabBtns.forEach(b => b.classList.remove('active'));
+            // Add active class to clicked
+            btn.classList.add('active');
+        });
+    });
 
-    function updateDisplay(time) {
-        const date = new Date(time);
-        const m = String(date.getUTCHours() * 60 + date.getUTCMinutes()).padStart(2, '0');
-        const s = String(date.getUTCSeconds()).padStart(2, '0');
-        const ms = String(Math.floor(date.getUTCMilliseconds() / 10)).padStart(2, '0'); 
-        if (minEl) minEl.textContent = m;
-        if (secEl) secEl.textContent = s;
-        if (msEl) msEl.textContent = ms;
-    }
+    // Send Message logic
+    const sendBtn = document.getElementById('send-btn');
+    const chatInput = document.getElementById('chat-input-field');
+    const chatMessagesContainer = document.getElementById('chat-messages-container');
 
-    if (btnStartStop) {
-        btnStartStop.addEventListener('click', () => {
-            if (isRunning) {
-                clearInterval(timerInterval);
-                isRunning = false;
-                btnStartStop.classList.remove('btn-stop');
-                btnStartStop.classList.add('btn-start');
-                if (startStopText) startStopText.textContent = 'Start';
-                if (iconPlay) iconPlay.style.display = 'block';
-                if (iconStop) iconStop.style.display = 'none';
-            } else {
-                startTime = Date.now() - elapsedMs;
-                timerInterval = setInterval(() => {
-                    elapsedMs = Date.now() - startTime;
-                    updateDisplay(elapsedMs);
-                }, 10);
-                isRunning = true;
-                btnStartStop.classList.remove('btn-start');
-                btnStartStop.classList.add('btn-stop');
-                if (startStopText) startStopText.textContent = 'Stop';
-                if (iconPlay) iconPlay.style.display = 'none';
-                if (iconStop) iconStop.style.display = 'block';
+    if (sendBtn && chatInput) {
+        sendBtn.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
             }
         });
     }
 
-    if (btnReset) {
-        btnReset.addEventListener('click', () => {
-            clearInterval(timerInterval);
-            isRunning = false;
-            elapsedMs = 0;
-            updateDisplay(0);
-            if (btnStartStop) {
-                btnStartStop.classList.remove('btn-stop');
-                btnStartStop.classList.add('btn-start');
-            }
-            if (startStopText) startStopText.textContent = 'Start';
-            if (iconPlay) iconPlay.style.display = 'block';
-            if (iconStop) iconStop.style.display = 'none';
-        });
+    function sendMessage() {
+        const text = chatInput.value.trim();
+        if (!text) return;
+
+        const now = new Date();
+        const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        const html = `
+            <div class="message outgoing">
+                <div class="bubble">
+                    ${text}
+                    <div class="msg-time">${timeString}</div>
+                </div>
+            </div>
+        `;
+
+        chatMessagesContainer.insertAdjacentHTML('beforeend', html);
+        chatInput.value = '';
+        viewChat.scrollTop = viewChat.scrollHeight;
     }
 });

@@ -237,10 +237,10 @@ export default function NotesScreen() {
   };
 
   const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '14px 16px', borderRadius: 14,
-    border: `1.5px solid ${HP_TOKENS.lineSoft}`, fontFamily: HP_FONT, fontSize: 14,
+    width: '100%', padding: '16px 20px', borderRadius: 16,
+    border: `1.5px solid ${HP_TOKENS.lineSoft}`, fontFamily: HP_FONT, fontSize: 15,
     outline: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink, boxSizing: 'border-box',
-    transition: '0.2s'
+    transition: 'all 0.2s ease'
   };
 
   if (showForm) {
@@ -251,14 +251,32 @@ export default function NotesScreen() {
           subtitle="Tulis, simpan, dan bagikan ide cemerlangmu." 
         />
 
-        <div style={{ 
-          background: HP_TOKENS.card, borderRadius: 24, padding: 20, 
-          border: `1.5px solid ${HP_TOKENS.line}`, 
-          boxShadow: '0 8px 24px rgba(26,29,35,0.03)'
-        }}>
-          {/* ACCESS CONFIGURATION TOP */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 8, letterSpacing: 0.5 }}>
+        <style>{`
+          .hp-native-select {
+            color-scheme: light dark;
+          }
+          .hp-native-select option {
+            background-color: var(--hp-card);
+            color: var(--hp-ink);
+            padding: 12px;
+          }
+          .hp-user-list::-webkit-scrollbar {
+            width: 6px;
+          }
+          .hp-user-list::-webkit-scrollbar-thumb {
+            background: var(--hp-lineSoft);
+            border-radius: 6px;
+          }
+        `}</style>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {/* SECTION 1: AKSES & BAGIKAN CATATAN */}
+          <div style={{ 
+            background: HP_TOKENS.card, borderRadius: 24, padding: 24, 
+            border: `1.5px solid ${HP_TOKENS.line}`, 
+            boxShadow: '0 8px 24px rgba(26,29,35,0.03)'
+          }}>
+            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 16, letterSpacing: 0.5 }}>
               AKSES & BAGIKAN CATATAN
             </div>
             
@@ -269,6 +287,7 @@ export default function NotesScreen() {
                   setVisibility(e.target.value);
                   setSharedUsers([]);
                 }}
+                className="hp-native-select"
                 style={{ ...inputStyle, flex: '1 1 200px', fontWeight: 700 }}
               >
                 <option value="private">🔒 Pribadi (Hanya Saya)</option>
@@ -280,7 +299,8 @@ export default function NotesScreen() {
                 <select
                   value={sharedPermission}
                   onChange={(e) => setSharedPermission(e.target.value)}
-                  style={{ ...inputStyle, flex: '1 1 120px', fontWeight: 700, padding: '14px 10px', fontSize: 13 }}
+                  className="hp-native-select"
+                  style={{ ...inputStyle, flex: '1 1 120px', fontWeight: 700, padding: '16px 14px' }}
                 >
                   <option value="view">👁️ Bisa Lihat</option>
                   <option value="edit">✏️ Bisa Ikut Edit</option>
@@ -290,20 +310,24 @@ export default function NotesScreen() {
 
             {visibility === 'custom' && (
               <div style={{ 
-                marginTop: 12, padding: 16, background: HP_TOKENS.paper, 
-                border: `1.5px solid ${HP_TOKENS.line}`, borderRadius: 16 
+                marginTop: 20, padding: 24, background: HP_TOKENS.paper, 
+                border: `1.5px solid ${HP_TOKENS.line}`, borderRadius: 20 
               }}>
                 {sharedUsers.length > 0 && (
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', padding: '10px',
-                    borderRadius: 12, background: HP_TOKENS.blueWash, marginBottom: 12 }}>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: '16px',
+                    borderRadius: 16, background: HP_TOKENS.blueWash, marginBottom: 20 }}>
                     {sharedUsers.map(uid => {
                       const u = allUsers.find((x: any) => String(x.id) === uid);
                       return u ? (
                         <span key={uid} onClick={() => toggleUser(uid)} style={{
-                          padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 800,
+                          padding: '8px 16px', borderRadius: 12, fontSize: 13, fontWeight: 800,
                           cursor: 'pointer', fontFamily: HP_FONT, border: 'none',
                           background: HP_TOKENS.blue, color: '#F4F7F9',
-                        }}>{u.name.split(' ')[0]} ✕</span>
+                          display: 'inline-flex', alignItems: 'center', gap: 6
+                        }}>
+                          {u.name.split(' ')[0]} 
+                          <HPGlyph name="close" size={14} color="#F4F7F9" />
+                        </span>
                       ) : null;
                     })}
                   </div>
@@ -311,9 +335,9 @@ export default function NotesScreen() {
 
                 <input value={searchUser} onChange={e => setSearchUser(e.target.value)}
                   placeholder="🔍 Cari nama atau departemen..."
-                  style={{ ...inputStyle, padding: '12px 14px', borderRadius: 12, marginBottom: 12 }} />
+                  style={{ ...inputStyle, padding: '16px 20px', borderRadius: 16, marginBottom: 20 }} />
 
-                <div style={{ maxHeight: 240, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <div className="hp-user-list" style={{ maxHeight: 320, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12, paddingRight: 8 }}>
                   {deptNames.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: 20, color: HP_TOKENS.inkMute }}>Tidak ditemukan</div>
                   ) : (
@@ -324,10 +348,10 @@ export default function NotesScreen() {
                       const someInDeptSelected = deptUsers.some((u: any) => sharedUsers.includes(String(u.id)));
 
                       return (
-                        <div key={dept} style={{ marginBottom: 4 }}>
+                        <div key={dept} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                           <div style={{
-                            display: 'flex', alignItems: 'center', gap: 8,
-                            padding: '10px 12px', borderRadius: 12,
+                            display: 'flex', alignItems: 'center', gap: 12,
+                            padding: '12px 16px', borderRadius: 16,
                             background: HP_TOKENS.card, border: `1.5px solid ${HP_TOKENS.lineSoft}`
                           }}>
                             <button onClick={(e) => { e.preventDefault(); toggleDeptCollapse(dept); }} className="hp-tap" style={{
@@ -336,13 +360,13 @@ export default function NotesScreen() {
                               transform: isCollapsed ? 'rotate(0)' : 'rotate(90deg)',
                               transition: 'transform 0.2s',
                             }}>
-                              <HPGlyph name="chevronRight" size={14} color={HP_TOKENS.inkMute} />
+                              <HPGlyph name="chevronRight" size={16} color={HP_TOKENS.inkMute} />
                             </button>
-                            <div style={{ flex: 1, ...HP_TEXT.h, fontSize: 13, color: HP_TOKENS.inkSoft }}>
+                            <div style={{ flex: 1, ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.ink }}>
                               {dept} ({deptUsers.length})
                             </div>
                             <button onClick={(e) => { e.preventDefault(); selectAllInDept(dept); }} className="hp-tap" style={{
-                              padding: '4px 12px', borderRadius: 8, fontSize: 11, fontWeight: 800,
+                              padding: '6px 14px', borderRadius: 10, fontSize: 12, fontWeight: 800,
                               cursor: 'pointer', fontFamily: HP_FONT,
                               background: allInDeptSelected ? HP_TOKENS.blue : someInDeptSelected ? `${HP_TOKENS.blue}30` : HP_TOKENS.lineSoft,
                               color: allInDeptSelected ? '#fff' : HP_TOKENS.blue,
@@ -352,36 +376,40 @@ export default function NotesScreen() {
                             </button>
                           </div>
 
-                          {!isCollapsed && deptUsers.map((u: any) => {
-                            const isSelected = sharedUsers.includes(String(u.id));
-                            return (
-                              <button key={u.id} onClick={(e) => { e.preventDefault(); toggleUser(String(u.id)); }}
-                                className="hp-tap" style={{
-                                  display: 'flex', alignItems: 'center', gap: 12,
-                                  padding: '10px 12px 10px 32px', borderRadius: 12,
-                                  background: isSelected ? HP_TOKENS.blueWash : 'transparent',
-                                  border: isSelected ? `1.5px solid ${HP_TOKENS.blue}30` : '1.5px solid transparent',
-                                  cursor: 'pointer', width: '100%', textAlign: 'left',
-                                  marginTop: 4
-                                }}>
-                                <HPAvatar name={u.name} size={36} />
-                                <div style={{ flex: 1 }}>
-                                  <div style={{ ...HP_TEXT.h, fontSize: 14 }}>{u.name}</div>
-                                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontSize: 11 }}>
-                                    {u.jobTitle || u.role}
-                                  </div>
-                                </div>
-                                <div style={{
-                                  width: 22, height: 22, borderRadius: 6,
-                                  border: `2px solid ${isSelected ? HP_TOKENS.blue : HP_TOKENS.line}`,
-                                  background: isSelected ? HP_TOKENS.blue : 'transparent',
-                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                }}>
-                                  {isSelected && <HPGlyph name="check" size={12} color="#F4F7F9" />}
-                                </div>
-                              </button>
-                            );
-                          })}
+                          {!isCollapsed && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 12 }}>
+                              {deptUsers.map((u: any) => {
+                                const isSelected = sharedUsers.includes(String(u.id));
+                                return (
+                                  <button key={u.id} onClick={(e) => { e.preventDefault(); toggleUser(String(u.id)); }}
+                                    className="hp-tap" style={{
+                                      display: 'flex', alignItems: 'center', gap: 16,
+                                      padding: '12px 16px', borderRadius: 16,
+                                      background: isSelected ? HP_TOKENS.blueWash : 'transparent',
+                                      border: isSelected ? `1.5px solid ${HP_TOKENS.blue}30` : '1.5px solid transparent',
+                                      cursor: 'pointer', width: '100%', textAlign: 'left', transition: 'all 0.2s'
+                                    }}>
+                                    <HPAvatar name={u.name} size={40} />
+                                    <div style={{ flex: 1 }}>
+                                      <div style={{ ...HP_TEXT.h, fontSize: 15 }}>{u.name}</div>
+                                      <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontSize: 12, marginTop: 4 }}>
+                                        {u.jobTitle || u.role}
+                                      </div>
+                                    </div>
+                                    <div style={{
+                                      width: 24, height: 24, borderRadius: 8,
+                                      border: `2px solid ${isSelected ? HP_TOKENS.blue : HP_TOKENS.line}`,
+                                      background: isSelected ? HP_TOKENS.blue : 'transparent',
+                                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                      transition: 'all 0.2s'
+                                    }}>
+                                      {isSelected && <HPGlyph name="check" size={14} color="#F4F7F9" />}
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
                       );
                     })
@@ -389,59 +417,67 @@ export default function NotesScreen() {
                  </div>
               </div>
             )}
-            
-            <div style={{ marginTop: 24 }}>
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 8, letterSpacing: 0.5 }}>
-                TEMA WARNA
-              </div>
-              <div style={{ display: 'flex', gap: 12 }}>
-                {NOTE_THEMES.map(theme => (
-                  <div
-                    key={theme.id}
-                    onClick={() => setNoteColor(theme.id)}
-                    className="hp-tap"
-                    style={{
-                      width: 32, height: 32, borderRadius: 16, background: theme.bg,
-                      border: `2.5px solid ${noteColor === theme.id ? theme.border : 'transparent'}`,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      boxShadow: noteColor === theme.id ? `0 4px 12px ${theme.border}40` : 'none'
-                    }}
-                    title={theme.label}
-                  />
-                ))}
-              </div>
+          </div>
+
+          {/* SECTION 2: TEMA WARNA */}
+          <div style={{ 
+            background: HP_TOKENS.card, borderRadius: 24, padding: 24, 
+            border: `1.5px solid ${HP_TOKENS.line}`, 
+            boxShadow: '0 8px 24px rgba(26,29,35,0.03)'
+          }}>
+            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 16, letterSpacing: 0.5 }}>
+              TEMA WARNA
+            </div>
+            <div style={{ display: 'flex', gap: 16 }}>
+              {NOTE_THEMES.map(theme => (
+                <div
+                  key={theme.id}
+                  onClick={() => setNoteColor(theme.id)}
+                  className="hp-tap"
+                  style={{
+                    width: 44, height: 44, borderRadius: 22, background: theme.bg,
+                    border: `3px solid ${noteColor === theme.id ? theme.border : 'transparent'}`,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    boxShadow: noteColor === theme.id ? `0 4px 16px ${theme.border}40` : 'none'
+                  }}
+                  title={theme.label}
+                />
+              ))}
             </div>
           </div>
 
-          <div style={{ width: '100%', height: 1.5, background: HP_TOKENS.lineSoft, margin: '20px 0' }} />
-
-          {/* NOTE CONTENT */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* SECTION 3: KONTEN */}
+          <div style={{ 
+            background: HP_TOKENS.card, borderRadius: 24, padding: 24, 
+            border: `1.5px solid ${HP_TOKENS.line}`, 
+            boxShadow: '0 8px 24px rgba(26,29,35,0.03)',
+            display: 'flex', flexDirection: 'column', gap: 24
+          }}>
             <div>
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 8, letterSpacing: 0.5 }}>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 12, letterSpacing: 0.5 }}>
                 JUDUL CATATAN
               </div>
               <input
                 value={noteTitle}
                 onChange={(e) => setNoteTitle(e.target.value)}
                 placeholder="Rapat Mingguan, Ide Kreatif, dll."
-                style={{ ...inputStyle, fontWeight: 800, fontSize: 16 }}
+                style={{ ...inputStyle, fontWeight: 800, fontSize: 18, padding: '18px 20px' }}
               />
             </div>
             
             <div>
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 8, letterSpacing: 0.5 }}>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 12, letterSpacing: 0.5 }}>
                 ISI CATATAN
               </div>
-              <div style={{ background: HP_TOKENS.card, borderRadius: 14, overflow: 'hidden', maxWidth: '100%' }}>
+              <div style={{ background: HP_TOKENS.card, borderRadius: 16, overflow: 'hidden', maxWidth: '100%', border: `1.5px solid ${HP_TOKENS.lineSoft}` }}>
                 <Editor
                   tinymceScriptSrc="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js"
                   value={newNote}
                   onEditorChange={(content) => setNewNote(content)}
                   init={{
                     width: '100%',
-                    height: 300,
+                    height: 400,
                     menubar: false,
                     toolbar_mode: 'sliding',
                     plugins: [
@@ -453,7 +489,7 @@ export default function NotesScreen() {
                       'bold italic forecolor | alignleft aligncenter ' +
                       'alignright alignjustify | bullist numlist outdent indent | ' +
                       'removeformat | help',
-                    content_style: `body { font-family: ${HP_FONT}, sans-serif; font-size: 14px; line-height: 1.6; }`,
+                    content_style: `body { font-family: ${HP_FONT}, sans-serif; font-size: 15px; line-height: 1.6; }`,
                     placeholder: "Tuliskan semua idemu di sini..."
                   }}
                 />
@@ -462,14 +498,14 @@ export default function NotesScreen() {
           </div>
 
           {/* ACTIONS */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 16, marginTop: 24, flexWrap: 'wrap' }}>
             <button
               onClick={cancelForm}
               className="hp-tap"
               style={{
-                padding: '14px 20px', borderRadius: 14, border: `1.5px solid ${HP_TOKENS.line}`,
+                padding: '16px 28px', borderRadius: 16, border: `1.5px solid ${HP_TOKENS.line}`,
                 background: HP_TOKENS.card, color: HP_TOKENS.inkSoft,
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer',
+                fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
               }}
             >
               Batal
@@ -479,10 +515,10 @@ export default function NotesScreen() {
               disabled={!newNote.trim() || (visibility === 'custom' && sharedUsers.length === 0)}
               className="hp-tap"
               style={{
-                padding: '14px 24px', borderRadius: 14, border: 'none',
+                padding: '16px 32px', borderRadius: 16, border: 'none',
                 background: (!newNote.trim() || (visibility === 'custom' && sharedUsers.length === 0)) ? HP_TOKENS.lineSoft : HP_TOKENS.primaryWash,
                 color: (!newNote.trim() || (visibility === 'custom' && sharedUsers.length === 0)) ? HP_TOKENS.inkMute : HP_TOKENS.primary,
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, 
+                fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, 
                 cursor: (!newNote.trim() || (visibility === 'custom' && sharedUsers.length === 0)) ? 'default' : 'pointer',
                 boxShadow: 'none'
               }}
