@@ -13,7 +13,7 @@ interface HabitCellProps {
 
 const DAY_LABELS = ['S', 'S', 'R', 'K', 'J', 'S', 'M'];
 
-export default function HabitCell({ h, onToggle, onQuickComplete, onFinish }: HabitCellProps) {
+function HabitCell({ h, onToggle, onQuickComplete, onFinish }: HabitCellProps) {
   const [showPoints, setShowPoints] = useState(false);
   const [monthOffset, setMonthOffset] = useState(0); // 0 = current month, 1 = previous month, etc.
 
@@ -33,51 +33,52 @@ export default function HabitCell({ h, onToggle, onQuickComplete, onFinish }: Ha
   habitCreatedAt.setHours(0, 0, 0, 0);
 
   const totalCells = 42; // 6 rows of 7 days
-  const calendarCells = Array(totalCells).fill(0).map((_, i) => {
-    const isCurrentMonth = i >= startDay && i < startDay + daysInMonth;
-    const cellDate = new Date(viewYear, viewMonth, i - startDay + 1);
-    
-    // Time difference in days relative to absolute today
-    const msPerDay = 1000 * 60 * 60 * 24;
-    // We use UTC to avoid daylight saving time offset issues when diffing days
-    const utcCellDate = Date.UTC(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
-    const utcToday = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
-    const daysOffset = Math.round((utcCellDate - utcToday) / msPerDay);
-    
-    const future = daysOffset > 0;
-    const isToday = daysOffset === 0;
-    const daysAgo = Math.abs(daysOffset);
-    
-    let done = false;
-    if (h.completedDates) {
-      const dateStr = `${cellDate.getFullYear()}-${String(cellDate.getMonth() + 1).padStart(2, '0')}-${String(cellDate.getDate()).padStart(2, '0')}`;
-      done = h.completedDates.includes(dateStr);
-    } else {
-      if (h.done) {
-        done = daysAgo < streak || daysAgo === 0;
+  const calendarCells = React.useMemo(() => {
+    return Array(totalCells).fill(0).map((_, i) => {
+      const isCurrentMonth = i >= startDay && i < startDay + daysInMonth;
+      const cellDate = new Date(viewYear, viewMonth, i - startDay + 1);
+      
+      // Time difference in days relative to absolute today
+      const msPerDay = 1000 * 60 * 60 * 24;
+      // We use UTC to avoid daylight saving time offset issues when diffing days
+      const utcCellDate = Date.UTC(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
+      const utcToday = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+      const daysOffset = Math.round((utcCellDate - utcToday) / msPerDay);
+      
+      const future = daysOffset > 0;
+      const isToday = daysOffset === 0;
+      const daysAgo = Math.abs(daysOffset);
+      
+      let done = false;
+      if (h.completedDates) {
+        const dateStr = `${cellDate.getFullYear()}-${String(cellDate.getMonth() + 1).padStart(2, '0')}-${String(cellDate.getDate()).padStart(2, '0')}`;
+        done = h.completedDates.includes(dateStr);
       } else {
-        done = daysAgo > 0 && daysAgo <= streak;
+        if (h.done) {
+          done = daysAgo < streak || daysAgo === 0;
+        } else {
+          done = daysAgo > 0 && daysAgo <= streak;
+        }
       }
-    }
-    
-    return {
-      date: cellDate,
-      isCurrentMonth,
-      future,
-      isToday,
-      done: !future && done,
-      daysAgo
-    };
-  });
+      
+      return {
+        date: cellDate,
+        isCurrentMonth,
+        future,
+        isToday,
+        done: !future && done,
+        daysAgo
+      };
+    });
+  }, [viewYear, viewMonth, startDay, daysInMonth, h.completedDates, h.done, h.streak, today.getTime()]);
 
   const monthLabel = viewDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
 
-  // Progress logic: we only care about progress within this viewed month?
-  // Or just general progress over the streak?
-  // Let's keep it simple: progress is just based on streak vs target, or just days completed in this view.
-  const pastDaysCount = calendarCells.filter(c => c.isCurrentMonth && !c.future).length;
-  const doneCount = calendarCells.filter(c => c.done).length;
-  const progress = Math.min(1, doneCount / Math.max(1, pastDaysCount));
+  const progress = React.useMemo(() => {
+    const pastDaysCount = calendarCells.filter(c => c.isCurrentMonth && !c.future).length;
+    const doneCount = calendarCells.filter(c => c.done).length;
+    return Math.min(1, doneCount / Math.max(1, pastDaysCount));
+  }, [calendarCells]);
 
   const handleCellClick = (cell: any) => {
     if (cell.future) return;
@@ -328,3 +329,5 @@ export default function HabitCell({ h, onToggle, onQuickComplete, onFinish }: Ha
     </div>
   );
 }
+
+export default React.memo(HabitCell);

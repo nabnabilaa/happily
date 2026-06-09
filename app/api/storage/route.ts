@@ -254,18 +254,18 @@ export async function GET(request: Request) {
     }));
 
     const rewardHistoryRes = await db.execute({
-      sql: "SELECT * FROM user_rewards WHERE user_id = ? ORDER BY date DESC",
+      sql: "SELECT * FROM user_rewards WHERE user_id = ? ORDER BY date DESC LIMIT 10",
       args: [userId]
     });
     const rewardHistory = rewardHistoryRes.rows.map(r => ({
       id: r.id, title: r.title, points: r.points, date: r.date, glyph: r.glyph
     }));
 
-    // Fetch logbook entries (recent 20)
+    // Fetch logbook entries (recent 10)
     let logbook: any[] = [];
     try {
       const logRes = await db.execute({
-        sql: "SELECT * FROM logbook_entries WHERE user_id = ? ORDER BY created_at DESC LIMIT 20",
+        sql: "SELECT * FROM logbook_entries WHERE user_id = ? ORDER BY created_at DESC LIMIT 10",
         args: [userId]
       });
       logbook = logRes.rows.map(r => ({

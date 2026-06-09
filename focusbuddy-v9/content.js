@@ -4133,12 +4133,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
   renderHabits()
   renderCoachInsights()
 
-  setInterval(() => {
-    detectFlowbeeUser()
-    if (!availableKPIs || !availableKPIs.length) loadKPIs()
-    flowbeeSyncAll()
-    checkReflectionReminder()
-  }, 30000)
+  // INTERVAL DITANGGUHKAN: Sinkronisasi dipindahkan ke event klik panel (on-demand) untuk menghemat memori.
 
   $('fb-date').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })
 
@@ -4337,20 +4332,8 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
     }
   }
 
-  // ── Mouse drag ──
-  buddy.addEventListener('mousedown', e => {
-    if (e.button !== 0) return
-    isDragging = true; dragDidMove = false
-    const rect = buddy.getBoundingClientRect()
-    dragOffX = e.clientX - rect.left
-    dragOffY = e.clientY - rect.top
-    buddy.classList.add('dragging')
-    dragOverlay = createDragOverlay()
-    e.preventDefault()
-  })
-
-  // Use capture phase on window so events fire before any page handler can stop them
-  window.addEventListener('mousemove', e => {
+  // ── Drag Handlers ──
+  function onDragMove(e) {
     if (!isDragging) return
     dragDidMove = true
     let targetX = e.clientX - dragOffX + 100
@@ -4362,32 +4345,15 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
       const currentSnapLeft = currentSnapX < W / 2
       
       if (currentSnapLeft) {
-        if (targetX > 140) {
-          setMascotAnimated(true)
-        }
+        if (targetX > 140) setMascotAnimated(true)
       } else {
-        if (targetX < W - 40) {
-          setMascotAnimated(true)
-        }
+        if (targetX < W - 40) setMascotAnimated(true)
       }
     }
-    
     applyPos(targetX, targetY)
-  }, true)
+  }
 
-  window.addEventListener('mouseup', endDrag, true)
-
-  // ── Touch drag ──
-  buddy.addEventListener('touchstart', e => {
-    const t = e.touches[0]; isDragging = true; dragDidMove = false
-    const rect = buddy.getBoundingClientRect()
-    dragOffX = t.clientX - rect.left; dragOffY = t.clientY - rect.top
-    buddy.classList.add('dragging')
-    dragOverlay = createDragOverlay()
-    e.preventDefault()
-  }, { passive: false })
-
-  window.addEventListener('touchmove', e => {
+  function onTouchMove(e) {
     if (!isDragging) return; dragDidMove = true
     const t = e.touches[0]
     let targetX = t.clientX - dragOffX + 100
@@ -4399,22 +4365,52 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
       const currentSnapLeft = currentSnapX < W / 2
       
       if (currentSnapLeft) {
-        if (targetX > 140) {
-          setMascotAnimated(true)
-        }
+        if (targetX > 140) setMascotAnimated(true)
       } else {
-        if (targetX < W - 40) {
-          setMascotAnimated(true)
-        }
+        if (targetX < W - 40) setMascotAnimated(true)
       }
     }
-    
     applyPos(targetX, targetY)
     e.preventDefault()
-  }, { capture: true, passive: false })
+  }
 
-  window.addEventListener('touchend', endDrag, true)
-  window.addEventListener('touchcancel', endDrag, true)
+  function onDragEnd() {
+    endDrag()
+    window.removeEventListener('mousemove', onDragMove, true)
+    window.removeEventListener('mouseup', onDragEnd, true)
+    window.removeEventListener('touchmove', onTouchMove, true)
+    window.removeEventListener('touchend', onDragEnd, true)
+    window.removeEventListener('touchcancel', onDragEnd, true)
+  }
+
+  // ── Mouse drag ──
+  buddy.addEventListener('mousedown', e => {
+    if (e.button !== 0) return
+    isDragging = true; dragDidMove = false
+    const rect = buddy.getBoundingClientRect()
+    dragOffX = e.clientX - rect.left
+    dragOffY = e.clientY - rect.top
+    buddy.classList.add('dragging')
+    dragOverlay = createDragOverlay()
+    e.preventDefault()
+    
+    window.addEventListener('mousemove', onDragMove, true)
+    window.addEventListener('mouseup', onDragEnd, true)
+  })
+
+  // ── Touch drag ──
+  buddy.addEventListener('touchstart', e => {
+    const t = e.touches[0]; isDragging = true; dragDidMove = false
+    const rect = buddy.getBoundingClientRect()
+    dragOffX = t.clientX - rect.left; dragOffY = t.clientY - rect.top
+    buddy.classList.add('dragging')
+    dragOverlay = createDragOverlay()
+    e.preventDefault()
+    
+    window.addEventListener('touchmove', onTouchMove, { capture: true, passive: false })
+    window.addEventListener('touchend', onDragEnd, true)
+    window.addEventListener('touchcancel', onDragEnd, true)
+  }, { passive: false })
 
   // Reposition on resize so buddy + panel stay on-screen
   window.addEventListener('resize', () => {
@@ -4445,6 +4441,12 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
     if (panelOpen) {
       positionPanel(parseInt(root.style.left) || window.innerWidth - 28, parseInt(root.style.top) || window.innerHeight - 28)
       renderAll()
+      
+      // Sinkronisasi data ketika panel dibuka (On-Demand)
+      detectFlowbeeUser()
+      if (typeof availableKPIs !== 'undefined' && (!availableKPIs || !availableKPIs.length) && typeof loadKPIs === 'function') loadKPIs()
+      if (typeof flowbeeSyncAll === 'function') flowbeeSyncAll()
+      if (typeof checkReflectionReminder === 'function') checkReflectionReminder()
     }
   })
 
@@ -4461,7 +4463,14 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
   buddy.addEventListener('mouseleave', () => {
     setTimeout(() => { ctx.rubScore = Math.max(0, ctx.rubScore - 5) }, 500)
   })
-  document.addEventListener('mousemove', () => { ctx.lastActivity = Date.now() }, { passive: true })
+  let activityThrottle = null;
+  document.addEventListener('mousemove', () => {
+    if (activityThrottle) return;
+    activityThrottle = setTimeout(() => {
+      ctx.lastActivity = Date.now();
+      activityThrottle = null;
+    }, 1000);
+  }, { passive: true })
   document.addEventListener('keydown', () => { ctx.lastActivity = Date.now() }, { passive: true })
 
   $('fb-x').addEventListener('click', () => {
