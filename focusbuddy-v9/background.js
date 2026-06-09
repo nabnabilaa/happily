@@ -67,6 +67,11 @@ chrome.runtime.onMessage.addListener((msg, _, res) => {
     res({ ok:true })
   }
 
+  if (msg.type === 'FB_STOP_ALARM_BROADCAST') {
+    chrome.tabs.query({}, tabs => tabs.forEach(t => chrome.tabs.sendMessage(t.id, { type: 'FB_STOP_ALARM' }).catch(()=>{})))
+    res({ ok:true })
+  }
+
   // ── Focus Mode: Enable distraction blocking ──
   if (msg.type === 'FB_FOCUS_START') {
     const sitesToBlock = msg.sitesToBlock || ['youtube.com', 'twitter.com', 'x.com', 'instagram.com', 'tiktok.com', 'reddit.com', 'facebook.com', 'netflix.com', 'twitch.tv'];

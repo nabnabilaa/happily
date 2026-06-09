@@ -4714,9 +4714,13 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
       const alarmPane = root.querySelector('#pane-alarm')
       if (alarmPane) alarmPane.classList.add('show')
       activeTab = 'alarm'
-      showToast('⏰ Alarm berbunyi!', msg.label || 'Waktunya!', 0, '🔇 Matikan', stopAlarmRing)
+      showToast('⏰ Alarm berbunyi!', msg.label || 'Waktunya!', 0, '🔇 Matikan', () => stopAlarmRing(true))
       ctx.alarms = ctx.alarms.filter(a => Math.abs(a.timestamp - Date.now()) > 90000)
       save(); renderAlarms()
+    }
+    
+    if (msg.type === 'FB_STOP_ALARM') {
+      stopAlarmRing(false)
     }
     if (msg.type === 'FB_TOGGLE') {
       if (!extensionEnabled) {
@@ -6920,7 +6924,10 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
     playChime(true)
   }
 
-  function stopAlarmRing() {
+  function stopAlarmRing(broadcast = true) {
+    // If it's an Event object from click listener, we want broadcast to be true
+    if (typeof broadcast !== 'boolean') broadcast = true
+    
     _alarmRinging = false
     _alarmStopCooldown = Date.now() + 5000  // block re-trigger for 5s
     const banner = $('fb-al-ringing')
@@ -6929,9 +6936,14 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
     // Clear any past alarms so countdown interval doesn't re-fire
     const now = Date.now()
     ctx.alarms = ctx.alarms.filter(a => a.timestamp > now + 2000)
-    clearInterval(alarmCdIv)
     save()
     if (activeTab === 'alarm') renderAlarms()
+    
+    if (broadcast) {
+      try {
+        chrome.runtime.sendMessage({ type: 'FB_STOP_ALARM_BROADCAST' }).catch(()=>{})
+      } catch(e) {}
+    }
   }
 
   const stopAlarmBtn = $('fb-al-stop')
