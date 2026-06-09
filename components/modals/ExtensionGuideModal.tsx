@@ -21,7 +21,7 @@ export default function ExtensionGuideModal({ onClose }: ExtensionGuideModalProp
           width: '90%',
           maxWidth: 480, 
           fontFamily: HP_FONT,
-          background: '#fff',
+          background: HP_TOKENS.card,
           overflow: 'hidden',
           borderRadius: 24,
           boxShadow: '0 24px 48px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)',
@@ -30,7 +30,7 @@ export default function ExtensionGuideModal({ onClose }: ExtensionGuideModalProp
       >
         {/* Header Hero Area */}
         <div style={{
-          background: 'linear-gradient(135deg, #F5EFEB, #E6DCD1)',
+          background: `linear-gradient(135deg, ${HP_TOKENS.yellowWash}, ${HP_TOKENS.card})`,
           padding: '40px 24px 32px',
           position: 'relative',
           flexShrink: 0,
@@ -41,7 +41,7 @@ export default function ExtensionGuideModal({ onClose }: ExtensionGuideModalProp
           gap: 12
         }}>
           {/* Decorative blur elements */}
-          <div style={{ position: 'absolute', right: -30, top: -30, width: 140, height: 140, background: 'rgba(255,255,255,0.4)', borderRadius: '50%', filter: 'blur(30px)' }} />
+          <div style={{ position: 'absolute', right: -30, top: -30, width: 140, height: 140, background: 'rgba(255,255,255,0.1)', borderRadius: '50%', filter: 'blur(30px)' }} />
           <div style={{ position: 'absolute', left: -20, bottom: -40, width: 100, height: 100, background: 'rgba(0,0,0,0.03)', borderRadius: '50%', filter: 'blur(20px)' }} />
           
           <button 
@@ -73,7 +73,7 @@ export default function ExtensionGuideModal({ onClose }: ExtensionGuideModalProp
         </div>
 
         {/* Content Area */}
-        <div style={{ padding: '32px 24px', background: '#FAFAFB', flex: 1, overflowY: 'auto', minHeight: 0 }}>
+        <div style={{ padding: '32px 24px', background: HP_TOKENS.paper, flex: 1, overflowY: 'auto', minHeight: 0 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <StepItem 
               num={1}
@@ -103,7 +103,7 @@ export default function ExtensionGuideModal({ onClose }: ExtensionGuideModalProp
               text={
                 <>
                   Buka tab baru, dan paste URL berikut:
-                  <div style={{ marginTop: 8, padding: '8px 12px', background: '#fff', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 8, color: HP_TOKENS.yellowDark, fontFamily: 'monospace', fontWeight: 'bold' }}>
+                  <div style={{ marginTop: 8, padding: '8px 12px', background: HP_TOKENS.card, border: `1px solid ${HP_TOKENS.lineSoft}`, borderRadius: 8, color: HP_TOKENS.yellowDark, fontFamily: 'monospace', fontWeight: 'bold' }}>
                     chrome://extensions/
                   </div>
                 </>
@@ -132,7 +132,7 @@ export default function ExtensionGuideModal({ onClose }: ExtensionGuideModalProp
         </div>
 
         {/* Footer Area */}
-        <div style={{ padding: '24px', background: '#fff', borderTop: `1px solid ${HP_TOKENS.lineSoft}`, flexShrink: 0 }}>
+        <div style={{ padding: '24px', background: HP_TOKENS.card, borderTop: `1px solid ${HP_TOKENS.lineSoft}`, flexShrink: 0 }}>
           <a 
             href="/focusbuddy-v9.zip" 
             download
@@ -191,7 +191,7 @@ function StepItem({ num, title, text, icon, isLast, isHovered, onHover, onLeave 
       style={{ 
         display: 'flex', gap: 16, alignItems: 'flex-start', position: 'relative',
         padding: '12px 16px', borderRadius: 16,
-        background: isHovered ? '#fff' : 'transparent',
+        background: isHovered ? HP_TOKENS.card : 'transparent',
         boxShadow: isHovered ? '0 4px 12px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.02)' : 'none',
         border: `1px solid ${isHovered ? HP_TOKENS.line : 'transparent'}`,
         transition: 'all 0.2s ease',
@@ -210,12 +210,12 @@ function StepItem({ num, title, text, icon, isLast, isHovered, onHover, onLeave 
       
       <div style={{ 
         width: 34, height: 34, borderRadius: 17, flexShrink: 0,
-        background: isHovered ? HP_TOKENS.yellowDark : '#fff', 
+        background: isHovered ? HP_TOKENS.yellowDark : HP_TOKENS.card, 
         color: isHovered ? '#fff' : HP_TOKENS.inkMute, 
         border: `2px solid ${isHovered ? HP_TOKENS.yellowDark : HP_TOKENS.line}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontFamily: HP_FONT, fontWeight: 900, fontSize: 14,
-        boxShadow: `0 0 0 4px ${isHovered ? HP_TOKENS.yellowSoft : '#FAFAFB'}, inset 0 0 0 1px ${isHovered ? 'transparent' : HP_TOKENS.line}`,
+        boxShadow: `0 0 0 4px ${isHovered ? HP_TOKENS.yellowSoft : HP_TOKENS.paper}, inset 0 0 0 1px ${isHovered ? 'transparent' : HP_TOKENS.line}`,
         transition: 'all 0.2s ease', zIndex: 1
       }}>
         {num}

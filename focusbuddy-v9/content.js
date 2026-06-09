@@ -2376,7 +2376,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
 .fb-timer-card {
     background: var(--fb-card);
     border-radius: 16px;
-    padding: 20px;
+    padding: 20px !important;
     box-shadow: 0 4px 20px rgba(0,0,0,0.06);
     display: flex;
     flex-direction: column;
@@ -2396,7 +2396,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 14px;
+    padding: 8px 14px !important;
     border-radius: 10px;
     border: 1.5px solid var(--fb-line);
     background: var(--fb-paper);
@@ -2426,7 +2426,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 14px;
+    padding: 10px 14px !important;
     background: var(--fb-line-soft);
     border: 1.5px solid var(--fb-line);
     border-radius: 12px;
@@ -2466,7 +2466,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 16px 0;
+    padding: 16px 0 !important;
 }
 
 .fb-timer-input-group {
@@ -2486,8 +2486,8 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
     background: var(--fb-line-soft);
     border: 1.5px solid transparent;
     outline: none;
-    padding: 0;
-    margin: 0;
+    padding: 0 !important;
+    margin: 0 !important;
     border-radius: 14px;
     transition: all 0.2s;
     font-variant-numeric: tabular-nums;
@@ -2605,7 +2605,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
 /* Timer History */
 .fb-timer-history-wrap {
     border-top: 1.5px solid var(--fb-line);
-    padding-top: 20px;
+    padding-top: 20px !important;
     margin-top: 12px;
     width: 100%;
 }
@@ -2634,7 +2634,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
     width: 100%;
     max-height: 280px;
     overflow-y: auto;
-    padding-right: 4px;
+    padding-right: 4px !important;
     scrollbar-width: thin;
 }
 .fb-timer-history-item {
@@ -3343,7 +3343,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
       <!-- Composer (collapsible) -->
       <div id="fb-note-composer-wrap" style="display:none; margin-bottom:22px;">
         <div class="fb-note-composer" style="border-radius:12px; background:var(--fb-card); border:1px solid var(--fb-line); overflow:hidden;">
-          <div style="padding:16px; display:flex; flex-direction:column; gap:14px;">
+          <div style="padding:16px !important; display:flex; flex-direction:column; gap:14px;">
             <!-- Row: Access + Permission -->
             <div>
               <div style="font-size:10px; font-weight:700; color:var(--fb-ink-mute); letter-spacing:.5px; text-transform:uppercase; margin-bottom:6px;">Akses & Bagikan Catatan</div>
@@ -3377,7 +3377,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
             <!-- Rich text editor -->
             <div>
               <div style="font-size:10px; font-weight:700; color:var(--fb-ink-mute); letter-spacing:.5px; text-transform:uppercase; margin-bottom:6px;">Isi Catatan</div>
-              <div id="fb-note-toolbar" style="display:flex; gap:4px; padding:6px 8px; border:1px solid var(--fb-line) !important; border-bottom:none !important; border-radius:8px 8px 0 0 !important; background:var(--fb-bg) !important;">
+              <div id="fb-note-toolbar" style="display:flex; gap:4px; padding:6px 8px !important; border:1px solid var(--fb-line) !important; border-bottom:none !important; border-radius:8px 8px 0 0 !important; background:var(--fb-bg) !important;">
                 <button type="button" class="fb-rte-btn" data-cmd="bold" title="Bold (Ctrl+B)" style="font-weight:800;">B</button>
                 <button type="button" class="fb-rte-btn" data-cmd="italic" title="Italic (Ctrl+I)" style="font-style:italic;">I</button>
                 <span style="width:1px; background:var(--fb-line); margin:0 4px;"></span>
@@ -3392,7 +3392,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
             </div>
           </div>
           <!-- Footer bar -->
-          <div style="display:flex; align-items:center; justify-content:flex-end; padding:0 16px 16px;">
+          <div style="display:flex; align-items:center; justify-content:flex-end; padding:0 16px 16px !important;">
             <div style="display:flex; gap:10px; align-items:center;">
               <button id="fb-note-cancel" style="padding:10px 16px !important; border-radius:8px !important; border:1px solid var(--fb-line) !important; background:transparent !important; color:var(--fb-ink-mute) !important; font-size:12.5px !important; font-weight:700 !important; cursor:pointer !important; font-family:inherit !important; transition:all .2s !important;">Batal</button>
               <button id="fb-note-save" style="padding:10px 18px !important; border-radius:8px !important; border:none !important; background:var(--fb-blue) !important; color:#fff !important; font-size:12.5px !important; font-weight:800 !important; cursor:pointer !important; font-family:inherit !important; transition:all .2s !important; box-shadow:0 2px 4px rgba(0,0,0,.1) !important;">Simpan Catatan</button>
@@ -3403,6 +3403,21 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
 
       <!-- Lists -->
       <div id="fb-note-list"></div>
+
+      <!-- NOTE DETAIL MODAL -->
+      <div id="fb-note-detail-modal" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:var(--fb-bg); z-index:999; flex-direction:column;">
+        <div style="display:flex; align-items:center; gap:10px; padding:16px !important; border-bottom:1px solid var(--fb-line); background:var(--fb-card);">
+          <button id="fb-note-detail-close" style="background:none;border:none;cursor:pointer;color:var(--fb-ink-mute);padding:4px !important;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:background 0.2s;" onmouseover="this.style.background='var(--fb-line-soft)'" onmouseout="this.style.background='none'">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <div style="font-size:15px; font-weight:800; color:var(--fb-ink); letter-spacing:-.3px;">Detail Catatan</div>
+        </div>
+        <div style="flex:1; overflow-y:auto; padding:20px !important; background:var(--fb-bg);">
+          <div id="fb-note-detail-meta" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;"></div>
+          <div id="fb-note-detail-title" style="font-size:18px; font-weight:800; color:var(--fb-ink); margin-bottom:12px; line-height:1.4;"></div>
+          <div id="fb-note-detail-content" style="font-size:14.5px; color:var(--fb-ink); line-height:1.7; word-wrap:break-word;"></div>
+        </div>
+      </div>
     </div>
 
     <!-- CHAT -->
@@ -3414,29 +3429,29 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
       </div>
 
       <!-- Messages View (Hidden initially) -->
-      <div id="fb-chat-messages-view" style="display:none; flex-direction:column; height:370px; padding:0 4px;">
+      <div id="fb-chat-messages-view" style="display:none; flex-direction:column; height:370px; padding:0 4px !important;">
         <!-- Header -->
-        <div style="display:flex;align-items:center;gap:12px;padding:10px 0 14px;border-bottom:1px solid var(--fb-line);margin-bottom:10px;">
-          <button id="fb-chat-back-btn" style="background:none;border:none;color:#8b5cf6;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:4px;border-radius:8px;transition:background 0.2s;">
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0 14px !important;border-bottom:1px solid var(--fb-line);margin-bottom:10px;">
+          <button id="fb-chat-back-btn" style="background:none;border:none;color:#8b5cf6;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:4px !important;border-radius:8px;transition:background 0.2s;">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
           <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg, #e0e7ff, #c7d2fe);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;color:#1f2937;">👤</div>
           <div style="flex:1;display:flex;flex-direction:column;justify-content:center;">
             <div id="fb-chat-active-name" style="color:var(--fb-ink);font-weight:700;font-size:15px;line-height:1.2;">Nama</div>
           </div>
-          <button style="background:none;border:none;color:#8b5cf6;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:4px;border-radius:8px;">
+          <button style="background:none;border:none;color:#8b5cf6;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:4px !important;border-radius:8px;">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
           </button>
         </div>
 
         <!-- Messages Area -->
-        <div id="fb-chat-msgs" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:18px;padding-right:6px;padding-bottom:10px;scrollbar-width:none;background:transparent;"></div>
+        <div id="fb-chat-msgs" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:18px;padding-right:6px !important;padding-bottom:10px !important;scrollbar-width:none;background:transparent;"></div>
 
         <!-- Composer -->
-        <div style="display:flex;gap:10px;margin-top:10px;align-items:center;padding:4px 0;">
-          <div style="flex:1;display:flex;align-items:center;background:var(--fb-card);border:1.5px solid var(--fb-line);border-radius:12px;padding:2px 8px;">
-            <input id="fb-chat-input" placeholder="Tulis pesan..." style="flex:1;background:transparent;border:none;color:var(--fb-ink);padding:12px 14px;font-size:13.5px;font-family:inherit;outline:none;box-sizing:border-box;margin:0;color-scheme:light dark;"/>
-            <button id="fb-chat-send-btn" style="background:transparent;color:var(--fb-blue);border:none;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0;margin:0;transition:opacity 0.2s;">
+        <div style="display:flex;gap:10px;margin-top:10px;align-items:center;padding:4px 0 !important;">
+          <div style="flex:1;display:flex;align-items:center;background:var(--fb-card);border:1.5px solid var(--fb-line);border-radius:12px;padding:2px 8px !important;">
+            <input id="fb-chat-input" placeholder="Tulis pesan..." style="flex:1;background:transparent;border:none;color:var(--fb-ink);padding:12px 14px !important;font-size:13.5px;font-family:inherit;outline:none;box-sizing:border-box;margin:0 !important;color-scheme:light dark;"/>
+            <button id="fb-chat-send-btn" style="background:transparent;color:var(--fb-blue);border:none;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0 !important;margin:0 !important;transition:opacity 0.2s;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform:translateX(-1px) translateY(1px)"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2z"/></svg>
             </button>
           </div>
@@ -3532,7 +3547,7 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
           <span id="fb-cal-form-arrow" style="font-size:16px; color:var(--fb-ink-mute); transition:transform .2s; line-height:1; flex-shrink:0; pointer-events:none;">›</span>
         </button>
         <div id="fb-cal-form-body" style="display:none; background:var(--fb-card); border:1.5px solid var(--fb-line); border-top:none; border-radius:0 0 12px 12px; overflow:hidden;">
-          <div style="padding:16px; display:flex; flex-direction:column; gap:14px;">
+          <div style="padding:16px !important; display:flex; flex-direction:column; gap:14px;">
             <!-- Event name -->
             <div>
               <div style="font-size:10px; color:var(--fb-ink-mute); margin-bottom:6px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;">Nama acara</div>
@@ -5991,11 +6006,39 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
       const txtEl = el.querySelector('.fb-note-txt')
       const expandBtn = el.querySelector('.fb-note-expand')
       requestAnimationFrame(() => { if (txtEl.scrollHeight > txtEl.clientHeight + 4) expandBtn.style.display = 'block' })
-      let expanded = false
       expandBtn.onclick = e => {
-        e.stopPropagation(); expanded = !expanded
-        txtEl.classList.toggle('clamped', !expanded)
-        expandBtn.textContent = expanded ? 'Sembunyikan ▴' : 'Lihat semua ▾'
+        e.stopPropagation();
+        
+        // Populate modal
+        const modal = $('fb-note-detail-modal');
+        const metaContainer = $('fb-note-detail-meta');
+        const titleContainer = $('fb-note-detail-title');
+        const contentContainer = $('fb-note-detail-content');
+        
+        if (modal && metaContainer && titleContainer && contentContainer) {
+          metaContainer.innerHTML = `
+            <div style="display:flex;align-items:center;gap:5px;">
+              ${note.pinned ? `<span style="font-size:12px;">📌</span>` : ''}
+              <span style="font-size:10px;font-weight:800;padding:3px 10px;border-radius:4px;background:${vis.bg};color:${vis.color};letter-spacing:.5px;">${vis.label}</span>
+              ${sharedInfo}${permBadge}
+            </div>
+            <span style="font-size:12px;color:#9E9892;font-weight:600;font-variant-numeric:tabular-nums;">${timeStr}</span>
+          `;
+          titleContainer.innerHTML = note.title ? esc(note.title) : '';
+          titleContainer.style.display = note.title ? 'block' : 'none';
+          
+          contentContainer.innerHTML = renderedContent;
+          
+          modal.style.display = 'flex';
+          
+          // Setup close button
+          const closeBtn = $('fb-note-detail-close');
+          if (closeBtn) {
+            closeBtn.onclick = () => {
+              modal.style.display = 'none';
+            };
+          }
+        }
       }
       
       const pinBtn = el.querySelector('.fb-note-act.pin')
