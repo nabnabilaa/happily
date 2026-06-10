@@ -6,7 +6,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   if (!alarm.name.startsWith('fb_')) return
   const label = decodeURIComponent(alarm.name.split('__')[1] || 'Alarm')
   chrome.notifications.create({ type:'basic', iconUrl:'icons/icon.png', title:'⏰ FocusBuddy', message:label, priority:2, requireInteraction:true })
-  chrome.tabs.query({}, tabs => tabs.forEach(t => chrome.tabs.sendMessage(t.id, { type:'FB_ALARM', label }).catch(()=>{})))
+  chrome.tabs.query({ active: true }, tabs => tabs.forEach(t => chrome.tabs.sendMessage(t.id, { type:'FB_ALARM', label }).catch(()=>{})))
 })
 
 chrome.runtime.onMessage.addListener((msg, _, res) => {
@@ -67,6 +67,11 @@ chrome.runtime.onMessage.addListener((msg, _, res) => {
     res({ ok:true })
   }
 
+  if (msg.type === 'FB_STOP_ALARM_BROADCAST') {
+    chrome.tabs.query({}, tabs => tabs.forEach(t => chrome.tabs.sendMessage(t.id, { type: 'FB_STOP_ALARM' }).catch(()=>{})))
+    res({ ok:true })
+  }
+
   // ── Focus Mode: Enable distraction blocking ──
   if (msg.type === 'FB_FOCUS_START') {
     const sitesToBlock = msg.sitesToBlock || ['youtube.com', 'twitter.com', 'x.com', 'instagram.com', 'tiktok.com', 'reddit.com', 'facebook.com', 'netflix.com', 'twitch.tv'];
@@ -88,7 +93,7 @@ chrome.runtime.onMessage.addListener((msg, _, res) => {
       if (msg.durationMins) {
         chrome.alarms.create('fb_focus_end', { delayInMinutes: msg.durationMins })
       }
-      chrome.tabs.query({}, tabs => {
+      chrome.tabs.query({ active: true }, tabs => {
         tabs.forEach(t => chrome.tabs.sendMessage(t.id, { type: 'FB_FOCUS_STATUS', active: true }).catch(() => {}))
       })
       chrome.notifications.create('fb_focus_start', {
@@ -110,7 +115,7 @@ chrome.runtime.onMessage.addListener((msg, _, res) => {
     }).then(() => {
       chrome.storage.local.set({ fb_focus_active: false })
       chrome.alarms.clear('fb_focus_end')
-      chrome.tabs.query({}, tabs => {
+      chrome.tabs.query({ active: true }, tabs => {
         tabs.forEach(t => chrome.tabs.sendMessage(t.id, { type: 'FB_FOCUS_STATUS', active: false }).catch(() => {}))
       })
       chrome.notifications.create('fb_focus_end', {
@@ -143,7 +148,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     }).then(() => {
       chrome.storage.local.set({ fb_focus_active: false })
       
-      chrome.tabs.query({}, tabs => {
+      chrome.tabs.query({ active: true }, tabs => {
         tabs.forEach(t => {
           chrome.tabs.sendMessage(t.id, { type: 'FB_FOCUS_STATUS', active: false }).catch(() => {})
         })

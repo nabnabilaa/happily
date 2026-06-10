@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from "react";
 
 interface HPState {
   mood: string | null;
@@ -896,13 +896,19 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
     }
   }, [userPayloadString]);
 
+  const contextValue = useMemo(() => ({ 
+    state, user, updateState, updateUser, setUserRole, login, logout, awardXP,
+    loading, refresh,
+    refreshSurveys, resetData, syncSkillProgress,
+    toasts, notify, dismissToast
+  }), [
+    state, user, loading, toasts,
+    updateState, updateUser, setUserRole, login, logout, awardXP,
+    refresh, refreshSurveys, resetData, syncSkillProgress, notify, dismissToast
+  ]);
+
   return (
-    <HPContext.Provider value={{ 
-      state, user, updateState, updateUser, setUserRole, login, logout, awardXP,
-      loading, refresh,
-      refreshSurveys, resetData, syncSkillProgress,
-      toasts, notify, dismissToast
-    }}>
+    <HPContext.Provider value={contextValue}>
       {children}
     </HPContext.Provider>
   );
