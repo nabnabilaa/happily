@@ -118,7 +118,18 @@ export default function PauseModal({ onClose }: PauseModalProps) {
     notify("Latihan Selesai 🧘‍♂️", "Kamu mendapat +5 Poin! Tubuh dan pikiranmu sudah lebih tenang.", "success");
   };
 
-  const phaseInfo = {
+  interface PhaseInfo {
+    label: string;
+    desc: string;
+    scale: number;
+    color: string;
+    bg: string;
+    gradient?: string;
+    halo?: string;
+    shadow?: string;
+  }
+
+  const phaseInfo: Record<string, PhaseInfo> = {
     setup: {
       label: 'Teknik Napas 4-7-8',
       desc: 'Atur jumlah putaran sebelum mulai',
