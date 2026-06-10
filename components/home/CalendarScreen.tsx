@@ -512,8 +512,7 @@ export default function CalendarScreen({ openModal }: Props) {
                             style={{
                               padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
                               background: recurrence === o.value ? HP_TOKENS.blueWash : 'transparent',
-                              color: recurrence === o.value ? HP_TOKENS.blue : HP_TOKENS.ink,
-                              ...HP_TEXT.body, fontSize: 13, fontWeight: recurrence === o.value ? 700 : 500,
+                              ...HP_TEXT.body, color: recurrence === o.value ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: recurrence === o.value ? 700 : 500,
                               marginBottom: 4
                             }}
                           >
@@ -546,8 +545,7 @@ export default function CalendarScreen({ openModal }: Props) {
                             style={{
                               padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
                               background: offset === Number(o.value) ? HP_TOKENS.blueWash : 'transparent',
-                              color: offset === Number(o.value) ? HP_TOKENS.blue : HP_TOKENS.ink,
-                              ...HP_TEXT.body, fontSize: 13, fontWeight: offset === Number(o.value) ? 700 : 500,
+                              ...HP_TEXT.body, color: offset === Number(o.value) ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: offset === Number(o.value) ? 700 : 500,
                               marginBottom: 4
                             }}
                           >
@@ -591,8 +589,7 @@ export default function CalendarScreen({ openModal }: Props) {
                           style={{
                             padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
                             background: visibility === o.value ? HP_TOKENS.blueWash : 'transparent',
-                            color: visibility === o.value ? HP_TOKENS.blue : HP_TOKENS.ink,
-                            ...HP_TEXT.body, fontSize: 13, fontWeight: visibility === o.value ? 700 : 500,
+                            ...HP_TEXT.body, color: visibility === o.value ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: visibility === o.value ? 700 : 500,
                             marginBottom: 4
                           }}
                         >

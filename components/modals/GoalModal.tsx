@@ -394,8 +394,7 @@ export default function GoalModal({ onClose, goal }: { onClose: () => void; goal
                       style={{
                         padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
                         background: parentId === "" ? HP_TOKENS.blueWash : 'transparent',
-                        color: parentId === "" ? HP_TOKENS.blue : HP_TOKENS.ink,
-                        ...HP_TEXT.body, fontSize: 13, fontWeight: parentId === "" ? 700 : 500,
+                        ...HP_TEXT.body, color: parentId === '' ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: parentId === "" ? 700 : 500,
                         marginBottom: 4
                       }}
                     >
@@ -412,8 +411,7 @@ export default function GoalModal({ onClose, goal }: { onClose: () => void; goal
                             style={{
                               padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
                               background: parentId === p.id ? HP_TOKENS.blueWash : 'transparent',
-                              color: parentId === p.id ? HP_TOKENS.blue : HP_TOKENS.ink,
-                              ...HP_TEXT.body, fontSize: 13, fontWeight: parentId === p.id ? 700 : 500,
+                              ...HP_TEXT.body, color: parentId === p.id ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: parentId === p.id ? 700 : 500,
                               marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8
                             }}
                           >
@@ -434,8 +432,7 @@ export default function GoalModal({ onClose, goal }: { onClose: () => void; goal
                             style={{
                               padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
                               background: parentId === p.id ? HP_TOKENS.blueWash : 'transparent',
-                              color: parentId === p.id ? HP_TOKENS.blue : HP_TOKENS.ink,
-                              ...HP_TEXT.body, fontSize: 13, fontWeight: parentId === p.id ? 700 : 500,
+                              ...HP_TEXT.body, color: parentId === p.id ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: parentId === p.id ? 700 : 500,
                               marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8
                             }}
                           >
@@ -456,8 +453,7 @@ export default function GoalModal({ onClose, goal }: { onClose: () => void; goal
                             style={{
                               padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
                               background: parentId === p.id ? HP_TOKENS.blueWash : 'transparent',
-                              color: parentId === p.id ? HP_TOKENS.blue : HP_TOKENS.ink,
-                              ...HP_TEXT.body, fontSize: 13, fontWeight: parentId === p.id ? 700 : 500,
+                              ...HP_TEXT.body, color: parentId === p.id ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: parentId === p.id ? 700 : 500,
                               marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8
                             }}
                           >

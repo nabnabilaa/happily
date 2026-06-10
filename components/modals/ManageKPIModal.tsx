@@ -137,8 +137,7 @@ export default function ManageKPIModal({ onClose }: ManageKPIModalProps) {
                       style={{
                         padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
                         background: month === (i + 1) ? HP_TOKENS.blueWash : 'transparent',
-                        color: month === (i + 1) ? HP_TOKENS.blue : HP_TOKENS.ink,
-                        ...HP_TEXT.body, fontSize: 13, fontWeight: month === (i + 1) ? 700 : 500,
+                        ...HP_TEXT.body, color: month === (i + 1) ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: month === (i + 1) ? 700 : 500,
                         marginBottom: 4
                       }}
                     >
@@ -168,8 +167,7 @@ export default function ManageKPIModal({ onClose }: ManageKPIModalProps) {
                       style={{
                         padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
                         background: year === y ? HP_TOKENS.blueWash : 'transparent',
-                        color: year === y ? HP_TOKENS.blue : HP_TOKENS.ink,
-                        ...HP_TEXT.body, fontSize: 13, fontWeight: year === y ? 700 : 500,
+                        ...HP_TEXT.body, color: year === y ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: year === y ? 700 : 500,
                         marginBottom: 4
                       }}
                     >
@@ -312,8 +310,7 @@ export default function ManageKPIModal({ onClose }: ManageKPIModalProps) {
                       style={{
                         padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
                         background: assignTo === "" ? HP_TOKENS.blueWash : 'transparent',
-                        color: assignTo === "" ? HP_TOKENS.blue : HP_TOKENS.ink,
-                        ...HP_TEXT.body, fontSize: 13, fontWeight: assignTo === "" ? 700 : 500,
+                        ...HP_TEXT.body, color: assignTo === '' ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: assignTo === "" ? 700 : 500,
                         marginBottom: 4
                       }}
                     >
@@ -326,8 +323,7 @@ export default function ManageKPIModal({ onClose }: ManageKPIModalProps) {
                         style={{
                           padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
                           background: assignTo === m.id ? HP_TOKENS.blueWash : 'transparent',
-                          color: assignTo === m.id ? HP_TOKENS.blue : HP_TOKENS.ink,
-                          ...HP_TEXT.body, fontSize: 13, fontWeight: assignTo === m.id ? 700 : 500,
+                          ...HP_TEXT.body, color: assignTo === m.id ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: assignTo === m.id ? 700 : 500,
                           marginBottom: 4
                         }}
                       >

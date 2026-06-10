@@ -328,8 +328,7 @@ export default function NotesScreen() {
                           style={{
                             padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
                             background: visibility === o.value ? HP_TOKENS.blueWash : 'transparent',
-                            color: visibility === o.value ? HP_TOKENS.blue : HP_TOKENS.ink,
-                            ...HP_TEXT.body, fontSize: 13, fontWeight: visibility === o.value ? 700 : 500,
+                            ...HP_TEXT.body, color: visibility === o.value ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: visibility === o.value ? 700 : 500,
                             marginBottom: 4
                           }}
                         >
@@ -366,8 +365,7 @@ export default function NotesScreen() {
                             style={{
                               padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
                               background: sharedPermission === o.value ? HP_TOKENS.blueWash : 'transparent',
-                              color: sharedPermission === o.value ? HP_TOKENS.blue : HP_TOKENS.ink,
-                              ...HP_TEXT.body, fontSize: 13, fontWeight: sharedPermission === o.value ? 700 : 500,
+                              ...HP_TEXT.body, color: sharedPermission === o.value ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: sharedPermission === o.value ? 700 : 500,
                               marginBottom: 4
                             }}
                           >

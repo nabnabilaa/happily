@@ -522,8 +522,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                           style={{
                             padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
                             background: selectedKpiId === "" ? HP_TOKENS.blueWash : 'transparent',
-                            color: selectedKpiId === "" ? HP_TOKENS.blue : HP_TOKENS.ink,
-                            ...HP_TEXT.body, fontSize: 13, fontWeight: selectedKpiId === "" ? 700 : 500,
+                            ...HP_TEXT.body, color: selectedKpiId === '' ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: selectedKpiId === "" ? 700 : 500,
                             marginBottom: 4
                           }}
                         >
@@ -548,8 +547,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                                   style={{
                                     padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
                                     background: isSelected ? HP_TOKENS.blueWash : 'transparent',
-                                    color: isSelected ? HP_TOKENS.blue : HP_TOKENS.ink,
-                                    ...HP_TEXT.body, fontSize: 13, fontWeight: isSelected ? 700 : 500,
+                                    ...HP_TEXT.body, color: isSelected ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: isSelected ? 700 : 500,
                                     display: 'flex', alignItems: 'center', gap: 8
                                   }}
                                 >
@@ -586,8 +584,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                                   style={{
                                     padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
                                     background: isSelected ? HP_TOKENS.blueWash : 'transparent',
-                                    color: isSelected ? HP_TOKENS.blue : HP_TOKENS.ink,
-                                    ...HP_TEXT.body, fontSize: 13, fontWeight: isSelected ? 700 : 500,
+                                    ...HP_TEXT.body, color: isSelected ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: isSelected ? 700 : 500,
                                     display: 'flex', alignItems: 'center', gap: 8
                                   }}
                                 >
