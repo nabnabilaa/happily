@@ -37,6 +37,9 @@ export default function NotesScreen() {
   const [sharedUsers, setSharedUsers] = useState<string[]>([]);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteColor, setNoteColor] = useState('yellow');
+  const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
+  const [showVisibilityDropdown, setShowVisibilityDropdown] = useState(false);
+  const [showPermissionDropdown, setShowPermissionDropdown] = useState(false);
 
   // Users & Search State
   const [searchQuery, setSearchQuery] = useState('');
@@ -87,13 +90,14 @@ export default function NotesScreen() {
     }
   };
 
-  const deleteNote = async (id: string) => {
-    if (!confirm('Hapus catatan ini?')) return;
+  const deleteNote = async () => {
+    if (!noteToDelete) return;
     try {
-      await fetch(`/api/notes?noteId=${id}&userId=${user?.id}`, {
+      await fetch(`/api/notes?noteId=${noteToDelete}&userId=${user?.id}`, {
         method: 'DELETE',
       });
       await mutateNotes();
+      setNoteToDelete(null);
       if (typeof window !== "undefined") {
         window.postMessage({ type: "FLOWBEE_WEBSITE_UPDATE" }, "*");
       }
@@ -267,6 +271,22 @@ export default function NotesScreen() {
             background: var(--hp-lineSoft);
             border-radius: 6px;
           }
+          .hp-notes-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 16px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+          }
+          @media (max-width: 600px) {
+            .hp-notes-actions {
+              flex-direction: column-reverse;
+            }
+            .hp-notes-actions button {
+              width: 100% !important;
+              justify-content: center;
+            }
+          }
         `}</style>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -281,30 +301,83 @@ export default function NotesScreen() {
             </div>
             
             <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-              <select
-                value={visibility}
-                onChange={(e) => {
-                  setVisibility(e.target.value);
-                  setSharedUsers([]);
-                }}
-                className="hp-native-select"
-                style={{ ...inputStyle, flex: '1 1 200px', fontWeight: 700 }}
-              >
-                <option value="private">🔒 Pribadi (Hanya Saya)</option>
-                <option value="company">🏢 Seluruh Perusahaan</option>
-                <option value="custom">👥 Pilih Anggota Spesifik...</option>
-              </select>
+              <div style={{ flex: '1 1 200px', position: 'relative' }}>
+                <div 
+                  onClick={() => setShowVisibilityDropdown(!showVisibilityDropdown)}
+                  style={{ ...inputStyle, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
+                >
+                  <span>
+                    {visibility === 'private' ? '🔒 Pribadi (Hanya Saya)' : 
+                     visibility === 'company' ? '🏢 Seluruh Perusahaan' : 
+                     '👥 Pilih Anggota Spesifik...'}
+                  </span>
+                  <HPGlyph name="chevron-down" size={16} color={HP_TOKENS.inkMute} />
+                </div>
+                {showVisibilityDropdown && (
+                  <>
+                    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 }} onClick={() => setShowVisibilityDropdown(false)} />
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(26,29,35,0.12)', border: `1px solid ${HP_TOKENS.line}`, zIndex: 101, maxHeight: 250, overflowY: 'auto', padding: 8 }}>
+                      {[
+                        { value: 'private', label: '🔒 Pribadi (Hanya Saya)' },
+                        { value: 'company', label: '🏢 Seluruh Perusahaan' },
+                        { value: 'custom', label: '👥 Pilih Anggota Spesifik...' }
+                      ].map(o => (
+                        <div 
+                          key={o.value} className="hp-tap"
+                          onClick={() => { setVisibility(o.value); setSharedUsers([]); setShowVisibilityDropdown(false); }}
+                          style={{
+                            padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                            background: visibility === o.value ? HP_TOKENS.blueWash : 'transparent',
+                            color: visibility === o.value ? HP_TOKENS.blue : HP_TOKENS.ink,
+                            ...HP_TEXT.body, fontSize: 13, fontWeight: visibility === o.value ? 700 : 500,
+                            marginBottom: 4
+                          }}
+                        >
+                          {o.label}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
               
               {visibility !== 'private' && (
-                <select
-                  value={sharedPermission}
-                  onChange={(e) => setSharedPermission(e.target.value)}
-                  className="hp-native-select"
-                  style={{ ...inputStyle, flex: '1 1 120px', fontWeight: 700, padding: '16px 14px' }}
-                >
-                  <option value="view">👁️ Bisa Lihat</option>
-                  <option value="edit">✏️ Bisa Ikut Edit</option>
-                </select>
+                <div style={{ flex: '1 1 120px', position: 'relative' }}>
+                  <div 
+                    onClick={() => setShowPermissionDropdown(!showPermissionDropdown)}
+                    style={{ ...inputStyle, fontWeight: 700, padding: '16px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    <span>
+                      {sharedPermission === 'view' ? '👁️ Bisa Lihat' : '✏️ Bisa Ikut Edit'}
+                    </span>
+                    <HPGlyph name="chevron-down" size={16} color={HP_TOKENS.inkMute} />
+                  </div>
+                  {showPermissionDropdown && (
+                    <>
+                      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 }} onClick={() => setShowPermissionDropdown(false)} />
+                      <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(26,29,35,0.12)', border: `1px solid ${HP_TOKENS.line}`, zIndex: 101, maxHeight: 250, overflowY: 'auto', padding: 8 }}>
+                        {[
+                          { value: 'view', label: '👁️ Bisa Lihat' },
+                          { value: 'edit', label: '✏️ Bisa Ikut Edit' }
+                        ].map(o => (
+                          <div 
+                            key={o.value} className="hp-tap"
+                            onClick={() => { setSharedPermission(o.value); setShowPermissionDropdown(false); }}
+                            style={{
+                              padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                              background: sharedPermission === o.value ? HP_TOKENS.blueWash : 'transparent',
+                              color: sharedPermission === o.value ? HP_TOKENS.blue : HP_TOKENS.ink,
+                              ...HP_TEXT.body, fontSize: 13, fontWeight: sharedPermission === o.value ? 700 : 500,
+                              marginBottom: 4
+                            }}
+                          >
+                            {o.label}
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
               )}
             </div>
 
@@ -498,7 +571,7 @@ export default function NotesScreen() {
           </div>
 
           {/* ACTIONS */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 16, marginTop: 24, flexWrap: 'wrap' }}>
+          <div className="hp-notes-actions">
             <button
               onClick={cancelForm}
               className="hp-tap"
@@ -643,7 +716,7 @@ export default function NotesScreen() {
                          </button>
                        )}
                        {String(note.userId) === String(user?.id) && (
-                         <button onClick={() => deleteNote(note.id)} className="hp-tap" style={{ background: '#fff', border: `1px solid ${theme.blob}`, borderRadius: 8, cursor: 'pointer', padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Hapus">
+                         <button onClick={() => setNoteToDelete(note.id)} className="hp-tap" style={{ background: '#fff', border: `1px solid ${theme.blob}`, borderRadius: 8, cursor: 'pointer', padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Hapus">
                            <HPGlyph name="close" size={12} color={HP_TOKENS.coral} />
                          </button>
                        )}
@@ -733,6 +806,49 @@ export default function NotesScreen() {
             </div>
           )}
         </>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {noteToDelete && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.5)', zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 24, backdropFilter: 'blur(4px)'
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: 24, padding: 32,
+            width: '100%', maxWidth: 400, textAlign: 'center',
+            boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
+            animation: 'hpPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+          }}>
+            <div style={{ width: 64, height: 64, borderRadius: 32, background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+              <HPGlyph name="trash" size={32} />
+            </div>
+            <div style={{ ...HP_TEXT.h, fontSize: 20, marginBottom: 8 }}>Hapus Catatan?</div>
+            <div style={{ ...HP_TEXT.body, color: HP_TOKENS.inkSoft, marginBottom: 24 }}>
+              Catatan ini akan dihapus secara permanen dan tidak dapat dikembalikan.
+            </div>
+            <div style={{ display: 'flex', gap: 12, flexDirection: 'column' }}>
+              <button onClick={deleteNote} className="hp-tap" style={{
+                padding: '16px', borderRadius: 16, border: 'none',
+                background: HP_TOKENS.coral, color: '#fff',
+                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: 'pointer',
+                width: '100%'
+              }}>
+                Ya, Hapus
+              </button>
+              <button onClick={() => setNoteToDelete(null)} className="hp-tap" style={{
+                padding: '16px', borderRadius: 16, border: 'none',
+                background: HP_TOKENS.card, color: HP_TOKENS.inkSoft,
+                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: 'pointer',
+                width: '100%'
+              }}>
+                Batal
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

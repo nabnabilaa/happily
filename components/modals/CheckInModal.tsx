@@ -76,7 +76,10 @@ export default function CheckInModal({ onClose }: CheckInModalProps) {
         notify("Check-In Tersimpan", "Tersimpan lokal karena kendala server. Akan disinkronkan otomatis.", "warning");
       } else {
         await awardXP('mood_checkin', 'Daily mood check-in');
-        notify("Check-In Berhasil 🎉", "Mood dan energimu hari ini sudah dicatat!", "success");
+        notify("Check-In Selesai ✨", "Terima kasih! Jangan lupa untuk Clock In ya agar kehadiranmu tercatat.", "success");
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('hp_show_morning_plan'));
+        }, 300); // give it a moment to close the modal before continuing
       }
     } catch (e) {
       console.error('Failed to save mood, queuing offline:', e);

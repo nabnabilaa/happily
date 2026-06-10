@@ -164,6 +164,20 @@ export default function HomeScreen({ openModal }: any) {
       }
     };
 
+    // Auto-Scroll to Clock-In
+    const handleScrollToClockIn = () => {
+      setTimeout(() => {
+        const el = document.getElementById('attendance-clock-in-btn');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.style.transition = 'transform 0.3s ease';
+          el.style.transform = 'scale(1.05)';
+          setTimeout(() => el.style.transform = 'scale(1)', 350);
+        }
+      }, 100);
+    };
+    window.addEventListener('hp_scroll_to_clock_in', handleScrollToClockIn);
+
     // Time Check for Reminders
     const checkTime = () => {
       if (!rawState?.workSchedule) return;
@@ -311,8 +325,11 @@ export default function HomeScreen({ openModal }: any) {
 
     generateNudge();
     
-    return () => clearInterval(interval);
-  }, [rawState, isClockedOut, isClockedIn, todayAttendance]);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('hp_scroll_to_clock_in', handleScrollToClockIn);
+    };
+  }, [rawState?.workSchedule, rawState?.todayAttendance, isClockedIn, isClockedOut, rawUser?.id, updateState]);
 
   // Auto-Popup Clock In
   useEffect(() => {
@@ -811,6 +828,11 @@ export default function HomeScreen({ openModal }: any) {
 
         {/* Mindful Breathing Reset Card */}
         <div style={{ marginTop: 16 }}>
+          <style dangerouslySetInnerHTML={{__html: `
+            @media (max-width: 500px) {
+              .hp-breathing-mobile { flex-direction: column !important; text-align: center !important; }
+            }
+          `}} />
           <HPCard 
             padding={16} 
             style={{ 
@@ -821,7 +843,7 @@ export default function HomeScreen({ openModal }: any) {
               overflow: 'hidden'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
+            <div className="hp-breathing-mobile" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
               <div style={{ 
                 width: 44, height: 44, borderRadius: 14, 
                 background: HP_TOKENS.card, display: 'flex', alignItems: 'center', justifyContent: 'center',

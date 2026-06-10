@@ -53,19 +53,21 @@ export default function DailyGreetingModal({ userName, streak, level, onClose, o
 
   const handleClose = () => {
     setPhase('closing');
-    setTimeout(onClose, 350);
+    setTimeout(() => {
+      onClose();
+      window.dispatchEvent(new CustomEvent('hp_show_morning_plan'));
+    }, 350);
   };
 
-  const handleCheckIn = (selectedMood?: string) => {
+  const handleCheckIn = () => {
     setPhase('closing');
-    if (selectedMood) {
-      updateState({ mood: selectedMood });
-    }
     setTimeout(() => {
       onClose();
       onOpenCheckIn?.();
     }, 350);
   };
+
+  const randomQuote = React.useMemo(() => QUOTES[Math.floor(Math.random() * QUOTES.length)], []);
 
   return (
     <div
@@ -157,32 +159,37 @@ export default function DailyGreetingModal({ userName, streak, level, onClose, o
             Hai, {cleanName}!
           </h2>
           <p style={{
-            fontSize: 14, color: 'var(--hp-ink-soft)', fontWeight: 500,
-            marginBottom: 20, lineHeight: 1.5
+            fontSize: 15, color: 'var(--hp-ink-soft)', fontWeight: 600,
+            marginBottom: 16, lineHeight: 1.5
           }}>
-            Yuk, isi sebentar untuk tahu bagaimana kondisimu pagi ini 🌱
+            {greeting.intro}
           </p>
-
-          {/* ── Mood Selector ──────────────────────────────────────────────── */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6, marginBottom: 24 }}>
-            {HP_MOODS.map(m => (
-              <button key={m.key} onClick={() => handleCheckIn(m.key)} className="hp-tap-btn" style={{
-                flex: 1, padding: '12px 4px', borderRadius: 16,
-                background: 'var(--hp-card)',
-                border: '1.5px solid var(--hp-line)',
-                cursor: 'pointer', fontFamily: HP_FONT, display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center',
-                transition: 'all 180ms',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <HPGlyph name={m.glyph} size={26} color={HP_TOKENS[m.tone as keyof typeof HP_TOKENS] || 'var(--hp-ink)'} />
-                </div>
-                <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--hp-ink-soft)' }}>{m.label}</div>
-              </button>
-            ))}
+          <div style={{
+            background: 'rgba(255,190,11,0.1)', padding: '16px', borderRadius: 16,
+            marginBottom: 24, border: '1px dashed rgba(255,190,11,0.4)'
+          }}>
+            <p style={{
+              fontSize: 14, color: 'var(--hp-ink)', fontStyle: 'italic',
+              lineHeight: 1.5
+            }}>
+              "{randomQuote}"
+            </p>
           </div>
 
           {/* ── Buttons ───────────────────────────────────────────────────── */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <button
+              onClick={handleCheckIn}
+              className="hp-tap-btn"
+              style={{
+                width: '100%', padding: '14px', borderRadius: 16, border: 'none',
+                background: 'linear-gradient(90deg, #FFBE0B, #FF9F1C)', color: '#fff',
+                fontFamily: HP_FONT, fontWeight: 800, fontSize: 15,
+                cursor: 'pointer', boxShadow: '0 4px 16px rgba(255,159,28,0.3)',
+              }}
+            >
+              Lanjut Check-in
+            </button>
             <button
               onClick={handleClose}
               className="hp-tap-btn"

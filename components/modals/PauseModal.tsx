@@ -21,7 +21,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
   const [targetCycles, setTargetCycles] = useState(5);
   const [currentCycle, setCurrentCycle] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [soundMode, setSoundMode] = useState<'off' | 'rain' | 'waves' | 'wind'>('waves');
+  const [soundMode, setSoundMode] = useState<'off' | 'Nada ZEN' | 'musik air' | 'suara alam' | 'white noise'>('Nada ZEN');
   const [hasCompleted, setHasCompleted] = useState(false);
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
 
@@ -36,20 +36,19 @@ export default function PauseModal({ onClose }: PauseModalProps) {
     };
   }, []);
 
-  // Sync Audio with isPlaying and soundMode state
+  // Sync Audio with isPlaying, soundMode, and phase
   useEffect(() => {
-    if (phase === 'setup' || phase === 'done') {
-      if (audioRef.current) audioRef.current.pause();
-      return;
-    }
+    // We want the audio to play if we are in an active session, OR if we are in 'done' phase.
+    // If user explicitly paused during session (isPlaying = false and phase != 'done' and phase != 'setup'), it pauses.
+    const shouldPlay = soundMode !== 'off' && (isPlaying || phase === 'done');
 
-    if (isPlaying && soundMode !== 'off') {
+    if (shouldPlay) {
       if (!audioRef.current) {
-        audioRef.current = new Audio(`/sounds/${soundMode}.mp3`);
+        audioRef.current = new Audio(`/audio/${soundMode}.mp3`);
         audioRef.current.loop = true;
         audioRef.current.volume = 0.5;
-      } else if (!audioRef.current.src.includes(soundMode)) {
-        audioRef.current.src = `/sounds/${soundMode}.mp3`;
+      } else if (!audioRef.current.src.includes(encodeURIComponent(soundMode))) {
+        audioRef.current.src = `/audio/${soundMode}.mp3`;
       }
       audioRef.current.play().catch(e => console.log('Audio playback prevented:', e));
     } else {
@@ -131,22 +130,31 @@ export default function PauseModal({ onClose }: PauseModalProps) {
       label: 'Tarik Napas',
       desc: 'Perlahan melalui hidung (4 detik)',
       scale: 1.5,
-      color: '#3B82F6', // Vibrant Blue
+      color: '#0ea5e9', // Vibrant Blue
       bg: '#eff6ff',
+      gradient: 'linear-gradient(135deg, #7dd3fc 0%, #0ea5e9 100%)',
+      halo: 'rgba(56, 189, 248, 0.2)',
+      shadow: 'rgba(14, 165, 233, 0.3)'
     },
     hold: {
       label: 'Tahan',
       desc: 'Fokus dan rasakan ketenangan (7 detik)',
       scale: 1.5,
-      color: '#8B5CF6', // Purple
+      color: '#8b5cf6', // Purple
       bg: '#f5f3ff',
+      gradient: 'linear-gradient(135deg, #c4b5fd 0%, #8b5cf6 100%)',
+      halo: 'rgba(167, 139, 250, 0.2)',
+      shadow: 'rgba(139, 92, 246, 0.3)'
     },
     exhale: {
       label: 'Hembuskan',
       desc: 'Lepaskan secara perlahan lewat mulut (8 detik)',
-      scale: 0.8,
-      color: '#10B981', // Emerald Green
+      scale: 1,
+      color: '#10b981', // Emerald Green
       bg: '#ecfdf5',
+      gradient: 'linear-gradient(135deg, #6ee7b7 0%, #10b981 100%)',
+      halo: 'rgba(52, 211, 153, 0.2)',
+      shadow: 'rgba(16, 185, 129, 0.3)'
     },
     done: {
       label: 'Selesai!',
@@ -180,6 +188,17 @@ export default function PauseModal({ onClose }: PauseModalProps) {
       animation: 'hpFadeIn 500ms ease-out',
       transition: 'background 2s ease-in-out',
     }}>
+      <style>{`
+        @keyframes blobMorph {
+          0%   { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+          33%  { border-radius: 40% 60% 60% 40% / 40% 50% 50% 60%; }
+          66%  { border-radius: 55% 45% 45% 55% / 30% 65% 35% 70%; }
+          100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+        }
+        @keyframes blobSpin {
+          to { transform: rotate(1turn); }
+        }
+      `}</style>
       {/* Top Header */}
       <div style={{ 
         padding: '56px 24px 20px', 
@@ -242,12 +261,13 @@ export default function PauseModal({ onClose }: PauseModalProps) {
             <div style={{ ...HP_TEXT.body, fontSize: 12, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 12, marginTop: -20, letterSpacing: 0.5 }}>
               PILIH SUARA PENDUKUNG
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginBottom: 40, maxWidth: 300, margin: '0 auto 40px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginBottom: 40, maxWidth: 400, margin: '0 auto 40px' }}>
               {[
                 { id: 'off', label: 'Hening', icon: '🔇' },
-                { id: 'rain', label: 'Hujan', icon: '🌧️' },
-                { id: 'waves', label: 'Ombak', icon: '🌊' },
-                { id: 'wind', label: 'Angin', icon: '🍃' },
+                { id: 'Nada ZEN', label: 'Nada ZEN', icon: '🧘' },
+                { id: 'musik air', label: 'Musik Air', icon: '💧' },
+                { id: 'suara alam', label: 'Suara Alam', icon: '🍃' },
+                { id: 'white noise', label: 'White Noise', icon: '📻' },
               ].map(opt => (
                 <button
                   key={opt.id}
@@ -322,36 +342,65 @@ export default function PauseModal({ onClose }: PauseModalProps) {
               PUTARAN {currentCycle + 1} / {targetCycles}
             </div>
 
-            {/* Original Beautiful Breathing Circle */}
-            <div style={{ position: 'relative', width: 220, height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {/* Animated Liquid Blob */}
+            <div style={{ position: 'relative', width: 280, height: 280, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {/* Halo Glow */}
               <div style={{
                 position: 'absolute',
-                width: 160, 
-                height: 160, 
-                borderRadius: 80, 
-                background: `linear-gradient(135deg, #ffffff, ${currentInfo.bg})`,
-                display: 'flex', 
-                flexDirection: 'column',
-                alignItems: 'center', 
+                inset: -20,
+                borderRadius: '50%',
+                background: currentInfo.halo,
+                filter: 'blur(25px)',
+                transition: 'background 2s ease, transform 1s ease'
+              }} />
+              
+              <div style={{
+                position: 'relative',
+                width: 160,
+                height: 160,
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'center',
-                transform: `scale(${currentInfo.scale})`, 
-                transition: phase === 'inhale' ? 'transform 4s ease-out, box-shadow 4s ease-out' 
-                          : phase === 'hold' ? 'transform 7s linear, box-shadow 7s linear' 
-                          : 'transform 8s ease-in-out, box-shadow 8s ease-in-out',
-                boxShadow: isPlaying 
-                  ? `0 20px 50px ${currentInfo.color}30, inset 0 4px 20px rgba(255,255,255,0.8)` 
-                  : '0 4px 12px rgba(0,0,0,0.02)',
-                border: `3px solid ${currentInfo.color}40`,
-                backdropFilter: 'blur(10px)',
+                overflow: 'visible',
+                zIndex: 10,
+                transform: `scale(${currentInfo.scale})`,
+                transition: phase === 'inhale' ? 'transform 4s cubic-bezier(0.4, 0, 0.2, 1)' 
+                          : phase === 'hold' ? 'transform 7s linear' 
+                          : 'transform 8s cubic-bezier(0.4, 0, 0.2, 1)',
               }}>
+                {/* Layer 1: Core Color */}
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: currentInfo.gradient,
+                  animation: 'blobMorph 8s ease-in-out infinite, blobSpin 20s linear infinite',
+                  animationPlayState: isPlaying ? 'running' : 'paused',
+                  transition: 'background 2s ease, box-shadow 2s ease',
+                  boxShadow: `0 15px 35px ${currentInfo.shadow}`
+                }} />
+                
+                {/* Layer 2: 3D Glossy Effect */}
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 60%)',
+                  animation: 'blobMorph 12s ease-in-out infinite reverse, blobSpin 25s linear infinite reverse',
+                  animationPlayState: isPlaying ? 'running' : 'paused',
+                  boxShadow: 'inset 10px 10px 20px rgba(255, 255, 255, 0.8), inset -10px -20px 20px rgba(0, 0, 0, 0.1)',
+                  pointerEvents: 'none'
+                }} />
+
+                {/* Timer Text */}
                 <div style={{ 
+                  position: 'relative',
+                  zIndex: 20,
                   ...HP_TEXT.h, 
                   fontSize: 56, 
-                  fontWeight: 300, 
-                  color: currentInfo.color, 
-                  transition: 'color 1s ease-in-out',
+                  fontWeight: 800, 
+                  color: 'white', 
                   fontVariantNumeric: 'tabular-nums',
-                  textShadow: '0 2px 10px rgba(255,255,255,0.8)'
+                  textShadow: '0 4px 15px rgba(0,0,0,0.15)',
+                  letterSpacing: -2
                 }}>
                   {secondsLeft}
                 </div>

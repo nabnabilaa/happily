@@ -96,6 +96,7 @@ export default function CalendarScreen({ openModal }: Props) {
   const [viewYear, setViewYear] = useState(new Date().getFullYear());
   const [showForm, setShowForm] = useState(false);
   const [allDivisions, setAllDivisions] = useState<string[]>([]);
+  const [eventToDelete, setEventToDelete] = useState<string | null>(null);
 
   // Form state
   const [title, setTitle] = useState('');
@@ -111,6 +112,9 @@ export default function CalendarScreen({ openModal }: Props) {
   const [search, setSearch] = useState('');
   const [collapsedDepts, setCollapsedDepts] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
+  const [showRecurrenceDropdown, setShowRecurrenceDropdown] = useState(false);
+  const [showOffsetDropdown, setShowOffsetDropdown] = useState(false);
+  const [showVisibilityDropdown, setShowVisibilityDropdown] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -232,6 +236,12 @@ export default function CalendarScreen({ openModal }: Props) {
         })
       });
 
+      // Auto-update status to meeting if event is happening now
+      const now = new Date();
+      if (startDT <= now && now <= endDT) {
+        fetch('/api/status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user?.id, status: 'meeting' }) }).catch(console.error);
+      }
+
       // Sync alarm to extension
       if (typeof window !== "undefined") {
         window.postMessage({
@@ -272,16 +282,17 @@ export default function CalendarScreen({ openModal }: Props) {
     setSaving(false);
   };
 
-  const handleDelete = async (eventId: string) => {
-    if (!confirm('Hapus agenda ini?')) return;
+  const handleDelete = async () => {
+    if (!eventToDelete) return;
     try {
-      await fetch(`/api/calendar?eventId=${eventId}&userId=${user?.id}`, { method: 'DELETE' });
+      await fetch(`/api/calendar?eventId=${eventToDelete}&userId=${user?.id}`, { method: 'DELETE' });
       notify('Agenda Dihapus', '', 'info');
       fetchData();
       if (typeof window !== "undefined") {
         window.postMessage({ type: "FLOWBEE_WEBSITE_UPDATE" }, "*");
       }
     } catch (e) { console.error(e); }
+    setEventToDelete(null);
   };
 
   const resetForm = () => {
@@ -482,33 +493,116 @@ export default function CalendarScreen({ openModal }: Props) {
             <div className="hp-form-row" style={{ marginTop: 4 }}>
               <div style={{ flex: 1 }}>
                 <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 4 }}>ULANGI</div>
-                <select value={recurrence} onChange={e => setRecurrence(e.target.value)} style={inputStyle}>
-                  {RECURRENCE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
+                <div style={{ position: 'relative' }}>
+                  <div 
+                    onClick={() => setShowRecurrenceDropdown(!showRecurrenceDropdown)}
+                    style={{ ...inputStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    <span>{RECURRENCE_OPTIONS.find(o => o.value === recurrence)?.label}</span>
+                    <HPGlyph name="chevron-down" size={16} color={HP_TOKENS.inkMute} />
+                  </div>
+                  {showRecurrenceDropdown && (
+                    <>
+                      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 }} onClick={() => setShowRecurrenceDropdown(false)} />
+                      <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(26,29,35,0.12)', border: `1px solid ${HP_TOKENS.line}`, zIndex: 101, maxHeight: 250, overflowY: 'auto', padding: 8 }}>
+                        {RECURRENCE_OPTIONS.map(o => (
+                          <div 
+                            key={o.value} className="hp-tap"
+                            onClick={() => { setRecurrence(o.value); setShowRecurrenceDropdown(false); }}
+                            style={{
+                              padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                              background: recurrence === o.value ? HP_TOKENS.blueWash : 'transparent',
+                              color: recurrence === o.value ? HP_TOKENS.blue : HP_TOKENS.ink,
+                              ...HP_TEXT.body, fontSize: 13, fontWeight: recurrence === o.value ? 700 : 500,
+                              marginBottom: 4
+                            }}
+                          >
+                            {o.label}
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 4 }}>ALARM</div>
-                <select value={offset} onChange={e => setOffset(Number(e.target.value))} style={inputStyle}>
-                  {OFFSET_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
+                <div style={{ position: 'relative' }}>
+                  <div 
+                    onClick={() => setShowOffsetDropdown(!showOffsetDropdown)}
+                    style={{ ...inputStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    <span>{OFFSET_OPTIONS.find(o => o.value === offset)?.label}</span>
+                    <HPGlyph name="chevron-down" size={16} color={HP_TOKENS.inkMute} />
+                  </div>
+                  {showOffsetDropdown && (
+                    <>
+                      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 }} onClick={() => setShowOffsetDropdown(false)} />
+                      <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(26,29,35,0.12)', border: `1px solid ${HP_TOKENS.line}`, zIndex: 101, maxHeight: 250, overflowY: 'auto', padding: 8 }}>
+                        {OFFSET_OPTIONS.map(o => (
+                          <div 
+                            key={o.value} className="hp-tap"
+                            onClick={() => { setOffset(Number(o.value)); setShowOffsetDropdown(false); }}
+                            style={{
+                              padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                              background: offset === Number(o.value) ? HP_TOKENS.blueWash : 'transparent',
+                              color: offset === Number(o.value) ? HP_TOKENS.blue : HP_TOKENS.ink,
+                              ...HP_TEXT.body, fontSize: 13, fontWeight: offset === Number(o.value) ? 700 : 500,
+                              marginBottom: 4
+                            }}
+                          >
+                            {o.label}
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
             {/* Invite attendees - Notes Style */}
             <div style={{ marginTop: 6 }}>
               <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 6 }}>UNDANG ANGGOTA / BAGIKAN</div>
-              <select
-                value={visibility}
-                onChange={(e) => {
-                  setVisibility(e.target.value);
-                  setSharedUsers([]);
-                }}
-                style={inputStyle}
-              >
-                <option value="private">🔒 Tidak Ada (Agenda Pribadi)</option>
-                <option value="company">🏢 Seluruh Perusahaan</option>
-                <option value="custom">👥 Pilih Anggota Spesifik...</option>
-              </select>
+              <div style={{ position: 'relative' }}>
+                <div 
+                  onClick={() => setShowVisibilityDropdown(!showVisibilityDropdown)}
+                  style={{ ...inputStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
+                >
+                  <span>
+                    {visibility === 'private' ? '🔒 Tidak Ada (Agenda Pribadi)' : 
+                     visibility === 'company' ? '🏢 Seluruh Perusahaan' : 
+                     '👥 Pilih Anggota Spesifik...'}
+                  </span>
+                  <HPGlyph name="chevron-down" size={16} color={HP_TOKENS.inkMute} />
+                </div>
+                {showVisibilityDropdown && (
+                  <>
+                    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 }} onClick={() => setShowVisibilityDropdown(false)} />
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(26,29,35,0.12)', border: `1px solid ${HP_TOKENS.line}`, zIndex: 101, maxHeight: 250, overflowY: 'auto', padding: 8 }}>
+                      {[
+                        { value: 'private', label: '🔒 Tidak Ada (Agenda Pribadi)' },
+                        { value: 'company', label: '🏢 Seluruh Perusahaan' },
+                        { value: 'custom', label: '👥 Pilih Anggota Spesifik...' }
+                      ].map(o => (
+                        <div 
+                          key={o.value} className="hp-tap"
+                          onClick={() => { setVisibility(o.value); setSharedUsers([]); setShowVisibilityDropdown(false); }}
+                          style={{
+                            padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                            background: visibility === o.value ? HP_TOKENS.blueWash : 'transparent',
+                            color: visibility === o.value ? HP_TOKENS.blue : HP_TOKENS.ink,
+                            ...HP_TEXT.body, fontSize: 13, fontWeight: visibility === o.value ? 700 : 500,
+                            marginBottom: 4
+                          }}
+                        >
+                          {o.label}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
 
               {visibility === 'custom' && (
                 <div style={{ 
@@ -760,7 +854,7 @@ export default function CalendarScreen({ openModal }: Props) {
                           <HPGlyph name="calendar" size={14} color={HP_TOKENS.blue} />
                         </a>
                         {isOwner && (
-                          <button onClick={() => handleDelete(ev.id)} style={{
+                          <button onClick={() => setEventToDelete(ev.id)} style={{
                             background: 'none', border: 'none', cursor: 'pointer', padding: 4,
                           }}>
                             <HPGlyph name="close" size={14} color={HP_TOKENS.inkMute} />
@@ -801,6 +895,49 @@ export default function CalendarScreen({ openModal }: Props) {
               </button>
             </div>
           </HPCard>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {eventToDelete && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.5)', zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 24, backdropFilter: 'blur(4px)'
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: 24, padding: 32,
+            width: '100%', maxWidth: 400, textAlign: 'center',
+            boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
+            animation: 'hpPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+          }}>
+            <div style={{ width: 64, height: 64, borderRadius: 32, background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+              <HPGlyph name="calendar" size={32} />
+            </div>
+            <div style={{ ...HP_TEXT.h, fontSize: 20, marginBottom: 8 }}>Hapus Agenda?</div>
+            <div style={{ ...HP_TEXT.body, color: HP_TOKENS.inkSoft, marginBottom: 24 }}>
+              Agenda kalender ini akan dihapus. Ini tidak dapat dibatalkan.
+            </div>
+            <div style={{ display: 'flex', gap: 12, flexDirection: 'column' }}>
+              <button onClick={handleDelete} className="hp-tap" style={{
+                padding: '16px', borderRadius: 16, border: 'none',
+                background: HP_TOKENS.coral, color: '#fff',
+                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: 'pointer',
+                width: '100%'
+              }}>
+                Ya, Hapus
+              </button>
+              <button onClick={() => setEventToDelete(null)} className="hp-tap" style={{
+                padding: '16px', borderRadius: 16, border: 'none',
+                background: HP_TOKENS.card, color: HP_TOKENS.inkSoft,
+                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: 'pointer',
+                width: '100%'
+              }}>
+                Batal
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

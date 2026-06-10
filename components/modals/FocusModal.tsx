@@ -177,6 +177,10 @@ export default function FocusModal({
         body: JSON.stringify({ action: 'START', userId: user?.id, title: sessionTitle, durationMins: duration, mode: focusMode })
       }).catch(console.error);
     }
+    
+    // Auto-update status to deepwork
+    fetch('/api/status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user?.id, status: 'deepwork' }) }).catch(console.error);
+    
   }, [notify, duration, isMobile, isMultiplayer, roomCode, focusMode, user, isGuest, sessionTitle, participants]);
 
   useEffect(() => {
@@ -368,6 +372,10 @@ export default function FocusModal({
     setBlocking(false);
     if (!isMobile) await sendToExtension('FB_FOCUS_END');
     
+    // Auto-revert status to working
+    fetch('/api/status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user?.id, status: 'working' }) }).catch(console.error);
+    
+    
     let base = duration >= 90 ? 150 : duration >= 45 ? 80 : 50;
     let finalXP = Math.floor(base * multiplier);
 
@@ -420,6 +428,9 @@ export default function FocusModal({
     } else if (reason === 'quit') {
       notify("Anda Keluar", "Anda meninggalkan sesi secara sepihak.", "warning");
     }
+    
+    // Auto-revert status to working
+    fetch('/api/status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user?.id, status: 'working' }) }).catch(console.error);
     
     onClose();
   }, [onClose, isMobile, notify, participants, roomCode, user?.id]);

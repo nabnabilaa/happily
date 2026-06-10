@@ -385,9 +385,20 @@ function AppContent() {
     if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
       setIsDragging(true);
     }
+    
+    let newX = dragRef.current.initialX + dx;
+    let newY = dragRef.current.initialY + dy;
+
+    // Boundary constraints
+    const maxRight = window.innerWidth - 60;
+    const maxBottom = window.innerHeight - 80;
+    
+    newX = Math.max(24 - maxRight, Math.min(newX, 8));
+    newY = Math.max(106 - maxBottom, Math.min(newY, 26));
+
     setCoachPos({
-      x: dragRef.current.initialX + dx,
-      y: dragRef.current.initialY + dy,
+      x: newX,
+      y: newY,
     });
   };
 

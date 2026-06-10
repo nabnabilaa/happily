@@ -13,17 +13,34 @@ export default function MorningPlanPopup({ planText, userId }: MorningPlanPopupP
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (planText && userId) {
-      const todayStr = new Date().toDateString();
-      const lastSeen = localStorage.getItem(`lastSeenMorningPlan_${userId}`);
-      if (lastSeen !== todayStr) {
-        // Show after a short delay for better UX
-        const timer = setTimeout(() => {
+    const checkAndShow = () => {
+      if (planText && userId) {
+        const todayStr = new Date().toDateString();
+        const lastSeen = localStorage.getItem(`lastSeenMorningPlan_${userId}`);
+        if (lastSeen !== todayStr) {
           setVisible(true);
+        } else {
+          window.dispatchEvent(new CustomEvent('hp_scroll_to_clock_in'));
+        }
+      } else {
+        window.dispatchEvent(new CustomEvent('hp_scroll_to_clock_in'));
+      }
+    };
+
+    // Listen for manual trigger from previous steps
+    window.addEventListener('hp_show_morning_plan', checkAndShow);
+
+    // Also auto-check if Daily Greeting is already done for today
+    import('@/components/modals/DailyGreetingModal').then(({ needsDailyGreeting }) => {
+      if (!needsDailyGreeting()) {
+        const timer = setTimeout(() => {
+          checkAndShow();
         }, 1000);
         return () => clearTimeout(timer);
       }
-    }
+    });
+
+    return () => window.removeEventListener('hp_show_morning_plan', checkAndShow);
   }, [planText, userId]);
 
   const handleClose = () => {
@@ -31,6 +48,10 @@ export default function MorningPlanPopup({ planText, userId }: MorningPlanPopupP
     if (userId) {
       localStorage.setItem(`lastSeenMorningPlan_${userId}`, new Date().toDateString());
     }
+    // Lanjutkan scroll setelah di-close
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('hp_scroll_to_clock_in'));
+    }, 100);
   };
 
   if (!visible || !planText) return null;

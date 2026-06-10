@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 export async function GET() {
   try {
     const roomsResult = await db.execute(`
-      SELECT fr.id, fr.name, fr.description, fr.mode, fr.duration_mins, fr.status, fr.host_id, fr.started_at,
+      SELECT fr.id, fr.name, fr.description, fr.mode, fr.duration_mins, fr.status, fr.host_id, fr.started_at, fr.created_at,
              u.name as host_name, u.avatar_image as host_avatar
       FROM focus_rooms fr
       JOIN users u ON fr.host_id = u.id
@@ -37,27 +37,56 @@ export async function GET() {
       });
     }
 
-    const activeRooms = roomsResult.rows.map(r => {
-      // Calculate remaining minutes if started
+    const now = Date.now();
+    const activeRooms: any[] = [];
+    const expiredRoomIds: string[] = [];
+
+    roomsResult.rows.forEach(r => {
       let remainingMins = r.duration_mins;
+      let isExpired = false;
+
       if (r.started_at && r.status === 'started') {
-        const elapsedSecs = Math.floor((Date.now() - new Date(r.started_at).getTime()) / 1000);
-        remainingMins = Math.max(1, Math.ceil((r.duration_mins * 60 - elapsedSecs) / 60));
+        const elapsedSecs = Math.floor((now - new Date(r.started_at).getTime()) / 1000);
+        const remainingSecs = r.duration_mins * 60 - elapsedSecs;
+        
+        if (remainingSecs <= 0) {
+          isExpired = true;
+        } else {
+          remainingMins = Math.ceil(remainingSecs / 60);
+        }
+      } else if (r.status === 'waiting' && r.created_at) {
+        // If it's been waiting for >60 mins, it's an abandoned room, clean it up
+        const elapsedSinceCreated = Math.floor((now - new Date(r.created_at).getTime()) / 1000);
+        if (elapsedSinceCreated > 3600) {
+          isExpired = true;
+        }
       }
 
-      return {
-        id: r.id,
-        name: r.name,
-        description: r.description,
-        mode: r.mode,
-        durationMins: r.duration_mins,
-        remainingMins,
-        status: r.status,
-        host: { id: r.host_id, name: r.host_name, avatar: r.host_avatar },
-        code: r.id, // using id as code for simplicity
-        participants: participantsMap[r.id] || []
-      };
+      if (isExpired) {
+        expiredRoomIds.push(r.id);
+      } else {
+        activeRooms.push({
+          id: r.id,
+          name: r.name,
+          description: r.description,
+          mode: r.mode,
+          durationMins: r.duration_mins,
+          remainingMins,
+          status: r.status,
+          host: { id: r.host_id, name: r.host_name, avatar: r.host_avatar },
+          code: r.id,
+          participants: participantsMap[r.id] || []
+        });
+      }
     });
+
+    // Auto-close expired rooms in DB so they don't linger
+    if (expiredRoomIds.length > 0) {
+      const placeholders = expiredRoomIds.map(() => '?').join(',');
+      db.execute(`UPDATE focus_rooms SET status = 'finished' WHERE id IN (${placeholders})`, expiredRoomIds).catch(err => {
+        console.error('Failed to auto-close expired rooms:', err);
+      });
+    }
 
     return NextResponse.json({ rooms: activeRooms });
   } catch (error: any) {

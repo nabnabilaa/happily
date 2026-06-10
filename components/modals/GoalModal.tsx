@@ -52,6 +52,7 @@ export default function GoalModal({ onClose, goal }: { onClose: () => void; goal
   const [searchQuery, setSearchQuery] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [managerKpis, setManagerKpis] = useState<any[]>([]);
+  const [showParentDropdown, setShowParentDropdown] = useState(false);
 
   // Fetch Manager KPIs for parent alignment options
   React.useEffect(() => {
@@ -367,38 +368,109 @@ export default function GoalModal({ onClose, goal }: { onClose: () => void; goal
         {parentOptions.length > 0 && scope !== 'employee' && (
           <div style={{ marginTop: 24 }}>
             <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 700, letterSpacing: 0.5 }}>HUBUNGKAN KE PARENT OKR</div>
-            <select
-              value={parentId}
-              onChange={e => setParentId(e.target.value)}
-              style={{
-                width: '100%', marginTop: 8, padding: 14, borderRadius: 16,
-                border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 14,
-                color: HP_TOKENS.ink, outline: 'none', background: HP_TOKENS.card, boxSizing: 'border-box',
-              }}
-            >
-              <option value="">-- Berdiri Sendiri --</option>
-              {parentOptions.filter((p: any) => p.source === 'manager_kpi').length > 0 && (
-                <optgroup label="📋 KPI dari Manager">
-                  {parentOptions.filter((p: any) => p.source === 'manager_kpi').map((p: any) => (
-                    <option key={p.id} value={p.id}>{p.title}</option>
-                  ))}
-                </optgroup>
+            <div style={{ position: 'relative' }}>
+              <div 
+                onClick={() => setShowParentDropdown(!showParentDropdown)}
+                style={{
+                  width: '100%', marginTop: 8, padding: 14, borderRadius: 16,
+                  border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 14,
+                  color: HP_TOKENS.ink, outline: 'none', background: HP_TOKENS.card, boxSizing: 'border-box',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none'
+                }}
+              >
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {parentId === "" ? "-- Berdiri Sendiri --" : parentOptions.find((p: any) => p.id === parentId)?.title || "-- Berdiri Sendiri --"}
+                </span>
+                <HPGlyph name="chevron-down" size={16} color={HP_TOKENS.inkMute} />
+              </div>
+              
+              {showParentDropdown && (
+                <>
+                  <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 }} onClick={() => setShowParentDropdown(false)} />
+                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(26,29,35,0.12)', border: `1px solid ${HP_TOKENS.line}`, zIndex: 101, maxHeight: 250, overflowY: 'auto', padding: 8 }}>
+                    <div 
+                      className="hp-tap"
+                      onClick={() => { setParentId(""); setShowParentDropdown(false); }}
+                      style={{
+                        padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                        background: parentId === "" ? HP_TOKENS.blueWash : 'transparent',
+                        color: parentId === "" ? HP_TOKENS.blue : HP_TOKENS.ink,
+                        ...HP_TEXT.body, fontSize: 13, fontWeight: parentId === "" ? 700 : 500,
+                        marginBottom: 4
+                      }}
+                    >
+                      -- Berdiri Sendiri --
+                    </div>
+                    
+                    {parentOptions.filter((p: any) => p.source === 'manager_kpi').length > 0 && (
+                      <div style={{ marginBottom: 8 }}>
+                        <div style={{ padding: '4px 12px', ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800 }}>📋 KPI dari Manager</div>
+                        {parentOptions.filter((p: any) => p.source === 'manager_kpi').map((p: any) => (
+                          <div 
+                            key={p.id} className="hp-tap"
+                            onClick={() => { setParentId(p.id); setShowParentDropdown(false); }}
+                            style={{
+                              padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                              background: parentId === p.id ? HP_TOKENS.blueWash : 'transparent',
+                              color: parentId === p.id ? HP_TOKENS.blue : HP_TOKENS.ink,
+                              ...HP_TEXT.body, fontSize: 13, fontWeight: parentId === p.id ? 700 : 500,
+                              marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8
+                            }}
+                          >
+                            <div style={{ width: 4, height: 16, borderRadius: 2, background: HP_TOKENS.blue, opacity: parentId === p.id ? 1 : 0.2 }} />
+                            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {parentOptions.filter((p: any) => p.source === 'assigned_okr').length > 0 && (
+                      <div style={{ marginBottom: 8 }}>
+                        <div style={{ padding: '4px 12px', ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800 }}>🎯 OKR Assigned</div>
+                        {parentOptions.filter((p: any) => p.source === 'assigned_okr').map((p: any) => (
+                          <div 
+                            key={p.id} className="hp-tap"
+                            onClick={() => { setParentId(p.id); setShowParentDropdown(false); }}
+                            style={{
+                              padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                              background: parentId === p.id ? HP_TOKENS.blueWash : 'transparent',
+                              color: parentId === p.id ? HP_TOKENS.blue : HP_TOKENS.ink,
+                              ...HP_TEXT.body, fontSize: 13, fontWeight: parentId === p.id ? 700 : 500,
+                              marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8
+                            }}
+                          >
+                            <div style={{ width: 4, height: 16, borderRadius: 2, background: HP_TOKENS.yellow, opacity: parentId === p.id ? 1 : 0.2 }} />
+                            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {parentOptions.filter((p: any) => p.source === 'team').length > 0 && (
+                      <div>
+                        <div style={{ padding: '4px 12px', ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800 }}>🏢 OKR Tim</div>
+                        {parentOptions.filter((p: any) => p.source === 'team').map((p: any) => (
+                          <div 
+                            key={p.id} className="hp-tap"
+                            onClick={() => { setParentId(p.id); setShowParentDropdown(false); }}
+                            style={{
+                              padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                              background: parentId === p.id ? HP_TOKENS.blueWash : 'transparent',
+                              color: parentId === p.id ? HP_TOKENS.blue : HP_TOKENS.ink,
+                              ...HP_TEXT.body, fontSize: 13, fontWeight: parentId === p.id ? 700 : 500,
+                              marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8
+                            }}
+                          >
+                            <div style={{ width: 4, height: 16, borderRadius: 2, background: HP_TOKENS.sage, opacity: parentId === p.id ? 1 : 0.2 }} />
+                            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
-              {parentOptions.filter((p: any) => p.source === 'assigned_okr').length > 0 && (
-                <optgroup label="🎯 OKR Assigned">
-                  {parentOptions.filter((p: any) => p.source === 'assigned_okr').map((p: any) => (
-                    <option key={p.id} value={p.id}>{p.title}</option>
-                  ))}
-                </optgroup>
-              )}
-              {parentOptions.filter((p: any) => p.source === 'team').length > 0 && (
-                <optgroup label="🏢 OKR Tim">
-                  {parentOptions.filter((p: any) => p.source === 'team').map((p: any) => (
-                    <option key={p.id} value={p.id}>{p.title}</option>
-                  ))}
-                </optgroup>
-              )}
-            </select>
+            </div>
           </div>
         )}
 

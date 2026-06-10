@@ -23,6 +23,8 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
   const [activeTab, setActiveTab] = useState<'kpi' | 'members' | 'attendance' | 'personal'>('kpi');
   const [apiKpis, setApiKpis] = useState<any[]>([]);
   const [loadingKpis, setLoadingKpis] = useState(true);
+  const [goalToDelete, setGoalToDelete] = useState<string | null>(null);
+  const [taskToDelete, setTaskToDelete] = useState<string | number | null>(null);
 
   useEffect(() => {
     async function fetchKPIs() {
@@ -231,9 +233,9 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
     }
   };
 
-  const handleDeleteGoal = async (goalId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!confirm("Hapus KPI ini?")) return;
+  const executeDeleteGoal = async () => {
+    if (!goalToDelete) return;
+    const goalId = goalToDelete;
 
     // 1. Update local state
     updateState((s: any) => ({
@@ -249,6 +251,51 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
         body: JSON.stringify({ goalId })
       });
     } catch (e) { console.error('Failed to delete goal:', e); }
+    
+    setGoalToDelete(null);
+  };
+
+  const executeDeleteTask = () => {
+    if (!taskToDelete) return;
+    const tId = taskToDelete;
+    updateState((s: any) => {
+      const newPriorities = s.priorities.filter((p: any) => p.id !== tId);
+      
+      const taskObj = s.priorities.find((p: any) => p.id === tId);
+      const targetId = taskObj?.goal_id || taskObj?.kpi_id;
+      const updatedGoals = s.goals.map((goal: any) => {
+        if (targetId && String(goal.id) === String(targetId)) {
+          const todayTasks = newPriorities.filter((p: any) => 
+            (p.goal_id && String(p.goal_id) === String(goal.id)) || 
+            (p.kpi_id && String(p.kpi_id) === String(goal.id))
+          );
+          const total = todayTasks.length;
+          const completed = todayTasks.filter((p: any) => p.done).length;
+          const newProgress = total > 0 ? Math.round((completed / total) * 100) : 0;
+          return { 
+            ...goal, 
+            progress: newProgress, 
+            metric: total > 0 ? `${completed}/${total} task selesai` : `0/0 task selesai`
+          };
+        }
+        return goal;
+      });
+
+      const extraState: any = {};
+      if (s.focusTaskId === tId) {
+        extraState.focusTaskId = null;
+        extraState.focusProgress = 0;
+        extraState.intention = "";
+      }
+
+      return {
+        ...s,
+        priorities: newPriorities,
+        goals: updatedGoals,
+        ...extraState
+      };
+    });
+    setTaskToDelete(null);
   };
 
   const handleEditProgress = async (goalId: string, newProgress: number) => {
@@ -411,7 +458,7 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
                           {g.status === 'approved' ? 'ACCEPT' : g.status === 'rejected' ? 'REJECT' : g.status === 'revision' ? 'REVISI' : 'ON PROGRESS'}
                         </div>
                         <button 
-                          onClick={(e) => handleDeleteGoal(g.id, e)}
+                          onClick={(e) => { e.stopPropagation(); setGoalToDelete(g.id); }}
                           className="hp-tap"
                           style={{
                             width: 24, height: 24, borderRadius: 12, border: 'none', background: 'rgba(26,29,35,0.05)',
@@ -755,46 +802,7 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
                     </div>
                   </div>
                   <button
-                    onClick={() => {
-                      if (confirm("Apakah Anda yakin ingin menghapus task ini?")) {
-                        updateState((s: any) => {
-                          const newPriorities = s.priorities.filter((p: any) => p.id !== t.id);
-                          
-                          const targetId = t.goal_id || t.kpi_id;
-                          const updatedGoals = s.goals.map((goal: any) => {
-                            if (targetId && String(goal.id) === String(targetId)) {
-                              const todayTasks = newPriorities.filter((p: any) => 
-                                (p.goal_id && String(p.goal_id) === String(goal.id)) || 
-                                (p.kpi_id && String(p.kpi_id) === String(goal.id))
-                              );
-                              const total = todayTasks.length;
-                              const completed = todayTasks.filter((p: any) => p.done).length;
-                              const newProgress = total > 0 ? Math.round((completed / total) * 100) : 0;
-                              return { 
-                                ...goal, 
-                                progress: newProgress, 
-                                metric: total > 0 ? `${completed}/${total} task selesai` : `0/0 task selesai`
-                              };
-                            }
-                            return goal;
-                          });
-
-                          const extraState: any = {};
-                          if (s.focusTaskId === t.id) {
-                            extraState.focusTaskId = null;
-                            extraState.focusProgress = 0;
-                            extraState.intention = "";
-                          }
-
-                          return {
-                            ...s,
-                            priorities: newPriorities,
-                            goals: updatedGoals,
-                            ...extraState
-                          };
-                        });
-                      }
-                    }}
+                    onClick={() => setTaskToDelete(t.id)}
                     style={{
                       background: HP_TOKENS.coralSoft, border: 'none', cursor: 'pointer',
                       width: 28, height: 28, borderRadius: 8,
@@ -973,7 +981,91 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
         <HRAttendanceView currentUser={user} openModal={openModal} />
       )}
 
+      {/* Delete Goal Modal */}
+      {goalToDelete && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.5)', zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 24, backdropFilter: 'blur(4px)'
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: 24, padding: 32,
+            width: '100%', maxWidth: 400, textAlign: 'center',
+            boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
+            animation: 'hpPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+          }}>
+            <div style={{ width: 64, height: 64, borderRadius: 32, background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+              <HPGlyph name="target" size={32} />
+            </div>
+            <div style={{ ...HP_TEXT.h, fontSize: 20, marginBottom: 8 }}>Hapus Goal?</div>
+            <div style={{ ...HP_TEXT.body, color: HP_TOKENS.inkSoft, marginBottom: 24 }}>
+              Goal ini akan dihapus dari sistem.
+            </div>
+            <div style={{ display: 'flex', gap: 12, flexDirection: 'column' }}>
+              <button onClick={executeDeleteGoal} className="hp-tap" style={{
+                padding: '16px', borderRadius: 16, border: 'none',
+                background: HP_TOKENS.coral, color: '#fff',
+                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: 'pointer',
+                width: '100%'
+              }}>
+                Ya, Hapus
+              </button>
+              <button onClick={() => setGoalToDelete(null)} className="hp-tap" style={{
+                padding: '16px', borderRadius: 16, border: 'none',
+                background: HP_TOKENS.lineSoft, color: HP_TOKENS.inkSoft,
+                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: 'pointer',
+                width: '100%'
+              }}>
+                Batal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
+      {/* Delete Task Modal */}
+      {taskToDelete && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.5)', zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 24, backdropFilter: 'blur(4px)'
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: 24, padding: 32,
+            width: '100%', maxWidth: 400, textAlign: 'center',
+            boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
+            animation: 'hpPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+          }}>
+            <div style={{ width: 64, height: 64, borderRadius: 32, background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+              <HPGlyph name="trash" size={32} />
+            </div>
+            <div style={{ ...HP_TEXT.h, fontSize: 20, marginBottom: 8 }}>Hapus Task Harian?</div>
+            <div style={{ ...HP_TEXT.body, color: HP_TOKENS.inkSoft, marginBottom: 24 }}>
+              Task ini akan dihapus dari prioritas Anda.
+            </div>
+            <div style={{ display: 'flex', gap: 12, flexDirection: 'column' }}>
+              <button onClick={executeDeleteTask} className="hp-tap" style={{
+                padding: '16px', borderRadius: 16, border: 'none',
+                background: HP_TOKENS.coral, color: '#fff',
+                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: 'pointer',
+                width: '100%'
+              }}>
+                Ya, Hapus
+              </button>
+              <button onClick={() => setTaskToDelete(null)} className="hp-tap" style={{
+                padding: '16px', borderRadius: 16, border: 'none',
+                background: HP_TOKENS.lineSoft, color: HP_TOKENS.inkSoft,
+                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: 'pointer',
+                width: '100%'
+              }}>
+                Batal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

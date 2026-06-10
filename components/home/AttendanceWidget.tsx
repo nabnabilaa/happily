@@ -80,6 +80,7 @@ export default function AttendanceWidget({ openModal }: AttendanceWidgetProps) {
 
     return (
       <button 
+        id="attendance-clock-in-btn"
         onClick={() => openModal('attendance_scanner')}
         className="hp-tap"
         style={{

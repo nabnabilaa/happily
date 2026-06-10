@@ -93,6 +93,9 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
           ...s,
           todayAttendance: { ...s.todayAttendance, checkIn: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }
         }));
+        // Auto-update status
+        fetch('/api/status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user?.id, status: 'working' }) }).catch(console.error);
+        
         setTimeout(onClose, 2000);
       } else {
         setStatus('error');
@@ -129,6 +132,9 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
             checkOut: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) 
           }
         }));
+        // Auto-update status
+        fetch('/api/status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user?.id, status: 'offline' }) }).catch(console.error);
+
         setTimeout(onClose, 3000);
       } else {
         setStatus('error');

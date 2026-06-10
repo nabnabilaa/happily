@@ -520,8 +520,10 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (pusherKey) {
+      let isCancelled = false;
       // 1. Pusher Mode (Production/Serverless)
       import('pusher-js').then(({ default: PusherClient }) => {
+        if (isCancelled) return;
         try {
           const pusher = new PusherClient(pusherKey, {
             cluster: pusherCluster,
@@ -583,6 +585,11 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         console.error("Failed to load pusher-js package, falling back to SSE", err);
         startSSE();
       });
+
+      return () => {
+        isCancelled = true;
+        cleanupFn();
+      };
     } else {
       // 2. SSE Fallback Mode (Local Dev/Default)
       startSSE();

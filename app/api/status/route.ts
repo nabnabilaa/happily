@@ -7,7 +7,7 @@ import { hpEventEmitter } from "@/lib/events";
 // Status types: working, meeting, break, away, sick, izin, cuti, offline
 // ══════════════════════════════════════════════════════════════
 
-export type UserStatusType = 'working' | 'meeting' | 'break' | 'away' | 'sick' | 'izin' | 'cuti' | 'offline';
+export type UserStatusType = 'working' | 'meeting' | 'break' | 'away' | 'sick' | 'izin' | 'cuti' | 'offline' | 'deepwork';
 
 const STATUS_META: Record<UserStatusType, { label: string; emoji: string; color: string }> = {
   working:  { label: 'Sedang Bekerja',   emoji: '💻', color: '#2D8A4E' },
@@ -18,6 +18,7 @@ const STATUS_META: Record<UserStatusType, { label: string; emoji: string; color:
   izin:     { label: 'Izin',              emoji: '📋', color: '#7B6BB5' },
   cuti:     { label: 'Cuti',              emoji: '🏖️', color: '#2196F3' },
   offline:  { label: 'Offline',           emoji: '⚫', color: '#CCCCCC' },
+  deepwork: { label: 'Deepwork',          emoji: '🔥', color: '#E85D04' },
 };
 
 // GET: Fetch all user statuses (for presence board)

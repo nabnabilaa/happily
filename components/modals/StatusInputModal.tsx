@@ -22,7 +22,7 @@ type StatusOption = {
 
 const STATUS_OPTIONS: StatusOption[] = [
   { key: 'working',  label: 'Sedang Bekerja',  emoji: '💻', color: '#2D8A4E', needsReason: false, needsAttachment: false, placeholder: '' },
-  { key: 'deep_work',label: 'Deep Work',       emoji: '🎯', color: '#5C3C92', needsReason: false, needsAttachment: false, placeholder: '' },
+  { key: 'deepwork',label: 'Deep Work',       emoji: '🎯', color: '#5C3C92', needsReason: false, needsAttachment: false, placeholder: '' },
   { key: 'meeting',  label: 'Dalam Meeting',   emoji: '📞', color: '#3B6FA0', needsReason: false, needsAttachment: false, placeholder: '' },
   { key: 'break',    label: 'Istirahat',        emoji: '☕', color: '#D4A017', needsReason: false, needsAttachment: false, placeholder: '' },
   { key: 'away',     label: 'Away / AFK',       emoji: '🚶', color: '#8A8A8A', needsReason: false, needsAttachment: false, placeholder: '' },

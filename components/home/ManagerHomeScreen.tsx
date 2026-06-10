@@ -55,6 +55,23 @@ export default function ManagerHomeScreen({ openModal }: Props) {
   if (!user || !state) return null;
   const levelProgress = calculateLevelProgress(user.points || 0);
 
+  // Auto-Scroll to Clock-In
+  useEffect(() => {
+    const handleScrollToClockIn = () => {
+      setTimeout(() => {
+        const el = document.getElementById('attendance-clock-in-btn');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.style.transition = 'transform 0.3s ease';
+          el.style.transform = 'scale(1.05)';
+          setTimeout(() => el.style.transform = 'scale(1)', 350);
+        }
+      }, 100);
+    };
+    window.addEventListener('hp_scroll_to_clock_in', handleScrollToClockIn);
+    return () => window.removeEventListener('hp_scroll_to_clock_in', handleScrollToClockIn);
+  }, []);
+
   return (
     <div style={{ position: 'relative', minHeight: '100%', paddingBottom: 120, fontFamily: HP_FONT }}>
       <BlobBackground colors={[HP_TOKENS.blueWash, HP_TOKENS.yellowWash, HP_TOKENS.blueSoft]} />

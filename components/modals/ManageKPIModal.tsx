@@ -39,6 +39,8 @@ export default function ManageKPIModal({ onClose }: ManageKPIModalProps) {
   const [loading, setLoading] = useState(true);
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
+  const [showMonthDropdown, setShowMonthDropdown] = useState(false);
+  const [showYearDropdown, setShowYearDropdown] = useState(false);
 
   // Form
   const [showForm, setShowForm] = useState(false);
@@ -46,6 +48,7 @@ export default function ManageKPIModal({ onClose }: ManageKPIModalProps) {
   const [target, setTarget] = useState('');
   const [weight, setWeight] = useState(25);
   const [assignTo, setAssignTo] = useState('');
+  const [showAssignDropdown, setShowAssignDropdown] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -115,12 +118,68 @@ export default function ManageKPIModal({ onClose }: ManageKPIModalProps) {
       <div style={{ marginTop: 4 }}>
         {/* Month/Year Selector */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-          <select value={month} onChange={e => setMonth(Number(e.target.value))} style={{ ...selectStyle, flex: 2 }}>
-            {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
-          </select>
-          <select value={year} onChange={e => setYear(Number(e.target.value))} style={{ ...selectStyle, flex: 1 }}>
-            {[2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
-          </select>
+          <div style={{ flex: 2, position: 'relative' }}>
+            <div 
+              onClick={() => setShowMonthDropdown(!showMonthDropdown)}
+              style={{ ...selectStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
+            >
+              <span>{MONTHS[month - 1]}</span>
+              <HPGlyph name="chevron-down" size={16} color={HP_TOKENS.inkMute} />
+            </div>
+            {showMonthDropdown && (
+              <>
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 }} onClick={() => setShowMonthDropdown(false)} />
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(26,29,35,0.12)', border: `1px solid ${HP_TOKENS.line}`, zIndex: 101, maxHeight: 250, overflowY: 'auto', padding: 8 }}>
+                  {MONTHS.map((m, i) => (
+                    <div 
+                      key={i} className="hp-tap"
+                      onClick={() => { setMonth(i + 1); setShowMonthDropdown(false); }}
+                      style={{
+                        padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                        background: month === (i + 1) ? HP_TOKENS.blueWash : 'transparent',
+                        color: month === (i + 1) ? HP_TOKENS.blue : HP_TOKENS.ink,
+                        ...HP_TEXT.body, fontSize: 13, fontWeight: month === (i + 1) ? 700 : 500,
+                        marginBottom: 4
+                      }}
+                    >
+                      {m}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+          <div style={{ flex: 1, position: 'relative' }}>
+            <div 
+              onClick={() => setShowYearDropdown(!showYearDropdown)}
+              style={{ ...selectStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
+            >
+              <span>{year}</span>
+              <HPGlyph name="chevron-down" size={16} color={HP_TOKENS.inkMute} />
+            </div>
+            {showYearDropdown && (
+              <>
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 }} onClick={() => setShowYearDropdown(false)} />
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(26,29,35,0.12)', border: `1px solid ${HP_TOKENS.line}`, zIndex: 101, maxHeight: 250, overflowY: 'auto', padding: 8 }}>
+                  {[2025, 2026, 2027].map(y => (
+                    <div 
+                      key={y} className="hp-tap"
+                      onClick={() => { setYear(y); setShowYearDropdown(false); }}
+                      style={{
+                        padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                        background: year === y ? HP_TOKENS.blueWash : 'transparent',
+                        color: year === y ? HP_TOKENS.blue : HP_TOKENS.ink,
+                        ...HP_TEXT.body, fontSize: 13, fontWeight: year === y ? 700 : 500,
+                        marginBottom: 4
+                      }}
+                    >
+                      {y}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Weight indicator */}
@@ -233,10 +292,52 @@ export default function ManageKPIModal({ onClose }: ManageKPIModalProps) {
             </div>
 
             <div style={{ ...HP_TEXT.small, fontSize: 11, fontWeight: 700, color: HP_TOKENS.inkMute }}>Assign ke</div>
-            <select value={assignTo} onChange={e => setAssignTo(e.target.value)} style={selectStyle}>
-              <option value="">Pilih anggota tim...</option>
-              {members.map(m => <option key={m.id} value={m.id}>{m.name} — {m.job_title || m.role}</option>)}
-            </select>
+            <div style={{ position: 'relative' }}>
+              <div 
+                onClick={() => setShowAssignDropdown(!showAssignDropdown)}
+                style={{ ...selectStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
+              >
+                <span>
+                  {assignTo === "" ? "Pilih anggota tim..." : members.find(m => m.id === assignTo)?.name || "Pilih anggota tim..."}
+                </span>
+                <HPGlyph name="chevron-down" size={16} color={HP_TOKENS.inkMute} />
+              </div>
+              {showAssignDropdown && (
+                <>
+                  <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 }} onClick={() => setShowAssignDropdown(false)} />
+                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(26,29,35,0.12)', border: `1px solid ${HP_TOKENS.line}`, zIndex: 101, maxHeight: 250, overflowY: 'auto', padding: 8 }}>
+                    <div 
+                      className="hp-tap"
+                      onClick={() => { setAssignTo(""); setShowAssignDropdown(false); }}
+                      style={{
+                        padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                        background: assignTo === "" ? HP_TOKENS.blueWash : 'transparent',
+                        color: assignTo === "" ? HP_TOKENS.blue : HP_TOKENS.ink,
+                        ...HP_TEXT.body, fontSize: 13, fontWeight: assignTo === "" ? 700 : 500,
+                        marginBottom: 4
+                      }}
+                    >
+                      Pilih anggota tim...
+                    </div>
+                    {members.map(m => (
+                      <div 
+                        key={m.id} className="hp-tap"
+                        onClick={() => { setAssignTo(m.id); setShowAssignDropdown(false); }}
+                        style={{
+                          padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                          background: assignTo === m.id ? HP_TOKENS.blueWash : 'transparent',
+                          color: assignTo === m.id ? HP_TOKENS.blue : HP_TOKENS.ink,
+                          ...HP_TEXT.body, fontSize: 13, fontWeight: assignTo === m.id ? 700 : 500,
+                          marginBottom: 4
+                        }}
+                      >
+                        {m.name} — {m.job_title || m.role}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
 
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => setShowForm(false)} style={{

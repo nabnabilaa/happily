@@ -18,9 +18,11 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
   const [newDescription, setNewDescription] = useState(editTask?.description || "");
   const [targetDate, setTargetDate] = useState<string>(editTask?.targetDate || (() => new Date().toISOString().split('T')[0]));
   const [selectedKpiId, setSelectedKpiId] = useState<string>(editTask?.kpi_id || initialGoalId || "");
+  const [showKpiDropdown, setShowKpiDropdown] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [completingTask, setCompletingTask] = useState<any>(null);
+  const [taskToDelete, setTaskToDelete] = useState<number | null>(null);
 
   // Fetch KPIs from API (manager monthly_kpis + personal_kpis tables) — only once
   const [apiKpis, setApiKpis] = useState<any[]>([]);
@@ -341,7 +343,9 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
     }
   };
 
-  const deletePriority = (id: number) => {
+  const executeDeletePriority = () => {
+    if (taskToDelete === null) return;
+    const id = taskToDelete;
     updateState((s: any) => {
       const taskToDelete = s.priorities.find((p: any) => String(p.id) === String(id));
       const newPriorities = s.priorities.filter((p: any) => String(p.id) !== String(id));
@@ -379,6 +383,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
         goals: updatedGoals
       };
     });
+    setTaskToDelete(null);
   };
 
   const inputStyle: React.CSSProperties = {
@@ -480,41 +485,130 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                 TERKAIT KPI MANA?
               </div>
               {myKpis.length > 0 ? (
-                <select 
-                  value={selectedKpiId}
-                  onChange={(e) => setSelectedKpiId(e.target.value)}
-                  style={{ ...inputStyle, height: 48 }}
-                >
-                  <option value="">Umum (tidak terkait KPI spesifik)</option>
-                  {myKpis.filter((k: any) => k.source === 'manager').length > 0 && (
-                    <optgroup label="KPI Bulanan (Manager)">
-                      {myKpis.filter((k: any) => k.source === 'manager').map((k: any) => {
-                        const goal = state.goals?.find((g: any) => String(g.id) === String(k.id));
-                        const parent = goal?.parent_id ? state.goals?.find((g: any) => String(g.id) === String(goal.parent_id)) : null;
-                        const alignmentText = parent ? ` (Aligned: ${parent.title})` : '';
-                        return (
-                          <option key={k.id} value={k.id}>
-                            {k.title}{alignmentText}{k.metricUnit ? ` (${k.metricUnit})` : ''}
-                          </option>
-                        );
-                      })}
-                    </optgroup>
+                <div style={{ position: 'relative' }}>
+                  <div 
+                    onClick={() => setShowKpiDropdown(!showKpiDropdown)}
+                    style={{ 
+                      ...inputStyle, 
+                      height: 48, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'space-between',
+                      cursor: 'pointer',
+                      userSelect: 'none'
+                    }}
+                  >
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {myKpis.find((k: any) => String(k.id) === String(selectedKpiId))?.title || "Umum (tidak terkait KPI spesifik)"}
+                    </span>
+                    <HPGlyph name="chevron-down" size={16} color={HP_TOKENS.inkMute} />
+                  </div>
+                  
+                  {showKpiDropdown && (
+                    <>
+                      <div 
+                        style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 }}
+                        onClick={() => setShowKpiDropdown(false)}
+                      />
+                      <div style={{ 
+                        position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, 
+                        background: '#fff', borderRadius: 16, 
+                        boxShadow: '0 8px 32px rgba(26,29,35,0.12)', border: `1px solid ${HP_TOKENS.line}`,
+                        zIndex: 101, maxHeight: 250, overflowY: 'auto', padding: 8
+                      }}>
+                        <div 
+                          className="hp-tap"
+                          onClick={() => { setSelectedKpiId(""); setShowKpiDropdown(false); }}
+                          style={{
+                            padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                            background: selectedKpiId === "" ? HP_TOKENS.blueWash : 'transparent',
+                            color: selectedKpiId === "" ? HP_TOKENS.blue : HP_TOKENS.ink,
+                            ...HP_TEXT.body, fontSize: 13, fontWeight: selectedKpiId === "" ? 700 : 500,
+                            marginBottom: 4
+                          }}
+                        >
+                          Umum (tidak terkait KPI spesifik)
+                        </div>
+                        
+                        {myKpis.filter((k: any) => k.source === 'manager').length > 0 && (
+                          <div style={{ marginBottom: 8 }}>
+                            <div style={{ padding: '4px 12px', ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800 }}>
+                              KPI Bulanan (Manager)
+                            </div>
+                            {myKpis.filter((k: any) => k.source === 'manager').map((k: any) => {
+                              const goal = state.goals?.find((g: any) => String(g.id) === String(k.id));
+                              const parent = goal?.parent_id ? state.goals?.find((g: any) => String(g.id) === String(goal.parent_id)) : null;
+                              const alignmentText = parent ? ` (Aligned: ${parent.title})` : '';
+                              const isSelected = String(k.id) === String(selectedKpiId);
+                              return (
+                                <div 
+                                  key={k.id}
+                                  className="hp-tap"
+                                  onClick={() => { setSelectedKpiId(k.id); setShowKpiDropdown(false); }}
+                                  style={{
+                                    padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                                    background: isSelected ? HP_TOKENS.blueWash : 'transparent',
+                                    color: isSelected ? HP_TOKENS.blue : HP_TOKENS.ink,
+                                    ...HP_TEXT.body, fontSize: 13, fontWeight: isSelected ? 700 : 500,
+                                    display: 'flex', alignItems: 'center', gap: 8
+                                  }}
+                                >
+                                  <div style={{ width: 4, height: 16, borderRadius: 2, background: HP_TOKENS.blue, opacity: isSelected ? 1 : 0.2 }} />
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{k.title}</div>
+                                    {(alignmentText || k.metricUnit) && (
+                                      <div style={{ fontSize: 11, color: isSelected ? HP_TOKENS.blue : HP_TOKENS.inkMute, opacity: 0.8, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        {alignmentText.replace(' (Aligned: ', 'Aligned: ').replace(')', '')} {k.metricUnit && `• ${k.metricUnit}`}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {myKpis.filter((k: any) => k.source === 'personal').length > 0 && (
+                          <div>
+                            <div style={{ padding: '4px 12px', ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800 }}>
+                              KPI Mandiri
+                            </div>
+                            {myKpis.filter((k: any) => k.source === 'personal').map((k: any) => {
+                              const goal = state.goals?.find((g: any) => String(g.id) === String(k.id));
+                              const parent = goal?.parent_id ? state.goals?.find((g: any) => String(g.id) === String(goal.parent_id)) : null;
+                              const alignmentText = parent ? ` (Aligned: ${parent.title})` : '';
+                              const isSelected = String(k.id) === String(selectedKpiId);
+                              return (
+                                <div 
+                                  key={k.id}
+                                  className="hp-tap"
+                                  onClick={() => { setSelectedKpiId(k.id); setShowKpiDropdown(false); }}
+                                  style={{
+                                    padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                                    background: isSelected ? HP_TOKENS.blueWash : 'transparent',
+                                    color: isSelected ? HP_TOKENS.blue : HP_TOKENS.ink,
+                                    ...HP_TEXT.body, fontSize: 13, fontWeight: isSelected ? 700 : 500,
+                                    display: 'flex', alignItems: 'center', gap: 8
+                                  }}
+                                >
+                                  <div style={{ width: 4, height: 16, borderRadius: 2, background: HP_TOKENS.sage, opacity: isSelected ? 1 : 0.2 }} />
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{k.title}</div>
+                                    {(alignmentText || k.metricUnit) && (
+                                      <div style={{ fontSize: 11, color: isSelected ? HP_TOKENS.blue : HP_TOKENS.inkMute, opacity: 0.8, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        {alignmentText.replace(' (Aligned: ', 'Aligned: ').replace(')', '')} {k.metricUnit && `• ${k.metricUnit}`}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </>
                   )}
-                  {myKpis.filter((k: any) => k.source === 'personal').length > 0 && (
-                    <optgroup label="KPI Mandiri">
-                      {myKpis.filter((k: any) => k.source === 'personal').map((k: any) => {
-                        const goal = state.goals?.find((g: any) => String(g.id) === String(k.id));
-                        const parent = goal?.parent_id ? state.goals?.find((g: any) => String(g.id) === String(goal.parent_id)) : null;
-                        const alignmentText = parent ? ` (Aligned: ${parent.title})` : '';
-                        return (
-                          <option key={k.id} value={k.id}>
-                            {k.title}{alignmentText}{k.metricUnit ? ` (${k.metricUnit})` : ''}
-                          </option>
-                        );
-                      })}
-                    </optgroup>
-                  )}
-                </select>
+                </div>
             ) : (
               <div style={{ 
                 padding: 12, borderRadius: 10, 
@@ -667,7 +761,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                       <HPGlyph name="edit" size={14} color={HP_TOKENS.inkFade}/>
                     </button>
                     <button 
-                      onClick={() => deletePriority(p.id)}
+                      onClick={() => setTaskToDelete(p.id)}
                       style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
                     >
                       <HPGlyph name="close" size={14} color={HP_TOKENS.coral}/>
@@ -722,6 +816,49 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
           onClose={() => setCompletingTask(null)}
           onConfirm={confirmTaskComplete}
         />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {taskToDelete !== null && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.5)', zIndex: 99999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 24, backdropFilter: 'blur(4px)'
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: 24, padding: 32,
+            width: '100%', maxWidth: 400, textAlign: 'center',
+            boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
+            animation: 'hpPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+          }}>
+            <div style={{ width: 64, height: 64, borderRadius: 32, background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+              <HPGlyph name="trash" size={32} />
+            </div>
+            <div style={{ ...HP_TEXT.h, fontSize: 20, marginBottom: 8 }}>Hapus Task Harian?</div>
+            <div style={{ ...HP_TEXT.body, color: HP_TOKENS.inkSoft, marginBottom: 24 }}>
+              Task ini akan dihapus dari prioritas harianmu.
+            </div>
+            <div style={{ display: 'flex', gap: 12, flexDirection: 'column' }}>
+              <button onClick={executeDeletePriority} className="hp-tap" style={{
+                padding: '16px', borderRadius: 16, border: 'none',
+                background: HP_TOKENS.coral, color: '#fff',
+                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: 'pointer',
+                width: '100%'
+              }}>
+                Ya, Hapus
+              </button>
+              <button onClick={() => setTaskToDelete(null)} className="hp-tap" style={{
+                padding: '16px', borderRadius: 16, border: 'none',
+                background: HP_TOKENS.lineSoft, color: HP_TOKENS.inkSoft,
+                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: 'pointer',
+                width: '100%'
+              }}>
+                Batal
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </Modal>
   );

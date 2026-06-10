@@ -28,6 +28,7 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
   const [showHistory, setShowHistory] = useState(false);
   const [historyTasks, setHistoryTasks] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const fetchHistory = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -75,13 +76,12 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
 
   const deleteGoal = () => {
     if (isReadOnly) return;
-    if (confirm(`Hapus goal "${g.title}"?`)) {
-      updateState((s: any) => ({
-        ...s,
-        goals: s.goals.filter((item: any) => String(item.id) !== String(g.id))
-      }));
-      notify('Goal Dihapus', `Goal "${g.title}" telah dihapus.`, 'info');
-    }
+    updateState((s: any) => ({
+      ...s,
+      goals: s.goals.filter((item: any) => String(item.id) !== String(g.id))
+    }));
+    notify('Goal Dihapus', `Goal "${g.title}" telah dihapus.`, 'info');
+    setShowDeleteModal(false);
   };
 
   const toggleTask = (taskId: number) => {
@@ -185,7 +185,7 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
             
             {!isReadOnly && (
               <button 
-                onClick={(e) => { e.stopPropagation(); deleteGoal(); }}
+                onClick={(e) => { e.stopPropagation(); setShowDeleteModal(true); }}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', flexShrink: 0 }}
               >
                 <div style={{ width: 18, height: 18, borderRadius: 9, background: HP_TOKENS.lineSoft, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -420,6 +420,49 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
           <HPGlyph name="info" size={12} color={HP_TOKENS.yellow} />
           <div style={{ ...HP_TEXT.tiny, color: '#8A6814', fontWeight: 700, fontSize: 10 }}>
             Tambahkan task di Task Harian & hubungkan ke KPI ini untuk tracking progress otomatis.
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.5)', zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 24, backdropFilter: 'blur(4px)'
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: 24, padding: 32,
+            width: '100%', maxWidth: 400, textAlign: 'center',
+            boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
+            animation: 'hpPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ width: 64, height: 64, borderRadius: 32, background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+              <HPGlyph name="target" size={32} />
+            </div>
+            <div style={{ ...HP_TEXT.h, fontSize: 20, marginBottom: 8 }}>Hapus Goal?</div>
+            <div style={{ ...HP_TEXT.body, color: HP_TOKENS.inkSoft, marginBottom: 24 }}>
+              Apakah Anda yakin ingin menghapus goal <b>"{g.title}"</b>?
+            </div>
+            <div style={{ display: 'flex', gap: 12, flexDirection: 'column' }}>
+              <button onClick={(e) => { e.stopPropagation(); deleteGoal(); }} className="hp-tap" style={{
+                padding: '16px', borderRadius: 16, border: 'none',
+                background: HP_TOKENS.coral, color: '#fff',
+                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: 'pointer',
+                width: '100%'
+              }}>
+                Ya, Hapus
+              </button>
+              <button onClick={(e) => { e.stopPropagation(); setShowDeleteModal(false); }} className="hp-tap" style={{
+                padding: '16px', borderRadius: 16, border: 'none',
+                background: HP_TOKENS.lineSoft, color: HP_TOKENS.inkSoft,
+                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: 'pointer',
+                width: '100%'
+              }}>
+                Batal
+              </button>
+            </div>
           </div>
         </div>
       )}
