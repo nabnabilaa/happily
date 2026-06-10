@@ -180,8 +180,10 @@ export function calculateWellbeingScore(state: any, user: any): {
   // Mid-Day Check-in — appears around 11:30 to 13:30
   const currentMins = now.getHours() * 60 + now.getMinutes();
   const isMidDayWindow = currentMins >= (11 * 60 + 30) && currentMins <= (13 * 60 + 30);
+  const todayStr = now.toISOString().split('T')[0];
+  const hasDoneMidDay = state.lastMidDayCheckIn === todayStr;
   
-  if (isMidDayWindow) {
+  if (isMidDayWindow && !hasDoneMidDay) {
     actions.push({
       icon: '📖',
       label: 'Isi Mid-Day Check-in',

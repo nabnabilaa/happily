@@ -41,6 +41,7 @@ const DEEP_LINK_MAP: Record<string, { modal: string; label: string; icon: string
   survey: { modal: 'take_survey', label: 'Isi Survey', icon: '📝' },
   attendance: { modal: 'attendance_history', label: 'Lihat Kehadiran', icon: '📅' },
   kpi: { modal: 'goals', label: 'Lihat KPI', icon: '🎯' },
+  room: { modal: 'focus', label: 'Masuk Ruang Tunggu', icon: '🚪' },
 };
 
 export default function NotificationsModal({ onClose, openModal }: NotificationsModalProps) {
@@ -159,7 +160,15 @@ export default function NotificationsModal({ onClose, openModal }: Notifications
       markOneRead(n.id);
       onClose();
       setTimeout(() => {
-        openModal(link.modal, { referenceId: n.referenceId });
+        if (n.referenceType === 'room') {
+          openModal('focus', { 
+            initialMultiplayer: true, 
+            initialRoomCode: n.referenceId,
+            isGuest: true
+          });
+        } else {
+          openModal(link.modal, { referenceId: n.referenceId });
+        }
       }, 200);
     }
   };
@@ -325,3 +334,4 @@ export default function NotificationsModal({ onClose, openModal }: Notifications
     </Modal>
   );
 }
+

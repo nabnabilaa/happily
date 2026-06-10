@@ -41,6 +41,17 @@ export async function POST(request: Request) {
       args: [kudosId, senderId, receiverId, valueTag || null, message]
     });
 
+    // Write to logbook for the sender so "Tebar Kebaikan" mission can check it
+    try {
+      const logbookId = "lb_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
+      await db.execute({
+        sql: "INSERT INTO logbook (id, user_id, type, target_id, note) VALUES (?, ?, ?, ?, ?)",
+        args: [logbookId, senderId, 'kudos_sent', receiverId, 'Sent appreciation']
+      });
+    } catch(e) {
+      console.warn("Failed to create logbook for kudos_sent:", e);
+    }
+
     // Award XP to RECEIVER only using absolute URL fetch to trigger the central xp/award endpoint logic
     try {
       const proto = request.headers.get('x-forwarded-proto') || 'http';

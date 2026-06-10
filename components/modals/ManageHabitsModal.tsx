@@ -39,6 +39,10 @@ export default function ManageHabitsModal({ onClose }: ManageHabitsModalProps) {
       habits: [...(s.habits || []), newH]
     }));
     setNewName("");
+    onClose();
+    setTimeout(() => {
+      document.getElementById('daily-training-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 300);
   };
 
   const deleteHabit = (name: string) => {

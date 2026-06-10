@@ -29,10 +29,13 @@ import WellbeingGauge from "@/components/home/WellbeingGauge";
 import AttendanceWidget from "@/components/home/AttendanceWidget";
 import TaskHarianWidget from "@/components/home/TaskHarianWidget";
 import DailyChallengeWidget from "@/components/home/DailyChallengeWidget";
+import CoworkingWidget from "@/components/home/CoworkingWidget";
 import SurveySection from "@/components/home/SurveySection";
 import LeaderboardWidget from "@/components/home/LeaderboardWidget";
 import NotificationBanner from "@/components/pwa/NotificationBanner";
 import MoodWall from "@/components/home/MoodWall";
+import CentralNudgeOverlay from "@/components/ui/CentralNudgeOverlay";
+import MorningPlanPopup from "@/components/ui/MorningPlanPopup";
 
 
 interface HomeScreenProps {
@@ -43,10 +46,10 @@ interface HomeScreenProps {
 
 
 export default function HomeScreen({ openModal }: any) {
-  const { state: rawState, updateState, updateUser, user: rawUser, syncSkillProgress, awardXP } = useHP();
+  const { state: rawState, updateState, updateUser, user: rawUser, syncSkillProgress, awardXP, notify } = useHP();
   const [greeting, setGreeting] = useState('');
   const [confetti, setConfetti] = useState(false);
-  const [celebrate, setCelebrate] = useState(false);
+  const [celebrate, setCelebrate] = useState<{show: boolean, points?: number, message?: string}>({show: false});
   const [reminder, setReminder] = useState<{ type: 'break' | 'clockout' | 'meeting', mins: number, sessionWith?: string } | null>(null);
   const [coachNudge, setCoachNudge] = useState<{ text: string, type: 'support' | 'warning' | 'cheer' }>({ 
     text: "Semangat ya! Kamu sudah melakukan yang terbaik hari ini. ✨", 
@@ -57,6 +60,25 @@ export default function HomeScreen({ openModal }: any) {
   const [selectedHabitDay, setSelectedHabitDay] = useState<{ name: string, date: Date, isToday: boolean, done: boolean } | null>(null);
   const [habitNote, setHabitNote] = useState("");
   const [todayAttendance, setTodayAttendance] = useState<any>(null);
+  const [centralNudge, setCentralNudge] = useState<{ id: string; type: 'kudos' | 'senggol'; from: string; message: string; } | null>(null);
+  const [showPlanBanner, setShowPlanBanner] = useState(false);
+
+  const yesterdayPlan = useMemo(() => {
+    if (!rawState || !rawState.logbook) return null;
+    const today = new Date().toLocaleDateString('id-ID');
+    // Find latest daily_reflection that is NOT from today
+    const reflection = rawState.logbook.find((l: any) => 
+      l.type === 'daily_reflection' && 
+      new Date(l.created_at).toLocaleDateString('id-ID') !== today
+    );
+    if (reflection && reflection.metadata_json) {
+      try {
+        const meta = JSON.parse(reflection.metadata_json);
+        if (meta.tomorrowPlan) return meta.tomorrowPlan;
+      } catch (e) {}
+    }
+    return null;
+  }, [rawState?.logbook]);
 
   // Fetch Attendance for absolute truth on clock-out
   useEffect(() => {
@@ -340,6 +362,49 @@ export default function HomeScreen({ openModal }: any) {
     }
   }, [rawState, rawUser, openModal]);
 
+  // Auto-Popup Mascot for New Kudos (Apresiasi) & Senggol (Nudge)
+  useEffect(() => {
+    if (!rawState || !rawUser || !rawState.feed) return;
+    
+    // 1. Check for Kudos
+    const latestKudos = rawState.feed.find((f: any) => f.to === rawUser.name);
+    if (latestKudos) {
+      const lastSeenKudosId = localStorage.getItem(`lastSeenKudos_${rawUser.id}`);
+      if (lastSeenKudosId !== String(latestKudos.id)) {
+        localStorage.setItem(`lastSeenKudos_${rawUser.id}`, String(latestKudos.id));
+        if (lastSeenKudosId !== null) {
+          setCentralNudge({
+            id: String(latestKudos.id),
+            type: 'kudos',
+            from: latestKudos.from,
+            message: latestKudos.msg
+          });
+          return; // Only show one at a time
+        }
+      }
+    }
+    
+    // 2. Check for Senggol (from logbook 'nudge_received' or notifications)
+    // Assuming backend inserts 'nudge_received' in logbook when senggol happens
+    if (rawState.logbook) {
+       const latestSenggol = rawState.logbook.find((l: any) => l.type === 'nudge_received');
+       if (latestSenggol) {
+          const lastSeenSenggolId = localStorage.getItem(`lastSeenSenggol_${rawUser.id}`);
+          if (lastSeenSenggolId !== String(latestSenggol.id)) {
+             localStorage.setItem(`lastSeenSenggol_${rawUser.id}`, String(latestSenggol.id));
+             if (lastSeenSenggolId !== null) {
+                setCentralNudge({
+                   id: String(latestSenggol.id),
+                   type: 'senggol',
+                   from: latestSenggol.metadata_json ? JSON.parse(latestSenggol.metadata_json).from : 'Sistem',
+                   message: latestSenggol.content || 'Ayo semangat, jangan melamun!'
+                });
+             }
+          }
+       }
+    }
+  }, [rawState?.feed, rawState?.logbook, rawUser?.id, rawUser?.name]);
+
 
 
   const beeMood = useMemo(() => {
@@ -378,9 +443,7 @@ export default function HomeScreen({ openModal }: any) {
 
   const processHabitToggle = useCallback((name: string, date: Date, isToday: boolean, wasDone: boolean, newDone: boolean, note: string) => {
     if (newDone && !wasDone) { 
-      setConfetti(true); 
-      setCelebrate(true);
-      setTimeout(() => setConfetti(false), 1200); 
+      notify('Latihan Selesai! 💪', '+20 Point', 'success');
       awardXP('habit_complete', `Latihan: ${name}`);
     }
 
@@ -452,7 +515,7 @@ export default function HomeScreen({ openModal }: any) {
 
   const handleFinishTraining = useCallback((name: string) => {
     setConfetti(true);
-    setCelebrate(true);
+    setCelebrate({show: true, points: 500, message: `Tamat Training: ${name}`});
     setTimeout(() => setConfetti(false), 2000);
     awardXP('training_graduated', `Tamat Training: ${name}`);
 
@@ -530,7 +593,9 @@ export default function HomeScreen({ openModal }: any) {
     <div style={{ position: 'relative', minHeight: '100%', paddingBottom: 120, fontFamily: HP_FONT }}>
       <BlobBackground colors={[HP_TOKENS.primaryWash, HP_TOKENS.card, HP_TOKENS.paper]}/>
       <Confetti show={confetti}/>
-      <CelebrationOverlay show={celebrate} onComplete={() => setCelebrate(false)} />
+      <CelebrationOverlay show={celebrate.show} points={celebrate.points} message={celebrate.message} onComplete={() => setCelebrate({show: false})} />
+      <CentralNudgeOverlay nudge={centralNudge} onClose={() => setCentralNudge(null)} />
+      <MorningPlanPopup planText={yesterdayPlan} userId={rawUser?.id} />
 
       <div style={{ position: 'relative', zIndex: 1, padding: '0 16px', paddingTop: 72 }} className="hp-stagger">
         
@@ -795,7 +860,7 @@ export default function HomeScreen({ openModal }: any) {
             <HPCard padding={16} style={{ 
               background: reminder.type === 'break' ? HP_TOKENS.yellowWash : HP_TOKENS.sageWash, 
               border: `1.5px solid ${reminder.type === 'break' ? HP_TOKENS.yellow : HP_TOKENS.sage}`,
-              animation: 'hpBounce 1s infinite'
+              animation: 'hpPulse 3s infinite'
             }}>
               <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
                 <div style={{ 
@@ -849,21 +914,27 @@ export default function HomeScreen({ openModal }: any) {
           </div>
         )}
 
-
-
+        {/* Coworking Lounge Widget */}
+        <CoworkingWidget openModal={openModal} />
 
         {/* LAYER 2 — Task Harian */}
         <TaskHarianWidget 
           openModal={openModal} 
-          onTaskComplete={() => {
+          onTaskComplete={(taskName?: string) => {
             setConfetti(true);
-            setCelebrate(true);
+            setCelebrate({show: true, points: 50, message: taskName ? `Selesai: ${taskName}` : "Hebat! Satu langkah lebih dekat."});
             setTimeout(() => setConfetti(false), 1200);
           }} 
         />
 
-        {/* LAYER 3 — Daily Challenges */}
-        <DailyChallengeWidget />
+        <DailyChallengeWidget 
+          openModal={openModal} 
+          onClaimReward={(points: number, title: string) => {
+            setConfetti(true);
+            setCelebrate({show: true, points, message: `Misi Selesai: ${title}`});
+            setTimeout(() => setConfetti(false), 1500);
+          }}
+        />
 
         {/* Survey Section — Smart targeting + internal questions */}
         <SurveySection openModal={openModal} />
@@ -871,7 +942,7 @@ export default function HomeScreen({ openModal }: any) {
 
 
         {/* Daily Training Habits */}
-        <div style={{ marginTop: 24 }}>
+        <div id="daily-training-section" style={{ marginTop: 24 }}>
           <SectionHeader 
             icon="leaf" 
             label="Daily Training" 

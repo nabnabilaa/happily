@@ -16,6 +16,7 @@ import TabNav from "@/components/layout/TabNav";
 import ErrorBoundary from "@/components/ui/ErrorBoundary";
 import ThemeSwitcher from "@/components/ui/ThemeSwitcher";
 import InstallButton from "@/components/pwa/InstallButton";
+import SenggolModal from "@/components/modals/SenggolModal";
 
 // ── Shared Screens ──
 import CalendarScreen from "@/components/home/CalendarScreen";
@@ -533,7 +534,7 @@ function AppContent() {
 
       {/* Modal Renderer */}
       {modal?.name === 'checkin'          && <CheckInModal onClose={closeModal} />}
-      {modal?.name === 'focus'            && <FocusModal onClose={closeModal} />}
+      {modal?.name === 'focus'            && <FocusModal onClose={closeModal} {...(modal.props || {})} />}
       {modal?.name === 'overtime_prompt'  && <OvertimePromptModal onClose={closeModal} />}
 
       {modal?.name === 'pause'            && <PauseModal onClose={closeModal} />}
@@ -554,7 +555,7 @@ function AppContent() {
       {modal?.name === 'system_guide'     && <SystemGuideModal onClose={closeModal} />}
       {modal?.name === 'profile_editor'   && <ProfileEditorModal onClose={closeModal} />}
       {modal?.name === 'manage_surveys'   && <ManageSurveysModal onClose={closeModal} openModal={openModal} {...modal.props} />}
-      {modal?.name === 'take_survey'     && <TakeSurveyModal onClose={closeModal} {...modal.props} />}
+      {modal?.name === 'take_survey'      && <TakeSurveyModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'survey_results'   && <SurveyResultsModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'attendance_scanner' && <AttendanceScannerModal onClose={closeModal} />}
       {modal?.name === 'attendance_history' && <AttendanceHistoryModal onClose={closeModal} {...modal.props} />}
@@ -582,6 +583,7 @@ function AppContent() {
         modal.props?.onChannelCreated?.(channelId);
       }} />}
       {modal?.name === 'appreciate'       && <AppreciateModal onClose={closeModal} {...modal.props} />}
+      {modal?.name === 'senggol'          && <SenggolModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'announcement'     && <AnnouncementModal onClose={closeModal} />}
       {modal?.name === 'mascot_guide'     && <MascotGuideModal onClose={closeModal} />}
       {modal?.name === 'extension_guide'  && <ExtensionGuideModal onClose={closeModal} />}

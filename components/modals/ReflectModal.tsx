@@ -23,6 +23,7 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
   const [productivity, setProductivity] = useState('mid');
   const [workLife, setWorkLife] = useState('ok');
   const [blockers, setBlockers] = useState('');
+  const [tomorrowPlan, setTomorrowPlan] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAllTasks, setShowAllTasks] = useState(false);
 
@@ -70,7 +71,7 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
           content: summary,
           points: 30,
           metadata: { 
-            mood, productivity, workLife, blockers, 
+            mood, productivity, workLife, blockers, tomorrowPlan,
             ...timestamp,
             taskCount: state?.priorities.filter((p: any) => p.done).length || 0 
           }
@@ -95,7 +96,7 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
             title: 'Tutup Hari (Clock Out)',
             content: summary,
             points: 30,
-            metadata_json: JSON.stringify({ mood, productivity, workLife, blockers, ...timestamp }),
+            metadata_json: JSON.stringify({ mood, productivity, workLife, blockers, tomorrowPlan, ...timestamp }),
             created_at: now.toISOString()
           },
           ...(s.logbook || [])
@@ -267,18 +268,32 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
               style={inputStyle}
             />
           </div>
+
+          <div style={{ marginTop: 16, background: `${HP_TOKENS.yellowWash}40`, padding: 16, borderRadius: 16, border: `1.5px solid ${HP_TOKENS.yellow}` }}>
+            <div style={{ ...HP_TEXT.h, fontSize: 14, marginBottom: 8, color: '#b45309' }}>Rencana Besok? <span style={{ color: '#ef4444' }}>*</span></div>
+            <div style={{ ...HP_TEXT.small, fontSize: 12, color: '#b45309', marginBottom: 12 }}>
+              Tuliskan garis besar prioritasmu untuk esok hari. Ini akan muncul di sapaan pagimu besok!
+            </div>
+            <textarea
+              value={tomorrowPlan} 
+              onChange={e => setTomorrowPlan(e.target.value)} 
+              rows={3}
+              placeholder="Besok aku akan fokus menyelesaikan dokumen X dan merevisi Y..."
+              style={{ ...inputStyle, border: `1px solid ${HP_TOKENS.yellowSoft}` }}
+            />
+          </div>
         </div>
 
         {/* 4. Save Button */}
         <button 
           onClick={handleFinish} 
-          disabled={isSubmitting}
+          disabled={isSubmitting || tomorrowPlan.trim() === ''}
           style={{
             width: '100%', padding: 20, borderRadius: 24,
             background: HP_TOKENS.primary, color: '#fff', border: 'none',
-            fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: isSubmitting ? 'default' : 'pointer',
+            fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: (isSubmitting || tomorrowPlan.trim() === '') ? 'not-allowed' : 'pointer',
             boxShadow: `0 8px 24px ${HP_TOKENS.primarySoft}`,
-            opacity: isSubmitting ? 0.7 : 1,
+            opacity: (isSubmitting || tomorrowPlan.trim() === '') ? 0.6 : 1,
             transition: '0.2s',
             display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10
           }}

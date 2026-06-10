@@ -333,6 +333,33 @@ export async function POST() {
         FOREIGN KEY (event_id) REFERENCES calendar_events(id) ON DELETE CASCADE,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       )`
+    },
+    {
+      desc: "Create focus_rooms table",
+      sql: `CREATE TABLE IF NOT EXISTS focus_rooms (
+        id VARCHAR(100) PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        mode VARCHAR(50) DEFAULT 'hardcore',
+        duration_mins INT DEFAULT 25,
+        status VARCHAR(50) DEFAULT 'waiting',
+        host_id VARCHAR(100) NOT NULL,
+        started_at DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (host_id) REFERENCES users(id)
+      )`
+    },
+    {
+      desc: "Create focus_room_participants table",
+      sql: `CREATE TABLE IF NOT EXISTS focus_room_participants (
+        room_id VARCHAR(100) NOT NULL,
+        user_id VARCHAR(100) NOT NULL,
+        status VARCHAR(50) DEFAULT 'joined',
+        is_host BOOLEAN DEFAULT FALSE,
+        joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (room_id, user_id),
+        FOREIGN KEY (room_id) REFERENCES focus_rooms(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )`
     }
   ];
 
@@ -416,6 +443,10 @@ export async function POST() {
 
     // ── Rewards table ──
     { desc: "rewards.stock", sql: "ALTER TABLE rewards ADD COLUMN stock INTEGER DEFAULT 999" },
+    {
+      desc: "Add description to focus_rooms",
+      sql: `ALTER TABLE focus_rooms ADD COLUMN description TEXT`
+    }
   ];
 
   for (const c of columns) {

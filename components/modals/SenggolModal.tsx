@@ -5,41 +5,35 @@ import { useHP } from "@/lib/HPContext";
 import { 
   HP_TOKENS, 
   HP_FONT, 
-  HP_TEXT,
-  HP_VALUES
+  HP_TEXT
 } from "@/lib/constants";
 import HPGlyph from "@/components/ui/HPGlyph";
 import HPAvatar from "@/components/ui/HPAvatar";
 import Modal from "@/components/ui/Modal";
 
-interface AppreciateModalProps {
+interface SenggolModalProps {
   onClose: () => void;
   toUser?: any;
 }
 
-export default function AppreciateModal({ onClose, toUser }: AppreciateModalProps) {
-  const { state, updateState, user } = useHP();
+export default function SenggolModal({ onClose, toUser }: SenggolModalProps) {
+  const { state, user } = useHP();
   const [to, setTo] = useState<any>(toUser || null);
-  const [value, setValue] = useState<string | null>(null);
-  const [msg, setMsg] = useState('');
+  const [type, setType] = useState<'greet' | 'coffee' | 'help'>('greet');
   const [people, setPeople] = useState<any[]>(toUser ? [toUser] : []);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [remaining, setRemaining] = useState(3);
 
-  // Fetch real users from database (not mock data)
   useEffect(() => {
     async function fetchUsers() {
       try {
         const res = await fetch('/api/users');
         const data = await res.json();
         if (data.users) {
-          // Filter out current user (can't appreciate yourself)
           const filtered = data.users.filter((u: any) => String(u.id) !== String(user?.id));
           setPeople(filtered);
-          
           if (toUser) {
             const match = filtered.find((u: any) => String(u.id) === String(toUser.id));
             if (match) setTo(match);
@@ -53,54 +47,30 @@ export default function AppreciateModal({ onClose, toUser }: AppreciateModalProp
   }, [user?.id, toUser]);
 
   const send = async () => {
-    if (!to || !value || !msg || !state || !user) return;
+    if (!to || !user) return;
     setLoading(true);
     setError(null);
 
     try {
-      const res = await fetch('/api/kudos', {
+      const res = await fetch('/api/status/greet', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           senderId: user.id,
           receiverId: to.id,
           senderName: user.name,
-          receiverName: to.name,
-          valueTag: value,
-          message: msg,
+          type: type,
         })
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        setError(data.error || 'Gagal mengirim apresiasi');
-        setLoading(false);
-        return;
+        throw new Error('Gagal mengirim');
       }
 
-      // Update feed in state (so it shows immediately)
-      const newFeedItem = {
-        id: data.kudosId || Date.now(), 
-        from: user.name, 
-        to: to.name, 
-        value, 
-        msg, 
-        likes: 0, 
-        time: 'Baru saja',
-      };
-
-      updateState((s: any) => ({
-        ...s,
-        feed: [newFeedItem, ...s.feed],
-        logbook: [...(s.logbook || []), { type: 'kudos_sent', created_at: new Date().toISOString() }]
-      }));
-
-      setRemaining(data.remaining ?? 2);
       setSuccess(true);
       setTimeout(() => onClose(), 1500);
     } catch (e) {
-      setError('Gagal mengirim. Coba lagi.');
+      setError('Gagal mengirim senggolan. Coba lagi.');
     } finally {
       setLoading(false);
     }
@@ -110,23 +80,26 @@ export default function AppreciateModal({ onClose, toUser }: AppreciateModalProp
 
   if (success) {
     return (
-      <Modal onClose={onClose} title="Beri Apresiasi">
+      <Modal onClose={onClose} title="Senggol Tim">
         <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>🌱</div>
-          <div style={{ ...HP_TEXT.h, fontSize: 18, color: HP_TOKENS.sage }}>Apresiasi Terkirim!</div>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>{type === 'greet' ? '👋' : type === 'coffee' ? '☕' : '🤝'}</div>
+          <div style={{ ...HP_TEXT.h, fontSize: 18, color: HP_TOKENS.sage }}>Terkirim!</div>
           <div style={{ ...HP_TEXT.body, fontSize: 13, color: HP_TOKENS.inkMute, marginTop: 8 }}>
-            {to?.name} mendapat +20 poin dari apresiasimu.
-          </div>
-          <div style={{ ...HP_TEXT.small, fontSize: 11, color: HP_TOKENS.inkFade, marginTop: 12 }}>
-            Sisa apresiasi hari ini: {remaining}
+            Notifikasi telah dikirimkan ke {to?.name.split(' ')[0]}.
           </div>
         </div>
       </Modal>
     );
   }
 
+  const NUDGE_OPTIONS = [
+    { key: 'greet', label: 'Sapa & Senggol', emoji: '👀', color: HP_TOKENS.ink },
+    { key: 'coffee', label: 'Ajak Ngopi/Rehat', emoji: '☕', color: '#8A6814', bg: HP_TOKENS.yellowSoft },
+    { key: 'help', label: 'Tawarkan Bantuan', emoji: '🤝', color: HP_TOKENS.coral },
+  ];
+
   return (
-    <Modal onClose={onClose} title="Beri Apresiasi">
+    <Modal onClose={onClose} title="Senggol Tim">
       <div style={{ marginTop: 4 }}>
         {error && (
           <div style={{ 
@@ -254,58 +227,38 @@ export default function AppreciateModal({ onClose, toUser }: AppreciateModalProp
           </div>
         )}
 
-        <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 700, marginTop: 22 }}>NILAI PERUSAHAAN</div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
-          {(state?.companyValues || HP_VALUES).map((v: string) => (
+        <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 700, marginTop: 22 }}>TIPE SENGGOLAN</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
+          {NUDGE_OPTIONS.map(opt => (
             <button 
-              key={v} 
-              onClick={() => setValue(v)} 
+              key={opt.key} 
+              onClick={() => setType(opt.key as any)} 
               style={{
-                padding: '9px 14px', 
-                borderRadius: 99,
-                background: value === v ? HP_TOKENS.sage : HP_TOKENS.card,
-                border: `1.5px solid ${value === v ? HP_TOKENS.sage : HP_TOKENS.line}`,
-                color: value === v ? '#fff' : HP_TOKENS.ink,
+                padding: '12px 14px', 
+                borderRadius: 12,
+                background: type === opt.key ? (opt.bg || `${HP_TOKENS.sageSoft}40`) : HP_TOKENS.card,
+                border: `1.5px solid ${type === opt.key ? (opt.bg ? opt.color : HP_TOKENS.sage) : HP_TOKENS.line}`,
                 fontFamily: HP_FONT, 
-                fontWeight: 700, 
-                fontSize: 13, 
+                display: 'flex', alignItems: 'center', gap: 10,
                 cursor: 'pointer',
+                transition: 'all 0.2s'
               }}
               className="hp-tap"
             >
-              {v}
+              <div style={{ fontSize: 20 }}>{opt.emoji}</div>
+              <div style={{ 
+                fontSize: 14, fontWeight: 700, 
+                color: type === opt.key ? (opt.bg ? opt.color : HP_TOKENS.sage) : HP_TOKENS.ink 
+              }}>
+                {opt.label}
+              </div>
             </button>
           ))}
         </div>
 
-        <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 700, marginTop: 22 }}>PESAN PERSONAL</div>
-        <textarea
-          value={msg} 
-          onChange={e => setMsg(e.target.value)} 
-          rows={4}
-          placeholder="Apa yang kamu apresiasi, dan dampaknya ke tim?"
-          style={{
-            width: '100%', 
-            marginTop: 10, 
-            padding: 14, 
-            borderRadius: 14,
-            border: `1.5px solid ${HP_TOKENS.line}`, 
-            fontFamily: HP_FONT, 
-            fontSize: 14,
-            color: HP_TOKENS.ink, 
-            outline: 'none', 
-            resize: 'none', 
-            background: HP_TOKENS.card, 
-            boxSizing: 'border-box',
-          }}
-        />
-        <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, marginTop: 6 }}>
-          💡 Penerima mendapat +20 poin. Maks 3 apresiasi per hari.
-        </div>
-
         <button 
           onClick={send} 
-          disabled={!to || !value || !msg || loading} 
+          disabled={!to || loading} 
           style={{
             width: '100%', 
             marginTop: 24, 
@@ -318,12 +271,12 @@ export default function AppreciateModal({ onClose, toUser }: AppreciateModalProp
             fontWeight: 800, 
             fontSize: 15, 
             cursor: 'pointer',
-            opacity: !to || !value || !msg || loading ? 0.4 : 1,
+            opacity: !to || loading ? 0.4 : 1,
             boxShadow: `0 4px 14px ${HP_TOKENS.sageSoft}`,
           }}
           className="hp-tap"
         >
-          {loading ? 'Mengirim...' : 'Kirim Apresiasi 🌱'}
+          {loading ? 'Mengirim...' : 'Kirim! 🚀'}
         </button>
       </div>
     </Modal>

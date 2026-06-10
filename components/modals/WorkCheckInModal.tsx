@@ -19,13 +19,14 @@ interface WorkCheckInModalProps {
 }
 
 export default function WorkCheckInModal({ onClose, openModal }: WorkCheckInModalProps) {
-  const { state, updateState, user, awardXP } = useHP();
+  const { state, updateState, user, awardXP, notify } = useHP();
   const [aiResponse, setAiResponse] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [notes, setNotes] = useState("");
   const [showNotes, setShowNotes] = useState(false);
   const [selectedMood, setSelectedMood] = useState(state?.mood || 'calm');
   const [completingTask, setCompletingTask] = useState<any>(null);
+  const [localProgress, setLocalProgress] = useState<Record<number, number>>({});
 
   if (!state) return null;
 
@@ -258,12 +259,13 @@ Jawab dengan tone yang asik dan menyemangati.`,
       ...s,
       mood: selectedMood,
       moods: [...(s.moods || []), { time: new Date().toISOString(), mood: selectedMood }],
-      logbook: [log, ...(s.logbook || [])]
+      logbook: [log, ...(s.logbook || [])],
+      lastMidDayCheckIn: new Date().toISOString().split('T')[0]
     }));
     
     setShowNotes(false);
     setNotes("");
-    alert("Update siang ini & Mood berhasil disimpan! ✨");
+    notify("Mid-Day Check-in", "Update siang ini & Mood berhasil disimpan! ✨", "success");
     onClose();
   };
 
@@ -281,6 +283,14 @@ Jawab dengan tone yang asik dan menyemangati.`,
     if (mood === 'tired') return '😩';
     if (mood === 'stress') return '🤯';
     return '😐';
+  };
+
+  const getMoodLabel = (mood: string) => {
+    if (mood === 'joy') return 'Semangat';
+    if (mood === 'calm') return 'Tenang';
+    if (mood === 'tired') return 'Lelah';
+    if (mood === 'stress') return 'Kewalahan';
+    return '';
   };
 
   return (
@@ -357,12 +367,16 @@ Jawab dengan tone yang asik dan menyemangati.`,
                   <div style={{ marginTop: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, alignItems: 'center' }}>
                       <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>Progres:</div>
-                      <div style={{ ...HP_TEXT.small, fontWeight: 800, color: HP_TOKENS.yellow }}>{p.progress || 0}%</div>
+                      <div style={{ ...HP_TEXT.small, fontWeight: 800, color: HP_TOKENS.yellow }}>
+                        {localProgress[p.id] !== undefined ? localProgress[p.id] : (p.progress || 0)}%
+                      </div>
                     </div>
                     <input 
                       type="range" min="0" max="100" 
-                      value={p.progress || 0} 
-                      onChange={(e) => updateTaskProgress(p.id, parseInt(e.target.value))}
+                      value={localProgress[p.id] !== undefined ? localProgress[p.id] : (p.progress || 0)} 
+                      onChange={(e) => setLocalProgress(prev => ({ ...prev, [p.id]: parseInt(e.target.value) }))}
+                      onMouseUp={(e) => updateTaskProgress(p.id, parseInt((e.target as HTMLInputElement).value))}
+                      onTouchEnd={(e) => updateTaskProgress(p.id, parseInt((e.target as HTMLInputElement).value))}
                       style={{ 
                         width: '100%', 
                         height: 6,
@@ -425,9 +439,13 @@ Jawab dengan tone yang asik dan menyemangati.`,
                 flex: 1, padding: '8px 0', borderRadius: 12,
                 background: selectedMood === m ? `${getMoodColor(m)}20` : HP_TOKENS.paper,
                 border: selectedMood === m ? `1.5px solid ${getMoodColor(m)}` : `1.5px solid ${HP_TOKENS.lineSoft}`,
-                fontSize: 20, cursor: 'pointer', transition: '0.2s'
+                cursor: 'pointer', transition: '0.2s',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4
               }}>
-                {getMoodEmoji(m)}
+                <span style={{ fontSize: 24 }}>{getMoodEmoji(m)}</span>
+                <span style={{ ...HP_TEXT.tiny, fontWeight: 700, color: selectedMood === m ? getMoodColor(m) : HP_TOKENS.inkMute }}>
+                  {getMoodLabel(m)}
+                </span>
               </button>
             ))}
           </div>

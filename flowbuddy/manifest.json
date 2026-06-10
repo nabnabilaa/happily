@@ -1,0 +1,67 @@
+{
+  "manifest_version": 3,
+  "name": "FocusBuddy",
+  "version": "7.1.0",
+  "description": "Teman produktivitas dengan karakter animasi - tugas, catatan, timer, alarm, focus mode. v7.1",
+  "permissions": [
+    "storage",
+    "alarms",
+    "notifications",
+    "tabs",
+    "declarativeNetRequest"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "focus_block",
+        "enabled": false,
+        "path": "rules/focus_block_rules.json"
+      }
+    ]
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "modules/rbac.js",
+        "modules/pane-team.js",
+        "modules/pane-people.js",
+        "content.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "FocusBuddy - klik untuk toggle"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "icons/*",
+        "focus_blocked.html"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

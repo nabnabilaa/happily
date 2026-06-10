@@ -51,6 +51,7 @@ interface HPState {
   coachSuggestions?: string[];
   overtimeStatus?: string;
   lastMoodCheckIn?: string;
+  lastMidDayCheckIn?: string;
 }
 
 export type UserRole = 'hr' | 'manager' | 'employee';

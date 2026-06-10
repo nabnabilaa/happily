@@ -172,7 +172,7 @@ export async function PUT(request: Request) {
         type || 'info',
         referenceId || null,
         referenceType || null,
-        new Date().toISOString()
+        new Date().toISOString().slice(0, 19).replace('T', ' ')
       ]
     });
 

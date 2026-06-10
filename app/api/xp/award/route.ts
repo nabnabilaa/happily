@@ -69,12 +69,24 @@ export async function POST(request: Request) {
 
     // ── Anti-Abuse: Global Daily XP/Point Cap ───────────────────────
     try {
+      const EXEMPT_ACTION_TYPES = [
+        'daily_challenge', 
+        'kpi_achieved', 
+        'kpi_exceeded', 
+        'streak_5', 
+        'streak_7', 
+        'streak_monthly', 
+        'streak_30', 
+        'training_graduated'
+      ];
+
       const todayGlobalXP = await db.execute({
         sql: `SELECT COALESCE(SUM(amount), 0) as total 
               FROM xp_transactions 
               WHERE user_id = ? 
-                AND DATE(created_at) = CURDATE()`,
-        args: [recipientId]
+                AND DATE(created_at) = CURDATE()
+                AND action_type NOT IN (${EXEMPT_ACTION_TYPES.map(() => '?').join(',')})`,
+        args: [recipientId, ...EXEMPT_ACTION_TYPES]
       });
       const currentGlobalTotal = Number(todayGlobalXP.rows[0]?.total) || 0;
 
@@ -98,8 +110,56 @@ export async function POST(request: Request) {
         finalAmount = remainingGlobalCap;
       }
 
-      // ── Anti-Abuse: Daily Task XP Cap ──────────────────────────────
+      // ── Anti-Abuse: Diminishing Returns for Focus Session ──────────────────────────────
+      if (actionType === 'focus_session') {
+        const todayFocus = await db.execute({
+          sql: `SELECT COUNT(*) as count 
+                FROM xp_transactions 
+                WHERE user_id = ? 
+                  AND action_type = 'focus_session'
+                  AND DATE(created_at) = CURDATE()`,
+          args: [recipientId]
+        });
+        const focusCount = Number(todayFocus.rows[0]?.count) || 0;
+        
+        if (focusCount >= 3) {
+          finalAmount = 0; // 4th+ session gives 0 XP
+          return NextResponse.json({ 
+            success: true, awarded: 0, awardedCoins: 0, capped: true,
+            message: `Batas poin harian fokus tercapai. Sesi ini tidak menambah Poin.`,
+            newTotal: 0, newCoins: 0, recipientId
+          });
+        } else if (focusCount === 2) {
+          finalAmount = Math.floor(finalAmount * 0.5); // 3rd session gives 50% XP
+        }
+      }
+
+      // ── Anti-Abuse: Daily Task XP Cap & Diminishing Returns ──────────────────────────────
       if (TASK_ACTION_TYPES.includes(actionType)) {
+        // Count how many tasks were already completed today
+        const todayTaskXPCount = await db.execute({
+          sql: `SELECT COUNT(*) as count
+                FROM xp_transactions 
+                WHERE user_id = ? 
+                  AND action_type IN ('task_approved', 'task_revised_approved', 'priority_complete')
+                  AND DATE(created_at) = CURDATE()`,
+          args: [recipientId]
+        });
+        const taskCount = Number(todayTaskXPCount.rows[0]?.count) || 0;
+
+        if (taskCount >= 6) {
+           finalAmount = 0;
+           return NextResponse.json({ 
+            success: true, awarded: 0, awardedCoins: 0, capped: true,
+            message: `Batas poin harian task tercapai. Task ini tidak menambah Poin.`,
+            newTotal: 0, newCoins: 0, recipientId
+          });
+        } else if (taskCount >= 3) {
+           finalAmount = 10;
+        } else {
+           finalAmount = 20; // First 3 tasks give 20
+        }
+
         const todayTaskXP = await db.execute({
           sql: `SELECT COALESCE(SUM(amount), 0) as total 
                 FROM xp_transactions 

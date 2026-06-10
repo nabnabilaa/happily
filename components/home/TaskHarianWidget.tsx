@@ -11,7 +11,7 @@ import TaskCompleteModal from "@/components/modals/TaskCompleteModal";
 
 interface Props {
   openModal: (name: string, props?: any) => void;
-  onTaskComplete?: () => void;
+  onTaskComplete?: (taskName?: string) => void;
 }
 
 export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
@@ -190,7 +190,7 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
       };
     });
 
-    onTaskComplete?.();
+    onTaskComplete?.(completingTask.title);
     setCompletingTask(null);
   }, [completingTask, updateState, awardXP, syncSkillProgress, user, onTaskComplete]);
 

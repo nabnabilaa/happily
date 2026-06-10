@@ -55,6 +55,7 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
   const [summary, setSummary] = useState<StatusSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [nameSearch, setNameSearch] = useState('');
   const [showAll, setShowAll] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
@@ -109,9 +110,18 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
   }, [fetchPresence]);
 
   const filteredUsers = users.filter(u => {
-    if (filter === 'all') return true;
-    if (filter === 'absent') return ['sick', 'izin', 'cuti'].includes(u.status);
-    return u.status === filter;
+    let matchesFilter = true;
+    if (filter === 'all') matchesFilter = true;
+    else if (filter === 'absent') matchesFilter = ['sick', 'izin', 'cuti'].includes(u.status);
+    else matchesFilter = u.status === filter;
+
+    let matchesSearch = true;
+    if (nameSearch.trim() !== '') {
+      matchesSearch = u.name.toLowerCase().includes(nameSearch.toLowerCase()) || 
+                      (u.jobTitle || u.team || '').toLowerCase().includes(nameSearch.toLowerCase());
+    }
+
+    return matchesFilter && matchesSearch;
   });
 
   const getStatusDotColor = (status: string) => {
@@ -189,22 +199,63 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
         </div>
       )}
 
-      {/* Update My Status button */}
-      <button
-        onClick={() => openModal('update_status')}
-        className="hp-tap"
+      {/* Update My Status & Global Actions */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <button
+          onClick={() => openModal('update_status')}
+          className="hp-tap"
+          style={{
+            flex: 2, padding: '12px 16px', borderRadius: 14,
+            background: `linear-gradient(135deg, ${HP_TOKENS.blue}, #2D6A9F)`,
+            color: '#F4F7F9', border: 'none', fontFamily: HP_FONT, fontWeight: 800,
+            fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', gap: 8,
+            boxShadow: `0 4px 16px ${HP_TOKENS.blue}30`,
+          }}
+        >
+          <HPGlyph name="activity" size={16} color="#F4F7F9" />
+          Update Status
+        </button>
+        <button
+          onClick={() => openModal('senggol')}
+          className="hp-tap"
+          style={{
+            flex: 1, padding: '12px', borderRadius: 14,
+            background: '#fff',
+            color: HP_TOKENS.ink, border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontWeight: 800,
+            fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', gap: 6,
+          }}
+        >
+          👀 Senggol
+        </button>
+        <button
+          onClick={() => openModal('appreciate')}
+          className="hp-tap"
+          style={{
+            flex: 1, padding: '12px', borderRadius: 14,
+            background: HP_TOKENS.sageWash,
+            color: HP_TOKENS.sage, border: `1.5px solid ${HP_TOKENS.sage}40`, fontFamily: HP_FONT, fontWeight: 800,
+            fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', gap: 6,
+          }}
+        >
+          🌱 Apresiasi
+        </button>
+      </div>
+
+      <input 
+        type="text" 
+        placeholder="Cari nama atau divisi..." 
+        value={nameSearch}
+        onChange={(e) => setNameSearch(e.target.value)}
         style={{
           width: '100%', padding: '12px 16px', borderRadius: 14,
-          background: `linear-gradient(135deg, ${HP_TOKENS.blue}, #2D6A9F)`,
-          color: '#F4F7F9', border: 'none', fontFamily: HP_FONT, fontWeight: 800,
-          fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center',
-          justifyContent: 'center', gap: 8, marginBottom: 16,
-          boxShadow: `0 4px 16px ${HP_TOKENS.blue}30`,
+          border: `1.5px solid ${HP_TOKENS.lineSoft}`, fontFamily: HP_FONT,
+          fontSize: 14, outline: 'none', background: HP_TOKENS.card, marginBottom: 12,
+          boxSizing: 'border-box'
         }}
-      >
-        <HPGlyph name="activity" size={16} color="#F4F7F9" />
-        Update Status Saya
-      </button>
+      />
 
       {/* User List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

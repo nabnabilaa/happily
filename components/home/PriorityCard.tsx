@@ -105,16 +105,6 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit 
           };
         }
       } else {
-        // Pause any other active timer
-        if (item.timer_started_at) {
-          const startTime = new Date(item.timer_started_at).getTime();
-          const sessionSeconds = Math.max(0, Math.floor((Date.now() - startTime) / 1000));
-          return {
-            ...item,
-            time_tracked: (item.time_tracked || 0) + sessionSeconds,
-            timer_started_at: null
-          };
-        }
         return item;
       }
     });
@@ -313,10 +303,6 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit 
            )}
           
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
-             <HPGlyph name={energyIcon} size={11} color={HP_TOKENS.inkMute} />
-             <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>
-               {p.est}
-             </span>
              
              {p.targetDate && (
                <>

@@ -82,7 +82,7 @@ export default function ExtensionGuideModal({ onClose }: ExtensionGuideModalProp
               onLeave={() => setHoveredStep(null)}
               icon="arrowDown"
               title="Unduh File"
-              text={<>Klik tombol di bawah untuk mendownload <strong>focusbuddy-v9.zip</strong></>}
+              text={<>Klik tombol di bawah untuk mendownload <strong>flowbuddy.zip</strong></>}
             />
             <StepItem 
               num={2}
@@ -125,7 +125,7 @@ export default function ExtensionGuideModal({ onClose }: ExtensionGuideModalProp
               onLeave={() => setHoveredStep(null)}
               icon="upload"
               title="Load Unpacked"
-              text={<>Klik tombol <strong>Load unpacked</strong> dan pilih folder yang kamu extract tadi.</>}
+              text={<>Tarik (drag & drop) folder <strong>flowbuddy</strong> hasil extract tadi ke halaman ekstensi, atau klik tombol <strong>Load unpacked</strong>.</>}
               isLast
             />
           </div>
@@ -134,7 +134,7 @@ export default function ExtensionGuideModal({ onClose }: ExtensionGuideModalProp
         {/* Footer Area */}
         <div style={{ padding: '24px', background: '#fff', borderTop: `1px solid ${HP_TOKENS.lineSoft}`, flexShrink: 0 }}>
           <a 
-            href="/focusbuddy-v9.zip" 
+            href="/flowbuddy.zip" 
             download
             className="hp-tap"
             onClick={() => {

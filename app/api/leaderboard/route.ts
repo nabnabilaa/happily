@@ -1,8 +1,18 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const period = searchParams.get('period') || 'monthly'; // weekly, monthly, all_time
+
+    let timeFilter = "AND MONTH(x.created_at) = MONTH(CURRENT_DATE()) AND YEAR(x.created_at) = YEAR(CURRENT_DATE())";
+    if (period === 'weekly') {
+      timeFilter = "AND YEARWEEK(x.created_at, 1) = YEARWEEK(CURRENT_DATE(), 1)";
+    } else if (period === 'all_time') {
+      timeFilter = "";
+    }
+
     const res = await db.execute(`
       SELECT u.id, u.name, u.department as team_name,
              COALESCE(SUM(x.amount), 0) as points, 
@@ -11,11 +21,10 @@ export async function GET() {
       LEFT JOIN xp_transactions x 
         ON u.id = x.user_id 
         AND x.action_type != 'reward_redeem' 
-        AND MONTH(x.created_at) = MONTH(CURRENT_DATE())
-        AND YEAR(x.created_at) = YEAR(CURRENT_DATE())
+        ${timeFilter}
       GROUP BY u.id, u.name, u.department, u.level, u.rank, u.avatar_image, u.avatar_config_json
       ORDER BY points DESC 
-      LIMIT 50
+      LIMIT 10
     `);
 
     const leaderboard = res.rows.map((r, index) => ({
