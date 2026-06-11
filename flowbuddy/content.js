@@ -1,7 +1,16 @@
+// --- File: 00-header.js ---
 ; (function () {
   'use strict'
+
+
+// --- File: 01-init-vars.js ---
   if (document.getElementById('fb-root')) return
   if (location.protocol === 'chrome-extension:' || location.protocol === 'devtools:') return
+
+  try {
+    window.postMessage({ type: 'FB_EXTENSION_INSTALLED', version: chrome.runtime.getManifest().version }, '*');
+    window.__FB_EXTENSION_INSTALLED = true;
+  } catch (e) {}
 
   // Safety wrapper to prevent "Extension context invalidated" errors when developer reloads extension
   function isContextValid() {
@@ -41,6 +50,9 @@
     }
   };
 
+
+
+// --- File: 02-state-machine-focusbuddy-state-svg-state-mapping.js ---
   // ═══════════════════════════════════════════════════════════════
   // STATE MACHINE  (FocusBuddy state → SVG state mapping)
   // ═══════════════════════════════════════════════════════════════
@@ -146,6 +158,9 @@
     })
   }
 
+
+
+// --- File: 03-flowbee-sync-module-2-way-task-notes-calendar-notification-sync.js ---
   // ═══════════════════════════════════════════════════════════════
   // FLOWBEE SYNC MODULE — 2-way task + notes + calendar + notification sync
   // ═══════════════════════════════════════════════════════════════
@@ -393,6 +408,7 @@
   }
 
   async function flowbeeSyncAll(pullOnly = false) {
+    if (document.hidden) return
     if (!flowbeeUserId || !extensionEnabled) return
     try {
       let localTasks = []
@@ -723,6 +739,9 @@
   // Auto-sync every 30 seconds (detect & sync deferred until after DOM ready)
   loadKPIs()
 
+
+
+// --- File: 04-dom-root.js ---
   // ═══════════════════════════════════════════════════════════════
   // DOM ROOT
   // ═══════════════════════════════════════════════════════════════
@@ -814,6 +833,9 @@
     document.head && document.head.appendChild(l)
   }
 
+
+
+// --- File: 05-html-css.js ---
   // ═══════════════════════════════════════════════════════════════
   // HTML + CSS
   // ═══════════════════════════════════════════════════════════════
@@ -867,10 +889,10 @@
 }
 
 :where(#fb-root div,#fb-root button,#fb-root input,#fb-root textarea,#fb-root span,#fb-root p,#fb-root label,#fb-root select,#fb-root details,#fb-root summary) {
-  box-sizing: border-box !important; font-family: Nunito,system-ui,sans-serif !important;
-  margin: 0 !important; padding: 0 !important; border: 0 !important; outline: 0 !important;
-  text-decoration: none !important; list-style: none !important;
-  -webkit-tap-highlight-color: transparent !important;
+  box-sizing: border-box; font-family: Nunito,system-ui,sans-serif;
+  margin: 0; padding: 0; border: 0; outline: 0;
+  text-decoration: none; list-style: none;
+  -webkit-tap-highlight-color: transparent;
 }
 :where(#fb-root button) { display:block !important; cursor:pointer !important }
 :where(#fb-root input, #fb-root textarea) { display:block !important }
@@ -4148,6 +4170,9 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
   if ($('fb-al-date')) $('fb-al-date').value = `${da.getFullYear()}-${p2(da.getMonth() + 1)}-${p2(da.getDate())}`
   if ($('fb-al-time')) $('fb-al-time').value = `${p2(da.getHours())}:${p2(da.getMinutes())}`
 
+
+
+// --- File: 06-update-svg-character.js ---
   // ═══════════════════════════════════════════════════════════════
   // UPDATE SVG CHARACTER
   // ═══════════════════════════════════════════════════════════════
@@ -4191,6 +4216,9 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
     root.querySelectorAll('.fb-alarm-time').forEach(b => b.style.color = cfg.color)
   }
 
+
+
+// --- File: 07-position-drag.js ---
   // ═══════════════════════════════════════════════════════════════
   // POSITION & DRAG
   // ═══════════════════════════════════════════════════════════════
@@ -4525,6 +4553,9 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
     });
   }
 
+
+
+// --- File: 08-theme-toggle.js ---
   // ═══════════════════════════════════════════════════════════════
   // THEME TOGGLE
   // ═══════════════════════════════════════════════════════════════
@@ -4540,6 +4571,9 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
     });
   }
 
+
+
+// --- File: 09-resize-handle.js ---
   // ═══════════════════════════════════════════════════════════════
   // RESIZE HANDLE
   // ═══════════════════════════════════════════════════════════════
@@ -4599,11 +4633,11 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
     
     const config = window.__FB ? window.__FB.getRoleConfig() : {
       tabs: [
-        { key: 'tasks', icon: '✅', label: 'Tugas' },
-        { key: 'notes', icon: '📝', label: 'Catatan' },
-        { key: 'timer', icon: '\u23f1',  label: 'Timer' },
-        { key: 'alarm', icon: '🗓️', label: 'Kalender' },
-        { key: 'chat',  icon: '💬', label: 'Chat' },
+        { key: 'tasks', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>', label: 'Tugas' },
+        { key: 'notes', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>', label: 'Catatan' },
+        { key: 'timer', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',  label: 'Timer' },
+        { key: 'alarm', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>', label: 'Kalender' },
+        { key: 'chat',  icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>', label: 'Chat' },
       ],
       accent: '#4A90E2',
     };
@@ -4714,6 +4748,9 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
     }
   })
 
+
+
+// --- File: 10-toast-fx.js ---
   // ═══════════════════════════════════════════════════════════════
   // TOAST & FX
   // ═══════════════════════════════════════════════════════════════
@@ -4780,6 +4817,9 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
 
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') }
 
+
+
+// --- File: 11-tasks.js ---
   // ═══════════════════════════════════════════════════════════════
   // ═══════════════════════════════════════════════════════════════
   // TASKS
@@ -5185,6 +5225,9 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
     }
   }
 
+
+
+// --- File: 12-daily-training-ai-coach-insights-breathing-evening-reflection.js ---
   // ═══════════════════════════════════════════════════════════════
   // DAILY TRAINING & AI COACH INSIGHTS & BREATHING & EVENING REFLECTION
   // ═══════════════════════════════════════════════════════════════
@@ -5836,6 +5879,9 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
   updatePriDD()
 
 
+
+
+// --- File: 13-notes.js ---
   // ═══════════════════════════════════════════════════════════════
   // NOTES
   // ═══════════════════════════════════════════════════════════════
@@ -5956,18 +6002,18 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
       
       el.innerHTML = `
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
-          <span style="font-size:11px;color:#9E9892;font-weight:600;font-variant-numeric:tabular-nums;">${timeStr}</span>
+          <span style="font-size:11px;color:var(--fb-ink-mute);font-weight:600;font-variant-numeric:tabular-nums;">${timeStr}</span>
           <div style="display:flex;align-items:center;gap:5px;">
             ${note.pinned ? `<span style="font-size:10px;">📌</span>` : ''}
             <span style="font-size:9.5px;font-weight:800;padding:2px 8px;border-radius:0;background:${vis.bg};color:${vis.color};letter-spacing:.4px;">${vis.label}</span>
             ${sharedInfo}${permBadge}
           </div>
         </div>
-        ${note.title ? `<div style="font-size:13.5px;font-weight:800;color:#1F1D1B;margin-bottom:4px;line-height:1.3;">${esc(note.title)}</div>` : ''}
-        <div class="fb-note-txt clamped" style="font-size:12.5px;color:#524E49;line-height:1.55;">${renderedContent}</div>
-        <button class="fb-note-expand" style="display:none;font-size:10px;color:#4A90E2;background:none;border:none;cursor:pointer;padding:2px 0;margin-top:2px;">Lihat semua ▾</button>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1px solid rgba(31,29,27,.05);">
-          <div style="display:flex;align-items:center;gap:5px;color:#BDB6AE;font-size:10.5px;font-weight:600;">
+        ${note.title ? `<div style="font-size:13.5px;font-weight:800;color:var(--fb-ink);margin-bottom:4px;line-height:1.3;">${esc(note.title)}</div>` : ''}
+        <div class="fb-note-txt clamped" style="font-size:12.5px;color:var(--fb-ink);opacity:0.9;line-height:1.55;">${renderedContent}</div>
+        <button class="fb-note-expand" style="display:none;font-size:10px;color:var(--fb-blue);background:none;border:none;cursor:pointer;padding:2px 0;margin-top:2px;">Lihat semua ▾</button>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1px solid var(--fb-line);">
+          <div style="display:flex;align-items:center;gap:5px;color:var(--fb-ink-mute);font-size:10.5px;font-weight:600;">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             ${authorText}
           </div>
@@ -6637,6 +6683,9 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
   });
 
   renderTimerHistory();
+
+
+// --- File: 14-mini-calendar-widget.js ---
   // ═══════════════════════════════════════════════════════════════
   
   // ═══════════════════════════════════════════════════════════════
@@ -6780,6 +6829,9 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
 
   renderMiniCalendar()
 
+
+
+// --- File: 15-alarms.js ---
   // ═══════════════════════════════════════════════════════════════
   // ═══════════════════════════════════════════════════════════════
   // ALARMS
@@ -7102,6 +7154,9 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
   if (calAddBtn) calAddBtn.onclick = addAlarm;
 
 
+
+
+// --- File: 16-chat.js ---
   // ═══════════════════════════════════════════════════════════════
   // CHAT
   // ═══════════════════════════════════════════════════════════════
@@ -7312,6 +7367,9 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
     };
   }
 
+
+
+// --- File: 17-render-helpers.js ---
   // ═══════════════════════════════════════════════════════════════
   // RENDER HELPERS
   // ═══════════════════════════════════════════════════════════════
@@ -7379,6 +7437,9 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
     if (t === 'people' && typeof window.__FB?.renderPeoplePane === 'function') window.__FB.renderPeoplePane()
   }
 
+
+
+// --- File: 18-init.js ---
   // ═══════════════════════════════════════════════════════════════
   // INIT
   // ═══════════════════════════════════════════════════════════════
@@ -7632,4 +7693,9 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
     window.postMessage({ type: 'FLOWBEE_REQ_USER' }, '*');
   })
 
+
+// --- File: 99-footer.js ---
+
 })()
+
+
