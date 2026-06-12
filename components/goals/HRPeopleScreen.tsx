@@ -12,6 +12,7 @@ import HRAttendanceView from "@/components/goals/HRAttendanceView";
 import DivisionTargetsView from "@/components/goals/DivisionTargetsView";
 import OfficeSettingsMap from "@/components/hr/OfficeSettingsMap";
 import GoalCard from "@/components/goals/GoalCard";
+import ManagerPersonalView from "@/components/goals/ManagerPersonalView";
 
 interface Props { openModal: (name: string, props?: any) => void; }
 
@@ -238,6 +239,49 @@ export default function HRPeopleScreen({ openModal }: Props) {
     width: '100%', marginTop: 8, padding: 12, borderRadius: 12,
     border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 14,
     outline: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink, boxSizing: 'border-box',
+  };
+
+  const handleDeleteTask = (taskId: string | number) => {
+    if (confirm("Apakah Anda yakin ingin menghapus task ini?")) {
+      updateState((s: any) => {
+        const newPriorities = s.priorities.filter((p: any) => p.id !== taskId);
+        
+        const taskToDelete = s.priorities.find((p: any) => p.id === taskId);
+        const targetId = taskToDelete?.goal_id || taskToDelete?.kpi_id;
+        
+        const updatedGoals = s.goals.map((goal: any) => {
+          if (targetId && String(goal.id) === String(targetId)) {
+            const todayTasks = newPriorities.filter((p: any) => 
+              (p.goal_id && String(p.goal_id) === String(goal.id)) || 
+              (p.kpi_id && String(p.kpi_id) === String(goal.id))
+            );
+            const total = todayTasks.length;
+            const completed = todayTasks.filter((p: any) => p.done).length;
+            const newProgress = total > 0 ? Math.round((completed / total) * 100) : 0;
+            return { 
+              ...goal, 
+              progress: newProgress, 
+              metric: total > 0 ? `${completed}/${total} task selesai` : `0/0 task selesai`
+            };
+          }
+          return goal;
+        });
+
+        const extraState: any = {};
+        if (s.focusTaskId === taskId) {
+          extraState.focusTaskId = null;
+          extraState.focusProgress = 0;
+          extraState.intention = "";
+        }
+
+        return {
+          ...s,
+          priorities: newPriorities,
+          goals: updatedGoals,
+          ...extraState
+        };
+      });
+    }
   };
 
   return (
@@ -499,171 +543,14 @@ export default function HRPeopleScreen({ openModal }: Props) {
 
       {/* ── Personal Tasks & KPIs ── */}
       {activeTab === 'personal' && (
-        <>
-          <SectionHeader 
-            icon="sparkle" 
-            label="Daily Tasks Saya" 
-            count={String(personalTasks.length)} 
-            action="+ Tambah Task"
-            onAction={() => openModal('manage_priorities')}
-          />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {personalTasks.map((t: any) => (
-              <HPCard key={t.id} padding={14}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <button 
-                    onClick={() => updateState((s: any) => ({
-                      ...s,
-                      priorities: s.priorities.map((p: any) => p.id === t.id ? { ...p, done: !p.done } : p)
-                    }))}
-                    style={{ 
-                      width: 24, height: 24, borderRadius: 8, border: `2px solid ${t.done ? HP_TOKENS.sage : HP_TOKENS.line}`,
-                      background: t.done ? HP_TOKENS.sage : 'none', cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}
-                  >
-                    {t.done && <HPGlyph name="check" size={14} color="#F4F7F9" />}
-                  </button>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ ...HP_TEXT.h, fontSize: 14, textDecoration: t.done ? 'line-through' : 'none', color: t.done ? HP_TOKENS.inkMute : HP_TOKENS.ink }}>{t.title}</div>
-                    <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-                      <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>{t.goal || 'General'}</div>
-                      <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue }}>{t.est || '15m'}</div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      if (confirm("Apakah Anda yakin ingin menghapus task ini?")) {
-                        updateState((s: any) => {
-                          const newPriorities = s.priorities.filter((p: any) => p.id !== t.id);
-                          
-                          const targetId = t.goal_id || t.kpi_id;
-                          const updatedGoals = s.goals.map((goal: any) => {
-                            if (targetId && String(goal.id) === String(targetId)) {
-                              const todayTasks = newPriorities.filter((p: any) => 
-                                (p.goal_id && String(p.goal_id) === String(goal.id)) || 
-                                (p.kpi_id && String(p.kpi_id) === String(goal.id))
-                              );
-                              const total = todayTasks.length;
-                              const completed = todayTasks.filter((p: any) => p.done).length;
-                              const newProgress = total > 0 ? Math.round((completed / total) * 100) : 0;
-                              return { 
-                                ...goal, 
-                                progress: newProgress, 
-                                metric: total > 0 ? `${completed}/${total} task selesai` : `0/0 task selesai`
-                              };
-                            }
-                            return goal;
-                          });
-
-                          const extraState: any = {};
-                          if (s.focusTaskId === t.id) {
-                            extraState.focusTaskId = null;
-                            extraState.focusProgress = 0;
-                            extraState.intention = "";
-                          }
-
-                          return {
-                            ...s,
-                            priorities: newPriorities,
-                            goals: updatedGoals,
-                            ...extraState
-                          };
-                        });
-                      }
-                    }}
-                    style={{
-                      background: HP_TOKENS.coralSoft, border: 'none', cursor: 'pointer',
-                      width: 28, height: 28, borderRadius: 8,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}
-                    title="Hapus Task"
-                  >
-                    <HPGlyph name="trash" size={12} color={HP_TOKENS.coral} />
-                  </button>
-                </div>
-              </HPCard>
-            ))}
-            {personalTasks.length === 0 && <div style={{ textAlign: 'center', padding: 20, color: HP_TOKENS.inkMute, background: HP_TOKENS.card, borderRadius: 20, border: `1.5px dashed ${HP_TOKENS.lineSoft}` }}>Belum ada task harian. Mulai harimu dengan fokus!</div>}
-          </div>
-
-          <div style={{ marginTop: 24 }}>
-            <SectionHeader 
-              icon="target" 
-              label="KPI Saya"
-              count={String(combinedMyGoals.length)} 
-              action="+ KPI Mandiri"
-              onAction={() => openModal('new_goal', { scope: 'personal' })}
-            />
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
-              {paginatedKPIs.map((g: any) => (
-                <div 
-                  key={g.id} 
-                  onClick={() => {
-                    if (g.isApiKpi) return;
-                    openModal('new_goal', { goal: g });
-                  }} 
-                  className={g.isApiKpi ? "" : "hp-tap"}
-                >
-                  <GoalCard g={g} isReadOnly={g.isApiKpi} />
-                </div>
-              ))}
-              
-              {/* Pagination Controls */}
-              {totalPagesKPI > 1 && (
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 16 }}>
-                  <button 
-                    onClick={() => setCurrentPageKPI(p => Math.max(1, p - 1))}
-                    disabled={currentPageKPI === 1}
-                    style={{
-                      padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
-                      background: currentPageKPI === 1 ? HP_TOKENS.lineSoft : '#fff',
-                      color: currentPageKPI === 1 ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
-                      fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
-                      cursor: currentPageKPI === 1 ? 'default' : 'pointer',
-                      opacity: currentPageKPI === 1 ? 0.6 : 1, transition: 'all 0.2s'
-                    }}
-                  >
-                    Sebelumnya
-                  </button>
-                  <span style={{ fontFamily: HP_FONT, fontSize: 13, fontWeight: 700, color: HP_TOKENS.inkSoft }}>
-                    {currentPageKPI} / {totalPagesKPI}
-                  </span>
-                  <button 
-                    onClick={() => setCurrentPageKPI(p => Math.min(totalPagesKPI, p + 1))}
-                    disabled={currentPageKPI === totalPagesKPI}
-                    style={{
-                      padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
-                      background: currentPageKPI === totalPagesKPI ? HP_TOKENS.lineSoft : '#fff',
-                      color: currentPageKPI === totalPagesKPI ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
-                      fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
-                      cursor: currentPageKPI === totalPagesKPI ? 'default' : 'pointer',
-                      opacity: currentPageKPI === totalPagesKPI ? 0.6 : 1, transition: 'all 0.2s'
-                    }}
-                  >
-                    Berikutnya
-                  </button>
-                </div>
-              )}
-              {combinedMyGoals.length === 0 && !loadingKpis && (
-                <div style={{ 
-                  textAlign: 'center', padding: '40px 20px', color: HP_TOKENS.inkMute, 
-                  background: HP_TOKENS.card, borderRadius: 24, border: `1.5px solid ${HP_TOKENS.lineSoft}`
-                }}>
-                  <div style={{ fontSize: 32, marginBottom: 12 }}>🌱</div>
-                  <div style={{ ...HP_TEXT.h, fontSize: 14 }}>Belum ada KPI personal.</div>
-                  <div style={{ ...HP_TEXT.small, marginTop: 4 }}>Tambahkan KPI Mandiri baru untuk melacak target kerjamu.</div>
-                </div>
-              )}
-              {loadingKpis && combinedMyGoals.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '40px 20px', color: HP_TOKENS.inkMute }}>
-                  Memuat KPI...
-                </div>
-              )}
-            </div>
-          </div>
-        </>
+        <ManagerPersonalView 
+          personalTasks={personalTasks}
+          combinedMyGoals={combinedMyGoals}
+          loadingKpis={loadingKpis}
+          updateState={updateState}
+          openModal={openModal}
+          setTaskToDelete={handleDeleteTask}
+        />
       )}
 
       {activeTab === 'attendance' && <HRAttendanceView currentUser={currentUser} openModal={openModal} />}
