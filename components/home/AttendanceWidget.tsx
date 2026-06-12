@@ -5,6 +5,7 @@ import HPCard from "@/components/ui/HPCard";
 import HPGlyph from "@/components/ui/HPGlyph";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
 import { useHP } from "@/lib/HPContext";
+import { isNetworkError } from "@/lib/errorUtils";
 
 interface AttendanceWidgetProps {
   openModal: (name: string, props?: any) => void;
@@ -32,12 +33,7 @@ export default function AttendanceWidget({ openModal }: AttendanceWidgetProps) {
       const data = await res.json();
       if (data.today) setTodayData(data.today);
     } catch (e: any) {
-      const isNetworkError = e instanceof TypeError || (e.message && (
-        e.message.toLowerCase().includes('failed to fetch') || 
-        e.message.toLowerCase().includes('networkerror') ||
-        e.message.toLowerCase().includes('fetch failed')
-      ));
-      if (isNetworkError) {
+      if (isNetworkError(e)) {
         console.warn("Failed to fetch attendance status (network issue):", e.message || e);
       } else {
         console.error(e);

@@ -94,7 +94,7 @@ export default function ExtensionGuideModal({ onClose }: ExtensionGuideModalProp
         <div style={{ padding: '32px 24px', background: HP_TOKENS.paper, flex: 1, overflowY: 'auto', minHeight: 0 }}>
           {isExtensionInstalled ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px', textAlign: 'center', gap: 16 }}>
-              <div style={{ width: 64, height: 64, borderRadius: 32, background: HP_TOKENS.successSoft, color: HP_TOKENS.success, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+              <div style={{ width: 64, height: 64, borderRadius: 32, background: HP_TOKENS.sageWash, color: HP_TOKENS.sage, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
                 <HPGlyph name="check" size={32} stroke={3} />
               </div>
               <h3 style={{ ...HP_TEXT.h, fontSize: 20, color: HP_TOKENS.ink, margin: 0 }}>Ekstensi Terpasang!</h3>

@@ -95,6 +95,7 @@ const HPContext = createContext<HPContextType | undefined>(undefined);
 import { calculateLevel, calculateRank, calculateLevelProgress } from "@/lib/xp";
 
 export { calculateLevelProgress }; // Re-export for existing imports that relied on HPContext
+import { isNetworkError } from "@/lib/errorUtils";
 
 export function HPProvider({ children }: { children: React.ReactNode }) {
   // 1. ALL STATES FIRST
@@ -242,12 +243,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         if (data.user) setUser(data.user);
       } catch (error: any) {
         const errorMsg = error?.message || String(error);
-        const isNetworkError = error instanceof TypeError || 
-          errorMsg.toLowerCase().includes('failed to fetch') || 
-          errorMsg.toLowerCase().includes('networkerror') ||
-          errorMsg.toLowerCase().includes('fetch failed');
-
-        if (isNetworkError) {
+        if (isNetworkError(error)) {
           console.warn("Failed to fetch state (network issue), falling back to local cache:", errorMsg);
         } else {
           console.error("Failed to fetch state, falling back to local cache:", errorMsg, error);
@@ -334,11 +330,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (e: any) {
         const errorMsg = e?.message || String(e);
-        const isNetworkError = e instanceof TypeError || 
-          errorMsg.toLowerCase().includes('failed to fetch') || 
-          errorMsg.toLowerCase().includes('networkerror') ||
-          errorMsg.toLowerCase().includes('fetch failed');
-        if (isNetworkError) {
+        if (isNetworkError(e)) {
           console.warn("Dashboard fetch error (network issue):", errorMsg);
         } else {
           console.error("Dashboard fetch error:", e);
@@ -421,12 +413,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         setState(prev => prev ? { ...prev, surveys: data.surveys } : null);
       }
     } catch (e: any) {
-      const isNetworkError = e instanceof TypeError || (e.message && (
-        e.message.toLowerCase().includes('failed to fetch') || 
-        e.message.toLowerCase().includes('networkerror') ||
-        e.message.toLowerCase().includes('fetch failed')
-      ));
-      if (isNetworkError) {
+      if (isNetworkError(e)) {
         console.warn("Failed to refresh surveys (network issue):", e.message || e);
       } else {
         console.error("Failed to refresh surveys:", e);
@@ -623,11 +610,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (e: any) {
       const errorMsg = e?.message || String(e);
-      const isNetworkError = e instanceof TypeError || 
-        errorMsg.toLowerCase().includes('failed to fetch') || 
-        errorMsg.toLowerCase().includes('networkerror') ||
-        errorMsg.toLowerCase().includes('fetch failed');
-      if (isNetworkError) {
+      if (isNetworkError(e)) {
         console.warn("Failed to award XP (network issue):", errorMsg);
       } else {
         console.error("Failed to award XP:", e);
@@ -776,11 +759,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
           }
         } catch (e: any) {
           const errorMsg = e?.message || String(e);
-          const isNetworkError = e instanceof TypeError || 
-            errorMsg.toLowerCase().includes('failed to fetch') || 
-            errorMsg.toLowerCase().includes('networkerror') ||
-            errorMsg.toLowerCase().includes('fetch failed');
-          if (isNetworkError) {
+          if (isNetworkError(e)) {
             console.warn("Sync error (network issue):", errorMsg);
           } else {
             console.error("Sync error:", e);
