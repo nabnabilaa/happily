@@ -55,15 +55,11 @@ interface DeptPulse {
 
 export default function HRHomeScreen({ openModal }: Props) {
   const { user, state, awardXP } = useHP();
-  
-  if (!user || !state?.hrData) return (
-    <div style={{ padding: 40, textAlign: 'center', opacity: 0.5 }}>Memuat data HR...</div>
-  );
 
-  const { metrics: m, atRiskEmployees, deptPulse } = state.hrData;
-  const levelProgress = calculateLevelProgress(user.points || 0);
-
-  const aiInsights = React.useMemo(() => generateAIInsights(state, user), [state, user]);
+  const aiInsights = React.useMemo(() => {
+    if (!user || !state?.hrData) return [];
+    return generateAIInsights(state, user);
+  }, [state, user]);
 
   // Auto-Scroll to Clock-In
   React.useEffect(() => {
@@ -81,6 +77,13 @@ export default function HRHomeScreen({ openModal }: Props) {
     window.addEventListener('hp_scroll_to_clock_in', handleScrollToClockIn);
     return () => window.removeEventListener('hp_scroll_to_clock_in', handleScrollToClockIn);
   }, []);
+
+  if (!user || !state?.hrData) return (
+    <div style={{ padding: 40, textAlign: 'center', opacity: 0.5 }}>Memuat data HR...</div>
+  );
+
+  const { metrics: m, atRiskEmployees, deptPulse } = state.hrData;
+  const levelProgress = calculateLevelProgress(user.points || 0);
 
   return (
     <div style={{ position: 'relative', minHeight: '100%', paddingBottom: 120, fontFamily: HP_FONT }}>

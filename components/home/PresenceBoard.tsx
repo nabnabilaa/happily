@@ -6,6 +6,7 @@ import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
 import HPCard from "@/components/ui/HPCard";
 import HPGlyph from "@/components/ui/HPGlyph";
 import HPAvatar from "@/components/ui/HPAvatar";
+import { isNetworkError } from "@/lib/errorUtils";
 
 interface PresenceBoardProps {
   openModal: (name: string, props?: any) => void;
@@ -77,12 +78,7 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
       setUsers(data.users || []);
       setSummary(data.summary || null);
     } catch (e: any) {
-      const isNetworkError = e instanceof TypeError || (e.message && (
-        e.message.toLowerCase().includes('failed to fetch') || 
-        e.message.toLowerCase().includes('networkerror') ||
-        e.message.toLowerCase().includes('fetch failed')
-      ));
-      if (isNetworkError) {
+      if (isNetworkError(e)) {
         console.warn("Failed to fetch presence (network issue):", e.message || e);
       } else {
         console.error("Failed to fetch presence:", e);

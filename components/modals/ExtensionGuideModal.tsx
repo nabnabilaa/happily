@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import HPCard from '@/components/ui/HPCard';
 import { HP_TOKENS, HP_FONT, HP_TEXT } from '@/lib/constants';
 import HPGlyph from '@/components/ui/HPGlyph';
@@ -10,6 +10,24 @@ interface ExtensionGuideModalProps {
 
 export default function ExtensionGuideModal({ onClose }: ExtensionGuideModalProps) {
   const [hoveredStep, setHoveredStep] = useState<number | null>(null);
+  const [isExtensionInstalled, setIsExtensionInstalled] = useState(false);
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'FB_EXTENSION_INSTALLED') {
+        setIsExtensionInstalled(true);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    
+    // Check if property is set globally in case message was sent before React mounted
+    if (typeof window !== 'undefined' && (window as any).__FB_EXTENSION_INSTALLED) {
+      setIsExtensionInstalled(true);
+    }
+
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
   return (
     <div className="hp-modal-overlay" onClick={onClose} style={{ zIndex: 9999, backdropFilter: 'blur(12px)', background: 'rgba(15, 31, 51, 0.4)' }}>
@@ -74,106 +92,142 @@ export default function ExtensionGuideModal({ onClose }: ExtensionGuideModalProp
 
         {/* Content Area */}
         <div style={{ padding: '32px 24px', background: HP_TOKENS.paper, flex: 1, overflowY: 'auto', minHeight: 0 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <StepItem 
-              num={1}
-              isHovered={hoveredStep === 1}
-              onHover={() => setHoveredStep(1)}
-              onLeave={() => setHoveredStep(null)}
-              icon="arrowDown"
-              title="Unduh File"
-              text={<>Klik tombol di bawah untuk mendownload <strong>flowbuddy.zip</strong></>}
-            />
-            <StepItem 
-              num={2}
-              isHovered={hoveredStep === 2}
-              onHover={() => setHoveredStep(2)}
-              onLeave={() => setHoveredStep(null)}
-              icon="zap"
-              title="Extract ZIP"
-              text={<><strong>Unzip</strong> / Extract file tersebut ke sebuah folder di komputermu.</>}
-            />
-            <StepItem 
-              num={3}
-              isHovered={hoveredStep === 3}
-              onHover={() => setHoveredStep(3)}
-              onLeave={() => setHoveredStep(null)}
-              icon="bee"
-              title="Buka Ekstensi Chrome"
-              text={
-                <>
-                  Buka tab baru, dan paste URL berikut:
-                  <div style={{ marginTop: 8, padding: '8px 12px', background: HP_TOKENS.card, border: `1px solid ${HP_TOKENS.lineSoft}`, borderRadius: 8, color: HP_TOKENS.yellowDark, fontFamily: 'monospace', fontWeight: 'bold' }}>
-                    chrome://extensions/
-                  </div>
-                </>
-              }
-            />
-            <StepItem 
-              num={4}
-              isHovered={hoveredStep === 4}
-              onHover={() => setHoveredStep(4)}
-              onLeave={() => setHoveredStep(null)}
-              icon="target"
-              title="Developer Mode"
-              text={<>Aktifkan <strong>Developer mode</strong> (Mode Pengembang) di pojok kanan atas.</>}
-            />
-            <StepItem 
-              num={5}
-              isHovered={hoveredStep === 5}
-              onHover={() => setHoveredStep(5)}
-              onLeave={() => setHoveredStep(null)}
-              icon="upload"
-              title="Load Unpacked"
-              text={<>Tarik (drag & drop) folder <strong>flowbuddy</strong> hasil extract tadi ke halaman ekstensi, atau klik tombol <strong>Load unpacked</strong>.</>}
-              isLast
-            />
-          </div>
+          {isExtensionInstalled ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px', textAlign: 'center', gap: 16 }}>
+              <div style={{ width: 64, height: 64, borderRadius: 32, background: HP_TOKENS.sageWash, color: HP_TOKENS.sage, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+                <HPGlyph name="check" size={32} stroke={3} />
+              </div>
+              <h3 style={{ ...HP_TEXT.h, fontSize: 20, color: HP_TOKENS.ink, margin: 0 }}>Ekstensi Terpasang!</h3>
+              <p style={{ ...HP_TEXT.body, color: HP_TOKENS.inkSoft, fontSize: 15, margin: 0, maxWidth: 300 }}>
+                Bagus sekali! Flowbuddy sudah aktif di browser kamu. Silakan tutup modal ini.
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <StepItem 
+                num={1}
+                isHovered={hoveredStep === 1}
+                onHover={() => setHoveredStep(1)}
+                onLeave={() => setHoveredStep(null)}
+                icon="arrowDown"
+                title="Unduh File"
+                text={<>Klik tombol di bawah untuk mendownload <strong>flowbuddy.zip</strong></>}
+              />
+              <StepItem 
+                num={2}
+                isHovered={hoveredStep === 2}
+                onHover={() => setHoveredStep(2)}
+                onLeave={() => setHoveredStep(null)}
+                icon="zap"
+                title="Extract ZIP"
+                text={<><strong>Unzip</strong> / Extract file tersebut ke sebuah folder di komputermu.</>}
+              />
+              <StepItem 
+                num={3}
+                isHovered={hoveredStep === 3}
+                onHover={() => setHoveredStep(3)}
+                onLeave={() => setHoveredStep(null)}
+                icon="bee"
+                title="Buka Ekstensi Chrome"
+                text={
+                  <>
+                    Buka tab baru, dan paste URL berikut:
+                    <div style={{ marginTop: 8, padding: '8px 12px', background: HP_TOKENS.card, border: `1px solid ${HP_TOKENS.lineSoft}`, borderRadius: 8, color: HP_TOKENS.yellowDark, fontFamily: 'monospace', fontWeight: 'bold' }}>
+                      chrome://extensions/
+                    </div>
+                  </>
+                }
+              />
+              <StepItem 
+                num={4}
+                isHovered={hoveredStep === 4}
+                onHover={() => setHoveredStep(4)}
+                onLeave={() => setHoveredStep(null)}
+                icon="target"
+                title="Developer Mode"
+                text={<>Aktifkan <strong>Developer mode</strong> (Mode Pengembang) di pojok kanan atas.</>}
+              />
+              <StepItem 
+                num={5}
+                isHovered={hoveredStep === 5}
+                onHover={() => setHoveredStep(5)}
+                onLeave={() => setHoveredStep(null)}
+                icon="upload"
+                title="Load Unpacked"
+                text={<>Tarik (drag & drop) folder <strong>flowbuddy</strong> hasil extract tadi ke halaman ekstensi, atau klik tombol <strong>Load unpacked</strong>.</>}
+                isLast
+              />
+            </div>
+          )}
         </div>
 
         {/* Footer Area */}
         <div style={{ padding: '24px', background: HP_TOKENS.card, borderTop: `1px solid ${HP_TOKENS.lineSoft}`, flexShrink: 0 }}>
-          <a 
-            href="/flowbuddy.zip" 
-            download
-            className="hp-tap"
-            onClick={() => {
-              setTimeout(onClose, 500); // Close after starting download
-            }}
-            style={{
-              textDecoration: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              width: '100%',
-              padding: '16px 24px',
-              borderRadius: 16,
-              background: `linear-gradient(135deg, ${HP_TOKENS.yellowLight}, ${HP_TOKENS.yellowDark})`,
-              color: '#fff',
-              fontSize: 16,
-              fontWeight: 800,
-              border: 'none',
-              boxShadow: `0 8px 24px ${HP_TOKENS.yellowSoft}`,
-              position: 'relative',
-              overflow: 'hidden'
-            }}
-          >
-            <HPGlyph name="arrowDown" size={20} />
-            Download ZIP
-            
-            {/* Shine effect */}
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              left: '-100%',
-              width: '50%',
-              height: '100%',
-              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)',
-              transform: 'skewX(-20deg)',
-              animation: 'hpShine 3s infinite'
-            }} />
-          </a>
+          {isExtensionInstalled ? (
+            <button 
+              className="hp-tap"
+              onClick={onClose}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                width: '100%',
+                padding: '16px 24px',
+                borderRadius: 16,
+                background: HP_TOKENS.ink,
+                color: '#fff',
+                fontSize: 16,
+                fontWeight: 800,
+                border: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              Lanjutkan
+            </button>
+          ) : (
+            <a 
+              href="/flowbuddy.zip" 
+              download
+              className="hp-tap"
+              onClick={() => {
+                setTimeout(onClose, 500); // Close after starting download
+              }}
+              style={{
+                textDecoration: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                width: '100%',
+                padding: '16px 24px',
+                borderRadius: 16,
+                background: `linear-gradient(135deg, ${HP_TOKENS.yellowLight}, ${HP_TOKENS.yellowDark})`,
+                color: '#fff',
+                fontSize: 16,
+                fontWeight: 800,
+                border: 'none',
+                boxShadow: `0 8px 24px ${HP_TOKENS.yellowSoft}`,
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+            >
+              <HPGlyph name="arrowDown" size={20} />
+              Download ZIP
+              
+              {/* Shine effect */}
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: '-100%',
+                width: '50%',
+                height: '100%',
+                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)',
+                transform: 'skewX(-20deg)',
+                animation: 'hpShine 3s infinite'
+              }} />
+            </a>
+          )}
           <style dangerouslySetInnerHTML={{__html: `
             @keyframes hpShine { 0% { left: -100% } 20% { left: 200% } 100% { left: 200% } }
           `}} />
