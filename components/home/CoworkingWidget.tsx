@@ -49,8 +49,7 @@ export default function CoworkingWidget({ openModal }: CoworkingWidgetProps) {
   useEffect(() => {
     fetchRooms();
 
-    // Auto-refresh rooms periodically to keep remainingMins updated and remove expired rooms
-    const pollInterval = setInterval(fetchRooms, 20000);
+    // Pusher will handle updates. No more polling here!
 
     let pusherChannel: any;
     const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
@@ -70,7 +69,6 @@ export default function CoworkingWidget({ openModal }: CoworkingWidgetProps) {
     }
 
     return () => {
-      clearInterval(pollInterval);
       if (pusherChannel) {
         pusherChannel.unbind('lobby-update', fetchRooms);
         pusherChannel.unsubscribe();

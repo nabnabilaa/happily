@@ -53,11 +53,6 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
   useEffect(() => {
     fetchChannels();
 
-    // ── Fallback: refresh channel list every 8s so lastMessage & unread badges update ──
-    channelPollRef.current = setInterval(() => {
-      fetchChannels();
-    }, 8000);
-
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
       if (channelPollRef.current) clearInterval(channelPollRef.current);
@@ -87,7 +82,7 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
   // then re-posts FLOWBEE_CHAT_INCOMING to window so this React app refreshes instantly.
   useEffect(() => {
     const handleIncoming = (event: MessageEvent) => {
-      if (event.data?.type !== 'FLOWBEE_CHAT_INCOMING') return;
+      if (event.data?.type !== 'FLOWBEE_CHAT_INCOMING' && event.data?.type !== 'FLOWBEE_CHAT_UPDATE') return;
       const { channelId } = event.data;
       const current = activeChannelRef.current;
       if (current && current.id === channelId) {
@@ -143,15 +138,6 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
     } catch (e) { console.error(e); }
     setMsgLoading(false);
 
-    // Start polling for new messages
-    if (pollRef.current) clearInterval(pollRef.current);
-    pollRef.current = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/chat?channelId=${channel.id}&userId=${user?.id}`);
-        const data = await res.json();
-        setMessages(data.messages || []);
-      } catch (e) { /* ignore */ }
-    }, 5000);
   }, [user?.id]);
 
   // Auto-scroll on new messages

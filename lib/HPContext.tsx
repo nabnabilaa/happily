@@ -487,6 +487,11 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
             title: data.title,
             message: data.text
           }, "*");
+          window.postMessage({
+            type: "FLOWBEE_CHAT_UPDATE",
+            channelId: data.channelId,
+            ts: Date.now()
+          }, "*");
         }
       }
     };

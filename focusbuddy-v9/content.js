@@ -7221,15 +7221,13 @@ input[type="date"].fb-in, input[type="time"].fb-in { cursor:pointer !important }
       msgView.style.display = 'flex';
       renderChatMessages(chatActiveChannelId);
       
-      // Stop channel poll, start message poll
-      clearInterval(chatChannelPollIv); chatChannelPollIv = null;
-      if (!chatPollIv) chatPollIv = setInterval(() => renderChatMessages(chatActiveChannelId, true), 3000);
+      // Stop channel poll
+      if (chatChannelPollIv) { clearInterval(chatChannelPollIv); chatChannelPollIv = null; }
       return;
     }
 
-    // Stop message poll, start channel poll
-    clearInterval(chatPollIv); chatPollIv = null;
-    if (!chatChannelPollIv) chatChannelPollIv = setInterval(() => renderChatChannelList(true), 10000);
+    // Stop message poll
+    if (chatPollIv) { clearInterval(chatPollIv); chatPollIv = null; }
 
     chView.style.display = 'block';
     msgView.style.display = 'none';

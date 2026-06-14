@@ -155,6 +155,27 @@ async function sendMessage(body: any) {
   // Get sender name for the response
   const senderRes = await db.execute({ sql: "SELECT name FROM users WHERE id = ?", args: [senderId] });
 
+  // Trigger Real-time Update to other members via Pusher/SSE
+  setTimeout(async () => {
+    try {
+      const { triggerRealtimeUpdate } = await import('@/lib/realtime');
+      const membersRes = await db.execute({ sql: "SELECT user_id FROM message_channel_members WHERE channel_id = ?", args: [channelId] });
+      const memberIds = membersRes.rows.map((r: any) => String(r.user_id));
+      const senderName = senderRes.rows[0]?.name || 'Unknown';
+      
+      for (const uid of memberIds) {
+        if (uid !== senderId) {
+          triggerRealtimeUpdate(uid, {
+            type: 'new_message',
+            channelId,
+            title: `Pesan dari ${senderName}`,
+            text: content.trim().substring(0, 50) + (content.length > 50 ? '...' : '')
+          });
+        }
+      }
+    } catch (e) { console.error("Realtime push failed", e); }
+  }, 10);
+
   return NextResponse.json({
     success: true,
     message: {
@@ -307,6 +328,23 @@ async function sendBroadcast(body: any) {
     sql: `INSERT INTO messages (id, channel_id, sender_id, content, message_type) VALUES (?, ?, ?, ?, 'broadcast')`,
     args: [msgId, channelId, senderId, content.trim()]
   });
+
+  // Trigger Real-time Update
+  setTimeout(async () => {
+    try {
+      const { triggerRealtimeUpdate } = await import('@/lib/realtime');
+      for (const uid of allMemberIds) {
+        if (uid !== senderId) {
+          triggerRealtimeUpdate(uid, {
+            type: 'new_message',
+            channelId,
+            title: `Siaran dari ${senderRes.rows[0].name}`,
+            text: content.trim().substring(0, 50) + (content.length > 50 ? '...' : '')
+          });
+        }
+      }
+    } catch (e) { console.error("Realtime push failed", e); }
+  }, 10);
 
   return NextResponse.json({
     success: true,
