@@ -52,20 +52,49 @@ export default function CoworkingWidget({ openModal }: CoworkingWidgetProps) {
     // Pusher will handle updates. No more polling here!
 
     let pusherChannel: any;
+    let pusherInstance: any;
     const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
     const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'mt1';
+    let fallbackTimer: NodeJS.Timeout | null = null;
 
-    if (pusherKey) {
+    const startFallback = () => {
+      if (!fallbackTimer) {
+        console.warn("[CoworkingWidget] Pusher unavailable or limit reached. Falling back to HTTP polling.");
+        fallbackTimer = setInterval(fetchRooms, 10000);
+      }
+    };
+
+    if (pusherKey && !pusherKey.includes('MASUKKAN')) {
       import('pusher-js').then(({ default: PusherClient }) => {
         if (!(window as any).Pusher) (window as any).Pusher = PusherClient;
-        const pusher = new PusherClient(pusherKey, {
+        pusherInstance = new PusherClient(pusherKey, {
           cluster: pusherCluster,
           authEndpoint: '/api/pusher/auth',
           auth: { params: { user_id: user?.id } }
         });
-        pusherChannel = pusher.subscribe('presence-lobby');
+
+        pusherInstance.connection.bind('error', function(err: any) {
+          if (err?.error?.data?.code === 4004 || err?.type === 'WebSocketError') {
+            startFallback();
+          }
+        });
+
+        pusherInstance.connection.bind('state_change', function(states: any) {
+          if (states.current === 'unavailable' || states.current === 'failed' || states.current === 'disconnected') {
+            startFallback();
+          } else if (states.current === 'connected' && fallbackTimer) {
+            // Recovered
+            clearInterval(fallbackTimer);
+            fallbackTimer = null;
+          }
+        });
+
+        pusherChannel = pusherInstance.subscribe('presence-lobby');
         pusherChannel.bind('lobby-update', fetchRooms);
       });
+    } else {
+      // Fallback polling for local development without Pusher
+      startFallback();
     }
 
     return () => {
@@ -73,6 +102,8 @@ export default function CoworkingWidget({ openModal }: CoworkingWidgetProps) {
         pusherChannel.unbind('lobby-update', fetchRooms);
         pusherChannel.unsubscribe();
       }
+      if (pusherInstance) pusherInstance.disconnect();
+      if (fallbackTimer) clearInterval(fallbackTimer);
     };
   }, [user?.id]);
 

@@ -249,18 +249,76 @@ export default function FocusModal({
     if (!isMultiplayer || !user?.id) return;
     
     let pusherChannel: any;
+    let pusherInstance: any;
     const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
     const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'mt1';
+    let fallbackTimer: NodeJS.Timeout | null = null;
 
-    if (pusherKey) {
+    const startFallback = () => {
+      if (!fallbackTimer) {
+        console.warn("[FocusModal] Pusher unavailable or limit reached. Falling back to HTTP polling.");
+        const fetchRoomState = async () => {
+          try {
+            const res = await fetch('/api/focus/rooms');
+            const data = await res.json();
+            if (data.rooms) {
+              const currentRoom = data.rooms.find((r: any) => String(r.id) === String(roomCode));
+              if (currentRoom) {
+                if (currentRoom.participants && currentRoom.participants.length > participants.length) {
+                  setParticipants(currentRoom.participants);
+                }
+                if (currentRoom.status === 'started' && isGuest && !started) {
+                  let currentDuration = currentRoom.durationMins || duration;
+                  setDuration(currentDuration);
+                  if (currentRoom.name) setSessionTitle(currentRoom.name);
+                  
+                  if (focusMode === 'hardcore' && !isMobile) {
+                    setShowQR(true);
+                  } else {
+                    setStarted(true);
+                    setSecs(currentRoom.remainingMins * 60);
+                    setSyncStatus('running');
+                  }
+                }
+              } else {
+                setSyncStatus('failed');
+                setStarted(false);
+                setFailedReason("Ruangan tidak ditemukan atau sesi dibatalkan.");
+              }
+            }
+          } catch (e) {
+            console.error("Polling error:", e);
+          }
+        };
+        fallbackTimer = setInterval(fetchRoomState, 5000);
+      }
+    };
+
+    if (pusherKey && !pusherKey.includes('MASUKKAN')) {
       if (!(window as any).Pusher) (window as any).Pusher = PusherClient;
-      const pusher = new PusherClient(pusherKey, {
+      pusherInstance = new PusherClient(pusherKey, {
         cluster: pusherCluster,
         authEndpoint: '/api/pusher/auth',
         auth: { params: { user_id: user.id } }
       });
       
-      pusherChannel = pusher.subscribe(`presence-focus-${roomCode}`);
+      pusherInstance.connection.bind('error', function(err: any) {
+        if (err?.error?.data?.code === 4004 || err?.type === 'WebSocketError') {
+          startFallback();
+        }
+      });
+
+      pusherInstance.connection.bind('state_change', function(states: any) {
+        if (states.current === 'unavailable' || states.current === 'failed' || states.current === 'disconnected') {
+          startFallback();
+        } else if (states.current === 'connected' && fallbackTimer) {
+          // Recovered
+          clearInterval(fallbackTimer);
+          fallbackTimer = null;
+        }
+      });
+
+      pusherChannel = pusherInstance.subscribe(`presence-focus-${roomCode}`);
       pusherChannel.bind('room-event', (ev: any) => {
         if (ev.type === 'JOIN' && !isGuest) {
           setParticipants(prev => {
@@ -321,6 +379,8 @@ export default function FocusModal({
           handleQRScanned();
         }
       });
+    } else {
+      startFallback();
     }
 
     return () => {
@@ -328,6 +388,8 @@ export default function FocusModal({
         pusherChannel.unbind_all();
         pusherChannel.unsubscribe();
       }
+      if (pusherInstance) pusherInstance.disconnect();
+      if (fallbackTimer) clearInterval(fallbackTimer);
     };
   }, [isMultiplayer, roomCode, user?.id, isGuest, started, focusMode, isMobile, notify, disconnectEvent, participants, duration, handleQRScanned]);
 

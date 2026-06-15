@@ -1,13 +1,5 @@
 import { NextResponse } from 'next/server';
-import Pusher from 'pusher';
-
-const pusher = new Pusher({
-  appId: process.env.PUSHER_APP_ID || '',
-  key: process.env.NEXT_PUBLIC_PUSHER_KEY || '',
-  secret: process.env.PUSHER_SECRET || '',
-  cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'mt1',
-  useTLS: true,
-});
+import { triggerPusherEvent } from '@/lib/pusher';
 
 export async function POST(request: Request) {
   try {
@@ -20,7 +12,7 @@ export async function POST(request: Request) {
     // Trigger an event to the specific room that the QR was scanned
     // This allows the desktop client to receive the signal and start the session without relying on a Chrome extension
     const channelName = `presence-focus-${roomId}`;
-    await pusher.trigger(channelName, 'room-event', {
+    await triggerPusherEvent(channelName, 'room-event', {
       type: 'FB_QR_SCANNED',
       timestamp: Date.now()
     });
