@@ -39,6 +39,9 @@ import HRHomeScreen from "@/components/home/HRHomeScreen";
 import HRPeopleScreen from "@/components/goals/HRPeopleScreen";
 import HRRecognizeScreen from "@/components/recognize/HRRecognizeScreen";
 
+// ── OKR Module ──
+import OKRDashboard from "@/components/okr/OKRDashboard";
+
 
 // ── Admin Screens ──
 
@@ -335,6 +338,8 @@ function AppContent() {
     // Chat tab is shared across all roles
     if (tab === 'chat') return <ChatScreen openModal={openModal} />;
     if (tab === 'team') return <TeamScreen openModal={openModal} />;
+    // OKR tab is shared across all roles
+    if (tab === 'okr') return <OKRDashboard openModal={openModal} />;
 
     // Employee
     if (currentRole === 'employee') {
