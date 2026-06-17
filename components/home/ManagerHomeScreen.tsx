@@ -52,8 +52,7 @@ export default function ManagerHomeScreen({ openModal }: Props) {
   const activePagePendingTasks = Math.min(currentPagePendingTasks, Math.max(1, totalPagesPendingTasks));
   const paginatedPendingTasks = pendingTasks.slice((activePagePendingTasks - 1) * pendingTasksPerPage, activePagePendingTasks * pendingTasksPerPage);
 
-  if (!user || !state) return null;
-  const levelProgress = calculateLevelProgress(user.points || 0);
+  const levelProgress = calculateLevelProgress(user?.points || 0);
 
   // Auto-Scroll to Clock-In
   useEffect(() => {
@@ -71,6 +70,8 @@ export default function ManagerHomeScreen({ openModal }: Props) {
     window.addEventListener('hp_scroll_to_clock_in', handleScrollToClockIn);
     return () => window.removeEventListener('hp_scroll_to_clock_in', handleScrollToClockIn);
   }, []);
+
+  if (!user || !state) return null;
 
   return (
     <div style={{ position: 'relative', minHeight: '100%', paddingBottom: 120, fontFamily: HP_FONT }}>

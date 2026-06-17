@@ -16,7 +16,8 @@ interface OKRDashboardProps {
 }
 
 export default function OKRDashboard({ openModal }: OKRDashboardProps) {
-  const { user, notify } = useHP();
+  const { user, notify, state } = useHP();
+  const members = state?.managerData?.members || [];
   const [okrs, setOkrs] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -245,6 +246,7 @@ export default function OKRDashboard({ openModal }: OKRDashboardProps) {
           userId={userId || ""}
           period={period}
           parentOKRs={okrs.filter(o => o.type === "company" || o.type === "team")}
+          members={members}
         />
       )}
 

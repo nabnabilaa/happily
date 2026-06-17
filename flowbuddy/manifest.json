@@ -1,67 +1,55 @@
 {
   "manifest_version": 3,
-  "name": "FocusBuddy",
-  "version": "7.1.0",
-  "description": "Teman produktivitas dengan karakter animasi - tugas, catatan, timer, alarm, focus mode. v7.1",
+  "name": "FlowBuddy",
+  "version": "1.0.0",
+  "description": "Teman kerja ultra-ringan — tugas cepat, catatan, chat, dan approval. Ekstensi modular berbasis peran.",
   "permissions": [
     "storage",
     "alarms",
-    "notifications",
-    "tabs",
-    "declarativeNetRequest"
+    "notifications"
   ],
-  "host_permissions": [
-    "<all_urls>"
-  ],
-  "declarative_net_request": {
-    "rule_resources": [
-      {
-        "id": "focus_block",
-        "enabled": false,
-        "path": "rules/focus_block_rules.json"
-      }
-    ]
-  },
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
-      "matches": [
-        "<all_urls>"
-      ],
-      "js": [
-        "modules/rbac.js",
-        "modules/pane-team.js",
-        "modules/pane-people.js",
-        "content.js"
-      ],
+      "matches": ["<all_urls>"],
+      "css": ["css/mascot.css"],
+      "js": ["js/mascot-state.js", "js/sync.js", "mascot-content.js"],
       "run_at": "document_idle",
       "all_frames": false
+    },
+    {
+      "matches": ["*://happily-flowbuddy.vercel.app/*", "*://localhost/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
     }
   ],
   "action": {
+    "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     },
-    "default_title": "FocusBuddy - klik untuk toggle"
+    "default_title": "FlowBuddy — Aksi cepat"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
   },
   "web_accessible_resources": [
     {
       "resources": [
+        "css/*",
+        "js/*",
         "icons/*",
-        "focus_blocked.html"
+        "popup.html"
       ],
       "matches": [
         "<all_urls>"
       ]
     }
-  ],
-  "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
-  }
+  ]
 }

@@ -53,12 +53,18 @@ export default function HomeScreen({ openModal }: any) {
     if (!rawUser?.id) return;
     const fetchAtt = () => {
       fetch(`/api/attendance/summary?userId=${rawUser.id}`)
-        .then(res => res.json())
+        .then(async res => {
+          if (!res.ok) {
+            const text = await res.text();
+            throw new Error(`Status ${res.status}: ${text.slice(0, 100)}`);
+          }
+          return res.json();
+        })
         .then(data => {
           if (data.today) setTodayAttendance(data.today);
           else setTodayAttendance({});
         })
-        .catch(err => console.warn("Failed to fetch attendance:", err));
+        .catch(err => console.warn("Failed to fetch attendance:", err.message));
     };
     fetchAtt();
     window.addEventListener('hp_db_update', fetchAtt);

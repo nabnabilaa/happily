@@ -1,22 +1,72 @@
-# Flowbuddy Extension
+# FlowBuddy — Ekstensi Browser Ultra-Lightweight
 
-## 📂 Struktur Proyek yang Baru
+Ekstensi browser bertema modular & context-aware untuk produktivitas kerja.  
+Mengadopsi mental model aplikasi perpesanan, dipadukan dengan sistem akses berbasis peran (RBAC).
 
-Karena file `content.js` sebelumnya sangat besar (7600+ baris), kode tersebut kini telah dipecah (*refactored*) menjadi beberapa modul kecil di dalam folder **`src/`** agar jauh lebih rapi dan mudah untuk dikembangkan.
+## 🚀 Instalasi (Chrome)
 
-Jika Anda ingin mengubah kode logika Flowbuddy, **jangan edit `content.js` secara langsung!**
-Silakan edit file-file yang ada di dalam folder `src/` (misalnya `src/11-tasks.js` untuk fitur tugas, `src/13-notes.js` untuk fitur catatan, dll).
+1. Buka `chrome://extensions/`
+2. Aktifkan **Developer mode** (toggle pojok kanan atas)
+3. Klik **Load unpacked**
+4. Pilih folder `flowbuddy/`
+5. Klik ikon ekstensi di toolbar — popup 380×600 muncul
 
-## 🚀 Cara Build (Menyatukan Kode)
+## 🎭 Role-Based Access (RBAC)
 
-Setelah Anda selesai mengedit file di dalam `src/`, Anda perlu menyatukannya kembali menjadi file `content.js` tunggal agar bisa dibaca oleh browser.
+| Role | Tab 1 | Tab 2 | Tab 3 |
+|---|---|---|---|
+| **Employee** | Tugas | Catatan | Chat |
+| **Manager** | Tugas | Approval | Tim & Chat |
+| **HR** | Tugas | Kontak | Broadcast & Chat |
 
-Cukup buka terminal/CMD di dalam folder `flowbuddy` ini, lalu jalankan perintah:
+Gunakan menu **⋮ → Ganti Role (Demo)** untuk mencoba role lain.
 
-```bash
-node build.js
+## 🎨 Fitur
+
+- ✅ **Tasks** — Quick-add, toggle selesai dengan bounce animation, progress bar harian
+- 📝 **Notes** — Brain-dump textarea dengan auto-save
+- 💬 **Chat** — Inbox + chat detail dengan slide transition
+- 📋 **Approval** (Manager) — Verifikasi tugas 1-klik dengan confetti
+- 👥 **Team Status** (Manager) — Status online/sibuk anggota tim
+- 👤 **Contacts** (HR) — Direktori karyawan dengan pencarian
+- 📢 **Broadcast** (HR) — Kirim pengumuman ke seluruh karyawan
+- 🌙 **Dark Mode** — Toggle manual, disimpan di localStorage
+- 🔥 **Daily Streak** — Gamifikasi ringan
+- 🎉 **Confetti & Sparkles** — Micro-interactions saat task selesai / approve
+
+## 🏗 Struktur File
+
+```
+flowbuddy/
+├── manifest.json       ← Manifest v3 (popup-based)
+├── popup.html          ← Main popup UI
+├── background.js       ← Service worker (alarm, notifikasi)
+├── css/
+│   ├── tokens.css      ← Design system variables + dark mode
+│   ├── layout.css      ← Header, footer, content area
+│   ├── components.css  ← Cards, badges, bubbles, buttons
+│   └── animations.css  ← Micro-interactions, confetti
+├── js/
+│   ├── app.js          ← Main orchestrator
+│   ├── rbac.js         ← Role-based access control
+│   ├── theme.js        ← Dark mode toggle
+│   ├── views/
+│   │   ├── tasks.js    ← Quick-add, toggle, confetti
+│   │   ├── notes.js    ← Brain-dump textarea
+│   │   ├── chat.js     ← Inbox + chat detail
+│   │   ├── approval.js ← Manager: verify tasks
+│   │   ├── team.js     ← Manager: team status
+│   │   ├── contacts.js ← HR: people directory
+│   │   └── broadcast.js← HR: announcements
+│   └── utils/
+│       ├── greeting.js ← Dynamic time-based greeting
+│       └── confetti.js ← Confetti & sparkle effects
+└── icons/              ← Extension icons
 ```
 
-Perintah di atas akan secara otomatis menggabungkan seluruh file `src/` sesuai urutan dan menulis ulang file `content.js` yang siap pakai. Setelah itu, buka browser Anda dan klik tombol **Reload / Refresh** ekstensi di halaman `chrome://extensions`.
+## 🔗 Web Dashboard
 
-Selamat mengembangkan fitur baru! 🐝
+Fitur berat (Timer, OKR, Laporan, Kalender penuh) tersedia di:  
+**https://happily-flowbuddy.vercel.app/**
+
+Akses via menu **⋮ → Buka Web Dashboard Lengkap** di ekstensi.

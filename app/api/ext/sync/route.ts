@@ -263,6 +263,71 @@ export async function POST(request: Request) {
       "SELECT id, name, department FROM users ORDER BY name ASC"
     );
 
+    // Chat Channels & Recent Messages
+    const channelsRes = await db.execute({
+      sql: `SELECT 
+              mc.id, mc.name, mc.type, mc.avatar_emoji, mc.created_at,
+              mcm.last_read_at,
+              (SELECT COUNT(*) FROM messages m WHERE m.channel_id = mc.id 
+               AND m.created_at > COALESCE(mcm.last_read_at, '2000-01-01')) as unread_count,
+              (SELECT m2.content FROM messages m2 WHERE m2.channel_id = mc.id 
+               ORDER BY m2.created_at DESC LIMIT 1) as last_message,
+              (SELECT m3.created_at FROM messages m3 WHERE m3.channel_id = mc.id 
+               ORDER BY m3.created_at DESC LIMIT 1) as last_message_at,
+              (SELECT u2.name FROM messages m4 JOIN users u2 ON m4.sender_id = u2.id 
+               WHERE m4.channel_id = mc.id ORDER BY m4.created_at DESC LIMIT 1) as last_sender_name
+            FROM message_channel_members mcm
+            JOIN message_channels mc ON mcm.channel_id = mc.id
+            WHERE mcm.user_id = ?
+            ORDER BY CASE WHEN last_message_at IS NULL THEN 1 ELSE 0 END, last_message_at DESC LIMIT 15`,
+      args: [userId]
+    });
+
+    const channels = await Promise.all(channelsRes.rows.map(async (ch) => {
+      let displayName = ch.name;
+      let displayEmoji = ch.avatar_emoji || '💬';
+
+      if (ch.type === 'dm') {
+        const otherRes = await db.execute({
+          sql: `SELECT u.name, u.avatar_image FROM message_channel_members mcm 
+                JOIN users u ON mcm.user_id = u.id
+                WHERE mcm.channel_id = ? AND mcm.user_id != ?`,
+          args: [String(ch.id), userId]
+        });
+        if (otherRes.rows.length > 0) {
+          displayName = String(otherRes.rows[0].name);
+          displayEmoji = '👤';
+        }
+      }
+
+      const msgsRes = await db.execute({
+         sql: `SELECT m.id, m.content, m.created_at, m.sender_id, u.name as sender_name
+               FROM messages m
+               JOIN users u ON m.sender_id = u.id
+               WHERE m.channel_id = ?
+               ORDER BY m.created_at DESC LIMIT 20`,
+         args: [String(ch.id)]
+      });
+
+      return {
+        id: ch.id,
+        name: displayName,
+        type: ch.type,
+        emoji: displayEmoji,
+        unreadCount: Number(ch.unread_count) || 0,
+        lastMessage: ch.last_message ? String(ch.last_message).substring(0, 80) : null,
+        lastMessageAt: ch.last_message_at,
+        lastSenderName: ch.last_sender_name,
+        messages: msgsRes.rows.reverse().map(m => ({
+           id: m.id,
+           content: m.content,
+           senderId: m.sender_id,
+           senderName: m.sender_name,
+           createdAt: m.created_at
+        }))
+      };
+    }));
+
     // Calendar events (upcoming 7 days)
     let calEvents: any[] = [];
     if (calendarRequest) {
@@ -652,6 +717,7 @@ export async function POST(request: Request) {
           authorDepartment: r.author_department || '',
         };
       }),
+      chats: channels,
       allUsers: allUsersRes.rows.map(r => ({ id: r.id, name: r.name, department: r.department })),
       calendar: calEvents,
       notifications: notifsRes.rows.map(r => ({

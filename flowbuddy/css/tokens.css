@@ -1,0 +1,168 @@
+/* ==========================================================================
+   FlowBuddy Design System — Tokens
+   Rasio: 60% Netral · 30% Role · 10% Aksen Fun
+   Dark mode via [data-theme="dark"], bukan prefers-color-scheme
+   ========================================================================== */
+
+/* ── Google Fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
+
+:root {
+  /* ── Netral / Kanvas (60%) ── */
+  --bg-main: #F8FAFC;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F1F5F9;
+  --text-primary: #334155;
+  --text-secondary: #64748B;
+  --text-muted: #94A3B8;
+  --border-light: #E2E8F0;
+  --border-medium: #CBD5E1;
+
+  /* ── Role Colors (30%) — default Employee ── */
+  --color-role: #3B82F6;
+  --color-role-soft: #DBEAFE;
+  --color-role-hover: #2563EB;
+
+  /* ── Employee ── */
+  --color-employee: #3B82F6;
+  --color-employee-soft: #DBEAFE;
+  /* ── Manager ── */
+  --color-manager: #4F46E5;
+  --color-manager-soft: #E0E7FF;
+  /* ── HR ── */
+  --color-hr: #8B5CF6;
+  --color-hr-soft: #EDE9FE;
+
+  /* ── Aksen Fun (10%) ── */
+  --color-success: #22C55E;
+  --color-success-soft: #DCFCE7;
+  --color-urgent: #F59E0B;
+  --color-urgent-alt: #FB923C;
+  --color-danger: #EF4444;
+  --color-danger-soft: #FEE2E2;
+
+  /* ── Chat Bubble ── */
+  --color-bubble-in: #F1F5F9;
+  --color-bubble-out: var(--color-role-soft);
+
+  /* ── Avatar Colors ── */
+  --color-avatar-rose: #FFE4E6;
+  --color-avatar-rose-text: #E11D48;
+  --color-avatar-emerald: #D1FAE5;
+  --color-avatar-emerald-text: #059669;
+  --color-avatar-indigo: #E0E7FF;
+  --color-avatar-indigo-text: #4F46E5;
+  --color-avatar-amber: #FEF3C7;
+  --color-avatar-amber-text: #D97706;
+  --color-avatar-purple: #EDE9FE;
+  --color-avatar-purple-text: #7C3AED;
+
+  /* ── Spacing ── */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+  --space-2xl: 24px;
+
+  /* ── Radius ── */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* ── Shadows ── */
+  --shadow-sm: 0 1px 3px rgba(51, 65, 85, 0.04);
+  --shadow-md: 0 4px 12px rgba(51, 65, 85, 0.06);
+  --shadow-lg: 0 8px 24px rgba(51, 65, 85, 0.08);
+  --shadow-glass: 0 4px 20px rgba(51, 65, 85, 0.05);
+
+  /* ── Typography ── */
+  --font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+  --font-size-xs: 10px;
+  --font-size-sm: 12px;
+  --font-size-base: 14px;
+  --font-size-md: 15px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 22px;
+
+  /* ── Transitions ── */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.2s ease;
+  --transition-smooth: 0.3s ease;
+  --transition-spring: 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ── Glassmorphism ── */
+  --glass-bg: rgba(255, 255, 255, 0.75);
+  --glass-blur: blur(12px);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* ── Dark Mode ── */
+[data-theme="dark"] {
+  --bg-main: #0F172A;
+  --bg-card: #1E293B;
+  --bg-card-hover: #334155;
+  --text-primary: #F1F5F9;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --border-light: rgba(255, 255, 255, 0.08);
+  --border-medium: rgba(255, 255, 255, 0.12);
+
+  /* Role colors brighten slightly in dark mode */
+  --color-employee: #60A5FA;
+  --color-employee-soft: rgba(59, 130, 246, 0.15);
+  --color-manager: #818CF8;
+  --color-manager-soft: rgba(79, 70, 229, 0.15);
+  --color-hr: #A78BFA;
+  --color-hr-soft: rgba(139, 92, 246, 0.15);
+
+  --color-bubble-in: #334155;
+
+  /* Avatar adjustments */
+  --color-avatar-rose: rgba(225, 29, 72, 0.15);
+  --color-avatar-emerald: rgba(5, 150, 105, 0.15);
+  --color-avatar-indigo: rgba(79, 70, 229, 0.15);
+  --color-avatar-amber: rgba(217, 119, 6, 0.15);
+  --color-avatar-purple: rgba(124, 58, 237, 0.15);
+
+  /* Shadows for dark mode */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.3);
+  --shadow-glass: 0 4px 20px rgba(0, 0, 0, 0.2);
+
+  --glass-bg: rgba(30, 41, 59, 0.8);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ── Role-based accent overrides ── */
+[data-role="employee"] {
+  --color-role: var(--color-employee);
+  --color-role-soft: var(--color-employee-soft);
+  --color-role-hover: #2563EB;
+}
+[data-role="manager"] {
+  --color-role: var(--color-manager);
+  --color-role-soft: var(--color-manager-soft);
+  --color-role-hover: #4338CA;
+}
+[data-role="hr"] {
+  --color-role: var(--color-hr);
+  --color-role-soft: var(--color-hr-soft);
+  --color-role-hover: #7C3AED;
+}
+[data-theme="dark"][data-role="employee"] {
+  --color-role-hover: #93C5FD;
+  --color-bubble-out: rgba(59, 130, 246, 0.2);
+}
+[data-theme="dark"][data-role="manager"] {
+  --color-role-hover: #A5B4FC;
+  --color-bubble-out: rgba(79, 70, 229, 0.2);
+}
+[data-theme="dark"][data-role="hr"] {
+  --color-role-hover: #C4B5FD;
+  --color-bubble-out: rgba(139, 92, 246, 0.2);
+}

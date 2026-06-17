@@ -1,0 +1,350 @@
+﻿
+      <button id="fb-clockin-submit" class="fb-btn" style="width: 100% !important; padding: 12px !important; border-radius: 12px !important; background: var(--fb-blue) !important; color: white !important; font-weight: 800 !important; font-size: 13px !important; margin-top: 4px !important; cursor: pointer !important; text-align: center !important; border: none !important; box-shadow: 0 4px 12px var(--fb-blue-soft) !important;">Clock In Sekarang (+20 EXP)</button>
+    </div>
+  </div>
+</div>
+
+<!-- Buddy (SVG character) -->
+<div id="fb-buddy">
+  <div id="fb-snap-ring"></div>
+  <div id="fb-drag-dot"></div>
+
+  <!-- Mini Buddy (Quiet Mode Edge Button) -->
+  <div id="fb-mini-buddy">
+    <div class="fb-mini-bg">
+      <img src="${chrome.runtime.getURL('icons/icon.png')}" width="32" height="32" style="object-fit: contain !important; pointer-events: none !important;" />
+    </div>
+  </div>
+
+  <div id="fb-svg-wrap" class="state-idle">
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" width="100" height="100" overflow="visible">
+      <defs>
+        <radialGradient id="fb-grad-badan" cx="40%" cy="30%" r="70%">
+          <stop class="stop-1" offset="0%"/>
+          <stop class="stop-2" offset="100%"/>
+        </radialGradient>
+        <!-- Specular highlight (upper-left gloss for 3D sphere effect) -->
+        <radialGradient id="fb-grad-specular" cx="35%" cy="25%" r="45%">
+          <stop offset="0%"   stop-color="rgba(255,255,255,0.65)"/>
+          <stop offset="60%"  stop-color="rgba(255,255,255,0.15)"/>
+          <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+        </radialGradient>
+        <!-- Rim shadow (bottom-right darkening for depth) -->
+        <radialGradient id="fb-grad-rim" cx="70%" cy="75%" r="55%">
+          <stop offset="0%"   stop-color="rgba(0,0,0,0.22)"/>
+          <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+        </radialGradient>
+        <filter id="fb-blur-pipi" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="4"/>
+        </filter>
+        <!-- Text/glow drop shadow for ZZZ and other text elements -->
+        <filter id="fb-text-shadow" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="2" dy="2" stdDeviation="1.5" flood-color="#3b5bdb" flood-opacity="0.9"/>
+        </filter>
+      </defs>
+
+      <!-- ΓöÇΓöÇ BACKGROUND EFFECTS ΓöÇΓöÇ -->
+
+      <!-- Api Roket (semangat) -->
+      <g class="api-roket">
+        <path d="M 80 195 C 88 170 100 158 100 158 C 100 158 112 170 120 195 Z" fill="#fcc419"/>
+        <path d="M 85 195 C 92 175 100 163 100 163 C 100 163 108 175 115 195 Z" fill="#ff922b"/>
+        <path d="M 88 195 C 94 180 100 170 100 170 C 100 170 106 180 112 195 Z" fill="#ff6b6b"/>
+      </g>
+
+      <!-- Aura Api (olahraga) -->
+      <g class="aura-api">
+        <ellipse cx="100" cy="168" rx="85" ry="18" fill="#ff6b6b" opacity="0.35"/>
+        <ellipse cx="100" cy="172" rx="60" ry="12" fill="#ff922b" opacity="0.4"/>
+      </g>
+
+      <!-- Awan Hujan (sedih) -->
+      <g class="awan-hujan">
+        <circle cx="60"  cy="32" r="22" fill="#dee2e6"/>
+        <circle cx="85"  cy="20" r="28" fill="#dee2e6"/>
+        <circle cx="115" cy="20" r="28" fill="#dee2e6"/>
+        <circle cx="140" cy="32" r="22" fill="#dee2e6"/>
+        <circle cx="160" cy="44" r="16" fill="#dee2e6"/>
+        <g class="tetes-hujan">
+          <line x1="72"  y1="52" x2="66"  y2="74" stroke="#74c0fc" stroke-width="3" stroke-linecap="round"/>
+          <line x1="100" y1="48" x2="94"  y2="70" stroke="#74c0fc" stroke-width="3" stroke-linecap="round"/>
+          <line x1="128" y1="48" x2="122" y2="70" stroke="#74c0fc" stroke-width="3" stroke-linecap="round"/>
+          <line x1="150" y1="55" x2="144" y2="77" stroke="#74c0fc" stroke-width="3" stroke-linecap="round"/>
+        </g>
+      </g>
+
+      <!-- Jam Menunggu (menunggu) -->
+      <g class="jam-menunggu">
+        <circle cx="165" cy="38" r="26" fill="white" stroke="#20c997" stroke-width="4"/>
+        <line x1="165" y1="38" x2="165" y2="16" stroke="#20c997" stroke-width="3.5" stroke-linecap="round" class="jarum-jam"/>
+        <line x1="165" y1="38" x2="183" y2="38" stroke="#20c997" stroke-width="3.5" stroke-linecap="round"/>
+        <circle cx="165" cy="38" r="4" fill="#20c997"/>
+        <!-- Tick marks -->
+        <line x1="165" y1="14" x2="165" y2="18" stroke="#20c997" stroke-width="2"/>
+        <line x1="165" y1="58" x2="165" y2="62" stroke="#20c997" stroke-width="2"/>
+        <line x1="141" y1="38" x2="145" y2="38" stroke="#20c997" stroke-width="2"/>
+        <line x1="185" y1="38" x2="189" y2="38" stroke="#20c997" stroke-width="2"/>
+      </g>
+
+      <!-- Kembang Api (semangat) -->
+      <g class="kembang-api">
+        <g transform="translate(18,45)">
+          <line x1="0" y1="0" x2="0"  y2="-18" stroke="#ff922b" stroke-width="3" stroke-linecap="round"/>
+          <line x1="0" y1="0" x2="13" y2="-13" stroke="#ffd43b" stroke-width="3" stroke-linecap="round"/>
+          <line x1="0" y1="0" x2="18" y2="0"   stroke="#ff922b" stroke-width="3" stroke-linecap="round"/>
+          <line x1="0" y1="0" x2="0"  y2="18"  stroke="#ffd43b" stroke-width="3" stroke-linecap="round"/>
+          <line x1="0" y1="0" x2="-13" y2="-13" stroke="#ff6b6b" stroke-width="3" stroke-linecap="round"/>
+        </g>
+        <g transform="translate(182,42)">
+          <line x1="0" y1="0" x2="0"   y2="-18" stroke="#ffd43b" stroke-width="3" stroke-linecap="round"/>
+          <line x1="0" y1="0" x2="-13" y2="-13" stroke="#ff922b" stroke-width="3" stroke-linecap="round"/>
+          <line x1="0" y1="0" x2="-18" y2="0"   stroke="#ffd43b" stroke-width="3" stroke-linecap="round"/>
+          <line x1="0" y1="0" x2="13"  y2="-13" stroke="#ff6b6b" stroke-width="3" stroke-linecap="round"/>
+          <line x1="0" y1="0" x2="0"   y2="18"  stroke="#ff922b" stroke-width="3" stroke-linecap="round"/>
+        </g>
+        <g transform="translate(22,162)">
+          <circle cx="0" cy="0" r="4" fill="#ff6b6b"/>
+          <line x1="0" y1="0" x2="0"  y2="-14" stroke="#ff6b6b" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="0" y1="0" x2="10" y2="-10" stroke="#ffd43b" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="0" y1="0" x2="14" y2="0"   stroke="#ff922b" stroke-width="2.5" stroke-linecap="round"/>
+        </g>
+      </g>
+
+      <!-- Hati Banyak (senang) -->
+      <g class="hati-banyak">
+        <path d="M 22 70 A 8 8 0 0 1 38 70 A 8 8 0 0 1 54 70 Q 54 82 38 94 Q 22 82 22 70 Z" fill="#ff8787" opacity="0.9"/>
+        <path d="M 155 25 A 7 7 0 0 1 169 25 A 7 7 0 0 1 183 25 Q 183 35 169 45 Q 155 35 155 25 Z" fill="#ff8787" opacity="0.9"/>
+        <path d="M 8 128 A 5 5 0 0 1 18 128 A 5 5 0 0 1 28 128 Q 28 136 18 144 Q 8 136 8 128 Z" fill="#ff8787" opacity="0.7"/>
+      </g>
+
+      <!-- Elemen Mikir (fokus) -->
+      <g class="elemen-mikir">
+        <g class="bohlam">
+          <path d="M 90 18 Q 100 0 110 18 Q 116 32 106 44 L 94 44 Q 84 32 90 18 Z" fill="#fcc419"/>
+          <rect x="96" y="44" width="8" height="10" rx="3" fill="#adb5bd"/>
+          <line x1="93" y1="52" x2="107" y2="52" stroke="#adb5bd" stroke-width="2"/>
+        </g>
+        <g class="rumus">
+          <text x="5" y="38" fill="#845ef7" font-size="18" font-weight="bold" font-family="monospace">E=mc┬▓</text>
+          <text x="168" y="60" fill="#845ef7" font-size="26" font-weight="bold">Γê₧</text>
+          <text x="172" y="20" fill="#845ef7" font-size="22" font-weight="bold">Γêæ</text>
+        </g>
+      </g>
+
+      <!-- Asap Kepala (kesal) -->
+      <g class="asap-kepala">
+        <circle cx="65"  cy="18" r="9"  fill="#adb5bd" opacity="0.8"/>
+        <circle cx="100" cy="8"  r="13" fill="#adb5bd" opacity="0.8"/>
+        <circle cx="135" cy="18" r="9"  fill="#adb5bd" opacity="0.8"/>
+        <circle cx="82"  cy="4"  r="7"  fill="#ced4da" opacity="0.6"/>
+        <circle cx="118" cy="4"  r="7"  fill="#ced4da" opacity="0.6"/>
+      </g>
+
+      <!-- Sparkles Senang -->
+      <g class="sparkles-senang">
+        <path d="M 24 90 L 28 100 L 18 100 Z" fill="#ffd43b"/>
+        <path d="M 176 90 L 180 100 L 170 100 Z" fill="#ffd43b"/>
+        <path d="M 14 140 L 18 150 L 8 150 Z"  fill="#ffd43b"/>
+        <path d="M 186 135 L 190 145 L 180 145 Z" fill="#ffd43b"/>
+        <circle cx="20"  cy="60" r="3" fill="#ffd43b"/>
+        <circle cx="180" cy="60" r="3" fill="#ffd43b"/>
+        <circle cx="10"  cy="115" r="2" fill="#ffd43b"/>
+        <circle cx="190" cy="115" r="2" fill="#ffd43b"/>
+      </g>
+
+      <!-- Holo Rings (fokus) -->
+      <g class="holo-rings" style="transform-origin:100px 110px">
+        <ellipse class="ring-1" cx="100" cy="110" rx="96" ry="30" fill="none" stroke="#339af0" stroke-width="2" opacity="0.5" style="transform-origin:100px 110px"/>
+        <ellipse class="ring-2" cx="100" cy="110" rx="78" ry="24" fill="none" stroke="#845ef7" stroke-width="1.5" opacity="0.4" style="transform-origin:100px 110px"/>
+      </g>
+
+      <!-- ΓöÇΓöÇ BADAN UTAMA ΓöÇΓöÇ -->
+      <path d="M100,25 C150,25 190,65 190,110 C190,155 150,190 100,190 C50,190 10,155 10,110 C10,65 50,25 100,25 Z"
+            fill="url(#fb-grad-badan)"/>
+      <!-- Specular gloss (upper-left) for 3D sphere look -->
+      <path d="M100,25 C150,25 190,65 190,110 C190,155 150,190 100,190 C50,190 10,155 10,110 C10,65 50,25 100,25 Z"
+            fill="url(#fb-grad-specular)" pointer-events="none"/>
+      <!-- Rim shadow (lower-right) for depth -->
+      <path d="M100,25 C150,25 190,65 190,110 C190,155 150,190 100,190 C50,190 10,155 10,110 C10,65 50,25 100,25 Z"
+            fill="url(#fb-grad-rim)" pointer-events="none"/>
+
+      <!-- ΓöÇΓöÇ AKSESORI ΓöÇΓöÇ -->
+
+      <!-- Topi Tidur -->
+      <g class="topi-tidur">
+        <path d="M 48 42 L 142 42 L 178 62 L 148 18 Z" fill="#3b5bdb"/>
+        <rect x="48" y="37" width="94" height="14" rx="7" fill="white"/>
+        <circle cx="172" cy="68" r="13" fill="#fcc419"/>
+        <path d="M 160 62 L 172 55 L 184 62" fill="none" stroke="#fcc419" stroke-width="2"/>
+      </g>
+
+      <!-- Kacamata Tebal (fokus) -->
+      <g class="kacamata-tebal">
+        <rect x="34" y="76" width="54" height="38" rx="10" fill="rgba(255,255,255,0.35)" stroke="#212529" stroke-width="6"/>
+        <rect x="112" y="76" width="54" height="38" rx="10" fill="rgba(255,255,255,0.35)" stroke="#212529" stroke-width="6"/>
+        <line x1="88"  y1="95" x2="112" y2="95" stroke="#212529" stroke-width="6"/>
+        <line x1="8"   y1="95" x2="34"  y2="95" stroke="#212529" stroke-width="5"/>
+        <line x1="166" y1="95" x2="192" y2="95" stroke="#212529" stroke-width="5"/>
+        <line x1="40"  y1="95" x2="160" y2="95" stroke="#339af0" stroke-width="3.5" class="garis-laser" opacity="0"/>
+      </g>
+
+      <!-- Ikat Kepala (olahraga) -->
+      <g class="ikat-kepala">
+        <path d="M 16 72 Q 100 92 184 72 L 178 52 Q 100 72 22 52 Z" fill="#ff6b6b"/>
+        <path d="M 16 72 Q 100 92 184 72" fill="none" stroke="#fa5252" stroke-width="2.5"/>
+      </g>
+
+      <!-- Urat Marah (kesal) -->
+      <g class="urat-marah">
+        <path d="M 148 48 L 158 48 L 158 38 L 163 38 L 163 48 L 173 48 L 173 53 L 163 53 L 163 63 L 158 63 L 158 53 L 148 53 Z" fill="#fa5252"/>
+      </g>
+
+      <!-- Pipi -->
+      <g class="pipi-container">
+        <ellipse class="pipi" cx="44"  cy="122" rx="17" ry="10" filter="url(#fb-blur-pipi)" opacity="0.75"/>
+        <ellipse class="pipi" cx="156" cy="122" rx="17" ry="10" filter="url(#fb-blur-pipi)" opacity="0.75"/>
+      </g>
+
+      <!-- ΓöÇΓöÇ ALIS ΓöÇΓöÇ -->
+      <g class="alis-group">
+        <g class="alis-sedih">
+          <path d="M 44 80 Q 60 64 76 75" fill="none" stroke="#212529" stroke-width="5.5" stroke-linecap="round"/>
+          <path d="M 156 80 Q 140 64 124 75" fill="none" stroke="#212529" stroke-width="5.5" stroke-linecap="round"/>
+        </g>
+        <g class="alis-marah">
+          <line x1="44" y1="74" x2="80" y2="94" stroke="#212529" stroke-width="7" stroke-linecap="round"/>
+          <line x1="156" y1="74" x2="120" y2="94" stroke="#212529" stroke-width="7" stroke-linecap="round"/>
+        </g>
+        <g class="alis-fokus">
+          <line x1="44" y1="80" x2="80" y2="85" stroke="#212529" stroke-width="5" stroke-linecap="round"/>
+          <line x1="156" y1="76" x2="120" y2="85" stroke="#212529" stroke-width="5" stroke-linecap="round"/>
+        </g>
+      </g>
+
+      <!-- ΓöÇΓöÇ MATA (default kedip) ΓöÇΓöÇ -->
+      <g class="mata-bisa-kedip">
+        <g class="mata-kiri">
+          <circle cx="65" cy="95" r="14" fill="#212529"/>
+          <g class="pupil-mata">
+            <circle cx="68" cy="90" r="5.5" fill="#ffffff"/>
+            <circle cx="60" cy="99" r="2.5" fill="#ffffff"/>
+          </g>
+        </g>
+        <g class="mata-kanan">
+          <circle cx="135" cy="95" r="14" fill="#212529"/>
+          <g class="pupil-mata">
+            <circle cx="132" cy="90" r="5.5" fill="#ffffff"/>
+            <circle cx="140" cy="99" r="2.5" fill="#ffffff"/>
+          </g>
+        </g>
+      </g>
+
+      <!-- ΓöÇΓöÇ MATA KHUSUS ΓöÇΓöÇ -->
+      <g class="mata-khusus">
+        <!-- Sedih -->
+        <g class="mata-sedih">
+          <circle cx="65" cy="95" r="14" fill="#212529"/>
+          <path d="M 52 95 A 13 13 0 0 0 78 95 Z" fill="#74c0fc" opacity="0.8"/>
+          <circle cx="68" cy="90" r="4.5" fill="#ffffff"/>
+          <circle cx="60" cy="99" r="2" fill="#ffffff"/>
+          <circle cx="135" cy="95" r="14" fill="#212529"/>
+          <path d="M 122 95 A 13 13 0 0 0 148 95 Z" fill="#74c0fc" opacity="0.8"/>
+          <circle cx="132" cy="90" r="4.5" fill="#ffffff"/>
+          <circle cx="140" cy="99" r="2" fill="#ffffff"/>
+        </g>
+        <!-- Fokus laser -->
+        <g class="mata-fokus">
+          <circle cx="65"  cy="95" r="14" fill="#212529"/>
+          <circle cx="65"  cy="95" r="5"  fill="#339af0" class="mata-laser"/>
+          <circle cx="135" cy="95" r="14" fill="#212529"/>
+          <circle cx="135" cy="95" r="5"  fill="#339af0" class="mata-laser"/>
+        </g>
+        <!-- Tidur -->
+        <g class="mata-tidur">
+          <path d="M 50 100 L 80 100" fill="none" stroke="#212529" stroke-width="5.5" stroke-linecap="round"/>
+          <path d="M 120 100 L 150 100" fill="none" stroke="#212529" stroke-width="5.5" stroke-linecap="round"/>
+        </g>
+        <!-- Olahraga (> <) -->
+        <g class="mata-ngotot">
+          <path d="M 48 88 L 74 100 L 48 112" fill="none" stroke="#212529" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M 152 88 L 126 100 L 152 112" fill="none" stroke="#212529" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+        <!-- Semangat bintang -->
+        <g class="mata-bintang">
+          <path d="M 65 74 L 72 88 L 88 90 L 76 102 L 80 117 L 65 109 L 50 117 L 54 102 L 42 90 L 58 88 Z" fill="#212529"/>
+          <path d="M 65 82 L 69 90 L 77 91 L 71 97 L 73 105 L 65 101 L 57 105 L 59 97 L 53 91 L 61 90 Z" fill="#fff"/>
+          <path d="M 135 74 L 142 88 L 158 90 L 146 102 L 150 117 L 135 109 L 120 117 L 124 102 L 112 90 L 128 88 Z" fill="#212529"/>
+          <path d="M 135 82 L 139 90 L 147 91 L 141 97 L 143 105 L 135 101 L 127 105 L 129 97 L 123 91 L 131 90 Z" fill="#fff"/>
+        </g>
+        <!-- Senang (^ ^) -->
+        <g class="mata-senang">
+          <path d="M 50 105 Q 65 84 80 105" fill="none" stroke="#212529" stroke-width="7" stroke-linecap="round"/>
+          <path d="M 120 105 Q 135 84 150 105" fill="none" stroke="#212529" stroke-width="7" stroke-linecap="round"/>
+        </g>
+      </g>
+
+      <!-- ΓöÇΓöÇ MULUT ΓöÇΓöÇ -->
+      <path class="mulut" d="M 90 125 Q 100 130 110 125"
+            fill="none" stroke="#212529" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+      <!-- ΓöÇΓöÇ PROPERTI DEPAN ΓöÇΓöÇ -->
+
+      <!-- Permen Karet (menunggu) -->
+      <g class="permen-karet">
+        <circle cx="100" cy="140" r="16" fill="#ffb8fc" stroke="#f06595" stroke-width="2.5" class="balon-tiup"/>
+        <g class="ledakan-permen">
+          <line x1="100" y1="120" x2="100" y2="106" stroke="#f06595" stroke-width="3" stroke-linecap="round"/>
+          <line x1="100" y1="160" x2="100" y2="174" stroke="#f06595" stroke-width="3" stroke-linecap="round"/>
+          <line x1="80"  y1="140" x2="66"  y2="140" stroke="#f06595" stroke-width="3" stroke-linecap="round"/>
+          <line x1="120" y1="140" x2="134" y2="140" stroke="#f06595" stroke-width="3" stroke-linecap="round"/>
+          <line x1="86"  y1="126" x2="76"  y2="116" stroke="#f06595" stroke-width="3" stroke-linecap="round"/>
+          <line x1="114" y1="126" x2="124" y2="116" stroke="#f06595" stroke-width="3" stroke-linecap="round"/>
+          <line x1="86"  y1="154" x2="76"  y2="164" stroke="#f06595" stroke-width="3" stroke-linecap="round"/>
+          <line x1="114" y1="154" x2="124" y2="164" stroke="#f06595" stroke-width="3" stroke-linecap="round"/>
+        </g>
+      </g>
+
+      <!-- Gelembung Ingus (tidur) -->
+      <path class="gelembung-ingus"
+            d="M 108 108 C 130 98 136 124 116 130 C 96 136 90 118 108 108 Z"
+            fill="rgba(255,255,255,0.65)" stroke="white" stroke-width="2.5"/>
+
+      <!-- Air Mata (sedih) -->
+      <g class="air-mata-imut">
+        <rect class="tetesan-mata"       x="60" y="107" width="9" height="16" rx="4.5" fill="#74c0fc"/>
+        <rect class="tetesan-mata delay" x="130" y="107" width="9" height="16" rx="4.5" fill="#74c0fc"/>
+      </g>
+
+      <!-- Keringat (olahraga) -->
+      <g class="keringat">
+        <path d="M 168 78 C 178 93 178 106 168 106 C 158 106 158 93 168 78 Z" fill="#74c0fc"/>
+        <path d="M 32  88 C 42  103 42  116 32  116 C 22  116 22  103 32  88 Z" fill="#74c0fc"/>
+      </g>
+
+      <!-- Barbel (olahraga) -->
+      <g class="barbel">
+        <rect x="0"   y="114" width="46" height="12" fill="#adb5bd" rx="6"/>
+        <rect x="4"   y="99"  width="16" height="42" fill="#212529" rx="5"/>
+        <rect x="25"  y="99"  width="16" height="42" fill="#212529" rx="5"/>
+        <rect x="154" y="114" width="46" height="12" fill="#adb5bd" rx="6"/>
+        <rect x="158" y="99"  width="16" height="42" fill="#212529" rx="5"/>
+        <rect x="179" y="99"  width="16" height="42" fill="#212529" rx="5"/>
+      </g>
+
+      <!-- Biskuit (makan) -->
+      <g class="biskuit-animasi">
+        <g class="biskuit-utuh">
+          <circle cx="100" cy="148" r="26" fill="#e85d04"/>
+          <circle cx="90"  cy="138" r="4.5" fill="#370617"/>
+          <circle cx="112" cy="143" r="5.5" fill="#370617"/>
+          <circle cx="94"  cy="158" r="3.5" fill="#370617"/>
+          <circle cx="116" cy="155" r="4"   fill="#370617"/>
+          <circle cx="103" cy="148" r="3"   fill="#370617"/>
+        </g>
+        <g class="biskuit-digigit">
+          <path d="M 74 148 A 26 26 0 1 0 126 148 A 10 10 0 0 1 116 136 A 10 10 0 0 1 94 130 A 10 10 0 0 1 78 140 Z" fill="#e85d04"/>
+          <circle cx="94"  cy="158" r="3.5" fill="#370617"/>
+          <circle cx="116" cy="155" r="4"   fill="#370617"/>
+          <circle cx="107" cy="162" r="3"   fill="#370617"/>
+        </g>
+        <g class="remah-terbang">

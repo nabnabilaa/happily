@@ -1,0 +1,345 @@
+/* ══════════════════════════════════════════════
+   SVG CHARACTER — BASE STATE (hidden defaults)
+══════════════════════════════════════════════ */
+.stop-1 { stop-color: var(--w1); transition: stop-color .8s ease }
+.stop-2 { stop-color: var(--w2); transition: stop-color .8s ease }
+.pipi   { fill:var(--wp); transition:all .8s ease; transform-origin:center; transform-box:fill-box }
+.mulut  { transform-origin:100px 125px; transition:d .5s cubic-bezier(.34,1.56,.64,1), fill .4s ease }
+.mata-bisa-kedip { transform-origin:100px 95px; animation:mataKedip 4.5s infinite }
+.pupil-mata { transition:all .3s ease }
+
+.aura-api,.api-roket,.awan-hujan,.jam-menunggu,.kembang-api,.hati-banyak,
+.elemen-mikir,.topi-tidur,.kacamata-tebal,.ikat-kepala,.urat-marah,.alis-sedih,
+.alis-marah,.alis-fokus,.mata-tidur,.mata-ngotot,.mata-bintang,.mata-senang,
+.mata-sedih,.mata-fokus,.gelembung-ingus,.keringat,.barbel,.biskuit-animasi,
+.biskuit-digigit,.remah-terbang,.remah-mulut,.gelembung-zzz,.air-mata-imut,
+.permen-karet,.holo-rings,.sparkles-senang,.asap-kepala {
+  opacity:0 !important; pointer-events:none !important;
+}
+.api-roket    { transform-origin:100px 190px }
+.kembang-api  { transform-origin:100px 100px }
+.topi-tidur   { transform-origin:100px 30px; transform:translateY(-20px); transition:all .5s ease }
+.kacamata-tebal { transform:translateY(-20px); transition:all .5s ease }
+.ikat-kepala  { transform:translateY(-20px); transition:all .5s ease }
+.urat-marah   { transform-origin:150px 50px }
+.awan-hujan   { transform:translateY(-40px) scale(.85); transition:all .5s ease; transform-origin:top center }
+
+/* ══════════════════════════════════════════════
+   STATE-SPECIFIC CSS
+══════════════════════════════════════════════ */
+
+/* IDLE */
+.state-idle.hp-buddy-svg-wrap { animation:melayangIdle 1.5s infinite alternate ease-in-out }
+.state-idle.hp-buddy-svg-wrap ~ .hp-buddy-bayangan { animation:bayanganMelayang 1.5s infinite alternate ease-in-out }
+@keyframes melayangIdle {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-12px); }
+}
+@keyframes bayanganMelayang {
+  0% { transform: translateX(-50%) scale(1); opacity: 0.15; }
+  100% { transform: translateX(-50%) scale(0.85); opacity: 0.08; }
+}
+
+/* TIDUR */
+.state-ngantuk.hp-buddy-svg-wrap  { animation:napasTidur 2s infinite alternate ease-in-out }
+.state-ngantuk .topi-tidur   { opacity:1 !important; transform:translateY(0) }
+.state-ngantuk .gelembung-zzz{ opacity:1 !important; animation:zzzNaik 3s infinite linear }
+.state-ngantuk .mata-bisa-kedip { opacity:0 !important }
+.state-ngantuk .mata-tidur   { opacity:1 !important }
+.state-ngantuk .gelembung-ingus { opacity:1 !important; animation:ingusMembesar 3s infinite linear; transform-origin:108px 108px; }
+
+/* SEDIH */
+.state-sedih.hp-buddy-svg-wrap    { transform:translateY(0px) scale(.95); animation:napasSedih 1.5s infinite alternate ease-in-out }
+.state-sedih .mata-bisa-kedip{ opacity:0 !important }
+.state-sedih .mata-sedih     { opacity:1 !important }
+.state-sedih .alis-sedih     { opacity:1 !important }
+.state-sedih .air-mata-imut  { opacity:1 !important }
+.state-sedih .tetesan-mata   { animation:nangisBanjir 1s infinite ease-in }
+.state-sedih .tetesan-mata.delay { animation-delay:.4s }
+.state-sedih .awan-hujan     { opacity:1 !important; transform:translateY(-25px) scale(.8) }
+.state-sedih .tetes-hujan    { opacity:1 !important; animation:hujanTurun .8s infinite linear }
+.state-sedih .mulut          { animation:bibirGemetar 2.5s infinite }
+.state-sedih ~ .hp-buddy-genangan    { opacity:1 !important; animation:genanganMeluas 3s forwards }
+
+
+/* MENUNGGU */
+.state-menunggu.hp-buddy-svg-wrap { animation:nungguBosan 1.5s infinite alternate ease-in-out }
+.state-menunggu .jam-menunggu { opacity:1 !important }
+.state-menunggu .jarum-jam   { animation:putarJam 1s infinite steps(8); transform-origin:100px 40px }
+.state-menunggu .pupil-mata  { animation:lirikKananKiri 3s infinite ease-in-out }
+.state-menunggu .permen-karet{ opacity:1 !important }
+.state-menunggu .balon-tiup  { animation:tiupBalon 4s infinite cubic-bezier(.2,.8,.2,1); transform-origin:100px 125px }
+.state-menunggu .ledakan-permen { animation:ledakanBalon 4s infinite ease-out; transform-origin:100px 125px }
+.state-menunggu .mulut       { transform:scale(0.3) }
+
+/* OLAHRAGA */
+.state-olahraga.hp-buddy-svg-wrap { animation:squatJump 1.5s infinite linear }
+.state-olahraga .mata-bisa-kedip { opacity:0 !important }
+.state-olahraga .mata-ngotot { opacity:1 !important }
+.state-olahraga .ikat-kepala { opacity:1 !important; transform:translateY(0) }
+.state-olahraga .pipi        { transform:scale(1.3) }
+.state-olahraga .barbel      { opacity:1 !important; animation:angkatBarbel 1.5s infinite }
+.state-olahraga .keringat    { opacity:1 !important; animation:keringatBercucuran 1.5s infinite }
+.state-olahraga .hp-buddy-bayangan { animation:bayanganSquat 1.5s infinite }
+.state-olahraga .aura-api    { opacity:1 !important; animation:auraMenyala .75s infinite alternate }
+
+/* FOKUS */
+.state-fokus .kacamata-tebal { opacity:1 !important; transform:translateY(0) }
+.state-fokus .alis-fokus     { opacity:1 !important }
+.state-fokus .elemen-mikir   { opacity:1 !important }
+.state-fokus .bohlam         { animation:lampuNyala 1.5s infinite alternate }
+.state-fokus .rumus          { animation:melayangRumus 3s infinite linear }
+.state-fokus .garis-laser    { opacity:1 !important; animation:scanLaser 2s infinite ease-in-out }
+.state-fokus .holo-rings     { opacity:1 !important }
+.state-fokus .ring-1         { animation:putarRing1 8s linear infinite }
+.state-fokus .ring-2         { animation:putarRing2 12s linear infinite }
+.state-fokus .mata-laser     { animation:nyalaLaser 1.5s infinite alternate; transform-origin:center; transform-box:fill-box }
+
+/* SENANG */
+.state-senang.hp-buddy-svg-wrap   { animation:tarianSenang 2s infinite linear }
+.state-senang .mata-bisa-kedip { opacity:0 !important }
+.state-senang .mata-senang   { opacity:1 !important }
+.state-senang .hati-banyak   { opacity:1 !important; animation:loveTerbangSuper 1.5s infinite ease-out }
+.state-senang .sparkles-senang { opacity:1 !important; animation:sparkleKelapKelip 1.5s infinite alternate }
+.state-senang .pipi          { transform:scale(1.4); opacity:1 !important }
+
+/* SEMANGAT */
+.state-semangat.hp-buddy-svg-wrap { animation:lompatSemangat .4s infinite alternate ease-in-out }
+.state-semangat .mata-bisa-kedip { opacity:0 !important }
+.state-semangat .mata-bintang { opacity:1 !important; transform:scale(1.1); transform-origin:center; transform-box:fill-box }
+.state-semangat .kembang-api { opacity:1 !important; animation:kembangApiMeriah .8s infinite alternate }
+.state-semangat .hp-buddy-bayangan { animation:bayanganLompatSemangat .4s infinite alternate ease-in }
+
+/* MAKAN */
+.state-makan.hp-buddy-svg-wrap    { animation:goyangSenang 2s infinite linear }
+.state-makan .mulut          { animation:ngunyah .3s infinite alternate }
+.state-makan .pipi           { animation:pipiNgunyah .3s infinite alternate }
+.state-makan .biskuit-animasi { opacity:1 !important }
+.state-makan .biskuit-utuh   { animation:toggleBiskuit 2.5s infinite }
+.state-makan .biskuit-digigit { animation:toggleBiskuitBalik 2.5s infinite }
+.state-makan .remah-mulut    { opacity:1 !important; animation:remahNempel 2.5s infinite }
+.state-makan .remah-terbang  { opacity:1 !important; animation:hamburRemah 2.5s infinite }
+
+/* KESAL */
+.state-kesal.hp-buddy-svg-wrap    { animation:gemetarKesal .1s infinite }
+.state-kesal .alis-marah     { opacity:1 !important }
+.state-kesal .urat-marah     { opacity:1 !important; animation:denyut .5s infinite }
+.state-kesal .asap-kepala    { opacity:1 !important; animation:ngepulAsap 1s infinite }
+.state-kesal .pipi           { transform:scale(1.4) }
+
+/* ══════════════════════════════════════════════
+   KEYFRAMES
+══════════════════════════════════════════════ */
+@keyframes melayangHalus {
+  0%   { transform: translateY(0)    rotateX(0deg)   scaleX(1)    scaleY(1); }
+  30%  { transform: translateY(-7px) rotateX(-6deg)  scaleX(1.04) scaleY(1.03); }
+  50%  { transform: translateY(-12px) rotateX(-3deg) scaleX(1.02) scaleY(1.06); }
+  70%  { transform: translateY(-7px) rotateX(-6deg)  scaleX(1.04) scaleY(1.03); }
+  100% { transform: translateY(0)    rotateX(0deg)   scaleX(1)    scaleY(1); }
+}
+@keyframes bayanganHalus { 0%,100%{transform:translateX(-50%) scale(1);opacity:.22} 50%{transform:translateX(-50%) scale(.65);opacity:.07} }
+@keyframes mataKedip { 0%,96%,100%{transform:scaleY(1)} 98%{transform:scaleY(.1)} }
+
+/* Tidur */
+@keyframes napasTidur { 0%{transform:translateY(0px) scaleY(.95)} 100%{transform:translateY(-5px) scaleY(1)} }
+@keyframes zzzNaik    { 0%{transform:translate(0,0) scale(.5);opacity:0} 20%{opacity:1} 100%{transform:translate(30px,-60px) scale(1.5) rotate(20deg);opacity:0} }
+@keyframes ingusMembesar { 
+  0% { transform:scale(0.2); opacity:1 } 
+  80% { transform:scale(1.5); opacity:1 } 
+  85% { transform:scale(1.6); opacity:0 } 
+  100% { transform:scale(0.2); opacity:0 } 
+}
+
+/* Sedih */
+@keyframes napasSedih { 0%{transform:translateY(0px) scaleY(0.95)} 100%{transform:translateY(-3px) scaleY(1)} }
+@keyframes nangisBanjir { 0%{transform:translateY(-5px) scaleY(.5);opacity:0} 20%{opacity:1} 100%{transform:translateY(35px) scaleY(1.3);opacity:0} }
+@keyframes bibirGemetar { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-2px)} }
+@keyframes gemetarSedih { 0%,100%{transform:translateY(0px) translateX(0)} 25%{transform:translateY(1px) translateX(1px)} 75%{transform:translateY(-1px) translateX(-1px)} }
+@keyframes hujanTurun   { 0%{transform:translateY(-5px);opacity:1} 100%{transform:translateY(25px);opacity:0} }
+
+/* Menunggu */
+@keyframes lirikKananKiri { 0%,100%{transform:translateX(0)} 20%,40%{transform:translateX(-6px)} 60%,80%{transform:translateX(6px)} }
+@keyframes nungguBosan    { 0%{transform:translateY(0) scaleY(1)} 100%{transform:translateY(8px) scaleY(.95)} }
+@keyframes tiupBalon      { 0%{transform:scale(0);opacity:0} 10%{transform:scale(.5);opacity:.9} 75%{transform:scale(2.2);opacity:.9} 76%,100%{opacity:0;transform:scale(0)} }
+@keyframes ledakanBalon   { 0%,75%{opacity:0;transform:scale(.5)} 76%{opacity:1;transform:scale(1.5)} 85%,100%{opacity:0;transform:scale(2.5)} }
+@keyframes putarJam       { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+
+/* Olahraga */
+@keyframes squatJump {
+  0%   { transform: translateY(0) scale(1,1); animation-timing-function: ease-out; }
+  25%  { transform: translateY(12px) scale(1.1, 0.9); animation-timing-function: ease-in; }
+  50%  { transform: translateY(0) scale(1, 1); animation-timing-function: ease-out; }
+  75%  { transform: translateY(-20px) scale(0.9, 1.1); animation-timing-function: ease-in; }
+  100% { transform: translateY(0) scale(1,1); }
+}
+@keyframes angkatBarbel { 0%,100%{transform:translateY(0)} 30%{transform:translateY(-10px)} 70%{transform:translateY(-60px)} }
+@keyframes keringatBercucuran { 0%{transform:translateY(0);opacity:0} 20%{opacity:1} 80%{transform:translateY(25px);opacity:1} 100%{transform:translateY(35px);opacity:0} }
+@keyframes auraMenyala  { 0%{transform:scale(1);opacity:.4} 100%{transform:scale(1.25);opacity:.8;filter:hue-rotate(15deg)} }
+@keyframes bayanganSquat { 0%,100%{transform:translateX(-50%) scale(1.2);opacity:.2} 50%{transform:translateX(-50%) scale(.6);opacity:.04} }
+
+/* Fokus */
+@keyframes lampuNyala    { 0%{opacity:.5;transform:scale(.9);filter:drop-shadow(0 0 5px #fcc419)} 100%{opacity:1;transform:scale(1.1);filter:drop-shadow(0 0 15px #fcc419)} }
+@keyframes melayangRumus { 0%{transform:translateY(0) rotate(0);opacity:0} 20%{opacity:1} 80%{opacity:1} 100%{transform:translateY(-40px) rotate(20deg);opacity:0} }
+@keyframes scanLaser     { 0%,100%{transform:translateY(-15px);opacity:0} 10%,90%{opacity:1} 50%{transform:translateY(25px)} }
+@keyframes putarRing1    { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+@keyframes putarRing2    { 0%{transform:rotate(360deg)} 100%{transform:rotate(0deg)} }
+@keyframes nyalaLaser    { 0%,100%{opacity:.4;transform:scale(.8)} 50%{opacity:1;transform:scale(1.4);filter:drop-shadow(0 0 5px #339af0)} }
+
+/* Senang */
+@keyframes tarianSenang {
+  0% { transform: translateY(0) scale(1.02, 0.98) rotate(0deg); animation-timing-function: ease-out; }
+  25% { transform: translateY(-15px) scale(0.98, 1.02) rotate(-6deg); animation-timing-function: ease-in; }
+  50% { transform: translateY(0) scale(1.02, 0.98) rotate(0deg); animation-timing-function: ease-out; }
+  75% { transform: translateY(-15px) scale(0.98, 1.02) rotate(6deg); animation-timing-function: ease-in; }
+  100% { transform: translateY(0) scale(1.02, 0.98) rotate(0deg); }
+}
+@keyframes loveTerbangSuper { 0%{transform:translate(0,0) scale(.5);opacity:0} 30%{opacity:1} 100%{transform:translate(30px,-80px) scale(1.5) rotate(20deg);opacity:0} }
+@keyframes sparkleKelapKelip { 0%,100%{opacity:.3;transform:scale(.8)} 50%{opacity:1;transform:scale(1.2)} }
+
+/* Semangat */
+@keyframes lompatSemangat   { 0%{transform:translateY(10px) scale(1.1,.9)} 100%{transform:translateY(-15px) scale(.9,1.1)} }
+@keyframes kembangApiMeriah { 0%{transform:scale(.5);opacity:0} 50%{opacity:1} 100%{transform:scale(1.8);opacity:0} }
+@keyframes bayanganLompatSemangat { 0%{transform:translateX(-50%) scale(1.2);opacity:.2} 100%{transform:translateX(-50%) scale(.6);opacity:.08} }
+
+/* Makan */
+@keyframes goyangSenang {
+  0% { transform: rotate(0); animation-timing-function: ease-out; }
+  25% { transform: rotate(-5deg); animation-timing-function: ease-in; }
+  50% { transform: rotate(0); animation-timing-function: ease-out; }
+  75% { transform: rotate(5deg); animation-timing-function: ease-in; }
+  100% { transform: rotate(0); }
+}
+@keyframes ngunyah       { 0%{transform:scaleY(1) translateY(0)} 100%{transform:scaleY(.4) translateY(-5px)} }
+@keyframes pipiNgunyah   { 0%{transform:scaleX(1)} 100%{transform:scaleX(1.2) translateX(3px)} }
+@keyframes toggleBiskuit { 0%,55%{opacity:1} 60%,100%{opacity:0} }
+@keyframes toggleBiskuitBalik { 0%,55%{opacity:0} 60%,95%{opacity:1} 100%{opacity:0} }
+@keyframes remahNempel   { 0%,55%{opacity:0} 60%,100%{opacity:1} }
+@keyframes hamburRemah   { 0%,55%{opacity:0;transform:translate(0,0)} 60%{opacity:1;transform:translate(0,0)} 85%{opacity:.4} 100%{opacity:0;transform:translate(10px,-20px) scale(.4)} }
+
+/* Kesal */
+@keyframes gemetarKesal  { 0%{transform:translate(0.5px,0.5px)} 25%{transform:translate(-0.5px,-0.5px)} 50%{transform:translate(-0.5px,0.5px)} 75%{transform:translate(0.5px,-0.5px)} 100%{transform:translate(0,0)} }
+@keyframes denyut        { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.3);opacity:.6} }
+@keyframes ngepulAsap    { 0%{transform:translateY(0) scale(.5);opacity:0} 50%{opacity:.9} 100%{transform:translateY(-50px) scale(1.5);opacity:0} }
+
+
+/* Container for Mascot */
+#flowbuddy-mascot-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 2147483647;
+  width: 120px;
+  height: 120px;
+  cursor: grab;
+  user-select: none;
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.15));
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+#flowbuddy-mascot-container:active {
+  cursor: grabbing;
+}
+
+/* Tooltip / Speech Bubble */
+#flowbuddy-mascot-tooltip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  right: 50%;
+  transform: translateX(50%) scale(0.9);
+  opacity: 0;
+  pointer-events: none;
+  background: #fff;
+  color: #1e293b;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05);
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+#flowbuddy-mascot-tooltip.show {
+  opacity: 1;
+  transform: translateX(50%) scale(1);
+}
+
+#flowbuddy-mascot-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: #fff transparent transparent transparent;
+}
+
+/* ══════════════════════════════════════════════
+   QUIET MODE (EDGE SNAP)
+══════════════════════════════════════════════ */
+#flowbuddy-mascot-container.quiet-mode .hp-buddy-svg-wrap,
+#flowbuddy-mascot-container.quiet-mode .hp-buddy-bayangan,
+#flowbuddy-mascot-container.quiet-mode .hp-buddy-genangan,
+#flowbuddy-mascot-container.quiet-mode #flowbuddy-mascot-tooltip {
+  display: none !important;
+}
+
+#flowbuddy-mini-mascot {
+  position: absolute;
+  bottom: 20px;
+  right: -30px;
+  width: 74px;
+  height: 48px;
+  display: none;
+  align-items: center;
+  justify-content: flex-start;
+  pointer-events: all;
+  cursor: pointer;
+  z-index: 5;
+}
+
+#flowbuddy-mascot-container.quiet-mode #flowbuddy-mini-mascot {
+  display: flex !important;
+}
+
+.fb-mini-bg {
+  width: 64px;
+  height: 44px;
+  background: #FAFBFC;
+  border: 1px solid rgba(26, 29, 35, 0.08);
+  border-right: none;
+  border-radius: 22px 0 0 22px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transition: transform 0.2s, background-color 0.2s;
+  padding-left: 8px;
+  box-sizing: border-box;
+}
+
+#flowbuddy-mini-mascot:hover .fb-mini-bg {
+  transform: translateX(-6px);
+  background: rgba(26, 29, 35, 0.04);
+}
+
+/* Snapped left-edge styles */
+#flowbuddy-mascot-container.on-left #flowbuddy-mini-mascot {
+  left: -30px;
+  right: auto;
+  justify-content: flex-end;
+}
+
+#flowbuddy-mascot-container.on-left .fb-mini-bg {
+  border-radius: 0 22px 22px 0;
+  border-right: 1px solid rgba(26, 29, 35, 0.08);
+  border-left: none;
+  padding-left: 0;
+  padding-right: 8px;
+  justify-content: flex-end;
+}
+
+#flowbuddy-mascot-container.on-left #flowbuddy-mini-mascot:hover .fb-mini-bg {
+  transform: translateX(6px);
+}

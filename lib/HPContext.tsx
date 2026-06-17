@@ -182,6 +182,10 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
 
       try {
         const res = await fetch(`/api/storage?userId=${userId}`);
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`Storage fetch failed with status ${res.status}: ${text.slice(0, 100)}`);
+        }
         const data = await res.json();
         if (data.error) throw new Error(`${data.error}: ${data.details || ''}`);
         
@@ -319,12 +323,20 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
       try {
         if (role === 'hr') {
           const res = await fetch('/api/hr/dashboard');
+          if (!res.ok) {
+            const text = await res.text();
+            throw new Error(`HR Dashboard fetch failed: ${res.status} ${text.slice(0, 100)}`);
+          }
           const data = await res.json();
           if (data && data.metrics) {
             setState(prev => prev ? { ...prev, hrData: data } : null);
           }
         } else if (role === 'manager') {
           const res = await fetch(`/api/manager/dashboard?userId=${userId}`);
+          if (!res.ok) {
+            const text = await res.text();
+            throw new Error(`Manager Dashboard fetch failed: ${res.status} ${text.slice(0, 100)}`);
+          }
           const data = await res.json();
           setState(prev => prev ? { ...prev, managerData: data } : null);
         }
@@ -408,6 +420,10 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== "undefined" && !navigator.onLine) return;
     try {
       const res = await fetch('/api/hr/surveys');
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`HR Surveys fetch failed: ${res.status} ${text.slice(0, 100)}`);
+      }
       const data = await res.json();
       if (data.surveys) {
         setState(prev => prev ? { ...prev, surveys: data.surveys } : null);
@@ -674,7 +690,13 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (user?.id && !loading) {
       fetch('/api/hr/surveys')
-        .then(r => r.json())
+        .then(async r => {
+          if (!r.ok) {
+            const text = await r.text();
+            throw new Error(`HR Surveys fetch failed: ${r.status} ${text.slice(0, 100)}`);
+          }
+          return r.json();
+        })
         .then(data => {
           if (data.surveys) setState(prev => prev ? { ...prev, surveys: data.surveys } : null);
         })
