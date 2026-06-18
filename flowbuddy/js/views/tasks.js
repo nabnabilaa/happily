@@ -6,6 +6,7 @@
 const TasksView = {
   tasks: [],
   storageKey: 'flowbuddy-tasks',
+  editingId: null,
 
   init() {
     this.load();
@@ -45,7 +46,7 @@ const TasksView = {
         fb3.tasks = this.tasks;
         chrome.storage.local.set({ fb3: fb3 }, () => {
           // Force push sync immediately
-          chrome.runtime.sendMessage({ type: 'FORCE_SYNC' });
+          try { chrome.runtime.sendMessage({ type: 'FORCE_SYNC' }).catch(()=>{}); } catch(e) {}
         });
       });
     }
@@ -101,10 +102,16 @@ const TasksView = {
   render(container) {
     const progress = this.getProgress();
     const pctClass = progress.pct === 100 ? 'complete' : '';
+    
+    // Sort tasks: undone first, then done
+    const sortedTasks = [...this.tasks].sort((a, b) => {
+      if (a.done === b.done) return 0;
+      return a.done ? 1 : -1;
+    });
 
     let html = `
       <div class="task-form">
-        <div class="section-title" style="border:none; margin-bottom: 8px;">TAMBAH TASK BARU</div>
+        <div id="task-form-title" class="section-title" style="border:none; margin-bottom: 8px;">TAMBAH TASK BARU</div>
         <div class="task-form-box">
           <textarea id="task-quick-add" placeholder="Deskripsikan task (min. 5 karakter)..." class="task-form-textarea" rows="2"></textarea>
           
@@ -128,7 +135,10 @@ const TasksView = {
             <span>Link bukti pengerjaan diisi nanti saat mencentang task selesai. Poin masuk setelah Manager ACC.</span>
           </div>
 
-          <button id="task-add-btn" class="btn-primary" style="width: 100%; background: #96B2A1; padding: 12px; margin-top: 4px; font-size: 14px;">+ Tambah Task</button>
+          <div style="display: flex; gap: 8px; margin-top: 4px;">
+            <button id="task-add-btn" class="btn-primary" style="flex: 1; background: #96B2A1; padding: 12px; font-size: 14px;">+ Tambah Task</button>
+            <button id="task-cancel-edit-btn" class="btn-secondary" style="display: none; padding: 12px; font-size: 14px;">Batal</button>
+          </div>
         </div>
       </div>
 
@@ -160,21 +170,34 @@ const TasksView = {
         </div>
       `;
     } else {
-      html += '<div class="task-list stagger-in">';
-      this.tasks.forEach(task => {
+      html += '<div class="task-list stagger-in" style="padding-bottom: 60px;">';
+      sortedTasks.forEach(task => {
         html += `
-          <div class="task-card" data-task-id="${task.id}">
-            <div class="task-checkbox ${task.done ? 'checked' : ''}" data-task-toggle="${task.id}" aria-label="${task.done ? 'Batal selesai' : 'Tandai selesai'}" role="checkbox" aria-checked="${task.done}" tabindex="0">
+          <div class="task-card" data-task-id="${task.id}" style="position: relative; padding-right: 40px; align-items: flex-start;">
+            <div class="task-checkbox ${task.done ? 'checked' : ''}" data-task-toggle="${task.id}" aria-label="${task.done ? 'Batal selesai' : 'Tandai selesai'}" role="checkbox" aria-checked="${task.done}" tabindex="0" style="margin-top: 2px;">
               ${task.done ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
             </div>
-            <span class="task-text ${task.done ? 'done' : ''}">${this.esc(task.title || task.text)}</span>
+            <div style="flex:1; min-width:0; display: flex; flex-direction: column; gap: 2px;">
+              <span class="task-text ${task.done ? 'done' : ''}">${this.esc(task.title || task.text)}</span>
+              ${task.description ? `<span style="font-size: 11px; color: var(--text-muted); line-height: 1.3;">${this.esc(task.description)}</span>` : ''}
+            </div>
+            
+            <button class="task-menu-btn" data-id="${task.id}" style="position: absolute; right: 8px; top: 12px; background: none; border: none; font-size: 18px; cursor: pointer; color: var(--text-muted); padding: 4px; border-radius: 4px;">⋮</button>
+            
+            <div class="task-dropdown" id="dropdown-${task.id}" style="display: none; position: absolute; right: 10px; top: 40px; background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 8px; box-shadow: var(--shadow-md); z-index: 10; min-width: 130px; overflow: hidden;">
+               <div class="task-edit-btn" data-id="${task.id}" style="padding: 10px 16px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--text-primary); border-bottom: 1px solid var(--border-light); display: flex; align-items: center; gap: 8px; transition: background 0.2s;">
+                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> Edit
+               </div>
+               <div class="task-del-btn" data-id="${task.id}" style="padding: 10px 16px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--color-danger); display: flex; align-items: center; gap: 8px; transition: background 0.2s;">
+                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Hapus
+               </div>
+            </div>
           </div>
         `;
       });
       html += '</div>';
     }
 
-    // Render non-done tasks first, then done tasks
     container.innerHTML = '';
     const wrapper = document.createElement('div');
     wrapper.innerHTML = html;
@@ -185,13 +208,15 @@ const TasksView = {
   },
 
   bindEvents(container) {
-    // Quick add
     const input = container.querySelector('#task-quick-add');
     const inputDesc = container.querySelector('#task-detail-add');
     const inputDate = container.querySelector('#task-date-add');
     const inputKpi = container.querySelector('#task-kpi-add');
     const addBtn = container.querySelector('#task-add-btn');
+    const cancelBtn = container.querySelector('#task-cancel-edit-btn');
+    const formTitle = container.querySelector('#task-form-title');
 
+    // Quick add / Update
     if (input && addBtn) {
       const doAdd = () => {
         const title = input.value;
@@ -200,13 +225,29 @@ const TasksView = {
         const kpi = inputKpi ? inputKpi.value : null;
         
         if (title.trim().length < 5) {
-          FlowBuddyApp.showToast('Deskripsi task minimal 5 karakter!');
+          if(FlowBuddyApp && FlowBuddyApp.showToast) FlowBuddyApp.showToast('Deskripsi task minimal 5 karakter!');
           return;
         }
 
-        this.addTask(title, desc, date, kpi);
+        if (this.editingId) {
+           const task = this.tasks.find(t => String(t.id) === String(this.editingId));
+           if (task) {
+              task.title = title.trim();
+              task.text = title.trim();
+              task.description = desc ? desc.trim() : null;
+              task.targetDate = date || new Date().toISOString().split('T')[0];
+              task.kpiId = kpi || null;
+              this.save();
+              if(FlowBuddyApp && FlowBuddyApp.showToast) FlowBuddyApp.showToast('Task diperbarui!');
+           }
+           this.editingId = null;
+        } else {
+           this.addTask(title, desc, date, kpi);
+           if(FlowBuddyApp && FlowBuddyApp.showToast) FlowBuddyApp.showToast('Task ditambahkan!');
+        }
         this.render(container);
       };
+      
       addBtn.addEventListener('click', doAdd);
       input.addEventListener('keypress', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -216,7 +257,87 @@ const TasksView = {
       });
     }
 
-    // Toggle tasks
+    if (cancelBtn) {
+       cancelBtn.addEventListener('click', () => {
+          this.editingId = null;
+          this.render(container);
+       });
+    }
+
+    // Toggle Dropdowns
+    container.querySelectorAll('.task-menu-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute('data-id');
+        const drop = container.querySelector(`#dropdown-${id}`);
+        const isVisible = drop.style.display === 'block';
+        
+        // Close all dropdowns
+        container.querySelectorAll('.task-dropdown').forEach(d => d.style.display = 'none');
+        
+        if (!isVisible) {
+          drop.style.display = 'block';
+        }
+      });
+    });
+
+    // Hover effects for dropdown items
+    container.querySelectorAll('.task-edit-btn, .task-del-btn').forEach(btn => {
+       btn.addEventListener('mouseover', () => btn.style.background = 'var(--bg-card-hover)');
+       btn.addEventListener('mouseout', () => btn.style.background = 'transparent');
+    });
+
+    // Close dropdowns on outside click
+    const closeDropdowns = () => {
+      container.querySelectorAll('.task-dropdown').forEach(d => d.style.display = 'none');
+    };
+    document.removeEventListener('click', closeDropdowns);
+    document.addEventListener('click', closeDropdowns);
+
+    // Edit Task
+    container.querySelectorAll('.task-edit-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute('data-id');
+        const task = this.tasks.find(t => String(t.id) === String(id));
+        if (task) {
+           this.editingId = id;
+           // Populate form
+           if(input) input.value = task.title || task.text || '';
+           if(inputDesc) inputDesc.value = task.description || '';
+           if(inputDate) inputDate.value = task.targetDate || new Date().toISOString().split('T')[0];
+           if(inputKpi && task.kpiId) inputKpi.value = task.kpiId;
+           
+           if(addBtn) {
+             addBtn.innerHTML = '✓ Update Task';
+             addBtn.style.background = 'var(--color-role)'; 
+           }
+           if(cancelBtn) cancelBtn.style.display = 'block';
+           if(formTitle) formTitle.textContent = 'EDIT TASK';
+           
+           container.querySelectorAll('.task-dropdown').forEach(d => d.style.display = 'none');
+           
+           // Scroll to top to see form
+           container.scrollTo({top: 0, behavior: 'smooth'});
+           input.focus();
+        }
+      });
+    });
+
+    // Delete Task
+    container.querySelectorAll('.task-del-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute('data-id');
+        if (confirm('Yakin ingin menghapus task ini?')) {
+           this.deleteTask(id);
+           this.render(container);
+           if(FlowBuddyApp && FlowBuddyApp.showToast) FlowBuddyApp.showToast('Task dihapus');
+        }
+      });
+    });
+
+    // Toggle tasks (Kerjakan)
     container.querySelectorAll('[data-task-toggle]').forEach(cb => {
       const handler = () => {
         const id = cb.getAttribute('data-task-toggle');
@@ -227,9 +348,11 @@ const TasksView = {
           // Check if all tasks done → confetti!
           if (this.allDone()) {
             setTimeout(() => {
-              FlowBuddyConfetti.burst(null, 50);
-              FlowBuddyApp.showToast('🎉 Semua beres! Kamu hebat!');
+              if(typeof FlowBuddyConfetti !== 'undefined') FlowBuddyConfetti.burst(null, 50);
+              if(FlowBuddyApp && FlowBuddyApp.showToast) FlowBuddyApp.showToast('🎉 Semua beres! Kamu hebat!');
             }, 400);
+          } else {
+            if(FlowBuddyApp && FlowBuddyApp.showToast) FlowBuddyApp.showToast('Task Selesai! Kerja bagus 👍');
           }
         }
 

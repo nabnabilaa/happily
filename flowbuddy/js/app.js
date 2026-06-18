@@ -21,6 +21,7 @@ const FlowBuddyApp = {
     if (typeof TeamView !== 'undefined' && TeamView.init) TeamView.init();
     if (typeof ContactsView !== 'undefined' && ContactsView.init) ContactsView.init();
     if (typeof BroadcastView !== 'undefined' && BroadcastView.init) BroadcastView.init();
+    if (typeof CalendarView !== 'undefined' && CalendarView.init) CalendarView.init();
 
     // 4. Load user data
     this.loadUserData();
@@ -220,6 +221,9 @@ const FlowBuddyApp = {
         break;
       case 'broadcast-chat':
         BroadcastView.render(panel);
+        break;
+      case 'calendar':
+        CalendarView.render(panel);
         break;
     }
   },
