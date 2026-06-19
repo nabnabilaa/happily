@@ -579,7 +579,7 @@ function AppContent() {
       {modal?.name === 'manage_depts'    && <DepartmentManagerModal onClose={closeModal} />}
       {modal?.name === 'member_logbook'  && <MemberLogbookModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'member_tasks'    && <MemberTaskModal onClose={closeModal} {...modal.props} />}
-      {modal?.name === 'manage_kpi'      && <ManageKPIModal onClose={closeModal} />}
+      {modal?.name === 'manage_kpi'      && <ManageKPIModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'weekly_review'    && <WeeklyReviewModal onClose={closeModal} />}
       {modal?.name === 'monthly_report'   && <MonthlyReportModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'ai_weekly_summary' && <AIAuditModal onClose={closeModal} type="weekly" />}

@@ -580,6 +580,49 @@ export async function POST() {
 
 
   // ═══════════════════════════════════════════════════════
+  // PHASE 7: Seed KPIs and Daily Priorities
+  // ═══════════════════════════════════════════════════════
+  try {
+    const kpiCheck = await db.execute("SELECT COUNT(*) as cnt FROM monthly_kpis");
+    if (Number(kpiCheck.rows[0]?.cnt) === 0) {
+      const kpis = [
+        {
+          id: "kpi_team_1", title: "Meningkatkan User Engagement Aplikasi sebesar 25%", target_description: "DAU naik dari 10k ke 12.5k",
+          weight: 40, month: 6, year: 2026, assigned_to: "user_manager", assigned_by: "user_director", status: "active", metric_target: 12500, metric_current: 11000, scope: "team"
+        },
+        {
+          id: "kpi_emp_1", title: "Merancang UI/UX untuk Fitur Gamifikasi", target_description: "Menyelesaikan 3 flow utama gamifikasi dengan rating kepuasan user > 4.0",
+          weight: 60, month: 6, year: 2026, assigned_to: "user_employee", assigned_by: "user_manager", status: "active", metric_target: 3, metric_current: 1, scope: "assigned"
+        }
+      ];
+      for (const kpi of kpis) {
+        await db.execute({
+          sql: `INSERT INTO monthly_kpis (id, title, target_description, weight, month, year, assigned_to, assigned_by, status, metric_target, metric_current, scope) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          args: [kpi.id, kpi.title, kpi.target_description, kpi.weight, kpi.month, kpi.year, kpi.assigned_to, kpi.assigned_by, kpi.status, kpi.metric_target, kpi.metric_current, kpi.scope]
+        });
+      }
+      
+      // Seed Daily Priorities for Sari Wijaya linked to kpi_emp_1
+      const dps = [
+        { id: "dp_emp_1", user_id: "user_employee", title: "Riset Kompetitor Gamifikasi", desc: "Menganalisis 3 aplikasi kompetitor", target_date: "2026-06-19", kpi_id: "kpi_emp_1", status: "done", is_done: 1, is_verified: 0, tone: "blue", proof_link: "https://figma.com/riset-kompetitor" },
+        { id: "dp_emp_2", user_id: "user_employee", title: "Wireframing Sistem Point & Reward", desc: "Buat wireframe lo-fi", target_date: "2026-06-19", kpi_id: "kpi_emp_1", status: "revision", is_done: 1, is_verified: 0, tone: "amber", proof_notes: "Coba tambahkan animasi di bagian point pop up ya." },
+        { id: "dp_emp_3", user_id: "user_employee", title: "Desain High-Fidelity Leaderboard", desc: "Buat screen leaderboard", target_date: "2026-06-20", kpi_id: "kpi_emp_1", status: "todo", is_done: 0, is_verified: 0, tone: "rose", proof_link: "" },
+      ];
+      for (const dp of dps) {
+        await db.execute({
+          sql: `INSERT INTO daily_priorities (id, user_id, title, description, target_date, kpi_id, goal_title, status, is_done, is_verified, tone, proof_link, proof_notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          args: [dp.id, dp.user_id, dp.title, dp.desc, dp.target_date, dp.kpi_id, "Merancang UI/UX untuk Fitur Gamifikasi", dp.status, dp.is_done, dp.is_verified, dp.tone, dp.proof_link, dp.proof_notes || null]
+        });
+      }
+      results.push("✅ Seeded KPIs and Daily Priorities for Sari Wijaya");
+    } else {
+      results.push("⏭️ KPIs already populated");
+    }
+  } catch(e: any) {
+    results.push(`❌ KPI Seeding: ${e.message}`);
+  }
+
+  // ═══════════════════════════════════════════════════════
   // PHASE 9: Verify final state
   // ═══════════════════════════════════════════════════════
   const verification: string[] = [];
@@ -591,16 +634,9 @@ export async function POST() {
       verification.push(userCols.includes(col) ? `✅ users.${col}` : `❌ users.${col} MISSING`);
     }
 
-    const goalsSchema = await db.execute("SHOW COLUMNS FROM goals");
-    const goalCols = goalsSchema.rows.map(r => String(r.Field || r.field));
-    const requiredGoalCols = ["parent_id", "assigned_by_id", "status", "is_kpi"];
-    for (const col of requiredGoalCols) {
-      verification.push(goalCols.includes(col) ? `✅ goals.${col}` : `❌ goals.${col} MISSING`);
-    }
-
     const dpSchema = await db.execute("SHOW COLUMNS FROM daily_priorities");
     const dpCols = dpSchema.rows.map(r => String(r.Field || r.field));
-    const requiredDpCols = ["goal_id", "is_verified"];
+    const requiredDpCols = ["kpi_id", "is_verified"];
     for (const col of requiredDpCols) {
       verification.push(dpCols.includes(col) ? `✅ daily_priorities.${col}` : `❌ daily_priorities.${col} MISSING`);
     }
@@ -617,13 +653,8 @@ export async function POST() {
     const deptUsers = await db.execute("SELECT COUNT(*) as cnt FROM users WHERE department IS NOT NULL AND department != ''");
     verification.push(`✅ Users with department: ${deptUsers.rows[0]?.cnt}`);
 
-    // Check OKR tables
-    const okrCount = await db.execute("SELECT COUNT(*) as cnt FROM okrs");
-    verification.push(`✅ okrs table: ${okrCount.rows[0]?.cnt} entries`);
-    const krCount = await db.execute("SELECT COUNT(*) as cnt FROM key_results");
-    verification.push(`✅ key_results table: ${krCount.rows[0]?.cnt} entries`);
-    const taskCount = await db.execute("SELECT COUNT(*) as cnt FROM okr_tasks");
-    verification.push(`✅ okr_tasks table: ${taskCount.rows[0]?.cnt} entries`);
+    const kpiCount = await db.execute("SELECT COUNT(*) as cnt FROM monthly_kpis");
+    verification.push(`✅ monthly_kpis table: ${kpiCount.rows[0]?.cnt} entries`);
 
   } catch (e: any) {
     verification.push(`❌ Verification error: ${e.message}`);

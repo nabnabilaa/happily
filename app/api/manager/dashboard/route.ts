@@ -119,7 +119,7 @@ export async function GET(request: Request) {
         userId: r.user_id,
         userName: r.user_name,
         title: r.title,
-        goalId: r.goal_id,
+        goalId: r.kpi_id || r.goal_id,
         done: !!r.is_done,
         verified: !!r.is_verified,
         status: r.status,

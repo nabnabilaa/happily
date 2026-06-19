@@ -9,6 +9,7 @@ import Modal from "@/components/ui/Modal";
 
 interface ManageKPIModalProps {
   onClose: () => void;
+  initialShowForm?: boolean;
 }
 
 interface KPI {
@@ -32,7 +33,7 @@ interface TeamMember {
 const now = new Date();
 const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
-export default function ManageKPIModal({ onClose }: ManageKPIModalProps) {
+export default function ManageKPIModal({ onClose, initialShowForm = false }: ManageKPIModalProps) {
   const { user, updateState } = useHP();
   const [kpis, setKpis] = useState<KPI[]>([]);
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -43,7 +44,7 @@ export default function ManageKPIModal({ onClose }: ManageKPIModalProps) {
   const [showYearDropdown, setShowYearDropdown] = useState(false);
 
   // Form
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(initialShowForm);
   const [title, setTitle] = useState('');
   const [target, setTarget] = useState('');
   const [weight, setWeight] = useState(25);
@@ -107,7 +108,44 @@ export default function ManageKPIModal({ onClose }: ManageKPIModalProps) {
     updateState((s: any) => ({ ...s, goals: [...(s.goals || [])] })); // trigger refetch
   };
 
-  const totalWeight = kpis.reduce((sum, k) => sum + k.weight, 0);
+  // Group KPIs by assignee
+  const groupedKPIs = kpis.reduce((acc: Record<string, { name: string; items: KPI[]; totalWeight: number }>, k) => {
+    const key = k.assignedTo || 'unassigned';
+    if (!acc[key]) {
+      acc[key] = {
+        name: k.assigneeName || 'Unassigned',
+        items: [],
+        totalWeight: 0
+      };
+    }
+    acc[key].items.push(k);
+    acc[key].totalWeight += k.weight;
+    return acc;
+  }, {});
+
+  const weightEntries = Object.values(groupedKPIs);
+  const hasExceeded = weightEntries.some(e => e.totalWeight > 100);
+  const all100 = weightEntries.length > 0 && weightEntries.every(e => e.totalWeight === 100);
+
+  let statusText = 'Bobot KPI Anggota Tim';
+  let statusColor = HP_TOKENS.blue;
+  let statusBg = HP_TOKENS.blueWash;
+
+  if (hasExceeded) {
+    const exceededNames = weightEntries.filter(e => e.totalWeight > 100).map(e => e.name.split(' ')[0]).join(', ');
+    statusText = `⚠️ Bobot ${exceededNames} melebihi 100%!`;
+    statusColor = HP_TOKENS.coral;
+    statusBg = '#FFF5F5';
+  } else if (all100) {
+    statusText = 'Bobot semua anggota pas 100% ✅';
+    statusColor = HP_TOKENS.sage;
+    statusBg = HP_TOKENS.sageWash;
+  } else if (weightEntries.length > 0) {
+    const incompleteNames = weightEntries.filter(e => e.totalWeight < 100).map(e => e.name.split(' ')[0]).join(', ');
+    statusText = `ℹ️ Bobot ${incompleteNames} kurang dari 100%`;
+    statusColor = HP_TOKENS.blue;
+    statusBg = HP_TOKENS.blueWash;
+  }
 
   const selectStyle: React.CSSProperties = {
     padding: 12, borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
@@ -184,19 +222,16 @@ export default function ManageKPIModal({ onClose }: ManageKPIModalProps) {
 
         {/* Weight indicator */}
         <div style={{ 
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
           padding: '10px 14px', borderRadius: 12, marginBottom: 16,
-          background: totalWeight === 100 ? HP_TOKENS.sageWash : totalWeight > 100 ? '#FFF5F5' : HP_TOKENS.blueWash,
-          border: `1px solid ${totalWeight === 100 ? HP_TOKENS.sage : totalWeight > 100 ? '#FFC9C9' : HP_TOKENS.blue}30`
+          background: statusBg,
+          border: `1px solid ${statusColor}30`
         }}>
-          <span style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.inkSoft }}>Total Bobot</span>
           <span style={{ 
-            fontFamily: HP_FONT, fontWeight: 900, fontSize: 16,
-            color: totalWeight === 100 ? HP_TOKENS.sage : totalWeight > 100 ? HP_TOKENS.coral : HP_TOKENS.blue 
+            fontFamily: HP_FONT, fontWeight: 800, fontSize: 13,
+            color: statusColor
           }}>
-            {totalWeight}%
-            {totalWeight === 100 && ' ✅'}
-            {totalWeight > 100 && ' ⚠️ Melebihi!'}
+            {statusText}
           </span>
         </div>
 
@@ -210,42 +245,55 @@ export default function ManageKPIModal({ onClose }: ManageKPIModalProps) {
             <div style={{ ...HP_TEXT.small, marginTop: 4 }}>Klik tombol di bawah untuk mulai</div>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
-            {kpis.map(k => (
-              <div key={k.id} style={{
-                padding: 14, borderRadius: 16, background: HP_TOKENS.card,
-                border: `1.5px solid ${HP_TOKENS.line}`,
-              }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ ...HP_TEXT.h, fontSize: 14 }}>{k.title}</div>
-                    {k.targetDescription && (
-                      <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, marginTop: 4 }}>
-                        Target: {k.targetDescription}
-                      </div>
-                    )}
-                    <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center' }}>
-                      <div style={{
-                        padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 800,
-                        background: HP_TOKENS.blueSoft, color: HP_TOKENS.blue, fontFamily: HP_FONT
-                      }}>
-                        Bobot: {k.weight}%
-                      </div>
-                      {k.assigneeName && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <HPAvatar name={k.assigneeName} size={18} />
-                          <span style={{ ...HP_TEXT.small, color: HP_TOKENS.inkSoft, fontWeight: 600 }}>
-                            {k.assigneeName.split(' ')[0]}
-                          </span>
-                        </div>
-                      )}
-                    </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 16 }}>
+            {weightEntries.map(group => (
+              <div key={group.name} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 14 }}>👤</span>
+                    <span style={{ ...HP_TEXT.small, fontWeight: 800, color: HP_TOKENS.inkSoft }}>
+                      {group.name}
+                    </span>
                   </div>
-                  <button onClick={() => handleDelete(k.id)} style={{ 
-                    background: 'none', border: 'none', cursor: 'pointer', padding: 4 
+                  <span style={{ 
+                    fontFamily: HP_FONT, fontSize: 12, fontWeight: 900,
+                    color: group.totalWeight === 100 ? HP_TOKENS.sage : group.totalWeight > 100 ? HP_TOKENS.coral : HP_TOKENS.blue 
                   }}>
-                    <HPGlyph name="close" size={16} color={HP_TOKENS.coral} />
-                  </button>
+                    Total Bobot: {group.totalWeight}% {group.totalWeight > 100 ? '⚠️' : ''}
+                  </span>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {group.items.map(k => (
+                    <div key={k.id} style={{
+                      padding: 14, borderRadius: 16, background: HP_TOKENS.card,
+                      border: `1.5px solid ${HP_TOKENS.line}`,
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ ...HP_TEXT.h, fontSize: 14 }}>{k.title}</div>
+                          {k.targetDescription && (
+                            <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, marginTop: 4 }}>
+                              Target: {k.targetDescription}
+                            </div>
+                          )}
+                          <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center' }}>
+                            <div style={{
+                              padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 800,
+                              background: HP_TOKENS.blueSoft, color: HP_TOKENS.blue, fontFamily: HP_FONT
+                            }}>
+                              Bobot: {k.weight}%
+                            </div>
+                          </div>
+                        </div>
+                        <button onClick={() => handleDelete(k.id)} style={{ 
+                          background: 'none', border: 'none', cursor: 'pointer', padding: 4 
+                        }}>
+                          <HPGlyph name="close" size={16} color={HP_TOKENS.coral} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
