@@ -21,6 +21,7 @@ interface KPI {
   assigneeName: string | null;
   status: string;
   finalScore: number | null;
+  scope?: string;
 }
 
 interface TeamMember {
@@ -40,8 +41,11 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
   const [loading, setLoading] = useState(true);
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
+  const [currentPage, setCurrentPage] = useState(1);
   const [showMonthDropdown, setShowMonthDropdown] = useState(false);
   const [showYearDropdown, setShowYearDropdown] = useState(false);
+  const [teamId, setTeamId] = useState<string | null>(null);
+  const [scope, setScope] = useState<'assigned' | 'team'>('assigned');
 
   // Form
   const [showForm, setShowForm] = useState(initialShowForm);
@@ -56,6 +60,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
   useEffect(() => {
     fetchKPIs();
     fetchMembers();
+    setCurrentPage(1);
   }, [month, year]);
 
   const fetchKPIs = async () => {
@@ -72,6 +77,10 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
       const res = await fetch('/api/users');
       const data = await res.json();
       if (data.users) {
+        const currentUserRow = data.users.find((u: any) => String(u.id) === String(user?.id));
+        if (currentUserRow) {
+          setTeamId(currentUserRow.team_id);
+        }
         setMembers(data.users.filter((u: any) => String(u.id) !== String(user?.id)));
       }
     } catch (e) { console.error(e); }
@@ -88,13 +97,13 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title, targetDescription: target, weight, month, year,
-          assignedTo: assignTo, assignedBy: user?.id
+          assignedTo: assignTo, assignedBy: user?.id, scope
         })
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error); setSaving(false); return; }
 
-      setTitle(''); setTarget(''); setWeight(25); setAssignTo('');
+      setTitle(''); setTarget(''); setWeight(25); setAssignTo(''); setScope('assigned');
       setShowForm(false);
       fetchKPIs();
       updateState((s: any) => ({ ...s, goals: [...(s.goals || [])] })); // trigger refetch
@@ -114,7 +123,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
     if (!acc[key]) {
       acc[key] = {
         id: key,
-        name: k.assigneeName || 'Unassigned',
+        name: k.scope === 'team' ? 'Seluruh Tim' : (k.assigneeName || 'Unassigned'),
         items: [],
         totalWeight: 0
       };
@@ -127,6 +136,11 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
   const weightEntries = Object.values(groupedKPIs);
   const hasExceeded = weightEntries.some(e => e.totalWeight > 100);
   const all100 = weightEntries.length > 0 && weightEntries.every(e => e.totalWeight === 100);
+
+  const itemsPerPage = 2;
+  const totalPages = Math.ceil(weightEntries.length / itemsPerPage);
+  const activePage = Math.min(currentPage, Math.max(1, totalPages));
+  const paginatedEntries = weightEntries.slice((activePage - 1) * itemsPerPage, activePage * itemsPerPage);
 
   let statusText = 'Bobot KPI Anggota Tim';
   let statusColor = HP_TOKENS.blue;
@@ -221,7 +235,163 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
           </div>
         </div>
 
-        {/* Weight indicator */}
+        {/* 1. Add Form (Always visible at top) */}
+        <div style={{ 
+          padding: 16, borderRadius: 20, background: HP_TOKENS.sageWash,
+          display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20,
+          border: `1px solid ${HP_TOKENS.sage}20`
+        }}>
+          <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.sage, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800 }}>
+            <span>🎯</span> Buat KPI Baru
+          </div>
+
+          {error && (
+            <div style={{ padding: 10, borderRadius: 10, background: '#FFF5F5', color: '#E03131', fontSize: 12, fontWeight: 700 }}>
+              {error}
+            </div>
+          )}
+
+          <input
+            type="text" value={title} onChange={e => setTitle(e.target.value)}
+            placeholder="Judul KPI (mis: Redesign checkout flow)"
+            style={selectStyle}
+          />
+          <textarea
+            value={target} onChange={e => setTarget(e.target.value)}
+            placeholder="Target terukur (mis: Deliverable hi-fi di Figma)"
+            rows={2}
+            style={{ ...selectStyle, resize: 'none' }}
+          />
+
+          <div style={{ ...HP_TEXT.small, fontSize: 11, fontWeight: 700, color: HP_TOKENS.inkMute }}>Tipe KPI</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button 
+              type="button"
+              onClick={() => { setScope('assigned'); setAssignTo(''); }}
+              style={{
+                flex: 1, padding: '10px', borderRadius: 12, fontSize: 12, fontWeight: 800,
+                background: scope === 'assigned' ? HP_TOKENS.blue : '#fff',
+                color: scope === 'assigned' ? '#fff' : HP_TOKENS.ink,
+                border: `1.5px solid ${scope === 'assigned' ? HP_TOKENS.blue : HP_TOKENS.line}`,
+                cursor: 'pointer', fontFamily: HP_FONT,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+              }}
+            >
+              <span>👤</span> Individu
+            </button>
+            <button 
+              type="button"
+              onClick={() => { setScope('team'); setAssignTo(teamId || 'team_1'); }}
+              style={{
+                flex: 1, padding: '10px', borderRadius: 12, fontSize: 12, fontWeight: 800,
+                background: scope === 'team' ? HP_TOKENS.blue : '#fff',
+                color: scope === 'team' ? '#fff' : HP_TOKENS.ink,
+                border: `1.5px solid ${scope === 'team' ? HP_TOKENS.blue : HP_TOKENS.line}`,
+                cursor: 'pointer', fontFamily: HP_FONT,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+              }}
+            >
+              <span>👥</span> Seluruh Tim
+            </button>
+          </div>
+
+          <div style={{ ...HP_TEXT.small, fontSize: 11, fontWeight: 700, color: HP_TOKENS.inkMute }}>Bobot (%)</div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {[10, 20, 25, 30, 40, 50].map(w => (
+              <button key={w} onClick={() => setWeight(w)} style={{
+                flex: 1, padding: 8, borderRadius: 8, fontSize: 12, fontWeight: 800,
+                background: weight === w ? HP_TOKENS.sage : '#fff',
+                color: weight === w ? '#fff' : HP_TOKENS.ink,
+                border: `1px solid ${weight === w ? HP_TOKENS.sage : HP_TOKENS.line}`,
+                cursor: 'pointer', fontFamily: HP_FONT,
+              }}>
+                {w}%
+              </button>
+            ))}
+          </div>
+
+          {scope === 'assigned' ? (
+            <>
+              <div style={{ ...HP_TEXT.small, fontSize: 11, fontWeight: 700, color: HP_TOKENS.inkMute }}>Assign ke</div>
+              <div style={{ position: 'relative' }}>
+                <div 
+                  onClick={() => setShowAssignDropdown(!showAssignDropdown)}
+                  style={{ ...selectStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
+                >
+                  <span>
+                    {assignTo === "" ? "Pilih anggota tim..." : members.find(m => m.id === assignTo)?.name || "Pilih anggota tim..."}
+                  </span>
+                  <HPGlyph name="chevron-down" size={16} color={HP_TOKENS.inkMute} />
+                </div>
+                {showAssignDropdown && (
+                  <>
+                    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 }} onClick={() => setShowAssignDropdown(false)} />
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(26,29,35,0.12)', border: `1px solid ${HP_TOKENS.line}`, zIndex: 101, maxHeight: 200, overflowY: 'auto', padding: 8 }}>
+                      <div 
+                        className="hp-tap"
+                        onClick={() => { setAssignTo(""); setShowAssignDropdown(false); }}
+                        style={{
+                          padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                          background: assignTo === "" ? HP_TOKENS.blueWash : 'transparent',
+                          ...HP_TEXT.body, color: assignTo === '' ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: assignTo === "" ? 700 : 500,
+                          marginBottom: 4
+                        }}
+                      >
+                        Pilih anggota tim...
+                      </div>
+                      {members.map(m => (
+                        <div 
+                          key={m.id} className="hp-tap"
+                          onClick={() => { setAssignTo(m.id); setShowAssignDropdown(false); }}
+                          style={{
+                            padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                            background: assignTo === m.id ? HP_TOKENS.blueWash : 'transparent',
+                            ...HP_TEXT.body, color: assignTo === m.id ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: assignTo === m.id ? 700 : 500,
+                            marginBottom: 4
+                          }}
+                        >
+                          {m.name} — {m.job_title || m.role}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            </>
+          ) : (
+            <div style={{ padding: 12, borderRadius: 12, background: HP_TOKENS.blueWash, border: `1px solid ${HP_TOKENS.blueSoft}` }}>
+              <div style={{ ...HP_TEXT.small, color: HP_TOKENS.blue, fontWeight: 700 }}>
+                👥 Target KPI Tim
+              </div>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkSoft, marginTop: 2 }}>
+                KPI ini akan ditugaskan ke seluruh anggota tim secara kolektif.
+              </div>
+            </div>
+          )}
+
+          <button onClick={handleCreate} disabled={!title || !assignTo || saving} style={{
+            width: '100%', padding: 12, borderRadius: 12, border: 'none',
+            background: HP_TOKENS.sage, color: '#F4F7F9',
+            fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',
+            opacity: !title || !assignTo || saving ? 0.5 : 1,
+            marginTop: 4
+          }}>
+            {saving ? 'Menyimpan...' : 'Buat KPI'}
+          </button>
+        </div>
+
+        <div style={{ margin: '24px 0 16px', height: 1, background: HP_TOKENS.line }} />
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div style={{ ...HP_TEXT.h, fontSize: 15, color: HP_TOKENS.ink, fontWeight: 800 }}>
+            📋 Daftar KPI Terdaftar
+          </div>
+          <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 700 }}>
+            {kpis.length} KPI
+          </div>
+        </div>
+
+        {/* Weight status indicator */}
         <div style={{ 
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           padding: '10px 14px', borderRadius: 12, marginBottom: 16,
@@ -236,18 +406,18 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
           </span>
         </div>
 
-        {/* KPI List */}
+        {/* 2. KPI List (Always visible at bottom) */}
         {loading ? (
           <div style={{ textAlign: 'center', padding: 20, color: HP_TOKENS.inkMute }}>Memuat...</div>
         ) : kpis.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '30px 20px', color: HP_TOKENS.inkMute }}>
             <div style={{ fontSize: 32, marginBottom: 8 }}>🎯</div>
             <div style={{ ...HP_TEXT.body, fontWeight: 700 }}>Belum ada KPI untuk {MONTHS[month - 1]} {year}</div>
-            <div style={{ ...HP_TEXT.small, marginTop: 4 }}>Klik tombol di bawah untuk mulai</div>
+            <div style={{ ...HP_TEXT.small, marginTop: 4 }}>Silakan buat KPI baru di atas</div>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 16 }}>
-            {weightEntries.map(group => (
+            {paginatedEntries.map(group => (
               <div key={group.id} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 4px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -298,121 +468,44 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
                 </div>
               </div>
             ))}
-          </div>
-        )}
 
-        {/* Add Form */}
-        {showForm ? (
-          <div style={{ 
-            padding: 16, borderRadius: 20, background: HP_TOKENS.sageWash,
-            display: 'flex', flexDirection: 'column', gap: 12
-          }}>
-            {error && (
-              <div style={{ padding: 10, borderRadius: 10, background: '#FFF5F5', color: '#E03131', fontSize: 12, fontWeight: 700 }}>
-                {error}
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 12 }}>
+                <button 
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={activePage === 1}
+                  style={{
+                    padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                    background: activePage === 1 ? HP_TOKENS.lineSoft : '#fff',
+                    color: activePage === 1 ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                    cursor: activePage === 1 ? 'default' : 'pointer',
+                    opacity: activePage === 1 ? 0.6 : 1, transition: 'all 0.2s'
+                  }}
+                >
+                  Sebelumnya
+                </button>
+                <span style={{ fontFamily: HP_FONT, fontSize: 13, fontWeight: 700, color: HP_TOKENS.inkSoft }}>
+                  {activePage} / {totalPages}
+                </span>
+                <button 
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={activePage === totalPages}
+                  style={{
+                    padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
+                    background: activePage === totalPages ? HP_TOKENS.lineSoft : '#fff',
+                    color: activePage === totalPages ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
+                    cursor: activePage === totalPages ? 'default' : 'pointer',
+                    opacity: activePage === totalPages ? 0.6 : 1, transition: 'all 0.2s'
+                  }}
+                >
+                  Berikutnya
+                </button>
               </div>
             )}
-
-            <input
-              type="text" value={title} onChange={e => setTitle(e.target.value)}
-              placeholder="Judul KPI (mis: Redesign checkout flow)"
-              style={selectStyle}
-            />
-            <textarea
-              value={target} onChange={e => setTarget(e.target.value)}
-              placeholder="Target terukur (mis: Deliverable hi-fi di Figma)"
-              rows={2}
-              style={{ ...selectStyle, resize: 'none' }}
-            />
-
-            <div style={{ ...HP_TEXT.small, fontSize: 11, fontWeight: 700, color: HP_TOKENS.inkMute }}>Bobot (%)</div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              {[10, 20, 25, 30, 40, 50].map(w => (
-                <button key={w} onClick={() => setWeight(w)} style={{
-                  flex: 1, padding: 8, borderRadius: 8, fontSize: 12, fontWeight: 800,
-                  background: weight === w ? HP_TOKENS.sage : '#fff',
-                  color: weight === w ? '#fff' : HP_TOKENS.ink,
-                  border: `1px solid ${weight === w ? HP_TOKENS.sage : HP_TOKENS.line}`,
-                  cursor: 'pointer', fontFamily: HP_FONT,
-                }}>
-                  {w}%
-                </button>
-              ))}
-            </div>
-
-            <div style={{ ...HP_TEXT.small, fontSize: 11, fontWeight: 700, color: HP_TOKENS.inkMute }}>Assign ke</div>
-            <div style={{ position: 'relative' }}>
-              <div 
-                onClick={() => setShowAssignDropdown(!showAssignDropdown)}
-                style={{ ...selectStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
-              >
-                <span>
-                  {assignTo === "" ? "Pilih anggota tim..." : members.find(m => m.id === assignTo)?.name || "Pilih anggota tim..."}
-                </span>
-                <HPGlyph name="chevron-down" size={16} color={HP_TOKENS.inkMute} />
-              </div>
-              {showAssignDropdown && (
-                <>
-                  <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 }} onClick={() => setShowAssignDropdown(false)} />
-                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(26,29,35,0.12)', border: `1px solid ${HP_TOKENS.line}`, zIndex: 101, maxHeight: 250, overflowY: 'auto', padding: 8 }}>
-                    <div 
-                      className="hp-tap"
-                      onClick={() => { setAssignTo(""); setShowAssignDropdown(false); }}
-                      style={{
-                        padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
-                        background: assignTo === "" ? HP_TOKENS.blueWash : 'transparent',
-                        ...HP_TEXT.body, color: assignTo === '' ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: assignTo === "" ? 700 : 500,
-                        marginBottom: 4
-                      }}
-                    >
-                      Pilih anggota tim...
-                    </div>
-                    {members.map(m => (
-                      <div 
-                        key={m.id} className="hp-tap"
-                        onClick={() => { setAssignTo(m.id); setShowAssignDropdown(false); }}
-                        style={{
-                          padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
-                          background: assignTo === m.id ? HP_TOKENS.blueWash : 'transparent',
-                          ...HP_TEXT.body, color: assignTo === m.id ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: assignTo === m.id ? 700 : 500,
-                          marginBottom: 4
-                        }}
-                      >
-                        {m.name} — {m.job_title || m.role}
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => setShowForm(false)} style={{
-                flex: 1, padding: 12, borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
-                background: HP_TOKENS.card, fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer', color: HP_TOKENS.inkSoft
-              }}>
-                Batal
-              </button>
-              <button onClick={handleCreate} disabled={!title || !assignTo || saving} style={{
-                flex: 2, padding: 12, borderRadius: 12, border: 'none',
-                background: HP_TOKENS.sage, color: '#F4F7F9',
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',
-                opacity: !title || !assignTo || saving ? 0.5 : 1,
-              }}>
-                {saving ? 'Menyimpan...' : 'Buat KPI'}
-              </button>
-            </div>
           </div>
-        ) : (
-          <button onClick={() => setShowForm(true)} style={{
-            width: '100%', padding: 14, borderRadius: 14, border: `2px dashed ${HP_TOKENS.sage}`,
-            background: HP_TOKENS.sageWash, color: HP_TOKENS.sage,
-            fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-          }}>
-            <HPGlyph name="plus" size={16} color={HP_TOKENS.sage} />
-            Tambah KPI Baru
-          </button>
         )}
       </div>
     </Modal>
