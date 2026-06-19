@@ -56,7 +56,7 @@ export default function ManagerTeamKPIView({
         label="Assigned to Members (KPIs)" 
         count={String(topLevelGoals.length)} 
         action="+ Buat KPI"
-        onAction={() => openModal('new_goal', { scope: 'employee' })}
+        onAction={() => openModal('manage_kpi')}
       />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {paginatedKPIs.map(g => {

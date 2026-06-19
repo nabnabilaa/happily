@@ -33,7 +33,7 @@ const now = new Date();
 const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
 export default function ManageKPIModal({ onClose }: ManageKPIModalProps) {
-  const { user } = useHP();
+  const { user, updateState } = useHP();
   const [kpis, setKpis] = useState<KPI[]>([]);
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,6 +96,7 @@ export default function ManageKPIModal({ onClose }: ManageKPIModalProps) {
       setTitle(''); setTarget(''); setWeight(25); setAssignTo('');
       setShowForm(false);
       fetchKPIs();
+      updateState((s: any) => ({ ...s, goals: [...(s.goals || [])] })); // trigger refetch
     } catch (e) { setError('Gagal menyimpan'); }
     setSaving(false);
   };
@@ -103,6 +104,7 @@ export default function ManageKPIModal({ onClose }: ManageKPIModalProps) {
   const handleDelete = async (kpiId: string) => {
     await fetch(`/api/kpi?id=${kpiId}`, { method: 'DELETE' });
     fetchKPIs();
+    updateState((s: any) => ({ ...s, goals: [...(s.goals || [])] })); // trigger refetch
   };
 
   const totalWeight = kpis.reduce((sum, k) => sum + k.weight, 0);
