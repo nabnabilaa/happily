@@ -265,7 +265,7 @@ window.fbForceSync = function() {
 
 // Listen to messages from window (web-to-extension)
 window.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'FLOWBEE_DB_UPDATE') {
+  if (event.data && (event.data.type === 'FLOWBEE_DB_UPDATE' || event.data.type === 'FLOWBEE_WEBSITE_UPDATE')) {
     flowbeeSyncAll(true);
   }
 });
@@ -281,10 +281,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 // Initial triggers
 setTimeout(() => {
   detectFlowbeeUser();
-  flowbeeSyncAll();
+  flowbeeSyncAll(true);
 }, 2000);
 
 setInterval(() => {
   detectFlowbeeUser();
-  flowbeeSyncAll();
+  flowbeeSyncAll(true);
 }, 5000);
