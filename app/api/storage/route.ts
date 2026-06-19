@@ -89,81 +89,8 @@ export async function GET(request: Request) {
       });
     }
 
-    // Fetch Goals with Owner Names and Sub-goals
-    const goalsRes = await db.execute({
-      sql: `SELECT g.*, u.name as joined_owner_name 
-            FROM goals g 
-            LEFT JOIN users u ON g.owner_id = u.id 
-            WHERE g.owner_id = ? 
-               OR g.assigned_by_id = ? 
-               OR g.scope IN ('company', 'team')
-               OR g.owner_id IN (SELECT id FROM users WHERE manager_id = ?)`,
-      args: [userId, userId, userId]
-    });
-
-    const goals = await Promise.all(goalsRes.rows.map(async (r) => {
-      const subGoalsRes = await db.execute({
-        sql: "SELECT * FROM sub_goals WHERE goal_id = ?",
-        args: [String(r.id)]
-      });
-
-      // Roll-up progress from child goals (aligned to this goal)
-      const childGoalsRes = await db.execute({
-        sql: "SELECT progress FROM goals WHERE parent_id = ?",
-        args: [String(r.id)]
-      });
-      let dynamicMetric = r.metric;
-      let effectiveProgress = Number(r.progress) || 0;
-
-      if (childGoalsRes.rows.length > 0) {
-        dynamicMetric = `${childGoalsRes.rows.length} aligned OKR`;
-      } else {
-        // Self-healing: accurately count actual tasks in database for metric labeling
-        const tasksRes = await db.execute({
-          sql: "SELECT COUNT(*) as total, SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as done FROM daily_priorities WHERE goal_id = ? OR kpi_id = ?",
-          args: [String(r.id), String(r.id)]
-        });
-        const total = Number(tasksRes.rows[0]?.total || 0);
-        if (total > 0) {
-          const done = Number(tasksRes.rows[0]?.done || 0);
-          dynamicMetric = `${done}/${total} task selesai`;
-        }
-      }
-
-      // Parse due_date: detect ISO vs display format, return both
-      const rawDue = (r.due_date as string) || '';
-      let dueDisplay = rawDue;
-      let dueISO = '';
-      if (rawDue.includes('T')) {
-        // Already ISO format
-        dueISO = rawDue.slice(0, 16);
-        try {
-          const d = new Date(rawDue);
-          if (!isNaN(d.getTime())) {
-            dueDisplay = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) + ' ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-          }
-        } catch (e) {}
-      }
-
-      return {
-        id: String(r.id), // Ensure ID is string for frontend consistency
-        title: r.title,
-        progress: effectiveProgress,
-        alignment: r.alignment,
-        due: dueDisplay,
-        dueISO: dueISO,
-        tone: r.tone,
-        metric: dynamicMetric,
-        scope: r.scope,
-        owner: (r.joined_owner_name as string) || (r.owner_name as string) || 'Unknown',
-        ownerId: String(r.owner_id),
-        assignedById: r.assigned_by_id ? String(r.assigned_by_id) : null,
-        parent_id: r.parent_id ? String(r.parent_id) : null,
-        status: r.status || 'pending',
-        is_kpi: !!r.is_kpi,
-        subGoals: subGoalsRes.rows.map(sr => ({ id: String(sr.id), title: sr.title, done: !!sr.is_done }))
-      };
-    }));
+    // Legacy goals are replaced by KPIs. Returning empty array for backward compatibility
+    const goals: any[] = [];
 
     const surveysRes = await db.execute("SELECT * FROM surveys WHERE status = 'active'");
     const surveys = surveysRes.rows.map(r => ({
@@ -628,81 +555,9 @@ export async function POST(request: Request) {
       }
     }
 
-    // Sync Goals — only sync goals this user OWNS or ASSIGNED (never touch others')
+    // Sync Goals — Legacy goals are now handled by KPI endpoints
     if (state.goals) {
-      // Only goals strictly owned by this user are candidates for deletion
-      // Goals from teammates, company-wide, or subordinates are READ-ONLY in this user's sync
-      const myOwnedGoalIds = state.goals
-        .filter((g: any) => String(g.ownerId || '') === String(userId))
-        .map((g: any) => String(g.id));
-
-      // Goals this user assigned (as manager) — also owned by them conceptually
-      const myAssignedGoalIds = state.goals
-        .filter((g: any) => String(g.assignedById || '') === String(userId) && String(g.ownerId || '') !== String(userId))
-        .map((g: any) => String(g.id));
-
-      // Safe delete: only remove goals owned by this user that are no longer in state
-      // NEVER delete goals owned by other users, even if they appear in state
-      if (myOwnedGoalIds.length > 0) {
-        try {
-          await db.execute({
-            sql: `DELETE FROM goals 
-                  WHERE owner_id = ? 
-                  AND id NOT IN (${myOwnedGoalIds.map(() => '?').join(',')})`,
-            args: [userId, ...myOwnedGoalIds]
-          });
-        } catch (e) {
-          console.error("Goal deletion sync error (owned):", e);
-        }
-      } else {
-        // If user has no goals in state, do NOT delete anything —
-        // state may just be loading/incomplete; skip deletion to prevent data loss
-        // (goals will still be upserted below when user adds new ones)
-      }
-
-      // Safe delete: only remove goals assigned BY this user that are no longer in state
-      if (myAssignedGoalIds.length > 0) {
-        try {
-          await db.execute({
-            sql: `DELETE FROM goals 
-                  WHERE assigned_by_id = ? 
-                  AND owner_id != ? 
-                  AND id NOT IN (${myAssignedGoalIds.map(() => '?').join(',')})`,
-            args: [userId, userId, ...myAssignedGoalIds]
-          });
-        } catch (e) {
-          console.error("Goal deletion sync error (assigned):", e);
-        }
-      }
-
-      for (const g of state.goals) {
-        // Only UPSERT goals this user owns or assigned — don't overwrite other users' goals
-        const goalOwnerId = String(g.ownerId || '');
-        const goalAssignedById = String(g.assignedById || '');
-        if (goalOwnerId !== String(userId) && goalAssignedById !== String(userId)) continue;
-
-        await db.execute({
-          sql: `INSERT INTO goals (id, owner_id, title, progress, alignment, due_date, tone, metric, scope, parent_id, assigned_by_id, status, is_kpi) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE 
-                owner_id=VALUES(owner_id), title=VALUES(title), progress=VALUES(progress), alignment=VALUES(alignment), 
-                due_date=VALUES(due_date), tone=VALUES(tone), metric=VALUES(metric), 
-                scope=VALUES(scope), parent_id=VALUES(parent_id), assigned_by_id=VALUES(assigned_by_id),
-                status=VALUES(status), is_kpi=VALUES(is_kpi)`,
-          args: [String(g.id), String(g.ownerId || userId), g.title, g.progress, g.alignment, g.dueISO || g.due, g.tone, g.metric, g.scope, g.parent_id || null, g.assignedById || null, g.status || 'pending', g.is_kpi ? 1 : 0]
-        });
-
-        // Sync Sub-goals
-        if (g.subGoals) {
-          await db.execute({ sql: "DELETE FROM sub_goals WHERE goal_id = ?", args: [String(g.id)] });
-          for (const sg of g.subGoals) {
-            await db.execute({
-              sql: `INSERT INTO sub_goals (goal_id, title, is_done) VALUES (?, ?, ?)`,
-              args: [String(g.id), sg.title, sg.done ? 1 : 0]
-            });
-          }
-        }
-      }
+      // Do nothing, KPIs are handled by /api/kpi routes.
     }
 
     // Sync Skills (Programmatic Diffing)
