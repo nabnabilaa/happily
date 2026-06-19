@@ -50,7 +50,27 @@ export function useManagerGoals(state: any, user: any, updateState: any, notify:
           subGoals: []
         }));
 
-        setApiKpis([...managerKpis, ...personalKpis]);
+        const teamRes = await fetch(`/api/kpi?userId=${user.id}&role=manager&month=${m}&year=${y}`);
+        const teamData = await teamRes.json();
+        const teamKpis = (teamData.kpis || []).map((k: any) => ({
+          id: String(k.id),
+          title: k.title,
+          progress: k.finalScore !== null && k.finalScore !== undefined ? Number(k.finalScore) : 0,
+          alignment: k.weight || 0,
+          due: `${m}/${y}`,
+          tone: 'blue',
+          metric: k.targetDescription || 'KPI Anggota',
+          scope: k.scope || 'assigned',
+          owner: k.assigneeName || 'Team Member',
+          ownerId: String(k.assignedTo),
+          assignedById: String(k.assignedBy),
+          status: k.status || 'active',
+          is_kpi: true,
+          isApiKpi: true,
+          subGoals: []
+        }));
+
+        setApiKpis([...managerKpis, ...personalKpis, ...teamKpis]);
       } catch (e) {
         console.error("Failed to load KPIs in ManagerGoalsScreen:", e);
       } finally {
@@ -76,12 +96,27 @@ export function useManagerGoals(state: any, user: any, updateState: any, notify:
   }, [apiKpis, goals, userId]);
 
   const assignedGoals = useMemo(() => {
-    if (!state?.goals || !user?.id) return [];
-    return state.goals.filter((g: any) => 
-      (g.scope === 'assigned' && String(g.assignedById) === String(user.id)) || 
-      (String(g.ownerId) !== String(user.id) && g.scope !== 'company')
+    const goalsFromState = state?.goals || [];
+    const stateAssigned = goalsFromState.filter((g: any) => 
+      (g.scope === 'assigned' && String(g.assignedById) === String(user?.id)) || 
+      (String(g.ownerId) !== String(user?.id) && g.scope !== 'company')
     );
-  }, [state?.goals, user?.id]);
+    
+    // Add team KPIs from API
+    const apiAssigned = apiKpis.filter((k: any) => 
+      k.scope === 'assigned' || k.scope === 'team'
+    ).filter((k: any) => 
+      String(k.ownerId) !== String(user?.id) || k.scope === 'team'
+    );
+    
+    const combined = [...stateAssigned];
+    apiAssigned.forEach((k: any) => {
+      if (!combined.some((g: any) => String(g.id) === String(k.id))) {
+        combined.push(k);
+      }
+    });
+    return combined;
+  }, [state?.goals, user?.id, apiKpis]);
 
   const topLevelGoals = useMemo(() => {
     return assignedGoals.filter((g: any) => {
