@@ -33,10 +33,10 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
   }, [logs, activePage]);
 
   useEffect(() => {
-    if (!state?.managerData?.teamTasks) return;
+    const teamTasks = state?.managerData?.teamTasks || [];
 
     const timer = setTimeout(() => {
-      const memberTasks = state.managerData.teamTasks.filter((t: any) => String(t.userId) === String(memberId));
+      const memberTasks = teamTasks.filter((t: any) => String(t.userId) === String(memberId));
       
       // Group by date (local date)
       const groups: Record<string, any[]> = {};
