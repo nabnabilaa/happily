@@ -202,11 +202,11 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
           className="hp-tap"
           style={{
             flex: 2, padding: '12px 16px', borderRadius: 14,
-            background: `linear-gradient(135deg, ${HP_TOKENS.blue}, #2D6A9F)`,
+            background: `linear-gradient(135deg, ${HP_TOKENS.primary}, #2563EB)`,
             color: '#F4F7F9', border: 'none', fontFamily: HP_FONT, fontWeight: 800,
             fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center',
             justifyContent: 'center', gap: 8,
-            boxShadow: `0 4px 16px ${HP_TOKENS.blue}30`,
+            boxShadow: `0 4px 16px rgba(59, 130, 246, 0.25)`,
           }}
         >
           <HPGlyph name="activity" size={16} color="#F4F7F9" />
@@ -289,7 +289,7 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
                       </div>
                       <div style={{
                         padding: '1px 6px', borderRadius: 4, fontSize: 8, fontWeight: 800,
-                        background: '#FF6B3515', color: '#FF6B35', fontFamily: HP_FONT, border: '1px solid #FF6B3530'
+                        background: 'rgba(59, 130, 246, 0.08)', color: 'var(--hp-primary)', fontFamily: HP_FONT, border: '1px solid rgba(59, 130, 246, 0.25)'
                       }}>
                         Lv {u.level} • {u.points} pts
                       </div>

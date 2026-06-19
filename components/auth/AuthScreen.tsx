@@ -167,9 +167,9 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
             flexWrap: "wrap",
             width: "100%",
             maxWidth: 960,
-            background: `linear-gradient(160deg, ${HP_TOKENS.primaryWash} 0%, #FFE6D6 100%)`,
+            background: `linear-gradient(160deg, ${HP_TOKENS.primaryWash} 0%, ${HP_TOKENS.primarySoft} 100%)`,
             borderRadius: 32,
-            boxShadow: "0 20px 60px rgba(255, 107, 53, 0.15)",
+            boxShadow: "0 20px 60px rgba(59, 130, 246, 0.15)",
             overflow: "hidden",
             position: "relative"
           }}>
@@ -192,17 +192,17 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
               <div style={{
                 fontFamily: HP_FONT_DISPLAY, fontSize: 36, fontWeight: 700, color: HP_TOKENS.ink, letterSpacing: -1,
               }}>
-                Focus<span style={{ color: HP_TOKENS.primary }}>Buddy</span> ✨
+                Flow<span style={{ color: HP_TOKENS.primary }}>buddy</span><span style={{ fontSize: 16, fontWeight: 800, color: HP_TOKENS.inkMute, marginLeft: 6 }}>by Maxy</span> ✨
               </div>
               <div style={{ fontSize: 13, color: HP_TOKENS.inkSoft, fontWeight: 600, marginTop: 4, letterSpacing: 0.5 }}>
-                Flow into Focus — Kerja Lebih Cerdas
+                Flowbuddy by Maxy — Kerja Lebih Cerdas
               </div>
 
               <div style={{ marginTop: 60 }}>
                 <h1 style={{ fontSize: 28, fontWeight: 800, color: HP_TOKENS.ink, margin: 0 }}>Selamat datang kembali!</h1>
                 <div style={{ width: 40, height: 4, background: HP_TOKENS.primary, borderRadius: 2, marginTop: 12, marginBottom: 16 }} />
                 <p style={{ fontSize: 15, color: HP_TOKENS.inkMute, lineHeight: 1.6, fontWeight: 500 }}>
-                  Masuk ke akunmu dan lanjutkan<br/>perjalanan produktifmu bersama FocusBuddy ✨
+                  Masuk ke akunmu dan lanjutkan<br/>perjalanan produktifmu bersama Flowbuddy ✨
                 </p>
               </div>
             </div>
@@ -232,7 +232,7 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
               </div>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: HP_TOKENS.primary }}>Install App</div>
-                <div style={{ fontSize: 11, fontWeight: 600, color: HP_TOKENS.inkMute }}>Nikmati pengalaman<br/>FocusBuddy di desktop</div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: HP_TOKENS.inkMute }}>Nikmati pengalaman<br/>Flowbuddy di desktop</div>
               </div>
               <HPGlyph name="download" size={16} color={HP_TOKENS.primary} />
             </div>
@@ -242,7 +242,7 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
             .hp-link { transition: all 0.2s ease; }
             .hp-link:hover { text-decoration: underline !important; filter: brightness(0.9); }
             .hp-btn-hover { transition: all 0.2s ease; }
-            .hp-btn-hover:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(255,107,53,0.4) !important; filter: brightness(1.05); }
+            .hp-btn-hover:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(59,130,246,0.4) !important; filter: brightness(1.05); }
             .hp-google-btn-wrapper { transition: all 0.2s ease; }
             .hp-google-btn-wrapper:hover { transform: translateY(-2px); }
             .hp-spin { animation: spin 1.5s linear infinite; }
@@ -355,9 +355,9 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                   className={loading ? "" : "hp-btn-hover"}
                   style={{
                     width: '100%', padding: '16px', borderRadius: 100, border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15,
-                    background: loading ? HP_TOKENS.lineSoft : `linear-gradient(135deg, ${HP_TOKENS.primary}, #FF8C00)`,
+                    background: loading ? HP_TOKENS.lineSoft : `linear-gradient(135deg, ${HP_TOKENS.primary}, #60A5FA)`,
                     color: loading ? HP_TOKENS.inkMute : '#fff', cursor: loading ? 'not-allowed' : 'pointer',
-                    boxShadow: loading ? 'none' : `0 8px 24px rgba(255,107,53,0.3)`, transition: 'all 0.2s',
+                    boxShadow: loading ? 'none' : `0 8px 24px rgba(59,130,246,0.3)`, transition: 'all 0.2s',
                     display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8
                   }}
                 >

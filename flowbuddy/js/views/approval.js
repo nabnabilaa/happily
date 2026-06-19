@@ -58,8 +58,8 @@ const ApprovalView = {
   },
 
   render(container) {
-    const pendingTasks = (this.teamTasks || []).filter(t => t.status === 'pending_review');
-    const processedTasks = (this.teamTasks || []).filter(t => t.status === 'approved' || t.status === 'rejected' || t.status === 'revision');
+    const pendingTasks = (this.teamTasks || []).filter(t => t.done && !t.verified);
+    const processedTasks = (this.teamTasks || []).filter(t => t.verified || t.status === 'rejected' || t.status === 'revision');
 
     let html = '<div class="section-title">📋 Persetujuan Tim</div>';
 
@@ -109,13 +109,13 @@ const ApprovalView = {
          if (processedTasks.length > 0) {
            html += '<div class="section-title" style="margin-top: 8px; font-size: 11px; border-bottom: none; color: var(--color-text-light);">RIWAYAT TUGAS HARIAN</div>';
            processedTasks.forEach(item => {
-              const icon = item.status === 'approved' ? '✅' : item.status === 'rejected' ? '❌' : '↻';
-              const label = item.status === 'approved' ? 'Disetujui' : item.status === 'rejected' ? 'Ditolak' : 'Revisi';
+              const icon = item.verified ? '✅' : item.status === 'rejected' ? '❌' : '↻';
+              const label = item.verified ? 'Disetujui' : item.status === 'rejected' ? 'Ditolak' : 'Revisi';
               html += `
-                <div class="approval-card" style="border-left-color: ${item.status === 'approved' ? 'var(--color-success)' : item.status === 'rejected' ? 'var(--color-danger)' : 'var(--color-urgent)'}; opacity: 0.7;">
-                  <div class="approval-header">
-                    <span>${icon}</span>
-                    <span class="approval-title" style="text-decoration: ${item.status === 'rejected' ? 'line-through' : 'none'};">${this.esc(item.title)}</span>
+                  <div class="approval-card" style="border-left-color: ${item.verified ? 'var(--color-success)' : item.status === 'rejected' ? 'var(--color-danger)' : 'var(--color-urgent)'}; opacity: 0.7;">
+                    <div class="approval-header">
+                      <span>${icon}</span>
+                      <span class="approval-title" style="text-decoration: ${item.status === 'rejected' ? 'line-through' : 'none'};">${this.esc(item.title)}</span>
                   </div>
                   <div class="approval-meta">${label} · Selesai Oleh: ${this.esc(item.userName)}</div>
                 </div>

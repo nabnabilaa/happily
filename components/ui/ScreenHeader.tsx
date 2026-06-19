@@ -10,7 +10,7 @@ interface ScreenHeaderProps {
 
 export default function ScreenHeader({ title, subtitle }: ScreenHeaderProps) {
   return (
-    <div style={{ padding: '24px 8px 16px' }}>
+    <div style={{ padding: '16px 8px 12px' }}>
       <div style={{ ...HP_TEXT.display }}>{title}</div>
       {subtitle && <div style={{ ...HP_TEXT.body, marginTop: 8 }}>{subtitle}</div>}
     </div>

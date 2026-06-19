@@ -5,41 +5,41 @@
    ========================================================================== */
 
 /* ── Google Fonts ── */
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@800&display=swap');
 
 :root {
   /* ── Netral / Kanvas (60%) ── */
-  --bg-main: #F8FAFC;
+  --bg-main: #FFFFFF;
   --bg-card: #FFFFFF;
-  --bg-card-hover: #F1F5F9;
-  --text-primary: #334155;
-  --text-secondary: #64748B;
-  --text-muted: #94A3B8;
+  --bg-card-hover: #F0F9FF;
+  --text-primary: #1E293B;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
   --border-light: #E2E8F0;
   --border-medium: #CBD5E1;
 
   /* ── Role Colors (30%) — default Employee ── */
   --color-role: #3B82F6;
-  --color-role-soft: #DBEAFE;
+  --color-role-soft: #EFF6FF;
   --color-role-hover: #2563EB;
 
   /* ── Employee ── */
   --color-employee: #3B82F6;
-  --color-employee-soft: #DBEAFE;
+  --color-employee-soft: #EFF6FF;
   /* ── Manager ── */
-  --color-manager: #4F46E5;
-  --color-manager-soft: #E0E7FF;
+  --color-manager: #60A5FA;
+  --color-manager-soft: #EFF6FF;
   /* ── HR ── */
-  --color-hr: #8B5CF6;
-  --color-hr-soft: #EDE9FE;
+  --color-hr: #93C5FD;
+  --color-hr-soft: #EFF6FF;
 
   /* ── Aksen Fun (10%) ── */
-  --color-success: #22C55E;
-  --color-success-soft: #DCFCE7;
+  --color-success: #10B981;
+  --color-success-soft: #ECFDF5;
   --color-urgent: #F59E0B;
-  --color-urgent-alt: #FB923C;
+  --color-urgent-alt: #F97316;
   --color-danger: #EF4444;
-  --color-danger-soft: #FEE2E2;
+  --color-danger-soft: #FEF2F2;
 
   /* ── Chat Bubble ── */
   --color-bubble-in: #F1F5F9;
@@ -85,8 +85,8 @@
   --font-size-base: 14px;
   --font-size-md: 15px;
   --font-size-lg: 16px;
-  --font-size-xl: 18px;
-  --font-size-2xl: 22px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 26px;
 
   /* ── Transitions ── */
   --transition-fast: 0.15s ease;
@@ -102,31 +102,31 @@
 
 /* ── Dark Mode ── */
 [data-theme="dark"] {
-  --bg-main: #0F172A;
+  --bg-main: #0B1329;
   --bg-card: #1E293B;
   --bg-card-hover: #334155;
-  --text-primary: #F1F5F9;
-  --text-secondary: #94A3B8;
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
   --text-muted: #64748B;
   --border-light: rgba(255, 255, 255, 0.08);
   --border-medium: rgba(255, 255, 255, 0.12);
 
   /* Role colors brighten slightly in dark mode */
   --color-employee: #60A5FA;
-  --color-employee-soft: rgba(59, 130, 246, 0.15);
-  --color-manager: #818CF8;
-  --color-manager-soft: rgba(79, 70, 229, 0.15);
-  --color-hr: #A78BFA;
-  --color-hr-soft: rgba(139, 92, 246, 0.15);
+  --color-employee-soft: rgba(96, 165, 250, 0.15);
+  --color-manager: #93C5FD;
+  --color-manager-soft: rgba(147, 197, 253, 0.15);
+  --color-hr: #38BDF8;
+  --color-hr-soft: rgba(56, 189, 248, 0.15);
 
   --color-bubble-in: #334155;
 
   /* Avatar adjustments */
-  --color-avatar-rose: rgba(225, 29, 72, 0.15);
-  --color-avatar-emerald: rgba(5, 150, 105, 0.15);
-  --color-avatar-indigo: rgba(79, 70, 229, 0.15);
-  --color-avatar-amber: rgba(217, 119, 6, 0.15);
-  --color-avatar-purple: rgba(124, 58, 237, 0.15);
+  --color-avatar-rose: rgba(239, 68, 68, 0.15);
+  --color-avatar-emerald: rgba(16, 185, 129, 0.15);
+  --color-avatar-indigo: rgba(96, 165, 250, 0.15);
+  --color-avatar-amber: rgba(245, 158, 11, 0.15);
+  --color-avatar-purple: rgba(147, 197, 253, 0.15);
 
   /* Shadows for dark mode */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
@@ -147,22 +147,28 @@
 [data-role="manager"] {
   --color-role: var(--color-manager);
   --color-role-soft: var(--color-manager-soft);
-  --color-role-hover: #4338CA;
+  --color-role-hover: #3B82F6;
 }
 [data-role="hr"] {
   --color-role: var(--color-hr);
   --color-role-soft: var(--color-hr-soft);
-  --color-role-hover: #7C3AED;
+  --color-role-hover: #60A5FA;
 }
 [data-theme="dark"][data-role="employee"] {
   --color-role-hover: #93C5FD;
-  --color-bubble-out: rgba(59, 130, 246, 0.2);
+  --color-bubble-out: rgba(96, 165, 250, 0.2);
 }
 [data-theme="dark"][data-role="manager"] {
-  --color-role-hover: #A5B4FC;
-  --color-bubble-out: rgba(79, 70, 229, 0.2);
+  --color-role-hover: #93C5FD;
+  --color-bubble-out: rgba(147, 197, 253, 0.2);
 }
 [data-theme="dark"][data-role="hr"] {
-  --color-role-hover: #C4B5FD;
-  --color-bubble-out: rgba(139, 92, 246, 0.2);
+  --color-role-hover: #E0F2FE;
+  --color-bubble-out: rgba(56, 189, 248, 0.2);
+}
+
+/* ── Universal Nunito ExtraBold Rule ── */
+* {
+  font-family: var(--font-family) !important;
+  font-weight: 800 !important;
 }

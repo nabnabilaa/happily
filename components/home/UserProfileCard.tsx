@@ -42,7 +42,7 @@ export default function UserProfileCard({ user, levelProgress, openModal }: User
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                   <div style={{ 
-                    background: '#FF6B35', color: '#fff', fontSize: 10, fontWeight: 900, 
+                    background: HP_TOKENS.primary, color: '#fff', fontSize: 10, fontWeight: 900, 
                     padding: '2px 8px', borderRadius: 100, letterSpacing: 0.5 
                   }}>
                     Lv.{user.level}
@@ -70,10 +70,10 @@ export default function UserProfileCard({ user, levelProgress, openModal }: User
               </button>
               <div className="hp-tap" style={{
                 display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 100,
-                background: 'rgba(255,107,53,0.08)', fontFamily: HP_FONT, fontWeight: 900, fontSize: 14, color: '#FF6B35',
-                border: '1.5px solid rgba(255,107,53,0.25)',
+                background: 'rgba(59, 130, 246, 0.08)', fontFamily: HP_FONT, fontWeight: 900, fontSize: 14, color: HP_TOKENS.primary,
+                border: '1.5px solid rgba(59, 130, 246, 0.25)',
               }}>
-                <HPGlyph name="zap" size={14} color="#FF6B35" />
+                <HPGlyph name="zap" size={14} color={HP_TOKENS.primary} />
                 <span>{user.streak}</span>
               </div>
             </div>
@@ -85,7 +85,7 @@ export default function UserProfileCard({ user, levelProgress, openModal }: User
               <div style={{ width: '100%', height: 6, background: 'var(--hp-border)', borderRadius: 100, overflow: 'hidden' }}>
                 <div style={{ 
                   width: `${levelProgress * 100}%`, height: '100%', 
-                  background: 'linear-gradient(90deg, #FF6B35, #FFBE0B)', 
+                  background: 'linear-gradient(90deg, #3B82F6, #60A5FA)', 
                   borderRadius: 100,
                   transition: '1s cubic-bezier(0.2, 0.8, 0.2, 1)',
                 }} />

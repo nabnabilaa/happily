@@ -59,7 +59,7 @@ const CalendarView = {
       title: title.trim(),
       date: date,
       time: time || '',
-      color: color || '#FF6B35'
+      color: color || '#3B82F6'
     });
     this.save();
   },
@@ -196,7 +196,7 @@ const CalendarView = {
               </div>
             </div>
             <div style="margin-bottom: 12px; display: flex; gap: 8px;" id="ev-colors">
-              <button class="color-dot sel" data-c="#FF6B35" style="width: 24px; height: 24px; border-radius: 50%; background: #FF6B35; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--border); cursor: pointer;"></button>
+              <button class="color-dot sel" data-c="#3B82F6" style="width: 24px; height: 24px; border-radius: 50%; background: #3B82F6; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--border); cursor: pointer;"></button>
               <button class="color-dot" data-c="#1D3557" style="width: 24px; height: 24px; border-radius: 50%; background: #1D3557; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--border); cursor: pointer;"></button>
               <button class="color-dot" data-c="#2EC4B6" style="width: 24px; height: 24px; border-radius: 50%; background: #2EC4B6; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--border); cursor: pointer;"></button>
               <button class="color-dot" data-c="#FFBE0B" style="width: 24px; height: 24px; border-radius: 50%; background: #FFBE0B; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--border); cursor: pointer;"></button>
@@ -288,7 +288,7 @@ const CalendarView = {
        });
     }
 
-    let selectedColor = '#FF6B35';
+    let selectedColor = '#3B82F6';
     const dots = container.querySelectorAll('.color-dot');
     
     // Function to apply color selection
@@ -375,7 +375,7 @@ const CalendarView = {
            if(titleInp) titleInp.value = ev.title || '';
            if(dateInp) dateInp.value = ev.date || '';
            if(timeInp) timeInp.value = ev.time || '';
-           selectColor(ev.color || '#FF6B35');
+           selectColor(ev.color || '#3B82F6');
            
            if(addBtn) {
              addBtn.innerHTML = '✓ Update Agenda';

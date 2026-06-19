@@ -173,7 +173,7 @@ const NotesView = {
         <p style="margin: 8px 0 0 0; font-size: 14px; color: #64748b;">Semua catatan meeting, ide, dan informasi.</p>
       </div>
 
-      <button id="add-note-btn" style="width: 100%; padding: 14px; border-radius: 16px; background: #8b5cf6; color: white; font-weight: 700; border: none; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2); margin-bottom: 20px; transition: transform 0.2s;">
+      <button id="add-note-btn" style="width: 100%; padding: 14px; border-radius: 16px; background: var(--color-success); color: white; font-weight: 700; border: none; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); margin-bottom: 20px; transition: transform 0.2s;">
          ✨ Buat Catatan Baru
       </button>
 
@@ -369,7 +369,7 @@ const NotesView = {
 
       <div style="display: flex; justify-content: flex-end; gap: 12px; margin-bottom: 32px;">
         <button id="cancel-note-btn" style="padding: 12px 24px; border-radius: 12px; background: #f1f5f9; color: #64748b; font-weight: 700; border: none; cursor: pointer; font-size: 14px;">Batal</button>
-        <button id="save-note-btn" style="padding: 12px 24px; border-radius: 12px; background: #8b5cf6; color: white; font-weight: 700; border: none; cursor: pointer; font-size: 14px; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);">Simpan Catatan</button>
+        <button id="save-note-btn" style="padding: 12px 24px; border-radius: 12px; background: var(--color-success); color: white; font-weight: 700; border: none; cursor: pointer; font-size: 14px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">Simpan Catatan</button>
       </div>
     `;
 

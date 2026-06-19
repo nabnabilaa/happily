@@ -199,12 +199,36 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
   const done = priorities.filter((p: any) => p.done).length;
   const total = priorities.length;
   
+  const sortedPriorities = React.useMemo(() => {
+    const energyOrder: Record<string, number> = { high: 3, mid: 2, low: 1 };
+    return [...priorities].sort((a: any, b: any) => {
+      // 1. Incomplete/Active tasks first, completed/pending tasks last
+      if (!!a.done !== !!b.done) {
+        return a.done ? 1 : -1;
+      }
+      
+      // 2. Sort by energy priority (high > mid > low)
+      const energyA = a.energy || a.energy_level || 'mid';
+      const energyB = b.energy || b.energy_level || 'mid';
+      const valA = energyOrder[String(energyA).toLowerCase()] || 2;
+      const valB = energyOrder[String(energyB).toLowerCase()] || 2;
+      if (valA !== valB) return valB - valA;
+      
+      // 3. Keep stable order by creation time or ID (oldest first)
+      const timeA = a.created_at ? new Date(a.created_at).getTime() : (isNaN(Number(a.id)) ? 0 : Number(a.id));
+      const timeB = b.created_at ? new Date(b.created_at).getTime() : (isNaN(Number(b.id)) ? 0 : Number(b.id));
+      if (timeA !== timeB) return timeA - timeB;
+      
+      return String(a.id).localeCompare(String(b.id));
+    });
+  }, [priorities]);
+  
   const itemsPerPage = 5;
   const totalPages = Math.ceil(total / itemsPerPage);
   const paginatedPriorities = React.useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
-    return priorities.slice(start, start + itemsPerPage);
-  }, [priorities, currentPage]);
+    return sortedPriorities.slice(start, start + itemsPerPage);
+  }, [sortedPriorities, currentPage]);
 
   return (
     <div id="task-harian-section" style={{ marginTop: 24 }}>
@@ -249,7 +273,7 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
             <div style={{ 
                width: `${total > 0 ? (done / total) * 100 : 0}%`, 
                height: '100%', 
-               background: `linear-gradient(to right, ${HP_TOKENS.primary}, #FF8C00)`, 
+               background: `linear-gradient(to right, ${HP_TOKENS.primary}, #60A5FA)`, 
                borderRadius: 6,
                transition: '1s cubic-bezier(0.2, 0.8, 0.2, 1)',
                boxShadow: `0 0 12px ${HP_TOKENS.primary}40`

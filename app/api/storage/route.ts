@@ -35,7 +35,13 @@ export async function GET(request: Request) {
 
     // 2. Fetch State components
     const prioritiesRes = await db.execute({
-      sql: "SELECT * FROM daily_priorities WHERE user_id = ? AND (is_done = 0 OR COALESCE(DATE(target_date), DATE(created_at)) = CURDATE()) ORDER BY COALESCE(target_date, created_at) ASC",
+      sql: `SELECT * FROM daily_priorities 
+            WHERE user_id = ? 
+              AND (is_done = 0 OR COALESCE(DATE(target_date), DATE(created_at)) = CURDATE()) 
+            ORDER BY is_done ASC, 
+                     CASE energy_level WHEN 'high' THEN 1 WHEN 'mid' THEN 2 WHEN 'low' THEN 3 ELSE 2 END ASC, 
+                     COALESCE(target_date, created_at) ASC, 
+                     id ASC`,
       args: [userId]
     });
     const priorities = prioritiesRes.rows.map(r => {
@@ -58,7 +64,8 @@ export async function GET(request: Request) {
         time_tracked: Number(r.time_tracked) || 0,
         timer_started_at: r.timer_started_at || null,
         proof_links: r.proof_link ? [r.proof_link] : [],
-        completion_notes: r.proof_notes || null
+        completion_notes: r.proof_notes || null,
+        created_at: r.created_at
       };
     });
 

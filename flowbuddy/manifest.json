@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "FlowBuddy",
+  "name": "Flowbuddy by Maxy",
   "version": "1.0.0",
   "description": "Teman kerja ultra-ringan — tugas cepat, catatan, chat, dan approval. Ekstensi modular berbasis peran.",
   "permissions": [
@@ -32,7 +32,7 @@
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     },
-    "default_title": "FlowBuddy — Aksi cepat"
+    "default_title": "Flowbuddy by Maxy — Aksi cepat"
   },
   "icons": {
     "16": "icons/icon16.png",

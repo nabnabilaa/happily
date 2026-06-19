@@ -57,16 +57,16 @@ export async function POST(req: Request) {
 
     try {
       await transporter.sendMail({
-        from: `"FocusBuddy" <${process.env.SMTP_USER}>`,
+        from: `"Flowbuddy by Maxy" <${process.env.SMTP_USER}>`,
         to: email,
-        subject: "Reset Password FocusBuddy",
+        subject: "Reset Password Flowbuddy by Maxy",
         html: `
           <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 10px;">
-            <h2 style="color: #FF6B35; text-align: center;">Reset Password Anda</h2>
+            <h2 style="color: #3B82F6; text-align: center;">Reset Password Anda</h2>
             <p style="color: #333;">Halo,</p>
-            <p style="color: #333;">Kami menerima permintaan untuk mereset password akun FocusBuddy Anda. Klik tombol di bawah ini untuk melanjutkan:</p>
+            <p style="color: #333;">Kami menerima permintaan untuk mereset password akun Flowbuddy by Maxy Anda. Klik tombol di bawah ini untuk melanjutkan:</p>
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${resetLink}" style="background-color: #FF6B35; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Reset Password</a>
+              <a href="${resetLink}" style="background-color: #3B82F6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Reset Password</a>
             </div>
             <p style="color: #666; font-size: 12px;">Jika Anda tidak merasa melakukan permintaan ini, abaikan saja email ini.</p>
           </div>

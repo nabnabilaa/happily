@@ -54,9 +54,9 @@ export default function TabNav({ tab, setTab, userRole }: TabNavProps) {
           position: 'relative', 
           width: 46, height: 46, 
           borderRadius: 14, 
-          background: `linear-gradient(135deg, ${HP_TOKENS.primaryWash}, ${HP_TOKENS.coralWash})`,
+          background: `linear-gradient(135deg, ${HP_TOKENS.primaryWash}, ${HP_TOKENS.primarySoft})`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: `0 4px 16px rgba(255,107,53,0.15)`,
+          boxShadow: `0 4px 16px rgba(59, 130, 246, 0.15)`,
           flexShrink: 0
         }}>
           <BeeMascot mood="happy" size={36} />
@@ -71,7 +71,8 @@ export default function TabNav({ tab, setTab, userRole }: TabNavProps) {
             alignItems: 'center'
           }}>
             <span style={{ color: HP_TOKENS.ink }}>Flow</span>
-            <span style={{ color: HP_TOKENS.primary }}>Buddy</span>
+            <span style={{ color: HP_TOKENS.primary }}>buddy</span>
+            <span style={{ fontSize: 12, fontWeight: 800, color: HP_TOKENS.inkMute, marginLeft: 6, alignSelf: 'flex-end', paddingBottom: 2 }}>by Maxy</span>
           </div>
           <div style={{ 
             fontFamily: HP_FONT, 

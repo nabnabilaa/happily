@@ -175,7 +175,7 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
         {/* Top Header: Progress Bar & Chests */}
         <div style={{ 
           padding: '22px 26px', 
-          background: '#F97316', // Solid orange from prototype
+          background: '#3B82F6', // Corporate blue
           color: '#fff',
           position: 'relative',
           overflow: 'hidden'
@@ -227,7 +227,7 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
                 <div style={{
                   position: 'absolute', right: -6, top: '50%', transform: 'translateY(-50%)',
                   width: 20, height: 20, borderRadius: '50%', background: '#FDE68A',
-                  border: '3px solid #F97316', boxShadow: '0 0 0 3px rgba(253,230,138,0.35)'
+                  border: '3px solid #3B82F6', boxShadow: '0 0 0 3px rgba(59,130,246,0.35)'
                 }} />
               </div>
 

@@ -241,7 +241,12 @@ export async function POST(request: Request) {
     const tasksRes = await db.execute({
       sql: `SELECT id, title, goal_title, is_done, energy_level, est_time, tone, 
             proof_link, proof_notes, metric_value, progress, is_project, project_duration_days, project_description, goal_id, kpi_id, description, target_date, time_tracked, timer_started_at, created_at
-            FROM daily_priorities WHERE user_id = ? AND (is_done = 0 OR COALESCE(DATE(target_date), DATE(created_at)) = CURDATE())`,
+            FROM daily_priorities 
+            WHERE user_id = ? AND (is_done = 0 OR COALESCE(DATE(target_date), DATE(created_at)) = CURDATE())
+            ORDER BY is_done ASC, 
+                     CASE energy_level WHEN 'high' THEN 1 WHEN 'mid' THEN 2 WHEN 'low' THEN 3 ELSE 2 END ASC, 
+                     COALESCE(target_date, created_at) ASC, 
+                     id ASC`,
       args: [userId]
     });
 
@@ -389,7 +394,7 @@ export async function POST(request: Request) {
         const tasksRes = await db.execute({
           sql: `SELECT dp.*, u.name as user_name FROM daily_priorities dp 
                 JOIN users u ON dp.user_id = u.id
-                WHERE dp.user_id IN (${placeholders}) AND (dp.is_done = 0 OR DATE(dp.created_at) = CURDATE())`,
+                WHERE dp.user_id IN (${placeholders}) AND (dp.is_done = 0 OR DATE(dp.created_at) = CURDATE() OR (dp.is_done = 1 AND dp.is_verified = 0))`,
           args: memberIdsOnly
         });
         teamTasks = tasksRes.rows.map(r => ({
@@ -700,6 +705,7 @@ export async function POST(request: Request) {
           targetDate: taskDate,
           timeTracked: Number(r.time_tracked) || 0,
           timerStartedAt: r.timer_started_at || null,
+          created_at: r.created_at,
         };
       }),
       notes: notesRes.rows.map(r => {

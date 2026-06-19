@@ -9,13 +9,14 @@ import HRAttendanceView from "@/components/goals/HRAttendanceView";
 import ManagerTeamKPIView from "@/components/goals/ManagerTeamKPIView";
 import ManagerPersonalView from "@/components/goals/ManagerPersonalView";
 import ManagerMembersView from "@/components/goals/ManagerMembersView";
+import ManagerDailyTasksView from "@/components/goals/ManagerDailyTasksView";
 import { useManagerGoals } from "@/hooks/useManagerGoals";
 
 interface Props { openModal: (name: string, props?: any) => void; }
 
 export default function ManagerGoalsScreen({ openModal }: Props) {
   const { state, user, updateState, notify } = useHP();
-  const [activeTab, setActiveTab] = useState<'kpi' | 'members' | 'attendance' | 'personal'>('kpi');
+  const [activeTab, setActiveTab] = useState<'kpi' | 'dailytasks' | 'members' | 'attendance' | 'personal'>('kpi');
   const [goalToDelete, setGoalToDelete] = useState<string | null>(null);
   const [taskToDelete, setTaskToDelete] = useState<string | number | null>(null);
 
@@ -97,6 +98,7 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
       <div style={{ display: 'flex', gap: 6, marginBottom: 16, overflowX: 'auto', paddingBottom: 4 }}>
         {([
           { key: 'kpi', label: 'KPI Tim' },
+          { key: 'dailytasks', label: 'Tugas Harian' },
           { key: 'personal', label: 'Personal' },
           { key: 'members', label: 'Anggota' },
           { key: 'attendance', label: 'Absensi' },
@@ -128,6 +130,15 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
           handleApproveGoal={handleApproveGoal}
           handleRevisionGoal={handleRevisionGoal}
           handleRejectGoal={handleRejectGoal}
+        />
+      )}
+
+      {activeTab === 'dailytasks' && (
+        <ManagerDailyTasksView
+          teamTasks={teamTasks}
+          membersList={membersList}
+          handleVerifyTask={handleVerifyTask}
+          handleRejectTask={handleRejectTask}
         />
       )}
 

@@ -272,6 +272,40 @@ export async function POST() {
       )`
     },
     {
+      desc: "Create goals table",
+      sql: `CREATE TABLE IF NOT EXISTS goals (
+        id VARCHAR(100) PRIMARY KEY,
+        title VARCHAR(500) NOT NULL,
+        owner_id VARCHAR(100) NOT NULL,
+        owner_name VARCHAR(255),
+        assigned_by_id VARCHAR(100),
+        progress INT DEFAULT 0,
+        alignment INT DEFAULT 100,
+        due_date VARCHAR(100),
+        tone VARCHAR(50) DEFAULT 'blue',
+        metric VARCHAR(255),
+        scope VARCHAR(50) DEFAULT 'personal',
+        status VARCHAR(50) DEFAULT 'pending',
+        is_kpi INT DEFAULT 0,
+        parent_id VARCHAR(100),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
+      )`
+    },
+    {
+      desc: "Create sub_goals table",
+      sql: `CREATE TABLE IF NOT EXISTS sub_goals (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        goal_id VARCHAR(100) NOT NULL,
+        title VARCHAR(500) NOT NULL,
+        is_done INT DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (goal_id) REFERENCES goals(id) ON DELETE CASCADE
+      )`
+    },
+    {
       desc: "Create ext_sync_log table",
       sql: `CREATE TABLE IF NOT EXISTS ext_sync_log (
         id INT AUTO_INCREMENT PRIMARY KEY,

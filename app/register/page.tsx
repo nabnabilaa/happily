@@ -71,7 +71,7 @@ export default function RegisterPage() {
         .hp-link { transition: all 0.2s ease; }
         .hp-link:hover { text-decoration: underline !important; filter: brightness(0.9); }
         .hp-btn-hover { transition: all 0.2s ease; }
-        .hp-btn-hover:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(255,107,53,0.4) !important; filter: brightness(1.05); }
+        .hp-btn-hover:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(59,130,246,0.4) !important; filter: brightness(1.05); }
         .hp-spin { animation: spin 1.5s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
       ` }} />
@@ -94,7 +94,7 @@ export default function RegisterPage() {
           maxWidth: 440,
           borderRadius: 24,
           padding: "clamp(32px, 5vw, 48px)",
-          boxShadow: "0 20px 60px rgba(255, 107, 53, 0.1)",
+          boxShadow: "0 20px 60px rgba(59, 130, 246, 0.1)",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -198,9 +198,9 @@ export default function RegisterPage() {
               className={loading || !!success ? "" : "hp-btn-hover"}
               style={{
                 width: '100%', padding: '16px', borderRadius: 100, border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15,
-                background: loading || !!success ? HP_TOKENS.lineSoft : `linear-gradient(135deg, ${HP_TOKENS.primary}, #FF8C00)`,
+                background: loading || !!success ? HP_TOKENS.lineSoft : `linear-gradient(135deg, ${HP_TOKENS.primary}, #60A5FA)`,
                 color: loading || !!success ? HP_TOKENS.inkMute : '#fff', cursor: loading || !!success ? 'not-allowed' : 'pointer',
-                boxShadow: loading || !!success ? 'none' : `0 8px 24px rgba(255,107,53,0.3)`, transition: 'all 0.2s',
+                boxShadow: loading || !!success ? 'none' : `0 8px 24px rgba(59,130,246,0.3)`, transition: 'all 0.2s',
                 display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, marginTop: 8
               }}
             >

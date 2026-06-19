@@ -103,10 +103,24 @@ const TasksView = {
     const progress = this.getProgress();
     const pctClass = progress.pct === 100 ? 'complete' : '';
     
-    // Sort tasks: undone first, then done
+    // Sort tasks: undone first, then done, then by energy level, then by creation date/ID
+    const energyOrder = { high: 3, mid: 2, low: 1 };
     const sortedTasks = [...this.tasks].sort((a, b) => {
-      if (a.done === b.done) return 0;
-      return a.done ? 1 : -1;
+      if (!!a.done !== !!b.done) {
+        return a.done ? 1 : -1;
+      }
+      
+      const energyA = a.priority || a.energy || 'mid';
+      const energyB = b.priority || b.energy || 'mid';
+      const valA = energyOrder[String(energyA).toLowerCase()] || 2;
+      const valB = energyOrder[String(energyB).toLowerCase()] || 2;
+      if (valA !== valB) return valB - valA;
+      
+      const timeA = a.created_at || a.createdAt ? new Date(a.created_at || a.createdAt).getTime() : (isNaN(Number(a.id)) ? 0 : Number(a.id));
+      const timeB = b.created_at || b.createdAt ? new Date(b.created_at || b.createdAt).getTime() : (isNaN(Number(b.id)) ? 0 : Number(b.id));
+      if (timeA !== timeB) return timeA - timeB;
+      
+      return String(a.id).localeCompare(String(b.id));
     });
 
     let html = `
@@ -136,7 +150,7 @@ const TasksView = {
           </div>
 
           <div style="display: flex; gap: 8px; margin-top: 4px;">
-            <button id="task-add-btn" class="btn-primary" style="flex: 1; background: #96B2A1; padding: 12px; font-size: 14px;">+ Tambah Task</button>
+            <button id="task-add-btn" class="btn-primary" style="flex: 1; background: var(--color-success); padding: 12px; font-size: 14px;">+ Tambah Task</button>
             <button id="task-cancel-edit-btn" class="btn-secondary" style="display: none; padding: 12px; font-size: 14px;">Batal</button>
           </div>
         </div>

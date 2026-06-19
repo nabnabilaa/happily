@@ -109,7 +109,7 @@ export default function DailyGreetingModal({ userName, streak, level, onClose, o
           filter: brightness(1.1);
         }
         .dg-gradient-text {
-          background: linear-gradient(135deg, #FFBE0B 0%, #FF6B35 100%);
+          background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
@@ -134,7 +134,7 @@ export default function DailyGreetingModal({ userName, streak, level, onClose, o
         <div style={{
           position: 'absolute', top: '-15%', left: '50%',
           width: 200, height: 200, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,107,53,0.15) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%)',
           pointerEvents: 'none', zIndex: 0,
           animation: 'glowPulse 4s ease-in-out infinite'
         }} />
@@ -183,9 +183,9 @@ export default function DailyGreetingModal({ userName, streak, level, onClose, o
               className="hp-tap-btn"
               style={{
                 width: '100%', padding: '14px', borderRadius: 16, border: 'none',
-                background: 'linear-gradient(90deg, #FFBE0B, #FF9F1C)', color: '#fff',
+                background: 'linear-gradient(90deg, #3B82F6, #60A5FA)', color: '#fff',
                 fontFamily: HP_FONT, fontWeight: 800, fontSize: 15,
-                cursor: 'pointer', boxShadow: '0 4px 16px rgba(255,159,28,0.3)',
+                cursor: 'pointer', boxShadow: '0 4px 16px rgba(59,130,246,0.3)',
               }}
             >
               Lanjut Check-in

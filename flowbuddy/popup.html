@@ -3,28 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlowBuddy</title>
+    <title>Flowbuddy by Maxy</title>
     <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="css/layout.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/animations.css">
     <link rel="stylesheet" href="css/mascot.css">
     <!-- Prevent white-flash: load theme before render -->
-    <script>
-      (function(){
-        var t = localStorage.getItem('flowbuddy-theme');
-        if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-        var r = localStorage.getItem('flowbuddy-role');
-        if (r) document.documentElement.setAttribute('data-role', r);
-      })();
-    </script>
+    <script src="js/init.js"></script>
 </head>
 <body>
     <div id="app" class="app-container">
         <!-- Login Overlay -->
         <div id="login-overlay" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center;">
             <div style="font-size: 48px; margin-bottom: 16px;">🐝</div>
-            <h2 style="font-family: 'Nunito', sans-serif; margin: 0 0 8px; color: var(--ink);">FlowBuddy</h2>
+            <h2 style="font-family: 'Nunito', sans-serif; margin: 0 0 8px; color: var(--ink);">Flowbuddy by Maxy</h2>
             <p style="font-size: 14px; color: var(--ink-soft); margin-bottom: 24px;">Silakan login ke web dashboard terlebih dahulu untuk mensinkronisasi data Anda.</p>
             <a href="http://localhost:3000/" target="_blank" style="padding: 12px 24px; background: var(--blue); color: white; text-decoration: none; border-radius: 12px; font-weight: bold; font-size: 14px; box-shadow: 0 4px 12px rgba(59,130,246,0.3);">Login ke Web App</a>
         </div>

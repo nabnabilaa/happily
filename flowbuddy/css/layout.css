@@ -9,17 +9,34 @@
   padding: 0;
 }
 
+html {
+  width: 380px;
+  height: 600px;
+}
+
+@media (min-width: 381px) {
+  html {
+    width: 100%;
+  }
+}
+
 body {
   font-family: var(--font-family);
   background-color: var(--bg-main);
   color: var(--text-primary);
-  width: 100%;
+  width: 380px;
   height: 600px;
   margin: 0;
   overflow: hidden;
   transition: background-color var(--transition-smooth), color var(--transition-smooth);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+@media (min-width: 381px) {
+  body {
+    width: 100%;
+  }
 }
 
 /* ── App Container ── */

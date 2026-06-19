@@ -32,78 +32,12 @@ export async function GET(request: Request) {
       statusTone: m.mood === 'stress' ? 'coral' : 'sage'
     }));
 
-    // 2. Fetch Team Goals
-    const memberIds = members.map(m => String(m.id)).concat([userId]);
+    // Legacy goals are replaced by KPIs, which are fetched separately via /api/kpi
+    const goals: any[] = [];
+    const approvals: any[] = [];
+
     const memberIdsOnly = members.map(m => String(m.id));
-    const placeholders = memberIds.map(() => '?').join(',');
     const memberPlaceholders = memberIdsOnly.length > 0 ? memberIdsOnly.map(() => '?').join(',') : "''";
-    
-    const goalsRes = await db.execute({
-      sql: `SELECT g.*, u.name as joined_owner_name FROM goals g
-            LEFT JOIN users u ON g.owner_id = u.id
-            WHERE (g.scope = 'team' AND g.owner_id IN (${placeholders}))
-            OR (g.scope = 'assigned' AND g.assigned_by_id = ?)`,
-      args: [...memberIds, userId]
-    });
-
-    const goals = await Promise.all(goalsRes.rows.map(async g => {
-      // Roll-up progress from child goals (keep query for metric labeling, but do not override rollupProgress)
-      const childRes = await db.execute({
-        sql: `SELECT progress FROM goals WHERE parent_id = ?`,
-        args: [String(g.id)]
-      });
-      let rollupProgress = Number(g.progress) || 0;
-
-      // Parse due_date for display
-      const rawDue = (g.due_date as string) || '';
-      let dueDisplay = rawDue;
-      if (rawDue.includes('T')) {
-        try {
-          const d = new Date(rawDue);
-          if (!isNaN(d.getTime())) {
-            dueDisplay = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) + ' ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-          }
-        } catch (e) {}
-      }
-
-      return {
-        id: g.id,
-        title: g.title,
-        progress: rollupProgress,
-        members: members.length + 1,
-        due: dueDisplay,
-        tone: g.tone || 'blue',
-        onTrack: rollupProgress > 40,
-        scope: g.scope,
-        assignedById: g.assigned_by_id,
-        ownerId: g.owner_id,
-        owner: (g.joined_owner_name as string) || (g.owner_name as string) || 'Team Member',
-        status: g.status || 'pending',
-        is_kpi: !!g.is_kpi,
-        parent_id: g.parent_id,
-        alignment: g.alignment || 100,
-        metric: childRes.rows.length > 0 ? `${childRes.rows.length} aligned OKR` : g.metric
-      };
-    }));
-
-    // 3. Fetch Pending Approvals (Goals or KPI tasks from team members)
-    let approvals: any[] = [];
-    if (memberIdsOnly.length > 0) {
-      const pendingRes = await db.execute({
-        sql: `SELECT g.*, u.name as owner_name 
-              FROM goals g 
-              JOIN users u ON g.owner_id = u.id
-              WHERE g.owner_id IN (${memberPlaceholders}) AND g.status = 'pending'`,
-        args: memberIdsOnly
-      });
-      approvals = pendingRes.rows.map(a => ({
-        id: a.id,
-        type: a.is_kpi ? 'KPI GOAL' : 'GOAL',
-        from: a.owner_name,
-        desc: a.title,
-        urgent: a.is_kpi === 1
-      }));
-    }
 
     // 4. Fetch Team Tasks (for verification)
     let teamTasks: any[] = [];

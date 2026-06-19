@@ -404,7 +404,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
                 padding: '12px 24px', borderRadius: 99,
                 background: 'var(--hp-primary)', color: '#fff',
                 border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 13,
-                cursor: 'pointer', boxShadow: '0 4px 12px rgba(255,107,53,0.3)'
+                cursor: 'pointer', boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
               }}
             >
               + Tambah Task

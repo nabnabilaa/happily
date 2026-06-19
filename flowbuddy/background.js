@@ -10,7 +10,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   chrome.notifications.create({
     type: 'basic',
     iconUrl: 'icons/icon48.png',
-    title: '🐝 FlowBuddy',
+    title: '🐝 Flowbuddy by Maxy',
     message: label,
     priority: 2,
     requireInteraction: true
@@ -55,7 +55,7 @@ chrome.runtime.onMessage.addListener((msg, sender, res) => {
     chrome.notifications.create(notifId, {
       type: 'basic',
       iconUrl: 'icons/icon48.png',
-      title: msg.title || '🐝 FlowBuddy',
+      title: msg.title || '🐝 Flowbuddy by Maxy',
       message: msg.message || '',
       priority: 1
     });

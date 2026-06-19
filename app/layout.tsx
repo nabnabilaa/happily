@@ -30,13 +30,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Flowbuddy — Flow into Focus",
+  title: "Flowbuddy by Maxy",
   description: "Human-Centered Productivity Platform",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Flowbuddy",
+    title: "Flowbuddy by Maxy",
   },
   formatDetection: {
     telephone: false,

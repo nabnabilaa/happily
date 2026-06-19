@@ -65,11 +65,11 @@ export const HP_FONT = "var(--hp-font)";
 export const HP_FONT_DISPLAY = "var(--hp-font-display)";
 
 export const HP_TEXT = {
-  display: { fontFamily: HP_FONT_DISPLAY, fontWeight: 800, fontSize: 'clamp(26px, 6.5vw, 34px)', lineHeight: 1.15, color: HP_TOKENS.ink, letterSpacing: -0.8 },
-  title: { fontFamily: HP_FONT_DISPLAY, fontWeight: 800, fontSize: 'clamp(20px, 5vw, 26px)', lineHeight: 1.2, color: HP_TOKENS.ink, letterSpacing: -0.4 },
-  h: { fontFamily: HP_FONT_DISPLAY, fontWeight: 800, fontSize: 'clamp(18px, 4vw, 20px)', lineHeight: 1.25, color: HP_TOKENS.ink },
-  body: { fontFamily: HP_FONT, fontWeight: 500, fontSize: 'clamp(14px, 3.5vw, 16px)', lineHeight: 1.45, color: HP_TOKENS.inkSoft },
-  small: { fontFamily: HP_FONT, fontWeight: 600, fontSize: 'clamp(12px, 3vw, 14px)', lineHeight: 1.4, color: HP_TOKENS.inkMute },
+  display: { fontFamily: HP_FONT_DISPLAY, fontWeight: 800, fontSize: 'clamp(32px, 8vw, 44px)', lineHeight: 1.15, color: HP_TOKENS.ink, letterSpacing: -0.8 },
+  title: { fontFamily: HP_FONT_DISPLAY, fontWeight: 800, fontSize: 'clamp(26px, 6vw, 32px)', lineHeight: 1.2, color: HP_TOKENS.ink, letterSpacing: -0.4 },
+  h: { fontFamily: HP_FONT_DISPLAY, fontWeight: 800, fontSize: 'clamp(20px, 4.5vw, 24px)', lineHeight: 1.25, color: HP_TOKENS.ink },
+  body: { fontFamily: HP_FONT, fontWeight: 800, fontSize: 'clamp(14px, 3.5vw, 16px)', lineHeight: 1.45, color: HP_TOKENS.inkSoft },
+  small: { fontFamily: HP_FONT, fontWeight: 800, fontSize: 'clamp(12px, 3vw, 14px)', lineHeight: 1.4, color: HP_TOKENS.inkMute },
   tiny: { fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: HP_TOKENS.inkMute, letterSpacing: 0.7, textTransform: 'uppercase' as const },
 };
 

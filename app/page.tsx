@@ -116,7 +116,7 @@ import DailyGreetingModal, { needsDailyGreeting, markDailyGreeted } from "@/comp
 
 // ─── Role pill badge colors (Gercep Palette) ────────────────────────────────
 const ROLE_META: Record<UserRole, { label: string; color: string; bg: string; glyph: string }> = {
-  employee: { label: 'Employee', color: '#FF6B35', bg: 'rgba(255,107,53,0.1)', glyph: 'target' },
+  employee: { label: 'Employee', color: '#3B82F6', bg: 'rgba(59,130,246,0.1)', glyph: 'target' },
   manager:  { label: 'Manager',  color: '#1D3557', bg: 'rgba(29,53,87,0.08)',  glyph: 'people' },
   hr:       { label: 'HR',       color: '#7B6BB5', bg: '#EDE8F5',              glyph: 'medal' },
 };
@@ -230,7 +230,7 @@ function AppContent() {
         overflow: 'hidden',
       }}>
         {/* Ambient background glows (using radial-gradient to prevent clipping artifacts) */}
-        <div style={{ position: 'absolute', width: '70vw', height: '70vw', background: 'radial-gradient(circle, rgba(255,107,53,0.1) 0%, rgba(255,107,53,0) 65%)', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', pointerEvents: 'none', zIndex: 0 }} />
+        <div style={{ position: 'absolute', width: '70vw', height: '70vw', background: 'radial-gradient(circle, rgba(59,130,246,0.1) 0%, rgba(59,130,246,0) 65%)', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', pointerEvents: 'none', zIndex: 0 }} />
         <div style={{ position: 'absolute', width: '50vw', height: '50vw', background: 'radial-gradient(circle, rgba(255,212,59,0.08) 0%, rgba(255,212,59,0) 65%)', top: '0%', left: '0%', transform: 'translate(-30%, -30%)', pointerEvents: 'none', zIndex: 0 }} />
         <div style={{ position: 'absolute', width: '80vw', height: '80vw', background: 'radial-gradient(circle, rgba(74,124,89,0.06) 0%, rgba(74,124,89,0) 60%)', bottom: '0%', right: '0%', transform: 'translate(20%, 20%)', pointerEvents: 'none', zIndex: 0 }} />
 
@@ -527,14 +527,14 @@ function AppContent() {
               width: 56, height: 56, borderRadius: 28, border: 'none',
               background: currentRole === 'manager' ? '#1D3557' :
                          currentRole === 'hr' ? '#7B6BB5' :
-                         '#FF6B35',
+                         '#3B82F6',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: isDragging ? 'grabbing' : 'pointer',
               touchAction: 'none',
               boxShadow: `0 8px 24px ${
                 currentRole === 'manager' ? 'rgba(29,53,87,0.45)' :
                 currentRole === 'hr' ? 'rgba(123,107,181,0.4)' :
-                'rgba(255,107,53,0.45)'
+                'rgba(59,130,246,0.45)'
               }`,
               transition: 'transform 0.1s ease-out',
               transform: isDragging ? 'scale(1.05)' : 'scale(1)',

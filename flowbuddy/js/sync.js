@@ -208,14 +208,22 @@ async function flowbeeSyncAll(pullOnly = false) {
           const existing = window.fbCtx.tasks.find(lt => String(lt.id) === String(wt.id));
           if (!existing) {
             window.fbCtx.tasks.push({
-              id: wt.id, text: wt.title, done: wt.done, date: wt.date || fbToday(), priority: wt.energy || 'mid', progress: wt.progress || 0
+              id: wt.id, text: wt.title, done: wt.done, date: wt.date || fbToday(), priority: wt.energy || 'mid', progress: wt.progress || 0, created_at: wt.created_at || null
             });
             changed = true;
           } else {
-            if (existing.done !== wt.done || existing.text !== wt.title || existing.progress !== (wt.progress || 0)) {
+            if (
+              existing.done !== wt.done || 
+              existing.text !== wt.title || 
+              existing.progress !== (wt.progress || 0) ||
+              existing.priority !== (wt.energy || 'mid') ||
+              existing.created_at !== wt.created_at
+            ) {
               existing.done = wt.done;
               existing.text = wt.title;
               existing.progress = wt.progress || 0;
+              existing.priority = wt.energy || 'mid';
+              existing.created_at = wt.created_at;
               changed = true;
             }
           }

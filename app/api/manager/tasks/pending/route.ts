@@ -59,11 +59,15 @@ export async function PUT(request: Request) {
 
     // status can be 'approved', 'revision', 'rejected'
     let is_done = 0;
-    if (status === 'approved') is_done = 1;
+    let is_verified = 0;
+    if (status === 'approved') {
+      is_done = 1;
+      is_verified = 1;
+    }
 
     await db.execute({
-      sql: `UPDATE daily_priorities SET status = ?, is_done = ?, proof_notes = ? WHERE id = ?`,
-      args: [status, is_done, notes || null, taskId]
+      sql: `UPDATE daily_priorities SET status = ?, is_done = ?, is_verified = ?, proof_notes = ? WHERE id = ?`,
+      args: [status, is_done, is_verified, notes || null, taskId]
     });
 
     return NextResponse.json({ success: true });
