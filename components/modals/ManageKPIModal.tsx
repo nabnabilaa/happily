@@ -109,10 +109,11 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
   };
 
   // Group KPIs by assignee
-  const groupedKPIs = kpis.reduce((acc: Record<string, { name: string; items: KPI[]; totalWeight: number }>, k) => {
+  const groupedKPIs = kpis.reduce((acc: Record<string, { id: string; name: string; items: KPI[]; totalWeight: number }>, k) => {
     const key = k.assignedTo || 'unassigned';
     if (!acc[key]) {
       acc[key] = {
+        id: key,
         name: k.assigneeName || 'Unassigned',
         items: [],
         totalWeight: 0
@@ -247,7 +248,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 16 }}>
             {weightEntries.map(group => (
-              <div key={group.name} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div key={group.id} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 4px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span style={{ fontSize: 14 }}>👤</span>
