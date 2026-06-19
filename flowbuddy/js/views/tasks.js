@@ -271,12 +271,33 @@ const TasksView = {
         const id = btn.getAttribute('data-id');
         const drop = container.querySelector(`#dropdown-${id}`);
         const isVisible = drop.style.display === 'block';
+        const taskCard = btn.closest('.task-card');
         
-        // Close all dropdowns
+        // Reset all z-indexes and close all dropdowns
+        container.querySelectorAll('.task-card').forEach(c => c.style.zIndex = '1');
         container.querySelectorAll('.task-dropdown').forEach(d => d.style.display = 'none');
         
         if (!isVisible) {
           drop.style.display = 'block';
+          drop.style.position = 'absolute';
+          
+          // Bring the current task card to the front to prevent overlap
+          if (taskCard) taskCard.style.zIndex = '100';
+          
+          // Check if there is enough space below
+          const rect = btn.getBoundingClientRect();
+          if (rect.bottom + 100 > window.innerHeight) {
+             // Open upwards
+             drop.style.top = 'auto';
+             drop.style.bottom = '40px'; 
+          } else {
+             // Open downwards
+             drop.style.bottom = 'auto';
+             drop.style.top = '40px'; 
+          }
+          
+          drop.style.left = 'auto';
+          drop.style.right = '10px';
         }
       });
     });

@@ -237,16 +237,43 @@ const NotesView = {
     const searchInput = container.querySelector('#note-search');
     if (searchInput) {
       searchInput.addEventListener('input', (e) => {
-        this.searchQuery = e.target.value;
-        this.render(container);
+        this.searchQuery = e.target.value.toLowerCase();
+        
+        // Filter DOM directly instead of re-rendering everything to prevent losing focus
+        const cards = container.querySelectorAll('.note-card');
+        let anyVisible = false;
+        
+        cards.forEach(card => {
+           const titleEl = card.querySelector('h3');
+           const textEl = card.querySelector('p');
+           
+           const title = titleEl ? titleEl.textContent.toLowerCase() : '';
+           const text = textEl ? textEl.textContent.toLowerCase() : '';
+           
+           if (!this.searchQuery || title.includes(this.searchQuery) || text.includes(this.searchQuery)) {
+              card.style.display = 'block';
+              anyVisible = true;
+           } else {
+              card.style.display = 'none';
+           }
+        });
+        
+        // Handle empty state for search
+        const grid = container.querySelector('.notes-grid');
+        let emptyState = container.querySelector('.empty-state-search');
+        
+        if (!anyVisible && cards.length > 0) {
+           if (!emptyState) {
+              emptyState = document.createElement('div');
+              emptyState.className = 'empty-state empty-state-search';
+              emptyState.innerHTML = '<div class="empty-state-icon" style="font-size:48px; margin-bottom:16px;">🔍</div><div class="empty-state-title">Tidak ditemukan</div><div class="empty-state-text">Coba kata kunci lain.</div>';
+              if (grid) grid.appendChild(emptyState);
+           }
+           emptyState.style.display = 'flex';
+        } else if (emptyState) {
+           emptyState.style.display = 'none';
+        }
       });
-      setTimeout(() => {
-         const searchEl = document.getElementById('note-search');
-         if (searchEl) {
-            searchEl.focus();
-            searchEl.setSelectionRange(searchEl.value.length, searchEl.value.length);
-         }
-      }, 10);
     }
 
     const addBtn = container.querySelector('#add-note-btn');

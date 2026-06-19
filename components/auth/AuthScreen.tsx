@@ -6,6 +6,7 @@ import HPGlyph from "@/components/ui/HPGlyph";
 import BeeMascot from "@/components/ui/BeeMascot";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import Image from "next/image";
+import Link from "next/link";
 
 // Intercept and suppress Google Sign-In / FedCM AbortErrors immediately on module load
 if (typeof window !== "undefined") {
@@ -58,6 +59,8 @@ interface AuthScreenProps {
 export default function AuthScreen({ onLogin }: AuthScreenProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
 
   const [form, setForm] = useState({
     email: "",
@@ -85,11 +88,17 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
     setLoading(true);
     setError("");
 
+    if (!/\S+@\S+\.\S+/.test(form.email)) {
+      setError("Format email tidak valid");
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, rememberMe }),
       });
 
       const data = await res.json();
@@ -230,6 +239,14 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
           </div>
           <style dangerouslySetInnerHTML={{ __html: `
             .hp-install-btn { display: none !important; }
+            .hp-link { transition: all 0.2s ease; }
+            .hp-link:hover { text-decoration: underline !important; filter: brightness(0.9); }
+            .hp-btn-hover { transition: all 0.2s ease; }
+            .hp-btn-hover:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(255,107,53,0.4) !important; filter: brightness(1.05); }
+            .hp-google-btn-wrapper { transition: all 0.2s ease; }
+            .hp-google-btn-wrapper:hover { transform: translateY(-2px); }
+            .hp-spin { animation: spin 1.5s linear infinite; }
+            @keyframes spin { 100% { transform: rotate(360deg); } }
             @media (max-width: 768px) {
               .hp-auth-wrapper {
                 background: transparent !important;
@@ -304,38 +321,51 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                     <HPGlyph name="lock" size={18} />
                   </div>
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     placeholder="Password"
                     required
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
                     style={{ ...inputStyle, paddingLeft: 46, textAlign: "left" }}
                   />
-                  <div style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", color: HP_TOKENS.inkSoft, cursor: "pointer" }}>
+                  <div 
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", color: HP_TOKENS.inkSoft, cursor: "pointer", opacity: showPassword ? 0.6 : 1 }}
+                  >
                     <HPGlyph name="eye" size={18} />
                   </div>
                 </div>
 
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, fontWeight: 600, color: HP_TOKENS.inkMute, marginTop: 4, marginBottom: 8 }}>
                   <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-                    <input type="checkbox" style={{ accentColor: HP_TOKENS.primary, width: 16, height: 16 }} defaultChecked />
+                    <input 
+                      type="checkbox" 
+                      style={{ accentColor: HP_TOKENS.primary, width: 16, height: 16 }} 
+                      checked={rememberMe} 
+                      onChange={(e) => setRememberMe(e.target.checked)} 
+                    />
                     Ingat saya
                   </label>
-                  <a href="#" style={{ color: HP_TOKENS.primary, textDecoration: "none" }}>Lupa password?</a>
+                  <Link href="/forgot-password" className="hp-link" style={{ color: HP_TOKENS.primary, textDecoration: "none" }}>Lupa password?</Link>
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="hp-tap"
+                  className={loading ? "" : "hp-btn-hover"}
                   style={{
                     width: '100%', padding: '16px', borderRadius: 100, border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15,
                     background: loading ? HP_TOKENS.lineSoft : `linear-gradient(135deg, ${HP_TOKENS.primary}, #FF8C00)`,
                     color: loading ? HP_TOKENS.inkMute : '#fff', cursor: loading ? 'not-allowed' : 'pointer',
                     boxShadow: loading ? 'none' : `0 8px 24px rgba(255,107,53,0.3)`, transition: 'all 0.2s',
+                    display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8
                   }}
                 >
-                  {loading ? "Processing..." : "Login 🚀"}
+                  {loading ? (
+                    <>
+                      <div className="hp-spin" style={{ display: 'flex', alignItems: 'center' }}>🚀</div> Memproses...
+                    </>
+                  ) : "Login 🚀"}
                 </button>
               </form>
 
@@ -346,7 +376,7 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                 <div style={{ flex: 1, height: 1, background: HP_TOKENS.line }} />
               </div>
 
-              <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
+              <div className="hp-google-btn-wrapper" style={{ width: "100%", display: "flex", justifyContent: "center" }}>
                 <GoogleLogin
                   onSuccess={handleGoogleSuccess}
                   onError={handleGoogleError}
@@ -358,6 +388,10 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                   text="signin_with"
                   shape="pill"
                 />
+              </div>
+
+              <div style={{ marginTop: 32, fontSize: 14, color: HP_TOKENS.inkSoft, fontWeight: 500, textAlign: "center" }}>
+                Belum punya akun? <Link href="/register" className="hp-link" style={{ color: HP_TOKENS.primary, fontWeight: 700, textDecoration: "none" }}>Daftar di sini</Link>
               </div>
             </div>
           </div>

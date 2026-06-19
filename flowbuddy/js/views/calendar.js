@@ -315,9 +315,34 @@ const CalendarView = {
         const id = btn.getAttribute('data-id');
         const drop = container.querySelector(`#cal-dropdown-${id}`);
         const isVisible = drop.style.display === 'block';
+        const calItem = btn.closest('.cal-item');
         
+        // Reset all z-indexes and close all dropdowns
+        container.querySelectorAll('.cal-item').forEach(c => c.style.zIndex = '1');
         container.querySelectorAll('.cal-dropdown').forEach(d => d.style.display = 'none');
-        if (!isVisible) drop.style.display = 'block';
+        
+        if (!isVisible) {
+          drop.style.display = 'block';
+          drop.style.position = 'absolute';
+          
+          // Bring the current item to the front to prevent overlap
+          if (calItem) calItem.style.zIndex = '100';
+          
+          // Check if there is enough space below
+          const rect = btn.getBoundingClientRect();
+          if (rect.bottom + 100 > window.innerHeight) {
+             // Open upwards
+             drop.style.top = 'auto';
+             drop.style.bottom = '30px'; 
+          } else {
+             // Open downwards
+             drop.style.bottom = 'auto';
+             drop.style.top = '30px'; 
+          }
+          
+          drop.style.left = 'auto';
+          drop.style.right = '10px';
+        }
       });
     });
 

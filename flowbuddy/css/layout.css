@@ -163,7 +163,7 @@ body {
 .view-panel.active {
   opacity: 1;
   pointer-events: auto;
-  transform: translateX(0);
+  transform: none; /* Changed from translateX(0) to fix stacking context for fixed elements */
   z-index: 1;
 }
 
@@ -192,6 +192,7 @@ body {
   -webkit-backdrop-filter: var(--glass-blur);
   border-top: var(--glass-border);
   z-index: 100;
+  position: relative;
   transition: background-color var(--transition-smooth);
 }
 
