@@ -42,7 +42,9 @@ export default function AttendanceWidget({ openModal }: AttendanceWidgetProps) {
     setLoading(false);
   };
 
-  if (loading) return null;
+  if (loading) return (
+    <div id="attendance-clock-in-btn" style={{ minHeight: '60px', opacity: 0 }}></div>
+  );
 
   const status = todayData?.status || 'not_checked_in';
   const checkInTime = todayData?.checkInAt 

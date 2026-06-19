@@ -50,14 +50,14 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
             }
 
             const newCompleted = Math.max(0, completed - 1);
-            const newProgress = total > 0 ? Math.round((newCompleted / total) * 100) : goal.progress;
-            return { ...goal, progress: newProgress, metric: total > 0 ? `${newCompleted}/${total} task selesai` : goal.metric };
-          }
-          return goal;
-        });
-
-        return { ...s, priorities: newPriorities, goals: updatedGoals };
+          // Progress % is now manual
+          return { ...goal, metric: total > 0 ? `${newCompleted}/${total} task selesai` : goal.metric };
+        }
+        return goal;
       });
+
+      return { ...s, priorities: newPriorities, goals: updatedGoals };
+    });
     }
   }, [state, updateState]);
 
@@ -78,10 +78,8 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
           const total = todayTasks.length;
           const completed = todayTasks.filter((p: any) => p.done).length;
 
-          const newProgress = total > 0 ? Math.round((completed / total) * 100) : 0;
           return { 
             ...goal, 
-            progress: newProgress, 
             metric: total > 0 ? `${completed}/${total} task selesai` : `0/0 task selesai`
           };
         }
@@ -119,6 +117,7 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
       const newPriorities = [...s.priorities];
       newPriorities[pIndex] = { 
         ...newPriorities[pIndex], 
+        status: 'pending_review',
         done: true,
         proof_links: data.proofLinks,
         is_project: data.isProject,
@@ -156,7 +155,7 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
 
       syncSkillProgress(newPriorities[pIndex].title + " " + (newPriorities[pIndex].kpi_title || ""), 2);
 
-      // Recalculate goal progress for linked goals
+      // Recalculate goal progress for linked goals (Tasks count only, not progress %)
       const task = newPriorities[pIndex];
       const targetId = task.goal_id || task.kpi_id;
       const updatedGoals = s.goals.map((goal: any) => {
@@ -174,8 +173,8 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
           }
 
           const newCompleted = Math.max(0, Math.min(total, completed + 1));
-          const newProgress = total > 0 ? Math.round((newCompleted / total) * 100) : goal.progress;
-          return { ...goal, progress: newProgress, metric: total > 0 ? `${newCompleted}/${total} task selesai` : goal.metric };
+          // Progress % is now manual, we just update the text metric
+          return { ...goal, metric: total > 0 ? `${newCompleted}/${total} task selesai` : goal.metric };
         }
         return goal;
       });

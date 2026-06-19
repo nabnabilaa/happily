@@ -52,39 +52,39 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
     const uid = String(user?.id || '');
     
     // Goals from state that this user owns
-    const managerGoals = goals
-      .filter((g: any) => g.scope === 'assigned' && String(g.ownerId) === uid)
+    const teamGoals = goals
+      .filter((g: any) => g.scope === 'team' && String(g.ownerId) === uid)
       .map((g: any) => ({
         id: g.id, title: g.title, weight: g.alignment || 0,
-        metricUnit: g.metricUnit || '', source: 'manager', isGoal: true
+        metricUnit: g.metricUnit || '', scope: 'team', isGoal: true
       }));
 
-    const personalGoals = goals
-      .filter((g: any) => g.scope === 'personal' && String(g.ownerId) === uid)
+    const assignedGoals = goals
+      .filter((g: any) => g.scope === 'assigned' && String(g.ownerId) === uid)
       .map((g: any) => ({
         id: g.id, title: g.title, weight: 0,
-        metricUnit: g.metricUnit || '', source: 'personal', isGoal: true
+        metricUnit: g.metricUnit || '', scope: 'assigned', isGoal: true
       }));
 
     // Merge API KPIs with state.goals, deduplicating by id or title
-    const apiManager = apiKpis.filter((k: any) => k.source === 'manager');
-    const apiPersonal = apiKpis.filter((k: any) => k.source === 'personal');
+    const apiTeam = apiKpis.filter((k: any) => k.scope === 'team');
+    const apiAssigned = apiKpis.filter((k: any) => k.scope === 'assigned');
 
-    const combinedManager = [...apiManager];
-    managerGoals.forEach((mg: any) => {
-      if (!combinedManager.some((k: any) => String(k.id) === String(mg.id) || k.title.toLowerCase() === mg.title.toLowerCase())) {
-        combinedManager.push(mg);
+    const combinedTeam = [...apiTeam];
+    teamGoals.forEach((mg: any) => {
+      if (!combinedTeam.some((k: any) => String(k.id) === String(mg.id) || k.title.toLowerCase() === mg.title.toLowerCase())) {
+        combinedTeam.push(mg);
       }
     });
 
-    const combinedPersonal = [...apiPersonal];
-    personalGoals.forEach((pg: any) => {
-      if (!combinedPersonal.some((k: any) => String(k.id) === String(pg.id) || k.title.toLowerCase() === pg.title.toLowerCase())) {
-        combinedPersonal.push(pg);
+    const combinedAssigned = [...apiAssigned];
+    assignedGoals.forEach((pg: any) => {
+      if (!combinedAssigned.some((k: any) => String(k.id) === String(pg.id) || k.title.toLowerCase() === pg.title.toLowerCase())) {
+        combinedAssigned.push(pg);
       }
     });
 
-    return [...combinedManager, ...combinedPersonal];
+    return [...combinedTeam, ...combinedAssigned];
   }, [apiKpis, state?.goals, user?.id]);
 
   const togglePriority = useCallback((id: number) => {
@@ -254,6 +254,8 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
               kpi_title: selectedKpi?.title || null,
               goal_id: selectedKpiId || null,
               goal: selectedKpi?.title || null,
+              status: 'todo',
+              done: false,
             };
           }
           return p;
@@ -529,15 +531,12 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                           Umum (tidak terkait KPI spesifik)
                         </div>
                         
-                        {myKpis.filter((k: any) => k.source === 'manager').length > 0 && (
+                        {myKpis.filter((k: any) => k.scope === 'team').length > 0 && (
                           <div style={{ marginBottom: 8 }}>
                             <div style={{ padding: '4px 12px', ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800 }}>
-                              KPI Bulanan (Manager)
+                              KPI Team
                             </div>
-                            {myKpis.filter((k: any) => k.source === 'manager').map((k: any) => {
-                              const goal = state.goals?.find((g: any) => String(g.id) === String(k.id));
-                              const parent = goal?.parent_id ? state.goals?.find((g: any) => String(g.id) === String(goal.parent_id)) : null;
-                              const alignmentText = parent ? ` (Aligned: ${parent.title})` : '';
+                            {myKpis.filter((k: any) => k.scope === 'team').map((k: any) => {
                               const isSelected = String(k.id) === String(selectedKpiId);
                               return (
                                 <div 
@@ -554,11 +553,6 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                                   <div style={{ width: 4, height: 16, borderRadius: 2, background: HP_TOKENS.blue, opacity: isSelected ? 1 : 0.2 }} />
                                   <div style={{ flex: 1, minWidth: 0 }}>
                                     <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{k.title}</div>
-                                    {(alignmentText || k.metricUnit) && (
-                                      <div style={{ fontSize: 11, color: isSelected ? HP_TOKENS.blue : HP_TOKENS.inkMute, opacity: 0.8, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                        {alignmentText.replace(' (Aligned: ', 'Aligned: ').replace(')', '')} {k.metricUnit && `• ${k.metricUnit}`}
-                                      </div>
-                                    )}
                                   </div>
                                 </div>
                               );
@@ -566,15 +560,12 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                           </div>
                         )}
 
-                        {myKpis.filter((k: any) => k.source === 'personal').length > 0 && (
+                        {myKpis.filter((k: any) => k.scope === 'assigned').length > 0 && (
                           <div>
                             <div style={{ padding: '4px 12px', ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800 }}>
-                              KPI Mandiri
+                              KPI Saya (Assigned)
                             </div>
-                            {myKpis.filter((k: any) => k.source === 'personal').map((k: any) => {
-                              const goal = state.goals?.find((g: any) => String(g.id) === String(k.id));
-                              const parent = goal?.parent_id ? state.goals?.find((g: any) => String(g.id) === String(goal.parent_id)) : null;
-                              const alignmentText = parent ? ` (Aligned: ${parent.title})` : '';
+                            {myKpis.filter((k: any) => k.scope === 'assigned').map((k: any) => {
                               const isSelected = String(k.id) === String(selectedKpiId);
                               return (
                                 <div 
@@ -591,11 +582,6 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                                   <div style={{ width: 4, height: 16, borderRadius: 2, background: HP_TOKENS.sage, opacity: isSelected ? 1 : 0.2 }} />
                                   <div style={{ flex: 1, minWidth: 0 }}>
                                     <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{k.title}</div>
-                                    {(alignmentText || k.metricUnit) && (
-                                      <div style={{ fontSize: 11, color: isSelected ? HP_TOKENS.blue : HP_TOKENS.inkMute, opacity: 0.8, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                        {alignmentText.replace(' (Aligned: ', 'Aligned: ').replace(')', '')} {k.metricUnit && `• ${k.metricUnit}`}
-                                      </div>
-                                    )}
                                   </div>
                                 </div>
                               );

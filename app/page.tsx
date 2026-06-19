@@ -39,9 +39,6 @@ import HRHomeScreen from "@/components/home/HRHomeScreen";
 import HRPeopleScreen from "@/components/goals/HRPeopleScreen";
 import HRRecognizeScreen from "@/components/recognize/HRRecognizeScreen";
 
-// ── OKR Module ──
-import OKRDashboard from "@/components/okr/OKRDashboard";
-
 
 // ── Admin Screens ──
 
@@ -74,7 +71,7 @@ const ReflectModal = safeDynamic(() => import("@/components/modals/ReflectModal"
 const CoachModal = safeDynamic(() => import("@/components/modals/CoachModal"));
 const NotificationsModal = safeDynamic(() => import("@/components/modals/NotificationsModal"));
 
-const GoalModal = safeDynamic(() => import("@/components/modals/GoalModal"));
+
 const WorkCheckInModal = safeDynamic(() => import("@/components/modals/WorkCheckInModal"));
 const ManagePrioritiesModal = safeDynamic(() => import("@/components/modals/ManagePrioritiesModal"));
 const ManageHabitsModal = safeDynamic(() => import("@/components/modals/ManageHabitsModal"));
@@ -92,7 +89,7 @@ const TakeSurveyModal = safeDynamic(() => import("@/components/modals/TakeSurvey
 const SurveyResultsModal = safeDynamic(() => import("@/components/modals/SurveyResultsModal"));
 const AttendanceScannerModal = safeDynamic(() => import("@/components/modals/AttendanceScannerModal"));
 const AttendanceHistoryModal = safeDynamic(() => import("@/components/modals/AttendanceHistoryModal"));
-const OKRDictionaryModal = safeDynamic(() => import("@/components/modals/OKRDictionaryModal"));
+
 const ManageContactsModal = safeDynamic(() => import("@/components/modals/ManageContactsModal"));
 const RewardEditorModal = safeDynamic(() => import("@/components/modals/RewardEditorModal"));
 const ContactEditorModal = safeDynamic(() => import("@/components/modals/ContactEditorModal"));
@@ -338,8 +335,7 @@ function AppContent() {
     // Chat tab is shared across all roles
     if (tab === 'chat') return <ChatScreen openModal={openModal} />;
     if (tab === 'team') return <TeamScreen openModal={openModal} />;
-    // OKR tab is shared across all roles
-    if (tab === 'okr') return <OKRDashboard openModal={openModal} />;
+
 
     // Employee
     if (currentRole === 'employee') {
@@ -558,7 +554,6 @@ function AppContent() {
       {modal?.name === 'coach'            && <CoachModal onClose={closeModal} />}
       {modal?.name === 'notifications'    && <NotificationsModal onClose={closeModal} openModal={openModal} />}
 
-      {modal?.name === 'new_goal'         && <GoalModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'work_checkin'     && <WorkCheckInModal onClose={closeModal} openModal={openModal} {...modal.props} />}
       {modal?.name === 'manage_priorities'&& <ManagePrioritiesModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'manage_habits'    && <ManageHabitsModal onClose={closeModal} />}
@@ -576,7 +571,6 @@ function AppContent() {
       {modal?.name === 'attendance_scanner' && <AttendanceScannerModal onClose={closeModal} />}
       {modal?.name === 'attendance_history' && <AttendanceHistoryModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'calendar'         && <CalendarModal onClose={closeModal} />}
-      {modal?.name === 'okr_dictionary'   && <OKRDictionaryModal onClose={closeModal} />}
       {modal?.name === 'manage_contacts' && <ManageContactsModal onClose={closeModal} />}
       {modal?.name === 'reward_editor'   && <RewardEditorModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'contact_editor'  && <ContactEditorModal onClose={closeModal} {...modal.props} />}

@@ -52,6 +52,7 @@ const FlowBuddyApp = {
     if (typeof chrome !== 'undefined' && chrome.storage) {
       chrome.storage.local.get('flowbuddy-user', (res) => {
         if (res['flowbuddy-user']) {
+          document.getElementById('login-overlay').style.display = 'none';
           const user = res['flowbuddy-user'];
           this.userName = user.name || 'Budi';
           this.userLevel = user.level || 1;
@@ -60,6 +61,8 @@ const FlowBuddyApp = {
           this.updateHeader();
           this.renderTabs();
           this.showView(FlowBuddyRBAC.getConfig().defaultView);
+        } else {
+          document.getElementById('login-overlay').style.display = 'flex';
         }
       });
       
@@ -67,6 +70,7 @@ const FlowBuddyApp = {
         if (area === 'local' && changes['flowbuddy-user']) {
           const user = changes['flowbuddy-user'].newValue;
           if (user) {
+            document.getElementById('login-overlay').style.display = 'none';
             this.userName = user.name || 'Budi';
             this.userLevel = user.level || 1;
             this.attendanceStreak = user.streak || 0;
@@ -84,15 +88,19 @@ const FlowBuddyApp = {
               }
               this.showView(FlowBuddyRBAC.getConfig().defaultView);
             }
+          } else {
+            document.getElementById('login-overlay').style.display = 'flex';
           }
         }
       });
     }
 
     // Fallback default
+    // Fallback default removed to prevent bypassing login screen
     try {
       const saved = localStorage.getItem('flowbuddy-user');
       if (saved) {
+        document.getElementById('login-overlay').style.display = 'none';
         const user = JSON.parse(saved);
         this.userName = user.name || 'Budi';
       }

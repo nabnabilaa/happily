@@ -50,6 +50,35 @@ function detectFlowbeeUser() {
   try {
     chrome.storage.local.get(['flowbee_user_id', 'flowbee_base_url', 'flowbee_user', 'flowbee_today_attendance', 'fb3'], r => {
       if (r) {
+        // Detect logout on the web app tab itself
+        if (r.flowbee_base_url && location.origin === r.flowbee_base_url) {
+          try {
+            const stored = localStorage.getItem('hp_user_id');
+            if (!stored && r.flowbee_user_id) {
+              chrome.storage.local.remove(['flowbee_user_id', 'flowbee_user', 'flowbee_today_attendance', 'fb3', 'flowbuddy-user']);
+              flowbeeUserId = null;
+              flowbeeUser = null;
+              todayAttendance = null;
+              window.fbCtx.tasks = []; window.fbCtx.notes = [];
+              const mc = document.getElementById('flowbuddy-mascot-container');
+              if (mc) mc.style.display = 'none';
+              return;
+            }
+          } catch(e){}
+        }
+
+        // Detect if another tab logged out (chrome.storage is missing user id)
+        if (!r.flowbee_user_id && flowbeeUserId) {
+          chrome.storage.local.remove(['flowbuddy-user']);
+          flowbeeUserId = null;
+          flowbeeUser = null;
+          todayAttendance = null;
+          window.fbCtx.tasks = []; window.fbCtx.notes = [];
+          const mc = document.getElementById('flowbuddy-mascot-container');
+          if (mc) mc.style.display = 'none';
+          return;
+        }
+
         if (r.flowbee_user_id) flowbeeUserId = r.flowbee_user_id;
         if (r.flowbee_base_url) FLOWBEE_API = r.flowbee_base_url.replace(/\/$/, '') + '/api/ext';
         if (r.flowbee_today_attendance) todayAttendance = r.flowbee_today_attendance;

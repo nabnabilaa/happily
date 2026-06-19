@@ -16,21 +16,23 @@ export async function GET(request: Request) {
     let args: any[];
 
     if (['manager', 'hr', 'admin'].includes(role || '')) {
-      // Manager/HR/Admin sees KPIs they assigned
+      // Manager/HR/Admin sees KPIs they assigned or team KPIs for their team
       sql = `SELECT k.*, u.name as assignee_name 
              FROM monthly_kpis k 
              LEFT JOIN users u ON k.assigned_to = u.id
-             WHERE k.assigned_by = ? AND k.month = ? AND k.year = ?
+             WHERE (k.assigned_by = ? OR (k.scope = 'team' AND k.assigned_to = (SELECT team_id FROM users WHERE id = ?))) 
+               AND k.month = ? AND k.year = ?
              ORDER BY k.created_at DESC`;
-      args = [userId, Number(month), Number(year)];
+      args = [userId, userId, Number(month), Number(year)];
     } else {
-      // Employee sees KPIs assigned to them
+      // Employee sees KPIs assigned to them AND Team KPIs
       sql = `SELECT k.*, u.name as assigner_name 
              FROM monthly_kpis k 
              LEFT JOIN users u ON k.assigned_by = u.id
-             WHERE k.assigned_to = ? AND k.month = ? AND k.year = ? AND k.status = 'active'
+             WHERE (k.assigned_to = ? OR (k.scope = 'team' AND k.assigned_to = (SELECT team_id FROM users WHERE id = ?))) 
+               AND k.month = ? AND k.year = ? AND k.status = 'active'
              ORDER BY k.weight DESC`;
-      args = [userId, Number(month), Number(year)];
+      args = [userId, userId, Number(month), Number(year)];
     }
 
     const res = await db.execute({ sql, args });
@@ -47,6 +49,9 @@ export async function GET(request: Request) {
       assignerName: r.assigner_name || null,
       status: r.status,
       finalScore: r.final_score,
+      metricTarget: r.metric_target,
+      metricCurrent: r.metric_current,
+      scope: r.scope || 'assigned',
       managerNotes: r.manager_notes,
       createdAt: r.created_at,
     }));
@@ -61,7 +66,7 @@ export async function GET(request: Request) {
 // POST: Create new KPI
 export async function POST(request: Request) {
   try {
-    const { title, targetDescription, weight, month, year, assignedTo, assignedBy } = await request.json();
+    const { title, targetDescription, weight, month, year, assignedTo, assignedBy, scope, metricTarget } = await request.json();
 
     if (!title || !assignedTo || !assignedBy) {
       return NextResponse.json({ error: "title, assignedTo, dan assignedBy wajib diisi" }, { status: 400 });
@@ -72,9 +77,9 @@ export async function POST(request: Request) {
     const y = year || new Date().getFullYear();
 
     await db.execute({
-      sql: `INSERT INTO monthly_kpis (id, title, target_description, weight, month, year, assigned_to, assigned_by) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      args: [id, title, targetDescription || '', Number(weight) || 0, m, y, assignedTo, assignedBy]
+      sql: `INSERT INTO monthly_kpis (id, title, target_description, weight, month, year, assigned_to, assigned_by, scope, metric_target) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [id, title, targetDescription || '', Number(weight) || 0, m, y, assignedTo, assignedBy, scope || 'assigned', metricTarget || 100]
     });
 
     // Create notification for employee
@@ -101,7 +106,7 @@ export async function POST(request: Request) {
 // PUT: Update KPI (finalize score, etc.)
 export async function PUT(request: Request) {
   try {
-    const { kpiId, finalScore, managerNotes, status } = await request.json();
+    const { kpiId, finalScore, metricCurrent, managerNotes, status } = await request.json();
 
     if (!kpiId) return NextResponse.json({ error: "kpiId required" }, { status: 400 });
 
@@ -109,6 +114,7 @@ export async function PUT(request: Request) {
     const args: any[] = [];
 
     if (finalScore !== undefined) { updates.push("final_score = ?"); args.push(finalScore); }
+    if (metricCurrent !== undefined) { updates.push("metric_current = ?"); args.push(metricCurrent); }
     if (managerNotes !== undefined) { updates.push("manager_notes = ?"); args.push(managerNotes); }
     if (status) { updates.push("status = ?"); args.push(status); }
 

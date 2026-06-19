@@ -21,14 +21,19 @@
 </head>
 <body>
     <div id="app" class="app-container">
-        <!-- â•â•â• Header â•â•â• -->
+        <!-- Login Overlay -->
+        <div id="login-overlay" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 16px;">🐝</div>
+            <h2 style="font-family: 'Nunito', sans-serif; margin: 0 0 8px; color: var(--ink);">FlowBuddy</h2>
+            <p style="font-size: 14px; color: var(--ink-soft); margin-bottom: 24px;">Silakan login ke web dashboard terlebih dahulu untuk mensinkronisasi data Anda.</p>
+            <a href="http://localhost:3000/" target="_blank" style="padding: 12px 24px; background: var(--blue); color: white; text-decoration: none; border-radius: 12px; font-weight: bold; font-size: 14px; box-shadow: 0 4px 12px rgba(59,130,246,0.3);">Login ke Web App</a>
+        </div>
+
+        <!-- ═══ Header ═══ -->
         <header class="app-header" id="main-header">
             <!-- Default Header -->
             <div class="header-left" id="header-default">
                 <div class="mascot-icon" id="header-mascot" style="width: 38px; height: 38px; margin-right: 12px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
-<svg class="hp-buddy-svg-wrap state-idle" style="width: 100%; height: 100%; --w1:#D6E4FF; --w2:#3B82F6; --wp:#93C5FD;" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" width="100" height="100" overflow="visible">
-      <defs>
-        <radialGradient id="fb-grad-badan" cx="40%" cy="30%" r="70%">
           <stop class="stop-1" offset="0%"/>
           <stop class="stop-2" offset="100%"/>
         </radialGradient>

@@ -40,7 +40,12 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
     fetch("/api/settings/office").then(res => res.json()).then(data => {
       if (data.offices) {
         setOffices(data.offices);
-        if (data.offices.length > 0) setOfficeId(data.offices[0].id);
+        if (data.offices.length > 0) {
+          setOfficeId(data.offices[0].id);
+        } else {
+          setCheckInType('WFA');
+          setNotes('Kerja dari luar kantor');
+        }
       }
     }).catch(() => {});
 

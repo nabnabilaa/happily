@@ -253,6 +253,25 @@ export async function POST() {
       )`
     },
     {
+      desc: "Create monthly_kpis table",
+      sql: `CREATE TABLE IF NOT EXISTS monthly_kpis (
+        id VARCHAR(100) PRIMARY KEY,
+        title VARCHAR(500) NOT NULL,
+        target_description TEXT,
+        weight DOUBLE,
+        month INT,
+        year INT,
+        assigned_to VARCHAR(100),
+        assigned_by VARCHAR(100),
+        status VARCHAR(50) DEFAULT 'active',
+        metric_target DOUBLE,
+        metric_current DOUBLE DEFAULT 0,
+        final_score DOUBLE,
+        manager_notes TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`
+    },
+    {
       desc: "Create ext_sync_log table",
       sql: `CREATE TABLE IF NOT EXISTS ext_sync_log (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -361,63 +380,7 @@ export async function POST() {
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       )`
     },
-    // ── OKR & Task Management tables ──
-    {
-      desc: "Create okrs table",
-      sql: `CREATE TABLE IF NOT EXISTS okrs (
-        id VARCHAR(100) PRIMARY KEY,
-        type ENUM('company','team','individual') NOT NULL,
-        owner_id VARCHAR(100),
-        division_id INT,
-        parent_okr_id VARCHAR(100),
-        period VARCHAR(20) NOT NULL,
-        objective_title TEXT NOT NULL,
-        created_by VARCHAR(100) NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_okrs_type (type),
-        INDEX idx_okrs_period (period),
-        INDEX idx_okrs_owner (owner_id),
-        INDEX idx_okrs_division (division_id)
-      )`
-    },
-    {
-      desc: "Create key_results table",
-      sql: `CREATE TABLE IF NOT EXISTS key_results (
-        id VARCHAR(100) PRIMARY KEY,
-        okr_id VARCHAR(100) NOT NULL,
-        title TEXT NOT NULL,
-        target_value DOUBLE DEFAULT 100,
-        current_value DOUBLE DEFAULT 0,
-        unit VARCHAR(50) DEFAULT '%',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_kr_okr (okr_id),
-        FOREIGN KEY (okr_id) REFERENCES okrs(id) ON DELETE CASCADE
-      )`
-    },
-    {
-      desc: "Create okr_tasks table",
-      sql: `CREATE TABLE IF NOT EXISTS okr_tasks (
-        id VARCHAR(100) PRIMARY KEY,
-        key_result_id VARCHAR(100),
-        assignee_id VARCHAR(100) NOT NULL,
-        created_by VARCHAR(100) NOT NULL,
-        title VARCHAR(500) NOT NULL,
-        description TEXT,
-        status ENUM('todo','in_progress','review','done') DEFAULT 'todo',
-        approval_type ENUM('reviewed','self_approved'),
-        approved_by VARCHAR(100),
-        approved_at DATETIME,
-        revision_note TEXT,
-        due_date DATE,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_okrtask_assignee (assignee_id),
-        INDEX idx_okrtask_status (status),
-        INDEX idx_okrtask_kr (key_result_id)
-      )`
-    }
+
   ];
 
   for (const t of tables) {
@@ -507,6 +470,10 @@ export async function POST() {
     {
       desc: "Add description to focus_rooms",
       sql: `ALTER TABLE focus_rooms ADD COLUMN description TEXT`
+    },
+    {
+      desc: "monthly_kpis.scope",
+      sql: `ALTER TABLE monthly_kpis ADD COLUMN scope VARCHAR(50) DEFAULT 'assigned'`
     }
   ];
 
@@ -610,108 +577,7 @@ export async function POST() {
     results.push(`❌ Seed notification templates: ${e.message}`);
   }
 
-  // ═══════════════════════════════════════════════════════
-  // PHASE 8: Seed OKR Demo Data
-  // ═══════════════════════════════════════════════════════
-  try {
-    const okrCheck = await db.execute("SELECT COUNT(*) as cnt FROM okrs");
-    if (Number(okrCheck.rows[0]?.cnt) === 0) {
-      // Ensure divisions "IT" and "Sales" exist  
-      await db.execute("INSERT IGNORE INTO departments (name) VALUES ('IT'), ('Sales')");
-      
-      // Get division IDs
-      const itDiv = await db.execute("SELECT id FROM departments WHERE name = 'IT'");
-      const salesDiv = await db.execute("SELECT id FROM departments WHERE name = 'Sales'");
-      const itDivId = itDiv.rows[0]?.id;
-      const salesDivId = salesDiv.rows[0]?.id;
 
-      // Set division manager_id
-      if (itDivId) await db.execute({ sql: "UPDATE departments SET manager_id = 'okr_mgr_it' WHERE id = ?", args: [itDivId] });
-      if (salesDivId) await db.execute({ sql: "UPDATE departments SET manager_id = 'okr_mgr_sales' WHERE id = ?", args: [salesDivId] });
-
-      // Create OKR demo users (using INSERT IGNORE to skip if already exist)
-      const bcrypt = await import('bcryptjs');
-      const hash = await bcrypt.hash('password123', 10);
-      const okrUsers = [
-        { id: 'okr_hr', name: 'Sari HR', email: 'sari.hr@demo.com', role: 'hr', divId: null },
-        { id: 'okr_mgr_it', name: 'Andi Manager IT', email: 'andi.mgr@demo.com', role: 'manager', divId: itDivId },
-        { id: 'okr_mgr_sales', name: 'Dewi Manager Sales', email: 'dewi.mgr@demo.com', role: 'manager', divId: salesDivId },
-        { id: 'okr_emp_it1', name: 'Budi Dev', email: 'budi.dev@demo.com', role: 'employee', divId: itDivId },
-        { id: 'okr_emp_it2', name: 'Citra QA', email: 'citra.qa@demo.com', role: 'employee', divId: itDivId },
-        { id: 'okr_emp_sales1', name: 'Eko Sales', email: 'eko.sales@demo.com', role: 'employee', divId: salesDivId },
-        { id: 'okr_emp_sales2', name: 'Fitri Sales', email: 'fitri.sales@demo.com', role: 'employee', divId: salesDivId },
-      ];
-      for (const u of okrUsers) {
-        await db.execute({
-          sql: `INSERT IGNORE INTO users (id, name, email, role, password_hash, points, coins, level, \`rank\`, streak, is_onboarded, division_id)
-                VALUES (?, ?, ?, ?, ?, 0, 0, 1, 'E', 0, 1, ?)`,
-          args: [u.id, u.name, u.email, u.role, hash, u.divId]
-        });
-      }
-
-      // Company OKR
-      await db.execute({
-        sql: `INSERT INTO okrs (id, type, owner_id, division_id, parent_okr_id, period, objective_title, created_by)
-              VALUES (?, 'company', NULL, NULL, NULL, '2026-Q3', 'Meningkatkan Revenue dan Customer Satisfaction Q3 2026', 'okr_hr')`,
-        args: ['okr_company_1']
-      });
-      // Company KRs
-      await db.execute({ sql: `INSERT INTO key_results (id, okr_id, title, target_value, current_value, unit) VALUES (?, ?, ?, ?, ?, ?)`, args: ['kr_c1', 'okr_company_1', 'Revenue naik 20% dari Q2', 20, 5, '%'] });
-      await db.execute({ sql: `INSERT INTO key_results (id, okr_id, title, target_value, current_value, unit) VALUES (?, ?, ?, ?, ?, ?)`, args: ['kr_c2', 'okr_company_1', 'NPS score ≥ 80', 80, 72, 'score'] });
-
-      // Team OKR - IT
-      await db.execute({
-        sql: `INSERT INTO okrs (id, type, owner_id, division_id, parent_okr_id, period, objective_title, created_by)
-              VALUES (?, 'team', 'okr_mgr_it', ?, 'okr_company_1', '2026-Q3', 'Deliver Platform v2 dengan zero critical bugs', 'okr_mgr_it')`,
-        args: ['okr_team_it', itDivId]
-      });
-      await db.execute({ sql: `INSERT INTO key_results (id, okr_id, title, target_value, current_value, unit) VALUES (?, ?, ?, ?, ?, ?)`, args: ['kr_t1', 'okr_team_it', 'Release 3 major features', 3, 1, 'features'] });
-      await db.execute({ sql: `INSERT INTO key_results (id, okr_id, title, target_value, current_value, unit) VALUES (?, ?, ?, ?, ?, ?)`, args: ['kr_t2', 'okr_team_it', 'Code coverage ≥ 85%', 85, 68, '%'] });
-
-      // Team OKR - Sales
-      await db.execute({
-        sql: `INSERT INTO okrs (id, type, owner_id, division_id, parent_okr_id, period, objective_title, created_by)
-              VALUES (?, 'team', 'okr_mgr_sales', ?, 'okr_company_1', '2026-Q3', 'Expand market share ke 3 kota baru', 'okr_mgr_sales')`,
-        args: ['okr_team_sales', salesDivId]
-      });
-      await db.execute({ sql: `INSERT INTO key_results (id, okr_id, title, target_value, current_value, unit) VALUES (?, ?, ?, ?, ?, ?)`, args: ['kr_s1', 'okr_team_sales', 'Onboard 50 new clients', 50, 12, 'clients'] });
-
-      // Individual OKRs
-      await db.execute({
-        sql: `INSERT INTO okrs (id, type, owner_id, division_id, parent_okr_id, period, objective_title, created_by) VALUES (?, 'individual', ?, ?, 'okr_team_it', '2026-Q3', 'Selesaikan modul payment gateway', 'okr_emp_it1')`,
-        args: ['okr_ind_budi', 'okr_emp_it1', itDivId]
-      });
-      await db.execute({ sql: `INSERT INTO key_results (id, okr_id, title, target_value, current_value, unit) VALUES (?, ?, ?, ?, ?, ?)`, args: ['kr_i1', 'okr_ind_budi', 'Integrasi 3 payment provider', 3, 1, 'provider'] });
-
-      // Individual OKR for Manager (self-approve)
-      await db.execute({
-        sql: `INSERT INTO okrs (id, type, owner_id, division_id, parent_okr_id, period, objective_title, created_by) VALUES (?, 'individual', ?, ?, NULL, '2026-Q3', 'Tingkatkan team velocity 15%', 'okr_mgr_it')`,
-        args: ['okr_ind_mgr', 'okr_mgr_it', itDivId]
-      });
-      await db.execute({ sql: `INSERT INTO key_results (id, okr_id, title, target_value, current_value, unit) VALUES (?, ?, ?, ?, ?, ?)`, args: ['kr_m1', 'okr_ind_mgr', 'Reduce avg PR review time to < 4 hours', 4, 8, 'hours'] });
-
-      // Sample Tasks
-      const taskSeed = [
-        { id: 'okrt_1', krId: 'kr_i1', assignee: 'okr_emp_it1', creator: 'okr_mgr_it', title: 'Setup Midtrans SDK', status: 'in_progress', desc: 'Integrasi Midtrans payment gateway SDK' },
-        { id: 'okrt_2', krId: 'kr_i1', assignee: 'okr_emp_it1', creator: 'okr_mgr_it', title: 'Implement Xendit webhook', status: 'todo', desc: 'Handle Xendit callback notifications' },
-        { id: 'okrt_3', krId: 'kr_t2', assignee: 'okr_emp_it2', creator: 'okr_mgr_it', title: 'Write unit tests for auth module', status: 'review', desc: 'Cover all auth endpoints with tests' },
-        { id: 'okrt_4', krId: 'kr_m1', assignee: 'okr_mgr_it', creator: 'okr_mgr_it', title: 'Setup automated PR reminder bot', status: 'in_progress', desc: 'Slack bot to remind pending PRs' },
-        { id: 'okrt_5', krId: 'kr_s1', assignee: 'okr_emp_sales1', creator: 'okr_mgr_sales', title: 'Presentasi ke 10 prospek di Surabaya', status: 'todo', desc: 'Roadshow ke potential clients' },
-      ];
-      for (const t of taskSeed) {
-        await db.execute({
-          sql: `INSERT INTO okr_tasks (id, key_result_id, assignee_id, created_by, title, description, status) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          args: [t.id, t.krId, t.assignee, t.creator, t.title, t.desc, t.status]
-        });
-      }
-
-      results.push("✅ Seeded OKR demo data (Company + Team + Individual OKRs, Key Results, Tasks)");
-    } else {
-      results.push("⏭️ OKR data already exists, skipping seed");
-    }
-  } catch (e: any) {
-    results.push(`❌ Seed OKR data: ${e.message}`);
-  }
 
   // ═══════════════════════════════════════════════════════
   // PHASE 9: Verify final state

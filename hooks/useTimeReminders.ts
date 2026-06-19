@@ -75,15 +75,20 @@ export function useTimeReminders(
     };
 
     const handleScrollToClockIn = () => {
-      setTimeout(() => {
+      let retries = 5;
+      const tryScroll = () => {
         const el = document.getElementById('attendance-clock-in-btn');
         if (el) {
           el.scrollIntoView({ behavior: 'smooth', block: 'center' });
           el.style.transition = 'transform 0.3s ease';
           el.style.transform = 'scale(1.05)';
           setTimeout(() => el.style.transform = 'scale(1)', 350);
+        } else if (retries > 0) {
+          retries--;
+          setTimeout(tryScroll, 200);
         }
-      }, 100);
+      };
+      setTimeout(tryScroll, 100);
     };
     window.addEventListener('hp_scroll_to_clock_in', handleScrollToClockIn);
 

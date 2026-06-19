@@ -238,9 +238,9 @@ async function seedAiven() {
         for (let k = 1; k <= 2; k++) {
           const kpiId = `kpi_${emp.id}_${k}`;
           await connection.query(
-            `INSERT INTO monthly_kpis (id, title, target_description, weight, month, year, assigned_to, assigned_by, status, metric_target, metric_current)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?)`,
-            [kpiId, `Target Q${Math.ceil(currentMonth/3)}: Initiative ${k}`, `Selesaikan 100% dengan kualitas tinggi`, 50, currentMonth, currentYear, emp.id, manager.id, 100, Math.floor(Math.random()*80)]
+            `INSERT INTO monthly_kpis (id, title, target_description, weight, month, year, assigned_to, assigned_by, status, metric_target, metric_current, scope)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?)`,
+            [kpiId, `Target Q${Math.ceil(currentMonth/3)}: Initiative ${k}`, `Selesaikan 100% dengan kualitas tinggi`, 50, currentMonth, currentYear, emp.id, manager.id, 100, Math.floor(Math.random()*80), 'assigned']
           );
 
           // Create 3 Tasks for each KPI

@@ -61,11 +61,9 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
   const taskProgress = hasTodayTasks ? Math.round((doneTaskCount / linkedTasks.length) * 100) : null;
   
   // Progress from child goals (aligned to this goal)
-  const childGoals = state?.goals?.filter((item: any) => String(item.parent_id) === String(g.id)) || [];
-  const hasChildren = childGoals.length > 0;
-  const childrenProgress = hasChildren 
-    ? Math.round(childGoals.reduce((acc, curr) => acc + (curr.progress || 0), 0) / childGoals.length)
-    : null;
+  const childGoals: any[] = [];
+  const hasChildren = false;
+  const childrenProgress = null;
 
   // Final display progress: prioritize auto-calculated from tasks/children
   const displayProgress = hasTodayTasks && taskProgress !== null
@@ -180,7 +178,6 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
                   fontSize: 10, fontWeight: 900, letterSpacing: 0.5
                 }}>DONE</div>
               )}
-              <HPChip tone={g.tone} size="sm">{g.alignment}% align</HPChip>
             </div>
             
             {!isReadOnly && (
@@ -198,15 +195,6 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
           <div style={{ ...HP_TEXT.h, fontSize: 16, lineHeight: 1.4, color: HP_TOKENS.ink, marginTop: 4 }}>
             {g.title}
           </div>
-
-          {parentGoal && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
-              <HPGlyph name="link" size={10} color={HP_TOKENS.blue} />
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 800, fontSize: 11 }}>
-                Aligned to: {parentGoal.title}
-              </div>
-            </div>
-          )}
         </div>
       </div>
 

@@ -282,6 +282,35 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit 
                </div>
              );
            })()}
+
+           {/* Status badge */}
+           {p.status === 'pending_review' && (
+             <div style={{
+               display: 'flex', alignItems: 'center', gap: 4,
+               background: HP_TOKENS.yellowSoft, padding: '2px 8px', borderRadius: 6,
+             }}>
+               <span style={{ fontSize: 10 }}>⏳</span>
+               <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.yellow, fontWeight: 800, fontSize: 10 }}>Menunggu Review</span>
+             </div>
+           )}
+           {p.status === 'revision' && (
+             <div style={{
+               display: 'flex', alignItems: 'center', gap: 4,
+               background: HP_TOKENS.coralSoft, padding: '2px 8px', borderRadius: 6,
+             }}>
+               <span style={{ fontSize: 10 }}>✍️</span>
+               <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.coral, fontWeight: 800, fontSize: 10 }}>Revisi</span>
+             </div>
+           )}
+           {p.status === 'rejected' && (
+             <div style={{
+               display: 'flex', alignItems: 'center', gap: 4,
+               background: HP_TOKENS.coralSoft, padding: '2px 8px', borderRadius: 6,
+             }}>
+               <span style={{ fontSize: 10 }}>❌</span>
+               <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.coral, fontWeight: 800, fontSize: 10 }}>Ditolak</span>
+             </div>
+           )}
            
            {/* Proof links badge */}
            {p.proof_links && p.proof_links.length > 0 && (
@@ -392,7 +421,7 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit 
           </>
         )}
         
-        {onEdit && !p.done && (
+        {(onEdit && (!p.done || p.status === 'revision' || p.status === 'rejected')) && (
           <button 
             onClick={(e) => { e.stopPropagation(); onEdit(); }}
             className="hp-tap"
