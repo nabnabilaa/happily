@@ -484,7 +484,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
             
             <div style={{ flex: 2, minWidth: 200 }}>
               <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 4 }}>
-                TERKAIT KPI MANA?
+                TERKAIT TARGET / KPI MANA?
               </div>
               {myKpis.length > 0 ? (
                 <div style={{ position: 'relative' }}>
@@ -501,7 +501,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                     }}
                   >
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {myKpis.find((k: any) => String(k.id) === String(selectedKpiId))?.title || "Umum (tidak terkait KPI spesifik)"}
+                      {myKpis.find((k: any) => String(k.id) === String(selectedKpiId))?.title || "Umum (tidak terkait Target/KPI spesifik)"}
                     </span>
                     <HPGlyph name="chevron-down" size={16} color={HP_TOKENS.inkMute} />
                   </div>
@@ -528,13 +528,13 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                             marginBottom: 4
                           }}
                         >
-                          Umum (tidak terkait KPI spesifik)
+                          Umum (tidak terkait Target/KPI spesifik)
                         </div>
                         
                         {myKpis.filter((k: any) => k.scope === 'team').length > 0 && (
                           <div style={{ marginBottom: 8 }}>
                             <div style={{ padding: '4px 12px', ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800 }}>
-                              KPI Team
+                              Target / KPI Team
                             </div>
                             {myKpis.filter((k: any) => k.scope === 'team').map((k: any) => {
                               const isSelected = String(k.id) === String(selectedKpiId);
@@ -563,7 +563,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                         {myKpis.filter((k: any) => k.scope === 'assigned').length > 0 && (
                           <div>
                             <div style={{ padding: '4px 12px', ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800 }}>
-                              KPI Saya (Assigned)
+                              Target / KPI Saya
                             </div>
                             {myKpis.filter((k: any) => k.scope === 'assigned').map((k: any) => {
                               const isSelected = String(k.id) === String(selectedKpiId);

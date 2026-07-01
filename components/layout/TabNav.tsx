@@ -17,20 +17,18 @@ const TAB_CONFIG: Record<UserRole, Array<{ key: string; label: string; icon: str
   employee: [
     { key: 'home',      label: 'Home',       icon: 'home' },
     { key: 'calendar',  label: 'Calendar',   icon: 'calendar' },
-    { key: 'goals',     label: 'KPI',        icon: 'target' },
+    { key: 'goals',     label: 'Target / KPI', icon: 'target' },
     { key: 'team',      label: 'Tim',        icon: 'people' },
     { key: 'recognize', label: 'Rewards',    icon: 'trophy' },
     { key: 'chat',      label: 'Chat',       icon: 'activity' },
-    { key: 'notes',     label: 'Catatan',    icon: 'book' },
   ],
   manager: [
     { key: 'home',      label: 'Dashboard',  icon: 'home' },
     { key: 'calendar',  label: 'Calendar',   icon: 'calendar' },
-    { key: 'goals',     label: 'Tim & KPI',  icon: 'target' },
+    { key: 'goals',     label: 'Tim & Target/KPI', icon: 'target' },
     { key: 'team',      label: 'Tim',        icon: 'people' },
     { key: 'recognize', label: 'Rewards',    icon: 'trophy' },
     { key: 'chat',      label: 'Chat',       icon: 'activity' },
-    { key: 'notes',     label: 'Catatan',    icon: 'book' },
   ],
   hr: [
     { key: 'home',      label: 'Dashboard',  icon: 'home' },
@@ -39,7 +37,6 @@ const TAB_CONFIG: Record<UserRole, Array<{ key: string; label: string; icon: str
     { key: 'team',      label: 'Tim',        icon: 'people' },
     { key: 'recognize', label: 'Rewards',    icon: 'trophy' },
     { key: 'chat',      label: 'Chat',       icon: 'activity' },
-    { key: 'notes',     label: 'Catatan',    icon: 'book' },
   ],
 };
 
@@ -61,31 +58,31 @@ export default function TabNav({ tab, setTab, userRole }: TabNavProps) {
         }}>
           <BeeMascot mood="happy" size={36} />
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
           <div style={{ 
             fontFamily: HP_FONT_DISPLAY, 
             fontWeight: 900, 
-            fontSize: 22, 
+            fontSize: 24, 
             letterSpacing: -0.5,
             display: 'flex',
-            alignItems: 'center'
+            alignItems: 'center',
+            lineHeight: 1.1
           }}>
             <span style={{ color: HP_TOKENS.ink }}>Flow</span>
             <span style={{ color: HP_TOKENS.primary }}>buddy</span>
-            <span style={{ fontSize: 12, fontWeight: 800, color: HP_TOKENS.inkMute, marginLeft: 6, alignSelf: 'flex-end', paddingBottom: 2 }}>by Maxy</span>
           </div>
           <div style={{ 
             fontFamily: HP_FONT, 
-            fontSize: 10, 
-            fontWeight: 800, 
-            color: HP_TOKENS.inkFade,
-            letterSpacing: 1,
-            textTransform: 'uppercase',
+            fontSize: 11, 
+            fontWeight: 700, 
+            color: HP_TOKENS.inkMute,
             display: 'flex',
             alignItems: 'center',
-            gap: 4
+            gap: 4,
+            marginTop: 2
           }}>
-            Workspace <HPGlyph name="sparkle" size={10} color={HP_TOKENS.yellow} />
+            <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, color: HP_TOKENS.inkFade }}>by Maxy</span>
+            <HPGlyph name="sparkle" size={10} color={HP_TOKENS.yellow} />
           </div>
         </div>
       </div>

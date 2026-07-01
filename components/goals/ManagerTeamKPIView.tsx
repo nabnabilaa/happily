@@ -53,9 +53,9 @@ export default function ManagerTeamKPIView({
     <>
       <SectionHeader 
         icon="people" 
-        label="Assigned to Members (KPIs)" 
+        label="Target & KPI Anggota Tim" 
         count={String(topLevelGoals.length)} 
-        action="+ Buat KPI"
+        action="+ Buat Target / KPI"
         onAction={() => openModal('manage_kpi', { initialShowForm: true })}
       />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

@@ -35,7 +35,6 @@ const DAILY_MISSIONS = [
   },
   { id: 'dm_midday', title: 'Cek Progres Siang', desc: 'Isi Mid-day Check-in di jam 11.30 - 13.30 sebelum terlewat.', emoji: '☀️', color: '#facc15', points: 15, actionLabel: 'Cek Progres', action: (openModal: any) => openModal('work_checkin'), check: (s: any) => (s.logbook || []).some((l: any) => l.type === 'progress_update' && (l.created_at || '').startsWith(getTodayStr())) },
   { id: 'dm_chat', title: 'Sapa Tim', desc: 'Buka fitur Chat dan lihat pembaruan dari tim.', emoji: '💬', color: '#60a5fa', points: 10, actionLabel: 'Buka Chat', action: () => window.dispatchEvent(new CustomEvent('set_tab', { detail: 'chat' })), check: (s: any) => false },
-  { id: 'dm_notes', title: 'Catatan Rapi', desc: 'Buka Catatan untuk merangkum hal penting hari ini.', emoji: '📓', color: '#a78bfa', points: 10, actionLabel: 'Buka Catatan', action: () => window.dispatchEvent(new CustomEvent('set_tab', { detail: 'notes' })), check: (s: any) => false },
 ];
 
 // Seeded random for daily rotation

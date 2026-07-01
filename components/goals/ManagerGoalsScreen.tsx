@@ -92,12 +92,12 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
 
   return (
     <div style={{ padding: '0 16px 120px', fontFamily: HP_FONT }}>
-      <ScreenHeader title="Tim & KPI" subtitle="Pantau goal tim dan performa anggota" />
+      <ScreenHeader title="Tim, Target & KPI" subtitle="Pantau goal tim dan performa anggota" />
 
       {/* Tab switcher */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 16, overflowX: 'auto', paddingBottom: 4 }}>
         {([
-          { key: 'kpi', label: 'KPI Tim' },
+          { key: 'kpi', label: 'Target & KPI Tim' },
           { key: 'dailytasks', label: 'Tugas Harian' },
           { key: 'personal', label: 'Personal' },
           { key: 'members', label: 'Anggota' },

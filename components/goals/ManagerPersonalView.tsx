@@ -85,9 +85,9 @@ export default function ManagerPersonalView({
       <div style={{ marginTop: 24 }}>
         <SectionHeader 
           icon="target" 
-          label="KPI Saya"
+          label="Target / KPI Saya"
           count={String(combinedMyGoals.length)} 
-          action="+ KPI Mandiri"
+          action="+ Target/KPI Mandiri"
           onAction={() => openModal('new_goal', { scope: 'personal' })}
         />
         

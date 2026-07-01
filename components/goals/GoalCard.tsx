@@ -211,7 +211,7 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
           </div>
           <div style={{ ...HP_TEXT.small, fontWeight: 800, color: HP_TOKENS.ink, fontSize: 12 }}>
             {hasChildren 
-              ? `${childGoals.length} Sub-KPI` 
+              ? `${childGoals.length} Sub-Target` 
               : hasTodayTasks 
                 ? `${doneTaskCount}/${linkedTasks.length} task selesai` 
                 : (g.metric && String(g.metric).includes('task selesai')) 
@@ -407,7 +407,7 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
         }}>
           <HPGlyph name="info" size={12} color={HP_TOKENS.yellow} />
           <div style={{ ...HP_TEXT.tiny, color: '#8A6814', fontWeight: 700, fontSize: 10 }}>
-            Tambahkan task di Task Harian & hubungkan ke KPI ini untuk tracking progress otomatis.
+            Tambahkan task di Task Harian & hubungkan ke Target/KPI ini untuk tracking progress otomatis.
           </div>
         </div>
       )}
@@ -429,9 +429,9 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
             <div style={{ width: 64, height: 64, borderRadius: 32, background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
               <HPGlyph name="target" size={32} />
             </div>
-            <div style={{ ...HP_TEXT.h, fontSize: 20, marginBottom: 8 }}>Hapus Goal?</div>
+            <div style={{ ...HP_TEXT.h, fontSize: 20, marginBottom: 8 }}>Hapus Target/KPI?</div>
             <div style={{ ...HP_TEXT.body, color: HP_TOKENS.inkSoft, marginBottom: 24 }}>
-              Apakah Anda yakin ingin menghapus goal <b>"{g.title}"</b>?
+              Apakah Anda yakin ingin menghapus Target/KPI <b>"{g.title}"</b>?
             </div>
             <div style={{ display: 'flex', gap: 12, flexDirection: 'column' }}>
               <button onClick={(e) => { e.stopPropagation(); deleteGoal(); }} className="hp-tap" style={{

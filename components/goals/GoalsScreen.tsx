@@ -116,13 +116,13 @@ export default function GoalsScreen({ openModal }: GoalsScreenProps) {
 
   return (
     <div style={{ padding: '0 16px 120px', fontFamily: HP_FONT }}>
-      <ScreenHeader title="Indikator Kinerja (KPI)" subtitle="Pantau kemajuan target utama yang harus kamu capai bulan ini" />
+      <ScreenHeader title="Target & Indikator Kinerja (KPI)" subtitle="Pantau kemajuan target utama yang harus kamu capai bulan ini" />
 
       {user?.role === 'manager' && <ReviewTaskWidget />}
 
       <SectionHeader 
         icon="target" 
-        label="DAFTAR KPI BULAN INI"
+        label="DAFTAR TARGET & KPI BULAN INI"
         count={String(combinedGoals.length)} 
       />
       
@@ -144,13 +144,13 @@ export default function GoalsScreen({ openModal }: GoalsScreenProps) {
             background: HP_TOKENS.card, borderRadius: 24, border: `1.5px solid ${HP_TOKENS.lineSoft}`
           }}>
             <div style={{ fontSize: 32, marginBottom: 12 }}>🌱</div>
-            <div style={{ ...HP_TEXT.h, fontSize: 14 }}>Belum ada KPI {tab}.</div>
+            <div style={{ ...HP_TEXT.h, fontSize: 14 }}>Belum ada Target/KPI {tab}.</div>
             <div style={{ ...HP_TEXT.small, marginTop: 4 }}>Semangat! Teruslah tumbuh dan berkembang.</div>
           </div>
         )}
         {loadingKpis && combinedGoals.length === 0 && (
           <div style={{ textAlign: 'center', padding: '40px 20px', color: HP_TOKENS.inkMute }}>
-            Memuat KPI...
+            Memuat Target/KPI...
           </div>
         )}
 
