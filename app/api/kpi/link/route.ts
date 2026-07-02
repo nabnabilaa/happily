@@ -4,15 +4,15 @@ import { db } from "@/lib/db";
 // POST: Create a task-KPI link (employee self-tags)
 export async function POST(request: Request) {
   try {
-    const { taskId, kpiId } = await request.json();
+    const { taskId, kpiId, weeklyTargetId } = await request.json();
 
     if (!taskId || !kpiId) {
       return NextResponse.json({ error: "taskId dan kpiId wajib diisi" }, { status: 400 });
     }
 
     await db.execute({
-      sql: "INSERT INTO task_kpi_links (task_id, kpi_id, linked_by, status) VALUES (?, ?, 'employee', 'pending')",
-      args: [taskId, kpiId]
+      sql: "INSERT INTO task_kpi_links (task_id, kpi_id, weekly_target_id, linked_by, status) VALUES (?, ?, ?, 'employee', 'pending')",
+      args: [taskId, kpiId, weeklyTargetId || null]
     });
 
     return NextResponse.json({ success: true });

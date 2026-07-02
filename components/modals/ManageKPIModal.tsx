@@ -57,6 +57,72 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Weekly Targets States
+  const [expandedKpiId, setExpandedKpiId] = useState<string | null>(null);
+  const [weeklyTargetsMap, setWeeklyTargetsMap] = useState<Record<string, any[]>>({});
+  const [loadingTargetsKpiId, setLoadingTargetsKpiId] = useState<string | null>(null);
+  
+  // Weekly Target Form
+  const [newWtTitle, setNewWtTitle] = useState('');
+  const [newWtWeek, setNewWtWeek] = useState(1);
+  const [newWtTargetVal, setNewWtTargetVal] = useState(100);
+  const [newWtUnit, setNewWtUnit] = useState('%');
+  const [wtSaving, setWtSaving] = useState(false);
+  const [wtError, setWtError] = useState<string | null>(null);
+
+  const fetchWeeklyTargets = async (kpiId: string) => {
+    setLoadingTargetsKpiId(kpiId);
+    try {
+      const res = await fetch(`/api/kpi/weekly-targets?kpiId=${kpiId}`);
+      const data = await res.json();
+      setWeeklyTargetsMap(prev => ({ ...prev, [kpiId]: data.weeklyTargets || [] }));
+    } catch (e) { console.error(e); }
+    setLoadingTargetsKpiId(null);
+  };
+
+  useEffect(() => {
+    if (expandedKpiId) {
+      fetchWeeklyTargets(expandedKpiId);
+    }
+  }, [expandedKpiId]);
+
+  const handleCreateWeeklyTarget = async (kpiId: string) => {
+    if (!newWtTitle) return;
+    setWtSaving(true);
+    setWtError(null);
+    try {
+      const res = await fetch('/api/kpi/weekly-targets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kpiId,
+          title: newWtTitle,
+          weekNumber: newWtWeek,
+          targetValue: newWtTargetVal,
+          metricUnit: newWtUnit
+        })
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setWtError(data.error || 'Gagal menyimpan');
+      } else {
+        setNewWtTitle('');
+        setNewWtWeek(prev => Math.min(5, prev + 1));
+        fetchWeeklyTargets(kpiId);
+      }
+    } catch (e) { setWtError('Gagal menyimpan'); }
+    setWtSaving(false);
+  };
+
+  const handleDeleteWeeklyTarget = async (kpiId: string, wtId: string) => {
+    try {
+      const res = await fetch(`/api/kpi/weekly-targets?id=${wtId}`, { method: 'DELETE' });
+      if (res.ok) {
+        fetchWeeklyTargets(kpiId);
+      }
+    } catch (e) { console.error(e); }
+  };
+
   useEffect(() => {
     fetchKPIs();
     fetchMembers();
@@ -455,6 +521,19 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
                             }}>
                               Bobot: {k.weight}%
                             </div>
+                            <button
+                              type="button"
+                              onClick={() => setExpandedKpiId(expandedKpiId === k.id ? null : k.id)}
+                              style={{
+                                background: expandedKpiId === k.id ? HP_TOKENS.blue : HP_TOKENS.blueWash,
+                                color: expandedKpiId === k.id ? '#fff' : HP_TOKENS.blue,
+                                padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 800,
+                                border: 'none', cursor: 'pointer', fontFamily: HP_FONT,
+                                display: 'flex', alignItems: 'center', gap: 4
+                              }}
+                            >
+                              <span>📅</span> Target Mingguan
+                            </button>
                           </div>
                         </div>
                         <button onClick={() => handleDelete(k.id)} style={{ 
@@ -463,8 +542,131 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
                           <HPGlyph name="close" size={16} color={HP_TOKENS.coral} />
                         </button>
                       </div>
-                    </div>
-                  ))}
+
+                      {expandedKpiId === k.id && (
+                        <div style={{ 
+                          marginTop: 12, padding: 12, borderRadius: 12, 
+                          background: HP_TOKENS.paper, border: `1.5px solid ${HP_TOKENS.line}` 
+                        }}>
+                          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 8, fontSize: 9, letterSpacing: '0.05em' }}>
+                            📅 TARGET MINGGUAN (KPI BREAKDOWN)
+                          </div>
+                          
+                          {/* Targets list */}
+                          {loadingTargetsKpiId === k.id ? (
+                            <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, textAlign: 'center', padding: 10, fontSize: 11 }}>
+                              Memuat target mingguan...
+                            </div>
+                          ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
+                              {(weeklyTargetsMap[k.id] || []).length === 0 ? (
+                                <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontStyle: 'italic', fontSize: 11 }}>
+                                  Belum ada target mingguan. Buat di bawah.
+                                </div>
+                              ) : (
+                                (weeklyTargetsMap[k.id] || []).map((wt: any) => (
+                                  <div key={wt.id} style={{ 
+                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
+                                    padding: '8px 10px', borderRadius: 10, background: '#fff', border: `1px solid ${HP_TOKENS.lineSoft}` 
+                                  }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
+                                      <div style={{ 
+                                        padding: '2px 6px', borderRadius: 4, background: HP_TOKENS.blueSoft, color: HP_TOKENS.blue, 
+                                        fontSize: 9, fontWeight: 900 
+                                      }}>M{wt.weekNumber}</div>
+                                      <div style={{ ...HP_TEXT.small, fontSize: 11, fontWeight: 700, color: HP_TOKENS.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        {wt.title}
+                                      </div>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                      <span style={{ fontSize: 10, fontWeight: 800, color: HP_TOKENS.inkMute }}>
+                                        {wt.targetValue} {wt.metricUnit}
+                                      </span>
+                                      <button 
+                                        type="button"
+                                        onClick={() => handleDeleteWeeklyTarget(k.id, wt.id)}
+                                        style={{ background: 'none', border: 'none', padding: 2, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                                      >
+                                        <span style={{ color: HP_TOKENS.coral, fontSize: 16, fontWeight: 800, lineHeight: 1 }}>×</span>
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          )}
+
+                          {/* Add Form */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 8, borderTop: `1px dashed ${HP_TOKENS.line}` }}>
+                            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkSoft, fontWeight: 800, fontSize: 9 }}>+ Tambah Target Mingguan</div>
+                            {wtError && (
+                              <div style={{ fontSize: 10, color: HP_TOKENS.coral, fontWeight: 700 }}>{wtError}</div>
+                            )}
+                            <div style={{ display: 'flex', gap: 6 }}>
+                              <select 
+                                value={newWtWeek} 
+                                onChange={e => setNewWtWeek(Number(e.target.value))}
+                                style={{ 
+                                  padding: 6, borderRadius: 8, border: `1px solid ${HP_TOKENS.line}`,
+                                  fontFamily: HP_FONT, fontSize: 11, background: '#fff', outline: 'none', color: HP_TOKENS.ink
+                                }}
+                              >
+                                {[1,2,3,4,5].map(w => <option key={w} value={w}>Minggu {w}</option>)}
+                              </select>
+                              <input 
+                                type="text"
+                                value={newWtTitle}
+                                onChange={e => setNewWtTitle(e.target.value)}
+                                placeholder="Target minggu ini (mis: Finalisasi Figma flow)"
+                                style={{ 
+                                  flex: 1, padding: 6, borderRadius: 8, border: `1px solid ${HP_TOKENS.line}`,
+                                  fontFamily: HP_FONT, fontSize: 11, background: '#fff', outline: 'none', color: HP_TOKENS.ink
+                                }}
+                              />
+                            </div>
+                            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                              <span style={{ fontSize: 10, color: HP_TOKENS.inkMute, fontWeight: 700 }}>Nilai Target:</span>
+                              <input 
+                                type="number"
+                                value={newWtTargetVal}
+                                onChange={e => setNewWtTargetVal(Number(e.target.value))}
+                                style={{ 
+                                  width: 55, padding: 6, borderRadius: 8, border: `1px solid ${HP_TOKENS.line}`,
+                                  fontFamily: HP_FONT, fontSize: 11, background: '#fff', outline: 'none', color: HP_TOKENS.ink
+                                }}
+                              />
+                              <select 
+                                value={newWtUnit} 
+                                onChange={e => setNewWtUnit(e.target.value)}
+                                style={{ 
+                                  padding: 6, borderRadius: 8, border: `1px solid ${HP_TOKENS.line}`,
+                                  fontFamily: HP_FONT, fontSize: 11, background: '#fff', outline: 'none', color: HP_TOKENS.ink
+                                }}
+                              >
+                                <option value="%">%</option>
+                                <option value="task">task</option>
+                                <option value="leads">leads</option>
+                                <option value="sales">sales</option>
+                              </select>
+                              <button 
+                                type="button"
+                                onClick={() => handleCreateWeeklyTarget(k.id)}
+                                disabled={!newWtTitle || wtSaving}
+                                style={{
+                                  padding: '6px 12px', borderRadius: 8, border: 'none',
+                                  background: HP_TOKENS.sage, color: '#fff',
+                                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
+                                  opacity: (!newWtTitle || wtSaving) ? 0.5 : 1, marginLeft: 'auto'
+                                }}
+                              >
+                                {wtSaving ? '...' : 'Tambah'}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      </div>
+                    ))}
                 </div>
               </div>
             ))}

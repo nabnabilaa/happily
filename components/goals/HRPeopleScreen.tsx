@@ -21,13 +21,126 @@ const DEPT_EMOJIS: Record<string, string> = {
   'Finance': '💰', 'Operations': '📦', 'Design': '🎨', 'Sales': '📈',
 };
 const DEPT_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444', '#06B6D4', '#EC4899', '#6366F1'];
+const MONTHS = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 
 export default function HRPeopleScreen({ openModal }: Props) {
   const { state, user: currentUser, updateState, refreshSurveys } = useHP();
   const isHR = currentUser?.role === 'hr';
-  const [activeTab, setActiveTab] = useState<'users' | 'attendance' | 'targets' | 'office' | 'schedule' | 'contacts' | 'surveys' | 'personal'>(isHR ? 'users' : 'attendance');
+  const [activeTab, setActiveTab] = useState<'users' | 'attendance' | 'targets' | 'office' | 'schedule' | 'contacts' | 'surveys' | 'personal' | 'hr_reports'>(isHR ? 'users' : 'attendance');
   const [apiKpis, setApiKpis] = useState<any[]>([]);
   const [loadingKpis, setLoadingKpis] = useState(true);
+
+  // Laporan & Ekspor states
+  const [reportType, setReportType] = useState<'logbook' | 'kpi' | 'weekly' | 'monthly'>('logbook');
+  const [reportDept, setReportDept] = useState('all');
+  const [reportMonth, setReportMonth] = useState(new Date().getMonth() + 1);
+  const [reportYear, setReportYear] = useState(new Date().getFullYear());
+  const [reportData, setReportData] = useState<any[]>([]);
+  const [loadingReport, setLoadingReport] = useState(false);
+
+  const fetchReportData = async () => {
+    if (!currentUser?.id) return;
+    setLoadingReport(true);
+    try {
+      const res = await fetch(`/api/hr/reports/export?adminId=${currentUser.id}&type=${reportType}&department=${reportDept}&month=${reportMonth}&year=${reportYear}`);
+      const data = await res.json();
+      setReportData(data.data || []);
+    } catch (e) {
+      console.error("Failed to fetch report data:", e);
+    } finally {
+      setLoadingReport(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'hr_reports' && isHR) {
+      fetchReportData();
+    }
+  }, [activeTab, reportType, reportDept, reportMonth, reportYear]);
+
+  const handleExportReportCSV = () => {
+    if (reportData.length === 0) return;
+    
+    // Include BOM for proper Excel UTF-8 display
+    let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+
+    let headers: string[] = [];
+    if (reportType === 'logbook') {
+      headers = ["Nama", "Departemen", "Tanggal", "Judul Task", "Deskripsi", "Status", "Bukti Link", "Bukti Notes", "KPI Terkait", "Target Mingguan"];
+    } else if (reportType === 'kpi') {
+      headers = ["Nama", "Departemen", "KPI Title", "Target Deskripsi", "Bobot (%)", "Skor Akhir", "Status", "Catatan Manager"];
+    } else if (reportType === 'weekly') {
+      headers = ["Nama", "Departemen", "KPI Title", "Minggu Ke", "Target Mingguan", "Nilai Target", "Unit"];
+    } else if (reportType === 'monthly') {
+      headers = ["Nama", "Departemen", "Jabatan", "Total Task", "Task Selesai", "Hari Aktif", "Hari Kerja", "Skor KPI", "Skor Kualitas", "Catatan Manager", "Status Laporan"];
+    }
+
+    csvContent += headers.map(h => `"${h.replace(/"/g, '""')}"`).join(",") + "\n";
+
+    for (const r of reportData) {
+      let row: string[] = [];
+      if (reportType === 'logbook') {
+        row = [
+          r.user_name || "",
+          r.department || "",
+          r.target_date ? r.target_date.slice(0, 10) : (r.created_at ? r.created_at.slice(0, 10) : ""),
+          r.title || "",
+          r.description || "",
+          r.is_done ? (r.is_verified ? "Verified" : "Selesai") : "Belum Selesai",
+          r.proof_link || "",
+          r.proof_notes || "",
+          r.goal_title || "",
+          r.weekly_target_title || ""
+        ];
+      } else if (reportType === 'kpi') {
+        row = [
+          r.user_name || "",
+          r.department || "",
+          r.title || "",
+          r.target_description || "",
+          String(r.weight || 0),
+          r.final_score !== null ? String(r.final_score) : "-",
+          r.status || "",
+          r.manager_notes || ""
+        ];
+      } else if (reportType === 'weekly') {
+        row = [
+          r.user_name || "",
+          r.department || "",
+          r.kpi_title || "",
+          `Minggu ${r.week_number}`,
+          r.title || "",
+          String(r.target_value || 0),
+          r.metric_unit || ""
+        ];
+      } else if (reportType === 'monthly') {
+        row = [
+          r.user_name || "",
+          r.department || "",
+          r.job_title || "",
+          String(r.total_tasks || 0),
+          String(r.tasks_completed || 0),
+          String(r.active_days || 0),
+          String(r.total_working_days || 0),
+          String(r.kpi_score || 0),
+          String(r.quality_score || 0),
+          r.manager_summary || "",
+          r.status || ""
+        ];
+      }
+
+      csvContent += row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(",") + "\n";
+    }
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    const filename = `laporan_${reportType}_${reportDept}_${reportMonth}_${reportYear}.csv`.toLowerCase().replace(/\s+/g, '_');
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   useEffect(() => {
     async function fetchKPIs() {
@@ -296,6 +409,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
         {[
           { key: 'personal', label: 'KPI Saya' },
           isHR && { key: 'users', label: 'People' },
+          isHR && { key: 'hr_reports', label: 'Laporan & Ekspor' },
           { key: 'attendance', label: 'Attendance' },
           { key: 'targets', label: 'Targets' },
           { key: 'office', label: 'Office' },
@@ -740,6 +854,211 @@ export default function HRPeopleScreen({ openModal }: Props) {
             </div>
           )}
         </>
+      )}
+
+      {/* ── Laporan & Ekspor Tab ── */}
+      {activeTab === 'hr_reports' && isHR && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Header Info */}
+          <HPCard style={{ background: HP_TOKENS.blueWash, border: `1.5px solid ${HP_TOKENS.blue}20` }} padding={16}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: HP_TOKENS.blue, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <HPGlyph name="book" size={20} color="#F4F7F9" />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ ...HP_TEXT.h, fontSize: 15 }}>Laporan & Ekspor Divisi</div>
+                <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkSoft, fontWeight: 600, marginTop: 2 }}>
+                  Unduh kegiatan harian (logbook), KPI, target mingguan, & bulanan per divisi.
+                </div>
+              </div>
+            </div>
+          </HPCard>
+
+          {/* Parameters Form / Card */}
+          <HPCard padding={16} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div>
+                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 4 }}>PILIH DIVISI</div>
+                <select 
+                  value={reportDept} 
+                  onChange={e => setReportDept(e.target.value)} 
+                  style={{ ...inputStyle, marginTop: 0, height: 44 }}
+                >
+                  <option value="all">Semua Divisi</option>
+                  {departments.map(d => (
+                    <option key={d.id || d.name} value={d.name}>{d.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 4 }}>TIPE LAPORAN</div>
+                <select 
+                  value={reportType} 
+                  onChange={e => setReportType(e.target.value as any)} 
+                  style={{ ...inputStyle, marginTop: 0, height: 44 }}
+                >
+                  <option value="logbook">📝 Logbook / Kegiatan Harian</option>
+                  <option value="kpi">🎯 Sasaran & KPI Bulanan</option>
+                  <option value="weekly">📅 Target & Laporan Mingguan</option>
+                  <option value="monthly">📊 Rekap Performa Bulanan</option>
+                </select>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div>
+                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 4 }}>BULAN</div>
+                <select 
+                  value={reportMonth} 
+                  onChange={e => setReportMonth(Number(e.target.value))} 
+                  style={{ ...inputStyle, marginTop: 0, height: 44 }}
+                >
+                  {MONTHS.map((m, i) => (
+                    <option key={i} value={i + 1}>{m}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 4 }}>TAHUN</div>
+                <select 
+                  value={reportYear} 
+                  onChange={e => setReportYear(Number(e.target.value))} 
+                  style={{ ...inputStyle, marginTop: 0, height: 44 }}
+                >
+                  {[2025, 2026, 2027].map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <button 
+              onClick={handleExportReportCSV} 
+              disabled={reportData.length === 0}
+              style={{
+                width: '100%', padding: '12px', borderRadius: 12, border: 'none',
+                background: reportData.length > 0 ? HP_TOKENS.sage : HP_TOKENS.lineSoft,
+                color: reportData.length > 0 ? '#fff' : HP_TOKENS.inkMute,
+                fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: reportData.length > 0 ? 'pointer' : 'default',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                marginTop: 8
+              }}
+            >
+              <span>📥</span> Unduh Laporan (CSV)
+            </button>
+          </HPCard>
+
+          {/* Table Preview */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, padding: '0 4px' }}>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 900 }}>PRATINJAU DATA ({reportData.length} baris)</div>
+              <button 
+                onClick={fetchReportData} 
+                style={{ background: 'none', border: 'none', color: HP_TOKENS.blue, fontWeight: 800, fontSize: 10, cursor: 'pointer' }}
+              >
+                Refresh
+              </button>
+            </div>
+
+            {loadingReport ? (
+              <div style={{ textAlign: 'center', padding: 30, color: HP_TOKENS.inkMute }}>Memuat pratinjau...</div>
+            ) : reportData.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '30px 20px', background: HP_TOKENS.card, borderRadius: 16, border: `1.5px dashed ${HP_TOKENS.line}` }}>
+                <span style={{ fontSize: 24 }}>📭</span>
+                <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, marginTop: 4 }}>Tidak ada data laporan untuk pilihan ini.</div>
+              </div>
+            ) : (
+              <div style={{ 
+                overflowX: 'auto', background: HP_TOKENS.card, borderRadius: 16, 
+                border: `1.5px solid ${HP_TOKENS.line}`, padding: 4 
+              }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11, textAlign: 'left', fontFamily: HP_FONT }}>
+                  <thead>
+                    <tr style={{ borderBottom: `1.5px solid ${HP_TOKENS.line}`, color: HP_TOKENS.inkMute }}>
+                      <th style={{ padding: '10px 12px', fontWeight: 800 }}>Nama</th>
+                      <th style={{ padding: '10px 12px', fontWeight: 800 }}>Divisi</th>
+                      {reportType === 'logbook' && (
+                        <>
+                          <th style={{ padding: '10px 12px', fontWeight: 800 }}>Tanggal</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 800 }}>Task</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 800 }}>Status</th>
+                        </>
+                      )}
+                      {reportType === 'kpi' && (
+                        <>
+                          <th style={{ padding: '10px 12px', fontWeight: 800 }}>KPI</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 800 }}>Bobot</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 800 }}>Skor</th>
+                        </>
+                      )}
+                      {reportType === 'weekly' && (
+                        <>
+                          <th style={{ padding: '10px 12px', fontWeight: 800 }}>KPI</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 800 }}>Minggu</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 800 }}>Target</th>
+                        </>
+                      )}
+                      {reportType === 'monthly' && (
+                        <>
+                          <th style={{ padding: '10px 12px', fontWeight: 800 }}>Selesai/Total Task</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 800 }}>Skor KPI</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 800 }}>Kualitas</th>
+                        </>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reportData.slice(0, 10).map((r, i) => (
+                      <tr key={i} style={{ borderBottom: i === reportData.slice(0, 10).length - 1 ? 'none' : `1px solid ${HP_TOKENS.lineSoft}`, color: HP_TOKENS.ink }}>
+                        <td style={{ padding: '10px 12px', fontWeight: 700 }}>{r.user_name}</td>
+                        <td style={{ padding: '10px 12px' }}>{r.department}</td>
+                        {reportType === 'logbook' && (
+                          <>
+                            <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>{r.target_date ? r.target_date.slice(0, 10) : (r.created_at ? r.created_at.slice(0, 10) : "")}</td>
+                            <td style={{ padding: '10px 12px', maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</td>
+                            <td style={{ padding: '10px 12px', fontWeight: 800, color: r.is_done ? HP_TOKENS.sage : HP_TOKENS.coral }}>
+                              {r.is_done ? (r.is_verified ? 'Verified' : 'Done') : 'Todo'}
+                            </td>
+                          </>
+                        )}
+                        {reportType === 'kpi' && (
+                          <>
+                            <td style={{ padding: '10px 12px', maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</td>
+                            <td style={{ padding: '10px 12px', fontWeight: 700 }}>{r.weight}%</td>
+                            <td style={{ padding: '10px 12px', fontWeight: 800, color: r.final_score !== null ? HP_TOKENS.blue : HP_TOKENS.inkMute }}>
+                              {r.final_score !== null ? `${r.final_score}/100` : '-'}
+                            </td>
+                          </>
+                        )}
+                        {reportType === 'weekly' && (
+                          <>
+                            <td style={{ padding: '10px 12px', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.kpi_title}</td>
+                            <td style={{ padding: '10px 12px', fontWeight: 700 }}>M{r.week_number}</td>
+                            <td style={{ padding: '10px 12px', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title} ({r.target_value} {r.metric_unit})</td>
+                          </>
+                        )}
+                        {reportType === 'monthly' && (
+                          <>
+                            <td style={{ padding: '10px 12px' }}>{r.tasks_completed}/{r.total_tasks}</td>
+                            <td style={{ padding: '10px 12px', fontWeight: 700, color: HP_TOKENS.blue }}>{r.kpi_score}%</td>
+                            <td style={{ padding: '10px 12px', fontWeight: 800, color: r.quality_score >= 80 ? HP_TOKENS.sage : r.quality_score >= 50 ? HP_TOKENS.yellow : HP_TOKENS.coral }}>
+                              {r.quality_score}%
+                            </td>
+                          </>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {reportData.length > 10 && (
+                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, textAlign: 'center', padding: '8px 0', borderTop: `1px solid ${HP_TOKENS.line}` }}>
+                    Menampilkan 10 dari {reportData.length} baris. Unduh CSV untuk data lengkap.
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

@@ -65,9 +65,12 @@ export async function GET(request: Request) {
         timer_started_at: r.timer_started_at || null,
         proof_links: r.proof_link ? [r.proof_link] : [],
         completion_notes: r.proof_notes || null,
+        weekly_target_id: r.weekly_target_id || null,
+        weekly_target_title: r.weekly_target_title || null,
         created_at: r.created_at
       };
     });
+
 
 
     const habitsRes = await db.execute({
@@ -467,16 +470,17 @@ export async function POST(request: Request) {
         // 3. Upsert current tasks
         for (const p of cleanPriorities) {
           await db.execute({
-            sql: `INSERT INTO daily_priorities (id, user_id, title, description, target_date, goal_title, goal_id, kpi_id, energy_level, est_time, is_done, is_verified, status, tone, proof_link, proof_notes, metric_value, time_tracked, timer_started_at, created_at) 
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            sql: `INSERT INTO daily_priorities (id, user_id, title, description, target_date, goal_title, goal_id, kpi_id, energy_level, est_time, is_done, is_verified, status, tone, proof_link, proof_notes, metric_value, time_tracked, timer_started_at, weekly_target_id, weekly_target_title, created_at) 
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                   ON DUPLICATE KEY UPDATE 
                   title=VALUES(title), description=VALUES(description), target_date=VALUES(target_date), goal_title=VALUES(goal_title), goal_id=VALUES(goal_id), 
                   kpi_id=VALUES(kpi_id), 
                   energy_level=VALUES(energy_level), est_time=VALUES(est_time), 
                   is_done=VALUES(is_done), is_verified=VALUES(is_verified), status=VALUES(status), tone=VALUES(tone),
                   proof_link=VALUES(proof_link), proof_notes=VALUES(proof_notes), metric_value=VALUES(metric_value),
-                  time_tracked=VALUES(time_tracked), timer_started_at=VALUES(timer_started_at)`,
-            args: [p.id, userId, p.title, p.description || null, p.targetDate || null, p.goal || null, p.goal_id || null, p.kpi_id || null, p.energy, p.est, p.done ? 1 : 0, p.verified ? 1 : 0, p.status || 'todo', p.tone, p.proof_links?.[0] || p.proof_link || null, p.completion_notes || p.proof_notes || null, p.metric_value || null, p.time_tracked || 0, p.timer_started_at || null]
+                  time_tracked=VALUES(time_tracked), timer_started_at=VALUES(timer_started_at),
+                  weekly_target_id=VALUES(weekly_target_id), weekly_target_title=VALUES(weekly_target_title)`,
+            args: [p.id, userId, p.title, p.description || null, p.targetDate || null, p.goal || null, p.goal_id || null, p.kpi_id || null, p.energy, p.est, p.done ? 1 : 0, p.verified ? 1 : 0, p.status || 'todo', p.tone, p.proof_links?.[0] || p.proof_link || null, p.completion_notes || p.proof_notes || null, p.metric_value || null, p.time_tracked || 0, p.timer_started_at || null, p.weekly_target_id || null, p.weekly_target_title || null]
           });
         }
       } catch (e) {

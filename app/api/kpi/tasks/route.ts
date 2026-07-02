@@ -8,7 +8,7 @@ export async function GET(request: Request) {
     if (!goalId) return NextResponse.json({ error: "goalId required" }, { status: 400 });
 
     const res = await db.execute({
-      sql: `SELECT id, title, is_done, description, created_at, target_date
+      sql: `SELECT id, title, is_done, description, created_at, target_date, weekly_target_id, weekly_target_title
             FROM daily_priorities 
             WHERE goal_id = ? OR kpi_id = ?
             ORDER BY created_at DESC`,
@@ -21,7 +21,9 @@ export async function GET(request: Request) {
       done: !!r.is_done,
       description: r.description,
       createdAt: r.created_at,
-      targetDate: r.target_date
+      targetDate: r.target_date,
+      weekly_target_id: r.weekly_target_id || null,
+      weekly_target_title: r.weekly_target_title || null
     }));
 
     return NextResponse.json({ tasks });

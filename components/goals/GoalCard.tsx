@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { HP_TOKENS, HP_TEXT, HP_FONT } from "@/lib/constants";
 import { useHP } from "@/lib/HPContext";
 import HPCard from "@/components/ui/HPCard";
@@ -29,6 +29,33 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
   const [historyTasks, setHistoryTasks] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  // Weekly Targets
+  const [weeklyTargets, setWeeklyTargets] = useState<any[]>([]);
+  const [loadingWeeklyTargets, setLoadingWeeklyTargets] = useState(false);
+
+  useEffect(() => {
+    async function fetchWeeklyTargets() {
+      if (!g.id) return;
+      setLoadingWeeklyTargets(true);
+      try {
+        const res = await fetch(`/api/kpi/weekly-targets?kpiId=${g.id}`);
+        const data = await res.json();
+        setWeeklyTargets(data.weeklyTargets || []);
+      } catch (e) {
+        console.error("Failed to load weekly targets for GoalCard:", e);
+      } finally {
+        setLoadingWeeklyTargets(false);
+      }
+    }
+    fetchWeeklyTargets();
+
+    const handleUpdate = () => {
+      fetchWeeklyTargets();
+    };
+    window.addEventListener('hp_db_update', handleUpdate);
+    return () => window.removeEventListener('hp_db_update', handleUpdate);
+  }, [g.id]);
 
   const fetchHistory = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -335,60 +362,149 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
             </div>
           )}
 
-          {(showHistory ? historyTasks : linkedTasks).map((sg: any) => (
-            <div 
-              key={sg.id} 
-              onClick={(e) => { 
-                e.stopPropagation(); 
-                if (!showHistory) toggleTask(sg.id); 
-              }}
-              className={showHistory ? "" : "hp-tap"}
-              style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: showHistory ? 'default' : 'pointer', opacity: showHistory ? 0.8 : 1 }}
-            >
-              <div style={{ 
-                width: 14, height: 14, borderRadius: 4, 
-                background: sg.done ? toneColor : 'transparent',
-                border: `1.5px solid ${sg.done ? toneColor : HP_TOKENS.line}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink: 0
-              }}>
-                {sg.done && <HPGlyph name="check" size={8} color="#F4F7F9" stroke={4}/>}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
-                <div style={{ 
-                  ...HP_TEXT.small, 
-                  fontSize: 12, 
-                  color: sg.done ? HP_TOKENS.inkFade : HP_TOKENS.ink,
-                  textDecoration: sg.done ? 'line-through' : 'none',
-                  fontWeight: 600,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6
-                }}>
-                  {sg.title}
-                  {showHistory && sg.targetDate && (
-                    <span style={{ fontSize: 9, fontWeight: 700, color: HP_TOKENS.inkMute, background: HP_TOKENS.lineSoft, padding: '2px 4px', borderRadius: 4, textDecoration: 'none' }}>
-                      {sg.targetDate.slice(0, 10)}
-                    </span>
-                  )}
-                </div>
-                {sg.description && (
-                  <div style={{ 
-                    ...HP_TEXT.small, 
-                    fontSize: 10, 
-                    color: HP_TOKENS.inkMute,
-                    marginTop: 2,
-                    lineHeight: 1.3
-                  }}>
-                    {sg.description}
-                  </div>
-                )}
-              </div>
+          {loadingWeeklyTargets && weeklyTargets.length === 0 ? (
+            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, textAlign: 'center', padding: '10px 0' }}>
+              Memuat Target Mingguan...
             </div>
-          ))}
+          ) : (
+            <>
+              {/* Grouped Weekly Targets (Weeks 1-5) */}
+              {weeklyTargets.map((wt: any) => {
+                const tasksForWeek = (showHistory ? historyTasks : linkedTasks).filter((t: any) => 
+                  (t.weekly_target_id && String(t.weekly_target_id) === String(wt.id)) ||
+                  (t.weeklyTargetId && String(t.weeklyTargetId) === String(wt.id))
+                );
+                const completedCount = tasksForWeek.filter((t: any) => t.done).length;
+                const weekProgress = tasksForWeek.length > 0 ? Math.round((completedCount / tasksForWeek.length) * 100) : 0;
+
+                return (
+                  <div key={wt.id} style={{ 
+                    padding: 10, borderRadius: 10, background: '#fff', 
+                    border: `1px solid ${HP_TOKENS.lineSoft}`, display: 'flex', flexDirection: 'column', gap: 6,
+                    marginBottom: 4
+                  }}>
+                    {/* Weekly Target Header & Progress */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flex: 1 }}>
+                        <span style={{ 
+                          padding: '2px 6px', borderRadius: 4, background: HP_TOKENS.blueSoft, color: HP_TOKENS.blue, 
+                          fontSize: 8, fontWeight: 900 
+                        }}>W{wt.weekNumber}</span>
+                        <span style={{ ...HP_TEXT.small, fontSize: 11, fontWeight: 800, color: HP_TOKENS.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {wt.title}
+                        </span>
+                      </div>
+                      <span style={{ ...HP_TEXT.tiny, color: toneColor, fontWeight: 800 }}>{weekProgress}%</span>
+                    </div>
+                    
+                    <HPBar value={weekProgress} tone={g.tone} height={4} />
+
+                    {/* Tasks list for this week */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
+                      {tasksForWeek.map((sg: any) => (
+                        <div 
+                          key={sg.id} 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            if (!showHistory) toggleTask(sg.id); 
+                          }}
+                          className={showHistory ? "" : "hp-tap"}
+                          style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: showHistory ? 'default' : 'pointer', opacity: showHistory ? 0.8 : 1 }}
+                        >
+                          <div style={{ 
+                            width: 12, height: 12, borderRadius: 3, 
+                            background: sg.done ? toneColor : 'transparent',
+                            border: `1.5px solid ${sg.done ? toneColor : HP_TOKENS.line}`,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            flexShrink: 0
+                          }}>
+                            {sg.done && <HPGlyph name="check" size={6} color="#F4F7F9" stroke={4}/>}
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+                            <div style={{ 
+                              ...HP_TEXT.small, 
+                              fontSize: 11, 
+                              color: sg.done ? HP_TOKENS.inkFade : HP_TOKENS.ink,
+                              textDecoration: sg.done ? 'line-through' : 'none',
+                              fontWeight: 600,
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
+                            }}>
+                              {sg.title}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {tasksForWeek.length === 0 && (
+                        <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontStyle: 'italic', fontSize: 9 }}>
+                          Belum ada task harian untuk minggu ini.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Unlinked Tasks (Backward compatibility) */}
+              {(() => {
+                const unlinkedTasks = (showHistory ? historyTasks : linkedTasks).filter((t: any) => 
+                  !t.weekly_target_id && !t.weeklyTargetId
+                );
+
+                if (unlinkedTasks.length === 0) return null;
+
+                return (
+                  <div style={{ 
+                    padding: 10, borderRadius: 10, background: HP_TOKENS.paper, 
+                    border: `1px dashed ${HP_TOKENS.line}`, display: 'flex', flexDirection: 'column', gap: 6,
+                    marginTop: 4
+                  }}>
+                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 900, fontSize: 8 }}>
+                      TASK LAINNYA / UMUM
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {unlinkedTasks.map((sg: any) => (
+                        <div 
+                          key={sg.id} 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            if (!showHistory) toggleTask(sg.id); 
+                          }}
+                          className={showHistory ? "" : "hp-tap"}
+                          style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: showHistory ? 'default' : 'pointer', opacity: showHistory ? 0.8 : 1 }}
+                        >
+                          <div style={{ 
+                            width: 12, height: 12, borderRadius: 3, 
+                            background: sg.done ? toneColor : 'transparent',
+                            border: `1.5px solid ${sg.done ? toneColor : HP_TOKENS.line}`,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            flexShrink: 0
+                          }}>
+                            {sg.done && <HPGlyph name="check" size={6} color="#F4F7F9" stroke={4}/>}
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+                            <div style={{ 
+                              ...HP_TEXT.small, 
+                              fontSize: 11, 
+                              color: sg.done ? HP_TOKENS.inkFade : HP_TOKENS.ink,
+                              textDecoration: sg.done ? 'line-through' : 'none',
+                              fontWeight: 600,
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
+                            }}>
+                              {sg.title}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+            </>
+          )}
 
           {showHistory && historyTasks.length === 0 && !loadingHistory && (
             <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, textAlign: 'center', padding: '10px 0' }}>

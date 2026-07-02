@@ -414,6 +414,22 @@ export async function POST() {
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       )`
     },
+    {
+      desc: "Create weekly_targets table",
+      sql: `CREATE TABLE IF NOT EXISTS weekly_targets (
+        id VARCHAR(100) PRIMARY KEY,
+        kpi_id VARCHAR(100) NOT NULL,
+        title VARCHAR(500) NOT NULL,
+        description TEXT,
+        week_number INT NOT NULL,
+        target_value DOUBLE DEFAULT 100,
+        current_value DOUBLE DEFAULT 0,
+        metric_unit VARCHAR(50) DEFAULT '%',
+        status VARCHAR(50) DEFAULT 'active',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (kpi_id) REFERENCES monthly_kpis(id) ON DELETE CASCADE
+      )`
+    }
 
   ];
 
@@ -487,6 +503,8 @@ export async function POST() {
     { desc: "daily_priorities.department", sql: "ALTER TABLE daily_priorities ADD COLUMN department VARCHAR(100)" },
     { desc: "daily_priorities.submitted_at", sql: "ALTER TABLE daily_priorities ADD COLUMN submitted_at DATETIME" },
     { desc: "daily_priorities.status", sql: "ALTER TABLE daily_priorities ADD COLUMN status VARCHAR(50) DEFAULT NULL" },
+    { desc: "daily_priorities.weekly_target_id", sql: "ALTER TABLE daily_priorities ADD COLUMN weekly_target_id VARCHAR(100) DEFAULT NULL" },
+    { desc: "daily_priorities.weekly_target_title", sql: "ALTER TABLE daily_priorities ADD COLUMN weekly_target_title VARCHAR(500) DEFAULT NULL" },
 
     // ── Notes table ──
     { desc: "notes.id_to_varchar", sql: "ALTER TABLE notes MODIFY COLUMN id VARCHAR(255)" },
@@ -508,6 +526,10 @@ export async function POST() {
     {
       desc: "monthly_kpis.scope",
       sql: `ALTER TABLE monthly_kpis ADD COLUMN scope VARCHAR(50) DEFAULT 'assigned'`
+    },
+    {
+      desc: "task_kpi_links.weekly_target_id",
+      sql: `ALTER TABLE task_kpi_links ADD COLUMN weekly_target_id VARCHAR(100) DEFAULT NULL`
     }
   ];
 

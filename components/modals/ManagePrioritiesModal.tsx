@@ -24,6 +24,39 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
   const [completingTask, setCompletingTask] = useState<any>(null);
   const [taskToDelete, setTaskToDelete] = useState<number | null>(null);
 
+  // Weekly Targets States
+  const [weeklyTargets, setWeeklyTargets] = useState<any[]>([]);
+  const [selectedWeeklyTargetId, setSelectedWeeklyTargetId] = useState<string>(editTask?.weekly_target_id || "");
+  const [showWeeklyTargetDropdown, setShowWeeklyTargetDropdown] = useState(false);
+  const [loadingWeeklyTargets, setLoadingWeeklyTargets] = useState(false);
+
+  // Fetch Weekly Targets when KPI changes
+  useEffect(() => {
+    async function fetchWeeklyTargets() {
+      if (!selectedKpiId) {
+        setWeeklyTargets([]);
+        setSelectedWeeklyTargetId("");
+        return;
+      }
+      setLoadingWeeklyTargets(true);
+      try {
+        const res = await fetch(`/api/kpi/weekly-targets?kpiId=${selectedKpiId}`);
+        const data = await res.json();
+        setWeeklyTargets(data.weeklyTargets || []);
+        if (editTask?.kpi_id === selectedKpiId && editTask?.weekly_target_id) {
+          setSelectedWeeklyTargetId(editTask.weekly_target_id);
+        } else {
+          setSelectedWeeklyTargetId("");
+        }
+      } catch (e) {
+        console.error("Failed to fetch weekly targets:", e);
+      } finally {
+        setLoadingWeeklyTargets(false);
+      }
+    }
+    fetchWeeklyTargets();
+  }, [selectedKpiId, editTask]);
+
   // Fetch KPIs from API (manager monthly_kpis + personal_kpis tables) — only once
   const [apiKpis, setApiKpis] = useState<any[]>([]);
   useEffect(() => {
@@ -227,6 +260,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
     
     try {
       const selectedKpi = myKpis.find((k: any) => String(k.id) === String(selectedKpiId));
+      const selectedWeeklyTarget = weeklyTargets.find((w: any) => String(w.id) === String(selectedWeeklyTargetId));
       
       // Validasi Duplikat: Jangan perbolehkan judul yang sama persis jika membuat baru, atau jika edit tapi judul diubah
       const isDuplicate = state.priorities?.some((p: any) => 
@@ -254,6 +288,8 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
               kpi_title: selectedKpi?.title || null,
               goal_id: selectedKpiId || null,
               goal: selectedKpi?.title || null,
+              weekly_target_id: selectedWeeklyTargetId || null,
+              weekly_target_title: selectedWeeklyTarget?.title || null,
               status: 'todo',
               done: false,
             };
@@ -267,6 +303,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
       setNewTitle("");
       setNewDescription("");
       setSelectedKpiId("");
+      setSelectedWeeklyTargetId("");
       return;
     }
 
@@ -280,6 +317,8 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
       kpi_title: selectedKpi?.title || null,
       goal_id: selectedKpiId || null,
       goal: selectedKpi?.title || null,
+      weekly_target_id: selectedWeeklyTargetId || null,
+      weekly_target_title: selectedWeeklyTarget?.title || null,
       energy: 'mid',
       est: "30m",
       done: false,
@@ -297,7 +336,11 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
         fetch('/api/kpi/link', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ taskId: String(newP.id), kpiId: selectedKpiId })
+          body: JSON.stringify({ 
+            taskId: String(newP.id), 
+            kpiId: selectedKpiId,
+            weeklyTargetId: selectedWeeklyTargetId || null
+          })
         }).catch(e => console.error('Failed to create KPI link:', e));
       }, 1500);
     }
@@ -340,6 +383,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
       setNewTitle("");
       setNewDescription("");
       setSelectedKpiId("");
+      setSelectedWeeklyTargetId("");
     } finally {
       setIsSubmitting(false);
     }
@@ -603,6 +647,100 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
             )}
           </div>
           </div>
+
+          {selectedKpiId && (
+            <div>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 4 }}>
+                TERKAIT TARGET MINGGUAN MANA?
+              </div>
+              {loadingWeeklyTargets ? (
+                <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, padding: 12 }}>Memuat target mingguan...</div>
+              ) : weeklyTargets.length > 0 ? (
+                <div style={{ position: 'relative' }}>
+                  <div 
+                    onClick={() => setShowWeeklyTargetDropdown(!showWeeklyTargetDropdown)}
+                    style={{ 
+                      ...inputStyle, 
+                      height: 48, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'space-between',
+                      cursor: 'pointer',
+                      userSelect: 'none'
+                    }}
+                  >
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {weeklyTargets.find((w: any) => String(w.id) === String(selectedWeeklyTargetId)) 
+                        ? `Minggu ${weeklyTargets.find((w: any) => String(w.id) === String(selectedWeeklyTargetId))?.weekNumber}: ${weeklyTargets.find((w: any) => String(w.id) === String(selectedWeeklyTargetId))?.title}`
+                        : "Pilih Target Mingguan (opsional)"}
+                    </span>
+                    <HPGlyph name="chevron-down" size={16} color={HP_TOKENS.inkMute} />
+                  </div>
+                  
+                  {showWeeklyTargetDropdown && (
+                    <>
+                      <div 
+                        style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 }}
+                        onClick={() => setShowWeeklyTargetDropdown(false)}
+                      />
+                      <div style={{ 
+                        position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, 
+                        background: '#fff', borderRadius: 16, 
+                        boxShadow: '0 8px 32px rgba(26,29,35,0.12)', border: `1px solid ${HP_TOKENS.line}`,
+                        zIndex: 101, maxHeight: 200, overflowY: 'auto', padding: 8
+                      }}>
+                        <div 
+                          className="hp-tap"
+                          onClick={() => { setSelectedWeeklyTargetId(""); setShowWeeklyTargetDropdown(false); }}
+                          style={{
+                            padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                            background: selectedWeeklyTargetId === "" ? HP_TOKENS.blueWash : 'transparent',
+                            ...HP_TEXT.body, color: selectedWeeklyTargetId === '' ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: selectedWeeklyTargetId === "" ? 700 : 500,
+                            marginBottom: 4
+                          }}
+                        >
+                          Umum (tidak terkait target mingguan spesifik)
+                        </div>
+                        
+                        {weeklyTargets.map((w: any) => {
+                          const isSelected = String(w.id) === String(selectedWeeklyTargetId);
+                          return (
+                            <div 
+                              key={w.id}
+                              className="hp-tap"
+                              onClick={() => { setSelectedWeeklyTargetId(w.id); setShowWeeklyTargetDropdown(false); }}
+                              style={{
+                                padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                                background: isSelected ? HP_TOKENS.blueWash : 'transparent',
+                                ...HP_TEXT.body, color: isSelected ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: isSelected ? 700 : 500,
+                                display: 'flex', alignItems: 'center', gap: 8
+                              }}
+                            >
+                              <div style={{ 
+                                padding: '2px 6px', borderRadius: 4, background: HP_TOKENS.blueSoft, color: HP_TOKENS.blue,
+                                fontSize: 9, fontWeight: 900
+                              }}>W{w.weekNumber}</div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.title}</div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div style={{ 
+                  padding: 12, borderRadius: 10, 
+                  background: HP_TOKENS.yellowWash, border: `1px solid ${HP_TOKENS.yellow}20`,
+                  ...HP_TEXT.small, fontSize: 12, color: HP_TOKENS.inkMute
+                }}>
+                  💡 Belum ada Target Mingguan untuk KPI ini.
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Info */}
           <div style={{ 
