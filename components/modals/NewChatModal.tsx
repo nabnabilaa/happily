@@ -10,6 +10,7 @@ import HPAvatar from "@/components/ui/HPAvatar";
 interface NewChatModalProps {
   onClose: () => void;
   onChannelCreated?: (channelId: string) => void;
+  defaultRecipientId?: string;
 }
 
 interface UserItem {
@@ -20,9 +21,9 @@ interface UserItem {
   role: string;
 }
 
-const GROUP_EMOJIS = ['👥', '🚀', '💡', '🎯', '🔥', '⚡', '🌟', '🎨', '📊', '🏆'];
+const GROUP_EMOJIS = ['🎯', '🔥', '🚀', '🌟', '💡', '💬', '🎉', '🏆', '📌', '⚡'];
 
-export default function NewChatModal({ onClose, onChannelCreated }: NewChatModalProps) {
+export default function NewChatModal({ onClose, onChannelCreated, defaultRecipientId }: NewChatModalProps) {
   const { user, notify } = useHP();
   const [mode, setMode] = useState<'select' | 'dm' | 'group' | 'broadcast'>('select');
   const [users, setUsers] = useState<UserItem[]>([]);

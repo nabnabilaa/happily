@@ -138,7 +138,9 @@ export default function HRWellbeingDashboard({ state, openModal, onGoToBurnout }
                       }}>
                         {dept.wellbeing} <span style={{fontSize:10, opacity:0.8}}>SCORE</span>
                       </div>
-                      <HPGlyph name="chevron-right" size={16} color={HP_TOKENS.inkMute} style={{ transform: expandedDept === dept.dept ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+                      <div style={{ transform: expandedDept === dept.dept ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', display: 'flex' }}>
+                        <HPGlyph name="chevron-right" size={16} color={HP_TOKENS.inkMute} />
+                      </div>
                     </div>
                   </div>
                   

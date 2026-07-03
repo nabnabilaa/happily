@@ -23,6 +23,7 @@ interface HPState {
   rewards: any[];
   rewardHistory: any[];
   logbook: any[];
+  onboardingConfig?: any[];
   lastActivityDate: string | null;
   penaltyActive: boolean;
   penaltyThresholdDays: number;

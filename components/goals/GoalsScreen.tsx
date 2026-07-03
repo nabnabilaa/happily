@@ -137,7 +137,7 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <div style={{ ...HP_TEXT.h, fontSize: 16 }}>Target Mingguan</div>
           <button
-            onClick={() => { setFormKpiId(activeKpiId); setShowForm(true); }}
+            onClick={() => { setFormKpiId(activeKpiId || ''); setShowForm(true); }}
             className="hp-tap"
             style={{
               padding: '10px 18px', borderRadius: 12, border: 'none',
