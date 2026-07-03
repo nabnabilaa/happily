@@ -298,9 +298,9 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
                 onMouseEnter={() => setHoveredMission(c.id)}
                 onMouseLeave={() => setHoveredMission(null)}
                 style={{ 
-                  display: 'flex', alignItems: 'center', gap: 16,
-                  padding: '16px',
-                  borderRadius: 20,
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '12px 14px',
+                  borderRadius: 16,
                   marginBottom: 8,
                   background: canClaim ? `linear-gradient(90deg, ${HP_TOKENS.yellowWash}60, #fff)` : isHovered && !isClaimed ? '#f9fafb' : '#fff',
                   border: canClaim ? `2px solid ${HP_TOKENS.yellow}` : `2px solid ${isHovered && !isClaimed ? '#e5e7eb' : '#f3f4f6'}`,
@@ -310,10 +310,10 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
                   boxShadow: canClaim ? `0 8px 24px ${HP_TOKENS.yellow}30` : isHovered && !isClaimed ? '0 8px 16px rgba(0,0,0,0.04)' : 'none'
                 }}
               >
-                <div className="daily-mission-info" style={{ display: 'flex', alignItems: 'center', gap: 16, flex: 1, minWidth: 0 }}>
+                <div className="daily-mission-info" style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
                   {/* Vibrant Emoji Icon */}
                   <div style={{ 
-                    width: 56, height: 56, borderRadius: 18, flexShrink: 0,
+                    width: 44, height: 44, borderRadius: 14, flexShrink: 0,
                     background: isClaimed ? HP_TOKENS.sageSoft : effectivelyCompleted ? HP_TOKENS.yellowSoft : `${c.color}15`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     transition: 'all 0.3s',
@@ -321,21 +321,21 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
                     boxShadow: canClaim ? `inset 0 0 12px ${HP_TOKENS.yellow}40` : 'none'
                   }}>
                     {isClaimed ? (
-                      <HPGlyph name="check" size={28} color={HP_TOKENS.sage} stroke={4} />
+                      <HPGlyph name="check" size={24} color={HP_TOKENS.sage} stroke={4} />
                     ) : (
-                      <span style={{ fontSize: 28, filter: effectivelyCompleted ? 'none' : 'grayscale(10%) opacity(0.9)' }}>{c.emoji}</span>
+                      <span style={{ fontSize: 24, filter: effectivelyCompleted ? 'none' : 'grayscale(10%) opacity(0.9)' }}>{c.emoji}</span>
                     )}
                   </div>
 
                   {/* Title */}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ 
-                      ...HP_TEXT.body, fontSize: 15, fontWeight: 900, 
+                      ...HP_TEXT.body, fontSize: 14, fontWeight: 900, 
                       color: isClaimed ? HP_TOKENS.inkFade : HP_TOKENS.ink,
                     }}>
                       {c.title}
                     </div>
-                    <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkSoft, marginTop: 4, fontSize: 13, lineHeight: 1.4, fontWeight: 600 }}>
+                    <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkSoft, marginTop: 2, fontSize: 12, lineHeight: 1.3, fontWeight: 600 }}>
                       {c.desc}
                     </div>
                   </div>
@@ -345,10 +345,10 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
                 <div className="daily-mission-action">
                     <div className="daily-mission-xp" style={{ 
                       ...HP_TEXT.tiny, color: isClaimed ? HP_TOKENS.inkMute : '#FF9F1C', 
-                      fontWeight: 900, fontSize: 14,
+                      fontWeight: 900, fontSize: 13,
                       display: 'flex', alignItems: 'center', gap: 4
                     }}>
-                      <span style={{ fontSize: 16 }}>⚡</span> +{c.points} XP
+                      <span style={{ fontSize: 14 }}>⚡</span> +{c.points} XP
                     </div>
 
                     {canClaim ? (
@@ -357,10 +357,10 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
                           onClick={() => claimReward(c)}
                           className="hp-tap"
                           style={{
-                            padding: '10px 24px', borderRadius: 100, border: 'none',
+                            padding: '8px 20px', borderRadius: 100, border: 'none',
                             background: `linear-gradient(90deg, #FFBE0B, #FF9F1C)`, 
                             color: '#fff',
-                            fontFamily: HP_FONT, fontWeight: 900, fontSize: 14,
+                            fontFamily: HP_FONT, fontWeight: 900, fontSize: 12,
                             cursor: 'pointer',
                             boxShadow: `0 4px 16px rgba(255,159,28,0.5)`,
                             animation: 'hpPulse 1.5s infinite',
@@ -373,8 +373,8 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
                       </div>
                     ) : isClaimed ? (
                       <div style={{ 
-                        ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 900, fontSize: 13,
-                        padding: '8px 16px', borderRadius: 100, background: HP_TOKENS.sageWash,
+                        ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 900, fontSize: 12,
+                        padding: '6px 14px', borderRadius: 100, background: HP_TOKENS.sageWash,
                         border: `1.5px solid ${HP_TOKENS.sage}`
                       }}>
                         Selesai ✓
@@ -387,12 +387,12 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
                         }}
                         className="hp-tap"
                         style={{
-                          padding: '10px 16px', borderRadius: 100, 
+                          padding: '8px 14px', borderRadius: 100, 
                           border: `none`,
                           background: `${HP_TOKENS.blue}`, color: '#fff',
-                          fontFamily: HP_FONT, fontWeight: 900, fontSize: 13,
+                          fontFamily: HP_FONT, fontWeight: 900, fontSize: 12,
                           cursor: 'pointer',
-                          display: 'flex', alignItems: 'center', gap: 6,
+                          display: 'flex', alignItems: 'center', gap: 4,
                           transition: 'all 0.2s',
                           boxShadow: `0 4px 12px ${HP_TOKENS.blue}40`
                         }}
