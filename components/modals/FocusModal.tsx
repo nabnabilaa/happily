@@ -707,7 +707,7 @@ export default function FocusModal({
               Mode Hardcore mewajibkan sinkronisasi perangkat. Scan QR ini dengan kamera HP agar tersambung ke Sesi Fokus.
             </div>
             <div style={{ padding: 16, background: '#fff', borderRadius: 24, display: 'inline-block' }}>
-              <QRCodeSVG value={typeof window !== 'undefined' ? `${window.location.origin}/focus/sync/${roomCode || soloSessionId}` : `/focus/sync/${roomCode || soloSessionId}`} size={180} />
+              <QRCodeSVG value={typeof window !== 'undefined' ? `${window.location.origin}/focus/sync/${roomCode || soloSessionId}${!roomCode ? `?solo=true&dur=${duration}` : ''}` : `/focus/sync/${roomCode || soloSessionId}${!roomCode ? `?solo=true&dur=${duration}` : ''}`} size={180} />
             </div>
             
             <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', gap: 12, width: '100%', maxWidth: 240 }}>
@@ -769,11 +769,24 @@ export default function FocusModal({
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20, marginTop: 16, background: 'rgba(255,255,255,0.05)', padding: '12px 24px', borderRadius: 24 }}>
-                  <button onClick={() => handleDurationChange(Math.max(5, duration - 5))} style={{ width: 40, height: 40, borderRadius: 20, border: 'none', background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 24, fontWeight: 800, cursor: 'pointer' }}>-</button>
-                  <div style={{ fontSize: 36, fontWeight: 800, fontFamily: HP_FONT, color: '#fff', width: 80, textAlign: 'center' }}>
-                    {duration} <span style={{ fontSize: 16, opacity: 0.6 }}>min</span>
+                  <button onClick={() => handleDurationChange(Math.max(1, duration - 5))} style={{ width: 40, height: 40, borderRadius: 20, border: 'none', background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 24, fontWeight: 800, cursor: 'pointer', flexShrink: 0 }}>-</button>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                    <input 
+                      type="number" 
+                      value={duration} 
+                      onChange={(e) => {
+                        let val = parseInt(e.target.value) || 0;
+                        if (val > 300) val = 300;
+                        if (val < 1 && e.target.value !== '') val = 1;
+                        if (e.target.value === '') handleDurationChange(0 as any); // allow empty temporarily
+                        else handleDurationChange(val);
+                      }}
+                      onBlur={() => { if (!duration || duration < 1) handleDurationChange(5); }}
+                      style={{ fontSize: 36, fontWeight: 800, fontFamily: HP_FONT, color: '#fff', width: 80, textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', margin: 0, padding: 0 }}
+                    />
+                    <span style={{ fontSize: 16, opacity: 0.6, paddingBottom: 6 }}>min</span>
                   </div>
-                  <button onClick={() => handleDurationChange(Math.min(180, duration + 5))} style={{ width: 40, height: 40, borderRadius: 20, border: 'none', background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 24, fontWeight: 800, cursor: 'pointer' }}>+</button>
+                  <button onClick={() => handleDurationChange(Math.min(300, (duration || 0) + 5))} style={{ width: 40, height: 40, borderRadius: 20, border: 'none', background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 24, fontWeight: 800, cursor: 'pointer', flexShrink: 0 }}>+</button>
                 </div>
 
                 <div style={{ marginTop: 24, padding: '20px', borderRadius: 20, background: 'rgba(255,255,255,0.1)', width: '100%', maxWidth: 320 }}>
@@ -857,11 +870,24 @@ export default function FocusModal({
                 <div style={{ ...HP_TEXT.display, fontSize: 28, color: '#F4F7F9', marginTop: 16 }}>Sesi Fokus Solo</div>
                 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20, marginTop: 36, background: 'rgba(255,255,255,0.05)', padding: '12px 24px', borderRadius: 24 }}>
-                  <button onClick={() => handleDurationChange(Math.max(5, duration - 5))} style={{ width: 40, height: 40, borderRadius: 20, border: 'none', background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 24, fontWeight: 800, cursor: 'pointer' }}>-</button>
-                  <div style={{ fontSize: 36, fontWeight: 800, fontFamily: HP_FONT, color: '#fff', width: 80, textAlign: 'center' }}>
-                    {duration} <span style={{ fontSize: 16, opacity: 0.6 }}>min</span>
+                  <button onClick={() => handleDurationChange(Math.max(1, duration - 5))} style={{ width: 40, height: 40, borderRadius: 20, border: 'none', background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 24, fontWeight: 800, cursor: 'pointer', flexShrink: 0 }}>-</button>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                    <input 
+                      type="number" 
+                      value={duration} 
+                      onChange={(e) => {
+                        let val = parseInt(e.target.value) || 0;
+                        if (val > 300) val = 300;
+                        if (val < 1 && e.target.value !== '') val = 1;
+                        if (e.target.value === '') handleDurationChange(0 as any); // allow empty temporarily
+                        else handleDurationChange(val);
+                      }}
+                      onBlur={() => { if (!duration || duration < 1) handleDurationChange(5); }}
+                      style={{ fontSize: 36, fontWeight: 800, fontFamily: HP_FONT, color: '#fff', width: 80, textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', margin: 0, padding: 0 }}
+                    />
+                    <span style={{ fontSize: 16, opacity: 0.6, paddingBottom: 6 }}>min</span>
                   </div>
-                  <button onClick={() => handleDurationChange(Math.min(180, duration + 5))} style={{ width: 40, height: 40, borderRadius: 20, border: 'none', background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 24, fontWeight: 800, cursor: 'pointer' }}>+</button>
+                  <button onClick={() => handleDurationChange(Math.min(300, (duration || 0) + 5))} style={{ width: 40, height: 40, borderRadius: 20, border: 'none', background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 24, fontWeight: 800, cursor: 'pointer', flexShrink: 0 }}>+</button>
                 </div>
 
                 <button onClick={handleStart} style={{ marginTop: 28, padding: '16px 40px', borderRadius: 99, background: HP_TOKENS.yellow, color: HP_TOKENS.ink, border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: 'pointer', boxShadow: '0 6px 20px rgba(245,200,66,0.4)' }}>

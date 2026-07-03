@@ -1,14 +1,17 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import PusherClient from "pusher-js";
 
 type Phase = "loading" | "ready" | "running" | "ended" | "failed";
 
 export default function FocusSyncPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const sessionId = params.sessionId as string;
+  const isSolo = searchParams.get('solo') === 'true';
+  const queryDur = parseInt(searchParams.get('dur') || '25', 10);
 
   const [phase, setPhase] = useState<Phase>("loading");
   const [room, setRoom] = useState<any>(null);
@@ -27,6 +30,15 @@ export default function FocusSyncPage() {
   useEffect(() => {
     if (!sessionId) return;
     async function fetchRoom() {
+      if (isSolo) {
+        // Solo session bypasses DB fetch
+        const dur = queryDur * 60;
+        setTotalSecs(dur);
+        setSecs(dur);
+        setPhase("running");
+        return;
+      }
+
       try {
         const res = await fetch(`/api/focus/rooms/${sessionId}`);
         if (!res.ok) throw new Error("Room not found");
@@ -57,7 +69,7 @@ export default function FocusSyncPage() {
       }
     }
     fetchRoom();
-  }, [sessionId]);
+  }, [sessionId, isSolo, queryDur]);
 
   // ── 2. Send sync signal to desktop ──────────────────────────────────────
   const signalDesktop = useCallback(async () => {
