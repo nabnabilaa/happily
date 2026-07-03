@@ -10,6 +10,21 @@ interface AttendanceScannerModalProps {
   onClose: () => void;
 }
 
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371e3;
+  const p1 = lat1 * Math.PI/180;
+  const p2 = lat2 * Math.PI/180;
+  const dp = (lat2-lat1) * Math.PI/180;
+  const dl = (lon2-lon1) * Math.PI/180;
+
+  const a = Math.sin(dp/2) * Math.sin(dp/2) +
+            Math.cos(p1) * Math.cos(p2) *
+            Math.sin(dl/2) * Math.sin(dl/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+  return R * c;
+}
+
 export default function AttendanceScannerModal({ onClose }: AttendanceScannerModalProps) {
   const { state, user, updateUser, updateState } = useHP();
   const [status, setStatus] = useState<'loading' | 'idle' | 'verifying' | 'success' | 'error'>('loading');
@@ -179,6 +194,19 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
 
   const isCheckingIn = todayStatus === 'not_checked_in';
   const isCheckingOut = todayStatus === 'checked_in';
+
+  let currentDistance: number | null = null;
+  let isOutOfRange = false;
+  let maxRadius = 200;
+  
+  if (isCheckingIn && checkInType === 'WFO' && location && officeId) {
+    const selectedOffice = offices.find(o => o.id === officeId);
+    if (selectedOffice && selectedOffice.lat && selectedOffice.lng) {
+      currentDistance = calculateDistance(location.lat, location.lng, selectedOffice.lat, selectedOffice.lng);
+      maxRadius = selectedOffice.radius || 200;
+      isOutOfRange = currentDistance > maxRadius;
+    }
+  }
   const isDone = todayStatus === 'checked_out';
 
   const selectStyle: React.CSSProperties = {
@@ -407,6 +435,17 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
                   </button>
                 )}
               </div>
+              
+              {/* Realtime Out of Range Warning */}
+              {isOutOfRange && (
+                <div style={{
+                  marginBottom: 16, padding: 12, borderRadius: 12, background: HP_TOKENS.coralSoft,
+                  color: HP_TOKENS.coral, fontSize: 13, fontWeight: 700, textAlign: 'center',
+                  animation: 'hpFadeIn 0.3s ease'
+                }}>
+                  ⚠️ Anda berada di luar area kantor. Jarak Anda: {Math.round(currentDistance!)}m, Maksimal: {maxRadius}m. Silakan pilih WFA jika bekerja dari luar.
+                </div>
+              )}
             )}
 
             {/* Verifying Spinner */}
@@ -440,20 +479,26 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
                 <button 
                   onClick={isCheckingIn ? handleCheckIn : handleCheckOut} 
                   className="hp-tap"
+                  disabled={isOutOfRange}
                   style={{
                     width: '100%', padding: '16px', borderRadius: 99, border: 'none',
-                    background: isCheckingIn 
-                      ? `linear-gradient(135deg, ${HP_TOKENS.blue}, #2B5286)` 
-                      : `linear-gradient(135deg, ${HP_TOKENS.sage}, #2D7A4E)`,
-                    color: '#F4F7F9',
-                    fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
+                    background: isOutOfRange 
+                      ? HP_TOKENS.lineSoft
+                      : isCheckingIn 
+                        ? `linear-gradient(135deg, ${HP_TOKENS.blue}, #2B5286)` 
+                        : `linear-gradient(135deg, ${HP_TOKENS.sage}, #2D7A4E)`,
+                    color: isOutOfRange ? HP_TOKENS.inkMute : '#F4F7F9',
+                    fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: isOutOfRange ? 'not-allowed' : 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                    boxShadow: isCheckingIn 
-                      ? '0 6px 20px rgba(59,111,160,0.3)' 
-                      : '0 6px 20px rgba(74,124,89,0.3)',
+                    boxShadow: isOutOfRange
+                      ? 'none'
+                      : isCheckingIn 
+                        ? '0 6px 20px rgba(59,111,160,0.3)' 
+                        : '0 6px 20px rgba(74,124,89,0.3)',
+                    opacity: isOutOfRange ? 0.6 : 1
                   }}
                 >
-                  <HPGlyph name={isCheckingIn ? "target" : "check"} size={18} color="#F4F7F9" />
+                  <HPGlyph name={isCheckingIn ? "target" : "check"} size={18} color={isOutOfRange ? HP_TOKENS.inkMute : "#F4F7F9"} />
                   {isCheckingIn ? 'Clock In Sekarang' : 'Clock Out Sekarang'}
                 </button>
                 
