@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import PusherClient from "pusher-js";
+import BeeMascot from "@/components/ui/BeeMascot";
 
 type Phase = "loading" | "ready" | "running" | "ended" | "failed";
 
@@ -34,8 +35,23 @@ export default function FocusSyncPage() {
         // Solo session bypasses DB fetch
         const dur = queryDur * 60;
         setTotalSecs(dur);
-        setSecs(dur);
-        setPhase("running");
+        
+        let startedAt = localStorage.getItem(`focus_start_${sessionId}`);
+        if (!startedAt) {
+          startedAt = String(Date.now());
+          localStorage.setItem(`focus_start_${sessionId}`, startedAt);
+        }
+        
+        const elapsed = Math.floor((Date.now() - parseInt(startedAt)) / 1000);
+        const remaining = Math.max(0, dur - elapsed);
+        
+        if (remaining <= 0) {
+           setSecs(0);
+           setPhase("ended");
+        } else {
+           setSecs(remaining);
+           setPhase("running");
+        }
         return;
       }
 
@@ -178,6 +194,13 @@ export default function FocusSyncPage() {
     };
   }, []);
 
+  // Cleanup localstorage on end
+  useEffect(() => {
+    if (phase === "ended" && isSolo) {
+      localStorage.removeItem(`focus_start_${sessionId}`);
+    }
+  }, [phase, isSolo, sessionId]);
+
   // ── Helpers ──────────────────────────────────────────────────────────────
   const displayMins = Math.floor(secs / 60);
   const displaySecs = secs % 60;
@@ -224,11 +247,15 @@ export default function FocusSyncPage() {
       <div style={{ ...rootStyle, background: "linear-gradient(180deg, #1a472a 0%, #0f2d1c 100%)" }}>
         <div style={{ fontSize: 64, marginBottom: 16 }}>🎉</div>
         <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>Fokus Selesai!</div>
-        <div style={{ fontSize: 14, opacity: 0.75, maxWidth: 300 }}>
+        <div style={{ fontSize: 14, opacity: 0.75, maxWidth: 300, marginBottom: 32 }}>
           Hebat! {room?.name ? `Sesi "${room.name}"` : "Sesi fokus"} berhasil diselesaikan.
-          <br />
-          Kamu bisa tutup halaman ini.
         </div>
+        <button 
+          onClick={() => window.location.href = '/'} 
+          style={{ padding: '14px 24px', borderRadius: 99, background: '#4ade80', color: '#064e3b', border: 'none', fontWeight: 800, cursor: 'pointer', fontFamily: "'Nunito', sans-serif" }}
+        >
+          Kembali ke Dashboard
+        </button>
       </div>
     );
   }
@@ -285,7 +312,17 @@ export default function FocusSyncPage() {
       <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.5, letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 }}>
         {room?.name || "Sesi Fokus"}
       </div>
-      <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 24 }}>🍅 Fokus Aktif</div>
+      
+      <div style={{ position: 'relative', marginTop: 16, marginBottom: 16 }}>
+        <div style={{
+          position: 'absolute', top: -30, right: -20, background: '#000', color: '#fff', 
+          padding: '4px 10px', borderRadius: 12, fontSize: 12, fontWeight: 800,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+        }}>
+          Fokus!
+        </div>
+        <BeeMascot mood="focus" size={80} />
+      </div>
 
       {/* Timer */}
       <div style={{
