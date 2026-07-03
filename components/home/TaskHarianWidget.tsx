@@ -73,6 +73,10 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
         body: JSON.stringify({ id, done: false, partialProgress: 0, status: 'todo' }),
       }).catch(e => console.error('Task undo persist failed:', e));
 
+      // Revoke the points awarded for this task
+      awardXP('priority_undo', `Selesaikan: ${priority.title}`);
+      xpAwardedRef.current.delete(id);
+
       const prevPct = priority.done ? 100 : (priority.partial_progress || 0);
       if (priority.weekly_target_id && prevPct > 0) {
         const linkedForTarget = (state?.priorities || []).filter((p: any) =>

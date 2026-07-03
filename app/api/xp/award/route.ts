@@ -67,6 +67,49 @@ export async function POST(request: Request) {
       amount = customAmount;
     }
 
+    // ── Handle Undo Actions (Reverse exactly what was added) ──────────
+    if (actionType === 'priority_undo') {
+      // Find the last priority_complete transaction for this task
+      const tx = await db.execute({
+        sql: `SELECT id, amount FROM xp_transactions 
+              WHERE user_id = ? AND action_type = 'priority_complete' AND description = ? 
+              ORDER BY created_at DESC LIMIT 1`,
+        args: [recipientId, description] // Description should match "Selesaikan: [title]"
+      });
+
+      if (tx.rows.length > 0) {
+        const revertAmount = Number(tx.rows[0].amount);
+        const txId = tx.rows[0].id;
+        
+        await db.transaction(async (conn) => {
+          await conn.execute("DELETE FROM xp_transactions WHERE id = ?", [txId]);
+          await conn.execute(
+            "UPDATE users SET points = GREATEST(0, points - ?), coins = GREATEST(0, coins - ?) WHERE id = ?", 
+            [revertAmount, revertAmount, recipientId]
+          );
+        });
+
+        // fetch new totals
+        const res = await db.execute({ sql: "SELECT points, coins, streak FROM users WHERE id = ?", args: [recipientId] });
+        return NextResponse.json({
+          success: true,
+          awarded: -revertAmount,
+          awardedCoins: -revertAmount,
+          newTotal: Number(res.rows[0]?.points) || 0,
+          newCoins: Number(res.rows[0]?.coins) || 0,
+          recipientId
+        });
+      } else {
+        return NextResponse.json({
+          success: true,
+          awarded: 0,
+          awardedCoins: 0,
+          message: "No transaction found to revert",
+          recipientId
+        });
+      }
+    }
+
     // ── Anti-Abuse: Global Daily XP/Point Cap ───────────────────────
     try {
       const EXEMPT_ACTION_TYPES = [
