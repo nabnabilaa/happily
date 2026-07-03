@@ -455,10 +455,10 @@ function fbShowNudgeOverlay(nudge, onCloseCb) {
 
   overlay.innerHTML = `
     <div id="fb-nudge-card" style="
-      background:${cardBg};border-radius:28px;padding:32px 28px 28px;
-      width:100%;max-width:360px;text-align:center;
+      background:${cardBg};border-radius:24px;padding:24px 20px 20px;
+      width:100%;max-width:320px;text-align:center;
       box-shadow:0 24px 48px rgba(0,0,0,.25);
-      transform:scale(.85) translateY(24px);
+      transform:scale(.75) translateY(24px);
       transition:all .4s cubic-bezier(.34,1.56,.64,1);
       position:relative;color:#fff;
     ">

@@ -64,9 +64,9 @@ export default function CentralNudgeOverlay({ nudge, onClose }: CentralNudgeOver
       <div style={{
         background: nudge?.type === 'kudos' ? `linear-gradient(135deg, #FFBE0B, #FF9F1C)` : `linear-gradient(135deg, #38bdf8, #818cf8)`,
         borderRadius: '32px',
-        padding: '32px',
+        padding: '24px',
         width: '100%',
-        maxWidth: '400px',
+        maxWidth: '320px',
         textAlign: 'center',
         boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
         transform: visible ? 'scale(1) translateY(0)' : 'scale(0.9) translateY(20px)',
