@@ -3,6 +3,9 @@
    Simplified: alarms, notifications only. No focus mode.
    ========================================================================== */
 
+// Track nudge IDs already shown this browser session (reset on service worker restart)
+const _shownNudgeIds = new Set();
+
 // ── Alarm Handler ──
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (!alarm.name.startsWith('fb_')) return;
@@ -87,15 +90,29 @@ chrome.runtime.onMessage.addListener((msg, sender, res) => {
     return true;
   }
 
-  // Relay FORCE_SYNC to active tab
+  // Relay FORCE_SYNC to active tab, preserving optional flags (e.g. chatRequest)
   if (msg.type === 'FORCE_SYNC') {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (tabs[0]) {
-        chrome.tabs.sendMessage(tabs[0].id, { type: 'FORCE_SYNC' }).catch(() => {});
+        chrome.tabs.sendMessage(tabs[0].id, {
+          type: 'FORCE_SYNC',
+          chatRequest: !!msg.chatRequest,
+        }).catch(() => {});
       }
     });
     res({ ok: true });
     return false;
+  }
+
+  // Deduplicate nudge overlays across tabs — only one tab shows it per session
+  if (msg.type === 'SHOULD_SHOW_NUDGE') {
+    if (!_shownNudgeIds.has(msg.notifId)) {
+      _shownNudgeIds.add(msg.notifId);
+      res({ show: true });
+    } else {
+      res({ show: false });
+    }
+    return true;
   }
 
   // Handle unknown messages so channel doesn't hang

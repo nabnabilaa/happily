@@ -61,6 +61,10 @@ const FlowBuddyApp = {
           this.updateHeader();
           this.renderTabs();
           this.showView(FlowBuddyRBAC.getConfig().defaultView);
+          // Initialize mascot with current state
+          if (typeof window.updateBuddySVG === 'function') {
+            window.updateBuddySVG(window.getFbState ? window.getFbState() : 'IDLE');
+          }
         } else {
           document.getElementById('login-overlay').style.display = 'flex';
         }
@@ -214,6 +218,8 @@ const FlowBuddyApp = {
         break;
       case 'chat':
         ChatView.renderInbox(panel);
+        // Fetch full message bodies on-demand (not on every background poll)
+        try { chrome.runtime.sendMessage({ type: 'FORCE_SYNC', chatRequest: true }).catch(() => {}); } catch(e) {}
         break;
       case 'chat-detail':
         // Rendered by ChatView.openChat()

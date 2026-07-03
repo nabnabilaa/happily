@@ -15,7 +15,7 @@ interface PauseModalProps {
 }
 
 export default function PauseModal({ onClose }: PauseModalProps) {
-  const { awardXP, notify } = useHP();
+  const { awardXP, notify, updateState } = useHP();
   const [phase, setPhase] = useState<'setup' | 'inhale' | 'hold' | 'exhale' | 'done'>('setup');
   const [secondsLeft, setSecondsLeft] = useState(4);
   const [targetCycles, setTargetCycles] = useState(5);
@@ -116,6 +116,10 @@ export default function PauseModal({ onClose }: PauseModalProps) {
   const handleComplete = async () => {
     await awardXP('focus_session', 'Mindful Breathing');
     notify("Latihan Selesai 🧘‍♂️", "Kamu mendapat +5 Poin! Tubuh dan pikiranmu sudah lebih tenang.", "success");
+    updateState((s: any) => ({
+      ...s,
+      logbook: [...(s.logbook || []), { type: 'pause_session', created_at: new Date().toISOString(), title: 'Mindful Breathing' }],
+    }));
   };
 
   interface PhaseInfo {

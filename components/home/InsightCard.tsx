@@ -8,9 +8,10 @@ import HPGlyph from "@/components/ui/HPGlyph";
 interface InsightCardProps {
   ins: any;
   idx: number;
+  onClick?: () => void;
 }
 
-export default function InsightCard({ ins, idx }: InsightCardProps) {
+export default function InsightCard({ ins, idx, onClick }: InsightCardProps) {
   const tones: Record<string, any> = {
     sage: { 
       bg: HP_TOKENS.yellowSoft, 
@@ -48,7 +49,8 @@ export default function InsightCard({ ins, idx }: InsightCardProps) {
   
   return (
     <div 
-      className="hp-tap" 
+      className={onClick ? "hp-tap" : ""}
+      onClick={onClick}
       style={{
         padding: '16px', 
         borderRadius: 16, 

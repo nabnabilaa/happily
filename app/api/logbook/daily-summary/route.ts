@@ -189,6 +189,41 @@ async function getDayDetail(userId: string, date: string) {
     args: [userId, date]
   });
 
+  // 5. Daily tasks (priorities) — by target_date or created_at
+  const tasksRes = await db.execute({
+    sql: `SELECT id, title, status, is_done, partial_progress, time_tracked,
+                 proof_link, proof_notes, metric_value, kpi_id, kpi_title,
+                 weekly_target_id, weekly_target_title, goal_title,
+                 completed_at, due_date, target_date, is_project, energy_level, description
+          FROM daily_priorities
+          WHERE user_id = ?
+            AND DATE(COALESCE(
+              CONVERT_TZ(target_date, '+00:00', '+07:00'),
+              CONVERT_TZ(created_at, '+00:00', '+07:00')
+            )) = ?
+          ORDER BY is_done ASC, created_at ASC`,
+    args: [userId, date]
+  });
+
+  const tasks = tasksRes.rows.map((t: any) => ({
+    id: t.id,
+    title: t.title,
+    status: t.status,
+    isDone: !!t.is_done,
+    partialProgress: Number(t.partial_progress) || 0,
+    timeTrackedSeconds: Number(t.time_tracked) || 0,
+    proofLinks: (() => { try { const v = JSON.parse(t.proof_link as string); return Array.isArray(v) ? v : (t.proof_link ? [t.proof_link] : []); } catch { return t.proof_link ? [t.proof_link] : []; } })(),
+    notes: t.proof_notes || null,
+    description: t.description || null,
+    metricValue: t.metric_value ? Number(t.metric_value) : null,
+    kpiTitle: t.kpi_title || t.goal_title || null,
+    weeklyTargetTitle: t.weekly_target_title || null,
+    completedAt: t.completed_at || null,
+    dueDate: t.due_date || null,
+    isProject: !!t.is_project,
+    energyLevel: t.energy_level || null,
+  }));
+
   return NextResponse.json({
     date,
     attendance: attRes.rows[0] || null,
@@ -196,6 +231,7 @@ async function getDayDetail(userId: string, date: string) {
     xpBreakdown: xpRes.rows,
     totalXP: xpRes.rows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0),
     logbookEntries: logRes.rows,
+    tasks,
   });
 }
 

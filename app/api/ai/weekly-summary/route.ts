@@ -8,10 +8,13 @@ export async function POST(request: Request) {
     const { managerId } = await request.json();
     if (!managerId) return NextResponse.json({ error: "managerId required" }, { status: 400 });
 
+    const deptRes = await db.execute({ sql: "SELECT department FROM users WHERE id = ?", args: [managerId] });
+    const managerDept = (deptRes.rows[0] as any)?.department || "";
+
     // Get team members
     const membersRes = await db.execute({
-      sql: "SELECT id, name, department, job_title FROM users WHERE manager_id = ?",
-      args: [managerId]
+      sql: "SELECT id, name, department, job_title FROM users WHERE department = ? AND id != ?",
+      args: [managerDept, managerId]
     });
 
     if (membersRes.rows.length === 0) {
@@ -112,7 +115,7 @@ export async function POST(request: Request) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openAiApiKey}` },
             body: JSON.stringify({
-              model: 'gpt-4o',
+              model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
               messages: [
                 { role: 'system', content: 'Kamu adalah AI HR analyst. Buat rangkuman kinerja mingguan karyawan dalam bahasa Indonesia, singkat, 3-4 kalimat. Berikan penilaian objektif dan saran actionable.' },
                 { role: 'user', content: prompt }

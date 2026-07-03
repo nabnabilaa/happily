@@ -27,6 +27,8 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
     topLevelGoals,
     handleVerifyTask,
     handleRejectTask,
+    handleManagerVerifyKpiTask,
+    handleManagerRejectKpiTask,
     executeDeleteGoal,
     handleEditProgress,
     handleApproveGoal,
@@ -127,6 +129,8 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
           handleEditProgress={handleEditProgress}
           handleVerifyTask={handleVerifyTask}
           handleRejectTask={handleRejectTask}
+          handleManagerVerifyKpiTask={handleManagerVerifyKpiTask}
+          handleManagerRejectKpiTask={handleManagerRejectKpiTask}
           handleApproveGoal={handleApproveGoal}
           handleRevisionGoal={handleRevisionGoal}
           handleRejectGoal={handleRejectGoal}

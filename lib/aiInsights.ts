@@ -4,6 +4,7 @@ export interface AIInsight {
   tone: string;
   title: string;
   body: string;
+  action?: string;
 }
 
 function getRandomPhrase(phrases: CoachPhrase[], vars: Record<string, string> = {}): AIInsight {
@@ -15,6 +16,10 @@ function getRandomPhrase(phrases: CoachPhrase[], vars: Record<string, string> = 
     body = body.replace(new RegExp(`{${key}}`, 'g'), value);
   }
 
+  // Determine action based on category if needed
+  let action = undefined;
+  // This logic is mostly handled outside in generateAIInsights or can be passed through.
+  // Actually, we can just pass the category down to use as action logic, or return action from generateAIInsights directly.
   return {
     tone: phrase.tone,
     title: phrase.title.replace(/{streak}/g, vars.streak || ''),
@@ -29,7 +34,15 @@ export function generateAIInsights(state: any, user: any): AIInsight[] {
   const addInsight = (categoryName: string, roleGroup: string = 'general', vars: Record<string, string> = {}) => {
     const categoryPhrases = COACH_WORD_BANK[roleGroup]?.[categoryName];
     if (categoryPhrases && categoryPhrases.length > 0) {
-      insights.push(getRandomPhrase(categoryPhrases, vars));
+      let phrase = getRandomPhrase(categoryPhrases, vars);
+      
+      // Determine action based on category
+      if (categoryName.includes('task')) phrase.action = 'scroll_task';
+      else if (categoryName.includes('mood') || categoryName.includes('wellbeing')) phrase.action = 'open_wellbeing';
+      else if (categoryName.includes('streak')) phrase.action = 'open_logbook';
+      else phrase.action = 'scroll_task'; // fallback
+      
+      insights.push(phrase);
     }
   };
 

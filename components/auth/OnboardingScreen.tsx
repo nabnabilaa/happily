@@ -6,7 +6,8 @@ import './OnboardingScreen.css';
 import BeeMascot from '@/components/ui/BeeMascot';
 import { useHP } from '@/lib/HPContext';
 
-export default function OnboardingScreen({ userName, onFinish }: { userName?: string, onFinish?: () => void }) {
+export default function OnboardingScreen({ userName, onFinish, skipSplash, previewConfig }: { userName?: string, onFinish?: (data: { job: string }) => void, skipSplash?: boolean, previewConfig?: any[] }) {
+    const { state } = useHP();
     const containerRef = useRef<HTMLDivElement>(null);
     const [buddyMood, setBuddyMood] = useState<'neutral'|'happy'|'sad'|'angry'>('neutral');
     const [clickCount, setClickCount] = useState(0);
@@ -144,7 +145,7 @@ $('nameIn').addEventListener('input',()=>{
 /* ══════════════════════════════
    S3 — ONBOARD
 ══════════════════════════════ */
-const STEPS=[
+const DEFAULT_STEPS=[
   {tag:'⚡ LANGKAH 1 / 4',q:'Kamu di divisi apa?',hint:'Bantu aku sesuaikan pengalaman yang pas buatmu',
    opts:[{e:'💻',bg:'#EAF4FD',l:'Developer / IT'},{e:'🎨',bg:'#FAF0FF',l:'Desainer / Kreatif'},{e:'📊',bg:'#EAFAF3',l:'Marketing / Sales'},{e:'📋',bg:'#FFF5EA',l:'Manajer / Tim Lead'},{e:'📚',bg:'#F5F3FF',l:'Lainnya'}]},
   {tag:'🎯 LANGKAH 2 / 4',q:'Gimana mood kerjamu hari ini?',hint:'Cerita jujur aja, Buddy siap adaptasi buat kamu',
@@ -154,6 +155,8 @@ const STEPS=[
   {tag:'🚀 LANGKAH 4 / 4',q:'Mau mulai dari mana duluan?',hint:'Buddy akan siapkan workspace yang sesuai pilihanmu',
    opts:[{e:'✅',bg:'#EAFAF3',l:'Atur To-Do List'},{e:'🎯',bg:'#FFF5EA',l:'Set Target Mingguan'},{e:'⏱️',bg:'#EEF0FF',l:'Mulai Pomodoro'},{e:'📊',bg:'#EAF4FD',l:'Lihat Dashboard'}]},
 ];
+const STEPS = (previewConfig && previewConfig.length > 0) ? previewConfig : (state?.onboardingConfig && state.onboardingConfig.length > 0 ? state.onboardingConfig : DEFAULT_STEPS);
+
 let obCur=0,obSel=null,obAns=[];
 
 function initS3(){
@@ -335,11 +338,27 @@ function restart(){
         window.restart = async () => {
             const btn = $('s6btn');
             if (btn) btn.textContent = 'Memulai...';
-            if (onFinish) onFinish();
+            if (onFinish) onFinish({ job: window._job || '' });
         };
 
-        // Initialize
-        initS1();
+        // Setup background elemen untuk S4 (game screen) — dipakai baik saat splash maupun skip splash
+        function setupS4Background(){
+          const sf2=$('s4stars');
+          if(sf2){for(let i=0;i<55;i++){const st=window.document.createElement('div');st.className='star';const sz=Math.random()>.7?3:Math.random()>.4?2:1.5;st.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*4}s;--de:${Math.random()*6}s;--o:${.2+Math.random()*.6}`;sf2.appendChild(st);}}
+          const bl=$('s4blobs');
+          if(bl){[{bg:'rgba(255,77,0,.15)',w:200,h:200,b:'15%',l:'10%'},{bg:'rgba(124,92,252,.12)',w:180,h:180,t:'20%',r:'5%'}].forEach(c=>{const o=window.document.createElement('div');o.className='mesh-blob';o.style.cssText=`background:${c.bg};width:${c.w}px;height:${c.h}px;border-radius:50%;filter:blur(60px);position:absolute;${c.b?`bottom:${c.b}`:''};${c.t?`top:${c.t}`:''};${c.l?`left:${c.l}`:''};${c.r?`right:${c.r}`:''}; --bd:10s;--bde:${Math.random()*3}s;--bx:20px;--by:-30px;animation:blobDrift 10s ease-in-out infinite alternate`;bl.appendChild(o);});}
+        }
+
+        // Initialize — skip S1 splash jika app sudah menampilkan loading splash sebelumnya
+        if (skipSplash) {
+          setupS4Background();
+          const s1el = $('s1'); const s2el = $('s2');
+          if (s1el) s1el.classList.remove('active');
+          if (s2el) s2el.classList.add('active');
+          initS2();
+        } else {
+          initS1();
+        }
 
         return () => {
             window.goStep2 = undefined;

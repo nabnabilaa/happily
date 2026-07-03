@@ -51,8 +51,14 @@ export async function GET(request: Request) {
       finalScore: r.final_score,
       metricTarget: r.metric_target,
       metricCurrent: r.metric_current,
+      kpiType: r.kpi_type || 'completion',
+      metricUnit: r.metric_unit || null,
+      metricPeriod: r.metric_period || null,
       scope: r.scope || 'assigned',
       managerNotes: r.manager_notes,
+      reviewStatus: r.review_status || null,
+      reviewNote: r.review_note || null,
+      penaltyPct: r.penalty_pct ? Number(r.penalty_pct) : 0,
       createdAt: r.created_at,
     }));
 
@@ -66,7 +72,7 @@ export async function GET(request: Request) {
 // POST: Create new KPI
 export async function POST(request: Request) {
   try {
-    const { title, targetDescription, weight, month, year, assignedTo, assignedBy, scope, metricTarget } = await request.json();
+    const { title, targetDescription, weight, month, year, assignedTo, assignedBy, scope, metricTarget, kpiType, metricUnit, metricPeriod } = await request.json();
 
     if (!title || !assignedTo || !assignedBy) {
       return NextResponse.json({ error: "title, assignedTo, dan assignedBy wajib diisi" }, { status: 400 });
@@ -77,9 +83,9 @@ export async function POST(request: Request) {
     const y = year || new Date().getFullYear();
 
     await db.execute({
-      sql: `INSERT INTO monthly_kpis (id, title, target_description, weight, month, year, assigned_to, assigned_by, scope, metric_target) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      args: [id, title, targetDescription || '', Number(weight) || 0, m, y, assignedTo, assignedBy, scope || 'assigned', metricTarget || 100]
+      sql: `INSERT INTO monthly_kpis (id, title, target_description, weight, month, year, assigned_to, assigned_by, scope, metric_target, kpi_type, metric_unit, metric_period)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [id, title, targetDescription || '', Number(weight) || 0, m, y, assignedTo, assignedBy, scope || 'assigned', metricTarget ?? 100, kpiType || 'completion', metricUnit || null, metricPeriod || null]
     });
 
     // Create notification for employee

@@ -14,7 +14,6 @@ import HPGlyph from "@/components/ui/HPGlyph";
 import BeeMascot from "@/components/ui/BeeMascot";
 import TabNav from "@/components/layout/TabNav";
 import ErrorBoundary from "@/components/ui/ErrorBoundary";
-import ThemeSwitcher from "@/components/ui/ThemeSwitcher";
 import InstallButton from "@/components/pwa/InstallButton";
 import SenggolModal from "@/components/modals/SenggolModal";
 
@@ -99,6 +98,7 @@ const DepartmentManagerModal = safeDynamic(() => import("@/components/modals/Dep
 const MemberLogbookModal = safeDynamic(() => import("@/components/modals/MemberLogbookModal"));
 const MemberTaskModal = safeDynamic(() => import("@/components/modals/MemberTaskModal"));
 const ManageKPIModal = safeDynamic(() => import("@/components/modals/ManageKPIModal"));
+const KpiReviewModal = safeDynamic(() => import("@/components/modals/KpiReviewModal"));
 const WeeklyReviewModal = safeDynamic(() => import("@/components/modals/WeeklyReviewModal"));
 const MonthlyReportModal = safeDynamic(() => import("@/components/modals/MonthlyReportModal"));
 const AIAuditModal = safeDynamic(() => import("@/components/modals/AIAuditModal"));
@@ -112,6 +112,7 @@ const ExtensionGuideModal = safeDynamic(() => import("@/components/modals/Extens
 import HPToastContainer from "@/components/ui/HPToastContainer";
 import ConfirmLogoutModal from "@/components/modals/ConfirmLogoutModal";
 import DailyGreetingModal, { needsDailyGreeting, markDailyGreeted } from "@/components/modals/DailyGreetingModal";
+const ManageOnboardingModal = safeDynamic(() => import("@/components/modals/ManageOnboardingModal"));
 
 
 // ─── Role pill badge colors (Gercep Palette) ────────────────────────────────
@@ -138,12 +139,15 @@ function AppContent() {
     const handleOpenReflect = () => openModal('reflect');
     const handleOpenExtensionGuide = () => openModal('extension_guide');
     
+    const handleSwitchTab = (e: any) => setTab(e.detail);
     window.addEventListener('hp_open_reflect', handleOpenReflect);
     window.addEventListener('hp_open_extension_guide', handleOpenExtensionGuide);
+    window.addEventListener('hp_switch_tab', handleSwitchTab);
     
     return () => {
       window.removeEventListener('hp_open_reflect', handleOpenReflect);
       window.removeEventListener('hp_open_extension_guide', handleOpenExtensionGuide);
+      window.removeEventListener('hp_switch_tab', handleSwitchTab);
     };
   }, [openModal]);
 
@@ -294,17 +298,27 @@ function AppContent() {
     );
   }
 
-  const handleOnboardingFinish = async () => {
+  const handleOnboardingFinish = async ({ job }: { job: string }) => {
     updateState({ onboarded: true });
-    // Explicitly sync once to be sure
+    // Simpan status onboarding dan divisi ke DB
+    try {
+      await fetch("/api/onboarding/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id, department: job || null }),
+      });
+    } catch (e) {
+      console.error("Failed to save onboarding department:", e);
+    }
+    // Sync state ke storage
     try {
       await fetch("/api/storage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          state: { ...state, onboarded: true }, 
-          user, 
-          userId: user.id 
+        body: JSON.stringify({
+          state: { ...state, onboarded: true },
+          user,
+          userId: user.id
         }),
       });
     } catch (e) {
@@ -314,11 +328,14 @@ function AppContent() {
   };
 
   // ── Onboarding ──
-  if (state && !state.onboarded && user.role === 'employee') {
+  // Jika state belum terbaca (null) atau user belum onboarded, tahan dulu di onboarding.
+  // Ini mencegah main app flash sebentar sebelum OnboardingScreen muncul.
+  if (!state || (!state.onboarded && user.role === 'employee')) {
     return (
-      <OnboardingScreen 
-        userName={user.name} 
-        onFinish={handleOnboardingFinish} 
+      <OnboardingScreen
+        userName={user.name}
+        onFinish={handleOnboardingFinish}
+        skipSplash
       />
     );
   }
@@ -349,6 +366,7 @@ function AppContent() {
     if (currentRole === 'manager') {
       if (tab === 'home')      return <ManagerHomeScreen openModal={openModal} />;
       if (tab === 'calendar')  return <CalendarScreen openModal={openModal} />;
+      if (tab === 'my_kpi')    return <GoalsScreen openModal={openModal} />;
       if (tab === 'goals')     return <ManagerGoalsScreen openModal={openModal} />;
       if (tab === 'notes')     return <NotesScreen />;
       if (tab === 'recognize') return <ManagerRecognizeScreen openModal={openModal} />;
@@ -357,6 +375,7 @@ function AppContent() {
     if (currentRole === 'hr') {
       if (tab === 'home')      return <HRHomeScreen openModal={openModal} />;
       if (tab === 'calendar')  return <CalendarScreen openModal={openModal} />;
+      if (tab === 'my_kpi')    return <GoalsScreen openModal={openModal} />;
       if (tab === 'goals')     return <HRPeopleScreen openModal={openModal} />;
       if (tab === 'notes')     return <NotesScreen />;
       if (tab === 'recognize') return <HRRecognizeScreen openModal={openModal} />;
@@ -422,7 +441,6 @@ function AppContent() {
           display: 'flex', alignItems: 'center', gap: 8,
         }}>
           <InstallButton />
-          <ThemeSwitcher />
 
           <button
             onClick={() => openModal('notifications')}
@@ -580,21 +598,23 @@ function AppContent() {
       {modal?.name === 'member_logbook'  && <MemberLogbookModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'member_tasks'    && <MemberTaskModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'manage_kpi'      && <ManageKPIModal onClose={closeModal} {...modal.props} />}
+      {modal?.name === 'kpi_review'      && <KpiReviewModal onClose={closeModal} />}
       {modal?.name === 'weekly_review'    && <WeeklyReviewModal onClose={closeModal} />}
       {modal?.name === 'monthly_report'   && <MonthlyReportModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'ai_weekly_summary' && <AIAuditModal onClose={closeModal} type="weekly" />}
       {modal?.name === 'ai_monthly_analysis' && <AIAuditModal onClose={closeModal} type="monthly" />}
       {modal?.name === 'employee_profile' && <EmployeeProfileModal onClose={closeModal} openModal={openModal} {...modal.props} />}
       {modal?.name === 'update_status'    && <StatusInputModal onClose={closeModal} />}
-      {modal?.name === 'new_chat'          && <NewChatModal onClose={closeModal} onChannelCreated={(channelId: string) => {
+      {modal?.name === 'new_chat'          && <NewChatModal onClose={closeModal} defaultRecipientId={modal.props?.recipientId} onChannelCreated={(channelId: string) => {
         // Dispatch event so ChatScreen can pick it up
         window.dispatchEvent(new CustomEvent('chat_channel_created', { detail: { channelId } }));
         // Also call the prop-based callback if passed from ChatScreen
         modal.props?.onChannelCreated?.(channelId);
       }} />}
       {modal?.name === 'appreciate'       && <AppreciateModal onClose={closeModal} {...modal.props} />}
-      {modal?.name === 'senggol'          && <SenggolModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'announcement'     && <AnnouncementModal onClose={closeModal} />}
+      {modal?.name === 'manage_onboarding' && <ManageOnboardingModal onClose={closeModal} />}
+      {modal?.name === 'senggol'          && <SenggolModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'mascot_guide'     && <MascotGuideModal onClose={closeModal} />}
       {modal?.name === 'extension_guide'  && <ExtensionGuideModal onClose={closeModal} />}
       {modal?.name === 'confirm_logout'   && <ConfirmLogoutModal onClose={closeModal} onConfirm={logout} />}

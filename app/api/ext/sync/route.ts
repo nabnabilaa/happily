@@ -23,12 +23,21 @@ export async function OPTIONS(request: Request) {
 // POST: Enhanced 2-way sync between extension and web
 export async function POST(request: Request) {
   try {
-    const { userId, tasks, notes, habits, calendarRequest, deletedTaskIds, deletedNoteIds, focusTaskId, focusProgress, focusIntention } = await request.json();
+    const { userId, tasks, notes, habits, calendarRequest, chatRequest, deletedTaskIds, deletedNoteIds, focusTaskId, focusProgress, focusIntention, readNotifIds } = await request.json();
     if (!userId) {
       return NextResponse.json(
         { error: "userId required" },
         { status: 400, headers: getCorsHeaders(request) }
       );
+    }
+
+    // ── MARK NOTIFICATIONS AS READ ──
+    if (readNotifIds && Array.isArray(readNotifIds) && readNotifIds.length > 0) {
+      const placeholders = readNotifIds.map(() => '?').join(',');
+      await db.execute({
+        sql: `UPDATE notifications SET is_read = 1 WHERE user_id = ? AND id IN (${placeholders})`,
+        args: [userId, ...readNotifIds.map(String)]
+      }).catch(() => {/* non-critical */});
     }
 
     // ── DELETIONS SYNC ──
@@ -73,10 +82,10 @@ export async function POST(request: Request) {
 
         await db.execute({
           sql: `INSERT INTO daily_priorities (id, user_id, title, description, target_date, kpi_id, goal_id, energy_level, est_time, is_done, tone, source, 
-                proof_link, proof_notes, metric_value, progress, is_project, project_duration_days, project_description, time_tracked, timer_started_at, created_at) 
+                proof_link, proof_notes, metric_value, partial_progress, is_project, project_duration_days, project_description, time_tracked, timer_started_at, created_at) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'extension', ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
                 ON DUPLICATE KEY UPDATE 
-                is_done = VALUES(is_done), title = VALUES(title), progress = VALUES(progress),
+                is_done = VALUES(is_done), title = VALUES(title), partial_progress = VALUES(partial_progress),
                 description = VALUES(description), target_date = VALUES(target_date),
                 kpi_id = VALUES(kpi_id), goal_id = VALUES(goal_id),
                 proof_link = COALESCE(VALUES(proof_link), proof_link),
@@ -268,18 +277,19 @@ export async function POST(request: Request) {
       "SELECT id, name, department FROM users ORDER BY name ASC"
     );
 
-    // Chat Channels & Recent Messages
+    // Chat Channels — lightweight inbox (header + unread count only).
+    // Full messages only fetched when chatRequest=true (popup opened chat view).
     const channelsRes = await db.execute({
-      sql: `SELECT 
-              mc.id, mc.name, mc.type, mc.avatar_emoji, mc.created_at,
+      sql: `SELECT
+              mc.id, mc.name, mc.type, mc.avatar_emoji,
               mcm.last_read_at,
-              (SELECT COUNT(*) FROM messages m WHERE m.channel_id = mc.id 
+              (SELECT COUNT(*) FROM messages m WHERE m.channel_id = mc.id
                AND m.created_at > COALESCE(mcm.last_read_at, '2000-01-01')) as unread_count,
-              (SELECT m2.content FROM messages m2 WHERE m2.channel_id = mc.id 
+              (SELECT m2.content FROM messages m2 WHERE m2.channel_id = mc.id
                ORDER BY m2.created_at DESC LIMIT 1) as last_message,
-              (SELECT m3.created_at FROM messages m3 WHERE m3.channel_id = mc.id 
+              (SELECT m3.created_at FROM messages m3 WHERE m3.channel_id = mc.id
                ORDER BY m3.created_at DESC LIMIT 1) as last_message_at,
-              (SELECT u2.name FROM messages m4 JOIN users u2 ON m4.sender_id = u2.id 
+              (SELECT u2.name FROM messages m4 JOIN users u2 ON m4.sender_id = u2.id
                WHERE m4.channel_id = mc.id ORDER BY m4.created_at DESC LIMIT 1) as last_sender_name
             FROM message_channel_members mcm
             JOIN message_channels mc ON mcm.channel_id = mc.id
@@ -288,48 +298,49 @@ export async function POST(request: Request) {
       args: [userId]
     });
 
-    const channels = await Promise.all(channelsRes.rows.map(async (ch) => {
-      let displayName = ch.name;
-      let displayEmoji = ch.avatar_emoji || '💬';
+    // Resolve DM display names in one batch query instead of per-channel queries
+    const dmChannelIds = channelsRes.rows
+      .filter(ch => ch.type === 'dm')
+      .map(ch => String(ch.id));
 
-      if (ch.type === 'dm') {
-        const otherRes = await db.execute({
-          sql: `SELECT u.name, u.avatar_image FROM message_channel_members mcm 
-                JOIN users u ON mcm.user_id = u.id
-                WHERE mcm.channel_id = ? AND mcm.user_id != ?`,
-          args: [String(ch.id), userId]
+    const dmNamesMap = new Map<string, string>();
+    if (dmChannelIds.length > 0) {
+      const dmPlaceholders = dmChannelIds.map(() => '?').join(',');
+      const dmNamesRes = await db.execute({
+        sql: `SELECT mcm.channel_id, u.name FROM message_channel_members mcm
+              JOIN users u ON mcm.user_id = u.id
+              WHERE mcm.channel_id IN (${dmPlaceholders}) AND mcm.user_id != ?`,
+        args: [...dmChannelIds, userId]
+      });
+      dmNamesRes.rows.forEach(r => dmNamesMap.set(String(r.channel_id), String(r.name)));
+    }
+
+    const channels = await Promise.all(channelsRes.rows.map(async (ch) => {
+      const isDm = ch.type === 'dm';
+      const displayName = isDm ? (dmNamesMap.get(String(ch.id)) || String(ch.name)) : String(ch.name);
+      const displayEmoji = isDm ? '👤' : (ch.avatar_emoji || '💬');
+
+      // Only fetch message bodies when chat view is open (chatRequest flag)
+      let messages: any[] = [];
+      if (chatRequest) {
+        const msgsRes = await db.execute({
+          sql: `SELECT m.id, m.content, m.created_at, m.sender_id, u.name as sender_name
+                FROM messages m JOIN users u ON m.sender_id = u.id
+                WHERE m.channel_id = ? ORDER BY m.created_at DESC LIMIT 20`,
+          args: [String(ch.id)]
         });
-        if (otherRes.rows.length > 0) {
-          displayName = String(otherRes.rows[0].name);
-          displayEmoji = '👤';
-        }
+        messages = msgsRes.rows.reverse().map(m => ({
+          id: m.id, content: m.content, senderId: m.sender_id,
+          senderName: m.sender_name, createdAt: m.created_at
+        }));
       }
 
-      const msgsRes = await db.execute({
-         sql: `SELECT m.id, m.content, m.created_at, m.sender_id, u.name as sender_name
-               FROM messages m
-               JOIN users u ON m.sender_id = u.id
-               WHERE m.channel_id = ?
-               ORDER BY m.created_at DESC LIMIT 20`,
-         args: [String(ch.id)]
-      });
-
       return {
-        id: ch.id,
-        name: displayName,
-        type: ch.type,
-        emoji: displayEmoji,
+        id: ch.id, name: displayName, type: ch.type, emoji: displayEmoji,
         unreadCount: Number(ch.unread_count) || 0,
         lastMessage: ch.last_message ? String(ch.last_message).substring(0, 80) : null,
-        lastMessageAt: ch.last_message_at,
-        lastSenderName: ch.last_sender_name,
-        messages: msgsRes.rows.reverse().map(m => ({
-           id: m.id,
-           content: m.content,
-           senderId: m.sender_id,
-           senderName: m.sender_name,
-           createdAt: m.created_at
-        }))
+        lastMessageAt: ch.last_message_at, lastSenderName: ch.last_sender_name,
+        messages,
       };
     }));
 
@@ -370,13 +381,16 @@ export async function POST(request: Request) {
     let deptPulse: any[] = [];
 
     if (userRole === 'manager') {
+      const deptRes = await db.execute({ sql: "SELECT department FROM users WHERE id = ?", args: [userId] });
+      const managerDept = (deptRes.rows[0] as any)?.department || "";
+
       const membersRes = await db.execute({
         sql: `SELECT u.*, 
               (SELECT mood_key FROM mood_checkins WHERE user_id = u.id ORDER BY created_at DESC LIMIT 1) as mood,
               (SELECT COUNT(*) FROM daily_priorities WHERE user_id = u.id AND is_done = 1 AND DATE(created_at) = CURDATE()) as tasks_done,
               (SELECT COUNT(*) FROM daily_priorities WHERE user_id = u.id AND DATE(created_at) = CURDATE()) as tasks_total
-              FROM users u WHERE u.manager_id = ?`,
-        args: [userId]
+              FROM users u WHERE u.department = ? AND u.id != ?`,
+        args: [managerDept, userId]
       });
 
       members = membersRes.rows.map(m => ({
@@ -610,6 +624,41 @@ export async function POST(request: Request) {
       };
     }
 
+    // Employee: lightweight department members for Tim (team) view
+    if (userRole === 'employee' && userDept) {
+      const empMembersRes = await db.execute({
+        sql: `SELECT id, name, job_title, department FROM users WHERE department = ? AND id != ? ORDER BY name ASC LIMIT 20`,
+        args: [userDept, userId]
+      });
+      members = empMembersRes.rows.map((m: any) => ({
+        id: m.id, name: m.name,
+        role: String(m.job_title || 'Team Member'),
+        dept: String(m.department || ''),
+        mood: 'neutral', wellbeing: 70,
+        tasks: { done: 0, total: 0 }
+      }));
+    }
+
+    // KPIs and weekly targets — needed by extension task form
+    const kpisRes = await db.execute({
+      sql: `SELECT id, title FROM monthly_kpis WHERE assigned_to = ? AND status = 'active' AND month = MONTH(CURDATE()) AND year = YEAR(CURDATE()) ORDER BY weight DESC`,
+      args: [userId]
+    });
+    const kpiIds = kpisRes.rows.map((r: any) => String(r.id));
+    let weeklyTargetsArr: any[] = [];
+    if (kpiIds.length > 0) {
+      const kpiPlaceholders = kpiIds.map(() => '?').join(',');
+      const wtRes = await db.execute({
+        sql: `SELECT id, kpi_id, title, week_number, metric_unit FROM weekly_targets WHERE kpi_id IN (${kpiPlaceholders}) ORDER BY kpi_id, week_number ASC`,
+        args: kpiIds
+      });
+      weeklyTargetsArr = wtRes.rows.map((r: any) => ({
+        id: r.id, kpiId: r.kpi_id, title: r.title,
+        weekNumber: Number(r.week_number), metricUnit: r.metric_unit || '%'
+      }));
+    }
+    const kpisArr = kpisRes.rows.map((r: any) => ({ id: r.id, title: r.title }));
+
     const hasChanges = tasksSynced > 0 || notesSynced > 0 || (deletedTaskIds && deletedTaskIds.length > 0) || (deletedNoteIds && deletedNoteIds.length > 0);
     if (hasChanges) {
       // Emit real-time event to refresh open website tabs
@@ -698,7 +747,7 @@ export async function POST(request: Request) {
           id: String(r.id), title: r.title, goal: r.goal_title || '',
           done: !!r.is_done, energy: r.energy_level || 'mid',
           date: taskDate,
-          proofLink: r.proof_link || '', progress: r.progress || 0,
+          proofLink: r.proof_link || '', progress: Number(r.partial_progress) || 0,
           isProject: !!r.is_project, metricValue: r.metric_value,
           goalId: r.goal_id, kpiId: r.kpi_id,
           description: r.description || '',
@@ -729,7 +778,9 @@ export async function POST(request: Request) {
       notifications: notifsRes.rows.map(r => ({
         id: r.id, title: r.title, message: r.message, type: r.type,
       })),
-      members: (userRole === 'manager' || userRole === 'hr') ? members : undefined,
+      kpis: kpisArr,
+      weeklyTargets: weeklyTargetsArr,
+      members: members.length > 0 ? members : undefined,
       teamTasks: userRole === 'manager' ? teamTasks : undefined,
       teamGoals: userRole === 'manager' ? teamGoals : undefined,
       teamApprovals: userRole === 'manager' ? teamApprovals : undefined,

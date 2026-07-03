@@ -13,10 +13,15 @@ interface GoalCardProps {
   isReadOnly?: boolean;
   tasks?: any[];
   onEditProgress?: (progress: number) => void;
+  managerMode?: boolean;
+  onManagerVerify?: (taskId: string) => void;
+  onManagerReject?: (taskId: string, wtId: string, action: 'revision' | 'reject', taskPct: number, totalWtTasks: number) => void;
+  onViewDetails?: () => void;
 }
 
-export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalCardProps) {
+export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, managerMode, onManagerVerify, onManagerReject, onViewDetails }: GoalCardProps) {
   const { state, updateState, awardXP, notify } = useHP();
+  const xpAwardedRef = React.useRef<Set<any>>(new Set());
   const tones: Record<string, string> = { 
     sage: HP_TOKENS.sage, 
     blue: HP_TOKENS.blue, 
@@ -33,6 +38,11 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
   // Weekly Targets
   const [weeklyTargets, setWeeklyTargets] = useState<any[]>([]);
   const [loadingWeeklyTargets, setLoadingWeeklyTargets] = useState(false);
+  const [showAddTarget, setShowAddTarget] = useState(false);
+  const [newTargetTitle, setNewTargetTitle] = useState('');
+  const [newTargetValue, setNewTargetValue] = useState('100');
+  const [newTargetUnit, setNewTargetUnit] = useState('%');
+  const [savingTarget, setSavingTarget] = useState(false);
 
   useEffect(() => {
     async function fetchWeeklyTargets() {
@@ -78,25 +88,48 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
 
   const parentGoal = g.parent_id ? state?.goals.find((item: any) => String(item.id) === String(g.parent_id)) : null;
 
+  // All priorities from state (used for weekly_target_id lookups which don't need goal filtering)
+  const allPriorities = tasks || state?.priorities || [];
   // Link to actual priorities (tasks) in state that are connected to this goal
-  const prioritiesToUse = tasks || state?.priorities || [];
-  // For `tasks` from manager, they might use `goalId` instead of `goal_id`.
-  const linkedTasks = prioritiesToUse.filter((p: any) => (p.goal_id && String(p.goal_id) === String(g.id)) || (p.goalId && String(p.goalId) === String(g.id)));
+  const linkedTasks = allPriorities.filter((p: any) =>
+    (p.goal_id && String(p.goal_id) === String(g.id)) ||
+    (p.goalId && String(p.goalId) === String(g.id)) ||
+    (p.kpi_id && String(p.kpi_id) === String(g.id)) ||
+    (p.kpiId && String(p.kpiId) === String(g.id))
+  );
   const hasTodayTasks = linkedTasks.length > 0;
   const hasTasks = hasTodayTasks || (g.metric && String(g.metric).includes('task selesai'));
   const doneTaskCount = linkedTasks.filter((p: any) => p.done).length;
-  const taskProgress = hasTodayTasks ? Math.round((doneTaskCount / linkedTasks.length) * 100) : null;
+  // Hitung progress dengan mempertimbangkan partial_progress (anti double-count)
+  const taskProgress = hasTodayTasks
+    ? Math.round(linkedTasks.reduce((sum: number, t: any) => {
+        const contrib = t.done ? 100 : (t.partial_progress || 0);
+        return sum + contrib;
+      }, 0) / linkedTasks.length)
+    : null;
   
-  // Progress from child goals (aligned to this goal)
-  const childGoals: any[] = [];
-  const hasChildren = false;
-  const childrenProgress = null;
+  // Untuk KPI dari API: hitung dari task count per weekly target (bukan DB currentValue)
+  // Pakai allPriorities (bukan linkedTasks) karena task lama mungkin tidak punya goal_id yang cocok
+  const weeklyTargetsProgress = weeklyTargets.length > 0
+    ? Math.round(
+        weeklyTargets.reduce((sum: number, wt: any) => {
+          const wtTasks = allPriorities.filter((t: any) =>
+            (t.weekly_target_id && String(t.weekly_target_id) === String(wt.id)) ||
+            (t.weeklyTargetId && String(t.weeklyTargetId) === String(wt.id))
+          );
+          const pct = wtTasks.length > 0
+            ? Math.round(wtTasks.reduce((s: number, t: any) => s + (t.done ? 100 : (t.partial_progress || 0)), 0) / wtTasks.length)
+            : Math.min(100, Math.round(((wt.currentValue || 0) / (wt.targetValue || 100)) * 100));
+          return sum + pct;
+        }, 0) / weeklyTargets.length
+      )
+    : null;
 
-  // Final display progress: prioritize auto-calculated from tasks/children
-  const displayProgress = hasTodayTasks && taskProgress !== null
-    ? taskProgress
-    : hasChildren && childrenProgress !== null
-      ? childrenProgress
+  // Final display progress: weekly targets progress (untuk KPI) > task progress > stored progress
+  const displayProgress = g.isApiKpi && weeklyTargetsProgress !== null
+    ? weeklyTargetsProgress
+    : hasTodayTasks && taskProgress !== null
+      ? taskProgress
       : (g.progress || 0);
 
   const deleteGoal = () => {
@@ -116,8 +149,9 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
     
     const wasDone = task.done;
     
-    // Award XP and show confetti if completing
-    if (!wasDone) {
+    // Award XP only on first completion in this session (guards undo→redo exploit)
+    if (!wasDone && !xpAwardedRef.current.has(taskId)) {
+      xpAwardedRef.current.add(taskId);
       awardXP('priority_complete', `Selesaikan: ${task.title}`);
       notify('Task Selesai! 🎉', `${task.title} berhasil diselesaikan.`, 'success');
     }
@@ -165,6 +199,16 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
 
   const toneColor = tones[g.tone] || HP_TOKENS.sage;
 
+  // Manager mode: expandable task detail
+  const [expandedTaskIds, setExpandedTaskIds] = useState<Set<string>>(new Set());
+  const toggleTaskExpand = (taskId: string) => {
+    setExpandedTaskIds(prev => {
+      const next = new Set(prev);
+      if (next.has(taskId)) next.delete(taskId); else next.add(taskId);
+      return next;
+    });
+  };
+
   // Editable progress state (for manager)
   const [editingProgress, setEditingProgress] = useState(false);
   const [tempProgress, setTempProgress] = useState(String(displayProgress));
@@ -189,18 +233,33 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
               {g.status && (
-                <div style={{ 
-                  padding: '3px 8px', borderRadius: 6, 
-                  background: g.status === 'approved' ? HP_TOKENS.sageSoft : g.status === 'rejected' ? HP_TOKENS.coralSoft : g.status === 'revision' ? HP_TOKENS.yellowSoft : HP_TOKENS.yellowSoft, 
+                <div style={{
+                  padding: '3px 8px', borderRadius: 6,
+                  background: g.status === 'approved' ? HP_TOKENS.sageSoft : g.status === 'rejected' ? HP_TOKENS.coralSoft : g.status === 'revision' ? HP_TOKENS.yellowSoft : HP_TOKENS.yellowSoft,
                   color: g.status === 'approved' ? HP_TOKENS.sage : g.status === 'rejected' ? HP_TOKENS.coral : '#8A6814',
                   fontSize: 10, fontWeight: 900, letterSpacing: 0.5
                 }}>
                   {g.status === 'approved' ? 'ACCEPT' : g.status === 'revision' ? 'REVISI' : g.status === 'rejected' ? 'REJECT' : 'PENDING'}
                 </div>
               )}
-              {displayProgress >= 100 && (
-                <div style={{ 
-                  padding: '3px 8px', borderRadius: 6, 
+              {/* Review status badge from HR/Manager */}
+              {g.reviewStatus === 'revision' && (
+                <div style={{
+                  padding: '3px 8px', borderRadius: 6,
+                  background: '#FFF3CC', color: '#8A6814',
+                  fontSize: 10, fontWeight: 900, letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 3
+                }}>⚠️ PERLU REVISI</div>
+              )}
+              {g.reviewStatus === 'rejected' && (
+                <div style={{
+                  padding: '3px 8px', borderRadius: 6,
+                  background: HP_TOKENS.coralSoft, color: HP_TOKENS.coral,
+                  fontSize: 10, fontWeight: 900, letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 3
+                }}>❌ DITOLAK</div>
+              )}
+              {displayProgress >= 100 && !g.reviewStatus && (
+                <div style={{
+                  padding: '3px 8px', borderRadius: 6,
                   background: HP_TOKENS.sageSoft, color: HP_TOKENS.sage,
                   fontSize: 10, fontWeight: 900, letterSpacing: 0.5
                 }}>DONE</div>
@@ -237,9 +296,9 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
             </span>
           </div>
           <div style={{ ...HP_TEXT.small, fontWeight: 800, color: HP_TOKENS.ink, fontSize: 12 }}>
-            {hasChildren 
-              ? `${childGoals.length} Sub-Target` 
-              : hasTodayTasks 
+            {weeklyTargets.length > 0
+              ? `${weeklyTargets.length} target mingguan`
+              : hasTodayTasks
                 ? `${doneTaskCount}/${linkedTasks.length} task selesai` 
                 : (g.metric && String(g.metric).includes('task selesai')) 
                   ? String(g.metric) 
@@ -320,213 +379,49 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress }: GoalC
         </div>
       </div>
 
-      {(linkedTasks.length > 0 || hasTasks) && (
-        <div style={{ 
-          marginTop: 16, 
-          padding: '12px', 
-          background: HP_TOKENS.paper,
-          borderRadius: 12,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 8
+      {/* Review Note Banner — shown to employee when flagged */}
+      {g.reviewStatus && g.reviewNote && (
+        <div style={{
+          marginTop: 10, padding: '10px 14px', borderRadius: 10,
+          background: g.reviewStatus === 'rejected' ? HP_TOKENS.coralSoft : '#FFF3CC',
+          border: `1px solid ${g.reviewStatus === 'rejected' ? HP_TOKENS.coral + '40' : '#F0C040'}`,
+          display: 'flex', alignItems: 'flex-start', gap: 8,
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 900, fontSize: 9, letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
-              LINKED QUESTS {g.metric ? `(${g.metric.split(' ')[0]})` : ''}
-              <button
-                onClick={fetchHistory}
-                style={{ 
-                  background: 'none', border: 'none', padding: '2px 6px', borderRadius: 4,
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
-                  color: HP_TOKENS.blue, fontSize: 9, fontWeight: 900, letterSpacing: 0.5,
-                  backgroundColor: HP_TOKENS.blueWash
-                }}
-              >
-                {showHistory ? 'SEMBUNYIKAN' : 'LIHAT SEMUA'}
-              </button>
+          <span style={{ fontSize: 14, flexShrink: 0 }}>{g.reviewStatus === 'rejected' ? '❌' : '⚠️'}</span>
+          <div>
+            <div style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, color: g.reviewStatus === 'rejected' ? HP_TOKENS.coral : '#8A6814', marginBottom: 2 }}>
+              {g.reviewStatus === 'rejected' ? 'KPI Ditolak oleh HR/Manager' : 'Catatan Revisi dari HR/Manager'}
             </div>
-            {!isReadOnly && (
-              <button 
-                onClick={(e) => { e.stopPropagation(); updateState((s: any) => ({ ...s, modal: { name: 'manage_priorities', props: { initialGoalId: String(g.id) } } })); }}
-                style={{ background: HP_TOKENS.sageSoft, border: 'none', borderRadius: 4, padding: '2px 6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
-              >
-                <HPGlyph name="target" size={8} color={HP_TOKENS.sage} />
-                <span style={{ fontSize: 8, fontWeight: 900, color: HP_TOKENS.sage }}>QUICK ADD</span>
-              </button>
+            <div style={{ fontFamily: HP_FONT, fontSize: 11, color: HP_TOKENS.inkSoft, lineHeight: 1.4 }}>{g.reviewNote}</div>
+            {g.penaltyPct > 0 && (
+              <div style={{ marginTop: 4, fontFamily: HP_FONT, fontSize: 10, fontWeight: 700, color: HP_TOKENS.coral }}>
+                Penalti progress: -{g.penaltyPct}%
+              </div>
             )}
           </div>
-          
-          {loadingHistory && (
-            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, textAlign: 'center', padding: '10px 0' }}>
-              Memuat task...
-            </div>
-          )}
-
-          {loadingWeeklyTargets && weeklyTargets.length === 0 ? (
-            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, textAlign: 'center', padding: '10px 0' }}>
-              Memuat Target Mingguan...
-            </div>
-          ) : (
-            <>
-              {/* Grouped Weekly Targets (Weeks 1-5) */}
-              {weeklyTargets.map((wt: any) => {
-                const tasksForWeek = (showHistory ? historyTasks : linkedTasks).filter((t: any) => 
-                  (t.weekly_target_id && String(t.weekly_target_id) === String(wt.id)) ||
-                  (t.weeklyTargetId && String(t.weeklyTargetId) === String(wt.id))
-                );
-                const completedCount = tasksForWeek.filter((t: any) => t.done).length;
-                const weekProgress = tasksForWeek.length > 0 ? Math.round((completedCount / tasksForWeek.length) * 100) : 0;
-
-                return (
-                  <div key={wt.id} style={{ 
-                    padding: 10, borderRadius: 10, background: '#fff', 
-                    border: `1px solid ${HP_TOKENS.lineSoft}`, display: 'flex', flexDirection: 'column', gap: 6,
-                    marginBottom: 4
-                  }}>
-                    {/* Weekly Target Header & Progress */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flex: 1 }}>
-                        <span style={{ 
-                          padding: '2px 6px', borderRadius: 4, background: HP_TOKENS.blueSoft, color: HP_TOKENS.blue, 
-                          fontSize: 8, fontWeight: 900 
-                        }}>W{wt.weekNumber}</span>
-                        <span style={{ ...HP_TEXT.small, fontSize: 11, fontWeight: 800, color: HP_TOKENS.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {wt.title}
-                        </span>
-                      </div>
-                      <span style={{ ...HP_TEXT.tiny, color: toneColor, fontWeight: 800 }}>{weekProgress}%</span>
-                    </div>
-                    
-                    <HPBar value={weekProgress} tone={g.tone} height={4} />
-
-                    {/* Tasks list for this week */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
-                      {tasksForWeek.map((sg: any) => (
-                        <div 
-                          key={sg.id} 
-                          onClick={(e) => { 
-                            e.stopPropagation(); 
-                            if (!showHistory) toggleTask(sg.id); 
-                          }}
-                          className={showHistory ? "" : "hp-tap"}
-                          style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: showHistory ? 'default' : 'pointer', opacity: showHistory ? 0.8 : 1 }}
-                        >
-                          <div style={{ 
-                            width: 12, height: 12, borderRadius: 3, 
-                            background: sg.done ? toneColor : 'transparent',
-                            border: `1.5px solid ${sg.done ? toneColor : HP_TOKENS.line}`,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            flexShrink: 0
-                          }}>
-                            {sg.done && <HPGlyph name="check" size={6} color="#F4F7F9" stroke={4}/>}
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
-                            <div style={{ 
-                              ...HP_TEXT.small, 
-                              fontSize: 11, 
-                              color: sg.done ? HP_TOKENS.inkFade : HP_TOKENS.ink,
-                              textDecoration: sg.done ? 'line-through' : 'none',
-                              fontWeight: 600,
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
-                            }}>
-                              {sg.title}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                      {tasksForWeek.length === 0 && (
-                        <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontStyle: 'italic', fontSize: 9 }}>
-                          Belum ada task harian untuk minggu ini.
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-
-              {/* Unlinked Tasks (Backward compatibility) */}
-              {(() => {
-                const unlinkedTasks = (showHistory ? historyTasks : linkedTasks).filter((t: any) => 
-                  !t.weekly_target_id && !t.weeklyTargetId
-                );
-
-                if (unlinkedTasks.length === 0) return null;
-
-                return (
-                  <div style={{ 
-                    padding: 10, borderRadius: 10, background: HP_TOKENS.paper, 
-                    border: `1px dashed ${HP_TOKENS.line}`, display: 'flex', flexDirection: 'column', gap: 6,
-                    marginTop: 4
-                  }}>
-                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 900, fontSize: 8 }}>
-                      TASK LAINNYA / UMUM
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      {unlinkedTasks.map((sg: any) => (
-                        <div 
-                          key={sg.id} 
-                          onClick={(e) => { 
-                            e.stopPropagation(); 
-                            if (!showHistory) toggleTask(sg.id); 
-                          }}
-                          className={showHistory ? "" : "hp-tap"}
-                          style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: showHistory ? 'default' : 'pointer', opacity: showHistory ? 0.8 : 1 }}
-                        >
-                          <div style={{ 
-                            width: 12, height: 12, borderRadius: 3, 
-                            background: sg.done ? toneColor : 'transparent',
-                            border: `1.5px solid ${sg.done ? toneColor : HP_TOKENS.line}`,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            flexShrink: 0
-                          }}>
-                            {sg.done && <HPGlyph name="check" size={6} color="#F4F7F9" stroke={4}/>}
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
-                            <div style={{ 
-                              ...HP_TEXT.small, 
-                              fontSize: 11, 
-                              color: sg.done ? HP_TOKENS.inkFade : HP_TOKENS.ink,
-                              textDecoration: sg.done ? 'line-through' : 'none',
-                              fontWeight: 600,
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
-                            }}>
-                              {sg.title}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })()}
-            </>
-          )}
-
-          {showHistory && historyTasks.length === 0 && !loadingHistory && (
-            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, textAlign: 'center', padding: '10px 0' }}>
-              Belum ada riwayat task.
-            </div>
-          )}
         </div>
       )}
 
-      {!hasTasks && !isReadOnly && (
-        <div style={{ 
-          marginTop: 12, padding: '10px 14px', 
-          background: HP_TOKENS.yellowWash, borderRadius: 10,
-          border: `1px dashed ${HP_TOKENS.yellow}60`,
-          display: 'flex', alignItems: 'center', gap: 8
-        }}>
-          <HPGlyph name="info" size={12} color={HP_TOKENS.yellow} />
-          <div style={{ ...HP_TEXT.tiny, color: '#8A6814', fontWeight: 700, fontSize: 10 }}>
-            Tambahkan task di Task Harian & hubungkan ke Target/KPI ini untuk tracking progress otomatis.
-          </div>
+      {/* Button Lihat Detail */}
+      {onViewDetails && (
+        <div style={{ marginTop: 16 }}>
+          <button
+            onClick={(e) => { e.stopPropagation(); onViewDetails(); }}
+            className="hp-tap"
+            style={{
+              width: '100%', padding: '12px', borderRadius: 12, border: `1.5px solid ${HP_TOKENS.lineSoft}`,
+              background: '#fff', color: HP_TOKENS.ink,
+              fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+            }}
+          >
+            Lihat Detail Target & Task <span>➔</span>
+          </button>
         </div>
       )}
+
+
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (

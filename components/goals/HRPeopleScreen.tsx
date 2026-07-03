@@ -224,7 +224,11 @@ export default function HRPeopleScreen({ openModal }: Props) {
   const [dbUsers, setDbUsers] = useState<any[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [departments, setDepartments] = useState<any[]>([]);
-  
+  const [deptRequests, setDeptRequests] = useState<any[]>([]);
+  const [loadingDeptRequests, setLoadingDeptRequests] = useState(false);
+  const [changeDeptId, setChangeDeptId] = useState<string | null>(null);
+  const [changeDeptVal, setChangeDeptVal] = useState('');
+
   const [currentPagePeople, setCurrentPagePeople] = useState(1);
   const [currentPageContacts, setCurrentPageContacts] = useState(1);
 
@@ -262,11 +266,13 @@ export default function HRPeopleScreen({ openModal }: Props) {
     if (activeTab === 'users' && isHR) {
       fetchUsers();
       fetchDepartments();
-      
+      fetchDeptRequests();
+
       const handleUpdate = () => {
         if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
           fetchUsers();
           fetchDepartments();
+          fetchDeptRequests();
         }
       };
       window.addEventListener('hp_db_update', handleUpdate);
@@ -283,6 +289,28 @@ export default function HRPeopleScreen({ openModal }: Props) {
       if (data.users) setDbUsers(data.users);
     } catch (e) { console.error(e); }
     setLoadingUsers(false);
+  };
+
+  const fetchDeptRequests = async () => {
+    if (!currentUser?.id) return;
+    setLoadingDeptRequests(true);
+    try {
+      const res = await fetch(`/api/hr/department-requests?requesterId=${currentUser.id}`);
+      const data = await res.json();
+      if (data.requests) setDeptRequests(data.requests);
+    } catch (e) { console.error(e); }
+    setLoadingDeptRequests(false);
+  };
+
+  const handleDeptRequestAction = async (targetUserId: string, action: string, department?: string) => {
+    try {
+      await fetch('/api/hr/department-requests', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requesterId: currentUser?.id, targetUserId, action, department }),
+      });
+      fetchDeptRequests();
+      fetchUsers();
+    } catch (e) { console.error(e); }
   };
 
   const fetchDepartments = async () => {
@@ -405,9 +433,8 @@ export default function HRPeopleScreen({ openModal }: Props) {
       />
 
       {/* Tab switcher */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 16, overflowX: 'auto', paddingBottom: 4 }}>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 12, overflowX: 'auto', paddingBottom: 4 }}>
         {[
-          { key: 'personal', label: 'KPI Saya' },
           isHR && { key: 'users', label: 'People' },
           isHR && { key: 'hr_reports', label: 'Laporan & Ekspor' },
           { key: 'attendance', label: 'Attendance' },
@@ -431,6 +458,21 @@ export default function HRPeopleScreen({ openModal }: Props) {
       {/* ── Users / People (Department Cards → People List) ── */}
       {activeTab === 'users' && isHR && (
         <>
+          {/* Review KPI quick-access bar for HR */}
+          <div style={{ marginBottom: 16 }}>
+            <button
+              onClick={() => openModal('kpi_review')}
+              style={{
+                width: '100%', padding: '12px 16px', borderRadius: 14, border: 'none', cursor: 'pointer',
+                background: '#FFF3CC', color: '#8A6814',
+                fontFamily: HP_FONT, fontWeight: 800, fontSize: 13,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              }}
+            >
+              📋 Review & Flag Laporan KPI Karyawan
+            </button>
+          </div>
+
           {/* Action Bar */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
             <button onClick={() => openModal('create_user', { onSave: handleCreateUser })} className="hp-tap" style={{
@@ -457,6 +499,122 @@ export default function HRPeopleScreen({ openModal }: Props) {
           ) : !selectedDept ? (
             /* ── Department Cards View ── */
             <>
+              {/* ── Pengajuan Divisi (Pending HR Approval) ── */}
+              {(loadingDeptRequests || deptRequests.length > 0) && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                    <span style={{ fontSize: 16 }}>📋</span>
+                    <span style={{ ...HP_TEXT.h, fontSize: 14 }}>Pengajuan Divisi</span>
+                    {deptRequests.length > 0 && (
+                      <span style={{
+                        background: HP_TOKENS.lavender, color: '#fff',
+                        borderRadius: 20, padding: '2px 8px',
+                        fontFamily: HP_FONT, fontWeight: 800, fontSize: 11,
+                      }}>{deptRequests.length}</span>
+                    )}
+                  </div>
+                  {loadingDeptRequests ? (
+                    <div style={{ padding: '12px 0', color: HP_TOKENS.inkMute, fontFamily: HP_FONT, fontSize: 13 }}>Memuat pengajuan...</div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {deptRequests.map(req => (
+                        <HPCard key={req.id} padding={14} style={{ border: `1.5px solid ${HP_TOKENS.line}` }}>
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                            <HPAvatar name={req.name} size={42} />
+                            <div style={{ flex: 1 }}>
+                              <div style={{ ...HP_TEXT.h, fontSize: 14 }}>{req.name}</div>
+                              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>{req.email}</div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
+                                <span style={{ fontSize: 12 }}>📁</span>
+                                <span style={{
+                                  fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, color: HP_TOKENS.blue,
+                                }}>{req.department || '—'}</span>
+                                <span style={{
+                                  background: '#FEF3C7', color: '#D97706',
+                                  borderRadius: 20, padding: '2px 8px',
+                                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 10,
+                                }}>pending</span>
+                              </div>
+                              {/* Ubah divisi input */}
+                              {changeDeptId === String(req.id) && (
+                                <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+                                  <input
+                                    value={changeDeptVal}
+                                    onChange={e => setChangeDeptVal(e.target.value)}
+                                    placeholder="Nama divisi baru..."
+                                    style={{
+                                      flex: 1, padding: '8px 12px', borderRadius: 10,
+                                      border: `1.5px solid ${HP_TOKENS.line}`,
+                                      fontFamily: HP_FONT, fontSize: 13, outline: 'none',
+                                      background: HP_TOKENS.card, color: HP_TOKENS.ink,
+                                    }}
+                                  />
+                                  <button
+                                    onClick={() => {
+                                      if (changeDeptVal.trim()) {
+                                        handleDeptRequestAction(String(req.id), 'change', changeDeptVal.trim());
+                                        setChangeDeptId(null); setChangeDeptVal('');
+                                      }
+                                    }}
+                                    className="hp-tap"
+                                    style={{
+                                      padding: '8px 12px', borderRadius: 10, border: 'none',
+                                      background: HP_TOKENS.blue, color: '#fff',
+                                      fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
+                                    }}
+                                  >Simpan</button>
+                                  <button
+                                    onClick={() => { setChangeDeptId(null); setChangeDeptVal(''); }}
+                                    className="hp-tap"
+                                    style={{
+                                      padding: '8px 12px', borderRadius: 10, border: 'none',
+                                      background: HP_TOKENS.lineSoft, color: HP_TOKENS.inkSoft,
+                                      fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
+                                    }}
+                                  >Batal</button>
+                                </div>
+                              )}
+                            </div>
+                            {/* Action buttons */}
+                            {changeDeptId !== String(req.id) && (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                <button
+                                  onClick={() => handleDeptRequestAction(String(req.id), 'approve')}
+                                  className="hp-tap"
+                                  style={{
+                                    padding: '6px 12px', borderRadius: 10, border: 'none',
+                                    background: '#D1FAE5', color: '#065F46',
+                                    fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
+                                  }}
+                                >✓ Setuju</button>
+                                <button
+                                  onClick={() => { setChangeDeptId(String(req.id)); setChangeDeptVal(req.department || ''); }}
+                                  className="hp-tap"
+                                  style={{
+                                    padding: '6px 12px', borderRadius: 10, border: 'none',
+                                    background: HP_TOKENS.blueSoft, color: HP_TOKENS.blue,
+                                    fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
+                                  }}
+                                >✎ Ubah</button>
+                                <button
+                                  onClick={() => handleDeptRequestAction(String(req.id), 'reject')}
+                                  className="hp-tap"
+                                  style={{
+                                    padding: '6px 12px', borderRadius: 10, border: 'none',
+                                    background: '#FEE2E2', color: '#B91C1C',
+                                    fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
+                                  }}
+                                >✕ Tolak</button>
+                              </div>
+                            )}
+                          </div>
+                        </HPCard>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Stats row */}
               <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
                 {[

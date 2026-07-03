@@ -17,7 +17,13 @@ interface KPIData {
   status: string;
   finalScore: number | null;
   managerNotes: string | null;
+  metricTarget: number | null;
+  metricCurrent: number | null;
+  reviewStatus: string | null;
+  reviewNote: string | null;
   links: { total: number; approved: number; pending: number; rejected: number; moved: number };
+  tasks: { id: any; title: string; status: string; isDone: boolean; partialProgress: number; timeTrackedSeconds: number; proofLinks: string[]; notes: string | null; metricValue: number | null; targetDate: string | null; dueDate: string | null; completedAt: string | null; isProject: boolean }[];
+  weeklyTargets: { id: string; title: string; weekNumber: number; targetValue: number; currentValue: number; metricUnit: string; status: string }[];
 }
 
 interface Report {
@@ -27,6 +33,8 @@ interface Report {
   totalWorkingDays: number;
   completionRate: number;
   avgTasksPerDay: number;
+  totalTimeTrackedHours?: number;
+  projectTaskCount?: number;
   kpiScore?: number;
   managerSummary?: string;
   status: string;
@@ -211,10 +219,15 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
         ) : (
           <>
             {/* Stats Row */}
-            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
               {statCard('Total Task', report.totalTasks)}
               {statCard('Selesai', report.tasksCompleted, `${report.completionRate}%`, 'sage')}
               {statCard('Hari Aktif', `${report.activeDays}/${report.totalWorkingDays}`, undefined, 'blue')}
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+              {statCard('Jam Kerja', `${report.totalTimeTrackedHours ?? 0}j`, 'dari timer aktif')}
+              {statCard('Rata-rata/Hari', report.avgTasksPerDay, 'task per hari aktif')}
+              {(report.projectTaskCount ?? 0) > 0 && statCard('Project Jangka Panjang', report.projectTaskCount ?? 0, 'task berkepanjangan')}
             </div>
 
             {/* KPI Section */}
@@ -296,6 +309,87 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
                             color: kpi.finalScore >= 70 ? HP_TOKENS.sage : kpi.finalScore >= 40 ? '#E67700' : HP_TOKENS.coral,
                           }}>
                             {kpi.finalScore}/100
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Weekly Targets Progress */}
+                      {kpi.weeklyTargets && kpi.weeklyTargets.length > 0 && (
+                        <div style={{ marginTop: 12 }}>
+                          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 6 }}>TARGET MINGGUAN</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            {kpi.weeklyTargets.map(wt => {
+                              const pct = wt.targetValue > 0 ? Math.min(100, Math.round((wt.currentValue / wt.targetValue) * 100)) : 0;
+                              return (
+                                <div key={wt.id}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+                                    <span style={{ ...HP_TEXT.small, fontSize: 11, color: HP_TOKENS.ink }}>
+                                      <span style={{ fontWeight: 800, color: HP_TOKENS.blue, fontSize: 9, marginRight: 4 }}>W{wt.weekNumber}</span>
+                                      {wt.title}
+                                    </span>
+                                    <span style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 10, color: pct >= 100 ? HP_TOKENS.sage : HP_TOKENS.inkSoft }}>
+                                      {wt.currentValue}/{wt.targetValue} {wt.metricUnit}
+                                    </span>
+                                  </div>
+                                  <div style={{ height: 5, background: HP_TOKENS.lineSoft, borderRadius: 99, overflow: 'hidden' }}>
+                                    <div style={{ width: `${pct}%`, height: '100%', background: pct >= 100 ? HP_TOKENS.sage : HP_TOKENS.blue, borderRadius: 99, transition: '0.3s' }} />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Task Details */}
+                      {kpi.tasks && kpi.tasks.length > 0 && (
+                        <div style={{ marginTop: 12 }}>
+                          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 6 }}>DETAIL TASK ({kpi.tasks.length})</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                            {kpi.tasks.map(t => (
+                              <div key={t.id} style={{
+                                padding: '8px 10px', borderRadius: 10,
+                                background: t.isDone ? HP_TOKENS.sageWash : t.partialProgress > 0 ? HP_TOKENS.blueWash : HP_TOKENS.paper,
+                                border: `1px solid ${t.isDone ? HP_TOKENS.sage + '30' : HP_TOKENS.line}`,
+                                display: 'flex', flexDirection: 'column', gap: 3,
+                              }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <span style={{ ...HP_TEXT.small, fontSize: 12, fontWeight: 700, color: HP_TOKENS.ink, textDecoration: t.isDone ? 'line-through' : 'none', flex: 1, marginRight: 8 }}>
+                                    {t.isDone ? '✅' : t.partialProgress > 0 ? '🔄' : '⬜'} {t.title}
+                                  </span>
+                                  <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                                    {t.isProject && <span style={{ ...HP_TEXT.tiny, fontSize: 9, color: '#6B5F8E', background: HP_TOKENS.lavenderSoft, padding: '1px 5px', borderRadius: 4 }}>📁</span>}
+                                    {t.timeTrackedSeconds > 0 && (
+                                      <span style={{ ...HP_TEXT.tiny, fontSize: 9, color: HP_TOKENS.sage, background: HP_TOKENS.sageSoft, padding: '1px 5px', borderRadius: 4 }}>
+                                        ⏱ {Math.round(t.timeTrackedSeconds / 60)}m
+                                      </span>
+                                    )}
+                                    {!t.isDone && t.partialProgress > 0 && (
+                                      <span style={{ ...HP_TEXT.tiny, fontSize: 9, color: HP_TOKENS.blue, background: HP_TOKENS.blueWash, padding: '1px 5px', borderRadius: 4 }}>
+                                        {t.partialProgress}%
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                {t.completedAt && (
+                                  <div style={{ ...HP_TEXT.tiny, fontSize: 9, color: HP_TOKENS.inkMute }}>
+                                    Selesai: {new Date(t.completedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                    {t.dueDate && ` · Deadline: ${new Date(t.dueDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}`}
+                                  </div>
+                                )}
+                                {t.notes && <div style={{ ...HP_TEXT.tiny, fontSize: 10, color: HP_TOKENS.inkSoft, fontStyle: 'italic' }}>"{t.notes}"</div>}
+                                {t.proofLinks && t.proofLinks.length > 0 && t.proofLinks[0] && (
+                                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                                    {t.proofLinks.filter(Boolean).map((l: string, i: number) => (
+                                      <a key={i} href={l} target="_blank" rel="noopener noreferrer"
+                                        style={{ ...HP_TEXT.tiny, fontSize: 9, color: HP_TOKENS.blue, textDecoration: 'underline' }}>
+                                        📎 Link {i + 1}
+                                      </a>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
                           </div>
                         </div>
                       )}

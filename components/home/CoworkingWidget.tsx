@@ -285,6 +285,29 @@ export default function CoworkingWidget({ openModal }: CoworkingWidgetProps) {
 
               {(() => {
                 const isBanned = user?.id ? room.bannedUsers?.includes(user.id) : false;
+                const isAlreadyParticipant = user?.id ? room.participants?.some(p => String(p.id) === String(user.id)) : false;
+                
+                if (isAlreadyParticipant) {
+                  return (
+                    <button 
+                      onClick={() => openModal('focus', { 
+                        initialMultiplayer: true,
+                        initialRoomCode: room.id,
+                        initialMode: room.mode,
+                        initialDuration: room.durationMins,
+                        initialRemainingMins: room.remainingMins,
+                        isGuest: !room.participants?.find(p => String(p.id) === String(user?.id))?.isHost
+                      })}
+                      className="hp-tap"
+                      style={{
+                        width: '100%', marginTop: 8, padding: '12px', borderRadius: 14, border: `1.5px solid ${HP_TOKENS.sage}`, background: 'transparent', color: HP_TOKENS.sage, fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer'
+                      }}
+                    >
+                      Masuk Kembali
+                    </button>
+                  );
+                }
+
                 return (
                   <button 
                     onClick={() => !isBanned && handleJoinClick(room)}
@@ -298,11 +321,10 @@ export default function CoworkingWidget({ openModal }: CoworkingWidgetProps) {
                       color: isBanned || room.status === 'started' ? HP_TOKENS.inkFade : '#fff',
                       fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, 
                       cursor: isBanned || room.status === 'started' ? 'not-allowed' : 'pointer',
-                      boxShadow: isBanned || room.status === 'started' ? 'none' : `0 4px 12px ${HP_TOKENS.sage}40`,
-                      transition: 'all 0.2s'
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all 0.2s'
                     }}
                   >
-                    {isBanned ? "Dilarang" : (room.status === 'started' ? 'Berjalan' : "Ikut Gabung")}
+                    {isBanned ? 'Dilarang Masuk' : room.status === 'started' ? 'Sesi Berlangsung' : 'Ikut (Minta Kode)'}
                   </button>
                 );
               })()}

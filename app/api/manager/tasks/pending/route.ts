@@ -8,12 +8,15 @@ export async function GET(request: Request) {
 
     if (!userId) return NextResponse.json({ error: 'ManagerId missing' }, { status: 400 });
 
-    const membersRes = await db.execute({
-      sql: `SELECT id FROM users WHERE manager_id = ?`,
-      args: [userId]
+    const deptRes = await db.execute({ sql: "SELECT department FROM users WHERE id = ?", args: [userId] });
+    const managerDept = (deptRes.rows[0] as any)?.department || "";
+
+    const userRes = await db.execute({
+      sql: `SELECT id FROM users WHERE department = ? AND id != ?`,
+      args: [managerDept, userId]
     });
 
-    const memberIds = membersRes.rows.map(m => String(m.id));
+    const memberIds = userRes.rows.map(m => String(m.id));
     if (memberIds.length === 0) {
       return NextResponse.json({ tasks: [] });
     }

@@ -25,12 +25,15 @@ export async function GET(request: Request) {
 
     if (type === 'logbook') {
       let sql = `
-        SELECT dp.id, dp.title, dp.description, dp.target_date, dp.is_done, dp.is_verified, 
-               dp.energy_level, dp.est_time, dp.weekly_target_title, dp.goal_title, dp.created_at,
+        SELECT dp.id, dp.title, dp.description, dp.target_date, dp.due_date, dp.completed_at,
+               dp.is_done, dp.is_verified, dp.status, dp.is_project,
+               dp.energy_level, dp.est_time, dp.time_tracked, dp.partial_progress,
+               dp.weekly_target_title, dp.goal_title, dp.proof_link, dp.proof_notes, dp.metric_value,
+               dp.created_at,
                u.name as user_name, u.department
         FROM daily_priorities dp
         JOIN users u ON dp.user_id = u.id
-        WHERE MONTH(COALESCE(dp.target_date, dp.created_at)) = ? 
+        WHERE MONTH(COALESCE(dp.target_date, dp.created_at)) = ?
           AND YEAR(COALESCE(dp.target_date, dp.created_at)) = ?
       `;
       const args: any[] = [month, year];
@@ -67,7 +70,7 @@ export async function GET(request: Request) {
 
     if (type === 'weekly') {
       let sql = `
-        SELECT wt.id, wt.title, wt.week_number, wt.target_value, wt.metric_unit, wt.created_at,
+        SELECT wt.id, wt.title, wt.week_number, wt.target_value, wt.current_value, wt.metric_unit, wt.status, wt.created_at,
                mk.title as kpi_title, u.name as user_name, u.department
         FROM weekly_targets wt
         JOIN monthly_kpis mk ON wt.kpi_id = mk.id

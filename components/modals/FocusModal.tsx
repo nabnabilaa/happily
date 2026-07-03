@@ -54,7 +54,7 @@ export default function FocusModal({
   initialRemainingMins,
   isGuest = false
 }: FocusModalProps) {
-  const { state, awardXP, notify, user } = useHP();
+  const { state, awardXP, notify, user, updateState } = useHP();
   
   // Timer States
   const [duration, setDuration] = useState(initialDuration);
@@ -87,6 +87,11 @@ export default function FocusModal({
   const [showQR, setShowQR] = useState(initialRemainingMins !== undefined && initialMode === 'hardcore'); 
   const [phoneConnected, setPhoneConnected] = useState(isMobile || initialMode === 'zen'); 
   const [exitWarning, setExitWarning] = useState(false);
+  const [lobbyExitWarning, setLobbyExitWarning] = useState(false);
+  // Solo session ID for QR sync (used when not in multiplayer room)
+  const [soloSessionId, setSoloSessionId] = useState<string>(() => 
+    Math.random().toString(36).substring(2, 8).toUpperCase()
+  );
 
   // Invite States
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
@@ -192,6 +197,30 @@ export default function FocusModal({
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, [handleQRScanned]);
+
+  // Pusher listener for SOLO session QR scan
+  // (Multiplayer sessions use the isMultiplayer Pusher block above)
+  useEffect(() => {
+    if (isMultiplayer || !showQR) return;
+    const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
+    const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'ap1';
+    if (!pusherKey) return;
+
+    const client = new PusherClient(pusherKey, { cluster: pusherCluster });
+    const channelName = `focus-solo-${soloSessionId}`;
+    const channel = client.subscribe(channelName);
+    channel.bind('room-event', (ev: any) => {
+      if (ev.type === 'FB_QR_SCANNED') {
+        handleQRScanned();
+      }
+    });
+
+    return () => {
+      channel.unbind_all();
+      channel.unsubscribe();
+      client.disconnect();
+    };
+  }, [isMultiplayer, showQR, soloSessionId, handleQRScanned]);
 
   // Host Judgment
   const handleHostJudgment = (action: 'tunggu' | 'mendesak' | 'lalai') => {
@@ -408,6 +437,8 @@ export default function FocusModal({
 
   const handleStart = useCallback(async () => {
     if (!isMobile && focusMode === 'hardcore') {
+      // Regenerate soloSessionId each time so QR is fresh
+      setSoloSessionId(Math.random().toString(36).substring(2, 8).toUpperCase());
       setShowQR(true); // Must scan QR to sync
     } else {
       setStarted(true);
@@ -442,6 +473,10 @@ export default function FocusModal({
     let finalXP = Math.floor(base * multiplier);
 
     await awardXP('focus_session', `Focus Session ${duration}m ${isMultiplayer ? '(Team Combo)' : ''}`, finalXP);
+    updateState((s: any) => ({
+      ...s,
+      logbook: [...(s.logbook || []), { type: 'focus_session', created_at: new Date().toISOString(), title: `Focus Session ${duration}m` }],
+    }));
     if (isMultiplayer && multiplier > 1) {
       notify("Team Combo Selesai! 🎉", `Luar biasa! +${finalXP} Poin (Multiplier x${multiplier})`, "success");
     } else {
@@ -565,10 +600,54 @@ export default function FocusModal({
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: `linear-gradient(180deg, ${HP_TOKENS.sage} 0%, #1c3525 100%)`, color: '#F4F7F9', fontFamily: HP_FONT, display: 'flex', flexDirection: 'column', animation: 'hpFadeIn 300ms', overflowY: 'auto' }}>
       <div style={{ padding: '40px 20px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-        <button onClick={started ? handleEarlyEndAttempt : onClose} style={iconBtnStyle}><HPGlyph name="close" size={18} color="#F4F7F9"/></button>
+        <button onClick={started ? handleEarlyEndAttempt : (isMultiplayer ? () => setLobbyExitWarning(true) : onClose)} style={iconBtnStyle}><HPGlyph name="close" size={18} color="#F4F7F9"/></button>
         <div style={{ ...HP_TEXT.small, color: 'rgba(255,255,255,0.7)', fontWeight: 700 }}>{isMultiplayer ? "TEAM COMBO ROOM" : "FOCUS MODE"}</div>
         <div style={{ width: 40 }}/>
       </div>
+
+      {lobbyExitWarning && (
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 99, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div style={{ background: '#fff', borderRadius: 24, padding: 24, width: '100%', maxWidth: 360, color: HP_TOKENS.ink, textAlign: 'center' }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>🚪</div>
+            <div style={{ ...HP_TEXT.h, fontSize: 20 }}>Keluar dari Ruang Tunggu?</div>
+            <div style={{ ...HP_TEXT.body, fontSize: 14, color: '#666', marginTop: 8, marginBottom: 24 }}>
+              Kamu bisa menyembunyikan layar ini (Minimize) dan kembali lagi nanti lewat Dashboard, ATAU keluar sepenuhnya dari room ini.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <button onClick={() => { setLobbyExitWarning(false); onClose(); }} style={{ padding: '12px', borderRadius: 12, background: HP_TOKENS.sage, color: '#fff', border: 'none', fontWeight: 800, cursor: 'pointer' }}>Minimize (Tetap di Room)</button>
+              
+              {(() => {
+                const isHost = participants.find(p => String(p.id) === String(user?.id))?.isHost;
+                if (isHost) {
+                  return (
+                    <button onClick={() => {
+                      fetch(`/api/focus/rooms/${roomCode}/action`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'ABORT_URGENT', userId: user?.id })
+                      });
+                      setLobbyExitWarning(false);
+                      onClose();
+                    }} style={{ padding: '12px', borderRadius: 12, background: 'rgba(239, 68, 68, 0.1)', color: '#dc2626', border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: 800, cursor: 'pointer' }}>Bubar & Hapus Room</button>
+                  );
+                } else {
+                  return (
+                    <button onClick={() => {
+                      fetch(`/api/focus/rooms/${roomCode}/action`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'LEAVE', userId: user?.id, userName: user?.name })
+                      });
+                      setLobbyExitWarning(false);
+                      onClose();
+                    }} style={{ padding: '12px', borderRadius: 12, background: 'transparent', color: '#dc2626', border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: 800, cursor: 'pointer' }}>Keluar Sepenuhnya</button>
+                  );
+                }
+              })()}
+              
+              <button onClick={() => setLobbyExitWarning(false)} style={{ padding: '12px', borderRadius: 12, background: 'transparent', color: HP_TOKENS.inkMute, border: 'none', fontWeight: 800, cursor: 'pointer', marginTop: 4 }}>Batal</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {exitWarning && (
         <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 99, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
@@ -576,20 +655,32 @@ export default function FocusModal({
             <div style={{ fontSize: 40, marginBottom: 12 }}>🚪</div>
             <div style={{ ...HP_TEXT.h, fontSize: 20 }}>Yakin Ingin Keluar?</div>
             <div style={{ ...HP_TEXT.body, fontSize: 14, color: '#666', marginTop: 8, marginBottom: 24 }}>
-              Keluar sepihak di tengah sesi akan menghanguskan Multiplier Tim. Jika keadaan Anda mendesak, laporkan status Urgent agar tim tidak rugi.
+              {isMultiplayer && participants.length > 1
+                ? "Keluar sepihak di tengah sesi akan menghanguskan Multiplier Tim. Jika keadaan Anda mendesak, laporkan status Urgent agar tim tidak rugi."
+                : "Mengakhiri sesi sekarang akan membatalkan progres fokusmu. Yakin ingin keluar?"}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <button onClick={() => setExitWarning(false)} style={{ padding: '12px', borderRadius: 12, background: HP_TOKENS.sage, color: '#fff', border: 'none', fontWeight: 800, cursor: 'pointer' }}>Kembali Fokus</button>
               
               {(() => {
                 const isHost = participants.find(p => String(p.id) === String(user?.id))?.isHost;
+                
+                if (!isMultiplayer || participants.length <= 1) {
+                  return (
+                    <button 
+                      onClick={() => handleEarlyEndConfirm(isHost ? 'abort_urgent' : 'quit')} 
+                      style={{ padding: '12px', borderRadius: 12, background: 'rgba(239, 68, 68, 0.1)', color: '#dc2626', border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: 800, cursor: 'pointer' }}
+                    >
+                      Akhiri Sesi
+                    </button>
+                  );
+                }
+
                 if (isHost) {
                   return (
                     <>
                       <button onClick={() => handleEarlyEndConfirm('abort_urgent')} style={{ padding: '12px', borderRadius: 12, background: 'rgba(239, 68, 68, 0.1)', color: '#dc2626', border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: 800, cursor: 'pointer' }}>Akhiri Sesi Semua (Urgent)</button>
-                      {participants.length > 1 && (
-                        <button onClick={() => handleEarlyEndConfirm('transfer_host')} style={{ padding: '12px', borderRadius: 12, background: 'rgba(245, 158, 11, 0.15)', color: '#d97706', border: 'none', fontWeight: 800, cursor: 'pointer' }}>Lempar Posisi Admin</button>
-                      )}
+                      <button onClick={() => handleEarlyEndConfirm('transfer_host')} style={{ padding: '12px', borderRadius: 12, background: 'rgba(245, 158, 11, 0.15)', color: '#d97706', border: 'none', fontWeight: 800, cursor: 'pointer' }}>Lempar Posisi Admin</button>
                     </>
                   );
                 } else {
@@ -616,7 +707,7 @@ export default function FocusModal({
               Mode Hardcore mewajibkan sinkronisasi perangkat. Scan QR ini dengan kamera HP agar tersambung ke Sesi Fokus.
             </div>
             <div style={{ padding: 16, background: '#fff', borderRadius: 24, display: 'inline-block' }}>
-              <QRCodeSVG value="https://flowbee.app/sync/4F8A" size={180} />
+              <QRCodeSVG value={typeof window !== 'undefined' ? `${window.location.origin}/focus/sync/${roomCode || soloSessionId}` : `/focus/sync/${roomCode || soloSessionId}`} size={180} />
             </div>
             
             <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', gap: 12, width: '100%', maxWidth: 240 }}>

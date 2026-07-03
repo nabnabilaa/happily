@@ -259,6 +259,69 @@ export function useManagerGoals(state: any, user: any, updateState: any, notify:
     } catch (e) { console.error('Failed to reject:', e); }
   };
 
+  const handleManagerVerifyKpiTask = async (taskId: string, goalId: string) => {
+    try {
+      const res = await fetch("/api/manager/verify-task", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId, goalId, managerId: user.id, action: 'approve' })
+      });
+      if (!res.ok) throw new Error();
+      updateState((s: any) => ({
+        ...s,
+        managerData: {
+          ...s.managerData,
+          teamTasks: s.managerData?.teamTasks?.map((t: any) =>
+            String(t.id) === String(taskId) ? { ...t, verified: true, done: true } : t
+          ) || []
+        }
+      }));
+      notify('Task Diverifikasi', 'Task berhasil di-ACC.', 'success');
+    } catch (e) {
+      console.error(e);
+      notify('Gagal', 'Gagal memverifikasi task.', 'error');
+    }
+  };
+
+  const handleManagerRejectKpiTask = async (taskId: string, wtId: string, action: 'revision' | 'reject', taskPct: number, totalWtTasks: number, goalId: string) => {
+    try {
+      const res = await fetch("/api/manager/verify-task", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId, goalId, managerId: user.id, action })
+      });
+      if (!res.ok) throw new Error();
+
+      // Reduce weekly target progress if task had contributed
+      if (wtId && taskPct > 0) {
+        const delta = -(taskPct / Math.max(1, totalWtTasks));
+        await fetch('/api/kpi/weekly-targets', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: wtId, delta })
+        });
+      }
+
+      updateState((s: any) => ({
+        ...s,
+        managerData: {
+          ...s.managerData,
+          teamTasks: s.managerData?.teamTasks?.map((t: any) =>
+            String(t.id) === String(taskId) ? { ...t, verified: false, done: false, status: action } : t
+          ) || []
+        }
+      }));
+      notify(
+        action === 'reject' ? 'Task Ditolak' : 'Task Dikembalikan',
+        action === 'reject' ? 'Task ditolak dan progress target dikurangi.' : 'Task dikembalikan untuk direvisi.',
+        'info'
+      );
+    } catch (e) {
+      console.error(e);
+      notify('Gagal', 'Gagal memproses task.', 'error');
+    }
+  };
+
   const handleRevisionGoal = async (goalId: string) => {
     updateState((s: any) => ({
       ...s,
@@ -283,6 +346,8 @@ export function useManagerGoals(state: any, user: any, updateState: any, notify:
     topLevelGoals,
     handleVerifyTask,
     handleRejectTask,
+    handleManagerVerifyKpiTask,
+    handleManagerRejectKpiTask,
     executeDeleteGoal,
     handleEditProgress,
     handleApproveGoal,

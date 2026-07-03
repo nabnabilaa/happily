@@ -26,15 +26,29 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
   const [todayStatus, setTodayStatus] = useState<'not_checked_in' | 'checked_in' | 'checked_out'>('not_checked_in');
   const [todayData, setTodayData] = useState<any>(null);
   const [checkoutResult, setCheckoutResult] = useState<any>(null);
+  const [locationStatus, setLocationStatus] = useState<'getting' | 'ok' | 'error'>('getting');
+  const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
+
+  const fetchLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationStatus('error');
+      return;
+    }
+    setLocationStatus('getting');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setLocationAccuracy(Math.round(pos.coords.accuracy));
+        setLocationStatus('ok');
+      },
+      () => setLocationStatus('error'),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  };
 
   useEffect(() => {
-    // Get location
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        () => {}
-      );
-    }
+    // Get location with high accuracy
+    fetchLocation();
     
     // Fetch offices
     fetch("/api/settings/office").then(res => res.json()).then(data => {
@@ -69,8 +83,20 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
 
   const handleCheckIn = async () => {
     setStatus('verifying');
+
+    // Re-fetch fresh GPS position before submitting
+    const freshLocation = await new Promise<{lat: number, lng: number} | null>((resolve) => {
+      if (!navigator.geolocation) { resolve(location); return; }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => resolve(location),
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    });
+
+    const finalLocation = freshLocation || location;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     try {
       const res = await fetch("/api/attendance/check-in", {
@@ -79,8 +105,8 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
         body: JSON.stringify({
           userId: user?.id,
           token: "manual_checkin",
-          lat: location?.lat,
-          lng: location?.lng,
+          lat: finalLocation?.lat,
+          lng: finalLocation?.lng,
           checkInType,
           officeId,
           notes
@@ -338,6 +364,50 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
                 </>
               )}
             </div>
+
+            {/* Location status indicator */}
+            {isCheckingIn && checkInType === 'WFO' && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px',
+                borderRadius: 12, marginBottom: 4,
+                background: locationStatus === 'ok' ? HP_TOKENS.sageWash
+                  : locationStatus === 'error' ? HP_TOKENS.coralSoft
+                  : HP_TOKENS.blueWash,
+                border: `1px solid ${locationStatus === 'ok' ? HP_TOKENS.sage + '40'
+                  : locationStatus === 'error' ? HP_TOKENS.coral + '40'
+                  : HP_TOKENS.blue + '30'}`,
+              }}>
+                <span style={{ fontSize: 16 }}>
+                  {locationStatus === 'ok' ? '📍' : locationStatus === 'error' ? '⚠️' : '🔄'}
+                </span>
+                <div style={{ flex: 1 }}>
+                  <div style={{
+                    fontSize: 12, fontWeight: 800, fontFamily: HP_FONT,
+                    color: locationStatus === 'ok' ? HP_TOKENS.sage
+                      : locationStatus === 'error' ? HP_TOKENS.coral
+                      : HP_TOKENS.blue,
+                  }}>
+                    {locationStatus === 'ok'
+                      ? `Lokasi terdeteksi${locationAccuracy !== null ? ` (±${locationAccuracy}m)` : ''}`
+                      : locationStatus === 'error'
+                      ? 'Lokasi tidak terdeteksi — izinkan akses GPS'
+                      : 'Mendapatkan lokasi GPS...'}
+                  </div>
+                </div>
+                {(locationStatus === 'error' || locationStatus === 'ok') && (
+                  <button
+                    onClick={fetchLocation}
+                    style={{
+                      padding: '4px 10px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                      background: 'transparent', fontSize: 11, fontWeight: 800,
+                      color: locationStatus === 'error' ? HP_TOKENS.coral : HP_TOKENS.inkMute,
+                    }}
+                  >
+                    ↻ Refresh
+                  </button>
+                )}
+              </div>
+            )}
 
             {/* Verifying Spinner */}
             {status === 'verifying' && (

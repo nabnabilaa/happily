@@ -27,6 +27,7 @@ export default function WorkCheckInModal({ onClose, openModal }: WorkCheckInModa
   const [selectedMood, setSelectedMood] = useState(state?.mood || 'calm');
   const [completingTask, setCompletingTask] = useState<any>(null);
   const [localProgress, setLocalProgress] = useState<Record<number, number>>({});
+  const [expandedTaskId, setExpandedTaskId] = useState<number | null>(null);
 
   if (!state) return null;
 
@@ -321,18 +322,21 @@ Jawab dengan tone yang asik dan menyemangati.`,
 
       <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 900, fontSize: 10, letterSpacing: 1, marginBottom: 12 }}>DAFTAR TARGET HARI INI</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
-        {priorities.map((p: any) => (
-          <HPCard key={p.id} padding={14} style={{ 
+        {priorities.map((p: any) => {
+          const isExpanded = expandedTaskId === p.id;
+          const pct = p.done ? 100 : (p.partial_progress || 0);
+          const proofLinks: string[] = (() => { try { const v = JSON.parse(p.proof_links); return Array.isArray(v) ? v : (p.proof_links ? [p.proof_links] : []); } catch { return Array.isArray(p.proof_links) ? p.proof_links : (p.proof_links ? [p.proof_links] : []); } })();
+          return (
+          <HPCard key={p.id} padding={14} style={{
             background: p.done ? `${HP_TOKENS.sageWash}40` : HP_TOKENS.card,
             border: `1.5px solid ${p.done ? HP_TOKENS.sage : HP_TOKENS.line}`,
-            opacity: p.done ? 0.7 : 1,
             transition: '0.2s'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <button 
+              <button
                 onClick={() => toggleTask(p.id)}
                 style={{
-                  width: 24, height: 24, borderRadius: 8,
+                  width: 24, height: 24, borderRadius: 8, flexShrink: 0,
                   background: p.done ? HP_TOKENS.sage : 'transparent',
                   border: `2px solid ${p.done ? HP_TOKENS.sage : HP_TOKENS.line}`,
                   cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -341,13 +345,22 @@ Jawab dengan tone yang asik dan menyemangati.`,
               >
                 {p.done && <HPGlyph name="check" size={14} color="#F4F7F9" stroke={4}/>}
               </button>
-              <div style={{ flex: 1 }}>
-                <div style={{ 
-                  ...HP_TEXT.body, fontSize: 14, fontWeight: 700, 
-                  textDecoration: p.done ? 'line-through' : 'none',
-                  color: p.done ? HP_TOKENS.inkFade : HP_TOKENS.ink
-                }}>
-                  {p.title}
+              <div
+                style={{ flex: 1, cursor: 'pointer' }}
+                onClick={() => setExpandedTaskId(isExpanded ? null : p.id)}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{
+                    ...HP_TEXT.body, fontSize: 14, fontWeight: 700,
+                    textDecoration: p.done ? 'line-through' : 'none',
+                    color: p.done ? HP_TOKENS.inkFade : HP_TOKENS.ink,
+                    flex: 1,
+                  }}>
+                    {p.title}
+                  </div>
+                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, marginLeft: 8 }}>
+                    {isExpanded ? '▲' : '▼'}
+                  </div>
                 </div>
                 {(() => {
                   const goalId = p.goal_id || p.kpi_id;
@@ -355,42 +368,112 @@ Jawab dengan tone yang asik dan menyemangati.`,
                   if (!goalId && !fallbackTitle) return null;
                   const goal = state?.goals?.find((g: any) => String(g.id) === String(goalId));
                   const displayGoal = goal ? goal.title : fallbackTitle;
-                  const parent = goal?.parent_id ? state?.goals?.find((g: any) => String(g.id) === String(goal.parent_id)) : null;
-                  const displayTag = parent ? `${displayGoal} (Aligned to: ${parent.title})` : displayGoal;
                   return (
                     <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2, fontWeight: 600 }}>
-                      Linked to: <span style={{ color: HP_TOKENS.blue }}>{displayTag}</span>
+                      <span style={{ color: HP_TOKENS.blue }}>{displayGoal}</span>
+                      {p.weekly_target_title && <span style={{ color: HP_TOKENS.inkFade }}> › {p.weekly_target_title}</span>}
                     </div>
                   );
                 })()}
-                {!p.done && (
-                  <div style={{ marginTop: 12 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, alignItems: 'center' }}>
-                      <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>Progres:</div>
-                      <div style={{ ...HP_TEXT.small, fontWeight: 800, color: HP_TOKENS.yellow }}>
-                        {localProgress[p.id] !== undefined ? localProgress[p.id] : (p.progress || 0)}%
-                      </div>
-                    </div>
-                    <input 
-                      type="range" min="0" max="100" 
-                      value={localProgress[p.id] !== undefined ? localProgress[p.id] : (p.progress || 0)} 
-                      onChange={(e) => setLocalProgress(prev => ({ ...prev, [p.id]: parseInt(e.target.value) }))}
-                      onMouseUp={(e) => updateTaskProgress(p.id, parseInt((e.target as HTMLInputElement).value))}
-                      onTouchEnd={(e) => updateTaskProgress(p.id, parseInt((e.target as HTMLInputElement).value))}
-                      style={{ 
-                        width: '100%', 
-                        height: 6,
-                        borderRadius: 3,
-                        accentColor: HP_TOKENS.yellow,
-                        cursor: 'pointer'
-                      }}
-                    />
+                {/* Partial progress bar */}
+                {!p.done && pct > 0 && (
+                  <div style={{ marginTop: 6, height: 4, borderRadius: 2, background: HP_TOKENS.lineSoft, overflow: 'hidden' }}>
+                    <div style={{ width: `${pct}%`, height: '100%', background: HP_TOKENS.yellow, borderRadius: 2 }} />
                   </div>
                 )}
               </div>
             </div>
+
+            {/* Expanded detail */}
+            {isExpanded && (
+              <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${HP_TOKENS.lineSoft}`, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {/* Description */}
+                {p.description && (
+                  <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkSoft, fontSize: 12 }}>{p.description}</div>
+                )}
+                {/* Status chip */}
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  <span style={{
+                    padding: '2px 8px', borderRadius: 6, fontSize: 10, fontFamily: HP_FONT, fontWeight: 800,
+                    background: p.done ? HP_TOKENS.sageWash : pct > 0 ? HP_TOKENS.yellowSoft : HP_TOKENS.coralSoft,
+                    color: p.done ? HP_TOKENS.sage : pct > 0 ? '#B45309' : HP_TOKENS.coral,
+                  }}>
+                    {p.done ? 'Selesai' : pct > 0 ? `${pct}% berjalan` : 'Belum dimulai'}
+                  </span>
+                  {p.is_project && <span style={{ padding: '2px 8px', borderRadius: 6, fontSize: 10, fontFamily: HP_FONT, fontWeight: 700, background: HP_TOKENS.blueWash || HP_TOKENS.blueSoft, color: HP_TOKENS.blue }}>Proyek</span>}
+                  {p.energy_level && <span style={{ padding: '2px 8px', borderRadius: 6, fontSize: 10, fontFamily: HP_FONT, fontWeight: 700, background: HP_TOKENS.lineSoft, color: HP_TOKENS.inkMute }}>Energi: {p.energy_level}</span>}
+                </div>
+                {/* Notes */}
+                {(p.completion_notes || p.proof_notes) && (
+                  <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkSoft, fontSize: 12, fontStyle: 'italic', padding: '6px 10px', background: HP_TOKENS.paper, borderRadius: 8 }}>
+                    "{p.completion_notes || p.proof_notes}"
+                  </div>
+                )}
+                {/* Metric value */}
+                {p.metric_value && (
+                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 700 }}>Nilai: {p.metric_value}</div>
+                )}
+                {/* Due date */}
+                {p.due_date && (
+                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>
+                    Deadline: {new Date(p.due_date + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </div>
+                )}
+                {/* Completed at */}
+                {p.completed_at && (
+                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage }}>
+                    Diselesaikan: {new Date(p.completed_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                )}
+                {/* Proof links */}
+                {proofLinks.filter(Boolean).length > 0 && (
+                  <div>
+                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 4 }}>HASIL PENGERJAAN</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                      {proofLinks.filter(Boolean).map((link: string, i: number) => (
+                        link.startsWith('http') ? (
+                          <a key={i} href={link} target="_blank" rel="noopener noreferrer" style={{
+                            padding: '4px 10px', borderRadius: 8, background: HP_TOKENS.blueSoft,
+                            color: HP_TOKENS.blue, fontSize: 11, fontFamily: HP_FONT, fontWeight: 700, textDecoration: 'none',
+                          }}>
+                            Lihat Bukti {proofLinks.filter(Boolean).length > 1 ? i + 1 : ''}
+                          </a>
+                        ) : (
+                          <span key={i} style={{
+                            padding: '4px 10px', borderRadius: 8, background: HP_TOKENS.lineSoft,
+                            color: HP_TOKENS.inkSoft, fontSize: 11, fontFamily: HP_FONT, fontWeight: 700,
+                          }}>
+                            {link}
+                          </span>
+                        )
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {/* Undone task: still show progress slider */}
+                {!p.done && (
+                  <div style={{ marginTop: 4 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, alignItems: 'center' }}>
+                      <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>Update Progres:</div>
+                      <div style={{ ...HP_TEXT.small, fontWeight: 800, color: HP_TOKENS.yellow }}>
+                        {localProgress[p.id] !== undefined ? localProgress[p.id] : (p.progress || 0)}%
+                      </div>
+                    </div>
+                    <input
+                      type="range" min="0" max="100"
+                      value={localProgress[p.id] !== undefined ? localProgress[p.id] : (p.progress || 0)}
+                      onChange={(e) => setLocalProgress(prev => ({ ...prev, [p.id]: parseInt(e.target.value) }))}
+                      onMouseUp={(e) => updateTaskProgress(p.id, parseInt((e.target as HTMLInputElement).value))}
+                      onTouchEnd={(e) => updateTaskProgress(p.id, parseInt((e.target as HTMLInputElement).value))}
+                      style={{ width: '100%', height: 6, borderRadius: 3, accentColor: HP_TOKENS.yellow, cursor: 'pointer' }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
           </HPCard>
-        ))}
+          );
+        })}
         {totalCount === 0 && (
           <div style={{ textAlign: 'center', padding: '24px 20px', color: HP_TOKENS.inkMute, background: HP_TOKENS.card, borderRadius: 16, border: `1.5px dashed ${HP_TOKENS.line}` }}>
             <div style={{ marginBottom: 16, fontSize: 14, fontWeight: 500 }}>Belum ada target untuk hari ini.</div>

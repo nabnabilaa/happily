@@ -30,27 +30,45 @@ export async function GET(request: Request) {
       rank: userRow.rank,
       avatarImage: userRow.avatar_image,
       userRole: userRow.user_role_context || userRow.role,
-      onboarded: !!userRow.is_onboarded
+      onboarded: !!userRow.is_onboarded,
+      department: userRow.department || null,
+      department_status: userRow.department_status || null
     };
 
     // 2. Fetch State components
     const prioritiesRes = await db.execute({
-      sql: `SELECT * FROM daily_priorities 
-            WHERE user_id = ? 
-              AND (is_done = 0 OR COALESCE(DATE(target_date), DATE(created_at)) = CURDATE()) 
-            ORDER BY is_done ASC, 
-                     CASE energy_level WHEN 'high' THEN 1 WHEN 'mid' THEN 2 WHEN 'low' THEN 3 ELSE 2 END ASC, 
-                     COALESCE(target_date, created_at) ASC, 
+      sql: `SELECT * FROM daily_priorities
+            WHERE user_id = ?
+              AND (is_done = 0
+                   OR COALESCE(DATE(target_date), DATE(created_at)) = CURDATE()
+                   OR DATE(completed_at) = CURDATE())
+            ORDER BY is_done ASC,
+                     CASE energy_level WHEN 'high' THEN 1 WHEN 'mid' THEN 2 WHEN 'low' THEN 3 ELSE 2 END ASC,
+                     COALESCE(target_date, created_at) ASC,
                      id ASC`,
       args: [userId]
     });
     const priorities = prioritiesRes.rows.map(r => {
       const parsedId = isNaN(Number(r.id)) ? r.id : Number(r.id);
+      let tDate = '';
+      if (r.target_date) {
+        if (r.target_date instanceof Date) {
+          const d = r.target_date;
+          tDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        } else {
+          const str = String(r.target_date);
+          tDate = str.includes('T') ? str.split('T')[0] : (str.includes(' ') ? str.split(' ')[0] : str);
+        }
+      } else {
+        const d = r.created_at ? (r.created_at instanceof Date ? r.created_at : new Date(r.created_at)) : new Date();
+        tDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      }
+
       return {
         id: parsedId,
         title: r.title,
         description: r.description,
-        targetDate: r.target_date,
+        targetDate: tDate,
         goal: r.goal_title,
         goal_id: r.goal_id ? (isNaN(Number(r.goal_id)) ? r.goal_id : Number(r.goal_id)) : null,
         kpi_id: r.kpi_id ? (isNaN(Number(r.kpi_id)) ? r.kpi_id : Number(r.kpi_id)) : null,
@@ -63,10 +81,15 @@ export async function GET(request: Request) {
         tone: r.tone,
         time_tracked: Number(r.time_tracked) || 0,
         timer_started_at: r.timer_started_at || null,
-        proof_links: r.proof_link ? [r.proof_link] : [],
+        proof_links: (() => { try { const v = JSON.parse(r.proof_link as string); return Array.isArray(v) ? v : [r.proof_link as string]; } catch { return r.proof_link ? [r.proof_link as string] : []; } })(),
         completion_notes: r.proof_notes || null,
         weekly_target_id: r.weekly_target_id || null,
         weekly_target_title: r.weekly_target_title || null,
+        partial_progress: Number(r.partial_progress) || 0,
+        metric_value: r.metric_value !== null && r.metric_value !== undefined ? Number(r.metric_value) : null,
+        is_project: !!r.is_project,
+        completed_at: r.completed_at || null,
+        due_date: r.due_date || null,
         created_at: r.created_at
       };
     });
@@ -144,11 +167,13 @@ export async function GET(request: Request) {
     ];
     let workSchedule = { start: "08:00", end: "17:00", breakStart: "12:00", breakEnd: "13:00" };
     let skillMapping: any[] | null = null;
+    let onboardingConfig: any[] | null = null;
     settingsRes.rows.forEach(r => {
       try {
         if (r.key === 'contacts' && r.value) contacts = JSON.parse(r.value as string);
         if (r.key === 'work_schedule' && r.value) workSchedule = JSON.parse(r.value as string);
         if (r.key === 'skill_mapping' && r.value) skillMapping = JSON.parse(r.value as string);
+        if (r.key === 'onboardingConfig' && r.value) onboardingConfig = JSON.parse(r.value as string);
       } catch (e) { console.error(`Error parsing setting ${r.key}:`, e); }
     });
 
@@ -270,6 +295,7 @@ export async function GET(request: Request) {
       penaltyActive: false,
       penaltyThresholdDays: 3,
       workSchedule,
+      onboardingConfig,
       todayAttendance: {
         checkIn: formatTime(checkIn),
         checkOut: formatTime(checkOut),
@@ -300,7 +326,7 @@ export async function POST(request: Request) {
     // Update User
     try {
       await db.execute({
-        sql: `UPDATE users SET name = ?, streak = ?, avatar_image = ?, user_role_context = ?, last_activity_at = ?, personal_wellbeing_goal = ?, wellbeing_routine = ?, is_onboarded = ?, focus_task_id = ?, focus_progress = ?, focus_intention = ? WHERE id = ?`,
+        sql: `UPDATE users SET name = ?, streak = ?, avatar_image = ?, user_role_context = ?, last_activity_at = ?, personal_wellbeing_goal = ?, wellbeing_routine = ?, is_onboarded = ?, focus_task_id = ?, focus_progress = ?, focus_intention = ?, department = ?, department_status = ? WHERE id = ?`,
         args: [
           user.name, user.streak,
           user.avatarImage || null,
@@ -312,6 +338,8 @@ export async function POST(request: Request) {
           state.focusTaskId || null,
           state.focusProgress || 0,
           state.intention || "",
+          user.department || null,
+          user.department_status || null,
           userId
         ]
       });
@@ -328,6 +356,7 @@ export async function POST(request: Request) {
             state.lastActivityDate ? new Date(state.lastActivityDate).toISOString().slice(0, 19).replace('T', ' ') : new Date().toISOString().slice(0, 19).replace('T', ' '),
             state.personalWellbeingGoal || "",
             JSON.stringify(state.wellbeingRoutine || []),
+            user.department || null,
             userId
           ]
         });
@@ -452,12 +481,14 @@ export async function POST(request: Request) {
         
         // 2. Delete tasks from DB that are for today or active but NOT in current state
         if (stateTaskIds.length > 0) {
-          await db.execute({ 
-            sql: `DELETE FROM daily_priorities 
-                  WHERE user_id = ? 
-                  AND (is_done = 0 OR COALESCE(DATE(target_date), DATE(created_at)) = CURDATE())
-                  AND id NOT IN (${stateTaskIds.map(() => '?').join(',')})`, 
-            args: [userId, ...stateTaskIds] 
+          await db.execute({
+            sql: `DELETE FROM daily_priorities
+                  WHERE user_id = ?
+                  AND (is_done = 0
+                       OR COALESCE(DATE(target_date), DATE(created_at)) = CURDATE()
+                       OR DATE(completed_at) = CURDATE())
+                  AND id NOT IN (${stateTaskIds.map(() => '?').join(',')})`,
+            args: [userId, ...stateTaskIds]
           });
         }
 
@@ -470,17 +501,19 @@ export async function POST(request: Request) {
         // 3. Upsert current tasks
         for (const p of cleanPriorities) {
           await db.execute({
-            sql: `INSERT INTO daily_priorities (id, user_id, title, description, target_date, goal_title, goal_id, kpi_id, energy_level, est_time, is_done, is_verified, status, tone, proof_link, proof_notes, metric_value, time_tracked, timer_started_at, weekly_target_id, weekly_target_title, created_at) 
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                  ON DUPLICATE KEY UPDATE 
-                  title=VALUES(title), description=VALUES(description), target_date=VALUES(target_date), goal_title=VALUES(goal_title), goal_id=VALUES(goal_id), 
-                  kpi_id=VALUES(kpi_id), 
-                  energy_level=VALUES(energy_level), est_time=VALUES(est_time), 
+            sql: `INSERT INTO daily_priorities (id, user_id, title, description, target_date, goal_title, goal_id, kpi_id, energy_level, est_time, is_done, is_verified, status, tone, proof_link, proof_notes, metric_value, time_tracked, timer_started_at, weekly_target_id, weekly_target_title, partial_progress, is_project, completed_at, due_date, created_at)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                  ON DUPLICATE KEY UPDATE
+                  title=VALUES(title), description=VALUES(description), target_date=VALUES(target_date), goal_title=VALUES(goal_title), goal_id=VALUES(goal_id),
+                  kpi_id=VALUES(kpi_id),
+                  energy_level=VALUES(energy_level), est_time=VALUES(est_time),
                   is_done=VALUES(is_done), is_verified=VALUES(is_verified), status=VALUES(status), tone=VALUES(tone),
                   proof_link=VALUES(proof_link), proof_notes=VALUES(proof_notes), metric_value=VALUES(metric_value),
                   time_tracked=VALUES(time_tracked), timer_started_at=VALUES(timer_started_at),
-                  weekly_target_id=VALUES(weekly_target_id), weekly_target_title=VALUES(weekly_target_title)`,
-            args: [p.id, userId, p.title, p.description || null, p.targetDate || null, p.goal || null, p.goal_id || null, p.kpi_id || null, p.energy, p.est, p.done ? 1 : 0, p.verified ? 1 : 0, p.status || 'todo', p.tone, p.proof_links?.[0] || p.proof_link || null, p.completion_notes || p.proof_notes || null, p.metric_value || null, p.time_tracked || 0, p.timer_started_at || null, p.weekly_target_id || null, p.weekly_target_title || null]
+                  weekly_target_id=VALUES(weekly_target_id), weekly_target_title=VALUES(weekly_target_title),
+                  partial_progress=VALUES(partial_progress), is_project=VALUES(is_project),
+                  completed_at=VALUES(completed_at), due_date=VALUES(due_date)`,
+            args: [p.id, userId, p.title, p.description || null, p.targetDate || null, p.goal || null, p.goal_id || null, p.kpi_id || null, p.energy, p.est, p.done ? 1 : 0, p.verified ? 1 : 0, p.status || 'todo', p.tone, p.proof_links?.length ? JSON.stringify(p.proof_links) : (p.proof_link || null), p.completion_notes || p.proof_notes || null, p.metric_value || null, p.time_tracked || 0, p.timer_started_at || null, p.weekly_target_id || null, p.weekly_target_title || null, p.partial_progress || 0, p.is_project ? 1 : 0, p.completed_at || null, p.due_date || null]
           });
         }
       } catch (e) {
@@ -634,6 +667,14 @@ export async function POST(request: Request) {
 
     // Sync Global Settings (Contacts, Work Schedule) - HR/Manager only
     if (user.role === 'hr' || user.userRole === 'hr') {
+      if (state.onboardingConfig && user.role === 'hr') {
+        try {
+          await db.execute({
+            sql: "INSERT INTO global_settings (`key`, value, updated_by) VALUES ('onboardingConfig', ?, ?) ON DUPLICATE KEY UPDATE value = VALUES(value), updated_by = VALUES(updated_by)",
+            args: [JSON.stringify(state.onboardingConfig), userId]
+          });
+        } catch (e) { console.error("Failed to update onboardingConfig", e); }
+      }
       if (state.contacts) {
         await db.execute({
           sql: `INSERT INTO global_settings (\`key\`, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = VALUES(value)`,

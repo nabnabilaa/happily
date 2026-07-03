@@ -19,6 +19,7 @@ import EmotionalHero from "@/components/home/EmotionalHero";
 import SectionHeader from "@/components/home/SectionHeader";
 import InsightCard from "@/components/home/InsightCard";
 import HabitCell from "@/components/home/HabitCell";
+import HabitEmptyState from "@/components/home/HabitEmptyState";
 import CelebrationOverlay from "@/components/ui/CelebrationOverlay";
 import WellbeingGauge from "@/components/home/WellbeingGauge";
 import AttendanceWidget from "@/components/home/AttendanceWidget";
@@ -121,6 +122,18 @@ export default function HomeScreen({ openModal }: any) {
   const moodObj = moodsList.find((m: any) => m.key === currentMood);
   const energyObj = energyList.find((e: any) => e.key === currentEnergy);
 
+  const handleInsightClick = (action?: string) => {
+    if (!action) return;
+    if (action === 'scroll_task') {
+      const el = document.getElementById('task-section');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else if (action === 'open_wellbeing') {
+      openModal('checkin');
+    } else if (action === 'open_logbook') {
+      openModal('logbook');
+    }
+  };
+
   return (
     <div style={{ position: 'relative', minHeight: '100%', paddingBottom: 120, fontFamily: HP_FONT }}>
       <BlobBackground colors={[HP_TOKENS.primaryWash, HP_TOKENS.card, HP_TOKENS.paper]}/>
@@ -203,6 +216,19 @@ export default function HomeScreen({ openModal }: any) {
 
           <AttendanceWidget openModal={openModal} />
         </HPCard>
+
+        {/* Logbook */}
+        <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <button onClick={() => openModal('logbook')} className="hp-tap" style={{
+            width: '100%', padding: '16px', borderRadius: 100,
+            background: 'transparent', color: HP_TOKENS.inkMute,
+            border: `2px solid var(--hp-border)`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+            fontFamily: HP_FONT, fontWeight: 700, fontSize: 14,
+          }}>
+            <HPGlyph name="book" size={18} color={HP_TOKENS.inkMute}/>
+            <span>Lihat Riwayat & Logbook Calendar</span>
+          </button>
+        </div>
 
         {/* HERO — Emotional check-in */}
         <div style={{ marginTop: 16 }}>
@@ -328,14 +354,16 @@ export default function HomeScreen({ openModal }: any) {
 
         <CoworkingWidget openModal={openModal} />
 
-        <TaskHarianWidget 
-          openModal={openModal} 
-          onTaskComplete={(taskName?: string) => {
-            setConfetti(true);
-            setCelebrate({show: true, points: 50, message: taskName ? `Selesai: ${taskName}` : "Hebat! Satu langkah lebih dekat."});
-            setTimeout(() => setConfetti(false), 1200);
-          }} 
-        />
+        <div id="task-section">
+          <TaskHarianWidget 
+            openModal={openModal} 
+            onTaskComplete={(taskName?: string) => {
+              setConfetti(true);
+              setCelebrate({show: true, points: 50, message: taskName ? `Selesai: ${taskName}` : "Hebat! Satu langkah lebih dekat."});
+              setTimeout(() => setConfetti(false), 1200);
+            }} 
+          />
+        </div>
 
         <DailyChallengeWidget 
           openModal={openModal} 
@@ -356,18 +384,22 @@ export default function HomeScreen({ openModal }: any) {
             action="Settings"
             onAction={() => openModal('manage_habits')}
           />
-          <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', alignItems: 'stretch' }}>
-            {state.habits?.map((h: any, i: number) => (
-              <div key={i} style={{ minWidth: 260, flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
-                <HabitCell 
-                  h={h} 
-                  onToggle={(date, isToday, done) => handleHabitDayClick(h.name, date, isToday, done)}
-                  onQuickComplete={(date, isToday, wasDone, newDone) => handleQuickComplete(h.name, date, isToday, wasDone, newDone)}
-                  onFinish={() => handleFinishTraining(h.name)}
-                />
-              </div>
-            ))}
-          </div>
+          {(!state.habits || state.habits.length === 0) ? (
+            <HabitEmptyState openModal={openModal} />
+          ) : (
+            <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', alignItems: 'stretch' }}>
+              {state.habits.map((h: any, i: number) => (
+                <div key={i} style={{ minWidth: 260, flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
+                  <HabitCell 
+                    h={h} 
+                    onToggle={(date, isToday, done) => handleHabitDayClick(h.name, date, isToday, done)}
+                    onQuickComplete={(date, isToday, wasDone, newDone) => handleQuickComplete(h.name, date, isToday, wasDone, newDone)}
+                    onFinish={() => handleFinishTraining(h.name)}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Professional Growth */}
@@ -375,23 +407,11 @@ export default function HomeScreen({ openModal }: any) {
           <SectionHeader icon="heart" label="AI Coach Insights" />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {aiInsights.map((ins, i) => (
-              <InsightCard key={i} ins={ins} idx={i}/>
+              <InsightCard key={i} ins={ins} idx={i} onClick={() => handleInsightClick(ins.action)} />
             ))}
           </div>
         </div>
 
-        {/* Closing actions */}
-        <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <button onClick={() => openModal('logbook')} className="hp-tap" style={{
-            width: '100%', padding: '16px', borderRadius: 100,
-            background: 'transparent', color: HP_TOKENS.inkMute,
-            border: `2px solid var(--hp-border)`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-            fontFamily: HP_FONT, fontWeight: 700, fontSize: 14,
-          }}>
-            <HPGlyph name="book" size={18} color={HP_TOKENS.inkMute}/>
-            <span>Lihat Riwayat & Logbook Calendar</span>
-          </button>
-        </div>
       </div>
 
       {selectedHabitDay && (

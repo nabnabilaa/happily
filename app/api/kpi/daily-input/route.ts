@@ -61,11 +61,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "userId, kpiId, date, value required" }, { status: 400 });
     }
 
-    // Upsert (one entry per kpi per user per day)
+    // DELETE + INSERT agar tidak bisa double-submit (lebih aman dari ON DUPLICATE KEY jika constraint belum ada)
     await db.execute({
-      sql: `INSERT INTO kpi_daily_inputs (kpi_id, user_id, date, value, notes, proof_link)
-            VALUES (?, ?, ?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE value = VALUES(value), notes = VALUES(notes), proof_link = VALUES(proof_link)`,
+      sql: `DELETE FROM kpi_daily_inputs WHERE kpi_id = ? AND user_id = ? AND date = ?`,
+      args: [kpiId, userId, date]
+    });
+    await db.execute({
+      sql: `INSERT INTO kpi_daily_inputs (kpi_id, user_id, date, value, notes, proof_link) VALUES (?, ?, ?, ?, ?, ?)`,
       args: [kpiId, userId, date, value, notes || null, proofLink || null]
     });
 

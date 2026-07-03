@@ -15,18 +15,23 @@
 <body>
     <div id="app" class="app-container">
         <!-- Login Overlay -->
-        <div id="login-overlay" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center;">
-            <div style="font-size: 48px; margin-bottom: 16px;">🐝</div>
-            <h2 style="font-family: 'Nunito', sans-serif; margin: 0 0 8px; color: var(--ink);">Flowbuddy by Maxy</h2>
-            <p style="font-size: 14px; color: var(--ink-soft); margin-bottom: 24px;">Silakan login ke web dashboard terlebih dahulu untuk mensinkronisasi data Anda.</p>
-            <a href="http://localhost:3000/" target="_blank" style="padding: 12px 24px; background: var(--blue); color: white; text-decoration: none; border-radius: 12px; font-weight: bold; font-size: 14px; box-shadow: 0 4px 12px rgba(59,130,246,0.3);">Login ke Web App</a>
+        <div id="login-overlay" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-main); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; text-align: center;">
+            <div style="margin-bottom: 20px; position: relative;">
+                <img src="icons/icon128.png" width="72" height="72" style="filter: drop-shadow(0 6px 20px rgba(59,130,246,0.35)); display: block;" alt="Flowbuddy" />
+            </div>
+            <h2 style="font-family: 'Nunito', sans-serif; font-size: 18px; font-weight: 800; margin: 0 0 10px; color: var(--text-primary);">Flowbuddy by Maxy</h2>
+            <p style="font-size: 13px; color: var(--text-secondary); margin: 0 0 8px; line-height: 1.5;">Ekstensi ini terhubung dengan akun Flowbuddy kamu.</p>
+            <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 28px; line-height: 1.5;">Login ke web app terlebih dahulu untuk mengaktifkan semua fitur.</p>
+            <a href="https://flowbuddy.maxy.academy/" target="_blank" style="display: inline-block; padding: 12px 28px; background: var(--color-role); color: white; text-decoration: none; border-radius: var(--radius-md); font-weight: 800; font-size: 14px; box-shadow: 0 4px 16px rgba(59,130,246,0.35); letter-spacing: 0.3px;">Login ke Flowbuddy</a>
+            <p style="font-size: 11px; color: var(--text-muted); margin: 16px 0 0;">Setelah login, ekstensi akan otomatis aktif.</p>
         </div>
 
         <!-- ═══ Header ═══ -->
         <header class="app-header" id="main-header">
             <!-- Default Header -->
             <div class="header-left" id="header-default">
-                <div class="mascot-icon" id="header-mascot" style="width: 38px; height: 38px; margin-right: 12px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
+                <div class="mascot-icon hp-buddy-svg-wrap state-idle" id="fb-ext-svg-wrap" style="width: 38px; height: 38px; margin-right: 12px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
+                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="overflow: hidden;">
           <stop class="stop-1" offset="0%"/>
           <stop class="stop-2" offset="100%"/>
         </radialGradient>
@@ -599,7 +604,7 @@
             <!-- Header Actions -->
             <div class="header-actions" id="header-actions">
                 <span class="streak-badge" id="streak-badge" title="Daily streak">🔥 3</span>
-                <button class="icon-btn" id="theme-toggle" aria-label="Toggle tema gelap" title="Toggle tema gelap">🌙</button>
+                <!-- dark mode belum diaktifkan -->
                 <button class="icon-btn" id="btn-settings" aria-label="Pengaturan" title="Pengaturan">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5.5" r="1.5"/><circle cx="12" cy="18.5" r="1.5"/></svg>
                 </button>
@@ -608,7 +613,7 @@
 
         <!-- Settings Dropdown -->
         <div class="settings-dropdown" id="settings-dropdown">
-            <a href="https://happily-flowbuddy.vercel.app/" target="_blank" class="settings-dropdown-item" id="link-dashboard">
+            <a href="https://flowbuddy.maxy.academy/" target="_blank" class="settings-dropdown-item" id="link-dashboard">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 Buka Web Dashboard Lengkap
             </a>
@@ -689,11 +694,78 @@
             </div>
         </footer>
 
+        <!-- Task Completion Modal -->
+        <div id="task-completion-modal" class="fb-modal-overlay" style="display: none;">
+            <div class="fb-modal-content">
+                <div class="fb-modal-header">
+                    <div style="display:flex;align-items:center;gap:8px;font-size:16px;font-weight:900;color:var(--text-primary);">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="#10B981" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                        Selesaikan Task
+                    </div>
+                    <button class="fb-modal-close" id="btn-close-task-modal">&times;</button>
+                </div>
+                
+                <div class="fb-modal-body">
+                    <div class="task-summary-card" id="modal-task-summary">
+                        <!-- Filled via JS -->
+                    </div>
+
+                    <!-- Progress Section -->
+                    <div class="modal-section-title">📊 BERAPA % YANG SUDAH SELESAI HARI INI?</div>
+                    <div class="pct-btn-group" id="modal-pct-buttons">
+                        <button class="pct-btn" data-val="25">25%</button>
+                        <button class="pct-btn" data-val="50">50%</button>
+                        <button class="pct-btn" data-val="75">75%</button>
+                        <button class="pct-btn" data-val="100">100%</button>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
+                        <input type="number" id="modal-task-pct" placeholder="Angka lain, misal 70" class="task-form-input" style="flex:1;">
+                        <span style="font-weight:800; color:var(--text-muted);">%</span>
+                    </div>
+
+                    <div id="modal-pct-hint" class="pct-hint" style="display:none; margin-top:10px; padding:10px; background:#ECFDF5; color:#065F46; border:1px solid #A7F3D0; border-radius:8px; font-size:12px; font-weight:700; align-items:center; gap:6px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Task akan ditandai selesai penuh hari ini.
+                    </div>
+
+                    <!-- Date Section -->
+                    <div class="modal-section-title" style="margin-top:16px;">📅 TANGGAL PENYELESAIAN</div>
+                    <input type="date" id="modal-task-date" class="task-form-input" style="width:100%;">
+                    <div style="font-size:10px; color:var(--text-muted); margin-top:4px; font-weight:700;">UBAH JIKA TASK SELESAI DI HARI LAIN (DEFAULT: HARI INI)</div>
+
+                    <!-- Links Section -->
+                    <div class="modal-section-title" style="margin-top:16px;">📎 LINK HASIL KERJA (OPSIONAL)</div>
+                    <div style="font-size:11px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">Lampirkan link drive, dokumen, atau hasil kerja. Bisa lebih dari satu.</div>
+                    <div id="modal-links-container" style="display:flex; flex-direction:column; gap:8px;">
+                        <!-- inputs added dynamically -->
+                    </div>
+                    <button class="btn-secondary" id="btn-add-modal-link" style="width:100%; margin-top:8px; padding:10px; border-style:dashed;">+ Tambah Link Lagi</button>
+
+                    <!-- Project Toggle -->
+                    <div class="project-toggle-card" style="margin-top:16px;">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="modal-task-project">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <div style="flex:1;">
+                            <div style="font-size:13px; font-weight:800; color:var(--text-primary); margin-bottom:2px;">📁 Task Jangka Panjang / Project</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Centang jika task ini berlanjut ke hari berikutnya (akan muncul lagi besok).</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fb-modal-footer">
+                    <button class="btn-primary" id="btn-save-task-modal" style="width:100%; padding:12px; font-size:14px; font-weight:900;">Simpan Progres</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Toast Container -->
         <div class="toast" id="toast"></div>
     </div>
 
     <!-- â•â•â• Scripts â•â•â• -->
+    <script src="js/mascot-state.js"></script>
     <script src="js/utils/greeting.js"></script>
     <script src="js/utils/confetti.js"></script>
     <script src="js/rbac.js"></script>

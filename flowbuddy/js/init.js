@@ -1,6 +1,7 @@
 (function(){
-  var t = localStorage.getItem('flowbuddy-theme');
-  if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  // Dark mode disembunyikan — hapus data-theme lama jika ada
+  localStorage.removeItem('flowbuddy-theme');
+  document.documentElement.removeAttribute('data-theme');
   var r = localStorage.getItem('flowbuddy-role');
   if (r) document.documentElement.setAttribute('data-role', r);
 })();

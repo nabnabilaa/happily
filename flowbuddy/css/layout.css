@@ -11,7 +11,7 @@
 
 html {
   width: 380px;
-  height: 600px;
+  height: 580px;
 }
 
 @media (min-width: 381px) {
@@ -25,7 +25,7 @@ body {
   background-color: var(--bg-main);
   color: var(--text-primary);
   width: 380px;
-  height: 600px;
+  height: 580px;
   margin: 0;
   overflow: hidden;
   transition: background-color var(--transition-smooth), color var(--transition-smooth);
@@ -170,7 +170,7 @@ body {
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: var(--space-lg);
+  padding: var(--space-lg) var(--space-lg) 80px;
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--transition-smooth), transform var(--transition-smooth);

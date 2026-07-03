@@ -14,6 +14,8 @@ interface Props {
     isProject: boolean;
     metricValue?: number;
     notes?: string;
+    completionPercent: number;
+    completedAt?: string;
   }) => void;
 }
 
@@ -23,9 +25,14 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
   const [isProject, setIsProject] = useState(task?.is_project || false);
   const [metricValue, setMetricValue] = useState('');
   const [notes, setNotes] = useState('');
+  const [completionPercent, setCompletionPercent] = useState(100);
+  const [customPercent, setCustomPercent] = useState('');
+  const [completedAt, setCompletedAt] = useState(new Date().toISOString().split('T')[0]);
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
   const [myKpis, setMyKpis] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isPartial = completionPercent < 100;
 
   // Load KPI info for metric hint
   useEffect(() => {
@@ -77,9 +84,11 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
       const cleanLinks = proofLinks.filter(l => l.trim().length > 0);
       await onConfirm({
         proofLinks: cleanLinks,
-        isProject,
+        isProject: isProject || isPartial,
         metricValue: metricValue ? parseFloat(metricValue) : undefined,
         notes: notes || undefined,
+        completionPercent,
+        completedAt: !isPartial ? completedAt : undefined,
       });
     } finally {
       // In case the modal is not unmounted by parent immediately
@@ -94,20 +103,22 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
   };
 
   return (
-    <Modal onClose={onClose} title="✅ Selesaikan Task">
+    <Modal onClose={onClose} title={isPartial ? "📊 Catat Progress Hari Ini" : "✅ Selesaikan Task"}>
       <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', gap: 16 }}>
-        
+
         {/* Task being completed */}
-        <div style={{ 
-          padding: 14, borderRadius: 14, 
-          background: HP_TOKENS.sageWash, border: `1.5px solid ${HP_TOKENS.sage}30`,
+        <div style={{
+          padding: 14, borderRadius: 14,
+          background: isPartial ? HP_TOKENS.blueWash : HP_TOKENS.sageWash,
+          border: `1.5px solid ${isPartial ? HP_TOKENS.blue + '30' : HP_TOKENS.sage + '30'}`,
           display: 'flex', alignItems: 'center', gap: 12,
         }}>
-          <div style={{ 
-            width: 28, height: 28, borderRadius: 14, background: HP_TOKENS.sage,
+          <div style={{
+            width: 28, height: 28, borderRadius: 14,
+            background: isPartial ? HP_TOKENS.blue : HP_TOKENS.sage,
             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}>
-            <HPGlyph name="check" size={16} color="#F4F7F9" />
+            <HPGlyph name={isPartial ? 'activity' : 'check'} size={16} color="#F4F7F9" />
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ ...HP_TEXT.h, fontSize: 14 }}>{task?.title}</div>
@@ -118,6 +129,88 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
             )}
           </div>
         </div>
+
+        {/* % Selesai Hari Ini */}
+        <div>
+          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 8 }}>
+            📊 BERAPA % YANG SUDAH SELESAI HARI INI?
+          </div>
+
+          {/* Quick select */}
+          <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+            {[25, 50, 75, 100].map(pct => (
+              <button
+                key={pct}
+                onClick={() => { setCompletionPercent(pct); setCustomPercent(''); }}
+                style={{
+                  flex: 1, padding: '10px 4px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                  background: completionPercent === pct && !customPercent
+                    ? (pct === 100 ? HP_TOKENS.sage : HP_TOKENS.blue)
+                    : HP_TOKENS.lineSoft,
+                  color: completionPercent === pct && !customPercent ? '#fff' : HP_TOKENS.inkSoft,
+                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 13,
+                  transition: 'all 0.15s',
+                }}
+              >
+                {pct}%
+              </button>
+            ))}
+          </div>
+
+          {/* Custom input */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <input
+              type="number"
+              min="1" max="99"
+              value={customPercent}
+              onChange={e => {
+                const v = e.target.value;
+                setCustomPercent(v);
+                const n = parseInt(v);
+                if (!isNaN(n) && n >= 1 && n <= 99) setCompletionPercent(n);
+              }}
+              placeholder="Angka lain, misal 70"
+              style={{ ...inputStyle, flex: 1, height: 40, fontSize: 13 }}
+            />
+            <span style={{ fontFamily: HP_FONT, fontSize: 13, color: HP_TOKENS.inkMute, fontWeight: 700 }}>%</span>
+          </div>
+
+          {/* Info banner */}
+          <div style={{
+            marginTop: 10, padding: '10px 14px', borderRadius: 10,
+            background: isPartial ? HP_TOKENS.blueWash : HP_TOKENS.sageWash,
+            border: `1px solid ${isPartial ? HP_TOKENS.blue + '25' : HP_TOKENS.sage + '25'}`,
+            fontFamily: HP_FONT, fontSize: 12, fontWeight: 700,
+            color: isPartial ? HP_TOKENS.blue : HP_TOKENS.sage,
+          }}>
+            {isPartial
+              ? `🔄 Task akan muncul lagi besok — progress hari ini (${completionPercent}%) tersimpan.`
+              : '✅ Task akan ditandai selesai penuh hari ini.'}
+          </div>
+        </div>
+
+        {/* Tanggal penyelesaian — hanya muncul kalau 100% */}
+        {!isPartial && (
+          <div>
+            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 6 }}>
+              📅 TANGGAL PENYELESAIAN
+            </div>
+            <input
+              type="date"
+              value={completedAt}
+              max={new Date().toISOString().split('T')[0]}
+              onChange={e => setCompletedAt(e.target.value)}
+              style={{
+                width: '100%', padding: 12, borderRadius: 10,
+                border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 13,
+                outline: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink, boxSizing: 'border-box',
+              }}
+            />
+            <div style={{ ...HP_TEXT.tiny, fontSize: 10, color: HP_TOKENS.inkMute, marginTop: 4 }}>
+              Ubah jika task selesai di hari lain (default: hari ini)
+            </div>
+          </div>
+        )}
 
         {/* Proof Links — MULTIPLE */}
         <div>
@@ -190,25 +283,6 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
           )}
         </div>
 
-        {/* Metric Value — only for KPIs that need it */}
-        {task?.kpi_id && kpiInfo && kpiInfo.kpiType !== 'completion' && (
-          <div>
-            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 6 }}>
-              💰 INPUT NILAI {(kpiInfo.metricUnit || 'METRIK').toUpperCase()}
-            </div>
-            <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkSoft, fontSize: 11, marginBottom: 8 }}>
-              Contoh: nilai penjualan, jumlah konten, dll. Akan terakumulasi ke KPI bulanan.
-            </div>
-            <input 
-              type="number" 
-              value={metricValue}
-              onChange={(e) => setMetricValue(e.target.value)}
-              placeholder={`Masukkan angka (${kpiInfo.metricUnit || 'Rp'})`}
-              style={inputStyle}
-            />
-          </div>
-        )}
-
         {/* Project Toggle */}
         <div style={{ 
           display: 'flex', alignItems: 'center', gap: 12, 
@@ -241,6 +315,34 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
           </div>
         </div>
 
+        {/* Metric input — only for metric-type KPIs */}
+        {task?.kpi_id && kpiInfo?.kpiType === 'metric' && (
+          <div>
+            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 6 }}>
+              📊 CATAT PENCAPAIAN HARI INI
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input
+                type="number"
+                value={metricValue}
+                onChange={e => setMetricValue(e.target.value)}
+                placeholder={kpiInfo.metricPeriod === 'day'
+                  ? `Target/hari: ${kpiInfo.metricTarget ? Math.round(kpiInfo.metricTarget / 22) : '?'}`
+                  : `Target/bulan: ${kpiInfo.metricTarget ?? '?'}`}
+                style={{ ...inputStyle, flex: 1 }}
+              />
+              <span style={{ fontFamily: HP_FONT, fontSize: 13, color: HP_TOKENS.inkMute, fontWeight: 700, flexShrink: 0 }}>
+                {kpiInfo.metricUnit || 'unit'}
+              </span>
+            </div>
+            <div style={{ ...HP_TEXT.tiny, fontSize: 10, color: HP_TOKENS.inkMute, marginTop: 4 }}>
+              {kpiInfo.metricPeriod === 'day'
+                ? `Target bulanan: ${kpiInfo.metricTarget} ${kpiInfo.metricUnit} (~${kpiInfo.metricTarget ? Math.round(kpiInfo.metricTarget / 22) : '?'}/hari)`
+                : `Target bulanan: ${kpiInfo.metricTarget} ${kpiInfo.metricUnit}`}
+            </div>
+          </div>
+        )}
+
         {/* Optional notes */}
         <div>
           <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 6 }}>
@@ -266,25 +368,21 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
           >
             Batal
           </button>
-          <button 
+          <button
             disabled={isSubmitting}
             onClick={handleConfirm}
             style={{
               flex: 2, padding: 14, borderRadius: 12, border: 'none',
-              background: HP_TOKENS.sage, color: '#F4F7F9',
+              background: isPartial ? HP_TOKENS.blue : HP_TOKENS.sage, color: '#F4F7F9',
               fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: isSubmitting ? 'default' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               opacity: isSubmitting ? 0.7 : 1,
             }}
           >
-            {isSubmitting ? (
-               "Memproses..."
-            ) : (
-              <>
-                <HPGlyph name="check" size={16} color="#F4F7F9" />
-                Selesai ✓
-              </>
-            )}
+            {isSubmitting ? "Memproses..." : isPartial
+              ? <>📊 Simpan Progress {completionPercent}%</>
+              : <><HPGlyph name="check" size={16} color="#F4F7F9" /> Selesai</>
+            }
           </button>
         </div>
       </div>

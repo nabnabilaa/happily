@@ -1,14 +1,14 @@
 const FB_STATES = {
-  IDLE: { color: '#3B82F6', badge: 'Halo! 👋', svgState: 'idle', w1: '#D6E4FF', w2: '#3B82F6', wp: '#93C5FD', mouth: 'M 90 125 Q 100 130 110 125' },
-  HAPPY: { color: '#4A7C59', badge: 'Yeay! 🎉', svgState: 'senang', w1: '#E1EFE6', w2: '#4A7C59', wp: '#8FB39B', mouth: 'M 80 125 Q 100 155 120 125' },
-  SAD: { color: '#7A92A8', badge: 'Sedih nih… 😢', svgState: 'sedih', w1: '#E5E9F0', w2: '#7A92A8', wp: '#B8C6D6', mouth: 'M 85 135 Q 100 115 115 135' },
-  SLEEPY: { color: '#A89BC9', badge: 'Zzzz… 😴', svgState: 'ngantuk', w1: '#EAE6F4', w2: '#A89BC9', wp: '#D3CCEB', mouth: 'M 95 130 Q 100 132 105 130' },
-  FOCUS: { color: '#FFBE0B', badge: 'Fokus bareng! 🔥', svgState: 'fokus', w1: '#FFF8CC', w2: '#FFBE0B', wp: '#FFDCA8', mouth: 'M 92 128 L 108 128' },
-  EATING: { color: '#FF6B35', badge: 'Makan dulu! 🍱', svgState: 'makan', w1: '#FFE6D6', w2: '#FF6B35', wp: '#FFB899', mouth: 'M 85 125 Q 100 155 115 125' },
-  STRETCHING: { color: '#20C997', badge: 'Stretching~ 🤸', svgState: 'olahraga', w1: '#E6FCF5', w2: '#20C997', wp: '#96F2D7', mouth: 'M 85 125 Q 100 115 115 125' },
-  EXCITED: { color: '#F59F00', badge: 'Luar biasa!!! ✨', svgState: 'semangat', w1: '#FFF3BF', w2: '#F59F00', wp: '#FFD43B', mouth: 'M 75 120 Q 100 180 125 120' },
-  ANNOYED: { color: '#FF4444', badge: 'Jangan digangguin! 😤', svgState: 'kesal', w1: '#FFE5E5', w2: '#FF4444', wp: '#FFAAAA', mouth: 'M 85 135 Q 100 115 115 135' },
-  WAITING: { color: '#0CA678', badge: 'Menunggu… ⏳', svgState: 'menunggu', w1: '#E6FCF5', w2: '#0CA678', wp: '#63E6BE', mouth: 'M 95 125 A 5 5 0 1 1 105 125 A 5 5 0 1 1 95 125' },
+  IDLE:      { color: '#3B82F6', badge: 'Halo! 👋',             svgState: 'idle',      w1: '#D6E4FF', w2: '#3B82F6', wp: '#93C5FD', mouth: 'M 90 125 Q 100 130 110 125' },
+  HAPPY:     { color: '#F06595', badge: 'Yeay! 🎉',             svgState: 'senang',    w1: '#FEEAF1', w2: '#F06595', wp: '#FAA2C1', mouth: 'M 80 125 Q 100 155 120 125' },
+  SAD:       { color: '#7A92A8', badge: 'Sedih nih… 😢',         svgState: 'sedih',     w1: '#E5E9F0', w2: '#7A92A8', wp: '#B8C6D6', mouth: 'M 85 135 Q 100 115 115 135' },
+  SLEEPY:    { color: '#A89BC9', badge: 'Zzzz… 😴',             svgState: 'ngantuk',   w1: '#EAE6F4', w2: '#A89BC9', wp: '#D3CCEB', mouth: 'M 95 130 Q 100 132 105 130' },
+  FOCUS:     { color: '#FFBE0B', badge: 'Fokus bareng! 🔥',      svgState: 'fokus',     w1: '#FFF8CC', w2: '#FFBE0B', wp: '#FFDCA8', mouth: 'M 92 128 L 108 128' },
+  EATING:    { color: '#FF6B35', badge: 'Makan dulu! 🍱',        svgState: 'makan',     w1: '#FFE6D6', w2: '#FF6B35', wp: '#FFB899', mouth: 'M 85 125 Q 100 155 115 125' },
+  STRETCHING:{ color: '#20C997', badge: 'Stretching~ 🤸',        svgState: 'olahraga',  w1: '#E6FCF5', w2: '#20C997', wp: '#96F2D7', mouth: 'M 85 125 Q 100 115 115 125' },
+  EXCITED:   { color: '#F59F00', badge: 'Luar biasa!!! ✨',       svgState: 'semangat',  w1: '#FFF3BF', w2: '#F59F00', wp: '#FFD43B', mouth: 'M 80 130 Q 100 160 120 130' },
+  ANNOYED:   { color: '#FF4444', badge: 'Jangan digangguin! 😤', svgState: 'kesal',     w1: '#FFE5E5', w2: '#FF4444', wp: '#FFAAAA', mouth: 'M 85 135 Q 100 115 115 135' },
+  WAITING:   { color: '#15AABF', badge: 'Menunggu… ⏳',           svgState: 'menunggu',  w1: '#E3FAFC', w2: '#15AABF', wp: '#66D9E8', mouth: 'M 95 125 A 5 5 0 1 1 105 125 A 5 5 0 1 1 95 125' },
 };
 
 window.fbCtx = {
@@ -19,6 +19,8 @@ window.fbCtx = {
   focusTaskId: null, focusProgress: 0, focusIntention: "",
   habits: [],
   reflectionDoneDate: "",
+  shownNotifIds: [],
+  pendingReadNotifIds: [],
 };
 
 window.fbCurrentState = 'IDLE';
@@ -72,7 +74,9 @@ window.updateBuddySVG = function(s) {
   const svgWrap = document.getElementById('fb-ext-svg-wrap');
   if (!svgWrap) return;
 
-  svgWrap.className = `hp-buddy-svg-wrap state-${cfg.svgState}`;
+  // Remove old state-* class and add the new one, preserving other classes
+  svgWrap.classList.remove(...Array.from(svgWrap.classList).filter(c => c.startsWith('state-')));
+  svgWrap.classList.add('hp-buddy-svg-wrap', `state-${cfg.svgState}`);
   svgWrap.style.setProperty('--w1', cfg.w1);
   svgWrap.style.setProperty('--w2', cfg.w2);
   svgWrap.style.setProperty('--wp', cfg.wp);

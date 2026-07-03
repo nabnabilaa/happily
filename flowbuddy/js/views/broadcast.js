@@ -144,7 +144,7 @@ const BroadcastView = {
         // Send to real API
         if (typeof chrome !== 'undefined' && chrome.storage) {
           chrome.storage.local.get(['flowbee_base_url'], async (res) => {
-            const baseUrl = res.flowbee_base_url || 'http://localhost:3000';
+            const baseUrl = res.flowbee_base_url || 'https://flowbuddy.maxy.academy';
             const url = baseUrl.replace(/\/$/, '') + '/api/announcements';
             try {
               const fetchCall = window.fbFetchAPI ? window.fbFetchAPI : fetch;

@@ -111,9 +111,12 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
   const loginInProgressRef = useRef(false); // blocks sync during user transitions
   const activeFetchDataRef = useRef<Promise<void> | null>(null);
   const activeFetchDashboardsRef = useRef<Promise<void> | null>(null);
+  const localMutationTimeRef = useRef<number>(0);
+  const isSyncingDbRef = useRef<boolean>(false);
 
   // 3. CALLBACKS
   const updateState = useCallback((update: Partial<HPState> | ((prev: HPState) => HPState)) => {
+    localMutationTimeRef.current = Date.now();
     setState((prev) => {
       if (!prev) return null;
       if (typeof update === "function") return update(prev);
@@ -203,6 +206,11 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
           });
           const sanitizedState = { ...data.state, habits: sanitizedHabits };
 
+          if (Date.now() - localMutationTimeRef.current < 5000 || syncTimerRef.current || isSyncingDbRef.current) {
+            console.warn("Skipping fetchData apply to avoid overwriting recent local mutations or active sync");
+            return;
+          }
+
           setState(prev => {
             // Preserve dashboard data that is fetched separately and not included in synced state
             const preserved: any = {};
@@ -283,6 +291,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback((userData: any) => {
     // Block auto-sync during the transition to prevent stale data overwriting the new user's DB
     loginInProgressRef.current = true;
+    setLoading(true);
     if (syncTimerRef.current) clearTimeout(syncTimerRef.current); // cancel any pending sync from old user
     skipNextSyncRef.current = true;
     setUser(userData);
@@ -554,7 +563,11 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
           });
 
           pusher.connection.bind('error', (err: any) => {
-            console.error("[Realtime] Pusher connection error:", err);
+            // Skip empty close-event errors (network drop, no credentials, dev environment)
+            const hasDetail = err && (err.type || err.error || err.status || err.message);
+            if (hasDetail) {
+              console.warn("[Realtime] Pusher connection error:", err);
+            }
             // 4004 is Pusher's error code for over quota / limit reached
             if (err?.error?.code === 4004 || err?.status === 403) {
               console.warn("[Realtime] Pusher limit reached or Auth error. Switching to SSE.");
@@ -744,6 +757,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
       // Debounce: wait 1500ms after last state change before syncing (longer to avoid rapid login transitions)
       if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
       syncTimerRef.current = setTimeout(async () => {
+        syncTimerRef.current = null;
         // Double-check: still not in a login transition when the timer fires
         if (loginInProgressRef.current) return;
 
@@ -756,6 +770,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         }
 
         try {
+          isSyncingDbRef.current = true;
           setSyncing(true);
           const finalSyncState: any = { ...data.state };
           delete finalSyncState.hrData;
@@ -792,6 +807,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
             console.error("Sync error:", e);
           }
         } finally {
+          isSyncingDbRef.current = false;
           setSyncing(false);
         }
       }, 1500);

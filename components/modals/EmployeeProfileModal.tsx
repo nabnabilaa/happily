@@ -154,7 +154,7 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
 
   return (
     <Modal onClose={onClose} title="">
-      <div style={{ marginTop: -8 }}>
+      <div style={{ marginTop: 24 }}>
         {/* Header Card */}
         <div style={{
           padding: '20px', borderRadius: 20, marginBottom: 16,

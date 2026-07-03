@@ -9,8 +9,9 @@
 
 :root {
   /* ── Netral / Kanvas (60%) ── */
-  --bg-main: #FFFFFF;
+  --bg-main: #F2F3F5;
   --bg-card: #FFFFFF;
+  --bg-body: #FFFFFF;
   --bg-card-hover: #F0F9FF;
   --text-primary: #1E293B;
   --text-secondary: #475569;
@@ -87,6 +88,22 @@
   --font-size-lg: 16px;
   --font-size-xl: 20px;
   --font-size-2xl: 26px;
+
+  /* ── Legacy variable aliases (used by view files) ── */
+  --dk: var(--text-primary);
+  --gray: var(--text-muted);
+  --c1: var(--color-role);
+  --c1p: var(--color-role-soft);
+  --border: var(--border-light);
+  --bg: var(--bg-main);
+  --ink: var(--text-primary);
+  --ink-soft: var(--text-secondary);
+  --blue: var(--color-role);
+
+  /* ── Mascot gradient defaults (IDLE state) ── */
+  --w1: #D6E4FF;
+  --w2: #3B82F6;
+  --wp: #93C5FD;
 
   /* ── Transitions ── */
   --transition-fast: 0.15s ease;

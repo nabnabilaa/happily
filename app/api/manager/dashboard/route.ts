@@ -8,6 +8,10 @@ export async function GET(request: Request) {
 
     if (!userId) return NextResponse.json({ error: 'ManagerId missing' }, { status: 400 });
 
+    // Get Manager Department
+    const deptRes = await db.execute({ sql: "SELECT department FROM users WHERE id = ?", args: [userId] });
+    const managerDept = (deptRes.rows[0] as any)?.department || "";
+
     // 1. Fetch Team Members (Direct Reports)
     const membersRes = await db.execute({
       sql: `SELECT u.*, 
@@ -16,8 +20,8 @@ export async function GET(request: Request) {
             (SELECT COUNT(*) FROM daily_priorities WHERE user_id = u.id AND DATE(created_at) = CURDATE()) as tasks_total,
             (SELECT COUNT(*) FROM daily_priorities WHERE user_id = u.id AND is_done = 1) as all_tasks_done,
             (SELECT COUNT(*) FROM daily_priorities WHERE user_id = u.id) as all_tasks_total
-            FROM users u WHERE u.manager_id = ?`,
-      args: [userId]
+            FROM users u WHERE u.department = ? AND u.id != ?`,
+      args: [managerDept, userId]
     });
 
     const members = membersRes.rows.map(m => ({
@@ -54,13 +58,29 @@ export async function GET(request: Request) {
         userName: r.user_name,
         title: r.title,
         goalId: r.kpi_id || r.goal_id,
+        weekly_target_id: r.weekly_target_id,
+        weeklyTargetId: r.weekly_target_id,
         done: !!r.is_done,
         verified: !!r.is_verified,
         status: r.status,
         energy: r.energy_level,
         est: r.est_time,
         tone: r.tone,
-        createdAt: r.created_at
+        createdAt: r.created_at,
+        completedAt: r.completed_at || null,
+        partial_progress: Number(r.partial_progress) || 0,
+        partialProgress: Number(r.partial_progress) || 0,
+        description: r.description || null,
+        notes: r.proof_notes || null,
+        metricValue: r.metric_value ? Number(r.metric_value) : null,
+        proofLinks: (() => {
+          try {
+            const v = JSON.parse(r.proof_link as string);
+            return Array.isArray(v) ? v : (r.proof_link ? [r.proof_link] : []);
+          } catch {
+            return r.proof_link ? [r.proof_link] : [];
+          }
+        })(),
       }));
     }
 

@@ -8,6 +8,7 @@ import HPCard from "@/components/ui/HPCard";
 import HPAvatar from "@/components/ui/HPAvatar";
 import ScreenHeader from "@/components/ui/ScreenHeader";
 import SectionHeader from "@/components/home/SectionHeader";
+import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
 
 interface CalEvent {
   id: string;
@@ -85,7 +86,7 @@ const getGoogleCalendarUrl = (ev: CalEvent) => {
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${dates}&details=${details}&location=${location}${recurParam}${addParam}`;
 };
 
-export default function CalendarScreen({ openModal }: Props) {
+function CalendarScreenInner({ openModal }: Props) {
   const { user, state, notify } = useHP();
   const [events, setEvents] = useState<CalEvent[]>([]);
   const [syncEvent, setSyncEvent] = useState<CalEvent | null>(null);
@@ -97,6 +98,20 @@ export default function CalendarScreen({ openModal }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [allDivisions, setAllDivisions] = useState<string[]>([]);
   const [eventToDelete, setEventToDelete] = useState<string | null>(null);
+
+  // Google Calendar Integration
+  const [gCalToken, setGCalToken] = useState<string | null>(null);
+  
+  const loginToGoogleCalendar = useGoogleLogin({
+    scope: 'https://www.googleapis.com/auth/calendar.events',
+    onSuccess: (tokenResponse) => {
+      setGCalToken(tokenResponse.access_token);
+      notify("Berhasil", "G-Calendar berhasil dihubungkan!", "success");
+    },
+    onError: () => {
+      notify("Gagal", "Tidak dapat menghubungkan G-Calendar.", "error");
+    }
+  });
 
   // Form state
   const [title, setTitle] = useState('');
@@ -272,9 +287,37 @@ export default function CalendarScreen({ openModal }: Props) {
           return u ? { id: u.id, name: u.name, email: u.email } : null;
         }).filter(Boolean) as any[]
       };
-      setSyncEvent(tempEv);
 
-      notify('Agenda Dibuat', `"${title}" berhasil ditambahkan ke Flowbee.`, 'success');
+      if (gCalToken) {
+        // Auto-sync
+        try {
+          const gcalEvent = {
+            summary: title,
+            description: desc,
+            location: location || undefined,
+            start: { dateTime: startDT.toISOString() },
+            end: { dateTime: endDT.toISOString() },
+            attendees: tempEv.attendees?.map(a => ({ email: a.email }))
+          };
+          
+          await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${gCalToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(gcalEvent)
+          });
+          notify('Agenda Dibuat & Tersinkronisasi', `"${title}" berhasil ditambahkan ke Flowbee dan G-Calendar.`, 'success');
+        } catch (e) {
+          console.error("GCal Sync Error", e);
+          notify('Agenda Dibuat', `Gagal auto-sync ke G-Calendar.`, 'error');
+          setSyncEvent(tempEv);
+        }
+      } else {
+        setSyncEvent(tempEv);
+        notify('Agenda Dibuat', `"${title}" berhasil ditambahkan ke Flowbee.`, 'success');
+      }
       setShowForm(false);
       resetForm();
       fetchData();
@@ -361,7 +404,23 @@ export default function CalendarScreen({ openModal }: Props) {
 
   return (
     <div style={{ padding: '0 16px 120px', fontFamily: HP_FONT }}>
-      <ScreenHeader title="📅 Kalender Kerja" subtitle="Jadwal, rapat, deadline — semua di satu tempat" />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <ScreenHeader title="📅 Kalender Kerja" subtitle="Jadwal, rapat, deadline — semua di satu tempat" />
+        <button 
+          onClick={() => loginToGoogleCalendar()}
+          className="hp-tap"
+          style={{
+            padding: '8px 12px', borderRadius: 12, border: 'none',
+            background: gCalToken ? HP_TOKENS.sageWash : HP_TOKENS.blueWash, 
+            color: gCalToken ? HP_TOKENS.sage : HP_TOKENS.blue,
+            fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap'
+          }}
+        >
+          <HPGlyph name="calendar" size={16} color={gCalToken ? HP_TOKENS.sage : HP_TOKENS.blue} />
+          {gCalToken ? 'Tersambung' : 'Hubungkan'}
+        </button>
+      </div>
 
       {/* Calendar Navigation */}
       <HPCard padding={0} style={{ marginBottom: 16, overflow: 'hidden' }}>
@@ -469,8 +528,25 @@ export default function CalendarScreen({ openModal }: Props) {
 
       {/* Create Event Form */}
       {showForm && (
-        <HPCard padding={16} style={{ marginBottom: 16, background: HP_TOKENS.blueWash, border: `1.5px solid ${HP_TOKENS.blue}30` }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.5)', zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 24, backdropFilter: 'blur(4px)'
+        }} onClick={() => { setShowForm(false); resetForm(); }}>
+          <div style={{
+            background: '#fff', borderRadius: 24, padding: 24,
+            width: '100%', maxWidth: 500, maxHeight: '85vh', overflowY: 'auto',
+            boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
+            animation: 'hpPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div style={{ ...HP_TEXT.h, fontSize: 18 }}>Buat Agenda</div>
+              <button onClick={() => { setShowForm(false); resetForm(); }} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}>
+                <HPGlyph name="cross" size={16} color={HP_TOKENS.inkMute} />
+              </button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <input type="text" placeholder="Judul agenda (mis: Rapat Sprint Review)" value={title} onChange={e => setTitle(e.target.value)} style={inputStyle} />
             <input type="text" placeholder="Lokasi / Link meeting (opsional)" value={location} onChange={e => setLocation(e.target.value)} style={inputStyle} />
             <textarea placeholder="Catatan tambahan (opsional)" value={desc} onChange={e => setDesc(e.target.value)} style={{ ...inputStyle, minHeight: 60, resize: 'none' }} />
@@ -721,7 +797,8 @@ export default function CalendarScreen({ openModal }: Props) {
               </button>
             </div>
           </div>
-        </HPCard>
+        </div>
+      </div>
       )}
 
       {/* Events List */}
@@ -938,5 +1015,19 @@ export default function CalendarScreen({ openModal }: Props) {
         </div>
       )}
     </div>
+  );
+}
+
+export default function CalendarScreen(props: Props) {
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+  
+  if (!clientId) {
+    return <CalendarScreenInner {...props} />;
+  }
+
+  return (
+    <GoogleOAuthProvider clientId={clientId}>
+      <CalendarScreenInner {...props} />
+    </GoogleOAuthProvider>
   );
 }

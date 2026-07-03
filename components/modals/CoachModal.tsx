@@ -37,10 +37,11 @@ function isOffTopic(text: string): boolean {
 }
 
 export default function CoachModal({ onClose }: CoachModalProps) {
-  const { state, user } = useHP();
+  const { state, user, updateState } = useHP();
   const [messages, setMessages] = useState<Array<{ from: 'ai' | 'user'; text: string }>>([]);
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
+  const [loggedToday, setLoggedToday] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -97,6 +98,15 @@ export default function CoachModal({ onClose }: CoachModalProps) {
     const newUserMsg = { from: 'user' as const, text: msg };
     setMessages(m => [...m, newUserMsg]);
     setInput('');
+
+    // Catat ke logbook agar dm_coach bisa diklaim (hanya sekali per hari)
+    if (!loggedToday) {
+      setLoggedToday(true);
+      updateState((s: any) => ({
+        ...s,
+        logbook: [...(s.logbook || []), { type: 'ai_coach', created_at: new Date().toISOString(), title: 'Coach AI Session' }],
+      }));
+    }
 
     // ── Client-side guardrail: off-topic check (zero tokens!) ──
     if (isOffTopic(msg)) {

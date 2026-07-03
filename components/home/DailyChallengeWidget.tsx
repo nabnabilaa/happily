@@ -11,30 +11,30 @@ import SectionHeader from "@/components/home/SectionHeader";
 const getTodayStr = () => new Date().toISOString().slice(0, 10);
 
 const DAILY_MISSIONS = [
-  { id: 'dm_mood', title: 'Cek Ombak Pagi', desc: 'Isi Mood Check-in untuk memulai hari.', emoji: '🌤️', color: '#38bdf8', points: 10, actionLabel: 'Cek Mood', action: (openModal: any) => openModal('checkin'), check: (s: any) => (s.logbook || []).some((l: any) => l.type === 'mood' && (l.created_at || '').startsWith(getTodayStr())) || (!!s.mood && s.mood !== 'calm') },
+  { id: 'dm_mood', title: 'Cek Ombak Pagi', desc: 'Isi Mood Check-in untuk memulai hari.', emoji: '🌤️', color: '#38bdf8', points: 10, actionLabel: 'Cek Mood', action: (openModal: any) => openModal('checkin'), check: (s: any) => !!s.lastMoodCheckIn && s.lastMoodCheckIn.startsWith(getTodayStr()) },
   { id: 'dm_focus', title: 'Fokus 15 Menit', desc: 'Lakukan sesi Pomodoro untuk pemanasan kerja.', emoji: '🍅', color: '#fb7185', points: 20, actionLabel: 'Mulai Fokus', action: (openModal: any) => openModal('focus'), check: (s: any) => (s.logbook || []).some((l: any) => l.type === 'focus_session' && (l.created_at || '').startsWith(getTodayStr())) },
-  { id: 'dm_task', title: 'Pecah Telur', desc: 'Pilih 1 tugas prioritas dan selesaikan hari ini.', emoji: '🎯', color: '#a78bfa', points: 20, actionLabel: 'Fokus Task', action: () => document.getElementById('task-harian-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), check: (s: any) => (s.priorities || []).filter((p: any) => p.done).length >= 1 },
+  { id: 'dm_task', title: 'Pecah Telur', desc: 'Pilih 1 tugas prioritas dan selesaikan hari ini.', emoji: '🎯', color: '#a78bfa', points: 20, actionLabel: 'Fokus Task', action: () => document.getElementById('daily-training-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), check: (s: any) => (s.priorities || []).filter((p: any) => p.done).length >= 1 },
   { id: 'dm_plan', title: 'Rencana Jitu', desc: 'Tambahkan minimal 3 tugas ke daftar prioritasmu.', emoji: '📝', color: '#34d399', points: 10, actionLabel: 'Susun Task', action: (openModal: any) => openModal('manage_priorities'), check: (s: any) => (s.priorities || []).length >= 3 },
   { id: 'dm_kudos', title: 'Tebar Kebaikan', desc: 'Kirim apresiasi atau kudos ke rekan kerjamu.', emoji: '🌟', color: '#fbbf24', points: 15, actionLabel: 'Kirim Kudos', action: (openModal: any) => openModal('appreciate'), check: (s: any) => (s.logbook || []).some((l: any) => l.type === 'kudos_sent' && (l.created_at || '').startsWith(getTodayStr())) },
   { id: 'dm_coach', title: 'Sapa Sang Pelatih', desc: 'Buka Coach AI dan minta 1 saran hari ini.', emoji: '🤖', color: '#818cf8', points: 10, actionLabel: 'Tanya Coach', action: (openModal: any) => openModal('coach'), check: (s: any) => (s.logbook || []).some((l: any) => l.type === 'ai_coach' && (l.created_at || '').startsWith(getTodayStr())) },
   { id: 'dm_pause', title: 'Jeda Sejenak', desc: 'Lakukan sesi pernapasan singkat (1 menit).', emoji: '🧘‍♂️', color: '#2dd4bf', points: 15, actionLabel: 'Mulai Napas', action: (openModal: any) => openModal('pause'), check: (s: any) => (s.logbook || []).some((l: any) => l.type === 'pause_session' && (l.created_at || '').startsWith(getTodayStr())) },
-  { 
-    id: 'dm_training', 
-    title: 'Daily Training', 
-    desc: 'Tandai selesai minimal 1 latihan/habit hari ini.', 
-    emoji: '💪', color: '#f87171', points: 20, 
-    actionLabel: (s: any) => (s.habits && s.habits.length > 0) ? 'Buka Latihan' : 'Buat Latihan', 
-    action: (openModal: any, s: any) => { 
+  {
+    id: 'dm_training',
+    title: 'Daily Training',
+    desc: 'Tandai selesai minimal 1 latihan/habit hari ini.',
+    emoji: '💪', color: '#f87171', points: 20,
+    actionLabel: (s: any) => (s.habits && s.habits.length > 0) ? 'Buka Latihan' : 'Buat Latihan',
+    action: (openModal: any, s: any) => {
       if (s.habits && s.habits.length > 0) {
         document.getElementById('daily-training-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       } else {
         openModal('manage_habits');
       }
-    }, 
-    check: (s: any) => (s.habits || []).some((h: any) => h.done) 
+    },
+    check: (s: any) => (s.habits || []).some((h: any) => h.done)
   },
-  { id: 'dm_midday', title: 'Cek Progres Siang', desc: 'Isi Mid-day Check-in di jam 11.30 - 13.30 sebelum terlewat.', emoji: '☀️', color: '#facc15', points: 15, actionLabel: 'Cek Progres', action: (openModal: any) => openModal('work_checkin'), check: (s: any) => (s.logbook || []).some((l: any) => l.type === 'progress_update' && (l.created_at || '').startsWith(getTodayStr())) },
-  { id: 'dm_chat', title: 'Sapa Tim', desc: 'Buka fitur Chat dan lihat pembaruan dari tim.', emoji: '💬', color: '#60a5fa', points: 10, actionLabel: 'Buka Chat', action: () => window.dispatchEvent(new CustomEvent('set_tab', { detail: 'chat' })), check: (s: any) => false },
+  { id: 'dm_midday', title: 'Cek Progres Siang', desc: 'Isi Mid-day Check-in di jam 11.30 - 13.30 sebelum terlewat.', emoji: '☀️', color: '#facc15', points: 15, actionLabel: 'Cek Progres', action: (openModal: any) => openModal('work_checkin'), check: (s: any) => (s.logbook || []).some((l: any) => l.type === 'realization_check' && (l.created_at || '').startsWith(getTodayStr())) },
+  { id: 'dm_chat', title: 'Sapa Tim', desc: 'Buka fitur Chat dan lihat pembaruan dari tim.', emoji: '💬', color: '#60a5fa', points: 10, actionLabel: 'Buka Chat', action: (_openModal: any, _s: any, onActioned?: () => void) => { window.dispatchEvent(new CustomEvent('set_tab', { detail: 'chat' })); onActioned?.(); }, check: (s: any) => false },
 ];
 
 // Seeded random for daily rotation
@@ -52,6 +52,7 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
 export default function DailyChallengeWidget({ openModal, onClaimReward }: { openModal: any, onClaimReward?: (points: number, title: string) => void }) {
   const { state, user, awardXP, notify } = useHP();
   const [claimedIds, setClaimedIds] = useState<Set<string>>(new Set());
+  const [actionedIds, setActionedIds] = useState<Set<string>>(new Set());
   const [hoveredMission, setHoveredMission] = useState<string | null>(null);
 
   // Load claimed challenges from localStorage
@@ -173,35 +174,35 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
       }}>
         {/* Top Header: Progress Bar & Chests */}
         <div style={{ 
-          padding: '22px 26px', 
+          padding: '16px 20px', 
           background: '#3B82F6', // Corporate blue
           color: '#fff',
           position: 'relative',
           overflow: 'hidden'
         }}>
           {/* Decos from prototype */}
-          <div style={{ position: 'absolute', width: 200, height: 200, background: 'rgba(255,255,255,0.07)', borderRadius: '50%', right: -50, top: -70, pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', width: 120, height: 120, background: 'rgba(255,255,255,0.05)', borderRadius: '50%', right: 90, bottom: -60, pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', width: 70, height: 70, background: 'rgba(255,255,255,0.06)', borderRadius: '50%', left: '55%', bottom: 8, pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', width: 150, height: 150, background: 'rgba(255,255,255,0.07)', borderRadius: '50%', right: -30, top: -50, pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', width: 80, height: 80, background: 'rgba(255,255,255,0.05)', borderRadius: '50%', right: 70, bottom: -40, pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', width: 50, height: 50, background: 'rgba(255,255,255,0.06)', borderRadius: '50%', left: '55%', bottom: 8, pointerEvents: 'none' }} />
 
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 18, position: 'relative', zIndex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, position: 'relative', zIndex: 1 }}>
             <div>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)', marginBottom: 5 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)', marginBottom: 2 }}>
                 Daily Quests
               </div>
-              <div style={{ fontSize: 19, fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>
-                Selesaikan misi,<br/>kumpulkan poin!
+              <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>
+                Selesaikan misi, kumpulkan poin!
               </div>
             </div>
             {/* XP Bubble */}
             <div style={{ 
-              background: 'rgba(0,0,0,0.18)', borderRadius: 14, padding: '10px 16px', 
-              textAlign: 'center', minWidth: 72, flexShrink: 0 
+              background: 'rgba(0,0,0,0.18)', borderRadius: 12, padding: '8px 12px', 
+              textAlign: 'center', minWidth: 60, flexShrink: 0 
             }}>
-              <div style={{ fontSize: 28, fontWeight: 800, color: '#FDE68A', lineHeight: 1 }}>
+              <div style={{ fontSize: 20, fontWeight: 800, color: '#FDE68A', lineHeight: 1 }}>
                 {currentXP}
               </div>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.65)', marginTop: 2 }}>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)', marginTop: 2 }}>
                 / {maxXP} XP
               </div>
             </div>
@@ -211,7 +212,7 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
           <div style={{ position: 'relative', zIndex: 1, paddingBottom: 16 }}>
             {/* Track */}
             <div style={{ 
-              height: 14, background: 'rgba(0,0,0,0.22)', borderRadius: 99, 
+              height: 10, background: 'rgba(0,0,0,0.22)', borderRadius: 99, 
               position: 'relative', marginBottom: 12 
             }}>
               {/* Fill */}
@@ -225,8 +226,8 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
               }}>
                 <div style={{
                   position: 'absolute', right: -6, top: '50%', transform: 'translateY(-50%)',
-                  width: 20, height: 20, borderRadius: '50%', background: '#FDE68A',
-                  border: '3px solid #3B82F6', boxShadow: '0 0 0 3px rgba(59,130,246,0.35)'
+                  width: 16, height: 16, borderRadius: '50%', background: '#FDE68A',
+                  border: '2px solid #3B82F6', boxShadow: '0 0 0 3px rgba(59,130,246,0.35)'
                 }} />
               </div>
 
@@ -239,11 +240,11 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
                     <div key={`dot-${idx}`} style={{
                       position: 'absolute', top: '50%', left: `${progressPct}%`,
                       transform: isAchieved ? 'translate(-50%, -50%) scale(1.15)' : 'translate(-50%, -50%)',
-                      width: 34, height: 34, borderRadius: '50%',
+                      width: 28, height: 28, borderRadius: '50%',
                       background: isAchieved ? '#fff' : 'rgba(255,255,255,0.2)',
-                      border: `2.5px solid ${isAchieved ? '#fff' : 'rgba(255,255,255,0.35)'}`,
+                      border: `2px solid ${isAchieved ? '#fff' : 'rgba(255,255,255,0.35)'}`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 16, transition: 'all 0.4s', zIndex: 2,
+                      fontSize: 14, transition: 'all 0.4s', zIndex: 2,
                       boxShadow: isAchieved ? '0 4px 12px rgba(0,0,0,0.15)' : '0 2px 4px rgba(0,0,0,0.05)'
                     }}>
                       {ms.icon}
@@ -283,15 +284,9 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
             // But checking logic is provided for most.
             const isCompleted = c.check(state);
             const isClaimed = claimedIds.has(c.id);
-            // Treat non-logbook-backed view actions as automatically completed once claimed, 
-            // but we can't detect "viewing" easily, so users just click Action, and if it's a view-only task, 
-            // we could either give them points immediately or let them claim it. Let's let them claim it if they want.
-            // Actually, if check() always returns false, they can never claim it.
-            // For view-only tasks, we'll assume it's completed if they click the action button and come back.
-            // Since we can't track clicks easily, we will change their check to return `true` if they are in the array of "freebies".
-            const isFreebie = ['dm_survey', 'dm_rewards', 'dm_profile', 'dm_guide', 'dm_mascot'].includes(c.id);
-            // For freebies, they are "completed" by default so they can just claim them.
-            const effectivelyCompleted = isCompleted || isFreebie;
+            // dm_chat and similar view-only missions become claimable after user clicks action button
+            const isActioned = actionedIds.has(c.id);
+            const effectivelyCompleted = isCompleted || isActioned;
 
             const canClaim = effectivelyCompleted && !isClaimed;
             const isHovered = hoveredMission === c.id;
@@ -386,7 +381,10 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
                       </div>
                     ) : (
                       <button
-                        onClick={() => openModal && c.action(openModal, state)}
+                        onClick={() => {
+                          const onActioned = () => setActionedIds(prev => new Set([...prev, c.id]));
+                          openModal && c.action(openModal, state, onActioned);
+                        }}
                         className="hp-tap"
                         style={{
                           padding: '10px 16px', borderRadius: 100, 

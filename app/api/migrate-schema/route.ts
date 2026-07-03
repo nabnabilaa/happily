@@ -472,6 +472,7 @@ export async function POST() {
     { desc: "users.focus_intention", sql: "ALTER TABLE users ADD COLUMN focus_intention TEXT DEFAULT NULL" },
     { desc: "users.mood_key", sql: "ALTER TABLE users ADD COLUMN mood_key VARCHAR(50) DEFAULT NULL" },
     { desc: "users.division_id", sql: "ALTER TABLE users ADD COLUMN division_id INT DEFAULT NULL" },
+    { desc: "users.department_status", sql: "ALTER TABLE users ADD COLUMN department_status VARCHAR(20) DEFAULT NULL" },
 
     // ── Divisions table ──
     { desc: "divisions.manager_id", sql: "ALTER TABLE divisions ADD COLUMN manager_id VARCHAR(100) DEFAULT NULL" },
@@ -530,6 +531,54 @@ export async function POST() {
     {
       desc: "task_kpi_links.weekly_target_id",
       sql: `ALTER TABLE task_kpi_links ADD COLUMN weekly_target_id VARCHAR(100) DEFAULT NULL`
+    },
+    // ── KPI Review columns ──
+    {
+      desc: "monthly_kpis.review_status",
+      sql: `ALTER TABLE monthly_kpis ADD COLUMN review_status VARCHAR(20) DEFAULT NULL`
+    },
+    {
+      desc: "monthly_kpis.review_note",
+      sql: `ALTER TABLE monthly_kpis ADD COLUMN review_note TEXT DEFAULT NULL`
+    },
+    {
+      desc: "monthly_kpis.penalty_pct",
+      sql: `ALTER TABLE monthly_kpis ADD COLUMN penalty_pct INT DEFAULT 0`
+    },
+    {
+      desc: "monthly_kpis.original_metric_current",
+      sql: `ALTER TABLE monthly_kpis ADD COLUMN original_metric_current DOUBLE DEFAULT NULL`
+    },
+    {
+      desc: "monthly_kpis.reviewed_by",
+      sql: `ALTER TABLE monthly_kpis ADD COLUMN reviewed_by VARCHAR(100) DEFAULT NULL`
+    },
+    {
+      desc: "monthly_kpis.reviewed_at",
+      sql: `ALTER TABLE monthly_kpis ADD COLUMN reviewed_at DATETIME DEFAULT NULL`
+    },
+    // ── Partial task progress ──
+    {
+      desc: "daily_priorities.partial_progress",
+      sql: `ALTER TABLE daily_priorities ADD COLUMN partial_progress INT DEFAULT 0`
+    },
+    // ── Task completion tracking ──
+    {
+      desc: "daily_priorities.completed_at",
+      sql: `ALTER TABLE daily_priorities ADD COLUMN completed_at DATETIME DEFAULT NULL`
+    },
+    {
+      desc: "daily_priorities.due_date",
+      sql: `ALTER TABLE daily_priorities ADD COLUMN due_date DATE DEFAULT NULL`
+    },
+    // ── KPI metric tracking ──
+    {
+      desc: "monthly_kpis.kpi_type",
+      sql: `ALTER TABLE monthly_kpis ADD COLUMN kpi_type VARCHAR(20) DEFAULT 'completion'`
+    },
+    {
+      desc: "monthly_kpis.metric_period",
+      sql: `ALTER TABLE monthly_kpis ADD COLUMN metric_period VARCHAR(10) DEFAULT NULL`
     }
   ];
 

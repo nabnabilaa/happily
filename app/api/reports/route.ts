@@ -201,7 +201,9 @@ function getWorkingDaysInMonth(month: number, year: number): number {
 async function generateReport(userId: string, month: number, year: number) {
   // Total tasks this month
   const tasksRes = await db.execute({
-    sql: `SELECT COUNT(*) as total, SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as done
+    sql: `SELECT COUNT(*) as total, SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as done,
+               COALESCE(SUM(time_tracked), 0) as total_time_tracked,
+               COALESCE(SUM(CASE WHEN is_project = 1 THEN 1 ELSE 0 END), 0) as project_count
           FROM daily_priorities WHERE user_id = ? AND MONTH(created_at) = ? AND YEAR(created_at) = ?`,
     args: [userId, month, year]
   });
@@ -237,6 +239,8 @@ async function generateReport(userId: string, month: number, year: number) {
 
   const totalTasks = Number(tasksRes.rows[0]?.total) || 0;
   const tasksCompleted = Number(tasksRes.rows[0]?.done) || 0;
+  const totalTimeTrackedSeconds = Number(tasksRes.rows[0]?.total_time_tracked) || 0;
+  const projectTaskCount = Number(tasksRes.rows[0]?.project_count) || 0;
   const activeDays = Number(daysRes.rows[0]?.days) || 0;
   const attendanceDays = Number(attendanceRes.rows[0]?.days) || 0;
   const totalXP = Number(xpRes.rows[0]?.total) || 0;
@@ -259,6 +263,8 @@ async function generateReport(userId: string, month: number, year: number) {
     avgTasksPerDay: activeDays > 0 ? Math.round((totalTasks / activeDays) * 10) / 10 : 0,
     totalXP,
     qualityScore,
+    totalTimeTrackedHours: Math.round(totalTimeTrackedSeconds / 3600 * 10) / 10,
+    projectTaskCount,
     moodTrend: moodRes.rows.map(r => ({ mood: r.mood, count: Number(r.cnt) })),
     status: 'draft',
   };
@@ -280,6 +286,23 @@ async function getKPIData(userId: string, month: number, year: number) {
     const linkCounts: Record<string, number> = {};
     linksRes.rows.forEach(r => { linkCounts[String(r.status)] = Number(r.cnt); });
 
+    // Task detail per KPI bulan ini
+    const taskDetailRes = await db.execute({
+      sql: `SELECT dp.id, dp.title, dp.status, dp.is_done, dp.partial_progress,
+                   dp.time_tracked, dp.proof_link, dp.proof_notes, dp.metric_value,
+                   dp.target_date, dp.due_date, dp.completed_at, dp.is_project
+            FROM daily_priorities dp
+            WHERE dp.kpi_id = ? AND dp.user_id = ?
+            ORDER BY dp.created_at DESC LIMIT 20`,
+      args: [String(k.id), String(k.assigned_to || userId)]
+    });
+
+    const weeklyRes = await db.execute({
+      sql: `SELECT id, title, week_number, target_value, current_value, metric_unit, status
+            FROM weekly_targets WHERE kpi_id = ? ORDER BY week_number ASC`,
+      args: [String(k.id)]
+    });
+
     return {
       id: k.id,
       title: k.title,
@@ -288,13 +311,41 @@ async function getKPIData(userId: string, month: number, year: number) {
       status: k.status,
       finalScore: k.final_score,
       managerNotes: k.manager_notes,
+      metricTarget: k.metric_target ? Number(k.metric_target) : null,
+      metricCurrent: k.metric_current ? Number(k.metric_current) : null,
+      reviewStatus: k.review_status || null,
+      reviewNote: k.review_note || null,
       links: {
         total: Object.values(linkCounts).reduce((a, b) => a + b, 0),
         approved: linkCounts['approved'] || 0,
         pending: linkCounts['pending'] || 0,
         rejected: linkCounts['rejected'] || 0,
         moved: linkCounts['moved'] || 0,
-      }
+      },
+      tasks: taskDetailRes.rows.map(t => ({
+        id: t.id,
+        title: t.title,
+        status: t.status,
+        isDone: !!t.is_done,
+        partialProgress: Number(t.partial_progress) || 0,
+        timeTrackedSeconds: Number(t.time_tracked) || 0,
+        proofLinks: (() => { try { const v = JSON.parse(t.proof_link as string); return Array.isArray(v) ? v : [t.proof_link]; } catch { return t.proof_link ? [t.proof_link] : []; } })(),
+        notes: t.proof_notes || null,
+        metricValue: t.metric_value ? Number(t.metric_value) : null,
+        targetDate: t.target_date || null,
+        dueDate: t.due_date || null,
+        completedAt: t.completed_at || null,
+        isProject: !!t.is_project,
+      })),
+      weeklyTargets: weeklyRes.rows.map(w => ({
+        id: w.id,
+        title: w.title,
+        weekNumber: Number(w.week_number),
+        targetValue: Number(w.target_value),
+        currentValue: Number(w.current_value),
+        metricUnit: w.metric_unit,
+        status: w.status,
+      })),
     };
   }));
 }

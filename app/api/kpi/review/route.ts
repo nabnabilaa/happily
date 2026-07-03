@@ -1,6 +1,65 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
+// POST: HR/Manager flag a monthly KPI progress report
+// Body: { kpiId, action: 'revision'|'rejected'|'clear', note, penaltyPct, reviewedBy }
+export async function POST(request: Request) {
+  try {
+    const { kpiId, action, note, penaltyPct, reviewedBy } = await request.json();
+
+    if (!kpiId || !action) {
+      return NextResponse.json({ error: "kpiId dan action wajib diisi" }, { status: 400 });
+    }
+    if (!['revision', 'rejected', 'clear'].includes(action)) {
+      return NextResponse.json({ error: "action harus revision, rejected, atau clear" }, { status: 400 });
+    }
+
+    const kpiRes = await db.execute({ sql: `SELECT * FROM monthly_kpis WHERE id = ?`, args: [kpiId] });
+    if (!kpiRes.rows.length) return NextResponse.json({ error: "KPI tidak ditemukan" }, { status: 404 });
+    const kpi = kpiRes.rows[0];
+
+    if (action === 'clear') {
+      const restored = kpi.original_metric_current !== null ? Number(kpi.original_metric_current) : Number(kpi.metric_current);
+      await db.execute({
+        sql: `UPDATE monthly_kpis SET review_status = NULL, review_note = NULL, penalty_pct = 0, metric_current = ?, original_metric_current = NULL, reviewed_by = NULL, reviewed_at = NULL WHERE id = ?`,
+        args: [restored, kpiId]
+      });
+      return NextResponse.json({ success: true, action: 'clear', restoredMetric: restored });
+    }
+
+    const pct = Math.max(0, Math.min(100, Number(penaltyPct) || 0));
+    const currentMetric = Number(kpi.metric_current) || 0;
+    const originalCurrent = kpi.original_metric_current !== null ? Number(kpi.original_metric_current) : currentMetric;
+    const penaltyAmount = Math.round(originalCurrent * pct / 100);
+    const newMetric = Math.max(0, originalCurrent - penaltyAmount);
+    const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+    await db.execute({
+      sql: `UPDATE monthly_kpis SET review_status = ?, review_note = ?, penalty_pct = ?, metric_current = ?, original_metric_current = ?, reviewed_by = ?, reviewed_at = ? WHERE id = ?`,
+      args: [action, note || null, pct, newMetric, originalCurrent, reviewedBy || null, now, kpiId]
+    });
+
+    try {
+      const notifId = "n_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
+      const isReject = action === 'rejected';
+      await db.execute({
+        sql: `INSERT INTO notifications (id, user_id, title, message, type) VALUES (?, ?, ?, ?, ?)`,
+        args: [
+          notifId, kpi.assigned_to,
+          isReject ? `❌ KPI Ditolak: ${kpi.title}` : `⚠️ KPI Perlu Revisi: ${kpi.title}`,
+          note || (isReject ? 'KPI kamu ditolak oleh HR/Manager.' : 'KPI kamu diminta untuk direvisi.'),
+          'warning'
+        ]
+      });
+    } catch (e) { console.warn('Notif failed:', e); }
+
+    return NextResponse.json({ success: true, action, penaltyAmount, newMetricCurrent: newMetric });
+  } catch (error: any) {
+    console.error("KPI Review POST Error:", error);
+    return NextResponse.json({ error: "Gagal memproses review KPI", details: error.message }, { status: 500 });
+  }
+}
+
 // GET: Fetch task-KPI links for review (Manager sees all pending links from team)
 export async function GET(request: Request) {
   try {

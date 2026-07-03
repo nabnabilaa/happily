@@ -5,6 +5,7 @@
 
 const ChatView = {
   contacts: [],
+  allUsers: [],
   messages: {},
   currentContactId: null,
 
@@ -18,10 +19,13 @@ const ChatView = {
         if (area === 'local' && changes['fb3']) {
           const fb3 = changes['fb3'].newValue;
           if (fb3) {
+            if (fb3.allUsers) {
+               this.allUsers = this.formatContacts(fb3.allUsers);
+            }
             if (fb3.chats && fb3.chats.length > 0) {
                this.contacts = this.formatChats(fb3.chats);
             } else if (fb3.allUsers && this.contacts.length === 0) {
-               this.contacts = this.formatContacts(fb3.allUsers);
+               this.contacts = this.allUsers;
             }
             if (FlowBuddyApp.currentView === 'chat') {
                const container = document.getElementById('view-chat');
@@ -46,10 +50,13 @@ const ChatView = {
         if (res.flowbee_user_id) this.userId = res.flowbee_user_id;
 
         if (res.fb3) {
+          if (res.fb3.allUsers) {
+             this.allUsers = this.formatContacts(res.fb3.allUsers);
+          }
           if (res.fb3.chats && res.fb3.chats.length > 0) {
             this.contacts = this.formatChats(res.fb3.chats);
           } else if (res.fb3.allUsers) {
-            this.contacts = this.formatContacts(res.fb3.allUsers);
+            this.contacts = this.allUsers;
           }
           
           const container = document.getElementById('view-chat');
@@ -71,7 +78,7 @@ const ChatView = {
 
   formatChats(rawChats) {
     const avatars = ['rose', 'emerald', 'purple', 'amber', 'indigo', 'cyan', 'blue'];
-    return rawChats.map((ch, i) => {
+    const newContacts = rawChats.map((ch, i) => {
       let dateDisplay = '';
       if (ch.lastMessageAt) {
          const d = new Date(ch.lastMessageAt);
@@ -81,7 +88,7 @@ const ChatView = {
             dateDisplay = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }).toUpperCase();
          }
       }
-      
+
       const parts = ch.name ? ch.name.split(' ') : ['?'];
       const initials = parts.length > 1 ? parts[0][0] + parts[1][0] : parts[0][0] + (parts[0][1] || '');
 
@@ -113,10 +120,10 @@ const ChatView = {
     // Preserve locally created contacts that haven't synced from the server yet
     this.contacts.forEach(oldContact => {
        if (!newContacts.find(nc => String(nc.id) === String(oldContact.id))) {
-          newContacts.unshift(oldContact); // Add to top since it's likely a recent local chat
+          newContacts.unshift(oldContact);
        }
     });
-    
+
     return newContacts;
   },
 
@@ -140,39 +147,83 @@ const ChatView = {
   },
 
   renderInbox(container) {
-    let html = '';
+    let html = `
+      <div style="padding: 0 0 16px;">
+        <input type="text" id="chat-search" class="task-form-input" placeholder="Cari teman untuk chat..." style="width: 100%; box-sizing: border-box; background: var(--glass-bg);">
+      </div>
+      <div id="chat-list-container">
+    `;
 
+    html += this.renderChatListHTML(this.contacts);
     if (this.contacts.length === 0) {
-      html = `
-        <div class="empty-state">
-          <div class="empty-state-icon">💬</div>
-          <div class="empty-state-title">Hore! Inbox zero</div>
-          <div class="empty-state-text">Saatnya ambil nafas sejenak ☕</div>
-        </div>
-      `;
-    } else {
-      html = '<div class="chat-list stagger-in">';
-      this.contacts.forEach(c => {
-        html += `
-          <div class="chat-item" data-chat-id="${c.id}">
-            <div class="avatar avatar-lg avatar-${c.avatar}">${c.initials}</div>
-            <div class="chat-info">
-              <div class="chat-header-info">
-                <h3 class="chat-name">${this.esc(c.name)}</h3>
-                <span class="chat-time">${c.time}</span>
-              </div>
-              <p class="chat-preview">${this.esc(c.lastMsg)}</p>
-            </div>
-            ${c.unread > 0 ? `<div class="unread-badge pulse">${c.unread}</div>` : ''}
-          </div>
-        `;
-      });
-      html += '</div>';
+      html += `<div style="font-size: 11px; color: var(--text-muted); padding: 12px 0 8px; font-weight: 800; text-transform: uppercase;">Mulai Chat Baru</div>`;
+      html += this.renderChatListHTML(this.allUsers, true);
     }
+
+    html += '</div>';
 
     container.innerHTML = html;
 
-    // Bind click handlers
+    const searchInput = container.querySelector('#chat-search');
+    searchInput.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase();
+      const listContainer = container.querySelector('#chat-list-container');
+      
+      if (!q) {
+        let listHtml = this.renderChatListHTML(this.contacts);
+        if (this.contacts.length === 0) {
+          listHtml += `<div style="font-size: 11px; color: var(--text-muted); padding: 12px 0 8px; font-weight: 800; text-transform: uppercase;">Mulai Chat Baru</div>`;
+          listHtml += this.renderChatListHTML(this.allUsers, true);
+        }
+        listContainer.innerHTML = listHtml;
+      } else {
+        const results = this.allUsers.filter(u => u.name.toLowerCase().includes(q));
+        listContainer.innerHTML = this.renderChatListHTML(results, true);
+      }
+      this.bindChatListClicks(container);
+    });
+
+    this.bindChatListClicks(container);
+  },
+
+  renderChatListHTML(contactsList, isSearchResult = false) {
+    if (contactsList.length === 0) {
+      if (isSearchResult) {
+        return `
+          <div class="empty-state" style="padding: 16px 0;">
+            <div class="empty-state-text">Tidak ada pengguna ditemukan</div>
+          </div>
+        `;
+      }
+      return `
+        <div class="empty-state" style="padding: 24px 0 12px;">
+          <div class="empty-state-icon">📱</div>
+          <div class="empty-state-title">Hore! Inbox zero</div>
+          <div class="empty-state-text">Belum ada chat aktif</div>
+        </div>
+      `;
+    }
+    let html = '<div class="chat-list stagger-in">';
+    contactsList.forEach(c => {
+      html += `
+        <div class="chat-item" data-chat-id="${c.id}">
+          <div class="avatar avatar-lg avatar-${c.avatar}">${c.initials}</div>
+          <div class="chat-info">
+            <div class="chat-header-info">
+              <h3 class="chat-name">${this.esc(c.name)}</h3>
+              <span class="chat-time">${c.time}</span>
+            </div>
+            <p class="chat-preview">${this.esc(c.lastMsg)}</p>
+          </div>
+          ${c.unread > 0 ? `<div class="unread-badge pulse">${c.unread}</div>` : ''}
+        </div>
+      `;
+    });
+    html += '</div>';
+    return html;
+  },
+
+  bindChatListClicks(container) {
     container.querySelectorAll('.chat-item').forEach(item => {
       item.addEventListener('click', () => {
         const id = item.getAttribute('data-chat-id');
@@ -186,24 +237,13 @@ const ChatView = {
     let contact = this.contacts.find(c => String(c.id) === String(contactId));
     
     // If not found in active chats, try to find in global users and add to contacts
-    if (!contact && window.fbCtx) {
-       const allAvailable = (window.fbCtx.allUsers || []).concat(window.fbCtx.members || []);
-       const rawUser = allAvailable.find(u => 'u_' + u.id === String(contactId) || String(u.id) === String(contactId));
-       if (rawUser) {
-          const parts = rawUser.name ? rawUser.name.split(' ') : ['?'];
-          const initials = parts.length > 1 ? parts[0][0] + parts[1][0] : parts[0][0] + (parts[0][1] || '');
-          contact = {
-             id: 'u_' + rawUser.id,
-             name: rawUser.name,
-             initials: initials.toUpperCase(),
-             avatar: 'blue', // default
-             lastMsg: 'Mulai percakapan',
-             time: '',
-             unread: 0,
-             status: 'online'
-          };
-          this.contacts.push(contact);
-          this.currentContactId = contact.id; // ensure correct ID format
+    if (!contact) {
+       contact = this.allUsers.find(u => String(u.id) === String(contactId));
+       if (contact) {
+          if (!this.contacts.find(c => String(c.id) === String(contact.id))) {
+             this.contacts.push(contact);
+          }
+          this.currentContactId = contact.id;
        }
     }
 

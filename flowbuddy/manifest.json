@@ -20,7 +20,7 @@
       "all_frames": false
     },
     {
-      "matches": ["*://happily-flowbuddy.vercel.app/*", "*://localhost/*"],
+      "matches": ["*://flowbuddy.maxy.academy/*", "*://happily-flowbuddy.vercel.app/*", "*://localhost/*"],
       "js": ["content.js"],
       "run_at": "document_idle"
     }

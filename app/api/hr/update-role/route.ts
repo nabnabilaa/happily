@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 
 export async function POST(request: Request) {
   try {
-    const { requesterId, targetUserId, newRole, managerId, jobTitle, department, name } = await request.json();
+    const { requesterId, targetUserId, newRole, jobTitle, department, name } = await request.json();
 
     if (!requesterId || !targetUserId) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
@@ -35,12 +35,7 @@ export async function POST(request: Request) {
       });
     }
 
-    if (managerId !== undefined) {
-      await db.execute({
-        sql: "UPDATE users SET manager_id = ? WHERE id = ?",
-        args: [managerId === "" ? null : managerId, targetUserId]
-      });
-    }
+
 
     if (jobTitle !== undefined) {
       await db.execute({

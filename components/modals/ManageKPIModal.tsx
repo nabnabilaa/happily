@@ -57,6 +57,12 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Metric tracking
+  const [metricEnabled, setMetricEnabled] = useState(false);
+  const [metricUnit, setMetricUnit] = useState('');
+  const [metricTargetNum, setMetricTargetNum] = useState('');
+  const [metricPeriod, setMetricPeriod] = useState<'month' | 'day'>('month');
+
   // Weekly Targets States
   const [expandedKpiId, setExpandedKpiId] = useState<string | null>(null);
   const [weeklyTargetsMap, setWeeklyTargetsMap] = useState<Record<string, any[]>>({});
@@ -158,18 +164,26 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
     setError(null);
 
     try {
+      const rawTarget = parseFloat(metricTargetNum) || 0;
+      const monthlyTarget = metricEnabled && metricPeriod === 'day' ? rawTarget * 22 : rawTarget;
+
       const res = await fetch('/api/kpi', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title, targetDescription: target, weight, month, year,
-          assignedTo: assignTo, assignedBy: user?.id, scope
+          assignedTo: assignTo, assignedBy: user?.id, scope,
+          kpiType: metricEnabled ? 'metric' : 'completion',
+          metricUnit: metricEnabled ? metricUnit : null,
+          metricTarget: metricEnabled ? monthlyTarget : 100,
+          metricPeriod: metricEnabled ? metricPeriod : null,
         })
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error); setSaving(false); return; }
 
       setTitle(''); setTarget(''); setWeight(25); setAssignTo(''); setScope('assigned');
+      setMetricEnabled(false); setMetricUnit(''); setMetricTargetNum(''); setMetricPeriod('month');
       setShowForm(false);
       fetchKPIs();
       updateState((s: any) => ({ ...s, goals: [...(s.goals || [])] })); // trigger refetch
@@ -434,6 +448,103 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
               </div>
             </div>
           )}
+
+          {/* Metric tracking section */}
+          <div style={{ borderTop: `1px solid ${HP_TOKENS.line}`, paddingTop: 12, marginTop: 4 }}>
+            <button
+              type="button"
+              onClick={() => setMetricEnabled(!metricEnabled)}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                background: metricEnabled ? HP_TOKENS.blueWash : 'transparent',
+                border: `1.5px solid ${metricEnabled ? HP_TOKENS.blue : HP_TOKENS.line}`,
+                borderRadius: 12, padding: '10px 14px', cursor: 'pointer', fontFamily: HP_FONT,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 15 }}>📊</span>
+                <span style={{ fontSize: 13, fontWeight: 800, color: metricEnabled ? HP_TOKENS.blue : HP_TOKENS.inkSoft }}>
+                  Lacak dengan Angka
+                </span>
+                <span style={{ fontSize: 11, color: HP_TOKENS.inkMute, fontWeight: 500 }}>
+                  (opsional)
+                </span>
+              </div>
+              <div style={{
+                width: 36, height: 20, borderRadius: 10,
+                background: metricEnabled ? HP_TOKENS.blue : HP_TOKENS.lineSoft,
+                position: 'relative', transition: '0.2s', flexShrink: 0,
+              }}>
+                <div style={{
+                  width: 14, height: 14, borderRadius: 7, background: '#fff',
+                  position: 'absolute', top: 3,
+                  left: metricEnabled ? 19 : 3, transition: '0.2s',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                }} />
+              </div>
+            </button>
+
+            {metricEnabled && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 4 }}>Target Angka</div>
+                    <input
+                      type="number"
+                      value={metricTargetNum}
+                      onChange={e => setMetricTargetNum(e.target.value)}
+                      placeholder="mis: 1, 30, 500"
+                      style={{ ...selectStyle, fontSize: 13 }}
+                    />
+                  </div>
+                  <div style={{ flex: 1.5 }}>
+                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 4 }}>Satuan</div>
+                    <input
+                      type="text"
+                      value={metricUnit}
+                      onChange={e => setMetricUnit(e.target.value)}
+                      placeholder="mis: konten, modul, juta Rp"
+                      style={{ ...selectStyle, fontSize: 13 }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 6 }}>Periode Target</div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {(['month', 'day'] as const).map(p => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setMetricPeriod(p)}
+                        style={{
+                          flex: 1, padding: '9px 8px', borderRadius: 10, fontSize: 12, fontWeight: 800,
+                          background: metricPeriod === p ? HP_TOKENS.blue : '#fff',
+                          color: metricPeriod === p ? '#fff' : HP_TOKENS.ink,
+                          border: `1.5px solid ${metricPeriod === p ? HP_TOKENS.blue : HP_TOKENS.line}`,
+                          cursor: 'pointer', fontFamily: HP_FONT,
+                        }}
+                      >
+                        {p === 'month' ? 'Per Bulan' : 'Per Hari Kerja'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {metricTargetNum && metricUnit && (
+                  <div style={{
+                    padding: '10px 14px', borderRadius: 10,
+                    background: HP_TOKENS.blueWash, border: `1px solid ${HP_TOKENS.blueSoft}`,
+                    fontFamily: HP_FONT, fontSize: 12, fontWeight: 700, color: HP_TOKENS.blue,
+                  }}>
+                    {metricPeriod === 'day'
+                      ? `Target: ${metricTargetNum} ${metricUnit}/hari kerja (~${Math.round(parseFloat(metricTargetNum) * 22)} ${metricUnit}/bulan)`
+                      : `Target: ${metricTargetNum} ${metricUnit}/bulan`}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           <button onClick={handleCreate} disabled={!title || !assignTo || saving} style={{
             width: '100%', padding: 12, borderRadius: 12, border: 'none',

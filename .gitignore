@@ -42,3 +42,7 @@ next-env.d.ts
 
 # scratch
 /scratch
+
+# Dummy scripts
+delete_dummy_tasks.js
+read_priorities.js

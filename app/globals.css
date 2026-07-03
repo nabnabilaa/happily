@@ -45,23 +45,23 @@
   --hp-honey-soft: rgba(255, 190, 11, 0.06);
   --hp-gold: #FFBE0B;
 
-  /* ── Neutrals (Pure White base like Duolingo) ── */
-  --hp-paper: #FFFFFF;
+  /* ── Neutrals ── */
+  --hp-paper: #F2F3F5;
   --hp-card: #FFFFFF;
   --hp-ink: #1A1A2E;
   --hp-ink-soft: #3D3D50;
   --hp-ink-mute: #8A8A9A;
   --hp-ink-fade: #C0B8B2;
-  --hp-line: rgba(59, 130, 246, 0.08);
-  --hp-line-soft: rgba(59, 130, 246, 0.04);
-  --hp-border: #E2E8F0;
+  --hp-line: rgba(0, 0, 0, 0.07);
+  --hp-line-soft: rgba(0, 0, 0, 0.04);
+  --hp-border: #E0E2E6;
 
   /* ── Layout ── */
   --hp-radius: 24px;
   --hp-radius-sm: 18px;
   --hp-radius-pill: 100px;
-  --hp-shadow: 0 8px 32px rgba(59, 130, 246, 0.08);
-  --hp-shadow-sm: 0 4px 16px rgba(59, 130, 246, 0.04);
+  --hp-shadow: 0 8px 32px rgba(59, 130, 246, 0.12);
+  --hp-shadow-sm: 0 2px 12px rgba(59, 130, 246, 0.08), 0 1px 3px rgba(0,0,0,0.04);
   --hp-shadow-orange: 0 8px 28px rgba(59, 130, 246, 0.20);
 }
 
@@ -141,6 +141,7 @@
 
 html, body {
   background: var(--hp-paper);
+  background-attachment: fixed;
   min-height: 100vh;
   color: var(--hp-ink);
   overflow-x: hidden;
@@ -318,7 +319,7 @@ div, section, article, aside, nav, header, footer, main {
   height: 100dvh;
   width: 100vw;
   overflow: hidden;
-  background: var(--hp-paper);
+  background: transparent;
 }
 
 /* Responsive Profile Layout */

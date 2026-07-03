@@ -44,8 +44,11 @@ export async function GET(request: Request) {
 
     // Filter by manager's team members
     if (managerId) {
-      query += ` AND (u.manager_id = ? OR u.id = ?)`;
-      args.push(managerId, managerId);
+      const deptRes = await db.execute({ sql: "SELECT department FROM users WHERE id = ?", args: [managerId] });
+      const managerDept = (deptRes.rows[0] as any)?.department || "";
+      
+      query += ` AND u.department = ?`;
+      args.push(managerDept);
     }
 
     query += ` ORDER BY 

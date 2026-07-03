@@ -20,6 +20,8 @@ interface ManagerTeamKPIViewProps {
   handleEditProgress: (id: string, progress: number) => void;
   handleVerifyTask: (taskId: string, goalId: string) => void;
   handleRejectTask: (taskId: string, goalId: string, action: 'reject' | 'revision') => void;
+  handleManagerVerifyKpiTask: (taskId: string, goalId: string) => void;
+  handleManagerRejectKpiTask: (taskId: string, wtId: string, action: 'revision' | 'reject', taskPct: number, totalWtTasks: number, goalId: string) => void;
   handleApproveGoal: (goalId: string) => void;
   handleRevisionGoal: (goalId: string) => void;
   handleRejectGoal: (goalId: string) => void;
@@ -36,6 +38,8 @@ export default function ManagerTeamKPIView({
   handleEditProgress,
   handleVerifyTask,
   handleRejectTask,
+  handleManagerVerifyKpiTask,
+  handleManagerRejectKpiTask,
   handleApproveGoal,
   handleRevisionGoal,
   handleRejectGoal
@@ -51,13 +55,26 @@ export default function ManagerTeamKPIView({
 
   return (
     <>
-      <SectionHeader 
-        icon="people" 
-        label="Target & KPI Anggota Tim" 
-        count={String(topLevelGoals.length)} 
-        action="+ Buat Target / KPI"
-        onAction={() => openModal('manage_kpi', { initialShowForm: true })}
-      />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+        <SectionHeader
+          icon="people"
+          label="Target & KPI Anggota Tim"
+          count={String(topLevelGoals.length)}
+          action="+ Buat Target / KPI"
+          onAction={() => openModal('manage_kpi', { initialShowForm: true })}
+        />
+        <button
+          onClick={() => openModal('kpi_review')}
+          style={{
+            padding: '8px 14px', borderRadius: 10, border: 'none', cursor: 'pointer',
+            background: '#FFF3CC', color: '#8A6814',
+            fontFamily: 'inherit', fontWeight: 800, fontSize: 11,
+            display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 8,
+          }}
+        >
+          📋 Review KPI
+        </button>
+      </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {paginatedKPIs.map(g => {
           const childGoals = assignedGoals.filter((c: any) => String(c.parent_id) === String(g.id));
@@ -67,9 +84,6 @@ export default function ManagerTeamKPIView({
           );
           const ownerName = g.owner || state.managerData?.members?.find((m: any) => String(m.id) === String(g.ownerId))?.name || 'Team Member';
           
-          const pendingVerification = allRelatedTasks.filter((t: any) => t.done && !t.verified);
-          const verifiedTasks = allRelatedTasks.filter((t: any) => t.verified);
-          const activeTasks = allRelatedTasks.filter((t: any) => !t.done);
 
           return (
             <div 
@@ -129,7 +143,15 @@ export default function ManagerTeamKPIView({
                   goalTitle: g.title,
                   childGoals: childGoals
                 })} className="hp-tap">
-                  <GoalCard g={g} isReadOnly={true} tasks={allRelatedTasks} onEditProgress={(p) => handleEditProgress(String(g.id), p)} />
+                  <GoalCard
+                    g={g}
+                    isReadOnly={true}
+                    tasks={allRelatedTasks}
+                    onEditProgress={(p) => handleEditProgress(String(g.id), p)}
+                    managerMode={true}
+                    onManagerVerify={(taskId) => handleManagerVerifyKpiTask(taskId, String(g.id))}
+                    onManagerReject={(taskId, wtId, action, taskPct, totalWtTasks) => handleManagerRejectKpiTask(taskId, wtId, action, taskPct, totalWtTasks, String(g.id))}
+                  />
                 </div>
 
                 {childGoals.length > 0 && (
@@ -191,79 +213,15 @@ export default function ManagerTeamKPIView({
                   </div>
                 )}
 
-                <div style={{ padding: '16px', background: HP_TOKENS.paper, borderTop: `1px solid ${HP_TOKENS.lineSoft}` }}>
-                  {pendingVerification.length > 0 && (
-                    <div style={{ marginBottom: 20 }}>
-                      <div style={{ ...HP_TEXT.tiny, fontWeight: 900, color: HP_TOKENS.yellow, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <HPGlyph name="zap" size={12} color={HP_TOKENS.yellow} />
-                        MENUNGGU PERSETUJUAN (ACC)
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        {pendingVerification.map((t: any) => (
-                          <div key={t.id} style={{ 
-                            display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', 
-                            background: HP_TOKENS.card, borderRadius: 18, border: `1.5px solid ${HP_TOKENS.yellow}30`,
-                            boxShadow: '0 4px 12px rgba(26,29,35,0.02)'
-                          }}>
-                            <div style={{ 
-                              width: 32, height: 32, borderRadius: 10, background: HP_TOKENS.yellow,
-                              display: 'flex', alignItems: 'center', justifyContent: 'center'
-                            }}>
-                              <HPGlyph name="zap" size={16} color="#F4F7F9" />
-                            </div>
-                            <div style={{ flex: 1 }}>
-                              <div style={{ fontSize: 13, fontWeight: 800, color: HP_TOKENS.ink }}>{t.title}</div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                                <div style={{ padding: '2px 6px', borderRadius: 4, background: HP_TOKENS.paper, fontSize: 9, fontWeight: 800, color: HP_TOKENS.inkFade }}>{t.est || '15m'}</div>
-                                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.yellow, fontWeight: 900, fontSize: 8 }}>WAITING ACC</div>
-                              </div>
-                            </div>
-                            <div style={{ display: 'flex', gap: 6 }}>
-                              <button onClick={(e) => { e.stopPropagation(); handleVerifyTask(t.id, g.id); }} className="hp-tap" style={{ padding: '8px 16px', borderRadius: 10, border: 'none', background: HP_TOKENS.sage, color: '#F4F7F9', fontSize: 11, fontWeight: 900, cursor: 'pointer', boxShadow: `0 4px 12px ${HP_TOKENS.sage}40` }}>ACC</button>
-                              <button onClick={(e) => { e.stopPropagation(); handleRejectTask(t.id, g.id, 'revision'); }} className="hp-tap" style={{ padding: '8px 12px', borderRadius: 10, border: `1px solid ${HP_TOKENS.yellow}`, background: HP_TOKENS.card, color: '#8A6814', fontSize: 11, fontWeight: 900, cursor: 'pointer' }}>Revisi</button>
-                              <button onClick={(e) => { e.stopPropagation(); handleRejectTask(t.id, g.id, 'reject'); }} className="hp-tap" style={{ padding: '8px 12px', borderRadius: 10, border: `1px solid ${HP_TOKENS.coral}`, background: HP_TOKENS.card, color: HP_TOKENS.coral, fontSize: 11, fontWeight: 900, cursor: 'pointer' }}>Tolak</button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div style={{ marginBottom: 20 }}>
-                    <div style={{ ...HP_TEXT.tiny, fontWeight: 900, color: HP_TOKENS.inkMute, marginBottom: 10 }}>PROGRESS HARI INI</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {activeTasks.map((t: any) => (
-                        <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 10, opacity: 0.7 }}>
-                          <div style={{ width: 6, height: 6, borderRadius: 3, background: HP_TOKENS.line }} />
-                          <div style={{ fontSize: 12, color: HP_TOKENS.inkSoft, fontWeight: 600 }}>{t.title}</div>
-                        </div>
-                      ))}
-                      {activeTasks.length === 0 && <div style={{ fontSize: 11, color: HP_TOKENS.inkMute, fontStyle: 'italic' }}>Tidak ada task aktif saat ini.</div>}
+                {g.status === 'pending' && (
+                  <div style={{ padding: '12px 16px', background: HP_TOKENS.paper, borderTop: `1px solid ${HP_TOKENS.lineSoft}` }}>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button onClick={(e) => { e.stopPropagation(); handleApproveGoal(String(g.id)); }} className="hp-tap" style={{ flex: 1, padding: '12px', borderRadius: 12, border: 'none', background: HP_TOKENS.sage, color: '#F4F7F9', fontFamily: HP_FONT, fontWeight: 900, fontSize: 13, cursor: 'pointer' }}>Approve KPI</button>
+                      <button onClick={(e) => { e.stopPropagation(); handleRevisionGoal(String(g.id)); }} className="hp-tap" style={{ flex: 1, padding: '12px', borderRadius: 12, border: `1.5px solid ${HP_TOKENS.yellow}`, background: HP_TOKENS.card, color: '#8A6814', fontFamily: HP_FONT, fontWeight: 900, fontSize: 13, cursor: 'pointer' }}>Revisi</button>
+                      <button onClick={(e) => { e.stopPropagation(); handleRejectGoal(String(g.id)); }} className="hp-tap" style={{ flex: 1, padding: '12px', borderRadius: 12, border: `1.5px solid ${HP_TOKENS.coral}`, background: HP_TOKENS.card, color: HP_TOKENS.coral, fontFamily: HP_FONT, fontWeight: 900, fontSize: 13, cursor: 'pointer' }}>Reject</button>
                     </div>
                   </div>
-
-                  {verifiedTasks.length > 0 && (
-                    <div>
-                      <div style={{ ...HP_TEXT.tiny, fontWeight: 900, color: HP_TOKENS.inkFade, marginBottom: 10 }}>HISTORY SELESAI</div>
-                      <div style={{ display: 'flex', flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
-                        {verifiedTasks.map((t: any) => (
-                          <div key={t.id} style={{ padding: '4px 10px', borderRadius: 8, background: HP_TOKENS.lineSoft, display: 'flex', alignItems: 'center', gap: 6, opacity: 0.6 }}>
-                            <HPGlyph name="check" size={10} color={HP_TOKENS.sage} />
-                            <span style={{ fontSize: 10, fontWeight: 700, color: HP_TOKENS.inkSoft }}>{t.title}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {g.status === 'pending' && (
-                     <div style={{ display: 'flex', gap: 10, marginTop: 24, borderTop: `1px dashed ${HP_TOKENS.line}`, paddingTop: 16 }}>
-                       <button onClick={(e) => { e.stopPropagation(); handleApproveGoal(String(g.id)); }} className="hp-tap" style={{ flex: 1, padding: '14px', borderRadius: 14, border: 'none', background: HP_TOKENS.sage, color: '#F4F7F9', fontFamily: HP_FONT, fontWeight: 900, fontSize: 13, cursor: 'pointer' }}>Approve KPI</button>
-                      <button onClick={(e) => { e.stopPropagation(); handleRevisionGoal(String(g.id)); }} className="hp-tap" style={{ flex: 1, padding: '14px', borderRadius: 14, border: `1.5px solid ${HP_TOKENS.yellow}`, background: HP_TOKENS.card, color: '#8A6814', fontFamily: HP_FONT, fontWeight: 900, fontSize: 13, cursor: 'pointer' }}>Revisi</button>
-                      <button onClick={(e) => { e.stopPropagation(); handleRejectGoal(String(g.id)); }} className="hp-tap" style={{ flex: 1, padding: '14px', borderRadius: 14, border: `1.5px solid ${HP_TOKENS.coral}`, background: HP_TOKENS.card, color: HP_TOKENS.coral, fontFamily: HP_FONT, fontWeight: 900, fontSize: 13, cursor: 'pointer' }}>Reject</button>
-                    </div>
-                  )}
-                </div>
+                )}
               </HPCard>
             </div>
           );

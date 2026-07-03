@@ -97,6 +97,24 @@ export async function PUT(request: Request) {
   }
 }
 
+// PATCH: Add delta to current_value (used when task is completed)
+export async function PATCH(request: Request) {
+  try {
+    const { id, delta } = await request.json();
+    if (!id || delta === undefined) {
+      return NextResponse.json({ error: "id dan delta wajib diisi" }, { status: 400 });
+    }
+    await db.execute({
+      sql: `UPDATE weekly_targets SET current_value = GREATEST(0, COALESCE(current_value, 0) + ?) WHERE id = ?`,
+      args: [Number(delta), id]
+    });
+    const res = await db.execute({ sql: `SELECT current_value, target_value FROM weekly_targets WHERE id = ?`, args: [id] });
+    return NextResponse.json({ success: true, currentValue: Number(res.rows[0]?.current_value) || 0 });
+  } catch (error: any) {
+    return NextResponse.json({ error: "Gagal update progres target", details: error.message }, { status: 500 });
+  }
+}
+
 // DELETE: Remove weekly target
 export async function DELETE(request: Request) {
   try {

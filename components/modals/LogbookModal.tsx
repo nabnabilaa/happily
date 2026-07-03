@@ -38,6 +38,7 @@ interface DayDetail {
   xpBreakdown: any[];
   totalXP: number;
   logbookEntries: any[];
+  tasks: any[];
 }
 
 const MONTH_NAMES = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
@@ -450,6 +451,111 @@ export default function LogbookModal({ onClose, targetUserId, targetUserName }: 
                 </div>
               )}
 
+              {/* Task Harian */}
+              {(dayDetail.tasks || []).length > 0 && (
+                <div>
+                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 900, marginBottom: 8, letterSpacing: 1 }}>
+                    TASK HARIAN ({dayDetail.tasks.length})
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {dayDetail.tasks.map((task: any) => {
+                      const isDone = task.isDone;
+                      const pct = isDone ? 100 : (task.partialProgress || 0);
+                      const statusColor = isDone ? HP_TOKENS.sage : pct > 0 ? HP_TOKENS.yellow : HP_TOKENS.coral;
+                      const statusBg = isDone ? HP_TOKENS.sageWash : pct > 0 ? HP_TOKENS.yellowSoft : HP_TOKENS.coralSoft;
+                      return (
+                        <div key={task.id} style={{
+                          padding: '10px 12px', borderRadius: 12,
+                          background: HP_TOKENS.card, border: `1px solid ${statusColor}30`,
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                            <div style={{
+                              width: 20, height: 20, borderRadius: 6, flexShrink: 0, marginTop: 1,
+                              background: isDone ? HP_TOKENS.sage : pct > 0 ? HP_TOKENS.yellow : HP_TOKENS.lineSoft,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            }}>
+                              {isDone && <span style={{ color: '#fff', fontSize: 10, fontWeight: 900 }}>✓</span>}
+                              {!isDone && pct > 0 && <span style={{ color: '#fff', fontSize: 8, fontWeight: 900 }}>{pct}%</span>}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, color: HP_TOKENS.ink, textDecoration: isDone ? 'line-through' : 'none', opacity: isDone ? 0.7 : 1 }}>
+                                {task.title}
+                              </div>
+                              {/* KPI / Target linkage */}
+                              {(task.kpiTitle || task.weeklyTargetTitle) && (
+                                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, marginTop: 2, fontWeight: 600 }}>
+                                  {task.weeklyTargetTitle ? `${task.kpiTitle} › ${task.weeklyTargetTitle}` : task.kpiTitle}
+                                </div>
+                              )}
+                              {/* Progress bar for partial */}
+                              {!isDone && pct > 0 && (
+                                <div style={{ marginTop: 6, height: 4, borderRadius: 2, background: HP_TOKENS.lineSoft, overflow: 'hidden' }}>
+                                  <div style={{ width: `${pct}%`, height: '100%', background: HP_TOKENS.yellow, borderRadius: 2 }} />
+                                </div>
+                              )}
+                              {/* Description */}
+                              {task.description && (
+                                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkSoft, marginTop: 4 }}>{task.description}</div>
+                              )}
+                              {/* Notes */}
+                              {task.notes && (
+                                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkSoft, marginTop: 4, fontStyle: 'italic' }}>
+                                  "{task.notes}"
+                                </div>
+                              )}
+                              {/* Proof links */}
+                              {task.proofLinks?.length > 0 && (
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
+                                  {task.proofLinks.filter(Boolean).map((link: string, i: number) => (
+                                    link.startsWith('http') ? (
+                                      <a key={i} href={link} target="_blank" rel="noopener noreferrer" style={{
+                                        padding: '2px 8px', borderRadius: 6, background: HP_TOKENS.blueSoft,
+                                        color: HP_TOKENS.blue, fontSize: 10, fontFamily: HP_FONT, fontWeight: 700,
+                                        textDecoration: 'none',
+                                      }}>
+                                        Bukti {i + 1}
+                                      </a>
+                                    ) : (
+                                      <span key={i} style={{
+                                        padding: '2px 8px', borderRadius: 6, background: HP_TOKENS.lineSoft,
+                                        color: HP_TOKENS.inkSoft, fontSize: 10, fontFamily: HP_FONT, fontWeight: 700,
+                                      }}>
+                                        {link}
+                                      </span>
+                                    )
+                                  ))}
+                                </div>
+                              )}
+                              {/* Footer: metric + time + completed_at */}
+                              <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
+                                {task.metricValue && (
+                                  <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 700 }}>Nilai: {task.metricValue}</span>
+                                )}
+                                {task.timeTrackedSeconds > 0 && (
+                                  <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 600 }}>
+                                    {Math.floor(task.timeTrackedSeconds / 3600) > 0
+                                      ? `${Math.floor(task.timeTrackedSeconds / 3600)}j ${Math.floor((task.timeTrackedSeconds % 3600) / 60)}m`
+                                      : `${Math.floor(task.timeTrackedSeconds / 60)}m`}
+                                  </span>
+                                )}
+                                {task.completedAt && (
+                                  <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>
+                                    Selesai: {new Date(task.completedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                )}
+                                {task.isProject && (
+                                  <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.lavender || '#7B6BB5', fontWeight: 700 }}>Proyek</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Logbook entries */}
               {dayDetail.logbookEntries.length > 0 && (
                 <div>
@@ -483,7 +589,7 @@ export default function LogbookModal({ onClose, targetUserId, targetUserName }: 
               )}
 
               {/* Empty state */}
-              {!dayDetail.attendance && !dayDetail.mood && dayDetail.xpBreakdown.length === 0 && dayDetail.logbookEntries.length === 0 && (
+              {!dayDetail.attendance && !dayDetail.mood && dayDetail.xpBreakdown.length === 0 && dayDetail.logbookEntries.length === 0 && (dayDetail.tasks || []).length === 0 && (
                 <div style={{ textAlign: 'center', padding: 20, color: HP_TOKENS.inkMute }}>
                   <div style={{ fontSize: 24, marginBottom: 6 }}>🌙</div>
                   <div style={{ ...HP_TEXT.small }}>Tidak ada aktivitas pada hari ini</div>

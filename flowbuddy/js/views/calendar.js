@@ -16,8 +16,9 @@ const CalendarView = {
       chrome.storage.onChanged.addListener((changes, area) => {
         if (area === 'local' && changes['fb3']) {
           const fb3 = changes['fb3'].newValue;
-          if (fb3 && fb3.events) {
-            this.events = fb3.events;
+          if (fb3) {
+            this.webEvents = fb3.calendar || [];
+            this.events = fb3.events || [];
             if (FlowBuddyApp.currentView === 'calendar') {
                const container = document.getElementById('view-calendar');
                if (container) this.render(container);
@@ -31,8 +32,9 @@ const CalendarView = {
   load() {
     if (typeof chrome !== 'undefined' && chrome.storage) {
       chrome.storage.local.get('fb3', (res) => {
-        if (res.fb3 && res.fb3.events) {
-          this.events = res.fb3.events;
+        if (res.fb3) {
+          this.webEvents = res.fb3.calendar || [];
+          this.events = res.fb3.events || [];
           const container = document.getElementById('view-calendar');
           if (container && FlowBuddyApp.currentView === 'calendar') this.render(container);
         }
@@ -50,6 +52,26 @@ const CalendarView = {
         });
       });
     }
+  },
+
+  normalizeWebEvent(e) {
+    const d = new Date(e.startTime);
+    if (isNaN(d.getTime())) return null;
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const timeStr = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    return {
+      id: 'web_' + (e.id || Math.random()),
+      title: e.title || '(Tanpa judul)',
+      date: dateStr,
+      time: timeStr,
+      color: '#2563EB',
+      isWeb: true
+    };
+  },
+
+  getAllEvents() {
+    const webNorm = (this.webEvents || []).map(e => this.normalizeWebEvent(e)).filter(Boolean);
+    return [...webNorm, ...this.events];
   },
 
   addEvent(title, date, time, color) {
@@ -125,12 +147,13 @@ const CalendarView = {
     }
     cellsHtml += '</div>';
 
-    // List of events
+    // List of events — merge local + web events
     let eventsHtml = '';
-    const eventsToShow = this.selectedDate 
-      ? this.events.filter(e => e.date === this.selectedDate)
-      : this.events.filter(e => e.date >= todayStr).sort((a,b) => a.date.localeCompare(b.date));
-      
+    const allEvents = this.getAllEvents();
+    const eventsToShow = this.selectedDate
+      ? allEvents.filter(e => e.date === this.selectedDate)
+      : allEvents.filter(e => e.date >= todayStr).sort((a,b) => a.date.localeCompare(b.date));
+
     if (eventsToShow.length === 0) {
       eventsHtml = `
         <div class="empty-state">
@@ -144,23 +167,33 @@ const CalendarView = {
       eventsToShow.forEach(ev => {
         const evD = new Date(ev.date);
         const dateDisp = `${evD.getDate()} ${monthNames[evD.getMonth()]} ${evD.getFullYear()}`;
-        eventsHtml += `
-          <div class="task-card" style="border-left: 4px solid ${ev.color}; padding-left: 12px; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; position: relative;">
-            <div style="font-size: 14px; font-weight: 700; color: var(--dk); width: calc(100% - 24px);">${this.esc(ev.title)}</div>
-            <div style="font-size: 12px; color: var(--gray);">${dateDisp}${ev.time ? ' • ' + ev.time : ''}</div>
-            
-            <button class="cal-menu-btn" data-id="${ev.id}" style="position: absolute; right: 8px; top: 12px; background: none; border: none; font-size: 18px; cursor: pointer; color: var(--text-muted); padding: 4px; border-radius: 4px;">⋮</button>
-            
-            <div class="cal-dropdown" id="cal-dropdown-${ev.id}" style="display: none; position: absolute; right: 10px; top: 40px; background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 8px; box-shadow: var(--shadow-md); z-index: 10; min-width: 130px; overflow: hidden;">
-               <div class="cal-edit-btn" data-id="${ev.id}" style="padding: 10px 16px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--text-primary); border-bottom: 1px solid var(--border-light); display: flex; align-items: center; gap: 8px; transition: background 0.2s;">
-                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> Edit
-               </div>
-               <div class="cal-del-btn" data-id="${ev.id}" style="padding: 10px 16px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--color-danger); display: flex; align-items: center; gap: 8px; transition: background 0.2s;">
-                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Hapus
-               </div>
+        if (ev.isWeb) {
+          eventsHtml += `
+            <div class="task-card" style="border-left: 4px solid ${ev.color}; padding-left: 12px; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; position: relative; opacity: 0.85;">
+              <div style="font-size: 14px; font-weight: 700; color: var(--dk); width: 100%;">${this.esc(ev.title)}</div>
+              <div style="font-size: 12px; color: var(--gray);">${dateDisp}${ev.time ? ' • ' + ev.time : ''}</div>
+              <span style="font-size: 10px; color: var(--color-role); font-weight: 700; background: var(--color-role-soft); padding: 2px 8px; border-radius: 99px;">Dari web</span>
             </div>
-          </div>
-        `;
+          `;
+        } else {
+          eventsHtml += `
+            <div class="task-card" style="border-left: 4px solid ${ev.color}; padding-left: 12px; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; position: relative;">
+              <div style="font-size: 14px; font-weight: 700; color: var(--dk); width: calc(100% - 24px);">${this.esc(ev.title)}</div>
+              <div style="font-size: 12px; color: var(--gray);">${dateDisp}${ev.time ? ' • ' + ev.time : ''}</div>
+
+              <button class="cal-menu-btn" data-id="${ev.id}" style="position: absolute; right: 8px; top: 12px; background: none; border: none; font-size: 18px; cursor: pointer; color: var(--text-muted); padding: 4px; border-radius: 4px;">⋮</button>
+
+              <div class="cal-dropdown" id="cal-dropdown-${ev.id}" style="display: none; position: absolute; right: 10px; top: 40px; background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 8px; box-shadow: var(--shadow-md); z-index: 10; min-width: 130px; overflow: hidden;">
+                 <div class="cal-edit-btn" data-id="${ev.id}" style="padding: 10px 16px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--text-primary); border-bottom: 1px solid var(--border-light); display: flex; align-items: center; gap: 8px; transition: background 0.2s;">
+                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> Edit
+                 </div>
+                 <div class="cal-del-btn" data-id="${ev.id}" style="padding: 10px 16px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--color-danger); display: flex; align-items: center; gap: 8px; transition: background 0.2s;">
+                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Hapus
+                 </div>
+              </div>
+            </div>
+          `;
+        }
       });
       eventsHtml += '</div>';
     }
@@ -218,7 +251,7 @@ const CalendarView = {
   renderDayCell(dayNum, dateKey, isOtherMonth, todayStr) {
     const isToday = dateKey === todayStr;
     const isSelected = dateKey === this.selectedDate;
-    const dayEvents = this.events.filter(e => e.date === dateKey);
+    const dayEvents = this.getAllEvents().filter(e => e.date === dateKey);
 
     let bg = 'transparent';
     let color = isOtherMonth ? 'rgba(0,0,0,0.3)' : 'var(--dk)';

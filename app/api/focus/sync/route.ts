@@ -9,13 +9,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing roomId' }, { status: 400 });
     }
 
-    // Trigger an event to the specific room that the QR was scanned
-    // This allows the desktop client to receive the signal and start the session without relying on a Chrome extension
-    const channelName = `presence-focus-${roomId}`;
-    await triggerPusherEvent(channelName, 'room-event', {
-      type: 'FB_QR_SCANNED',
-      timestamp: Date.now()
-    });
+    // Trigger on both channels:
+    // - presence-focus-{roomId}: used by multiplayer rooms
+    // - focus-solo-{roomId}: used by solo hardcore sessions
+    // The desktop FocusModal subscribes to whichever is relevant.
+    await Promise.allSettled([
+      triggerPusherEvent(`presence-focus-${roomId}`, 'room-event', {
+        type: 'FB_QR_SCANNED',
+        timestamp: Date.now()
+      }),
+      triggerPusherEvent(`focus-solo-${roomId}`, 'room-event', {
+        type: 'FB_QR_SCANNED',
+        timestamp: Date.now()
+      }),
+    ]);
 
     return NextResponse.json({ success: true, message: 'Sync signal sent successfully' });
   } catch (error: any) {

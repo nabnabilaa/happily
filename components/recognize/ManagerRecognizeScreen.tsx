@@ -137,6 +137,44 @@ export default function ManagerRecognizeScreen({ openModal }: Props) {
           );
         })()}
       </div>
+
+      {/* Riwayat Penukaran */}
+      <div style={{ marginTop: 32, marginBottom: 32 }}>
+        <SectionHeader icon="clock" label="Riwayat Penukaran" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {(!state.rewardHistory || state.rewardHistory.length === 0) ? (
+            <div style={{ textAlign: 'center', padding: 20, color: HP_TOKENS.inkMute, border: `1.5px dashed ${HP_TOKENS.line}`, borderRadius: 20 }}>
+              Belum ada riwayat penukaran.
+            </div>
+          ) : (
+            state.rewardHistory.map((h: any, idx: number) => (
+              <div key={idx} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '16px', borderRadius: 16, border: `1.5px solid ${HP_TOKENS.lineSoft}`,
+                background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{
+                    width: 40, height: 40, borderRadius: 12, background: HP_TOKENS.blueWash, color: HP_TOKENS.blue,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}>
+                    <HPGlyph name="gift" size={20} />
+                  </div>
+                  <div>
+                    <div style={{ ...HP_TEXT.h, fontSize: 14 }}>{h.title}</div>
+                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 4 }}>
+                      {new Date(h.date).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.coral }}>
+                  -{h.points} pts
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
     </div>
   );
 }

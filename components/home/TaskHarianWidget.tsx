@@ -18,6 +18,44 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
   const { state, updateState, user, awardXP, syncSkillProgress } = useHP();
   const [completingTask, setCompletingTask] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [highlightedTaskId, setHighlightedTaskId] = useState<any>(null);
+  // Tracks task IDs that already got XP this session — prevents undo→redo and link-update exploits
+  const xpAwardedRef = React.useRef<Set<any>>(new Set());
+
+  // Listen for navigation requests from GoalsScreen linked task rows
+  React.useEffect(() => {
+    const handler = (e: any) => {
+      const { taskId } = e.detail || {};
+      if (!taskId) return;
+
+      const priorities = state?.priorities || [];
+      const energyOrder: Record<string, number> = { high: 3, mid: 2, low: 1 };
+      const sorted = [...priorities].sort((a: any, b: any) => {
+        if (!!a.done !== !!b.done) return a.done ? 1 : -1;
+        const eA = energyOrder[String(a.energy || a.energy_level || 'mid').toLowerCase()] || 2;
+        const eB = energyOrder[String(b.energy || b.energy_level || 'mid').toLowerCase()] || 2;
+        if (eA !== eB) return eB - eA;
+        const tA = a.created_at ? new Date(a.created_at).getTime() : (isNaN(Number(a.id)) ? 0 : Number(a.id));
+        const tB = b.created_at ? new Date(b.created_at).getTime() : (isNaN(Number(b.id)) ? 0 : Number(b.id));
+        return tA !== tB ? tA - tB : String(a.id).localeCompare(String(b.id));
+      });
+
+      const idx = sorted.findIndex((p: any) => String(p.id) === String(taskId));
+      if (idx !== -1) {
+        const page = Math.ceil((idx + 1) / 5);
+        setCurrentPage(page);
+      }
+
+      setHighlightedTaskId(taskId);
+      setTimeout(() => {
+        const el = document.getElementById('task-harian-section');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+      setTimeout(() => setHighlightedTaskId(null), 3000);
+    };
+    window.addEventListener('hp_focus_task', handler);
+    return () => window.removeEventListener('hp_focus_task', handler);
+  }, [state?.priorities]);
 
   const togglePriority = useCallback((id: number) => {
     const priority = state?.priorities?.find((p: any) => p.id === id);
@@ -27,37 +65,43 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
       // Task is being marked DONE → open completion modal
       setCompletingTask(priority);
     } else {
-      // Task is being un-checked → just toggle
-      updateState((s: any) => {
-        const newPriorities = s.priorities.map((p: any) => 
-          p.id === id ? { ...p, done: false } : p
-        );
+      // Task is being un-done → reset semua progress + undo weekly target contribution
+      // Immediately persist undo to DB
+      fetch('/api/priorities/complete', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, done: false, partialProgress: 0, status: 'todo' }),
+      }).catch(e => console.error('Task undo persist failed:', e));
 
+      const prevPct = priority.done ? 100 : (priority.partial_progress || 0);
+      if (priority.weekly_target_id && prevPct > 0) {
+        const linkedForTarget = (state?.priorities || []).filter((p: any) =>
+          p.weekly_target_id && String(p.weekly_target_id) === String(priority.weekly_target_id)
+        );
+        const totalLinked = Math.max(1, linkedForTarget.length);
+        fetch('/api/kpi/weekly-targets', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: priority.weekly_target_id, delta: -(prevPct / totalLinked) })
+        }).catch(console.error);
+      }
+      updateState((s: any) => {
+        const newPriorities = s.priorities.map((p: any) =>
+          p.id === id ? { ...p, done: false, partial_progress: 0, status: 'todo', completed_at: null } : p
+        );
         const task = s.priorities.find((p: any) => p.id === id);
         const targetId = task?.goal_id || task?.kpi_id;
         const updatedGoals = s.goals.map((goal: any) => {
           if (targetId && String(goal.id) === String(targetId)) {
-            let total = 0;
-            let completed = 0;
-            const match = String(goal.metric || '').match(/^(\d+)\/(\d+)\s+task/);
-            if (match) {
-              completed = parseInt(match[1]);
-              total = parseInt(match[2]);
-            } else {
-              const todayTasks = newPriorities.filter((p: any) => (p.goal_id && String(p.goal_id) === String(goal.id)) || (p.kpi_id && String(p.kpi_id) === String(goal.id)));
-              total = todayTasks.length;
-              completed = todayTasks.filter((p: any) => p.done).length;
-            }
-
-            const newCompleted = Math.max(0, completed - 1);
-          // Progress % is now manual
-          return { ...goal, metric: total > 0 ? `${newCompleted}/${total} task selesai` : goal.metric };
-        }
-        return goal;
+            const todayTasks = newPriorities.filter((p: any) => (p.goal_id && String(p.goal_id) === String(goal.id)) || (p.kpi_id && String(p.kpi_id) === String(goal.id)));
+            const total = todayTasks.length;
+            const completed = todayTasks.filter((p: any) => p.done).length;
+            return { ...goal, metric: total > 0 ? `${completed}/${total} task selesai` : goal.metric };
+          }
+          return goal;
+        });
+        return { ...s, priorities: newPriorities, goals: updatedGoals };
       });
-
-      return { ...s, priorities: newPriorities, goals: updatedGoals };
-    });
     }
   }, [state, updateState]);
 
@@ -102,88 +146,130 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
     });
   }, [updateState]);
 
-  const confirmTaskComplete = useCallback((data: {
-    proofLinks: string[]; isProject: boolean; metricValue?: number; notes?: string;
+  const confirmTaskComplete = useCallback(async (data: {
+    proofLinks: string[]; isProject: boolean; metricValue?: number; notes?: string; completionPercent: number; completedAt?: string;
   }) => {
     if (!completingTask) return;
     const id = completingTask.id;
+    const pct = data.completionPercent ?? 100;
+    const isPartial = pct < 100;
 
-    awardXP('priority_complete', `Selesaikan: ${completingTask.title}`);
+    // Calculate final progress outside updateState so we can persist immediately
+    const prevProgress = completingTask.partial_progress || 0;
+    const newProgress = Math.min(100, prevProgress + pct);
+    const nowFullyDone = newProgress >= 100;
+    const progressDelta = newProgress - prevProgress;
+
+    // AWAIT the PATCH — DB must be updated BEFORE local state changes.
+    // Without await, any SSE-triggered fetchData that arrives before the PATCH completes
+    // reads stale done=false from DB, then the HPContext debounce timer fires with that
+    // stale value and overwrites the completed state.
+    try {
+      await fetch('/api/priorities/complete', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id,
+          done: nowFullyDone,
+          partialProgress: nowFullyDone ? 100 : newProgress,
+          status: nowFullyDone ? 'accepted' : 'in_progress',
+          proofLinks: data.proofLinks,
+          notes: data.notes,
+          metricValue: data.metricValue,
+          isProject: data.isProject || isPartial,
+          completedAt: data.completedAt || null,
+        }),
+      });
+    } catch (e) {
+      console.error('Task persist failed:', e);
+    }
+
+    // Side effects OUTSIDE updateState — React may invoke updateState callbacks multiple times
+    // (StrictMode dev), which would double-accumulate these API calls.
+    if (data.metricValue && completingTask.kpi_id && progressDelta > 0) {
+      const metricDelta = data.metricValue * progressDelta / 100;
+      fetch('/api/kpi/daily-input', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user?.id, kpiId: completingTask.kpi_id,
+          date: new Date().toISOString().slice(0, 10),
+          value: metricDelta, notes: data.notes || completingTask.title,
+          proofLink: data.proofLinks[0] || null,
+        })
+      }).catch(e => console.error('KPI input failed:', e));
+    }
+
+    if (progressDelta > 0 && completingTask.weekly_target_id) {
+      const linkedForTarget = (state?.priorities || []).filter((p: any) =>
+        p.weekly_target_id && String(p.weekly_target_id) === String(completingTask.weekly_target_id)
+      );
+      const totalLinked = Math.max(1, linkedForTarget.length);
+      const metricDelta = data.metricValue ? (data.metricValue * progressDelta / 100) : null;
+      const targetDelta = metricDelta ?? (progressDelta / totalLinked);
+      fetch('/api/kpi/weekly-targets', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: completingTask.weekly_target_id, delta: targetDelta })
+      }).catch(e => console.error('Weekly target update failed:', e));
+    }
+
+    // Award XP only on genuine first-time completion: task wasn't already done,
+    // actual new progress was made, and this task hasn't been awarded XP this session.
+    if (nowFullyDone && !completingTask.done && progressDelta > 0 && !xpAwardedRef.current.has(id)) {
+      xpAwardedRef.current.add(id);
+      awardXP('priority_complete', `Selesaikan: ${completingTask.title}`);
+    }
 
     updateState((s: any) => {
       const pIndex = s.priorities.findIndex((p: any) => p.id === id);
       if (pIndex === -1) return s;
 
       const newPriorities = [...s.priorities];
-      newPriorities[pIndex] = { 
-        ...newPriorities[pIndex], 
-        status: 'pending_review',
-        done: true,
+      const prevProgress = newPriorities[pIndex].partial_progress || 0;
+      const newProgress = Math.min(100, prevProgress + pct);
+      const nowFullyDone = newProgress >= 100;
+
+      newPriorities[pIndex] = {
+        ...newPriorities[pIndex],
+        done: nowFullyDone,
+        status: nowFullyDone ? 'accepted' : 'in_progress',
         proof_links: data.proofLinks,
-        is_project: data.isProject,
+        is_project: data.isProject || isPartial,
         metric_value: data.metricValue || null,
         completion_notes: data.notes || null,
-        completed_at: new Date().toISOString(),
+        partial_progress: nowFullyDone ? 100 : newProgress,
+        completed_at: nowFullyDone ? (data.completedAt ? new Date(data.completedAt).toISOString() : new Date().toISOString()) : null,
       };
-
-      const now = new Date();
-      const newLog = {
-        id: Date.now(),
-        type: 'quest_completion',
-        title: newPriorities[pIndex].title,
-        points: 50, // Updated to match actual backend task_approved reward
-        date: now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
-        day: now.toLocaleDateString('id-ID', { weekday: 'long' }),
-        time: now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-      };
-
-      // Submit metric value to KPI daily input API if applicable
-      if (data.metricValue && newPriorities[pIndex].kpi_id) {
-        fetch('/api/kpi/daily-input', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: user?.id,
-            kpiId: newPriorities[pIndex].kpi_id,
-            date: new Date().toISOString().slice(0, 10),
-            value: data.metricValue,
-            notes: data.notes || newPriorities[pIndex].title,
-            proofLink: data.proofLinks[0] || null,
-          })
-        }).catch(e => console.error('KPI input failed:', e));
-      }
 
       syncSkillProgress(newPriorities[pIndex].title + " " + (newPriorities[pIndex].kpi_title || ""), 2);
 
-      // Recalculate goal progress for linked goals (Tasks count only, not progress %)
+      const now = new Date();
+      const newLog = nowFullyDone ? {
+        id: Date.now(), type: 'quest_completion',
+        title: newPriorities[pIndex].title, points: 50,
+        date: now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
+        day: now.toLocaleDateString('id-ID', { weekday: 'long' }),
+        time: now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+      } : null;
+
       const task = newPriorities[pIndex];
       const targetId = task.goal_id || task.kpi_id;
       const updatedGoals = s.goals.map((goal: any) => {
         if (targetId && String(goal.id) === String(targetId)) {
-          let total = 0;
-          let completed = 0;
-          const match = String(goal.metric || '').match(/^(\d+)\/(\d+)\s+task/);
-          if (match) {
-            completed = parseInt(match[1]);
-            total = parseInt(match[2]);
-          } else {
-            const todayTasks = newPriorities.filter((p: any) => (p.goal_id && String(p.goal_id) === String(goal.id)) || (p.kpi_id && String(p.kpi_id) === String(goal.id)));
-            total = todayTasks.length;
-            completed = todayTasks.filter((p: any) => p.done).length;
-          }
-
-          const newCompleted = Math.max(0, Math.min(total, completed + 1));
-          // Progress % is now manual, we just update the text metric
-          return { ...goal, metric: total > 0 ? `${newCompleted}/${total} task selesai` : goal.metric };
+          const todayTasks = newPriorities.filter((p: any) => (p.goal_id && String(p.goal_id) === String(goal.id)) || (p.kpi_id && String(p.kpi_id) === String(goal.id)));
+          const total = todayTasks.length;
+          const completed = todayTasks.filter((p: any) => p.done).length;
+          return { ...goal, metric: total > 0 ? `${completed}/${total} task selesai` : goal.metric };
         }
         return goal;
       });
 
-      return { 
-        ...s, 
+      return {
+        ...s,
         priorities: newPriorities,
         goals: updatedGoals,
-        logbook: [newLog, ...(s.logbook || [])],
+        logbook: newLog ? [newLog, ...(s.logbook || [])] : (s.logbook || []),
         lastActivityDate: now.toISOString(),
         penaltyActive: false,
       };
@@ -198,6 +284,9 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
   const priorities = state.priorities || [];
   const done = priorities.filter((p: any) => p.done).length;
   const total = priorities.length;
+  const partialProgressPct = total > 0
+    ? Math.round(priorities.reduce((sum: number, p: any) => sum + (p.done ? 100 : (p.partial_progress || 0)), 0) / total)
+    : 0;
   
   const sortedPriorities = React.useMemo(() => {
     const energyOrder: Record<string, number> = { high: 3, mid: 2, low: 1 };
@@ -259,7 +348,7 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
             <div>
               <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.primary, fontWeight: 900, letterSpacing: 1, marginBottom: 4 }}>PROGRESS TASK HARI INI</div>
               <div style={{ ...HP_TEXT.h, fontSize: 28, color: HP_TOKENS.ink }}>
-                {total > 0 ? Math.round((done / total) * 100) : 0}% 
+                {partialProgressPct}%
                 <span style={{ fontSize: 14, color: HP_TOKENS.inkFade, fontWeight: 600, marginLeft: 8 }}>Tercapai</span>
               </div>
             </div>
@@ -271,7 +360,7 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
           
           <div style={{ position: 'relative', height: 12, background: HP_TOKENS.lineSoft, borderRadius: 6, overflow: 'hidden' }}>
             <div style={{ 
-               width: `${total > 0 ? (done / total) * 100 : 0}%`, 
+               width: `${partialProgressPct}%`,
                height: '100%', 
                background: `linear-gradient(to right, ${HP_TOKENS.primary}, #60A5FA)`, 
                borderRadius: 6,
@@ -311,13 +400,25 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {paginatedPriorities.length > 0 ? (
           paginatedPriorities.map((p: any) => (
-            <PriorityCard 
-              key={p.id} 
-              p={p} 
-              onToggle={() => togglePriority(p.id)} 
-              onDelete={() => deletePriority(p.id)}
-              onEdit={() => openModal('manage_priorities', { editTask: p })}
-            />
+            <div
+              key={p.id}
+              id={`task-card-${p.id}`}
+              style={{
+                borderRadius: 22,
+                outline: String(p.id) === String(highlightedTaskId) ? `3px solid ${HP_TOKENS.blue}` : 'none',
+                outlineOffset: 2,
+                boxShadow: String(p.id) === String(highlightedTaskId) ? `0 0 0 6px ${HP_TOKENS.blue}18` : 'none',
+                transition: 'outline 0.3s, box-shadow 0.3s',
+                animation: String(p.id) === String(highlightedTaskId) ? 'hpPulse 0.8s ease 2' : 'none',
+              }}
+            >
+              <PriorityCard
+                p={p}
+                onToggle={() => togglePriority(p.id)}
+                onDelete={() => deletePriority(p.id)}
+                onEdit={() => openModal('manage_priorities', { editTask: p })}
+              />
+            </div>
           ))
         ) : (
           <div style={{ 
