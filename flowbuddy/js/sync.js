@@ -168,8 +168,14 @@ async function flowbeeSyncAll(pullOnly = false, chatRequest = false) {
         readNotifIds: pendingReads,
       })
     });
+    let data;
+    try {
+      data = await res.json();
+    } catch (err) {
+      console.warn("Flowbuddy Sync: Server returned non-JSON response (likely Next.js compiling). Retrying later.");
+      return;
+    }
     
-    const data = await res.json();
     if (data.success) {
       if (!pullOnly) {
         window.fbCtx.deletedTaskIds = [];
