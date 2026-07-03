@@ -435,17 +435,17 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
                   </button>
                 )}
               </div>
-              
-              {/* Realtime Out of Range Warning */}
-              {isOutOfRange && (
-                <div style={{
-                  marginBottom: 16, padding: 12, borderRadius: 12, background: HP_TOKENS.coralSoft,
-                  color: HP_TOKENS.coral, fontSize: 13, fontWeight: 700, textAlign: 'center',
-                  animation: 'hpFadeIn 0.3s ease'
-                }}>
-                  ⚠️ Anda berada di luar area kantor. Jarak Anda: {Math.round(currentDistance!)}m, Maksimal: {maxRadius}m. Silakan pilih WFA jika bekerja dari luar.
-                </div>
-              )}
+            )}
+            
+            {/* Realtime Out of Range Warning */}
+            {isCheckingIn && checkInType === 'WFO' && isOutOfRange && (
+              <div style={{
+                marginBottom: 16, padding: 12, borderRadius: 12, background: HP_TOKENS.coralSoft,
+                color: HP_TOKENS.coral, fontSize: 13, fontWeight: 700, textAlign: 'center',
+                animation: 'hpFadeIn 0.3s ease'
+              }}>
+                ⚠️ Anda berada di luar area kantor. Jarak Anda: {Math.round(currentDistance!)}m, Maksimal: {maxRadius}m. Silakan pilih WFA jika bekerja dari luar.
+              </div>
             )}
 
             {/* Verifying Spinner */}
