@@ -216,7 +216,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
         metric_value: data.metricValue || null,
         completion_notes: data.notes || null,
         partial_progress: nowFullyDone ? 100 : newProgress,
-        completed_at: nowFullyDone ? (data.completedAt ? new Date(data.completedAt).toISOString() : new Date().toISOString()) : null,
+        completed_at: nowFullyDone ? (data.completedAt ? new Date(data.completedAt).toISOString().slice(0, 19).replace('T', ' ') : new Date().toISOString().slice(0, 19).replace('T', ' ')) : null,
       };
 
       const now = new Date();

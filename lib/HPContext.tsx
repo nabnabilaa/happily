@@ -196,7 +196,6 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         // Cache successfully fetched data
         localStorage.setItem(`hp_cached_state_${userId}`, JSON.stringify(data));
 
-        skipNextSyncRef.current = true;
         if (data.state) {
           // Sanitize habits to ensure 'done' status matches today's date in completedDates
           const todayReal = new Date();
@@ -212,6 +211,10 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
             return;
           }
 
+          // Only skip the next sync cycle when we actually apply DB state.
+          // Setting this before the guard (old code) left skipNextSyncRef=true even when
+          // we returned early, which caused the next local updateState to skip its debounce.
+          skipNextSyncRef.current = true;
           setState(prev => {
             // Preserve dashboard data that is fetched separately and not included in synced state
             const preserved: any = {};

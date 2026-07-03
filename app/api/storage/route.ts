@@ -515,7 +515,7 @@ export async function POST(request: Request) {
                   weekly_target_id=VALUES(weekly_target_id), weekly_target_title=VALUES(weekly_target_title),
                   partial_progress=VALUES(partial_progress), is_project=VALUES(is_project),
                   completed_at=VALUES(completed_at), due_date=VALUES(due_date)`,
-            args: [p.id, userId, p.title, p.description || null, p.targetDate || null, p.goal || null, p.goal_id || null, p.kpi_id || null, p.energy, p.est, p.done ? 1 : 0, p.verified ? 1 : 0, p.status || 'todo', p.tone, p.proof_links?.length ? JSON.stringify(p.proof_links) : (p.proof_link || null), p.completion_notes || p.proof_notes || null, p.metric_value || null, p.time_tracked || 0, p.timer_started_at || null, p.weekly_target_id || null, p.weekly_target_title || null, p.partial_progress || 0, p.is_project ? 1 : 0, p.completed_at || null, p.due_date || null]
+            args: [p.id, userId, p.title, p.description || null, p.targetDate || null, p.goal || null, p.goal_id || null, p.kpi_id || null, p.energy, p.est, p.done ? 1 : 0, p.verified ? 1 : 0, p.status || 'todo', p.tone, p.proof_links?.length ? JSON.stringify(p.proof_links) : (p.proof_link || null), p.completion_notes || p.proof_notes || null, p.metric_value || null, p.time_tracked || 0, p.timer_started_at || null, p.weekly_target_id || null, p.weekly_target_title || null, p.partial_progress || 0, p.is_project ? 1 : 0, p.completed_at ? String(p.completed_at).slice(0, 19).replace('T', ' ') : null, p.due_date || null]
           });
         }
       } catch (e) {
