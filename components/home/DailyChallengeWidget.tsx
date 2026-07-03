@@ -236,20 +236,20 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
                 {milestones.map((ms, idx) => {
                   const progressPct = (ms.target / maxXP) * 100;
                   const isAchieved = currentXP >= ms.target;
-                  return (
-                    <div key={`dot-${idx}`} style={{
-                      position: 'absolute', top: '50%', left: `${progressPct}%`,
-                      transform: isAchieved ? 'translate(-50%, -50%) scale(1.15)' : 'translate(-50%, -50%)',
-                      width: 28, height: 28, borderRadius: '50%',
-                      background: isAchieved ? '#fff' : 'rgba(255,255,255,0.2)',
-                      border: `2px solid ${isAchieved ? '#fff' : 'rgba(255,255,255,0.35)'}`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 14, transition: 'all 0.4s', zIndex: 2,
-                      boxShadow: isAchieved ? '0 4px 12px rgba(0,0,0,0.15)' : '0 2px 4px rgba(0,0,0,0.05)'
-                    }}>
-                      {ms.icon}
-                    </div>
-                  );
+                    return (
+                      <div key={`dot-${idx}`} style={{
+                        position: 'absolute', top: '50%', left: `${progressPct}%`,
+                        transform: isAchieved ? 'translate(-50%, -50%) scale(1.2)' : 'translate(-50%, -50%)',
+                        width: 36, height: 36, borderRadius: '50%',
+                        background: isAchieved ? '#fff' : 'rgba(255,255,255,0.2)',
+                        border: `2px solid ${isAchieved ? '#fff' : 'rgba(255,255,255,0.35)'}`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 18, transition: 'all 0.4s', zIndex: 2,
+                        boxShadow: isAchieved ? '0 4px 12px rgba(0,0,0,0.15)' : '0 2px 4px rgba(0,0,0,0.05)'
+                      }}>
+                        {ms.icon}
+                      </div>
+                    );
                 })}
               </div>
             </div>
