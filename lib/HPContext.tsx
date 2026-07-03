@@ -185,7 +185,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        const res = await fetch(`/api/storage?userId=${userId}`);
+        const res = await fetch(`/api/storage?userId=${userId}&_t=${Date.now()}`, { cache: 'no-store' });
         if (!res.ok) {
           const text = await res.text();
           throw new Error(`Storage fetch failed with status ${res.status}: ${text.slice(0, 100)}`);
