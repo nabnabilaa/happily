@@ -35,6 +35,9 @@ syncUserDataToExtension();
 window.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'FLOWBEE_WEBSITE_UPDATE') {
     syncUserDataToExtension();
+    try {
+      chrome.runtime.sendMessage({ type: 'FORCE_SYNC' });
+    } catch(e) {}
   }
 });
 

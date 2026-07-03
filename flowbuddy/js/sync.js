@@ -345,6 +345,9 @@ function fbDetectNudge(notif) {
   return null;
 }
 
+let _fbNudgeQueue = [];
+let _fbIsShowingNudge = false;
+
 function fbCheckNudgeNotifications(notifications) {
   if (!Array.isArray(notifications) || notifications.length === 0) return;
   const shown = window.fbCtx.shownNotifIds || [];
@@ -361,14 +364,25 @@ function fbCheckNudgeNotifications(notifications) {
         if (resp && resp.show) {
           window.fbCtx.shownNotifIds.push(n.id);
           window.fbCtx.pendingReadNotifIds.push(n.id);
-          fbShowNudgeOverlay(nudge);
+          _fbNudgeQueue.push(nudge);
+          fbProcessNudgeQueue();
         }
       });
     } catch (e) { /* context invalidated, ignore */ }
   });
 }
 
-function fbShowNudgeOverlay(nudge) {
+function fbProcessNudgeQueue() {
+  if (_fbIsShowingNudge || _fbNudgeQueue.length === 0) return;
+  _fbIsShowingNudge = true;
+  const nudge = _fbNudgeQueue.shift();
+  fbShowNudgeOverlay(nudge, () => {
+    _fbIsShowingNudge = false;
+    setTimeout(fbProcessNudgeQueue, 300);
+  });
+}
+
+function fbShowNudgeOverlay(nudge, onCloseCb) {
   // Inject keyframe animation once
   if (!document.getElementById('fb-nudge-style')) {
     const style = document.createElement('style');
@@ -483,7 +497,10 @@ function fbShowNudgeOverlay(nudge) {
     overlay.style.opacity = '0';
     const card = document.getElementById('fb-nudge-card');
     if (card) card.style.transform = 'scale(.9) translateY(20px)';
-    setTimeout(() => { if (overlay.parentNode) overlay.remove(); }, 350);
+    setTimeout(() => { 
+      if (overlay.parentNode) overlay.remove(); 
+      if (typeof onCloseCb === 'function') onCloseCb();
+    }, 350);
   };
 
   document.getElementById('fb-nudge-btn').addEventListener('click', dismiss);
