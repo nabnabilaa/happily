@@ -191,17 +191,19 @@ async function getDayDetail(userId: string, date: string) {
 
   // 5. Daily tasks (priorities) — by target_date or created_at
   const tasksRes = await db.execute({
-    sql: `SELECT id, title, status, is_done, partial_progress, time_tracked,
-                 proof_link, proof_notes, metric_value, kpi_id, kpi_title,
-                 weekly_target_id, weekly_target_title, goal_title,
-                 completed_at, due_date, target_date, is_project, energy_level, description
-          FROM daily_priorities
-          WHERE user_id = ?
+    sql: `SELECT dp.id, dp.title, dp.status, dp.is_done, dp.partial_progress, dp.time_tracked,
+                 dp.proof_link, dp.proof_notes, dp.metric_value, dp.kpi_id,
+                 dp.weekly_target_id, dp.weekly_target_title, dp.goal_title,
+                 dp.completed_at, dp.due_date, dp.target_date, dp.is_project, dp.energy_level, dp.description,
+                 k.title as kpi_title
+          FROM daily_priorities dp
+          LEFT JOIN kpis k ON dp.kpi_id = k.id
+          WHERE dp.user_id = ?
             AND DATE(COALESCE(
-              CONVERT_TZ(target_date, '+00:00', '+07:00'),
-              CONVERT_TZ(created_at, '+00:00', '+07:00')
+              CONVERT_TZ(dp.target_date, '+00:00', '+07:00'),
+              CONVERT_TZ(dp.created_at, '+00:00', '+07:00')
             )) = ?
-          ORDER BY is_done ASC, created_at ASC`,
+          ORDER BY dp.is_done ASC, dp.created_at ASC`,
     args: [userId, date]
   });
 
@@ -223,6 +225,7 @@ async function getDayDetail(userId: string, date: string) {
     isProject: !!t.is_project,
     energyLevel: t.energy_level || null,
   }));
+
 
   return NextResponse.json({
     date,
