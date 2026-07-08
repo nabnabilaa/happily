@@ -192,7 +192,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         }
         const data = await res.json();
         if (data.error) throw new Error(`${data.error}: ${data.details || ''}`);
-        
+
         // Cache successfully fetched data
         localStorage.setItem(`hp_cached_state_${userId}`, JSON.stringify(data));
 
@@ -241,7 +241,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
             mood: null, energy: null, tag: null, intention: "",
             priorities: [], feed: [], goals: [], habits: [],
             surveys: [], skills: [], learning: [], coaching: null, wellbeing: { dims: [], programs: [] },
-            points: data.user?.points || 0, coins: data.user?.points || 0, notifications: 0, 
+            points: data.user?.points || 0, coins: data.user?.points || 0, notifications: 0,
             rewards: [], rewardHistory: [],
             logbook: [], lastActivityDate: new Date().toISOString(),
             penaltyActive: false, penaltyThresholdDays: 3,
@@ -383,7 +383,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
       if (!prev) return null;
       let targetSkill = "";
       const s = source.toLowerCase();
-      
+
       // Use configurable skill mapping from global_settings if available
       const skillMapping = (prev as any)._skillMapping;
       if (skillMapping && Array.isArray(skillMapping)) {
@@ -395,7 +395,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
           }
         }
       }
-      
+
       // Fallback: general keyword matching
       if (!targetSkill) {
         if (s.includes("design") || s.includes("component") || s.includes("token") || s.includes("figma")) targetSkill = "Design";
@@ -456,7 +456,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
 
     const userId = user.id;
     const activeRole = user.userRole || user.role;
-    let cleanupFn = () => {};
+    let cleanupFn = () => { };
     const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
     const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'mt1';
 
@@ -520,7 +520,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
       sseActive = true;
       console.log("[Realtime] Starting SSE connection fallback...");
       eventSourceInstance = new EventSource(`/api/events?userId=${userId}`);
-      
+
       eventSourceInstance.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
@@ -589,7 +589,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
           // Subscribe to global presence channel for active status tracking
           const presenceChannelName = `presence-global`;
           const presenceChannel = pusher.subscribe(presenceChannelName);
-          
+
           presenceChannel.bind('pusher:subscription_succeeded', (members: any) => {
             console.log('[Realtime] Successfully subscribed to presence channel. Members:', members.count);
           });
@@ -717,7 +717,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         .then(data => {
           if (data.surveys) setState(prev => prev ? { ...prev, surveys: data.surveys } : null);
         })
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [user?.id, loading]);
 
@@ -736,7 +736,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         skipNextSyncRef.current = false;
         return; // Actually skip this sync cycle (data just came from server)
       }
-      
+
       // Store latest data for sync
       latestSyncRef.current = { state, user };
 
@@ -752,12 +752,12 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
       }
 
       const currentPayloadStr = JSON.stringify({ state: syncState, user });
-      
+
       // If the data we are about to sync is exactly the same as the last time we synced it, do nothing!
       if (lastSyncedPayloadRef.current === currentPayloadStr) {
         return;
       }
-      
+
       // Debounce: wait 1500ms after last state change before syncing (longer to avoid rapid login transitions)
       if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
       syncTimerRef.current = setTimeout(async () => {
@@ -767,7 +767,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
 
         const data = latestSyncRef.current;
         if (!data) return;
-        
+
         if (typeof window !== "undefined" && !navigator.onLine) {
           console.warn("Browser is offline, skipping sync.");
           return;
@@ -785,7 +785,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
           if (!isHRUserFinal) {
             delete finalSyncState.rewards;
           }
-          
+
           const finalPayload = JSON.stringify({ state: finalSyncState, user: data.user, userId: data.user.id });
           lastSyncedPayloadRef.current = JSON.stringify({ state: finalSyncState, user: data.user }); // Update ref immediately with consistent structure (no userId)
 
@@ -794,7 +794,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
             headers: { "Content-Type": "application/json" },
             body: finalPayload,
           });
-          
+
           if (response.ok) {
             if (typeof window !== "undefined") {
               window.postMessage({ type: "FLOWBEE_WEBSITE_UPDATE" }, "*");
@@ -858,7 +858,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
 
     const handleMessage = (event: MessageEvent) => {
       if (event.source !== window) return;
-      
+
       if (event.data?.type === "FLOWBEE_REQ_USER") {
         if (user) {
           window.postMessage({
@@ -929,7 +929,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
     }
   }, [userPayloadString]);
 
-  const contextValue = useMemo(() => ({ 
+  const contextValue = useMemo(() => ({
     state, user, updateState, updateUser, setUserRole, login, logout, awardXP,
     loading, refresh,
     refreshSurveys, resetData, syncSkillProgress,

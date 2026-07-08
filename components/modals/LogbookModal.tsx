@@ -424,13 +424,13 @@ export default function LogbookModal({ onClose, targetUserId, targetUserName }: 
               )}
 
               {/* XP Breakdown */}
-              {dayDetail.xpBreakdown.length > 0 && (
+              {(dayDetail.xpBreakdown || []).length > 0 && (
                 <div>
                   <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 6 }}>
                     EXP HARI INI: <span style={{ color: HP_TOKENS.sage, fontWeight: 900 }}>+{dayDetail.totalXP}</span>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    {dayDetail.xpBreakdown.map((xp: any, i: number) => (
+                    {(dayDetail.xpBreakdown || []).map((xp: any, i: number) => (
                       <div key={i} style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                         padding: '6px 10px', borderRadius: 8, background: HP_TOKENS.card,
@@ -557,12 +557,12 @@ export default function LogbookModal({ onClose, targetUserId, targetUserName }: 
               )}
 
               {/* Logbook entries */}
-              {dayDetail.logbookEntries.length > 0 && (
+              {(dayDetail.logbookEntries || []).length > 0 && (
                 <div>
                   <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 6 }}>
-                    CATATAN LOGBOOK ({dayDetail.logbookEntries.length})
+                    CATATAN LOGBOOK ({(dayDetail.logbookEntries || []).length})
                   </div>
-                  {dayDetail.logbookEntries.map((entry: any, i: number) => (
+                  {(dayDetail.logbookEntries || []).map((entry: any, i: number) => (
                     <div key={i} style={{
                       padding: 10, borderRadius: 10, background: HP_TOKENS.blueWash,
                       border: `1px solid ${HP_TOKENS.blue}15`, marginBottom: 6,
@@ -589,7 +589,7 @@ export default function LogbookModal({ onClose, targetUserId, targetUserName }: 
               )}
 
               {/* Empty state */}
-              {!dayDetail.attendance && !dayDetail.mood && dayDetail.xpBreakdown.length === 0 && dayDetail.logbookEntries.length === 0 && (dayDetail.tasks || []).length === 0 && (
+              {!dayDetail.attendance && !dayDetail.mood && (dayDetail.xpBreakdown || []).length === 0 && (dayDetail.logbookEntries || []).length === 0 && (dayDetail.tasks || []).length === 0 && (
                 <div style={{ textAlign: 'center', padding: 20, color: HP_TOKENS.inkMute }}>
                   <div style={{ fontSize: 24, marginBottom: 6 }}>🌙</div>
                   <div style={{ ...HP_TEXT.small }}>Tidak ada aktivitas pada hari ini</div>

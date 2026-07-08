@@ -145,20 +145,6 @@ export default function AttendanceWidget({ openModal }: AttendanceWidgetProps) {
           </button>
         </div>
 
-        {/* History link */}
-        <button
-          onClick={() => openModal('logbook')}
-          className="hp-tap"
-          style={{
-            width: '100%', padding: '8px', borderTop: `1px solid ${HP_TOKENS.lineSoft}`,
-            background: HP_TOKENS.paper, border: 'none', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, color: HP_TOKENS.inkMute,
-          }}
-        >
-          <HPGlyph name="calendar" size={12} color={HP_TOKENS.inkMute} />
-          Lihat Riwayat & Logbook
-        </button>
       </HPCard>
     );
   }
@@ -194,19 +180,6 @@ export default function AttendanceWidget({ openModal }: AttendanceWidgetProps) {
           </div>
         </div>
       </div>
-      <button
-        onClick={() => openModal('logbook')}
-        className="hp-tap"
-        style={{
-          width: '100%', padding: '8px', borderTop: `1px solid ${HP_TOKENS.lineSoft}`,
-          background: HP_TOKENS.paper, border: 'none', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-          fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, color: HP_TOKENS.inkMute,
-        }}
-      >
-        <HPGlyph name="calendar" size={12} color={HP_TOKENS.inkMute} />
-        Lihat Riwayat & Logbook
-      </button>
     </HPCard>
   );
 }
