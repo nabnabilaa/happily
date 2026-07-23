@@ -6,35 +6,33 @@ import HPGlyph from '@/components/ui/HPGlyph';
 import HPCard from '@/components/ui/HPCard';
 import { useHP } from '@/lib/HPContext';
 import OnboardingScreen from '@/components/auth/OnboardingScreen';
+import { DEFAULT_ONBOARDING_STEPS, normalizeOnboardingSteps, resolveStepOptions } from '@/lib/onboardingUtils';
 
 interface Props {
   onClose: () => void;
 }
-
-const DEFAULT_STEPS = [
-  {tag:'⚡ LANGKAH 1 / 4',q:'Kamu di divisi apa?',hint:'Bantu aku sesuaikan pengalaman yang pas buatmu',
-   opts:[{e:'💻',bg:'#EAF4FD',l:'Developer / IT'},{e:'🎨',bg:'#FAF0FF',l:'Desainer / Kreatif'},{e:'📊',bg:'#EAFAF3',l:'Marketing / Sales'},{e:'📋',bg:'#FFF5EA',l:'Manajer / Tim Lead'},{e:'📚',bg:'#F5F3FF',l:'Lainnya'}]},
-  {tag:'🎯 LANGKAH 2 / 4',q:'Gimana mood kerjamu hari ini?',hint:'Cerita jujur aja, Buddy siap adaptasi buat kamu',
-   opts:[{e:'⚡',bg:'#FFFAEC',l:'Super Semangat!'},{e:'😊',bg:'#EAFAF3',l:'Oke-oke aja'},{e:'😴',bg:'#EEF0FF',l:'Agak Lelah'},{e:'😤',bg:'#FAEAEA',l:'Butuh Motivasi'}]},
-  {tag:'🔥 LANGKAH 3 / 4',q:'Apa tantangan terbesar kamu?',hint:'Pilih yang paling sering bikin kamu stuck',
-   opts:[{e:'⏰',bg:'#FFF5EA',l:'Susah Fokus'},{e:'📬',bg:'#EAF4FD',l:'Terlalu Banyak Task'},{e:'😴',bg:'#EEF0FF',l:'Gampang Procrastinate'},{e:'🤝',bg:'#EAFAF3',l:'Koordinasi Tim'}]},
-  {tag:'🚀 LANGKAH 4 / 4',q:'Mau mulai dari mana duluan?',hint:'Buddy akan siapkan workspace yang sesuai pilihanmu',
-   opts:[{e:'✅',bg:'#EAFAF3',l:'Atur To-Do List'},{e:'🎯',bg:'#FFF5EA',l:'Set Target Mingguan'},{e:'⏱️',bg:'#EEF0FF',l:'Mulai Pomodoro'},{e:'📊',bg:'#EAF4FD',l:'Lihat Dashboard'}]},
-];
 
 export default function ManageOnboardingModal({ onClose }: Props) {
   const { state, updateState, user } = useHP();
   const [steps, setSteps] = useState<any[]>([]);
   const [previewMode, setPreviewMode] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [departments, setDepartments] = useState<{ name: string }[]>([]);
 
   useEffect(() => {
     if (state?.onboardingConfig && state.onboardingConfig.length > 0) {
-      setSteps(JSON.parse(JSON.stringify(state.onboardingConfig)));
+      setSteps(normalizeOnboardingSteps(JSON.parse(JSON.stringify(state.onboardingConfig))));
     } else {
-      setSteps(JSON.parse(JSON.stringify(DEFAULT_STEPS)));
+      setSteps(JSON.parse(JSON.stringify(DEFAULT_ONBOARDING_STEPS)));
     }
   }, [state?.onboardingConfig]);
+
+  useEffect(() => {
+    fetch('/api/hr/departments')
+      .then(res => res.json())
+      .then(data => setDepartments(data.departments || []))
+      .catch(() => {});
+  }, []);
 
   const handleSave = async () => {
     updateState({ onboardingConfig: steps });
@@ -153,15 +151,33 @@ export default function ManageOnboardingModal({ onClose }: Props) {
                     style={{ width: '100%', padding: '12px', borderRadius: 12, border: `1px solid ${HP_TOKENS.line}`, marginBottom: 16, fontFamily: HP_FONT, fontSize: 14 }}
                   />
                   <div style={{ fontSize: 13, fontWeight: 700, color: HP_TOKENS.inkMute, marginBottom: 8 }}>Opsi Jawaban</div>
-                  {step.opts.map((opt: any, oidx: number) => (
-                    <div key={oidx} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                      <input value={opt.e} onChange={e => { const n = [...steps]; n[idx].opts[oidx].e = e.target.value; setSteps(n); }} style={{ width: 50, padding: 8, borderRadius: 8, border: `1px solid ${HP_TOKENS.line}`, textAlign: 'center' }} />
-                      <input value={opt.bg} onChange={e => { const n = [...steps]; n[idx].opts[oidx].bg = e.target.value; setSteps(n); }} style={{ width: 80, padding: 8, borderRadius: 8, border: `1px solid ${HP_TOKENS.line}` }} />
-                      <input value={opt.l} onChange={e => { const n = [...steps]; n[idx].opts[oidx].l = e.target.value; setSteps(n); }} style={{ flex: 1, padding: 8, borderRadius: 8, border: `1px solid ${HP_TOKENS.line}` }} />
-                      <button onClick={() => { const n = [...steps]; n[idx].opts.splice(oidx,1); setSteps(n); }} style={{ background: 'transparent', border: 'none', color: HP_TOKENS.coral, cursor: 'pointer' }}>Hapus</button>
+                  {step.dynamicSource === 'departments' ? (
+                    <div style={{ marginBottom: 16 }}>
+                      <div style={{ fontSize: 12, color: HP_TOKENS.inkMute, marginBottom: 10, lineHeight: 1.5 }}>
+                        Opsi langkah ini otomatis mengikuti daftar <b>Departemen</b> yang dikelola HR (menu People &gt; Permintaan Departemen), jadi tidak diedit manual di sini. Jawaban karyawan akan selalu cocok dengan departemen asli.
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        {resolveStepOptions(step, departments).map((o: any, oi: number) => (
+                          <div key={oi} style={{ padding: '4px 10px', borderRadius: 20, background: o.bg, fontSize: 12, fontWeight: 600 }}>{o.e} {o.l}</div>
+                        ))}
+                        {departments.length === 0 && (
+                          <div style={{ fontSize: 12, color: HP_TOKENS.inkMute }}>Belum ada departemen terdaftar di HR.</div>
+                        )}
+                      </div>
                     </div>
-                  ))}
-                  <button onClick={() => { const n = [...steps]; n[idx].opts.push({e:'✨', bg:'#f0f0f0', l:'Opsi baru'}); setSteps(n); }} style={{ background: HP_TOKENS.lineSoft, padding: '6px 12px', borderRadius: 8, border: 'none', fontSize: 12, cursor: 'pointer', marginBottom: 16 }}>+ Tambah Opsi</button>
+                  ) : (
+                    <>
+                      {step.opts.map((opt: any, oidx: number) => (
+                        <div key={oidx} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                          <input value={opt.e} onChange={e => { const n = [...steps]; n[idx].opts[oidx].e = e.target.value; setSteps(n); }} style={{ width: 50, padding: 8, borderRadius: 8, border: `1px solid ${HP_TOKENS.line}`, textAlign: 'center' }} />
+                          <input value={opt.bg} onChange={e => { const n = [...steps]; n[idx].opts[oidx].bg = e.target.value; setSteps(n); }} style={{ width: 80, padding: 8, borderRadius: 8, border: `1px solid ${HP_TOKENS.line}` }} />
+                          <input value={opt.l} onChange={e => { const n = [...steps]; n[idx].opts[oidx].l = e.target.value; setSteps(n); }} style={{ flex: 1, padding: 8, borderRadius: 8, border: `1px solid ${HP_TOKENS.line}` }} />
+                          <button onClick={() => { const n = [...steps]; n[idx].opts.splice(oidx,1); setSteps(n); }} style={{ background: 'transparent', border: 'none', color: HP_TOKENS.coral, cursor: 'pointer' }}>Hapus</button>
+                        </div>
+                      ))}
+                      <button onClick={() => { const n = [...steps]; n[idx].opts.push({e:'✨', bg:'#f0f0f0', l:'Opsi baru'}); setSteps(n); }} style={{ background: HP_TOKENS.lineSoft, padding: '6px 12px', borderRadius: 8, border: 'none', fontSize: 12, cursor: 'pointer', marginBottom: 16 }}>+ Tambah Opsi</button>
+                    </>
+                  )}
                   <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                     <button onClick={() => setEditingIndex(null)} style={{ background: HP_TOKENS.lavender, color: '#fff', padding: '8px 16px', borderRadius: 12, border: 'none', fontWeight: 700, cursor: 'pointer' }}>Selesai Edit</button>
                   </div>
@@ -173,18 +189,22 @@ export default function ManageOnboardingModal({ onClose }: Props) {
                     <button onClick={() => moveStep(idx, 1)} disabled={idx===steps.length-1} style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: idx===steps.length-1?0.2:1 }}>⬇️</button>
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 12, fontWeight: 800, color: HP_TOKENS.lavender, marginBottom: 4 }}>LANGKAH {idx + 1}</div>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: HP_TOKENS.lavender, marginBottom: 4 }}>
+                      LANGKAH {idx + 1}{step.dynamicSource === 'departments' ? ' · 🔗 Terhubung ke Departemen HR' : ''}
+                    </div>
                     <div style={{ fontSize: 16, fontWeight: 800, color: HP_TOKENS.ink }}>{step.q}</div>
                     <div style={{ fontSize: 13, color: HP_TOKENS.inkSoft, marginTop: 2, marginBottom: 12 }}>{step.hint}</div>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      {step.opts.map((o: any, oi: number) => (
+                      {resolveStepOptions(step, departments).map((o: any, oi: number) => (
                         <div key={oi} style={{ padding: '4px 10px', borderRadius: 20, background: o.bg, fontSize: 12, fontWeight: 600 }}>{o.e} {o.l}</div>
                       ))}
                     </div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <button onClick={() => setEditingIndex(idx)} style={{ background: HP_TOKENS.lineSoft, border: 'none', padding: '8px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>Edit</button>
-                    <button onClick={() => removeStep(idx)} style={{ background: 'transparent', border: `1px solid ${HP_TOKENS.coral}40`, color: HP_TOKENS.coral, padding: '8px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>Hapus</button>
+                    {step.dynamicSource !== 'departments' && (
+                      <button onClick={() => removeStep(idx)} style={{ background: 'transparent', border: `1px solid ${HP_TOKENS.coral}40`, color: HP_TOKENS.coral, padding: '8px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>Hapus</button>
+                    )}
                   </div>
                 </div>
               )}

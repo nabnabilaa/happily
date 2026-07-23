@@ -5,10 +5,20 @@ import React, { useEffect, useRef, useState } from 'react';
 import './OnboardingScreen.css';
 import BeeMascot from '@/components/ui/BeeMascot';
 import { useHP } from '@/lib/HPContext';
+import { normalizeOnboardingSteps, resolveStepOptions, DEFAULT_ONBOARDING_STEPS } from '@/lib/onboardingUtils';
 
-export default function OnboardingScreen({ userName, onFinish, skipSplash, previewConfig }: { userName?: string, onFinish?: (data: { job: string }) => void, skipSplash?: boolean, previewConfig?: any[] }) {
+export default function OnboardingScreen({ userName, onFinish, skipSplash, previewConfig }: { userName?: string, onFinish?: (data: { job: string, answers: { question: string, answer: string | null }[] }) => void, skipSplash?: boolean, previewConfig?: any[] }) {
     const { state } = useHP();
     const containerRef = useRef<HTMLDivElement>(null);
+    // Daftar departemen HR — diambil di background agar step "divisi" selalu
+    // menampilkan pilihan yang nyambung dengan departemen asli, bukan teks bebas.
+    const deptListRef = useRef<{ name: string }[]>([]);
+    useEffect(() => {
+        fetch('/api/hr/departments')
+            .then(res => res.json())
+            .then(data => { deptListRef.current = data.departments || []; })
+            .catch(() => {});
+    }, []);
     const [buddyMood, setBuddyMood] = useState<'neutral'|'happy'|'sad'|'angry'>('neutral');
     const [clickCount, setClickCount] = useState(0);
     const [buddyMsg, setBuddyMsg] = useState('Hai! Senang ketemu kamu 🤜\nAku Buddy, bantu harimu lebih produktif!');
@@ -145,17 +155,7 @@ $('nameIn').addEventListener('input',()=>{
 /* ══════════════════════════════
    S3 — ONBOARD
 ══════════════════════════════ */
-const DEFAULT_STEPS=[
-  {tag:'⚡ LANGKAH 1 / 4',q:'Kamu di divisi apa?',hint:'Bantu aku sesuaikan pengalaman yang pas buatmu',
-   opts:[{e:'💻',bg:'#EAF4FD',l:'Developer / IT'},{e:'🎨',bg:'#FAF0FF',l:'Desainer / Kreatif'},{e:'📊',bg:'#EAFAF3',l:'Marketing / Sales'},{e:'📋',bg:'#FFF5EA',l:'Manajer / Tim Lead'},{e:'📚',bg:'#F5F3FF',l:'Lainnya'}]},
-  {tag:'🎯 LANGKAH 2 / 4',q:'Gimana mood kerjamu hari ini?',hint:'Cerita jujur aja, Buddy siap adaptasi buat kamu',
-   opts:[{e:'⚡',bg:'#FFFAEC',l:'Super Semangat!'},{e:'😊',bg:'#EAFAF3',l:'Oke-oke aja'},{e:'😴',bg:'#EEF0FF',l:'Agak Lelah'},{e:'😤',bg:'#FAEAEA',l:'Butuh Motivasi'}]},
-  {tag:'🔥 LANGKAH 3 / 4',q:'Apa tantangan terbesar kamu?',hint:'Pilih yang paling sering bikin kamu stuck',
-   opts:[{e:'⏰',bg:'#FFF5EA',l:'Susah Fokus'},{e:'📬',bg:'#EAF4FD',l:'Terlalu Banyak Task'},{e:'😴',bg:'#EEF0FF',l:'Gampang Procrastinate'},{e:'🤝',bg:'#EAFAF3',l:'Koordinasi Tim'}]},
-  {tag:'🚀 LANGKAH 4 / 4',q:'Mau mulai dari mana duluan?',hint:'Buddy akan siapkan workspace yang sesuai pilihanmu',
-   opts:[{e:'✅',bg:'#EAFAF3',l:'Atur To-Do List'},{e:'🎯',bg:'#FFF5EA',l:'Set Target Mingguan'},{e:'⏱️',bg:'#EEF0FF',l:'Mulai Pomodoro'},{e:'📊',bg:'#EAF4FD',l:'Lihat Dashboard'}]},
-];
-const STEPS = (previewConfig && previewConfig.length > 0) ? previewConfig : (state?.onboardingConfig && state.onboardingConfig.length > 0 ? state.onboardingConfig : DEFAULT_STEPS);
+const STEPS = normalizeOnboardingSteps((previewConfig && previewConfig.length > 0) ? previewConfig : (state?.onboardingConfig && state.onboardingConfig.length > 0 ? state.onboardingConfig : DEFAULT_ONBOARDING_STEPS));
 
 let obCur=0,obSel=null,obAns=[];
 
@@ -181,7 +181,7 @@ function renderOb(first=false){
   }
 
   const cont=$('obOpts');cont.innerHTML='';
-  s.opts.forEach((o,i)=>{
+  resolveStepOptions(s, deptListRef.current).forEach((o,i)=>{
     const card=window.document.createElement('div');card.className='opt';card.id=`o${i}`;
     card.innerHTML=`<div class="opt-ico" style="background:${o.bg}">${o.e}</div><span class="opt-lbl">${o.l}</span><div class="opt-tick">✓</div>`;
     card.onclick=()=>selectOpt(i,o.l);
@@ -338,7 +338,8 @@ function restart(){
         window.restart = async () => {
             const btn = $('s6btn');
             if (btn) btn.textContent = 'Memulai...';
-            if (onFinish) onFinish({ job: window._job || '' });
+            const answers = STEPS.map((s, i) => ({ question: s.q, answer: obAns[i] ?? null }));
+            if (onFinish) onFinish({ job: window._job || '', answers });
         };
 
         // Setup background elemen untuk S4 (game screen) — dipakai baik saat splash maupun skip splash

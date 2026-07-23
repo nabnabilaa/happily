@@ -474,6 +474,7 @@ export async function POST() {
     { desc: "users.division_id", sql: "ALTER TABLE users ADD COLUMN division_id INT DEFAULT NULL" },
     { desc: "users.department_status", sql: "ALTER TABLE users ADD COLUMN department_status VARCHAR(20) DEFAULT NULL" },
     { desc: "users.hr_access", sql: "ALTER TABLE users ADD COLUMN hr_access INTEGER DEFAULT 0" },
+    { desc: "users.onboarding_answers", sql: "ALTER TABLE users ADD COLUMN onboarding_answers TEXT DEFAULT NULL" },
 
     // ── Divisions table ──
     { desc: "divisions.manager_id", sql: "ALTER TABLE divisions ADD COLUMN manager_id VARCHAR(100) DEFAULT NULL" },
@@ -741,7 +742,7 @@ export async function POST() {
   try {
     const usersSchema = await db.execute("SHOW COLUMNS FROM users");
     const userCols = usersSchema.rows.map(r => String(r.Field || r.field));
-    const requiredUserCols = ["manager_id", "department", "coins", "user_role_context", "is_onboarded", "division_id"];
+    const requiredUserCols = ["manager_id", "department", "coins", "user_role_context", "is_onboarded", "division_id", "onboarding_answers"];
     for (const col of requiredUserCols) {
       verification.push(userCols.includes(col) ? `✅ users.${col}` : `❌ users.${col} MISSING`);
     }

@@ -17,8 +17,8 @@ export async function GET(request: Request) {
 
     // 1. User basic info
     const userRes = await db.execute({
-      sql: `SELECT id, name, email, role, job_title, department, manager_id, 
-                   avatar_image, points, level, streak, coins, created_at
+      sql: `SELECT id, name, email, role, job_title, department, department_status, manager_id,
+                   avatar_image, points, level, streak, coins, created_at, onboarding_answers
             FROM users WHERE id = ?`,
       args: [userId]
     });
@@ -28,6 +28,13 @@ export async function GET(request: Request) {
     }
 
     const user = userRes.rows[0] as any;
+
+    // Jawaban onboarding tersimpan sebagai JSON — parse jadi knowledge tambahan per user.
+    let onboardingAnswers: { question: string; answer: string | null }[] = [];
+    if (user.onboarding_answers) {
+      try { onboardingAnswers = JSON.parse(user.onboarding_answers); } catch { onboardingAnswers = []; }
+    }
+    delete user.onboarding_answers;
 
     // 2. Manager name
     let managerName = null;
@@ -107,6 +114,7 @@ export async function GET(request: Request) {
         ...user,
         managerName,
       },
+      onboardingAnswers,
       attendance: {
         totalDays: Number(att.total_days) || 0,
         totalMinutes: Number(att.total_minutes) || 0,

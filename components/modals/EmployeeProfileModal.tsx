@@ -24,7 +24,7 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
   const { user } = useHP();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'kpi' | 'logbook'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'kpi' | 'logbook' | 'onboarding'>('overview');
 
   // Extra data
   const [kpis, setKpis] = useState<any[]>([]);
@@ -332,6 +332,7 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
             { key: 'overview', label: '📊 Ringkasan' },
             { key: 'kpi', label: '🎯 KPI' },
             { key: 'logbook', label: '📖 Logbook' },
+            { key: 'onboarding', label: '📝 Onboarding' },
           ].map(t => (
             <button key={t.key} onClick={() => setActiveTab(t.key as any)} className="hp-tap" style={{
               flex: '0 0 auto', padding: '8px 14px', borderRadius: 12,
@@ -532,6 +533,40 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
                   </HPCard>
                 );
               })
+            )}
+          </div>
+        )}
+
+        {/* ── ONBOARDING TAB — knowledge tambahan dari jawaban onboarding karyawan ── */}
+        {activeTab === 'onboarding' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <HPCard padding={14}>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 10 }}>🏢 DIVISI</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ ...HP_TEXT.h, fontSize: 15 }}>{u.department || 'Belum dipilih'}</div>
+                {u.department_status && (
+                  <div style={{
+                    padding: '3px 10px', borderRadius: 8, fontSize: 10, fontWeight: 800, fontFamily: HP_FONT,
+                    background: u.department_status === 'approved' ? HP_TOKENS.sageWash : u.department_status === 'rejected' ? '#FAEAEA' : HP_TOKENS.yellowSoft,
+                    color: u.department_status === 'approved' ? HP_TOKENS.sage : u.department_status === 'rejected' ? HP_TOKENS.coral : '#8A6814',
+                  }}>
+                    {u.department_status === 'approved' ? 'DISETUJUI' : u.department_status === 'rejected' ? 'DITOLAK' : 'MENUNGGU HR'}
+                  </div>
+                )}
+              </div>
+            </HPCard>
+
+            {(p.onboardingAnswers || []).length === 0 ? (
+              <div style={{ textAlign: 'center', padding: 30, color: HP_TOKENS.inkMute, border: `1.5px dashed ${HP_TOKENS.line}`, borderRadius: 16 }}>
+                Belum ada data onboarding tercatat untuk karyawan ini.
+              </div>
+            ) : (
+              (p.onboardingAnswers || []).map((qa: any, i: number) => (
+                <HPCard key={i} padding={14}>
+                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 6 }}>{qa.question}</div>
+                  <div style={{ ...HP_TEXT.h, fontSize: 14 }}>{qa.answer || '—'}</div>
+                </HPCard>
+              ))
             )}
           </div>
         )}

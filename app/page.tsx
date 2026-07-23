@@ -299,14 +299,14 @@ function AppContent() {
     );
   }
 
-  const handleOnboardingFinish = async ({ job }: { job: string }) => {
+  const handleOnboardingFinish = async ({ job, answers }: { job: string, answers?: { question: string, answer: string | null }[] }) => {
     updateState({ onboarded: true });
-    // Simpan status onboarding dan divisi ke DB
+    // Simpan status onboarding, divisi, dan seluruh jawaban onboarding (knowledge tambahan per user) ke DB
     try {
       await fetch("/api/onboarding/complete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id, department: job || null }),
+        body: JSON.stringify({ userId: user.id, department: job || null, answers: answers || [] }),
       });
     } catch (e) {
       console.error("Failed to save onboarding department:", e);
