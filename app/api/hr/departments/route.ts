@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getRequesterAccess, canHrAdmin } from "@/lib/hrAuth";
 
 export async function GET(request: Request) {
   try {
@@ -15,8 +16,8 @@ export async function POST(request: Request) {
     const { name, requesterId } = await request.json();
     if (!name || !requesterId) return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
 
-    const roleCheck = await db.execute({ sql: "SELECT role FROM users WHERE id = ?", args: [requesterId] });
-    if (roleCheck.rows[0]?.role !== 'hr') return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    const requester = await getRequesterAccess(requesterId);
+    if (!canHrAdmin(requester.role, requester.hrAccess)) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
     await db.execute({ sql: "INSERT INTO departments (name) VALUES (?)", args: [name] });
     return NextResponse.json({ success: true });
@@ -30,8 +31,8 @@ export async function PUT(request: Request) {
     const { id, name, requesterId } = await request.json();
     if (!id || !name || !requesterId) return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
 
-    const roleCheck = await db.execute({ sql: "SELECT role FROM users WHERE id = ?", args: [requesterId] });
-    if (roleCheck.rows[0]?.role !== 'hr') return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    const requester = await getRequesterAccess(requesterId);
+    if (!canHrAdmin(requester.role, requester.hrAccess)) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
     // Get old name to update users
     const oldDept = await db.execute({ sql: "SELECT name FROM departments WHERE id = ?", args: [id] });
@@ -55,8 +56,8 @@ export async function DELETE(request: Request) {
     const { id, requesterId } = await request.json();
     if (!id || !requesterId) return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
 
-    const roleCheck = await db.execute({ sql: "SELECT role FROM users WHERE id = ?", args: [requesterId] });
-    if (roleCheck.rows[0]?.role !== 'hr') return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    const requester = await getRequesterAccess(requesterId);
+    if (!canHrAdmin(requester.role, requester.hrAccess)) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
     await db.execute({ sql: "DELETE FROM departments WHERE id = ?", args: [id] });
     return NextResponse.json({ success: true });

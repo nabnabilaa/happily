@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getRequesterAccess, canManageTeam } from "@/lib/hrAuth";
 
 export async function GET(request: Request) {
   try {
@@ -8,17 +9,13 @@ export async function GET(request: Request) {
 
     if (!requesterId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const roleCheck = await db.execute({
-      sql: "SELECT role FROM users WHERE id = ?",
-      args: [requesterId]
-    });
-
-    const role = roleCheck.rows[0]?.role;
-    if (role !== 'hr' && role !== 'manager') {
+    const requester = await getRequesterAccess(requesterId);
+    if (!canManageTeam(requester.role, requester.hrAccess)) {
       return NextResponse.json({ error: "Unauthorized. Only HR and Managers can view user lists." }, { status: 403 });
     }
 
-    const res = await db.execute("SELECT id, name, email, role, level, points, job_title, department, manager_id, password_hash, avatar_image FROM users ORDER BY created_at DESC");
+    // SELECT * agar aman jika kolom hr_access belum dimigrasi (kolom hilang → undefined).
+    const res = await db.execute("SELECT * FROM users ORDER BY created_at DESC");
     
     return NextResponse.json({ users: res.rows });
   } catch (error) {

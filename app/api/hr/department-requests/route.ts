@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getRequesterAccess, canHrAdmin } from "@/lib/hrAuth";
 
 // GET — daftar user dengan department_status = 'pending'
 export async function GET(request: Request) {
@@ -10,13 +11,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "requesterId wajib diisi" }, { status: 400 });
   }
 
-  // Pastikan requester adalah HR
-  const hrCheck = await db.execute({
-    sql: "SELECT role FROM users WHERE id = ?",
-    args: [requesterId],
-  });
-
-  if (!hrCheck.rows.length || hrCheck.rows[0].role !== "hr") {
+  // Pastikan requester bisa akses HR (role hr ATAU hr_access)
+  const requester = await getRequesterAccess(requesterId);
+  if (!canHrAdmin(requester.role, requester.hrAccess)) {
     return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
   }
 
@@ -40,13 +37,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "requesterId, targetUserId, dan action wajib diisi" }, { status: 400 });
     }
 
-    // Pastikan requester adalah HR
-    const hrCheck = await db.execute({
-      sql: "SELECT role FROM users WHERE id = ?",
-      args: [requesterId],
-    });
-
-    if (!hrCheck.rows.length || hrCheck.rows[0].role !== "hr") {
+    // Pastikan requester bisa akses HR (role hr ATAU hr_access)
+    const requester = await getRequesterAccess(requesterId);
+    if (!canHrAdmin(requester.role, requester.hrAccess)) {
       return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
     }
 

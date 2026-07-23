@@ -70,6 +70,8 @@ interface HPUser {
   userRole?: UserRole | null;
   avatarImage?: string;
   department?: string;
+  /** Akses HR-Admin tambahan: employee/manager yang boleh switch ke konsol HR. */
+  hrAccess?: boolean;
 }
 
 interface HPContextType {

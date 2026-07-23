@@ -19,7 +19,8 @@ export default function EditUserModal({ onClose, user, managers, onSave, onDelet
     name: user.name || "",
     role: user.role || "employee",
     jobTitle: user.job_title || "",
-    department: user.department || ""
+    department: user.department || "",
+    hrAccess: Number(user.hr_access) === 1
   });
 
   const [departments, setDepartments] = useState<any[]>([]);
@@ -32,10 +33,18 @@ export default function EditUserModal({ onClose, user, managers, onSave, onDelet
 
   const handleSave = () => {
     onSave({
+      newRole: form.role,
       jobTitle: form.jobTitle,
-      department: form.department
+      department: form.department,
+      hrAccess: form.role === 'hr' ? false : form.hrAccess
     });
     onClose();
+  };
+
+  const ROLE_LABELS: Record<string, string> = {
+    employee: 'Employee',
+    manager: 'Manager',
+    hr: 'HR Admin',
   };
 
   const inputStyle: React.CSSProperties = {
@@ -65,11 +74,30 @@ export default function EditUserModal({ onClose, user, managers, onSave, onDelet
 
 
 
+        {/* Role → menentukan akses (Employee / Manager / HR Admin) */}
+        <div>
+          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 8, display: 'block' }}>ROLE / AKSES</label>
+          <select
+            value={form.role}
+            onChange={e => setForm({...form, role: e.target.value})}
+            style={selectStyle}
+          >
+            <option value="employee">Employee</option>
+            <option value="manager">Manager</option>
+            <option value="hr">HR Admin</option>
+          </select>
+          {form.role !== (user.role || 'employee') && (
+            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.yellow, fontWeight: 700, marginTop: 6 }}>
+              ⚠️ Akses berubah: {ROLE_LABELS[user.role] || user.role} → {ROLE_LABELS[form.role] || form.role}. Berlaku saat user login/refresh berikutnya.
+            </div>
+          )}
+        </div>
+
         <div>
           <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 8, display: 'block' }}>DEPARTMENT</label>
-          <select 
-            value={form.department} 
-            onChange={e => setForm({...form, department: e.target.value})} 
+          <select
+            value={form.department}
+            onChange={e => setForm({...form, department: e.target.value})}
             style={selectStyle}
           >
             <option value="">Pilih Departemen...</option>
@@ -81,13 +109,37 @@ export default function EditUserModal({ onClose, user, managers, onSave, onDelet
 
         <div>
           <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 8, display: 'block' }}>JOB TITLE</label>
-          <input 
-            placeholder="e.g. Senior Developer" 
-            value={form.jobTitle} 
-            onChange={e => setForm({...form, jobTitle: e.target.value})} 
-            style={inputStyle} 
+          <input
+            placeholder="e.g. Senior Developer"
+            value={form.jobTitle}
+            onChange={e => setForm({...form, jobTitle: e.target.value})}
+            style={inputStyle}
           />
         </div>
+
+        {/* Akses HR-Admin tambahan — user tetap employee/manager tapi bisa switch ke konsol HR */}
+        {form.role !== 'hr' && (
+          <label style={{
+            display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer',
+            padding: 14, borderRadius: 16, border: `1.5px solid ${form.hrAccess ? '#7B6BB5' : HP_TOKENS.line}`,
+            background: form.hrAccess ? '#EDE8F5' : HP_TOKENS.card,
+          }}>
+            <input
+              type="checkbox"
+              checked={form.hrAccess}
+              onChange={e => setForm({ ...form, hrAccess: e.target.checked })}
+              style={{ marginTop: 2, width: 18, height: 18, accentColor: '#7B6BB5', cursor: 'pointer' }}
+            />
+            <div>
+              <div style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, color: HP_TOKENS.ink }}>
+                Akses HR-Admin
+              </div>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>
+                User tetap {form.role === 'manager' ? 'manager' : 'karyawan'} biasa, tapi bisa switch ke konsol HR.
+              </div>
+            </div>
+          </label>
+        )}
 
         <div style={{ display: 'flex', gap: 12, marginTop: 10 }}>
           <button 

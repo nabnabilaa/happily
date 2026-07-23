@@ -34,7 +34,8 @@ export async function GET(request: Request) {
       userRole: userRow.user_role_context || userRow.role,
       onboarded: !!userRow.is_onboarded,
       department: userRow.department || null,
-      department_status: userRow.department_status || null
+      department_status: userRow.department_status || null,
+      hrAccess: Number(userRow.hr_access) === 1
     };
 
     // 2. Fetch State components

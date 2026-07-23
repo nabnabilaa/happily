@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { getRequesterAccess, canHrAdmin } from '@/lib/hrAuth';
 
 // GET: Get all responses for a survey (HR only)
 export async function GET(request: Request) {
@@ -12,13 +13,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'surveyId diperlukan' }, { status: 400 });
     }
 
-    // Verify requester is HR
+    // Verify requester can access HR (role hr ATAU hr_access)
     if (requesterId) {
-      const userCheck = await db.execute({
-        sql: "SELECT role FROM users WHERE id = ?",
-        args: [requesterId]
-      });
-      if (userCheck.rows.length === 0 || userCheck.rows[0].role !== 'hr') {
+      const requester = await getRequesterAccess(requesterId);
+      if (!canHrAdmin(requester.role, requester.hrAccess)) {
         return NextResponse.json({ error: 'Hanya HR yang bisa melihat hasil survey' }, { status: 403 });
       }
     }

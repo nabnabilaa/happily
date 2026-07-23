@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { getRequesterAccess, canHrAdmin } from '@/lib/hrAuth';
 
 export async function POST(req: Request) {
   try {
@@ -9,15 +10,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
     }
 
-    // 1. Verify requester is HR
-    const hrResult = await db.execute({
-      sql: "SELECT role FROM users WHERE id = ?",
-      args: [requesterId]
-    });
-    
-    const hrUser = hrResult.rows[0];
-    
-    if (!hrUser || hrUser.role !== 'hr') {
+    // 1. Verify requester can manage HR (role hr OR hr_access)
+    const requester = await getRequesterAccess(requesterId);
+    if (!canHrAdmin(requester.role, requester.hrAccess)) {
       return NextResponse.json({ error: 'Unauthorized. HR access required.' }, { status: 403 });
     }
 

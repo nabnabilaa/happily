@@ -31,10 +31,10 @@ const TAB_CONFIG: Record<UserRole, Array<{ key: string; label: string; icon: str
     { key: 'recognize', label: 'Rewards',    icon: 'trophy' },
     { key: 'chat',      label: 'Chat',       icon: 'activity' },
   ],
+  // HR = konsol admin/pengawas bersih (tanpa KPI Saya / fitur personal karyawan).
   hr: [
     { key: 'home',      label: 'Dashboard',  icon: 'home' },
     { key: 'calendar',  label: 'Calendar',   icon: 'calendar' },
-    { key: 'my_kpi',    label: 'KPI Saya',   icon: 'target' },
     { key: 'goals',     label: 'People',     icon: 'people' },
     { key: 'team',      label: 'Tim',        icon: 'people' },
     { key: 'recognize', label: 'Rewards',    icon: 'trophy' },

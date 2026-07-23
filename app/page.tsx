@@ -101,6 +101,7 @@ const ManageKPIModal = safeDynamic(() => import("@/components/modals/ManageKPIMo
 const KpiReviewModal = safeDynamic(() => import("@/components/modals/KpiReviewModal"));
 const WeeklyReviewModal = safeDynamic(() => import("@/components/modals/WeeklyReviewModal"));
 const MonthlyReportModal = safeDynamic(() => import("@/components/modals/MonthlyReportModal"));
+const ReportExportModal = safeDynamic(() => import("@/components/modals/ReportExportModal"));
 const AIAuditModal = safeDynamic(() => import("@/components/modals/AIAuditModal"));
 const EmployeeProfileModal = safeDynamic(() => import("@/components/modals/EmployeeProfileModal"));
 const StatusInputModal = safeDynamic(() => import("@/components/modals/StatusInputModal"));
@@ -119,7 +120,7 @@ const ManageOnboardingModal = safeDynamic(() => import("@/components/modals/Mana
 const ROLE_META: Record<UserRole, { label: string; color: string; bg: string; glyph: string }> = {
   employee: { label: 'Employee', color: '#3B82F6', bg: 'rgba(59,130,246,0.1)', glyph: 'target' },
   manager:  { label: 'Manager',  color: '#1D3557', bg: 'rgba(29,53,87,0.08)',  glyph: 'people' },
-  hr:       { label: 'HR',       color: '#7B6BB5', bg: '#EDE8F5',              glyph: 'medal' },
+  hr:       { label: 'HR Admin',  color: '#7B6BB5', bg: '#EDE8F5',              glyph: 'medal' },
 };
 
 function AppContent() {
@@ -341,9 +342,14 @@ function AppContent() {
   }
 
   // ── Determine Role ────────────────────────────────────────────────────────
-  const currentRole = (user?.role || 'employee') as UserRole;
+  // Base role = role akun sebenarnya (dari DB). currentRole = tampilan aktif (bisa di-switch).
+  const baseRole = (user?.role || 'employee') as UserRole;
+  const currentRole = (user?.userRole || user?.role || 'employee') as UserRole;
   const isManager = currentRole === 'manager';
   const isHR = currentRole === 'hr';
+  // Employee/manager dengan akses HR-Admin tambahan boleh switch ke konsol HR.
+  // Akun ber-role 'hr' murni tidak perlu switcher (sudah selalu di konsol HR).
+  const canSwitchHr = !!user?.hrAccess && baseRole !== 'hr';
 
   // ── Render screen by role + tab ─────────────────────────────────────────────
   const renderScreen = () => {
@@ -375,7 +381,6 @@ function AppContent() {
     if (currentRole === 'hr') {
       if (tab === 'home')      return <HRHomeScreen openModal={openModal} />;
       if (tab === 'calendar')  return <CalendarScreen openModal={openModal} />;
-      if (tab === 'my_kpi')    return <GoalsScreen openModal={openModal} />;
       if (tab === 'goals')     return <HRPeopleScreen openModal={openModal} />;
       if (tab === 'notes')     return <NotesScreen />;
       if (tab === 'recognize') return <HRRecognizeScreen openModal={openModal} />;
@@ -489,6 +494,27 @@ function AppContent() {
             ) : null}
           </button>
 
+          {/* HR switcher — untuk employee/manager dengan akses HR-Admin tambahan */}
+          {canSwitchHr && (
+            <button
+              onClick={() => { setUserRole(currentRole === 'hr' ? baseRole : 'hr'); setTab('home'); }}
+              className="hp-tap"
+              title={currentRole === 'hr' ? 'Kembali ke tampilan karyawan' : 'Buka konsol HR-Admin'}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '6px 12px', borderRadius: 99,
+                background: currentRole === 'hr' ? '#EDE8F5' : HP_TOKENS.card,
+                border: `1.5px solid ${currentRole === 'hr' ? '#7B6BB5' : HP_TOKENS.line}`,
+                fontFamily: HP_FONT, fontWeight: 800, fontSize: 11,
+                color: currentRole === 'hr' ? '#7B6BB5' : HP_TOKENS.inkSoft,
+                boxShadow: '0 2px 8px rgba(26,29,35,0.06)', cursor: 'pointer',
+              }}
+            >
+              <HPGlyph name={currentRole === 'hr' ? 'home' : 'medal'} size={11} color={currentRole === 'hr' ? '#7B6BB5' : HP_TOKENS.inkSoft} />
+              <span>{currentRole === 'hr' ? 'Mode Karyawan' : 'Konsol HR'}</span>
+            </button>
+          )}
+
           <div
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
@@ -601,6 +627,7 @@ function AppContent() {
       {modal?.name === 'kpi_review'      && <KpiReviewModal onClose={closeModal} />}
       {modal?.name === 'weekly_review'    && <WeeklyReviewModal onClose={closeModal} />}
       {modal?.name === 'monthly_report'   && <MonthlyReportModal onClose={closeModal} {...modal.props} />}
+      {modal?.name === 'report_export'    && <ReportExportModal onClose={closeModal} />}
       {modal?.name === 'ai_weekly_summary' && <AIAuditModal onClose={closeModal} type="weekly" />}
       {modal?.name === 'ai_monthly_analysis' && <AIAuditModal onClose={closeModal} type="monthly" />}
       {modal?.name === 'employee_profile' && <EmployeeProfileModal onClose={closeModal} openModal={openModal} {...modal.props} />}

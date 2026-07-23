@@ -1,22 +1,18 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getRequesterAccess, canHrAdmin } from "@/lib/hrAuth";
 
 export async function POST(request: Request) {
   try {
-    const { requesterId, targetUserId, newRole, jobTitle, department, name } = await request.json();
+    const { requesterId, targetUserId, newRole, jobTitle, department, name, hrAccess } = await request.json();
 
     if (!requesterId || !targetUserId) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
     }
 
-    // Verify if requester is hr
-    const requesterCheck = await db.execute({
-      sql: "SELECT role FROM users WHERE id = ?",
-      args: [requesterId]
-    });
-
-    const role = requesterCheck.rows[0]?.role;
-    if (role !== 'hr') {
+    // Verify if requester can manage HR (role hr OR punya hr_access tambahan)
+    const requester = await getRequesterAccess(requesterId);
+    if (!canHrAdmin(requester.role, requester.hrAccess)) {
       return NextResponse.json({ error: "Unauthorized. Only HR can manage users." }, { status: 403 });
     }
 
@@ -32,6 +28,14 @@ export async function POST(request: Request) {
       await db.execute({
         sql: "UPDATE users SET role = ?, user_role_context = ? WHERE id = ?",
         args: [newRole, newRole, targetUserId]
+      });
+    }
+
+    // Akses HR-Admin tambahan (untuk employee/manager yang bisa switch ke konsol HR)
+    if (hrAccess !== undefined) {
+      await db.execute({
+        sql: "UPDATE users SET hr_access = ? WHERE id = ?",
+        args: [hrAccess ? 1 : 0, targetUserId]
       });
     }
 

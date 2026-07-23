@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getRequesterAccess, canManageTeam } from "@/lib/hrAuth";
 
 // GET: Fetch division report data for export (Logbook, KPI, Weekly target, Monthly summary)
 export async function GET(request: Request) {
@@ -13,15 +14,31 @@ export async function GET(request: Request) {
 
     if (!requesterId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const roleCheck = await db.execute({
-      sql: "SELECT role FROM users WHERE id = ?",
-      args: [requesterId]
-    });
-
-    const role = roleCheck.rows[0]?.role;
-    if (role !== 'hr' && role !== 'manager') {
+    const requester = await getRequesterAccess(requesterId);
+    if (!canManageTeam(requester.role, requester.hrAccess)) {
       return NextResponse.json({ error: "Unauthorized. Hanya HR dan Manager yang dapat mengakses laporan." }, { status: 403 });
     }
+
+    // Cakupan orang: HR/hr_access = semua; Manager = otomatis dibatasi ke anggota timnya.
+    const isFullAccess = requester.role === 'hr' || requester.hrAccess;
+    const managerScope = (!isFullAccess && requester.role === 'manager') ? requesterId : null;
+    const userIdsParam = searchParams.get('userIds');
+    const userIdList = userIdsParam ? userIdsParam.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+    // Bangun filter user (prefix = alias tabel users, mis. 'u.').
+    const userScope = (prefix: string) => {
+      const parts: string[] = [];
+      const a: any[] = [];
+      if (managerScope) { parts.push(`${prefix}manager_id = ?`); a.push(managerScope); }
+      if (userIdList.length) {
+        parts.push(`${prefix}id IN (${userIdList.map(() => '?').join(',')})`);
+        a.push(...userIdList);
+      } else if (department !== 'all') {
+        parts.push(`${prefix}department = ?`);
+        a.push(department);
+      }
+      return { clause: parts.length ? ' AND ' + parts.join(' AND ') : '', args: a };
+    };
 
     if (type === 'logbook') {
       let sql = `
@@ -38,10 +55,9 @@ export async function GET(request: Request) {
       `;
       const args: any[] = [month, year];
 
-      if (department !== 'all') {
-        sql += " AND u.department = ?";
-        args.push(department);
-      }
+      const scope = userScope('u.');
+      sql += scope.clause;
+      args.push(...scope.args);
       sql += " ORDER BY u.name ASC, COALESCE(dp.target_date, dp.created_at) DESC";
 
       const res = await db.execute({ sql, args });
@@ -58,10 +74,9 @@ export async function GET(request: Request) {
       `;
       const args: any[] = [month, year];
 
-      if (department !== 'all') {
-        sql += " AND u.department = ?";
-        args.push(department);
-      }
+      const scope = userScope('u.');
+      sql += scope.clause;
+      args.push(...scope.args);
       sql += " ORDER BY u.name ASC, mk.created_at DESC";
 
       const res = await db.execute({ sql, args });
@@ -69,20 +84,21 @@ export async function GET(request: Request) {
     }
 
     if (type === 'weekly') {
+      const week = Number(searchParams.get('week')) || 0; // 0 = semua minggu
       let sql = `
-        SELECT wt.id, wt.title, wt.week_number, wt.target_value, wt.current_value, wt.metric_unit, wt.status, wt.created_at,
-               mk.title as kpi_title, u.name as user_name, u.department
+        SELECT wt.id, wt.title, wt.week_number, wt.target_value, wt.current_value, wt.metric_unit, wt.status, wt.created_at, wt.timeframe,
+               mk.title as kpi_title, mk.weight as kpi_weight, u.name as user_name, u.department
         FROM weekly_targets wt
         JOIN monthly_kpis mk ON wt.kpi_id = mk.id
         JOIN users u ON mk.assigned_to = u.id
         WHERE mk.month = ? AND mk.year = ?
       `;
       const args: any[] = [month, year];
+      if (week > 0) { sql += " AND wt.week_number = ?"; args.push(week); }
 
-      if (department !== 'all') {
-        sql += " AND u.department = ?";
-        args.push(department);
-      }
+      const scope = userScope('u.');
+      sql += scope.clause;
+      args.push(...scope.args);
       sql += " ORDER BY u.name ASC, mk.title ASC, wt.week_number ASC";
 
       const res = await db.execute({ sql, args });
@@ -91,14 +107,10 @@ export async function GET(request: Request) {
 
     if (type === 'monthly') {
       // Compile real-time monthly reports for all users in the division
-      let usersSql = "SELECT id, name, department, job_title FROM users";
-      const usersArgs: any[] = [];
-
-      if (department !== 'all') {
-        usersSql += " WHERE department = ?";
-        usersArgs.push(department);
-      }
-      usersSql += " ORDER BY name ASC";
+      const mScope = userScope('u.');
+      let usersSql = "SELECT u.id, u.name, u.department, u.job_title FROM users u WHERE 1=1" + mScope.clause;
+      const usersArgs: any[] = [...mScope.args];
+      usersSql += " ORDER BY u.name ASC";
 
       const usersRes = await db.execute({ sql: usersSql, args: usersArgs });
       const users = usersRes.rows as any[];
@@ -128,9 +140,9 @@ export async function GET(request: Request) {
           args: [u.id, month, year]
         });
 
-        // Get saved report
+        // Get saved report. NB: monthly_reports has no quality_score column — it is always computed below.
         const reportRes = await db.execute({
-          sql: "SELECT kpi_score, quality_score, status, manager_summary FROM monthly_reports WHERE user_id = ? AND month = ? AND year = ?",
+          sql: "SELECT kpi_score, status, manager_summary FROM monthly_reports WHERE user_id = ? AND month = ? AND year = ?",
           args: [u.id, month, year]
         });
 
@@ -170,8 +182,10 @@ export async function GET(request: Request) {
           tasks_completed: tasksCompleted,
           active_days: Math.max(activeDays, attendanceDays),
           total_working_days: totalWorkingDays,
-          kpi_score: savedReport ? savedReport.kpi_score : computedKpiScore,
-          quality_score: savedReport ? (savedReport.quality_score || computedQualityScore) : computedQualityScore,
+          kpi_score: savedReport && savedReport.kpi_score != null ? Number(savedReport.kpi_score) : computedKpiScore,
+          quality_score: computedQualityScore,
+          completion_rate: completionRate,
+          attendance_days: attendanceDays,
           manager_summary: savedReport ? savedReport.manager_summary : '',
           status: savedReport ? savedReport.status : 'draft'
         });

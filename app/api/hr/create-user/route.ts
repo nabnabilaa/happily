@@ -1,23 +1,19 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
+import { getRequesterAccess, canHrAdmin } from "@/lib/hrAuth";
 
 export async function POST(request: Request) {
   try {
-    const { requesterId, name, email, password, role: newUserRole, jobTitle, department } = await request.json();
+    const { requesterId, name, email, password, role: newUserRole, jobTitle, department, hrAccess } = await request.json();
 
     if (!requesterId || !name || !email || !password) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
     }
 
-    // Verify if requester is HR
-    const requesterCheck = await db.execute({
-      sql: "SELECT role FROM users WHERE id = ?",
-      args: [requesterId]
-    });
-
-    const requesterRole = requesterCheck.rows[0]?.role;
-    if (requesterRole !== 'hr') {
+    // Verify if requester can manage HR (role hr OR punya hr_access tambahan)
+    const requester = await getRequesterAccess(requesterId);
+    if (!canHrAdmin(requester.role, requester.hrAccess)) {
       return NextResponse.json({ error: "Unauthorized. Only HR can create users." }, { status: 403 });
     }
 
@@ -35,9 +31,9 @@ export async function POST(request: Request) {
     const userId = "u_" + Math.random().toString(36).substring(2, 11);
     
     await db.execute({
-      sql: `INSERT INTO users (id, email, name, role, password_hash, job_title, department, points, \`level\`, \`rank\`, streak) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, 0, 1, 'Rookie', 0)`,
-      args: [userId, email, name, newUserRole || 'employee', password_hash, jobTitle || '', department || '']
+      sql: `INSERT INTO users (id, email, name, role, password_hash, job_title, department, hr_access, points, \`level\`, \`rank\`, streak)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 1, 'Rookie', 0)`,
+      args: [userId, email, name, newUserRole || 'employee', password_hash, jobTitle || '', department || '', hrAccess ? 1 : 0]
     });
 
     return NextResponse.json({ success: true, userId });

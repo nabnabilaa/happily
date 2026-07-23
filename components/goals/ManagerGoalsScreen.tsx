@@ -10,13 +10,14 @@ import ManagerTeamKPIView from "@/components/goals/ManagerTeamKPIView";
 import ManagerPersonalView from "@/components/goals/ManagerPersonalView";
 import ManagerMembersView from "@/components/goals/ManagerMembersView";
 import ManagerDailyTasksView from "@/components/goals/ManagerDailyTasksView";
+import ReportDashboard from "@/components/reports/ReportDashboard";
 import { useManagerGoals } from "@/hooks/useManagerGoals";
 
 interface Props { openModal: (name: string, props?: any) => void; }
 
 export default function ManagerGoalsScreen({ openModal }: Props) {
   const { state, user, updateState, notify } = useHP();
-  const [activeTab, setActiveTab] = useState<'kpi' | 'dailytasks' | 'members' | 'attendance' | 'personal'>('kpi');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'kpi' | 'dailytasks' | 'members' | 'attendance' | 'personal'>('dashboard');
   const [goalToDelete, setGoalToDelete] = useState<string | null>(null);
   const [taskToDelete, setTaskToDelete] = useState<string | number | null>(null);
 
@@ -99,6 +100,7 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
       {/* Tab switcher */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 16, overflowX: 'auto', paddingBottom: 4 }}>
         {([
+          { key: 'dashboard', label: '📊 Dashboard Tim' },
           { key: 'kpi', label: 'Target & KPI Tim' },
           { key: 'dailytasks', label: 'Tugas Harian' },
           { key: 'personal', label: 'Personal' },
@@ -116,6 +118,10 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
           </button>
         ))}
       </div>
+
+      {activeTab === 'dashboard' && (
+        <ReportDashboard openModal={openModal} teamOnly />
+      )}
 
       {activeTab === 'kpi' && (
         <ManagerTeamKPIView

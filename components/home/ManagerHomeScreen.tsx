@@ -445,6 +445,15 @@ export default function ManagerHomeScreen({ openModal }: Props) {
           }} className="hp-tap">📢 Pengumuman</button>
         </div>
 
+        {/* Ekspor laporan tim (Excel multi-sheet: harian/mingguan/bulanan/kpi) */}
+        <button onClick={() => openModal('report_export')} style={{
+          width: '100%', marginTop: 8, padding: '13px', borderRadius: 16, border: 'none', cursor: 'pointer',
+          background: `linear-gradient(135deg, ${HP_TOKENS.sage}, #3d6b4a)`, color: '#F4F7F9',
+          fontFamily: HP_FONT, fontWeight: 800, fontSize: 13,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          boxShadow: `0 4px 14px ${HP_TOKENS.sage}30`,
+        }} className="hp-tap">📥 Ekspor Laporan Tim (Excel)</button>
+
         {/* Friday / End-of-Month AI Summaries */}
         {(() => {
           const today = new Date();

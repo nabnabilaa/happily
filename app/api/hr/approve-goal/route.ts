@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getRequesterAccess, canManageTeam } from "@/lib/hrAuth";
 
 export async function POST(req: Request) {
   try {
@@ -9,13 +10,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Check if requester is manager or hr
-    const roleCheck = await db.execute({
-      sql: "SELECT role FROM users WHERE id = ?",
-      args: [requesterId]
-    });
-    const role = (roleCheck.rows[0] as any)?.role;
-    if (role !== 'hr' && role !== 'manager') {
+    // Check if requester can manage team (manager, hr, atau hr_access)
+    const requester = await getRequesterAccess(requesterId);
+    if (!canManageTeam(requester.role, requester.hrAccess)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 

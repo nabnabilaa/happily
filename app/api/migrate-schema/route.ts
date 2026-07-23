@@ -473,6 +473,7 @@ export async function POST() {
     { desc: "users.mood_key", sql: "ALTER TABLE users ADD COLUMN mood_key VARCHAR(50) DEFAULT NULL" },
     { desc: "users.division_id", sql: "ALTER TABLE users ADD COLUMN division_id INT DEFAULT NULL" },
     { desc: "users.department_status", sql: "ALTER TABLE users ADD COLUMN department_status VARCHAR(20) DEFAULT NULL" },
+    { desc: "users.hr_access", sql: "ALTER TABLE users ADD COLUMN hr_access INTEGER DEFAULT 0" },
 
     // ── Divisions table ──
     { desc: "divisions.manager_id", sql: "ALTER TABLE divisions ADD COLUMN manager_id VARCHAR(100) DEFAULT NULL" },
@@ -579,6 +580,12 @@ export async function POST() {
     {
       desc: "monthly_kpis.metric_period",
       sql: `ALTER TABLE monthly_kpis ADD COLUMN metric_period VARCHAR(10) DEFAULT NULL`
+    },
+    {
+      // Free-form durasi target (mis. "Minggu 1–2", "3 minggu pertama", "Sepanjang bulan").
+      // Model target: 1 KPI diselesaikan beberapa target dgn durasi bebas — bukan wajib mingguan.
+      desc: "weekly_targets.timeframe",
+      sql: `ALTER TABLE weekly_targets ADD COLUMN timeframe VARCHAR(120) DEFAULT NULL`
     }
   ];
 

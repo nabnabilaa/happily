@@ -126,6 +126,10 @@ export default function HRHomeScreen({ openModal }: Props) {
   const { metrics: m } = state.hrData;
   const levelProgress = calculateLevelProgress(user.points || 0);
 
+  // HR = konsol admin/pengawas yang bersih: fitur personal karyawan selalu disembunyikan.
+  // Employee yang butuh fitur personal tetap login sebagai employee (bukan role HR).
+  const showPersonal = false;
+
   const moodsList = state?.moods || HP_MOODS;
   const energyList = state?.energyOpts || HP_ENERGY;
   const currentMood = state.mood ?? null;
@@ -157,7 +161,7 @@ export default function HRHomeScreen({ openModal }: Props) {
         <NotificationBanner />
 
         {/* Mid-Day Check-In Banner */}
-        {isMidDayWindow() && (
+        {showPersonal && isMidDayWindow() && (
           <div
             onClick={() => openModal('work_checkin')}
             className="hp-tap"
@@ -183,7 +187,7 @@ export default function HRHomeScreen({ openModal }: Props) {
         )}
 
         {/* Personal wellbeing */}
-        <WellbeingGauge state={state} user={user} openModal={openModal} />
+        {showPersonal && <WellbeingGauge state={state} user={user} openModal={openModal} />}
 
         {/* HR Profile Header */}
         <div style={{
@@ -244,33 +248,38 @@ export default function HRHomeScreen({ openModal }: Props) {
           </div>
         </div>
 
-        {/* Nudge Banner (Bubble) */}
-        <CoachNudgeBanner coachNudge={coachNudge} beeMood={beeMood as any} openModal={openModal} />
+        {showPersonal && (
+          <>
+            {/* Nudge Banner (Bubble) */}
+            <CoachNudgeBanner coachNudge={coachNudge} beeMood={beeMood as any} openModal={openModal} />
 
-        {/* Attendance */}
-        <div style={{ marginTop: 16 }}>
-          <AttendanceWidget openModal={openModal} />
-        </div>
+            {/* Attendance */}
+            <div style={{ marginTop: 16 }}>
+              <AttendanceWidget openModal={openModal} />
+            </div>
 
-        {/* Logbook */}
-        <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <button onClick={() => openModal('logbook')} className="hp-tap" style={{
-            width: '100%', padding: '12px 16px', borderRadius: 16,
-            background: HP_TOKENS.card, color: HP_TOKENS.ink,
-            border: `1.5px solid ${HP_TOKENS.lineSoft}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-            fontFamily: HP_FONT, fontWeight: 700, fontSize: 13,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
-          }}>
-            <HPGlyph name="book" size={16} color={HP_TOKENS.inkSoft}/>
-            <span>Lihat Riwayat & Logbook Calendar</span>
-          </button>
-        </div>
+            {/* Logbook */}
+            <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <button onClick={() => openModal('logbook')} className="hp-tap" style={{
+                width: '100%', padding: '12px 16px', borderRadius: 16,
+                background: HP_TOKENS.card, color: HP_TOKENS.ink,
+                border: `1.5px solid ${HP_TOKENS.lineSoft}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 13,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+              }}>
+                <HPGlyph name="book" size={16} color={HP_TOKENS.inkSoft}/>
+                <span>Lihat Riwayat & Logbook Calendar</span>
+              </button>
+            </div>
+          </>
+        )}
 
         {/* HR-specific: Wellbeing Radar & Burnout (Tabbed) */}
         <HRAnalyticsTabs state={state} openModal={openModal} />
 
 
         {/* Mood & Energy check-in */}
+        {showPersonal && (
         <div style={{ marginTop: 16 }}>
           <EmotionalHero
             state={state}
@@ -281,8 +290,10 @@ export default function HRHomeScreen({ openModal }: Props) {
             onOpenMidDay={() => openModal('work_checkin')}
           />
         </div>
+        )}
 
         {/* Mindful Breathing Reset */}
+        {showPersonal && (
         <div style={{ marginTop: 16 }}>
           <HPCard
             padding={16}
@@ -320,9 +331,10 @@ export default function HRHomeScreen({ openModal }: Props) {
             </div>
           </HPCard>
         </div>
+        )}
 
         {/* Smart Reminders */}
-        {reminder && (
+        {showPersonal && reminder && (
           <div style={{ marginTop: 16 }}>
             <HPCard padding={16} style={{
               background: reminder.type === 'break' ? HP_TOKENS.yellowWash : HP_TOKENS.sageWash,
@@ -400,6 +412,8 @@ export default function HRHomeScreen({ openModal }: Props) {
 
 
 
+        {showPersonal && (
+        <>
         {/* Focus tools */}
         <CoworkingWidget openModal={openModal} />
 
@@ -462,6 +476,8 @@ export default function HRHomeScreen({ openModal }: Props) {
             </div>
           )}
         </div>
+        </>
+        )}
 
         {/* HR-specific: Kelola Survey */}
         <button onClick={() => openModal('manage_surveys')} className="hp-tap" style={{

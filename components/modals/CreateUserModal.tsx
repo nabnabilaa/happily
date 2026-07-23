@@ -17,7 +17,8 @@ export default function CreateUserModal({ onClose, onSave }: CreateUserModalProp
     password: "",
     role: "employee",
     jobTitle: "",
-    department: ""
+    department: "",
+    hrAccess: false
   });
   const [loading, setLoading] = useState(false);
 
@@ -125,13 +126,37 @@ export default function CreateUserModal({ onClose, onSave }: CreateUserModalProp
 
         <div>
           <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 6, display: 'block' }}>JOB TITLE</label>
-          <input 
-            placeholder="e.g. Account Executive" 
-            value={form.jobTitle} 
-            onChange={e => setForm({...form, jobTitle: e.target.value})} 
-            style={inputStyle} 
+          <input
+            placeholder="e.g. Account Executive"
+            value={form.jobTitle}
+            onChange={e => setForm({...form, jobTitle: e.target.value})}
+            style={inputStyle}
           />
         </div>
+
+        {/* Akses HR-Admin tambahan — hanya relevan untuk employee/manager (role hr sudah pasti HR) */}
+        {form.role !== 'hr' && (
+          <label style={{
+            display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer',
+            padding: 14, borderRadius: 16, border: `1.5px solid ${form.hrAccess ? '#7B6BB5' : HP_TOKENS.line}`,
+            background: form.hrAccess ? '#EDE8F5' : HP_TOKENS.card,
+          }}>
+            <input
+              type="checkbox"
+              checked={form.hrAccess}
+              onChange={e => setForm({ ...form, hrAccess: e.target.checked })}
+              style={{ marginTop: 2, width: 18, height: 18, accentColor: '#7B6BB5', cursor: 'pointer' }}
+            />
+            <div>
+              <div style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, color: HP_TOKENS.ink }}>
+                Beri akses HR-Admin
+              </div>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>
+                User tetap {form.role === 'manager' ? 'manager' : 'karyawan'} biasa, tapi bisa switch ke konsol HR (People, laporan, kelola akun).
+              </div>
+            </div>
+          </label>
+        )}
 
         <button 
           onClick={handleSave}

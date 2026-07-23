@@ -123,7 +123,8 @@ export async function POST(request: Request) {
       streak: fbUserRow.streak,
       avatarImage: fbUserRow.avatar_image,
       userRole: fbUserRow.user_role_context || fbUserRow.role,
-      onboarded: !!fbUserRow.is_onboarded
+      onboarded: !!fbUserRow.is_onboarded,
+      hrAccess: Number(fbUserRow.hr_access) === 1
     };
 
     return NextResponse.json({ user });
