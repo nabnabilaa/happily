@@ -424,7 +424,7 @@ export default function ReportDashboard({ openModal, lockedDept, compact, teamOn
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    justify: 'space-between',
+                    justifyContent: 'space-between',
                     flexWrap: 'wrap',
                     gap: 12,
                     marginTop: 16,

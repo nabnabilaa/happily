@@ -287,7 +287,7 @@ export default function RewardCard({
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        justify: 'space-between',
+        justifyContent: 'space-between',
         gap: 10,
         marginTop: 20,
         zIndex: 2,

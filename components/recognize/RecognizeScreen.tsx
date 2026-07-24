@@ -31,7 +31,7 @@ export default function RecognizeScreen({ openModal }: RecognizeScreenProps) {
         position: 'relative',
         display: 'flex',
         alignItems: 'center',
-        justify: 'space-between',
+        justifyContent: 'space-between',
         padding: '28px 26px',
         borderRadius: 24,
         background: '#2563EB',
@@ -62,13 +62,13 @@ export default function RecognizeScreen({ openModal }: RecognizeScreenProps) {
             fontWeight: 900,
             color: '#FFFFFF',
             letterSpacing: '-1px',
-            lineHeight: 1,
+            lineHeight: 1.1,
             textShadow: '0 4px 16px rgba(0,0,0,0.2)',
             display: 'flex',
             alignItems: 'baseline',
             gap: 8
           }}>
-            {userCoins.toLocaleString()}
+            <span>{userCoins.toLocaleString()}</span>
             <span style={{ fontSize: 20, fontWeight: 800, color: 'rgba(255, 255, 255, 0.85)' }}>poin</span>
           </div>
         </div>
@@ -77,13 +77,14 @@ export default function RecognizeScreen({ openModal }: RecognizeScreenProps) {
         <div style={{
           width: 64,
           height: 64,
+          flexShrink: 0,
           borderRadius: 20,
           background: 'rgba(255, 255, 255, 0.2)',
           backdropFilter: 'blur(16px)',
           border: '1px solid rgba(255, 255, 255, 0.35)',
           display: 'flex',
           alignItems: 'center',
-          justify: 'center',
+          justifyContent: 'center',
           boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
           zIndex: 2,
           fontSize: 36
@@ -168,7 +169,7 @@ export default function RecognizeScreen({ openModal }: RecognizeScreenProps) {
                 <div style={{
                   gridColumn: '1 / -1',
                   display: 'flex',
-                  justify: 'center',
+                  justifyContent: 'center',
                   alignItems: 'center',
                   gap: 12,
                   marginTop: 16
@@ -243,7 +244,7 @@ export default function RecognizeScreen({ openModal }: RecognizeScreenProps) {
               <div key={idx} style={{
                 display: 'flex',
                 alignItems: 'center',
-                justify: 'space-between',
+                justifyContent: 'space-between',
                 padding: '16px 20px',
                 borderRadius: 20,
                 border: `1.5px solid ${HP_TOKENS.lineSoft}`,
@@ -259,7 +260,7 @@ export default function RecognizeScreen({ openModal }: RecognizeScreenProps) {
                     color: HP_TOKENS.blue,
                     display: 'flex',
                     alignItems: 'center',
-                    justify: 'center'
+                    justifyContent: 'center'
                   }}>
                     <HPGlyph name="gift" size={20} />
                   </div>

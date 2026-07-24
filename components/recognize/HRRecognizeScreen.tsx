@@ -60,8 +60,8 @@ export default function HRRecognizeScreen({ openModal }: Props) {
 
       {/* Points badge */}
       <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16,
-        padding: '24px 20px', borderRadius: 24,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '28px 26px', borderRadius: 24,
         background: `${HP_TOKENS.primary}`,
         boxShadow: '0 12px 32px rgba(255, 107, 53, 0.25)',
         marginBottom: 24,
@@ -69,20 +69,25 @@ export default function HRRecognizeScreen({ openModal }: Props) {
         overflow: 'hidden'
       }}>
         {/* Decorative elements */}
-        <div style={{ position: 'absolute', right: -20, top: -40, width: 120, height: 120, background: 'rgba(255,255,255,0.15)', borderRadius: '50%', filter: 'blur(20px)' }} />
-        
-        <div style={{ 
-          width: 64, height: 64, borderRadius: 20, background: 'rgba(255,255,255,0.2)', 
-          display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)',
-          boxShadow: '0 8px 16px rgba(0,0,0,0.1)', zIndex: 1
-        }}>
-          <span style={{ fontSize: 36 }}>🏆</span>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', zIndex: 1 }}>
-          <div style={{ ...HP_TEXT.tiny, color: 'rgba(255,255,255,0.9)', letterSpacing: 1, fontWeight: 800 }}>POIN BELANJA</div>
-          <div style={{ ...HP_TEXT.display, fontSize: 36, color: '#fff', textShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-            {userCoins.toLocaleString()} <span style={{ fontSize: 20, fontWeight: 800, color: 'rgba(255,255,255,0.9)' }}>poin</span>
+        <div style={{ position: 'absolute', right: -20, top: -40, width: 140, height: 140, background: 'rgba(255,255,255,0.18)', borderRadius: '50%', filter: 'blur(24px)' }} />
+
+        <div style={{ display: 'flex', flexDirection: 'column', zIndex: 1, gap: 4 }}>
+          <div style={{ ...HP_TEXT.tiny, color: 'rgba(255,255,255,0.9)', letterSpacing: 1.5, fontWeight: 900, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <HPGlyph name="sparkle" size={14} color="#FFE4E6" />
+            POIN BELANJA
           </div>
+          <div style={{ ...HP_TEXT.display, fontSize: 38, color: '#fff', textShadow: '0 4px 12px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'baseline', gap: 8, lineHeight: 1.1 }}>
+            <span>{userCoins.toLocaleString()}</span> <span style={{ fontSize: 20, fontWeight: 800, color: 'rgba(255,255,255,0.85)' }}>poin</span>
+          </div>
+        </div>
+
+        <div style={{ 
+          width: 64, height: 64, borderRadius: 20, background: 'rgba(255,255,255,0.2)', flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255,255,255,0.35)',
+          boxShadow: '0 8px 16px rgba(0,0,0,0.1)', zIndex: 1, fontSize: 36
+        }}>
+          🏆
         </div>
       </div>
 
