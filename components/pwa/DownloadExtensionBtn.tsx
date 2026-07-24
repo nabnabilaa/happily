@@ -40,7 +40,7 @@ export default function DownloadExtensionBtn() {
         width: '100%',
         padding: '12px 16px',
         borderRadius: 14,
-        background: 'linear-gradient(135deg, var(--hp-yellow-light), var(--hp-yellow-dark))',
+        background: 'var(--hp-yellow)',
         color: '#fff',
         border: 'none',
         cursor: 'pointer',

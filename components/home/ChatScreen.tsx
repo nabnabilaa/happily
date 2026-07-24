@@ -306,7 +306,7 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
                   <div style={{
                     width: 40, height: 40, borderRadius: 12,
                     background: ch.type === 'broadcast'
-                      ? 'linear-gradient(135deg, #F59E0B, #D97706)'
+                      ? '#F59E0B'
                       : (ch.type === 'dm' ? HP_TOKENS.yellowSoft : HP_TOKENS.blueSoft),
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 20, flexShrink: 0,
@@ -398,7 +398,7 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
               <div style={{
                 width: 42, height: 42, borderRadius: 14,
                 background: activeChannel.type === 'broadcast'
-                  ? 'linear-gradient(135deg, #F59E0B, #D97706)'
+                  ? '#F59E0B'
                   : (activeChannel.type === 'dm' ? HP_TOKENS.yellowSoft : HP_TOKENS.blueSoft),
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 20, flexShrink: 0,

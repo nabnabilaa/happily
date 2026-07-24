@@ -8,38 +8,118 @@ import HPGlyph from "@/components/ui/HPGlyph";
 interface RewardCardProps {
   title: string;
   points: number;
-  tone: "sage" | "yellow" | "blue" | "coral" | "lavender";
+  tone?: string;
   glyph?: string;
+  category?: string;
+  description?: string;
+  index?: number;
   isWishlist?: boolean;
+  isFullWidth?: boolean;
   onToggleWishlist?: (e: React.MouseEvent) => void;
   onRedeem?: () => void;
 }
 
-const TONE_CONFIG: Record<string, any> = {
-  primary: { bg: HP_TOKENS.primaryWash, accent: HP_TOKENS.primary, text: '#1E3A8A', glow: 'rgba(59, 130, 246, 0.15)' },
-  blue:   { bg: HP_TOKENS.blueWash,   accent: HP_TOKENS.blue,   text: '#00558A', glow: 'rgba(77,168,218,0.12)' },
-  yellow: { bg: HP_TOKENS.yellowWash, accent: HP_TOKENS.yellow, text: '#7A5F10', glow: 'rgba(255,190,11,0.12)' },
-  sage:   { bg: HP_TOKENS.sageWash,   accent: HP_TOKENS.sage,   text: '#2D5A3D', glow: 'rgba(74,124,89,0.12)' },
-  coral:  { bg: '#FEF0ED',            accent: HP_TOKENS.coral,  text: '#8B3A2F', glow: 'rgba(232,139,125,0.15)' },
-  lavender: { bg: HP_TOKENS.lavenderSoft, accent: HP_TOKENS.lavender, text: '#4A3A6E', glow: 'rgba(123,104,238,0.12)' },
+// Clean, vibrant solid colors (100% flat solid colors, no gradients)
+const PALETTE_LIST = [
+  { name: 'orange',  bg: '#EA580C', border: '#C2410C', accent: '#FDBA74', badgeBg: 'rgba(0, 0, 0, 0.25)', text: '#FFFFFF', subtext: 'rgba(255, 255, 255, 0.85)', btnBg: '#FFFFFF', btnText: '#7C2D12' },
+  { name: 'purple',  bg: '#7C3AED', border: '#6D28D9', accent: '#A78BFA', badgeBg: 'rgba(0, 0, 0, 0.25)', text: '#FFFFFF', subtext: 'rgba(255, 255, 255, 0.85)', btnBg: '#FFFFFF', btnText: '#4C1D95' },
+  { name: 'teal',    bg: '#059669', border: '#047857', accent: '#6EE7B7', badgeBg: 'rgba(0, 0, 0, 0.25)', text: '#FFFFFF', subtext: 'rgba(255, 255, 255, 0.85)', btnBg: '#FFFFFF', btnText: '#064E3B' },
+  { name: 'magenta', bg: '#DB2777', border: '#BE185D', accent: '#F472B6', badgeBg: 'rgba(0, 0, 0, 0.25)', text: '#FFFFFF', subtext: 'rgba(255, 255, 255, 0.85)', btnBg: '#FFFFFF', btnText: '#831843' },
+  { name: 'blue',    bg: '#2563EB', border: '#1D4ED8', accent: '#60A5FA', badgeBg: 'rgba(0, 0, 0, 0.25)', text: '#FFFFFF', subtext: 'rgba(255, 255, 255, 0.85)', btnBg: '#FFFFFF', btnText: '#1E3A8A' },
+  { name: 'amber',   bg: '#D97706', border: '#B45309', accent: '#FDE047', badgeBg: 'rgba(0, 0, 0, 0.25)', text: '#FFFFFF', subtext: 'rgba(255, 255, 255, 0.85)', btnBg: '#FFFFFF', btnText: '#78350F' },
+  { name: 'indigo',  bg: '#4F46E5', border: '#4338CA', accent: '#A5B4FC', badgeBg: 'rgba(0, 0, 0, 0.25)', text: '#FFFFFF', subtext: 'rgba(255, 255, 255, 0.85)', btnBg: '#FFFFFF', btnText: '#312E81' },
+  { name: 'coral',   bg: '#DC2626', border: '#B91C1C', accent: '#FCA5A5', badgeBg: 'rgba(0, 0, 0, 0.25)', text: '#FFFFFF', subtext: 'rgba(255, 255, 255, 0.85)', btnBg: '#FFFFFF', btnText: '#7F1D1D' }
+];
+
+const PALETTE_MAP: Record<string, typeof PALETTE_LIST[0]> = {
+  orange:  PALETTE_LIST[0],
+  purple:  PALETTE_LIST[1],
+  teal:    PALETTE_LIST[2],
+  magenta: PALETTE_LIST[3],
+  blue:    PALETTE_LIST[4],
+  yellow:  PALETTE_LIST[5],
+  amber:   PALETTE_LIST[5],
+  indigo:  PALETTE_LIST[6],
+  coral:   PALETTE_LIST[7],
+  pink:    PALETTE_LIST[3],
+  sage:    PALETTE_LIST[2],
 };
 
-const GLYPH_MAP: Record<string, string> = {
-  'Extra cuti 1 hari':     'tree',
-  'Voucher lunch 100k':    'heart',
-  'Workshop UX intensif':  'book',
-  'Donasi program sosial': 'leaf',
-  'Tiket bioskop 2x':      'star',
-  'Pulsa / e-wallet 50k':  'zap',
-  'Voucher belanja 200k':  'target',
-  'Kelas online premium':  'refresh',
-  'Sesi wellness 1:1':     'people',
+function getPalette(tone?: string, index: number = 0) {
+  if (tone && tone !== 'blue' && PALETTE_MAP[tone]) return PALETTE_MAP[tone];
+  return PALETTE_LIST[index % PALETTE_LIST.length];
+}
+
+// Icon & Emoji mapping dictionary for predefined or newly created rewards
+const GLYPH_CONFIG: Record<string, { emoji: string; glyphName: string }> = {
+  gift:     { emoji: '🎁', glyphName: 'gift' },
+  trophy:   { emoji: '🏆', glyphName: 'trophy' },
+  star:     { emoji: '⭐', glyphName: 'star' },
+  heart:    { emoji: '❤️', glyphName: 'heart' },
+  zap:      { emoji: '⚡', glyphName: 'zap' },
+  tree:     { emoji: '🌴', glyphName: 'tree' },
+  book:     { emoji: '📚', glyphName: 'book' },
+  leaf:     { emoji: '🌿', glyphName: 'leaf' },
+  target:   { emoji: '🎯', glyphName: 'target' },
+  refresh:  { emoji: '🎓', glyphName: 'refresh' },
+  people:   { emoji: '🧘', glyphName: 'people' },
+  coffee:   { emoji: '🥤', glyphName: 'sparkle' },
+  food:     { emoji: '🍔', glyphName: 'heart' },
+  ticket:   { emoji: '🎟️', glyphName: 'star' },
+  shirt:    { emoji: '🧥', glyphName: 'trophy' },
+  card:     { emoji: '💳', glyphName: 'target' },
+  headset:  { emoji: '🎧', glyphName: 'zap' },
+  bag:      { emoji: '🛍️', glyphName: 'target' }
 };
 
-export default function RewardCard({ title, points, tone, glyph, isWishlist, onToggleWishlist, onRedeem }: RewardCardProps) {
+function resolveAccent(title: string, glyphKey?: string, categoryKey?: string) {
+  if (glyphKey && GLYPH_CONFIG[glyphKey]) return GLYPH_CONFIG[glyphKey];
+
+  const t = title.toLowerCase();
+  const c = (categoryKey || '').toLowerCase();
+
+  if (t.includes('gofood') || t.includes('makan') || t.includes('lunch') || c.includes('food'))
+    return { emoji: '🍔', glyphName: 'heart' };
+  if (t.includes('tiket') || t.includes('cinema') || t.includes('bioskop') || c.includes('ticket'))
+    return { emoji: '🎟️', glyphName: 'star' };
+  if (t.includes('tumbler') || t.includes('kopi') || t.includes('drink'))
+    return { emoji: '🥤', glyphName: 'sparkle' };
+  if (t.includes('hoodie') || t.includes('baju') || t.includes('kaos'))
+    return { emoji: '🧥', glyphName: 'trophy' };
+  if (t.includes('tokopedia') || t.includes('wallet') || t.includes('pulsa') || t.includes('voucher'))
+    return { emoji: '💳', glyphName: 'target' };
+  if (t.includes('headset') || t.includes('audio') || t.includes('bluetooth'))
+    return { emoji: '🎧', glyphName: 'zap' };
+  if (t.includes('cuti') || t.includes('libur') || t.includes('leave'))
+    return { emoji: '🌴', glyphName: 'tree' };
+  if (t.includes('donasi') || t.includes('sosial'))
+    return { emoji: '🌱', glyphName: 'leaf' };
+  if (t.includes('kelas') || t.includes('workshop') || t.includes('kursus'))
+    return { emoji: '📚', glyphName: 'book' };
+  if (t.includes('wellness') || t.includes('sehat'))
+    return { emoji: '🧘', glyphName: 'people' };
+
+  return { emoji: '🎁', glyphName: glyphKey || 'gift' };
+}
+
+export default function RewardCard({
+  title,
+  points,
+  tone,
+  glyph,
+  category,
+  description,
+  index = 0,
+  isWishlist,
+  isFullWidth,
+  onToggleWishlist,
+  onRedeem
+}: RewardCardProps) {
   const { state, updateState, updateUser, user, notify } = useHP();
-  const cfg = TONE_CONFIG[tone] || TONE_CONFIG.blue;
-  const icon = glyph ?? GLYPH_MAP[title] ?? 'sparkle';
+  
+  // Pick palette dynamically based on tone or index to ensure adjacent cards have distinct vibrant colors
+  const palette = getPalette(tone, index);
+  const accentData = resolveAccent(title, glyph, category);
 
   const userCoins = state?.points ?? 0;
   const isLocked = userCoins < points;
@@ -64,7 +144,7 @@ export default function RewardCard({ title, points, tone, glyph, isWishlist, onT
         coins: s.points - points,
         rewardHistory: [
           ...(s.rewardHistory || []),
-          { id: Date.now(), title, points, date: new Date().toLocaleDateString('id-ID'), glyph: icon }
+          { id: Date.now(), title, points, date: new Date().toLocaleDateString('id-ID'), glyph: accentData.glyphName }
         ]
       }));
       updateUser({ points: (user?.points || 0) - points, coins: (user?.points || 0) - points });
@@ -75,93 +155,207 @@ export default function RewardCard({ title, points, tone, glyph, isWishlist, onT
   return (
     <div
       style={{
-        display: 'flex', alignItems: 'flex-start', gap: 14,
-        padding: '14px 16px', borderRadius: 18,
-        background: isLocked ? HP_TOKENS.card : cfg.bg,
-        border: `1.5px solid ${HP_TOKENS.line}`,
-        boxShadow: isLocked ? 'none' : `0 4px 12px ${cfg.glow}`,
-        marginBottom: 16,
-        opacity: isLocked ? 0.8 : 1,
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        minHeight: isFullWidth ? 180 : 200,
+        padding: '24px 22px 20px',
+        borderRadius: 28,
+        background: isLocked
+          ? '#F1F5F9'
+          : palette.bg,
+        border: isLocked
+          ? `1.5px solid ${HP_TOKENS.line}`
+          : `1.5px solid ${palette.border}`,
+        boxShadow: isLocked
+          ? '0 2px 8px rgba(0, 0, 0, 0.04)'
+          : '0 6px 18px rgba(0, 0, 0, 0.08)',
+        overflow: 'hidden',
+        transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease',
+        cursor: isLocked ? 'default' : 'pointer'
       }}
+      className={isLocked ? "" : "hp-tap"}
     >
-      <div style={{
-        width: 56, height: 56, borderRadius: 16,
-        background: isLocked ? HP_TOKENS.lineSoft : `${cfg.accent}22`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0, marginTop: 2
-      }}>
-        <HPGlyph name={isLocked ? "lock" : icon} size={28} color={isLocked ? HP_TOKENS.inkFade : cfg.accent} />
-      </div>
 
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-          <div style={{ ...HP_TEXT.h, fontSize: 15, color: isLocked ? HP_TOKENS.ink : cfg.text }}>{title}</div>
-          {onToggleWishlist ? (
-            <div 
-              onClick={onToggleWishlist}
-              style={{
-                width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: isWishlist ? '#FFD43B' : HP_TOKENS.paper,
-                border: `1.5px solid ${isWishlist ? '#FCC419' : HP_TOKENS.lineSoft}`,
-                cursor: 'pointer', transition: 'all 0.2s',
-                boxShadow: isWishlist ? '0 4px 10px rgba(252, 196, 25, 0.3)' : '0 2px 5px rgba(0,0,0,0.05)'
-              }}
-              title={isWishlist ? "Hapus dari Wishlist" : "Jadikan Wishlist"}
-              className="hp-tap"
-            >
-              <HPGlyph name="star" size={16} color={isWishlist ? '#fff' : HP_TOKENS.inkFade} />
-            </div>
-          ) : <div />}
-        </div>
-        
-        <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, marginTop: 4, fontSize: 12, lineHeight: 1.4 }}>
-          {/* Simulated description */}
-          {title.includes('Voucher') ? `Voucher digital senilai ${points/20} ribu rupiah.` : `Satu buah ${title.toLowerCase()} eksklusif.`}
-        </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginTop: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{
-              padding: '4px 12px', borderRadius: 99, fontSize: 11, fontWeight: 900,
-              background: isLocked ? HP_TOKENS.lineSoft : 'linear-gradient(135deg, #FFD43B, #F59F00)', 
-              color: isLocked ? HP_TOKENS.inkFade : '#fff', 
-              boxShadow: isLocked ? 'none' : '0 4px 10px rgba(245, 159, 0, 0.3)',
-              fontFamily: HP_FONT, display: 'flex', alignItems: 'center', gap: 4
+      {/* TOP ROW: Header Title + Right Side Icons */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, zIndex: 2 }}>
+        <div style={{ flex: 1, minWidth: 0, paddingRight: 10 }}>
+          {/* Wishlist Tag */}
+          {isWishlist && (
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4,
+              padding: '4px 10px', borderRadius: 99,
+              background: 'rgba(255, 212, 59, 0.3)',
+              border: '1px solid rgba(255, 212, 59, 0.7)',
+              color: '#FFD43B', fontSize: 10, fontWeight: 900,
+              letterSpacing: 0.5, marginBottom: 8, textTransform: 'uppercase'
             }}>
-              <div style={{
-                width: 14, height: 14, borderRadius: '50%',
-                background: isLocked ? 'transparent' : '#fff',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <HPGlyph name="star" size={8} color={isLocked ? HP_TOKENS.inkFade : "#E67700"} />
-              </div>
-              {points.toLocaleString()} POIN
-            </span>
-            <span style={{ fontSize: 10, fontWeight: 900, color: HP_TOKENS.sage }}>
-              STOK: 100
-            </span>
+              <HPGlyph name="star" size={10} color="#FFD43B" />
+              Wishlist Kamu
+            </div>
+          )}
+
+          {/* Short Title (Top Left) */}
+          <h3 style={{
+            ...HP_TEXT.h,
+            fontSize: 17,
+            fontWeight: 900,
+            color: isLocked ? '#94A3B8' : '#FFFFFF',
+            lineHeight: 1.25,
+            letterSpacing: '-0.3px',
+            margin: 0
+          }}>
+            {title}
+          </h3>
+
+          {/* Short Description (Below Title) */}
+          <p style={{
+            ...HP_TEXT.small,
+            fontSize: 12,
+            lineHeight: 1.45,
+            color: isLocked ? '#64748B' : 'rgba(255, 255, 255, 0.85)',
+            marginTop: 6,
+            marginBottom: 0
+          }}>
+            {description
+              ? description
+              : title.includes('Voucher')
+                ? `Voucher digital senilai ${points / 20} ribu rupiah.`
+                : `Satu buah ${title.toLowerCase()} eksklusif.`}
+          </p>
+        </div>
+
+        {/* TOP RIGHT ICONS: Large 3D Icon Badge & Wishlist Button cleanly side-by-side */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          flexShrink: 0,
+          zIndex: 3
+        }}>
+          {/* Large 3D Icon Container */}
+          <div style={{
+            width: 52,
+            height: 52,
+            borderRadius: 18,
+            background: isLocked ? 'rgba(255,255,255,0.08)' : 'rgba(255, 255, 255, 0.22)',
+            backdropFilter: 'blur(12px)',
+            border: isLocked ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(255, 255, 255, 0.35)',
+            boxShadow: isLocked ? 'none' : '0 6px 16px rgba(0, 0, 0, 0.15)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 26,
+            flexShrink: 0
+          }}>
+            {isLocked ? (
+              <HPGlyph name="lock" size={22} color="rgba(255,255,255,0.4)" />
+            ) : (
+              <span>{accentData.emoji}</span>
+            )}
           </div>
 
-          <button
-            onClick={handleRedeem}
-            disabled={isLocked}
-            style={{
-              padding: '10px 16px', borderRadius: 14, border: 'none',
-              background: isLocked ? HP_TOKENS.lineSoft : cfg.accent,
-              color: isLocked ? HP_TOKENS.inkFade : '#fff',
-              fontFamily: HP_FONT, fontWeight: 800, fontSize: 12,
-              cursor: isLocked ? 'default' : 'pointer', transition: 'all 0.2s',
-              boxShadow: isLocked ? 'none' : `0 4px 12px ${cfg.glow}`,
-              display: 'flex', alignItems: 'center', gap: 6
-            }}
-            className={isLocked ? "" : "hp-tap"}
-          >
-            {isLocked ? "Poin Kurang" : "Tukar Sekarang"}
-            {!isLocked && <HPGlyph name="sparkle" size={12} color="#fff" />}
-          </button>
+          {/* Wishlist Star Button */}
+          {onToggleWishlist && (
+            <button
+              onClick={onToggleWishlist}
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: '50%',
+                background: isWishlist ? '#FFD43B' : 'rgba(0, 0, 0, 0.25)',
+                backdropFilter: 'blur(8px)',
+                border: `1px solid ${isWishlist ? '#FCC419' : 'rgba(255, 255, 255, 0.25)'}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
+                transition: 'all 0.2s',
+                flexShrink: 0
+              }}
+              title={isWishlist ? "Hapus dari Wishlist" : "Jadikan Wishlist"}
+            >
+              <HPGlyph name="star" size={14} color={isWishlist ? '#000' : 'rgba(255,255,255,0.9)'} />
+            </button>
+          )}
         </div>
+      </div>
+
+      {/* BOTTOM ROW: Points Tag + Stock Badge + Action Button */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justify: 'space-between',
+        gap: 10,
+        marginTop: 20,
+        zIndex: 2,
+        flexWrap: 'nowrap'
+      }}>
+        {/* Left Side: Points Pill & Stok Tag */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, flexWrap: 'nowrap' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 5,
+            padding: '6px 12px',
+            borderRadius: 99,
+            background: isLocked ? 'rgba(0, 0, 0, 0.15)' : 'rgba(0, 0, 0, 0.25)',
+            backdropFilter: 'blur(8px)',
+            border: isLocked ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(255, 255, 255, 0.25)',
+            color: '#FFFFFF',
+            fontSize: 12,
+            fontWeight: 900,
+            letterSpacing: 0.5,
+            whiteSpace: 'nowrap'
+          }}>
+            <HPGlyph name="star" size={12} color={palette.accent} />
+            {points.toLocaleString()} <span style={{ opacity: 0.8, fontSize: 10 }}>POIN</span>
+          </div>
+
+          <span style={{
+            fontSize: 10,
+            fontWeight: 800,
+            color: isLocked ? '#64748B' : 'rgba(255, 255, 255, 0.85)',
+            whiteSpace: 'nowrap',
+            background: isLocked ? 'rgba(0,0,0,0.1)' : 'rgba(0, 0, 0, 0.2)',
+            padding: '4px 8px',
+            borderRadius: 8
+          }}>
+            STOK: 100
+          </span>
+        </div>
+
+        {/* Right Side: Action Button */}
+        <button
+          onClick={handleRedeem}
+          disabled={isLocked}
+          style={{
+            padding: '10px 16px',
+            borderRadius: 14,
+            border: 'none',
+            background: isLocked ? 'rgba(255, 255, 255, 0.1)' : '#FFFFFF',
+            color: isLocked ? '#64748B' : '#0F172A',
+            fontFamily: HP_FONT,
+            fontWeight: 900,
+            fontSize: 12,
+            cursor: isLocked ? 'default' : 'pointer',
+            boxShadow: isLocked ? 'none' : '0 4px 14px rgba(0,0,0,0.15)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            whiteSpace: 'nowrap',
+            flexShrink: 0,
+            transition: 'all 0.2s'
+          }}
+        >
+          <span>{isLocked ? "Poin Kurang" : "Tukar Sekarang"}</span>
+          {!isLocked && <HPGlyph name="sparkle" size={12} color="#0F172A" />}
+        </button>
       </div>
     </div>
   );
 }
+
+

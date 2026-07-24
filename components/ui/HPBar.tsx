@@ -26,9 +26,7 @@ export default function HPBar({
     teal: HP_TOKENS.teal,
   };
   
-  const fillBg = gradient 
-    ? `linear-gradient(90deg, ${HP_TOKENS.primary}, ${HP_TOKENS.yellow})`
-    : map[tone] || HP_TOKENS.primary;
+  const fillBg = map[tone] || HP_TOKENS.primary;
 
   return (
     <div style={{ width: '100%', height, background: 'var(--hp-border)', borderRadius: 99, overflow: 'hidden' }}>

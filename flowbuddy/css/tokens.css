@@ -5,7 +5,7 @@
    ========================================================================== */
 
 /* ── Google Fonts ── */
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Fredoka:wght@500;600;700&family=Inter:wght@400;600;700;800&family=Manrope:wght@400;600;700;800&family=Nunito:wght@400;600;700;800;900&family=Poppins:wght@400;600;700;800;900&display=swap');
 
 :root {
   /* ── Netral / Kanvas (60%) ── */
@@ -184,7 +184,30 @@
   --color-bubble-out: rgba(56, 189, 248, 0.2);
 }
 
-/* ── Universal Nunito ExtraBold Rule ── */
+/* ── Dynamic Font Selectors ── */
+[data-font="nunito"] {
+  --font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+}
+[data-font="manrope"] {
+  --font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+}
+[data-font="inter"] {
+  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+[data-font="feather"] {
+  --font-family: 'Feather', 'Nunito', system-ui, -apple-system, sans-serif;
+}
+[data-font="baloo2"] {
+  --font-family: 'Baloo 2', system-ui, -apple-system, sans-serif;
+}
+[data-font="fredoka"] {
+  --font-family: 'Fredoka', system-ui, -apple-system, sans-serif;
+}
+[data-font="poppins"] {
+  --font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+}
+
+/* ── Universal Font Rule ── */
 * {
   font-family: var(--font-family) !important;
   font-weight: 800 !important;

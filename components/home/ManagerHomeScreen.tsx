@@ -154,7 +154,7 @@ export default function ManagerHomeScreen({ openModal }: Props) {
             onClick={() => openModal('work_checkin')}
             className="hp-tap"
             style={{
-              background: `linear-gradient(135deg, ${HP_TOKENS.yellowWash} 0%, ${HP_TOKENS.yellowSoft} 100%)`,
+              background: `${HP_TOKENS.yellowWash}`,
               border: `1.5px solid ${HP_TOKENS.yellow}60`, borderRadius: 20,
               padding: '16px', marginBottom: 16,
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -179,7 +179,7 @@ export default function ManagerHomeScreen({ openModal }: Props) {
 
         {/* Manager Profile Header */}
         <div style={{
-          background: `linear-gradient(135deg, ${HP_TOKENS.paper}, ${HP_TOKENS.card})`,
+          background: `${HP_TOKENS.paper}`,
           borderRadius: 24, padding: '24px 20px', marginTop: 8,
           border: `1.5px solid ${HP_TOKENS.line}`, boxShadow: '0 10px 30px rgba(26,29,35,0.04)',
           position: 'relative', overflow: 'hidden'
@@ -317,7 +317,7 @@ export default function ManagerHomeScreen({ openModal }: Props) {
           <HPCard
             padding={16}
             style={{
-              background: `linear-gradient(135deg, ${HP_TOKENS.sageWash} 0%, ${HP_TOKENS.blueWash} 100%)`,
+              background: `${HP_TOKENS.sageWash}`,
               border: `1.5px solid ${HP_TOKENS.sage}20`,
               boxShadow: '0 8px 24px rgba(74, 124, 89, 0.04)',
             }}
@@ -409,7 +409,7 @@ export default function ManagerHomeScreen({ openModal }: Props) {
           onClick={() => openModal('manage_kpi')}
           style={{
             marginTop: 10, width: '100%', padding: '14px', borderRadius: 20,
-            background: `linear-gradient(135deg, ${HP_TOKENS.blue}, #2B5286)`, color: '#F4F7F9',
+            background: `${HP_TOKENS.blue}`, color: '#F4F7F9',
             border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
             boxShadow: '0 4px 12px rgba(59,111,160,0.3)'
@@ -448,7 +448,7 @@ export default function ManagerHomeScreen({ openModal }: Props) {
         {/* Ekspor laporan tim (Excel multi-sheet: harian/mingguan/bulanan/kpi) */}
         <button onClick={() => openModal('report_export')} style={{
           width: '100%', marginTop: 8, padding: '13px', borderRadius: 16, border: 'none', cursor: 'pointer',
-          background: `linear-gradient(135deg, ${HP_TOKENS.sage}, #3d6b4a)`, color: '#F4F7F9',
+          background: `${HP_TOKENS.sage}`, color: '#F4F7F9',
           fontFamily: HP_FONT, fontWeight: 800, fontSize: 13,
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           boxShadow: `0 4px 14px ${HP_TOKENS.sage}30`,

@@ -26,7 +26,7 @@ export default function HPPlaceholder({
       height: h, 
       borderRadius: 16, 
       overflow: 'hidden',
-      background: `repeating-linear-gradient(45deg, ${map[tone]} 0 10px, ${HP_TOKENS.paper} 10px 20px)`,
+      background: `${map[tone]}`,
       display: 'flex', 
       alignItems: 'center', 
       justifyContent: 'center',

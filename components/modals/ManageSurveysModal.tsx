@@ -200,7 +200,7 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
           {/* Create button */}
           <button onClick={() => { resetBuilder(); setView('builder'); }} className="hp-tap" style={{
             width: '100%', padding: '16px', borderRadius: 16, border: 'none',
-            background: `linear-gradient(135deg, ${HP_TOKENS.lavender}, #5A4E8C)`,
+            background: `${HP_TOKENS.lavender}`,
             color: '#F4F7F9', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
             marginBottom: 20, boxShadow: '0 6px 20px rgba(123,107,181,0.3)',

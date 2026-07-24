@@ -62,7 +62,7 @@ export default function CentralNudgeOverlay({ nudge, onClose }: CentralNudgeOver
       <Confetti show={showConfetti} />
       
       <div style={{
-        background: nudge?.type === 'kudos' ? `linear-gradient(135deg, #FFBE0B, #FF9F1C)` : `linear-gradient(135deg, #38bdf8, #818cf8)`,
+        background: nudge?.type === 'kudos' ? '#FFBE0B' : '#38bdf8',
         borderRadius: '32px',
         padding: '24px',
         width: '100%',

@@ -302,7 +302,7 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
                   padding: '12px 14px',
                   borderRadius: 16,
                   marginBottom: 8,
-                  background: canClaim ? `linear-gradient(90deg, ${HP_TOKENS.yellowWash}60, #fff)` : isHovered && !isClaimed ? '#f9fafb' : '#fff',
+                  background: canClaim ? `${HP_TOKENS.yellowWash}60` : isHovered && !isClaimed ? '#f9fafb' : '#fff',
                   border: canClaim ? `2px solid ${HP_TOKENS.yellow}` : `2px solid ${isHovered && !isClaimed ? '#e5e7eb' : '#f3f4f6'}`,
                   opacity: isClaimed ? 0.5 : 1,
                   transition: 'all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
@@ -358,7 +358,7 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
                           className="hp-tap"
                           style={{
                             padding: '8px 20px', borderRadius: 100, border: 'none',
-                            background: `linear-gradient(90deg, #FFBE0B, #FF9F1C)`, 
+                            background: `#FFBE0B`, 
                             color: '#fff',
                             fontFamily: HP_FONT, fontWeight: 900, fontSize: 12,
                             cursor: 'pointer',

@@ -41,6 +41,35 @@ export default function ReportDashboard({ openModal, lockedDept, compact, teamOn
   const [dlBusy, setDlBusy] = useState('');
   const [kpiDetail, setKpiDetail] = useState<any>(null); // { title } saat bar KPI diklik
 
+  // Search & Pagination state for Per-Person Detail Cards
+  const [peopleSearch, setPeopleSearch] = useState('');
+  const [peoplePage, setPeoplePage] = useState(1);
+  const PEOPLE_PER_PAGE = 12;
+
+  // Filter people based on search query
+  const filteredPeople = useMemo(() => {
+    if (!data?.people) return [];
+    if (!peopleSearch.trim()) return data.people;
+    const q = peopleSearch.toLowerCase().trim();
+    return data.people.filter((p: any) =>
+      p.name?.toLowerCase().includes(q) ||
+      p.department?.toLowerCase().includes(q) ||
+      p.jobTitle?.toLowerCase().includes(q)
+    );
+  }, [data?.people, peopleSearch]);
+
+  // Reset page when search or filters change
+  useEffect(() => {
+    setPeoplePage(1);
+  }, [peopleSearch, dept, month, year, week]);
+
+  // Paginated list
+  const totalPeoplePages = Math.max(1, Math.ceil(filteredPeople.length / PEOPLE_PER_PAGE));
+  const paginatedPeopleList = useMemo(() => {
+    const start = (peoplePage - 1) * PEOPLE_PER_PAGE;
+    return filteredPeople.slice(start, start + PEOPLE_PER_PAGE);
+  }, [filteredPeople, peoplePage]);
+
   const scopeLabel = useMemo(() => (teamOnly ? 'Tim Saya' : dept === 'all' ? 'Semua Divisi' : dept), [dept, teamOnly]);
 
   useEffect(() => {
@@ -109,7 +138,7 @@ export default function ReportDashboard({ openModal, lockedDept, compact, teamOn
       {/* Header */}
       <HPCard padding={0} style={{ overflow: 'hidden' }}>
         {!compact && (
-          <div style={{ background: `linear-gradient(135deg, ${HP_TOKENS.sage}, #2f5a3c)`, padding: 20, color: '#F4F7F9' }}>
+          <div style={{ background: HP_TOKENS.sage, padding: 20, color: '#F4F7F9' }}>
             <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 20 }}>📊 Dashboard Laporan Kinerja</div>
             <div style={{ fontSize: 13, fontWeight: 600, opacity: 0.9, marginTop: 2 }}>{scopeLabel} · {periodLabel}</div>
           </div>
@@ -280,40 +309,183 @@ export default function ReportDashboard({ openModal, lockedDept, compact, teamOn
 
           {/* Per-person cards */}
           {!hidePeople && (
-          <div>
-            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 900, margin: '0 4px 8px' }}>DETAIL PER ORANG ({people.length})</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
-              {people.map(p => (
-                <button key={p.id} onClick={() => openModal('employee_profile', { employeeId: p.id, employeeName: p.name })} className="hp-tap"
-                  style={{ textAlign: 'left', cursor: 'pointer', background: HP_TOKENS.card, border: `1.5px solid ${HP_TOKENS.line}`, borderRadius: 16, padding: 14, display: 'flex', flexDirection: 'column', gap: 10, fontFamily: HP_FONT }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <HPAvatar name={p.name} size={40} image={p.avatarImage} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ ...HP_TEXT.h, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
-                      <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontSize: 10 }}>{p.jobTitle || p.department}</div>
-                    </div>
-                    <Donut value={p.kpiScore} color={toneFor(p.kpiScore)} size={48} thickness={4}>
-                      <span style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 13, color: toneFor(p.kpiScore) }}>{p.kpiScore}</span>
-                    </Donut>
-                  </div>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <MiniStat b={`${p.tasksCompleted}/${p.totalTasks}`} s={`${p.completionRate}%`} />
-                    <MiniStat b={`${p.attendanceDays}/${p.workingDays}`} s="Hadir" />
-                    <MiniStat b={`${p.kpiCount}`} s="KPI" />
-                  </div>
-                  {p.targets?.length > 0 && <TargetBars targets={p.targets} max={3} />}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                    <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontSize: 10 }}>Ketuk untuk profil →</span>
-                    <span role="button" tabIndex={0}
-                      onClick={(e) => { e.stopPropagation(); downloadOnePerson(p); }}
-                      onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); downloadOnePerson(p); } }}
-                      style={{ ...HP_TEXT.tiny, fontSize: 10, color: HP_TOKENS.sage, fontWeight: 800, padding: '3px 8px', borderRadius: 8, background: HP_TOKENS.sageWash, cursor: 'pointer' }}>
-                      ⬇ Excel
-                    </span>
-                  </div>
-                </button>
-              ))}
+          <div style={{ marginTop: 24 }}>
+            <div style={{ 
+              display: 'flex', 
+              flexWrap: 'wrap', 
+              alignItems: 'center', 
+              justifyContent: 'space-between', 
+              gap: 12, 
+              margin: '0 4px 12px' 
+            }}>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 900, fontSize: 12 }}>
+                DETAIL PER ORANG ({filteredPeople.length}{data?.people?.length !== filteredPeople.length ? ` / ${data?.people?.length}` : ''})
+              </div>
+
+              {/* Search Bar */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                background: HP_TOKENS.card,
+                borderRadius: 12,
+                padding: '6px 12px',
+                border: `1.5px solid ${HP_TOKENS.line}`,
+                minWidth: 240,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+              }}>
+                <span style={{ fontSize: 14 }}>🔍</span>
+                <input
+                  type="text"
+                  value={peopleSearch}
+                  onChange={(e) => setPeopleSearch(e.target.value)}
+                  placeholder="Cari nama, divisi, atau jabatan..."
+                  style={{
+                    flex: 1,
+                    background: 'none',
+                    border: 'none',
+                    outline: 'none',
+                    fontFamily: HP_FONT,
+                    fontWeight: 700,
+                    fontSize: 13,
+                    color: HP_TOKENS.ink,
+                  }}
+                />
+                {peopleSearch && (
+                  <button
+                    onClick={() => setPeopleSearch('')}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: 12,
+                      color: HP_TOKENS.inkMute,
+                      padding: 2
+                    }}
+                    title="Hapus pencarian"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
             </div>
+
+            {filteredPeople.length === 0 ? (
+              <div style={{
+                background: HP_TOKENS.card,
+                borderRadius: 16,
+                border: `1.5px dashed ${HP_TOKENS.line}`,
+                padding: '36px 20px',
+                textAlign: 'center',
+                color: HP_TOKENS.inkMute,
+                fontFamily: HP_FONT,
+                fontSize: 14,
+                fontWeight: 700
+              }}>
+                Tidak ada anggota yang cocok dengan kata kunci &quot;{peopleSearch}&quot;.
+              </div>
+            ) : (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
+                  {paginatedPeopleList.map(p => (
+                    <button key={p.id} onClick={() => openModal('employee_profile', { employeeId: p.id, employeeName: p.name })} className="hp-tap"
+                      style={{ textAlign: 'left', cursor: 'pointer', background: HP_TOKENS.card, border: `1.5px solid ${HP_TOKENS.line}`, borderRadius: 16, padding: 14, display: 'flex', flexDirection: 'column', gap: 10, fontFamily: HP_FONT }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <HPAvatar name={p.name} size={40} image={p.avatarImage} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ ...HP_TEXT.h, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontSize: 10 }}>{p.jobTitle || p.department}</div>
+                        </div>
+                        <Donut value={p.kpiScore} color={toneFor(p.kpiScore)} size={48} thickness={4}>
+                          <span style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 13, color: toneFor(p.kpiScore) }}>{p.kpiScore}</span>
+                        </Donut>
+                      </div>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <MiniStat b={`${p.tasksCompleted}/${p.totalTasks}`} s={`${p.completionRate}%`} />
+                        <MiniStat b={`${p.attendanceDays}/${p.workingDays}`} s="Hadir" />
+                        <MiniStat b={`${p.kpiCount}`} s="KPI" />
+                      </div>
+                      {p.targets?.length > 0 && <TargetBars targets={p.targets} max={3} />}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                        <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontSize: 10 }}>Ketuk untuk profil →</span>
+                        <span role="button" tabIndex={0}
+                          onClick={(e) => { e.stopPropagation(); downloadOnePerson(p); }}
+                          onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); downloadOnePerson(p); } }}
+                          style={{ ...HP_TEXT.tiny, fontSize: 10, color: HP_TOKENS.sage, fontWeight: 800, padding: '3px 8px', borderRadius: 8, background: HP_TOKENS.sageWash, cursor: 'pointer' }}>
+                          ⬇ Excel
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Pagination Controls */}
+                {totalPeoplePages > 1 && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justify: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: 12,
+                    marginTop: 16,
+                    padding: '12px 16px',
+                    background: HP_TOKENS.card,
+                    borderRadius: 16,
+                    border: `1.5px solid ${HP_TOKENS.line}`
+                  }}>
+                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontSize: 12, fontWeight: 700 }}>
+                      Menampilkan {(peoplePage - 1) * PEOPLE_PER_PAGE + 1} - {Math.min(peoplePage * PEOPLE_PER_PAGE, filteredPeople.length)} dari {filteredPeople.length} orang
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <button
+                        onClick={() => setPeoplePage(p => Math.max(1, p - 1))}
+                        disabled={peoplePage === 1}
+                        className="hp-tap"
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: 10,
+                          border: `1px solid ${HP_TOKENS.line}`,
+                          background: peoplePage === 1 ? HP_TOKENS.lineSoft : HP_TOKENS.paper,
+                          color: peoplePage === 1 ? HP_TOKENS.inkMute : HP_TOKENS.ink,
+                          fontFamily: HP_FONT,
+                          fontWeight: 800,
+                          fontSize: 12,
+                          cursor: peoplePage === 1 ? 'default' : 'pointer',
+                          opacity: peoplePage === 1 ? 0.5 : 1
+                        }}
+                      >
+                        ◀ Sebelumnya
+                      </button>
+
+                      <span style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, color: HP_TOKENS.ink, padding: '0 4px' }}>
+                        {peoplePage} / {totalPeoplePages}
+                      </span>
+
+                      <button
+                        onClick={() => setPeoplePage(p => Math.min(totalPeoplePages, p + 1))}
+                        disabled={peoplePage === totalPeoplePages}
+                        className="hp-tap"
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: 10,
+                          border: `1px solid ${HP_TOKENS.line}`,
+                          background: peoplePage === totalPeoplePages ? HP_TOKENS.lineSoft : HP_TOKENS.paper,
+                          color: peoplePage === totalPeoplePages ? HP_TOKENS.inkMute : HP_TOKENS.ink,
+                          fontFamily: HP_FONT,
+                          fontWeight: 800,
+                          fontSize: 12,
+                          cursor: peoplePage === totalPeoplePages ? 'default' : 'pointer',
+                          opacity: peoplePage === totalPeoplePages ? 0.5 : 1
+                        }}
+                      >
+                        Selanjutnya ▶
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
           )}
         </>

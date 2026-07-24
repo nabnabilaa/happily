@@ -296,7 +296,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
 
   return (
     <Modal onClose={onClose} title="Mid-Day Check-In 🍯">
-      <div style={{ marginBottom: 24, padding: '24px 20px', background: `linear-gradient(135deg, ${HP_TOKENS.sageWash} 0%, ${HP_TOKENS.card} 100%)`, borderRadius: 24, border: `1px solid ${HP_TOKENS.sage}30`, boxShadow: '0 8px 32px rgba(26,29,35,0.03)' }}>
+      <div style={{ marginBottom: 24, padding: '24px 20px', background: `${HP_TOKENS.sageWash}`, borderRadius: 24, border: `1px solid ${HP_TOKENS.sage}30`, boxShadow: '0 8px 32px rgba(26,29,35,0.03)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div>
             <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 900, letterSpacing: 1, marginBottom: 4 }}>OVERALL PROGRESS</div>
@@ -310,7 +310,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
         <div style={{ height: 12, background: HP_TOKENS.lineSoft, borderRadius: 6, overflow: 'hidden', boxShadow: 'inset 0 2px 4px rgba(26,29,35,0.02)' }}>
           <div style={{ 
             width: `${progress}%`, height: '100%', 
-            background: `linear-gradient(to right, ${HP_TOKENS.sage}, #4ADE80)`,
+            background: `${HP_TOKENS.sage}`,
             transition: '1.5s cubic-bezier(0.2, 0.8, 0.2, 1)',
             boxShadow: `0 0 12px ${HP_TOKENS.sage}40`
           }} />

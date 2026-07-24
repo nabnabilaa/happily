@@ -401,7 +401,7 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
                 {isManager && (
                   <div style={{
                     padding: '14px', borderRadius: 16, marginBottom: 16,
-                    background: `linear-gradient(135deg, ${HP_TOKENS.ink}, #2C3E50)`,
+                    background: `${HP_TOKENS.ink}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   }}>
                     <span style={{ ...HP_TEXT.body, fontWeight: 700, color: 'rgba(255,255,255,0.7)' }}>

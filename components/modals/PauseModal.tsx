@@ -147,7 +147,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
       scale: 1.5,
       color: '#0ea5e9', // Vibrant Blue
       bg: '#eff6ff',
-      gradient: 'linear-gradient(135deg, #7dd3fc 0%, #0ea5e9 100%)',
+      gradient: '#7dd3fc',
       halo: 'rgba(56, 189, 248, 0.2)',
       shadow: 'rgba(14, 165, 233, 0.3)'
     },
@@ -157,7 +157,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
       scale: 1.5,
       color: '#8b5cf6', // Purple
       bg: '#f5f3ff',
-      gradient: 'linear-gradient(135deg, #c4b5fd 0%, #8b5cf6 100%)',
+      gradient: '#c4b5fd',
       halo: 'rgba(167, 139, 250, 0.2)',
       shadow: 'rgba(139, 92, 246, 0.3)'
     },
@@ -167,7 +167,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
       scale: 1,
       color: '#10b981', // Emerald Green
       bg: '#ecfdf5',
-      gradient: 'linear-gradient(135deg, #6ee7b7 0%, #10b981 100%)',
+      gradient: '#6ee7b7',
       halo: 'rgba(52, 211, 153, 0.2)',
       shadow: 'rgba(16, 185, 129, 0.3)'
     },
@@ -398,7 +398,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
                 <div style={{
                   position: 'absolute',
                   inset: 0,
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 60%)',
+                  background: 'rgba(255,255,255,0.4 0%, rgba(255,255,255,0) 60%)',
                   animation: 'blobMorph 12s ease-in-out infinite reverse, blobSpin 25s linear infinite reverse',
                   animationPlayState: isPlaying ? 'running' : 'paused',
                   boxShadow: 'inset 10px 10px 20px rgba(255, 255, 255, 0.8), inset -10px -20px 20px rgba(0, 0, 0, 0.1)',

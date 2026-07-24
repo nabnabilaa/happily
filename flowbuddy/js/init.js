@@ -4,4 +4,7 @@
   document.documentElement.removeAttribute('data-theme');
   var r = localStorage.getItem('flowbuddy-role');
   if (r) document.documentElement.setAttribute('data-role', r);
+
+  var f = localStorage.getItem('flowbuddy-font') || 'nunito';
+  document.documentElement.setAttribute('data-font', f);
 })();

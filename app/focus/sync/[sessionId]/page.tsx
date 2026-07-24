@@ -208,7 +208,7 @@ export default function FocusSyncPage() {
 
   const rootStyle: React.CSSProperties = {
     minHeight: "100dvh",
-    background: "linear-gradient(180deg, #2D6A4F 0%, #1B4332 100%)",
+    background: "#2D6A4F",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
@@ -244,7 +244,7 @@ export default function FocusSyncPage() {
   // ── Render: Ended ───────────────────────────────────────────────────────
   if (phase === "ended") {
     return (
-      <div style={{ ...rootStyle, background: "linear-gradient(180deg, #1a472a 0%, #0f2d1c 100%)" }}>
+      <div style={{ ...rootStyle, background: "#1a472a" }}>
         <div style={{ fontSize: 64, marginBottom: 16 }}>🎉</div>
         <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>Fokus Selesai!</div>
         <div style={{ fontSize: 14, opacity: 0.75, maxWidth: 300, marginBottom: 32 }}>

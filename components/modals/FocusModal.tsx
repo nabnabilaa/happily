@@ -576,7 +576,7 @@ export default function FocusModal({
 
   if (syncStatus === 'failed') {
     return (
-      <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: `linear-gradient(180deg, #dc2626 0%, #7f1d1d 100%)`, color: '#fff', fontFamily: HP_FONT, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center' }}>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: `#dc2626`, color: '#fff', fontFamily: HP_FONT, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center' }}>
         <div style={{ width: 80, height: 80, borderRadius: 40, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}><span style={{ fontSize: 40 }}>😡</span></div>
         <div style={{ ...HP_TEXT.h, fontSize: 32 }}>Sesi Gagal!</div>
         <div style={{ ...HP_TEXT.body, fontSize: 16, marginTop: 12, maxWidth: 300 }}>{failedReason}</div>
@@ -587,7 +587,7 @@ export default function FocusModal({
 
   if (syncStatus === 'completed') {
     return (
-      <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: `linear-gradient(180deg, ${HP_TOKENS.sage} 0%, #2D4F3A 100%)`, color: '#fff', fontFamily: HP_FONT, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center' }}>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: `${HP_TOKENS.sage}`, color: '#fff', fontFamily: HP_FONT, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center' }}>
         <BeeMascot mood="happy" size={120} />
         <div style={{ ...HP_TEXT.h, fontSize: 32, marginTop: 24 }}>{isMultiplayer ? "TEAM COMBO BERHASIL!" : "FOKUS BERHASIL!"}</div>
         <div style={{ ...HP_TEXT.body, fontSize: 16, marginTop: 12, opacity: 0.9 }}>
@@ -598,7 +598,7 @@ export default function FocusModal({
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: `linear-gradient(180deg, ${HP_TOKENS.sage} 0%, #1c3525 100%)`, color: '#F4F7F9', fontFamily: HP_FONT, display: 'flex', flexDirection: 'column', animation: 'hpFadeIn 300ms', overflowY: 'auto' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: `${HP_TOKENS.sage}`, color: '#F4F7F9', fontFamily: HP_FONT, display: 'flex', flexDirection: 'column', animation: 'hpFadeIn 300ms', overflowY: 'auto' }}>
       <div style={{ padding: '40px 20px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
         <button onClick={started ? handleEarlyEndAttempt : (isMultiplayer ? () => setLobbyExitWarning(true) : onClose)} style={iconBtnStyle}><HPGlyph name="close" size={18} color="#F4F7F9"/></button>
         <div style={{ ...HP_TEXT.small, color: 'rgba(255,255,255,0.7)', fontWeight: 700 }}>{isMultiplayer ? "TEAM COMBO ROOM" : "FOCUS MODE"}</div>

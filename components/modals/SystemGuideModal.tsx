@@ -97,7 +97,7 @@ export default function SystemGuideModal({ onClose }: SystemGuideModalProps) {
         {/* Skill Guide */}
         <section style={{ 
           marginTop: 8, padding: 16, borderRadius: 20, 
-          background: `linear-gradient(135deg, ${HP_TOKENS.sageWash}, ${HP_TOKENS.card})`,
+          background: `${HP_TOKENS.sageWash}`,
           border: `1.5px solid ${HP_TOKENS.sageSoft}`
         }}>
           <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.sage }}>Otomatisasi Progress Skill</div>

@@ -436,7 +436,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
           {/* Dashboard & Unduh Laporan (semua divisi) — hasil lebur tab Laporan ke People */}
           <button onClick={() => setShowAllDash(s => !s)} className="hp-tap" style={{
             width: '100%', padding: '13px 16px', borderRadius: 14, border: 'none', cursor: 'pointer', marginBottom: 12,
-            background: showAllDash ? HP_TOKENS.sage : `linear-gradient(135deg, ${HP_TOKENS.sage}, #2f5a3c)`, color: '#F4F7F9',
+            background: showAllDash ? HP_TOKENS.sage : `${HP_TOKENS.sage}`, color: '#F4F7F9',
             fontFamily: HP_FONT, fontWeight: 800, fontSize: 13,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           }}>
@@ -841,7 +841,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
           </HPCard>
           <button onClick={() => openModal('manage_surveys')} className="hp-tap" style={{
             width: '100%', padding: '16px', borderRadius: 16, border: 'none',
-            background: `linear-gradient(135deg, ${HP_TOKENS.lavender}, #5A4E8C)`,
+            background: `${HP_TOKENS.lavender}`,
             color: '#F4F7F9', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
             boxShadow: '0 6px 20px rgba(123,107,181,0.3)',
@@ -932,7 +932,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
             {paginatedContacts.map((contact: any) => (
               <HPCard key={contact.id} padding={14} style={{ border: `1.5px solid ${HP_TOKENS.lineSoft}`, transition: 'all 0.2s', ':hover': { borderColor: HP_TOKENS.blue } } as any}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                  <div style={{ width: 44, height: 44, borderRadius: 14, background: `linear-gradient(135deg, ${HP_TOKENS.blueSoft}, ${HP_TOKENS.lavenderSoft})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 14, background: `${HP_TOKENS.blueSoft}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <HPGlyph name="people" size={22} color={HP_TOKENS.blue} />
                   </div>
                   <div style={{ flex: 1 }}>

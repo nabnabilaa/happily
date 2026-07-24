@@ -95,7 +95,7 @@ export default function LeaderboardWidget({ currentUserId }: { currentUserId?: s
         {top3.length > 0 && (
           <HPCard padding={16} style={{ 
             display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 8, 
-            paddingTop: 32, minHeight: 220, background: 'linear-gradient(to bottom, transparent, #fafafa)' 
+            paddingTop: 32, minHeight: 220, background: 'transparent' 
           }}>
             {podiumOrder.map((user) => {
               const rank = user.rank;
@@ -115,7 +115,7 @@ export default function LeaderboardWidget({ currentUserId }: { currentUserId?: s
                     )}
                     <div style={{ 
                       borderRadius: '50%', padding: 3, 
-                      background: `linear-gradient(135deg, ${style.bg}, ${style.color})`,
+                      background: `${style.bg}`,
                       boxShadow: `0 4px 12px ${style.stroke}40`
                     }}>
                       <HPAvatar name={user.name} size={rank === 1 ? 64 : 48} />

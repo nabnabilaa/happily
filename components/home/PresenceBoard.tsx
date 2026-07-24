@@ -202,7 +202,7 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
           className="hp-tap"
           style={{
             flex: 2, padding: '12px 16px', borderRadius: 14,
-            background: `linear-gradient(135deg, ${HP_TOKENS.primary}, #2563EB)`,
+            background: `${HP_TOKENS.primary}`,
             color: '#F4F7F9', border: 'none', fontFamily: HP_FONT, fontWeight: 800,
             fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center',
             justifyContent: 'center', gap: 8,

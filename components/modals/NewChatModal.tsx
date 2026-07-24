@@ -222,11 +222,11 @@ export default function NewChatModal({ onClose, onChannelCreated, defaultRecipie
             <button onClick={() => setMode('broadcast')} className="hp-tap" style={{
               padding: '18px 16px', borderRadius: 16,
               border: `1.5px solid #F59E0B30`,
-              background: 'linear-gradient(135deg, #FFF7ED, #FFFBEB)',
+              background: '#FFF7ED',
               cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14,
             }}>
               <div style={{ width: 48, height: 48, borderRadius: 14,
-                background: 'linear-gradient(135deg, #F59E0B, #D97706)',
+                background: '#F59E0B',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>📢</div>
               <div style={{ textAlign: 'left', flex: 1 }}>
                 <div style={{ ...HP_TEXT.h, fontSize: 15 }}>Pesan Siaran</div>
@@ -369,7 +369,7 @@ export default function NewChatModal({ onClose, onChannelCreated, defaultRecipie
           className="hp-tap"
           style={{
             width: '100%', padding: 16, borderRadius: 14, border: 'none',
-            background: broadcastContent.trim() ? 'linear-gradient(135deg, #F59E0B, #D97706)' : HP_TOKENS.lineSoft,
+            background: broadcastContent.trim() ? '#F59E0B' : HP_TOKENS.lineSoft,
             color: broadcastContent.trim() ? '#fff' : HP_TOKENS.inkMute,
             fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
             opacity: creating || !broadcastContent.trim() ? 0.5 : 1,

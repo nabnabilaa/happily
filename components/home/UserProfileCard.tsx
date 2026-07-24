@@ -85,7 +85,7 @@ export default function UserProfileCard({ user, levelProgress, openModal }: User
               <div style={{ width: '100%', height: 6, background: 'var(--hp-border)', borderRadius: 100, overflow: 'hidden' }}>
                 <div style={{ 
                   width: `${levelProgress * 100}%`, height: '100%', 
-                  background: 'linear-gradient(90deg, #3B82F6, #60A5FA)', 
+                  background: '#3B82F6', 
                   borderRadius: 100,
                   transition: '1s cubic-bezier(0.2, 0.8, 0.2, 1)',
                 }} />

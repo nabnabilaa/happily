@@ -83,7 +83,7 @@ export default function AttendanceWidget({ openModal }: AttendanceWidgetProps) {
         className="hp-tap"
         style={{
           width: '100%', padding: '16px', borderRadius: 20, 
-          background: `linear-gradient(135deg, ${HP_TOKENS.coral}, #E03131)`, 
+          background: `${HP_TOKENS.coral}`, 
           color: '#F4F7F9', border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
           boxShadow: '0 4px 16px rgba(224,49,49,0.3)'
@@ -134,7 +134,7 @@ export default function AttendanceWidget({ openModal }: AttendanceWidgetProps) {
             disabled={!!checkOutTime}
             style={{
               padding: '14px 20px', border: 'none', cursor: checkOutTime ? 'default' : 'pointer',
-              background: checkOutTime ? HP_TOKENS.lineSoft : `linear-gradient(135deg, ${HP_TOKENS.sage}, #2D7A4E)`,
+              background: checkOutTime ? HP_TOKENS.lineSoft : `${HP_TOKENS.sage}`,
               color: checkOutTime ? HP_TOKENS.inkFade : '#F4F7F9', fontFamily: HP_FONT, fontWeight: 800, fontSize: 12,
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
               borderLeft: `1px solid ${checkOutTime ? 'transparent' : HP_TOKENS.sage + '40'}`,

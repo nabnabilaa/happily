@@ -286,7 +286,7 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
 
       <div style={{ 
         marginTop: 20, padding: 12, borderRadius: 12,
-        background: 'linear-gradient(to bottom, #F9FAFB, #F3F4F6)'
+        background: '#F9FAFB'
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

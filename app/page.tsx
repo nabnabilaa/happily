@@ -235,9 +235,9 @@ function AppContent() {
         overflow: 'hidden',
       }}>
         {/* Ambient background glows (using radial-gradient to prevent clipping artifacts) */}
-        <div style={{ position: 'absolute', width: '70vw', height: '70vw', background: 'radial-gradient(circle, rgba(59,130,246,0.1) 0%, rgba(59,130,246,0) 65%)', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', pointerEvents: 'none', zIndex: 0 }} />
-        <div style={{ position: 'absolute', width: '50vw', height: '50vw', background: 'radial-gradient(circle, rgba(255,212,59,0.08) 0%, rgba(255,212,59,0) 65%)', top: '0%', left: '0%', transform: 'translate(-30%, -30%)', pointerEvents: 'none', zIndex: 0 }} />
-        <div style={{ position: 'absolute', width: '80vw', height: '80vw', background: 'radial-gradient(circle, rgba(74,124,89,0.06) 0%, rgba(74,124,89,0) 60%)', bottom: '0%', right: '0%', transform: 'translate(20%, 20%)', pointerEvents: 'none', zIndex: 0 }} />
+        <div style={{ position: 'absolute', width: '70vw', height: '70vw', background: 'rgba(59,130,246,0.1 0%, rgba(59,130,246,0) 65%)', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', pointerEvents: 'none', zIndex: 0 }} />
+        <div style={{ position: 'absolute', width: '50vw', height: '50vw', background: 'rgba(255,212,59,0.08 0%, rgba(255,212,59,0) 65%)', top: '0%', left: '0%', transform: 'translate(-30%, -30%)', pointerEvents: 'none', zIndex: 0 }} />
+        <div style={{ position: 'absolute', width: '80vw', height: '80vw', background: 'rgba(74,124,89,0.06 0%, rgba(74,124,89,0) 60%)', bottom: '0%', right: '0%', transform: 'translate(20%, 20%)', pointerEvents: 'none', zIndex: 0 }} />
 
         {/* Buddy Mascot */}
         <div style={{ animation: 'hpFloat 2.8s ease-in-out infinite', zIndex: 2 }}>

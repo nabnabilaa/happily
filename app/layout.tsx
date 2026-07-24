@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Nunito } from "next/font/google";
+import { Nunito, Manrope, Inter, Baloo_2, Fredoka, Poppins } from "next/font/google";
 import "./globals.css";
 import Shell from "@/components/layout/Shell";
 import PWARegistration from "@/components/pwa/PWARegistration";
@@ -12,13 +12,37 @@ import GlobalClickInterceptor from "@/components/ui/GlobalClickInterceptor";
 const nunito = Nunito({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800", "900"],
-  variable: "--hp-font",
+  variable: "--font-nunito",
 });
 
-const nunitoDisplay = Nunito({
+const manrope = Manrope({
   subsets: ["latin"],
-  weight: ["700", "800", "900"],
-  variable: "--hp-font-display",
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-manrope",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-inter",
+});
+
+const baloo2 = Baloo_2({
+  subsets: ["latin"],
+  weight: ["500", "600", "700", "800"],
+  variable: "--font-baloo2",
+});
+
+const fredoka = Fredoka({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-fredoka",
+});
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-poppins",
 });
 
 export const viewport: Viewport = {
@@ -51,10 +75,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className={`${nunito.variable} ${nunitoDisplay.variable}`} suppressHydrationWarning>
+    <html 
+      lang="id" 
+      className={`${nunito.variable} ${manrope.variable} ${inter.variable} ${baloo2.variable} ${fredoka.variable} ${poppins.variable}`} 
+      suppressHydrationWarning
+    >
       <head>
       </head>
       <body>
+        <Script id="font-loader" strategy="beforeInteractive" dangerouslySetInnerHTML={{
+          __html: `
+            try {
+              var savedFont = localStorage.getItem('hp-font') || 'nunito';
+              document.documentElement.setAttribute('data-font', savedFont);
+            } catch (e) {}
+          `
+        }} />
         <Script id="theme-loader" strategy="beforeInteractive" dangerouslySetInnerHTML={{
           __html: `
             try {

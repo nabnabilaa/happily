@@ -167,7 +167,7 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
             flexWrap: "wrap",
             width: "100%",
             maxWidth: 960,
-            background: `linear-gradient(160deg, ${HP_TOKENS.primaryWash} 0%, ${HP_TOKENS.primarySoft} 100%)`,
+            background: `${HP_TOKENS.primaryWash}`,
             borderRadius: 32,
             boxShadow: "0 20px 60px rgba(59, 130, 246, 0.15)",
             overflow: "hidden",
@@ -355,7 +355,7 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                   className={loading ? "" : "hp-btn-hover"}
                   style={{
                     width: '100%', padding: '16px', borderRadius: 100, border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15,
-                    background: loading ? HP_TOKENS.lineSoft : `linear-gradient(135deg, ${HP_TOKENS.primary}, #60A5FA)`,
+                    background: loading ? HP_TOKENS.lineSoft : `${HP_TOKENS.primary}`,
                     color: loading ? HP_TOKENS.inkMute : '#fff', cursor: loading ? 'not-allowed' : 'pointer',
                     boxShadow: loading ? 'none' : `0 8px 24px rgba(59,130,246,0.3)`, transition: 'all 0.2s',
                     display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8

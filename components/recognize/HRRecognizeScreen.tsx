@@ -62,7 +62,7 @@ export default function HRRecognizeScreen({ openModal }: Props) {
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16,
         padding: '24px 20px', borderRadius: 24,
-        background: `linear-gradient(135deg, ${HP_TOKENS.primary}, #E65A20)`,
+        background: `${HP_TOKENS.primary}`,
         boxShadow: '0 12px 32px rgba(255, 107, 53, 0.25)',
         marginBottom: 24,
         position: 'relative',

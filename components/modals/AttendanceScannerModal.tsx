@@ -485,8 +485,8 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
                     background: isOutOfRange 
                       ? HP_TOKENS.lineSoft
                       : isCheckingIn 
-                        ? `linear-gradient(135deg, ${HP_TOKENS.blue}, #2B5286)` 
-                        : `linear-gradient(135deg, ${HP_TOKENS.sage}, #2D7A4E)`,
+                        ? `${HP_TOKENS.blue}` 
+                        : `${HP_TOKENS.sage}`,
                     color: isOutOfRange ? HP_TOKENS.inkMute : '#F4F7F9',
                     fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: isOutOfRange ? 'not-allowed' : 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,

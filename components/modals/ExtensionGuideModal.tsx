@@ -48,7 +48,7 @@ export default function ExtensionGuideModal({ onClose }: ExtensionGuideModalProp
       >
         {/* Header Hero Area */}
         <div style={{
-          background: `linear-gradient(135deg, ${HP_TOKENS.yellowWash}, ${HP_TOKENS.card})`,
+          background: `${HP_TOKENS.yellowWash}`,
           padding: '40px 24px 32px',
           position: 'relative',
           flexShrink: 0,
@@ -202,7 +202,7 @@ export default function ExtensionGuideModal({ onClose }: ExtensionGuideModalProp
                 width: '100%',
                 padding: '16px 24px',
                 borderRadius: 16,
-                background: `linear-gradient(135deg, ${HP_TOKENS.yellowLight}, ${HP_TOKENS.yellowDark})`,
+                background: `${HP_TOKENS.yellowLight}`,
                 color: '#fff',
                 fontSize: 16,
                 fontWeight: 800,
@@ -222,7 +222,7 @@ export default function ExtensionGuideModal({ onClose }: ExtensionGuideModalProp
                 left: '-100%',
                 width: '50%',
                 height: '100%',
-                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)',
+                background: 'transparent, transparent)',
                 transform: 'skewX(-20deg)',
                 animation: 'hpShine 3s infinite'
               }} />

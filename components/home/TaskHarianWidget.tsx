@@ -336,7 +336,7 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
       {/* Realization Progress Card */}
       <HPCard padding={20} style={{ 
         marginBottom: 20, 
-        background: `linear-gradient(135deg, ${HP_TOKENS.primaryWash} 0%, ${HP_TOKENS.card} 100%)`, 
+        background: `${HP_TOKENS.primaryWash}`, 
         border: `1.5px solid ${HP_TOKENS.primary}20`,
         boxShadow: '0 10px 30px rgba(26,29,35,0.03)',
         position: 'relative',
@@ -366,7 +366,7 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
             <div style={{ 
                width: `${partialProgressPct}%`,
                height: '100%', 
-               background: `linear-gradient(to right, ${HP_TOKENS.primary}, #60A5FA)`, 
+               background: `${HP_TOKENS.primary}`, 
                borderRadius: 6,
                transition: '1s cubic-bezier(0.2, 0.8, 0.2, 1)',
                boxShadow: `0 0 12px ${HP_TOKENS.primary}40`

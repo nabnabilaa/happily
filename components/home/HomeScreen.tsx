@@ -152,7 +152,7 @@ export default function HomeScreen({ openModal }: any) {
                 onClick={() => openModal('work_checkin')}
                 className="hp-tap"
                 style={{
-                  background: `linear-gradient(135deg, ${HP_TOKENS.yellowWash} 0%, ${HP_TOKENS.yellowSoft} 100%)`,
+                  background: `${HP_TOKENS.yellowWash}`,
                   border: `1.5px solid ${HP_TOKENS.yellow}60`,
                   borderRadius: 20,
                   padding: '16px',
@@ -252,7 +252,7 @@ export default function HomeScreen({ openModal }: any) {
           <HPCard 
             padding={16} 
             style={{ 
-              background: `linear-gradient(135deg, ${HP_TOKENS.sageWash} 0%, ${HP_TOKENS.blueWash} 100%)`, 
+              background: `${HP_TOKENS.sageWash}`, 
               border: `1.5px solid ${HP_TOKENS.sage}20`,
               boxShadow: '0 8px 24px rgba(74, 124, 89, 0.04)',
               position: 'relative',

@@ -113,7 +113,7 @@ function ResetPasswordContent() {
           position: "relative",
           zIndex: 1
         }}>
-          <div style={{ marginBottom: 24, width: 64, height: 64, borderRadius: "50%", background: `linear-gradient(135deg, ${HP_TOKENS.primary}20, ${HP_TOKENS.primary}40)`, display: "flex", alignItems: "center", justifyContent: "center", color: HP_TOKENS.primary }}>
+          <div style={{ marginBottom: 24, width: 64, height: 64, borderRadius: "50%", background: `${HP_TOKENS.primary}20`, display: "flex", alignItems: "center", justifyContent: "center", color: HP_TOKENS.primary }}>
             <HPGlyph name="lock" size={32} />
           </div>
 
@@ -204,7 +204,7 @@ function ResetPasswordContent() {
                   className={loading || !email || !token ? "" : "hp-btn-hover"}
                   style={{
                     width: '100%', padding: '16px', borderRadius: 100, border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15,
-                    background: loading || !email || !token ? HP_TOKENS.lineSoft : `linear-gradient(135deg, ${HP_TOKENS.primary}, #60A5FA)`,
+                    background: loading || !email || !token ? HP_TOKENS.lineSoft : `${HP_TOKENS.primary}`,
                     color: loading || !email || !token ? HP_TOKENS.inkMute : '#fff', cursor: loading || !email || !token ? 'not-allowed' : 'pointer',
                     boxShadow: loading || !email || !token ? 'none' : `0 8px 24px rgba(59,130,246,0.3)`, transition: 'all 0.2s',
                     display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, marginTop: 8

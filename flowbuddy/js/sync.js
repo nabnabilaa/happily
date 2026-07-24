@@ -415,8 +415,8 @@ function fbShowNudgeOverlay(nudge, onCloseCb) {
     ? 'M 78 125 Q 100 152 122 125'
     : 'M 82 128 Q 100 145 118 128';
   const cardBg   = isKudos
-    ? 'linear-gradient(135deg,#FFBE0B,#FF9F1C)'
-    : 'linear-gradient(135deg,#38bdf8,#818cf8)';
+    ? '#FFBE0B'
+    : '#38bdf8';
   const btnColor = isKudos ? '#FF9F1C' : '#38bdf8';
   const label    = isKudos ? '✨ Apresiasi Baru ✨' : '👀 Senggolan Masuk';
   const headline = isKudos

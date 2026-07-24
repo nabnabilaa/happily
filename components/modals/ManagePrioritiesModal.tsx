@@ -756,7 +756,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                       <div style={{ height: 5, background: HP_TOKENS.lineSoft, borderRadius: 99, overflow: 'hidden' }}>
                         <div style={{
                           height: '100%', borderRadius: 99, width: `${p.partial_progress}%`,
-                          background: `linear-gradient(90deg, ${HP_TOKENS.blue}, ${HP_TOKENS.lavender})`,
+                          background: `${HP_TOKENS.blue}`,
                           transition: 'width 0.4s ease',
                         }} />
                       </div>

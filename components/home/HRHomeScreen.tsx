@@ -166,7 +166,7 @@ export default function HRHomeScreen({ openModal }: Props) {
             onClick={() => openModal('work_checkin')}
             className="hp-tap"
             style={{
-              background: `linear-gradient(135deg, ${HP_TOKENS.yellowWash} 0%, ${HP_TOKENS.yellowSoft} 100%)`,
+              background: `${HP_TOKENS.yellowWash}`,
               border: `1.5px solid ${HP_TOKENS.yellow}60`, borderRadius: 20,
               padding: '16px', marginBottom: 16,
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -191,7 +191,7 @@ export default function HRHomeScreen({ openModal }: Props) {
 
         {/* HR Profile Header */}
         <div style={{
-          background: `linear-gradient(135deg, ${HP_TOKENS.paper}, ${HP_TOKENS.card})`,
+          background: `${HP_TOKENS.paper}`,
           borderRadius: 24, padding: '24px 20px', marginTop: 8,
           border: `1.5px solid ${HP_TOKENS.line}`, boxShadow: '0 10px 30px rgba(26,29,35,0.04)',
           position: 'relative', overflow: 'hidden'
@@ -298,7 +298,7 @@ export default function HRHomeScreen({ openModal }: Props) {
           <HPCard
             padding={16}
             style={{
-              background: `linear-gradient(135deg, ${HP_TOKENS.sageWash} 0%, ${HP_TOKENS.blueWash} 100%)`,
+              background: `${HP_TOKENS.sageWash}`,
               border: `1.5px solid ${HP_TOKENS.sage}20`,
               boxShadow: '0 8px 24px rgba(74, 124, 89, 0.04)',
             }}
@@ -482,7 +482,7 @@ export default function HRHomeScreen({ openModal }: Props) {
         {/* HR-specific: Kelola Survey */}
         <button onClick={() => openModal('manage_surveys')} className="hp-tap" style={{
           marginTop: 16, width: '100%', padding: '16px', borderRadius: 22,
-          background: `linear-gradient(135deg, ${HP_TOKENS.lavender}, #5A4E8C)`, color: '#F4F7F9',
+          background: `${HP_TOKENS.lavender}`, color: '#F4F7F9',
           border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14,
           fontFamily: HP_FONT, textAlign: 'left', boxShadow: '0 8px 22px rgba(123,107,181,0.3)',
           position: 'relative', overflow: 'hidden',

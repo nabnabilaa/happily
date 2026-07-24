@@ -196,7 +196,7 @@ export default function SurveyResultsModal({ onClose, surveyId }: SurveyResultsM
                             <div style={{ height: 60, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', marginBottom: 4 }}>
                               <div style={{
                                 width: '100%', height: `${Math.max(4, pct)}%`, borderRadius: 4,
-                                background: `linear-gradient(to top, ${HP_TOKENS.yellow}, ${HP_TOKENS.yellowSoft})`,
+                                background: `${HP_TOKENS.yellow}`,
                                 transition: '0.5s',
                               }} />
                             </div>

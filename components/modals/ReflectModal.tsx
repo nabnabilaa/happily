@@ -149,7 +149,7 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
     <Modal onClose={onClose} noPadding>
       {/* 1. Header Banner (Edge-to-Edge) */}
       <div style={{
-        background: `linear-gradient(135deg, ${HP_TOKENS.sageSoft} 0%, ${HP_TOKENS.sageWash} 100%)`,
+        background: `${HP_TOKENS.sageSoft}`,
         padding: '32px 24px 40px',
         position: 'relative',
         overflow: 'hidden',

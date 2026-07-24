@@ -228,7 +228,7 @@ export default function CoworkingWidget({ openModal }: CoworkingWidgetProps) {
             <HPCard 
               padding={16}
               style={{ 
-                background: `linear-gradient(135deg, ${HP_TOKENS.sageWash} 0%, #fff 100%)`, 
+                background: `${HP_TOKENS.sageWash}`, 
                 border: `1.5px solid ${HP_TOKENS.sage}30`,
                 position: 'relative',
                 display: 'flex',

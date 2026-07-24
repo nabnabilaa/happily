@@ -249,7 +249,7 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
             className="hp-tap"
             style={{
               width: '100%', padding: '14px', borderRadius: 12, border: 'none',
-              background: `linear-gradient(135deg, ${HP_TOKENS.blue}, ${HP_TOKENS.lavender})`, color: '#fff',
+              background: `${HP_TOKENS.blue}`, color: '#fff',
               fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer',
               opacity: (saving || !formKpiId || !formTitle.trim()) ? 0.6 : 1,
               boxShadow: '0 6px 16px rgba(123, 107, 181, 0.3)'

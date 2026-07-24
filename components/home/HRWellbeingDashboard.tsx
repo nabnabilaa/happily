@@ -47,7 +47,7 @@ export default function HRWellbeingDashboard({ state, openModal, onGoToBurnout }
       <HPCard 
         padding={isOpen ? 16 : 14} 
         style={{ 
-          background: `linear-gradient(135deg, ${HP_TOKENS.blueWash} 0%, ${HP_TOKENS.blueSoft} 100%)`, 
+          background: `${HP_TOKENS.blueWash}`, 
           border: `1.5px solid ${HP_TOKENS.blue}30`,
           transition: 'all 0.3s ease'
         }}

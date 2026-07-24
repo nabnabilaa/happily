@@ -253,7 +253,7 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
         {/* Header Card */}
         <div style={{
           padding: '20px', borderRadius: 20, marginBottom: 16,
-          background: `linear-gradient(135deg, ${HP_TOKENS.lavenderSoft}, ${HP_TOKENS.blueSoft})`,
+          background: `${HP_TOKENS.lavenderSoft}`,
           border: `1.5px solid ${HP_TOKENS.lavender}20`,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -350,7 +350,7 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {/* Capaian Kinerja (donut skor + tren mingguan) */}
             {agg && (
-              <HPCard padding={16} style={{ background: `linear-gradient(135deg, ${HP_TOKENS.sageWash}, ${HP_TOKENS.blueSoft})`, border: `1.5px solid ${HP_TOKENS.sage}20` }}>
+              <HPCard padding={16} style={{ background: `${HP_TOKENS.sageWash}`, border: `1.5px solid ${HP_TOKENS.sage}20` }}>
                 <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 12 }}>🎯 CAPAIAN KINERJA BULAN INI</div>
                 <div style={{ display: 'flex', gap: 10, justifyContent: 'space-around' }}>
                   {[
