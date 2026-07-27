@@ -12,15 +12,13 @@ interface UserProfileCardProps {
 export default function UserProfileCard({ user, levelProgress, openModal }: UserProfileCardProps) {
   if (!user) return null;
   return (
-        <div style={{ 
+        <div className="hp-bento-card" style={{ 
           background: HP_TOKENS.card,
-          borderRadius: 24,
-          padding: '24px',
-          marginTop: 16,
           border: `1px solid ${HP_TOKENS.line}`,
           boxShadow: 'var(--hp-shadow-sm)',
           position: 'relative',
           overflow: 'hidden',
+          height: '100%',
         }}>
           <div 
             onClick={() => openModal('profile_editor')}

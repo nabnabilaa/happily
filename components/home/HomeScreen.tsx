@@ -142,7 +142,7 @@ export default function HomeScreen({ openModal }: any) {
       <CentralNudgeOverlay nudge={centralNudge} onClose={() => setCentralNudge(null)} />
       <MorningPlanPopup planText={yesterdayPlan} userId={rawUser?.id} />
 
-      <div style={{ position: 'relative', zIndex: 1, padding: '0 16px', paddingTop: 72 }} className="hp-stagger">
+      <div style={{ position: 'relative', zIndex: 1, padding: '0 16px', paddingTop: 8 }} className="hp-stagger">
         
         <NotificationBanner />
 
@@ -181,11 +181,11 @@ export default function HomeScreen({ openModal }: any) {
               </div>
         ) : null}
 
-        {/* ═══ BENTO GRID CONTAINER ═══ */}
+        {/* ═══ 12-COLUMN BENTO GRID CONTAINER ═══ */}
         <div className="hp-bento-grid">
           
-          {/* BENTO HERO: Energy Score & Emotional Hero (Full Width Span 2) */}
-          <div className="hp-bento-full">
+          {/* BENTO HERO: Energy Score & Emotional Hero (Col 12) */}
+          <div className="hp-bento-col-12">
             <EmotionalHero 
               state={state} 
               moodObj={moodObj} 
@@ -196,138 +196,144 @@ export default function HomeScreen({ openModal }: any) {
             />
           </div>
 
-          {/* BENTO CARD 1: User Profile & XP Level Progress (1x1 Bento) */}
-          <UserProfileCard user={user} levelProgress={levelProgress} openModal={openModal} />
+          {/* ROW 1: User Profile (Col 6) + Jadwal & Kehadiran (Col 6) */}
+          <div className="hp-bento-col-6">
+            <UserProfileCard user={user} levelProgress={levelProgress} openModal={openModal} />
+          </div>
 
-          {/* BENTO CARD 2: Jadwal & Kehadiran (1x1 Bento with 3D Crescent Moon 🌙) */}
-          <div className="hp-bento-card">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <HPGlyph name="calendar" size={18} color="#2563EB" />
-                <span style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, color: '#0F172A' }}>Jadwal & Absensi</span>
-              </div>
-              <div className="hp-bento-anchor-3d" style={{ background: '#F5F3FF', border: '1px solid #DDD6FE' }}>
-                🌙
-              </div>
-            </div>
-
-            <div style={{ 
-              display: 'flex', gap: 10, padding: '10px 12px', borderRadius: 14, 
-              background: '#F8FAFC', border: '1px solid #E2E8F0',
-              marginBottom: 14
-            }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ color: '#64748B', fontWeight: 800, fontSize: 9, marginBottom: 2, textTransform: 'uppercase' }}>JAM KERJA</div>
-                <div style={{ fontSize: 12, fontWeight: 800, color: '#0F172A' }}>
-                  {state.workSchedule?.start || '08:00'} - {state.workSchedule?.end || '17:00'}
+          <div className="hp-bento-col-6">
+            <div className="hp-bento-card">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <HPGlyph name="calendar" size={18} color="#2563EB" />
+                  <span style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, color: '#0F172A' }}>Jadwal & Absensi</span>
+                </div>
+                <div className="hp-bento-anchor-3d" style={{ background: '#F5F3FF', border: '1px solid #DDD6FE' }}>
+                  🌙
                 </div>
               </div>
-              <div style={{ width: 1, background: '#E2E8F0' }} />
-              <div style={{ flex: 1 }}>
-                <div style={{ color: '#64748B', fontWeight: 800, fontSize: 9, marginBottom: 2, textTransform: 'uppercase' }}>ISTIRAHAT</div>
-                <div style={{ fontSize: 12, fontWeight: 800, color: '#0F172A' }}>
-                  {state.workSchedule?.breakStart || '12:00'} - {state.workSchedule?.breakEnd || '13:00'}
+
+              <div style={{ 
+                display: 'flex', gap: 10, padding: '10px 12px', borderRadius: 14, 
+                background: '#F8FAFC', border: '1px solid #E2E8F0',
+                marginBottom: 14
+              }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ color: '#64748B', fontWeight: 800, fontSize: 9, marginBottom: 2, textTransform: 'uppercase' }}>JAM KERJA</div>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: '#0F172A' }}>
+                    {state.workSchedule?.start || '08:00'} - {state.workSchedule?.end || '17:00'}
+                  </div>
+                </div>
+                <div style={{ width: 1, background: '#E2E8F0' }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ color: '#64748B', fontWeight: 800, fontSize: 9, marginBottom: 2, textTransform: 'uppercase' }}>ISTIRAHAT</div>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: '#0F172A' }}>
+                    {state.workSchedule?.breakStart || '12:00'} - {state.workSchedule?.breakEnd || '13:00'}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <AttendanceWidget openModal={openModal} />
+              <AttendanceWidget openModal={openModal} />
+            </div>
           </div>
 
-          {/* BENTO CARD 3: Quick Action Shortcut Grid (1x1 Bento with ⚡) */}
-          <div className="hp-bento-card" style={{ background: '#F8FAFC' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-              <span style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, color: '#0F172A' }}>Aksi Cepat</span>
-              <div className="hp-bento-anchor-3d" style={{ background: '#EFF6FF', border: '1px solid #BFDBFE' }}>
-                ⚡
+          {/* ROW 2: Aksi Cepat (Col 6) + Mindful Reset (Col 6) */}
+          <div className="hp-bento-col-6">
+            <div className="hp-bento-card" style={{ background: '#F8FAFC' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                <span style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, color: '#0F172A' }}>Aksi Cepat</span>
+                <div className="hp-bento-anchor-3d" style={{ background: '#EFF6FF', border: '1px solid #BFDBFE' }}>
+                  ⚡
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+                <button 
+                  onClick={() => openModal('work_checkin')} 
+                  className="hp-tap" 
+                  style={{
+                    padding: '12px 8px', borderRadius: 14, background: '#FFFFFF', border: '1px solid #E2E8F0',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
+                  }}
+                >
+                  <span style={{ fontSize: 20 }}>⏱️</span>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: '#0F172A' }}>Clock-in</span>
+                </button>
+
+                <button 
+                  onClick={() => {
+                    const el = document.getElementById('task-section');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }} 
+                  className="hp-tap" 
+                  style={{
+                    padding: '12px 8px', borderRadius: 14, background: '#FFFFFF', border: '1px solid #E2E8F0',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
+                  }}
+                >
+                  <span style={{ fontSize: 20 }}>🎯</span>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: '#0F172A' }}>Task Baru</span>
+                </button>
+
+                <button 
+                  onClick={() => openModal('senggol')} 
+                  className="hp-tap" 
+                  style={{
+                    padding: '12px 8px', borderRadius: 14, background: '#FFFFFF', border: '1px solid #E2E8F0',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
+                  }}
+                >
+                  <span style={{ fontSize: 20 }}>👀</span>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: '#0F172A' }}>Senggol</span>
+                </button>
+
+                <button 
+                  onClick={() => openModal('appreciate')} 
+                  className="hp-tap" 
+                  style={{
+                    padding: '12px 8px', borderRadius: 14, background: '#FFFFFF', border: '1px solid #E2E8F0',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
+                  }}
+                >
+                  <span style={{ fontSize: 20 }}>🌱</span>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: '#0F172A' }}>Apresiasi</span>
+                </button>
               </div>
             </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
-              <button 
-                onClick={() => openModal('work_checkin')} 
-                className="hp-tap" 
-                style={{
-                  padding: '12px 8px', borderRadius: 14, background: '#FFFFFF', border: '1px solid #E2E8F0',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
-                }}
-              >
-                <span style={{ fontSize: 20 }}>⏱️</span>
-                <span style={{ fontSize: 11, fontWeight: 800, color: '#0F172A' }}>Clock-in</span>
-              </button>
-
-              <button 
-                onClick={() => {
-                  const el = document.getElementById('task-section');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                }} 
-                className="hp-tap" 
-                style={{
-                  padding: '12px 8px', borderRadius: 14, background: '#FFFFFF', border: '1px solid #E2E8F0',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
-                }}
-              >
-                <span style={{ fontSize: 20 }}>🎯</span>
-                <span style={{ fontSize: 11, fontWeight: 800, color: '#0F172A' }}>Task Baru</span>
-              </button>
-
-              <button 
-                onClick={() => openModal('senggol')} 
-                className="hp-tap" 
-                style={{
-                  padding: '12px 8px', borderRadius: 14, background: '#FFFFFF', border: '1px solid #E2E8F0',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
-                }}
-              >
-                <span style={{ fontSize: 20 }}>👀</span>
-                <span style={{ fontSize: 11, fontWeight: 800, color: '#0F172A' }}>Senggol</span>
-              </button>
-
-              <button 
-                onClick={() => openModal('appreciate')} 
-                className="hp-tap" 
-                style={{
-                  padding: '12px 8px', borderRadius: 14, background: '#FFFFFF', border: '1px solid #E2E8F0',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
-                }}
-              >
-                <span style={{ fontSize: 20 }}>🌱</span>
-                <span style={{ fontSize: 11, fontWeight: 800, color: '#0F172A' }}>Apresiasi</span>
-              </button>
-            </div>
           </div>
 
-          {/* BENTO CARD 4: Mindful Breathing Reset Card (1x1 Bento with 3D Heart 💗) */}
-          <div className="hp-bento-card" style={{ background: '#ECFDF5', border: '1px solid #A7F3D0' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <span style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, color: '#065F46' }}>Mindful Reset</span>
-              <div className="hp-bento-anchor-3d" style={{ background: '#FFFFFF', border: '1px solid #A7F3D0' }}>
-                🧘‍♂️
+          <div className="hp-bento-col-6">
+            <div className="hp-bento-card" style={{ background: '#ECFDF5', border: '1px solid #A7F3D0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <span style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, color: '#065F46' }}>Mindful Reset</span>
+                <div className="hp-bento-anchor-3d" style={{ background: '#FFFFFF', border: '1px solid #A7F3D0' }}>
+                  🧘‍♂️
+                </div>
               </div>
+              <p style={{ fontSize: 12, color: '#047857', lineHeight: 1.45, margin: '0 0 14px' }}>
+                Box Breathing 1 menit untuk meredakan stress dan mengembalikan fokusmu.
+              </p>
+              <button 
+                onClick={() => openModal('pause')}
+                className="hp-tap"
+                style={{
+                  width: '100%', padding: '10px', borderRadius: 12, border: 'none',
+                  background: '#059669', color: '#FFFFFF',
+                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(5, 150, 105, 0.25)'
+                }}
+              >
+                Mulai Reset
+              </button>
             </div>
-            <p style={{ fontSize: 12, color: '#047857', lineHeight: 1.45, margin: '0 0 14px' }}>
-              Box Breathing 1 menit untuk meredakan stress dan mengembalikan fokusmu.
-            </p>
-            <button 
-              onClick={() => openModal('pause')}
-              className="hp-tap"
-              style={{
-                width: '100%', padding: '10px', borderRadius: 12, border: 'none',
-                background: '#059669', color: '#FFFFFF',
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(5, 150, 105, 0.25)'
-              }}
-            >
-              Mulai Reset
-            </button>
           </div>
 
-          {/* BENTO CARD 5: Task Harian Widget (Full Width Span 2) */}
-          <div className="hp-bento-full" id="task-section">
+          {/* ROW 3: Task Harian Widget (Col 12) */}
+          <div className="hp-bento-col-12" id="task-section">
             <TaskHarianWidget 
               openModal={openModal} 
               onTaskComplete={(taskName?: string) => {
@@ -338,33 +344,36 @@ export default function HomeScreen({ openModal }: any) {
             />
           </div>
 
-          {/* BENTO CARD 6: Daily Challenge Widget (1x1 Bento) */}
-          <DailyChallengeWidget 
-            openModal={openModal} 
-            onClaimReward={(points: number, title: string) => {
-              setConfetti(true);
-              setCelebrate({show: true, points, message: `Misi Selesai: ${title}`});
-              setTimeout(() => setConfetti(false), 1500);
-            }}
-          />
+          {/* ROW 4: Nudge Harian / Daily Challenge (Col 6) + AI Insights (Col 6) */}
+          <div className="hp-bento-col-6">
+            <DailyChallengeWidget 
+              openModal={openModal} 
+              onClaimReward={(points: number, title: string) => {
+                setConfetti(true);
+                setCelebrate({show: true, points, message: `Misi Selesai: ${title}`});
+                setTimeout(() => setConfetti(false), 1500);
+              }}
+            />
+          </div>
 
-          {/* BENTO CARD 7: AI Coach Insights (1x1 Bento) */}
-          <div className="hp-bento-card">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <span style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, color: '#0F172A' }}>AI Coach Insights</span>
-              <div className="hp-bento-anchor-3d" style={{ background: '#FFF7ED', border: '1px solid #FFEDD5' }}>
-                💡
+          <div className="hp-bento-col-6">
+            <div className="hp-bento-card">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <span style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, color: '#0F172A' }}>AI Coach Insights</span>
+                <div className="hp-bento-anchor-3d" style={{ background: '#FFF7ED', border: '1px solid #FFEDD5' }}>
+                  💡
+                </div>
               </div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {aiInsights.slice(0, 2).map((ins, i) => (
-                <InsightCard key={i} ins={ins} idx={i} onClick={() => handleInsightClick(ins.action)} />
-              ))}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {aiInsights.slice(0, 2).map((ins, i) => (
+                  <InsightCard key={i} ins={ins} idx={i} onClick={() => handleInsightClick(ins.action)} />
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* BENTO CARD 8: Tim & Komunitas Coworking (Full Width Span 2) */}
-          <div className="hp-bento-full">
+          {/* ROW 5: Tim & Komunitas Coworking (Col 12) */}
+          <div className="hp-bento-col-12">
             <CoworkingWidget openModal={openModal} />
           </div>
 
