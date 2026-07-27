@@ -59,6 +59,11 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
   const [nameSearch, setNameSearch] = useState('');
   const [showAll, setShowAll] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, nameSearch]);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -139,12 +144,7 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
     );
   }
 
-  const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 4; // 2x2 items per page
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filter, nameSearch]);
 
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
   const displayedUsers = filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
