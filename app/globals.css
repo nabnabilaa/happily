@@ -414,51 +414,75 @@ div, section, article, aside, nav, header, footer, main {
   }
 }
 
-/* ═══ BOTTOM TAB BAR (Gercep Style) ═══ */
+/* ═══ BOTTOM TAB BAR (Responsive Mobile & Desktop) ═══ */
 .hp-app-nav {
   flex-shrink: 0;
-  background: var(--hp-card);
-  border-top: 1px solid var(--hp-border);
+  height: 64px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid var(--hp-border, #E2E8F0);
   display: flex;
   flex-direction: row;
+  align-items: center;
   justify-content: space-around;
-  padding: 8px 12px max(12px, env(safe-area-inset-bottom));
-  z-index: 50;
-  box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+  padding: 4px 6px max(6px, env(safe-area-inset-bottom));
+  z-index: 90;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
 }
 
 .hp-nav-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  background: none;
-  border: none;
+  justify-content: center;
+  gap: 2px;
+  background: transparent;
+  border: 1px solid transparent;
   cursor: pointer;
-  padding: 8px 6px;
-  border-radius: 14px;
-  transition: all 0.2s ease;
+  padding: 6px 4px;
+  border-radius: 12px;
+  transition: all 0.18s ease;
   flex: 1;
+  min-width: 0;
   position: relative;
+  text-decoration: none;
 }
 
-.hp-nav-btn:hover {
-  background: var(--hp-line-soft);
+.hp-nav-btn.active {
+  background: #EFF6FF;
+  border-color: #BFDBFE;
+  color: #2563EB;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.12);
 }
 
 .hp-nav-btn-icon {
-  margin-bottom: 2px;
-  transition: transform 0.25s cubic-bezier(.34,1.56,.64,1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  transition: transform 0.2s ease;
 }
 
 .hp-nav-btn.active .hp-nav-btn-icon {
-  transform: scale(1.18);
+  transform: scale(1.1);
 }
 
 .hp-nav-btn-text {
   font-family: var(--hp-font);
   font-weight: 800;
   font-size: 10px;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+
+.hp-nav-subtext {
+  display: none;
 }
 
 .hp-nav-brand {
@@ -479,10 +503,11 @@ div, section, article, aside, nav, header, footer, main {
   width: 100%;
   max-width: 100%;
   margin: 0 auto;
-  padding: 64px 20px 130px;
+  padding: 56px 16px 80px;
+  box-sizing: border-box;
 }
 
-/* ═══ DESKTOP OVERRIDES ═══ */
+/* ═══ DESKTOP OVERRIDES (>=768px) ═══ */
 @media (min-width: 768px) {
   .hp-desktop-hidden {
     display: none !important;
@@ -500,30 +525,60 @@ div, section, article, aside, nav, header, footer, main {
     flex-direction: column;
     justify-content: flex-start;
     width: 260px;
-    border-top: none;
-    border-right: 1px solid var(--hp-border);
-    padding: 24px 16px;
-    gap: 8px;
-    background: var(--hp-paper);
-    box-shadow: none;
     height: 100vh;
     position: sticky;
     top: 0;
+    border-top: none;
+    border-right: 1px solid var(--hp-border, #E2E8F0);
+    padding: 24px 16px;
+    gap: 6px;
+    background: var(--hp-paper, #F8FAFC);
+    box-shadow: none;
+    backdrop-filter: none;
     overflow-y: auto;
   }
   
   .hp-nav-btn {
     flex-direction: row;
     flex: 0 0 auto;
-    padding: 12px 18px;
-    gap: 14px;
-    border-radius: var(--hp-radius-sm);
+    justify-content: flex-start;
+    width: 100%;
+    padding: 10px 14px;
+    gap: 12px;
+    border-radius: 14px;
+    text-align: left;
+    border: 1px solid transparent;
   }
-  
+
+  .hp-nav-btn.active {
+    background: #2563EB;
+    border-color: #2563EB;
+    color: #FFFFFF;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
+  }
+
+  .hp-nav-btn-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+  }
+
   .hp-nav-btn-text {
-    font-size: 15px;
+    font-size: 14px;
+    text-align: left;
   }
-  
+
+  .hp-nav-subtext {
+    display: block;
+    font-family: var(--hp-font);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .hp-nav-brand {
     display: flex !important;
     align-items: center;

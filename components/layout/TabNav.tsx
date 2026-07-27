@@ -92,7 +92,7 @@ export default function TabNav({ tab, setTab, userRole }: TabNavProps) {
   const tabs = TAB_CONFIG[roleKey];
 
   return (
-    <div className="hp-app-nav">
+    <nav className="hp-app-nav">
       {/* Desktop Brand Logo */}
       <div className="hp-nav-brand">
         <div
@@ -164,39 +164,12 @@ export default function TabNav({ tab, setTab, userRole }: TabNavProps) {
             key={t.key}
             onClick={() => setTab(t.key)}
             className={`hp-nav-btn hp-tap${active ? " active" : ""}`}
-            style={{
-              position: "relative",
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              width: "100%",
-              // Clean Modern Aesthetic
-              background: active ? "#2563EB" : `${meta.color}08`,
-              color: active ? "#FFFFFF" : "#0F172A",
-              borderRadius: 14,
-              marginBottom: 6,
-              border: active ? "1px solid #2563EB" : `1px solid ${meta.color}20`,
-              boxShadow: active ? "0 4px 14px rgba(37, 99, 235, 0.28)" : "none",
-              padding: "10px 14px",
-              cursor: "pointer",
-              transition: "all 0.18s ease-in-out",
-              textAlign: "left",
-            }}
           >
-            {/* Unified Single Icon on Left with subtle category tint */}
+            {/* Icon */}
             <div
               className="hp-nav-btn-icon"
               style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 34,
-                height: 34,
-                borderRadius: 10,
                 background: active ? "rgba(255, 255, 255, 0.2)" : meta.bg,
-                color: active ? "#FFFFFF" : meta.color,
-                flexShrink: 0,
-                transition: "transform 0.18s ease",
               }}
             >
               <HPGlyph
@@ -208,40 +181,24 @@ export default function TabNav({ tab, setTab, userRole }: TabNavProps) {
             </div>
 
             {/* Title + Conversational Subtext */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 1, overflow: "hidden", flex: 1 }}>
-              <div
-                style={{
-                  fontFamily: HP_FONT,
-                  fontSize: 14,
-                  fontWeight: active ? 800 : 700,
-                  color: active ? "#FFFFFF" : "#0F172A",
-                  lineHeight: 1.2,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
+            <div style={{ display: "flex", flexDirection: "column", gap: 1, overflow: "hidden", minWidth: 0 }}>
+              <div className="hp-nav-btn-text">
                 {t.label}
               </div>
               <div
+                className="hp-nav-subtext"
                 style={{
-                  fontFamily: HP_FONT,
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: active ? "#DBEAFE" : "#64748B", // High contrast ratio >= 4.5:1
-                  lineHeight: 1.2,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
+                  color: active ? "#DBEAFE" : "#64748B",
                 }}
               >
                 {meta.copy}
               </div>
             </div>
 
-            {/* Sleek category dot indicator */}
+            {/* Sleek category dot indicator (Desktop) */}
             {!active && (
               <span
+                className="hp-mobile-hidden"
                 style={{
                   width: 6,
                   height: 6,
@@ -249,6 +206,7 @@ export default function TabNav({ tab, setTab, userRole }: TabNavProps) {
                   background: meta.color,
                   opacity: 0.8,
                   flexShrink: 0,
+                  marginLeft: "auto",
                 }}
               />
             )}
@@ -283,8 +241,9 @@ export default function TabNav({ tab, setTab, userRole }: TabNavProps) {
         </div>
         <DownloadExtensionBtn />
       </div>
-    </div>
+    </nav>
   );
 }
+
 
 
