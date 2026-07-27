@@ -61,9 +61,10 @@ export default function HRRecognizeScreen({ openModal }: Props) {
       {/* Points badge */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '28px 26px', borderRadius: 24,
-        background: `${HP_TOKENS.primary}`,
-        boxShadow: '0 12px 32px rgba(255, 107, 53, 0.25)',
+        padding: '24px 26px', borderRadius: 20,
+        background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 100%)',
+        border: '1px solid rgba(255, 255, 255, 0.15)',
+        boxShadow: '0 8px 24px rgba(37, 99, 235, 0.22)',
         marginBottom: 24,
         position: 'relative',
         overflow: 'hidden'
