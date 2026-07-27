@@ -358,17 +358,35 @@ export default function HomeScreen({ openModal }: any) {
 
           <div className="hp-bento-col-6">
             <div className="hp-bento-card">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <span style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, color: '#0F172A' }}>AI Coach Insights</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                <div>
+                  <div style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, color: '#0F172A' }}>AI Coach Insights</div>
+                  <div style={{ fontSize: 11, color: '#64748B', fontWeight: 600, marginTop: 2 }}>Rekomendasi & saran personal untukmu</div>
+                </div>
                 <div className="hp-bento-anchor-3d" style={{ background: '#FFF7ED', border: '1px solid #FFEDD5' }}>
                   💡
                 </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {aiInsights.slice(0, 2).map((ins, i) => (
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1, marginTop: 4 }}>
+                {aiInsights.map((ins, i) => (
                   <InsightCard key={i} ins={ins} idx={i} onClick={() => handleInsightClick(ins.action)} />
                 ))}
               </div>
+
+              <button 
+                onClick={() => openModal('coach')}
+                className="hp-tap"
+                style={{
+                  width: '100%', padding: '10px 14px', borderRadius: 12,
+                  background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#2563EB',
+                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 8
+                }}
+              >
+                <HPGlyph name="sparkle" size={14} color="#2563EB" />
+                <span>Konsultasi dengan Coach AI</span>
+              </button>
             </div>
           </div>
 
