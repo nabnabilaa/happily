@@ -120,7 +120,7 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
 
   if (kpis.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '60px 20px', background: HP_TOKENS.card, borderRadius: 24, border: `1.5px solid ${HP_TOKENS.lineSoft}` }}>
+      <div style={{ textAlign: 'center', padding: '60px 20px', background: HP_TOKENS.card, borderRadius: HP_TOKENS.radiusLg, border: `1.5px solid ${HP_TOKENS.lineSoft}` }}>
         <div style={{ fontSize: 32, marginBottom: 12 }}>🎯</div>
         <div style={{ ...HP_TEXT.h, fontSize: 14 }}>Belum ada KPI dari manager.</div>
         <div style={{ ...HP_TEXT.small, marginTop: 4, color: HP_TOKENS.inkMute }}>Target bisa dibuat setelah KPI diberikan.</div>
@@ -140,11 +140,10 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
             onClick={() => { setFormKpiId(activeKpiId || ''); setShowForm(true); }}
             className="hp-tap"
             style={{
-              padding: '10px 18px', borderRadius: 12, border: 'none',
+              padding: '10px 18px', borderRadius: HP_TOKENS.radiusSm, border: 'none',
               background: HP_TOKENS.ink, color: '#fff',
-              fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',
+              fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
             }}
           >
             <HPGlyph name="plus" size={14} color="#fff" />
@@ -162,7 +161,7 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
               value={formKpiId}
               onChange={e => setFormKpiId(e.target.value)}
               style={{
-                width: '100%', padding: '10px 12px', borderRadius: 10,
+                width: '100%', padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm,
                 border: `1.5px solid ${formKpiId ? HP_TOKENS.blue : HP_TOKENS.line}`,
                 fontFamily: HP_FONT, fontSize: 13, fontWeight: 700,
                 background: HP_TOKENS.card, color: HP_TOKENS.ink, outline: 'none',
@@ -182,7 +181,7 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
               onChange={e => setFormTitle(e.target.value)}
               placeholder="cth: Selesaikan modul onboarding minggu ini"
               style={{
-                width: '100%', padding: '10px 12px', borderRadius: 10, boxSizing: 'border-box',
+                width: '100%', padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm, boxSizing: 'border-box',
                 border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 13,
                 background: HP_TOKENS.card, color: HP_TOKENS.ink, outline: 'none',
               }}
@@ -196,7 +195,7 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
               onChange={e => setFormDesc(e.target.value)}
               placeholder="Detail lebih lanjut..."
               style={{
-                width: '100%', padding: '10px 12px', borderRadius: 10, boxSizing: 'border-box',
+                width: '100%', padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm, boxSizing: 'border-box',
                 border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 13,
                 background: HP_TOKENS.card, color: HP_TOKENS.ink, outline: 'none',
               }}
@@ -210,7 +209,7 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
                 type="number" min="1" value={formTargetValue}
                 onChange={e => setFormTargetValue(e.target.value)}
                 style={{
-                  width: '100%', padding: '10px 12px', borderRadius: 10, boxSizing: 'border-box',
+                  width: '100%', padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm, boxSizing: 'border-box',
                   border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 13,
                   background: HP_TOKENS.card, color: HP_TOKENS.ink, outline: 'none',
                 }}
@@ -223,7 +222,7 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
                 onChange={e => setFormUnit(e.target.value)}
                 placeholder="%"
                 style={{
-                  width: '100%', padding: '10px 12px', borderRadius: 10, boxSizing: 'border-box',
+                  width: '100%', padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm, boxSizing: 'border-box',
                   border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 13,
                   background: HP_TOKENS.card, color: HP_TOKENS.ink, outline: 'none',
                 }}
@@ -235,7 +234,7 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
                 type="number" min="1" max="5" value={formWeekNumber}
                 onChange={e => setFormWeekNumber(e.target.value)}
                 style={{
-                  width: '100%', padding: '10px 12px', borderRadius: 10, boxSizing: 'border-box',
+                  width: '100%', padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm, boxSizing: 'border-box',
                   border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 13,
                   background: HP_TOKENS.card, color: HP_TOKENS.ink, outline: 'none',
                 }}
@@ -248,11 +247,10 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
             disabled={saving || !formKpiId || !formTitle.trim()}
             className="hp-tap"
             style={{
-              width: '100%', padding: '14px', borderRadius: 12, border: 'none',
+              width: '100%', padding: '14px', borderRadius: HP_TOKENS.radiusSm, border: 'none',
               background: `${HP_TOKENS.blue}`, color: '#fff',
-              fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer',
+              fontFamily: HP_FONT, fontWeight: 700, fontSize: 14, cursor: 'pointer',
               opacity: (saving || !formKpiId || !formTitle.trim()) ? 0.6 : 1,
-              boxShadow: '0 6px 16px rgba(123, 107, 181, 0.3)'
             }}
           >
             {saving ? 'Menyimpan...' : 'Simpan Target'}
@@ -284,7 +282,7 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
                   onClick={() => setActiveKpiId(String(kpi.id))}
                   className="hp-tap"
                   style={{
-                    padding: '16px', borderRadius: 16, cursor: 'pointer',
+                    padding: '16px', borderRadius: HP_TOKENS.radiusMd, cursor: 'pointer',
                     background: isActive ? HP_TOKENS.card : 'transparent',
                     border: `1.5px solid ${isActive ? HP_TOKENS.blue : HP_TOKENS.lineSoft}`,
                     boxShadow: isActive ? '0 4px 12px rgba(0,0,0,0.03)' : 'none',
@@ -293,7 +291,7 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, color: HP_TOKENS.ink, lineHeight: 1.3 }}>
+                      <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, color: HP_TOKENS.ink, lineHeight: 1.3 }}>
                         {kpi.title}
                       </div>
                       <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 4 }}>
@@ -301,7 +299,7 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
                       </div>
                     </div>
                     <div style={{ 
-                      fontFamily: HP_FONT, fontWeight: 900, fontSize: 14, 
+                      fontFamily: HP_FONT, fontWeight: 700, fontSize: 14, 
                       color: kpiProgressFromTargets >= 100 ? HP_TOKENS.sage : HP_TOKENS.blue 
                     }}>
                       {kpiProgressFromTargets}%
@@ -322,7 +320,7 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
 
           {/* Detail View: Target & Task List */}
           <div style={{ 
-            background: HP_TOKENS.card, borderRadius: 24, 
+            background: HP_TOKENS.card, borderRadius: HP_TOKENS.radiusLg, 
             border: `1px solid ${HP_TOKENS.lineSoft}`, overflow: 'hidden' 
           }}>
             {activeKpi ? (
@@ -333,7 +331,7 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                     <span style={{ fontSize: 18 }}>🎯</span>
-                    <div style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, color: HP_TOKENS.ink }}>
+                    <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, color: HP_TOKENS.ink }}>
                       {activeKpi.title}
                     </div>
                   </div>
@@ -362,7 +360,7 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
 
                       return (
                         <div key={t.id} style={{
-                          padding: '16px', margin: '8px', borderRadius: 16,
+                          padding: '16px', margin: '8px', borderRadius: HP_TOKENS.radiusMd,
                           border: `1px solid ${HP_TOKENS.lineSoft}`,
                           background: '#fff',
                         }}>
@@ -371,10 +369,10 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
                               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                                 <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>MINGGU {t.weekNumber}</span>
                                 {pct >= 100 && (
-                                  <span style={{ fontSize: 10, background: HP_TOKENS.sageSoft, color: HP_TOKENS.sage, borderRadius: 20, padding: '2px 6px', fontFamily: HP_FONT, fontWeight: 800 }}>✓ SELESAI</span>
+                                  <span style={{ fontSize: 10, background: HP_TOKENS.sageSoft, color: HP_TOKENS.sage, borderRadius: HP_TOKENS.radius, padding: '2px 6px', fontFamily: HP_FONT, fontWeight: 700 }}>✓ SELESAI</span>
                                 )}
                               </div>
-                              <div style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, color: HP_TOKENS.ink }}>{t.title}</div>
+                              <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 14, color: HP_TOKENS.ink }}>{t.title}</div>
                               {t.description && (
                                 <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, marginTop: 4, fontSize: 12 }}>{t.description}</div>
                               )}
@@ -383,12 +381,12 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
                               onClick={() => confirmDelete(String(t.id), String(activeKpi.id))}
                               className="hp-tap"
                               style={{
-                                background: HP_TOKENS.coralSoft || '#FFE5E5', border: 'none', cursor: 'pointer',
-                                width: 28, height: 28, borderRadius: 14,
+                                background: HP_TOKENS.coralSoft, border: 'none', cursor: 'pointer',
+                                width: 28, height: 28, borderRadius: '50%',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
                               }}
                             >
-                              <HPGlyph name="trash" size={14} color={HP_TOKENS.coral || '#FF4444'} />
+                              <HPGlyph name="trash" size={14} color={HP_TOKENS.coral} />
                             </button>
                           </div>
 
@@ -396,15 +394,15 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, alignItems: 'flex-end' }}>
                               <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>
                                 {linkedTasks.length > 0
-                                  ? <>TASK: <span style={{ color: HP_TOKENS.ink, fontSize: 13, fontWeight: 800 }}>{doneTasks.length}/{linkedTasks.length}</span> selesai</>
-                                  : <>TARGET: <span style={{ color: HP_TOKENS.ink, fontSize: 13, fontWeight: 800 }}>{pct}%</span></>
+                                  ? <>TASK: <span style={{ color: HP_TOKENS.ink, fontSize: 13, fontWeight: 700 }}>{doneTasks.length}/{linkedTasks.length}</span> selesai</>
+                                  : <>TARGET: <span style={{ color: HP_TOKENS.ink, fontSize: 13, fontWeight: 700 }}>{pct}%</span></>
                                 }
                               </span>
-                              <span style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 14, color: pct >= 100 ? HP_TOKENS.sage : HP_TOKENS.blue }}>
+                              <span style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 14, color: pct >= 100 ? HP_TOKENS.sage : HP_TOKENS.blue }}>
                                 {pct}%
                               </span>
                             </div>
-                            <div style={{ height: 6, background: '#E2E8F0', borderRadius: 3, overflow: 'hidden' }}>
+                            <div style={{ height: 6, background: HP_TOKENS.lineSoft, borderRadius: 3, overflow: 'hidden' }}>
                               <div style={{
                                 height: '100%', width: `${pct}%`,
                                 background: pct >= 100 ? HP_TOKENS.sage : HP_TOKENS.blue,
@@ -417,9 +415,9 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
                             <div style={{ 
                               marginTop: 16, padding: '12px', 
                               background: HP_TOKENS.lineSoft + '40', 
-                              borderRadius: 12, border: `1px solid ${HP_TOKENS.lineSoft}`
+                              borderRadius: HP_TOKENS.radiusSm, border: `1px solid ${HP_TOKENS.lineSoft}`
                             }}>
-                              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 8, fontWeight: 800 }}>
+                              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 8, fontWeight: 700 }}>
                                 TASK TERHUBUNG · {doneTasks.length}/{linkedTasks.length} selesai
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -433,7 +431,7 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
                                     }}
                                     style={{
                                       background: '#fff', padding: '10px 12px', borderRadius: 8,
-                                      border: `1px solid ${HP_TOKENS.lineSoft}`, boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
+                                      border: `1px solid ${HP_TOKENS.lineSoft}`,
                                       cursor: p.done ? 'default' : 'pointer',
                                       transition: 'background 0.15s',
                                     }}
@@ -442,7 +440,7 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
                                   >
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                       <div style={{
-                                        width: 14, height: 14, borderRadius: 7, flexShrink: 0,
+                                        width: 14, height: 14, borderRadius: '50%', flexShrink: 0,
                                         background: p.done ? HP_TOKENS.sage : (!p.done && (p.partial_progress || 0) > 0 ? HP_TOKENS.blue + '20' : 'transparent'),
                                         border: `2px solid ${p.done ? HP_TOKENS.sage : (!p.done && (p.partial_progress || 0) > 0 ? HP_TOKENS.blue : HP_TOKENS.line)}`,
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -454,18 +452,18 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
                                         color: p.done ? HP_TOKENS.inkMute : HP_TOKENS.ink,
                                       }}>{p.title}</span>
                                       {!p.done && (
-                                        <span style={{ fontFamily: HP_FONT, fontSize: 10, fontWeight: 800, color: HP_TOKENS.blue, flexShrink: 0 }}>
+                                        <span style={{ fontFamily: HP_FONT, fontSize: 10, fontWeight: 700, color: HP_TOKENS.blue, flexShrink: 0 }}>
                                           {(p.partial_progress || 0) > 0 ? `${p.partial_progress}%` : '→ Selesaikan'}
                                         </span>
                                       )}
                                       {p.metric_value != null && p.done && (
-                                        <span style={{ fontFamily: HP_FONT, fontSize: 10, fontWeight: 800, color: HP_TOKENS.sage, flexShrink: 0 }}>
+                                        <span style={{ fontFamily: HP_FONT, fontSize: 10, fontWeight: 700, color: HP_TOKENS.sage, flexShrink: 0 }}>
                                           +{p.metric_value}{t.metricUnit}
                                         </span>
                                       )}
                                     </div>
                                     {!p.done && (p.partial_progress || 0) > 0 && (
-                                      <div style={{ height: 4, background: '#F1F5F9', borderRadius: 2, overflow: 'hidden', marginTop: 8 }}>
+                                      <div style={{ height: 4, background: HP_TOKENS.lineSoft, borderRadius: 2, overflow: 'hidden', marginTop: 8 }}>
                                         <div style={{
                                           height: '100%', borderRadius: 2, background: HP_TOKENS.blue, width: `${p.partial_progress}%`, transition: '0.4s ease'
                                         }} />
@@ -486,7 +484,7 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
                             onClick={() => openModal('manage_priorities', { initialGoalId: String(activeKpi.id) })}
                             className="hp-tap"
                             style={{
-                              marginTop: 12, padding: '8px 14px', borderRadius: 10,
+                              marginTop: 12, padding: '8px 14px', borderRadius: HP_TOKENS.radiusSm,
                               border: `1.5px dashed ${HP_TOKENS.line}`, background: 'transparent',
                               color: HP_TOKENS.inkSoft, fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, cursor: 'pointer',
                               display: 'flex', alignItems: 'center', gap: 6,
@@ -513,13 +511,13 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
           background: 'rgba(0,0,0,0.5)', zIndex: 9999,
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
         }}>
-          <HPCard padding={24} style={{ width: '100%', maxWidth: 360, background: '#fff', borderRadius: 24 }}>
+          <HPCard padding={24} style={{ width: '100%', maxWidth: 360, background: '#fff', borderRadius: HP_TOKENS.radiusLg }}>
             <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
               <div style={{
-                width: 40, height: 40, borderRadius: 20, background: HP_TOKENS.coralSoft || '#FFE5E5',
+                width: 40, height: 40, borderRadius: '50%', background: HP_TOKENS.coralSoft,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
               }}>
-                <HPGlyph name="trash" size={20} color={HP_TOKENS.coral || '#FF4444'} />
+                <HPGlyph name="trash" size={20} color={HP_TOKENS.coral} />
               </div>
               <div>
                 <div style={{ ...HP_TEXT.h, fontSize: 16 }}>Hapus Target?</div>
@@ -533,9 +531,9 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
                 onClick={() => setTargetToDelete(null)}
                 className="hp-tap"
                 style={{
-                  flex: 1, padding: 12, borderRadius: 14, border: 'none',
+                  flex: 1, padding: 12, borderRadius: HP_TOKENS.radiusMd, border: 'none',
                   background: HP_TOKENS.lineSoft, color: HP_TOKENS.inkSoft,
-                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',
+                  fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: 'pointer',
                 }}
               >
                 Batal
@@ -544,9 +542,9 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
                 onClick={executeDelete}
                 className="hp-tap"
                 style={{
-                  flex: 1, padding: 12, borderRadius: 14, border: 'none',
-                  background: HP_TOKENS.coral || '#FF4444', color: '#fff',
-                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',
+                  flex: 1, padding: 12, borderRadius: HP_TOKENS.radiusMd, border: 'none',
+                  background: HP_TOKENS.coral, color: '#fff',
+                  fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: 'pointer',
                 }}
               >
                 Hapus
@@ -651,7 +649,7 @@ export default function GoalsScreen({ openModal }: GoalsScreenProps) {
 
       {/* Tab Bar */}
       <div style={{ 
-        display: 'flex', background: HP_TOKENS.lineSoft, padding: 4, borderRadius: 16, marginBottom: 24 
+        display: 'flex', background: HP_TOKENS.lineSoft, padding: 4, borderRadius: HP_TOKENS.radiusMd, marginBottom: 24 
       }}>
         {[
           { key: 'target', label: '📋 Target' },
@@ -662,10 +660,10 @@ export default function GoalsScreen({ openModal }: GoalsScreenProps) {
             onClick={() => setTab(t.key as any)}
             className="hp-tap"
             style={{
-              flex: 1, padding: '12px 8px', borderRadius: 12, border: 'none', cursor: 'pointer',
+              flex: 1, padding: '12px 8px', borderRadius: HP_TOKENS.radiusSm, border: 'none', cursor: 'pointer',
               background: tab === t.key ? '#fff' : 'transparent',
               color: tab === t.key ? HP_TOKENS.ink : HP_TOKENS.inkSoft,
-              fontFamily: HP_FONT, fontWeight: 800, fontSize: 14,
+              fontFamily: HP_FONT, fontWeight: 700, fontSize: 14,
               boxShadow: tab === t.key ? '0 2px 8px rgba(0,0,0,0.05)' : 'none',
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
@@ -687,7 +685,7 @@ export default function GoalsScreen({ openModal }: GoalsScreenProps) {
               <div style={{ textAlign: 'center', padding: '40px 20px', color: HP_TOKENS.inkMute, fontFamily: HP_FONT }}>Memuat KPI...</div>
             )}
             {!loadingKpis && kpis.length === 0 && (
-              <div style={{ textAlign: 'center', padding: '60px 20px', background: HP_TOKENS.card, borderRadius: 24, border: `1.5px solid ${HP_TOKENS.lineSoft}` }}>
+              <div style={{ textAlign: 'center', padding: '60px 20px', background: HP_TOKENS.card, borderRadius: HP_TOKENS.radiusLg, border: `1.5px solid ${HP_TOKENS.lineSoft}` }}>
                 <div style={{ fontSize: 32, marginBottom: 12 }}>🌱</div>
                 <div style={{ ...HP_TEXT.h, fontSize: 14 }}>Belum ada KPI bulan ini.</div>
                 <div style={{ ...HP_TEXT.small, marginTop: 4 }}>Hubungi manager untuk mendapatkan KPI.</div>

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
+import { HP_TOKENS, HP_TEXT } from "@/lib/constants";
 import HPGlyph from "@/components/ui/HPGlyph";
 
 interface SectionHeaderProps {
@@ -10,49 +10,84 @@ interface SectionHeaderProps {
   count?: string;
   action?: string;
   onAction?: () => void;
+  /**
+   * Drop the large leading gap. Use inside a rail or a card, where the
+   * surrounding container already provides the separation and 32px of air
+   * above the heading just looks like a mistake.
+   */
+  tight?: boolean;
 }
 
-export default function SectionHeader({ 
-  icon, 
-  label, 
-  count, 
+/**
+ * Divides a screen into labelled groups. Renders an <h2> so sections show up
+ * in the document outline.
+ *
+ * The action reads as a text link rather than a filled button: a section
+ * header is a signpost, and a solid button here competes with the real
+ * primary action inside the section.
+ */
+export default function SectionHeader({
+  icon,
+  label,
+  count,
   action,
-  onAction 
+  onAction,
+  tight = false,
 }: SectionHeaderProps) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '24px 4px 12px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <div style={{ 
-          width: 32, 
-          height: 32, 
-          borderRadius: 10, 
-          background: HP_TOKENS.primarySoft, 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center' 
-        }}>
-          <HPGlyph name={icon} size={16} color={HP_TOKENS.primary}/>
-        </div>
-        <div style={{ ...HP_TEXT.h, whiteSpace: 'nowrap' }}>{label}</div>
-        {count && <span style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 700, whiteSpace: 'nowrap' }}>({count})</span>}
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
+        padding: tight ? "0 2px 10px" : "32px 2px 12px",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>
+        <HPGlyph name={icon} size={17} color={HP_TOKENS.inkMute} stroke={2} />
+        <h2
+          style={{
+            ...HP_TEXT.h,
+            fontSize: 16,
+            margin: 0,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {label}
+        </h2>
+        {count && (
+          <span
+            style={{
+              ...HP_TEXT.small,
+              color: HP_TOKENS.inkFade,
+              fontVariantNumeric: "tabular-nums",
+              flexShrink: 0,
+            }}
+          >
+            {count}
+          </span>
+        )}
       </div>
+
       {action && (
-        <button 
+        <button
+          type="button"
           onClick={onAction}
-          className="hp-tap" 
-          style={{ 
+          className="hp-tap"
+          style={{
             flexShrink: 0,
-            whiteSpace: 'nowrap',
-            background: HP_TOKENS.primary, 
-            borderRadius: 12,
-            padding: '8px 16px',
-            border: 'none', 
-            fontFamily: HP_FONT, 
-            fontWeight: 800, 
-            fontSize: 13, 
-            color: HP_TOKENS.paper, 
-            cursor: 'pointer',
-            boxShadow: `0 4px 12px ${HP_TOKENS.primaryWash}`
+            // 44px target even though the text is small
+            minHeight: 44,
+            padding: "0 4px",
+            color: HP_TOKENS.primary,
+            fontSize: 13.5,
+            fontWeight: 600,
+            letterSpacing: "-0.005em",
+            whiteSpace: "nowrap",
+            borderRadius: HP_TOKENS.radiusXs,
           }}
         >
           {action}

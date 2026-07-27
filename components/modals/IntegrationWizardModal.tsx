@@ -47,12 +47,12 @@ export default function IntegrationWizardModal({ onClose }: IntegrationWizardMod
         <div style={{ 
           background: HP_TOKENS.card, 
           border: `1.5px solid ${HP_TOKENS.line}`, 
-          borderRadius: 16, 
+          borderRadius: HP_TOKENS.radiusMd, 
           padding: 20 
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
             <div style={{ 
-              width: 40, height: 40, borderRadius: 12, 
+              width: 40, height: 40, borderRadius: HP_TOKENS.radiusSm, 
               background: HP_TOKENS.blueSoft, display: 'flex', alignItems: 'center', justifyContent: 'center' 
             }}>
               <HPGlyph name="zap" size={20} color={HP_TOKENS.blue} />
@@ -72,14 +72,14 @@ export default function IntegrationWizardModal({ onClose }: IntegrationWizardMod
               readOnly
               value={extensionToken}
               style={{
-                flex: 1, padding: '12px 16px', borderRadius: 12, border: `1px solid ${HP_TOKENS.line}`,
-                fontFamily: 'monospace', fontSize: 14, outline: 'none', background: '#F8FAFC', color: HP_TOKENS.ink
+                flex: 1, padding: '12px 16px', borderRadius: HP_TOKENS.radiusSm, border: `1px solid ${HP_TOKENS.line}`,
+                fontFamily: 'monospace', fontSize: 14, outline: 'none', background: HP_TOKENS.sunken, color: HP_TOKENS.ink
               }}
             />
             <button 
               onClick={() => copyToClipboard(extensionToken, 'token')}
               style={{
-                padding: '0 20px', borderRadius: 12, background: copiedToken ? HP_TOKENS.sage : HP_TOKENS.ink,
+                padding: '0 20px', borderRadius: HP_TOKENS.radiusSm, background: copiedToken ? HP_TOKENS.sage : HP_TOKENS.ink,
                 color: '#fff', border: 'none', fontFamily: HP_FONT, fontWeight: 700, cursor: 'pointer', transition: '0.2s'
               }}
               className="hp-tap"
@@ -93,12 +93,12 @@ export default function IntegrationWizardModal({ onClose }: IntegrationWizardMod
         <div style={{ 
           background: HP_TOKENS.card, 
           border: `1.5px solid ${HP_TOKENS.line}`, 
-          borderRadius: 16, 
+          borderRadius: HP_TOKENS.radiusMd, 
           padding: 20 
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
             <div style={{ 
-              width: 40, height: 40, borderRadius: 12, 
+              width: 40, height: 40, borderRadius: HP_TOKENS.radiusSm, 
               background: HP_TOKENS.coralSoft, display: 'flex', alignItems: 'center', justifyContent: 'center' 
             }}>
               <HPGlyph name="calendar" size={20} color={HP_TOKENS.coral} />
@@ -119,14 +119,14 @@ export default function IntegrationWizardModal({ onClose }: IntegrationWizardMod
               readOnly
               value={gcalUrl}
               style={{
-                flex: 1, padding: '12px 16px', borderRadius: 12, border: `1px solid ${HP_TOKENS.line}`,
-                fontFamily: 'monospace', fontSize: 13, outline: 'none', background: '#F8FAFC', color: HP_TOKENS.ink
+                flex: 1, padding: '12px 16px', borderRadius: HP_TOKENS.radiusSm, border: `1px solid ${HP_TOKENS.line}`,
+                fontFamily: 'monospace', fontSize: 13, outline: 'none', background: HP_TOKENS.sunken, color: HP_TOKENS.ink
               }}
             />
             <button 
               onClick={() => copyToClipboard(gcalUrl, 'gcal')}
               style={{
-                padding: '0 20px', borderRadius: 12, background: copiedGCal ? HP_TOKENS.sage : HP_TOKENS.ink,
+                padding: '0 20px', borderRadius: HP_TOKENS.radiusSm, background: copiedGCal ? HP_TOKENS.sage : HP_TOKENS.ink,
                 color: '#fff', border: 'none', fontFamily: HP_FONT, fontWeight: 700, cursor: 'pointer', transition: '0.2s'
               }}
               className="hp-tap"

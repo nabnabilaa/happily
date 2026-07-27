@@ -191,10 +191,10 @@ export default function NewChatModal({ onClose, onChannelCreated, defaultRecipie
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {/* DM */}
           <button onClick={() => setMode('dm')} className="hp-tap" style={{
-            padding: '18px 16px', borderRadius: 16, border: `1.5px solid ${HP_TOKENS.line}`,
+            padding: '18px 16px', borderRadius: HP_TOKENS.radiusMd, border: `1.5px solid ${HP_TOKENS.line}`,
             background: HP_TOKENS.card, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14,
           }}>
-            <div style={{ width: 48, height: 48, borderRadius: 14, background: HP_TOKENS.yellowSoft,
+            <div style={{ width: 48, height: 48, borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.yellowSoft,
               display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>👤</div>
             <div style={{ textAlign: 'left', flex: 1 }}>
               <div style={{ ...HP_TEXT.h, fontSize: 15 }}>Direct Message</div>
@@ -205,10 +205,10 @@ export default function NewChatModal({ onClose, onChannelCreated, defaultRecipie
 
           {/* Group */}
           <button onClick={() => setMode('group')} className="hp-tap" style={{
-            padding: '18px 16px', borderRadius: 16, border: `1.5px solid ${HP_TOKENS.line}`,
+            padding: '18px 16px', borderRadius: HP_TOKENS.radiusMd, border: `1.5px solid ${HP_TOKENS.line}`,
             background: HP_TOKENS.card, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14,
           }}>
-            <div style={{ width: 48, height: 48, borderRadius: 14, background: HP_TOKENS.blueSoft,
+            <div style={{ width: 48, height: 48, borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.blueSoft,
               display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>👥</div>
             <div style={{ textAlign: 'left', flex: 1 }}>
               <div style={{ ...HP_TEXT.h, fontSize: 15 }}>Grup Chat</div>
@@ -220,19 +220,19 @@ export default function NewChatModal({ onClose, onChannelCreated, defaultRecipie
           {/* Broadcast — only HR/Manager */}
           {isHRorManager && (
             <button onClick={() => setMode('broadcast')} className="hp-tap" style={{
-              padding: '18px 16px', borderRadius: 16,
-              border: `1.5px solid #F59E0B30`,
-              background: '#FFF7ED',
+              padding: '18px 16px', borderRadius: HP_TOKENS.radiusMd,
+              border: `1.5px solid `,
+              background: HP_TOKENS.warningWash,
               cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14,
             }}>
-              <div style={{ width: 48, height: 48, borderRadius: 14,
-                background: '#F59E0B',
+              <div style={{ width: 48, height: 48, borderRadius: HP_TOKENS.radiusMd,
+                background: HP_TOKENS.warning,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>📢</div>
               <div style={{ textAlign: 'left', flex: 1 }}>
                 <div style={{ ...HP_TEXT.h, fontSize: 15 }}>Pesan Siaran</div>
                 <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, marginTop: 2 }}>Kirim pesan penting ke divisi tertentu atau semua</div>
               </div>
-              <HPGlyph name="chevronRight" size={16} color="#D97706" />
+              <HPGlyph name="chevronRight" size={16} color={HP_TOKENS.warning} />
             </button>
           )}
         </div>
@@ -256,22 +256,22 @@ export default function NewChatModal({ onClose, onChannelCreated, defaultRecipie
         {/* Title */}
         <input value={broadcastTitle} onChange={e => setBroadcastTitle(e.target.value)}
           placeholder="Judul siaran (opsional)..."
-          style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
+          style={{ width: '100%', padding: '12px 14px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.line}`,
             fontFamily: HP_FONT, fontSize: 14, outline: 'none', boxSizing: 'border-box', fontWeight: 700, marginBottom: 10 }} />
 
         {/* Content */}
         <textarea value={broadcastContent} onChange={e => setBroadcastContent(e.target.value)}
           placeholder="Tulis pesan siaran..."
           rows={3}
-          style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
+          style={{ width: '100%', padding: '12px 14px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.line}`,
             fontFamily: HP_FONT, fontSize: 14, outline: 'none', boxSizing: 'border-box', resize: 'vertical', marginBottom: 14 }} />
 
         {/* Target Departments Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
           <div style={{ ...HP_TEXT.h, fontSize: 13 }}>🎯 Target Divisi</div>
           <div style={{
-            ...HP_TEXT.tiny, fontSize: 11, color: '#D97706', fontWeight: 700,
-            padding: '2px 8px', borderRadius: 6, background: '#FEF3C7',
+            ...HP_TEXT.tiny, fontSize: 11, color: HP_TOKENS.warning, fontWeight: 700,
+            padding: '2px 8px', borderRadius: 6, background: HP_TOKENS.warningWash,
           }}>
             {targetLabel}
           </div>
@@ -280,24 +280,24 @@ export default function NewChatModal({ onClose, onChannelCreated, defaultRecipie
         {/* Search departments */}
         <input value={search} onChange={e => setSearch(e.target.value)}
           placeholder="🔍 Cari divisi..."
-          style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.line}`,
+          style={{ width: '100%', padding: '10px 14px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.line}`,
             fontFamily: HP_FONT, fontSize: 12, outline: 'none', boxSizing: 'border-box', marginBottom: 8 }} />
 
         {/* Select All toggle */}
         <button onClick={selectAllDepts} className="hp-tap" style={{
           display: 'flex', alignItems: 'center', gap: 10, width: '100%',
-          padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
-          background: allSelected ? '#FFF7ED' : HP_TOKENS.lineSoft,
-          border: `1.5px solid ${allSelected ? '#F59E0B40' : 'transparent'}`,
+          padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm, cursor: 'pointer',
+          background: allSelected ? HP_TOKENS.warningWash : HP_TOKENS.lineSoft,
+          border: `1.5px solid ${allSelected ? HP_TOKENS.warningSoft : 'transparent'}`,
           marginBottom: 4,
         }}>
           <div style={{
             width: 20, height: 20, borderRadius: 5,
-            border: `2px solid ${allSelected ? '#F59E0B' : HP_TOKENS.line}`,
-            background: allSelected ? '#F59E0B' : 'transparent',
+            border: `2px solid ${allSelected ? HP_TOKENS.warning : HP_TOKENS.line}`,
+            background: allSelected ? HP_TOKENS.warning : 'transparent',
             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}>
-            {allSelected && <HPGlyph name="check" size={12} color="#F4F7F9" />}
+            {allSelected && <HPGlyph name="check" size={12} color={HP_TOKENS.onPrimary} />}
           </div>
           <div style={{ ...HP_TEXT.h, fontSize: 13, flex: 1, textAlign: 'left' }}>Semua Divisi</div>
           <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontSize: 10 }}>{departments.length} divisi</div>
@@ -306,7 +306,7 @@ export default function NewChatModal({ onClose, onChannelCreated, defaultRecipie
         {/* Scrollable department list */}
         <div style={{
           maxHeight: 180, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2,
-          marginBottom: 10, borderRadius: 10, border: `1px solid ${HP_TOKENS.line}`,
+          marginBottom: 10, borderRadius: HP_TOKENS.radiusSm, border: `1px solid ${HP_TOKENS.line}`,
           padding: 4,
         }}>
           {filteredDepts.length === 0 ? (
@@ -321,20 +321,20 @@ export default function NewChatModal({ onClose, onChannelCreated, defaultRecipie
                 <button key={dept} onClick={() => toggleDeptForBroadcast(dept)} className="hp-tap" style={{
                   display: 'flex', alignItems: 'center', gap: 10, width: '100%',
                   padding: '9px 10px', borderRadius: 8, cursor: 'pointer',
-                  background: sel ? '#FFF7ED' : 'transparent',
+                  background: sel ? HP_TOKENS.warningWash : 'transparent',
                   border: 'none',
                   transition: 'background 0.15s',
                 }}>
                   <div style={{
                     width: 18, height: 18, borderRadius: 5,
-                    border: `2px solid ${sel ? '#F59E0B' : HP_TOKENS.line}`,
-                    background: sel ? '#F59E0B' : 'transparent',
+                    border: `2px solid ${sel ? HP_TOKENS.warning : HP_TOKENS.line}`,
+                    background: sel ? HP_TOKENS.warning : 'transparent',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                   }}>
-                    {sel && <HPGlyph name="check" size={10} color="#F4F7F9" />}
+                    {sel && <HPGlyph name="check" size={10} color={HP_TOKENS.onPrimary} />}
                   </div>
                   <div style={{ ...HP_TEXT.h, fontSize: 13, flex: 1, textAlign: 'left',
-                    color: sel ? '#92400E' : HP_TOKENS.ink }}>
+                    color: sel ? HP_TOKENS.warning : HP_TOKENS.ink }}>
                     {dept}
                   </div>
                   <div style={{
@@ -353,12 +353,12 @@ export default function NewChatModal({ onClose, onChannelCreated, defaultRecipie
         {selectedDepts.length > 0 && !allSelected && (
           <div style={{
             display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 10,
-            padding: '6px 8px', borderRadius: 8, background: '#FEF3C7',
+            padding: '6px 8px', borderRadius: 8, background: HP_TOKENS.warningWash,
           }}>
             {selectedDepts.map(d => (
               <span key={d} onClick={() => toggleDeptForBroadcast(d)} style={{
-                padding: '3px 8px', borderRadius: 6, background: '#F59E0B',
-                color: '#F4F7F9', fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: HP_FONT,
+                padding: '3px 8px', borderRadius: 6, background: HP_TOKENS.warning,
+                color: HP_TOKENS.onPrimary, fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: HP_FONT,
               }}>{d} ✕</span>
             ))}
           </div>
@@ -368,10 +368,10 @@ export default function NewChatModal({ onClose, onChannelCreated, defaultRecipie
           disabled={!broadcastContent.trim() || creating}
           className="hp-tap"
           style={{
-            width: '100%', padding: 16, borderRadius: 14, border: 'none',
-            background: broadcastContent.trim() ? '#F59E0B' : HP_TOKENS.lineSoft,
+            width: '100%', padding: 16, borderRadius: HP_TOKENS.radiusMd, border: 'none',
+            background: broadcastContent.trim() ? HP_TOKENS.warning : HP_TOKENS.lineSoft,
             color: broadcastContent.trim() ? '#fff' : HP_TOKENS.inkMute,
-            fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
+            fontFamily: HP_FONT, fontWeight: 700, fontSize: 15, cursor: 'pointer',
             opacity: creating || !broadcastContent.trim() ? 0.5 : 1,
             boxShadow: broadcastContent.trim() ? '0 4px 16px rgba(245,158,11,0.3)' : 'none',
           }}>
@@ -387,7 +387,7 @@ export default function NewChatModal({ onClose, onChannelCreated, defaultRecipie
       <Modal onClose={onClose} title="👤 Pilih Kontak">
         <input value={search} onChange={e => setSearch(e.target.value)}
           placeholder="🔍 Cari nama atau departemen..."
-          style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
+          style={{ width: '100%', padding: '12px 14px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.line}`,
             fontFamily: HP_FONT, fontSize: 13, outline: 'none', boxSizing: 'border-box', marginBottom: 12 }} />
         <div style={{ maxHeight: 360, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
           {loading ? (
@@ -398,7 +398,7 @@ export default function NewChatModal({ onClose, onChannelCreated, defaultRecipie
             filteredUsers.map(u => (
               <button key={u.id} onClick={() => handleStartDM(u.id)} disabled={creating}
                 className="hp-tap" style={{
-                  display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 12,
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm,
                   background: 'transparent', border: '1.5px solid transparent',
                   cursor: 'pointer', width: '100%', textAlign: 'left', opacity: creating ? 0.5 : 1,
                 }}>
@@ -426,7 +426,7 @@ export default function NewChatModal({ onClose, onChannelCreated, defaultRecipie
       {/* Group name & emoji */}
       <div style={{ marginBottom: 14 }}>
         <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-          <div style={{ width: 48, height: 48, borderRadius: 14, background: HP_TOKENS.blueSoft,
+          <div style={{ width: 48, height: 48, borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.blueSoft,
             display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24,
             cursor: 'pointer', flexShrink: 0 }}
             onClick={() => {
@@ -437,18 +437,18 @@ export default function NewChatModal({ onClose, onChannelCreated, defaultRecipie
           </div>
           <input value={groupName} onChange={e => setGroupName(e.target.value)}
             placeholder="Nama grup..."
-            style={{ flex: 1, padding: '12px 14px', borderRadius: 12,
+            style={{ flex: 1, padding: '12px 14px', borderRadius: HP_TOKENS.radiusSm,
               border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT,
               fontSize: 14, outline: 'none', fontWeight: 700 }} />
         </div>
         {selectedUsers.length > 0 && (
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', padding: '8px 10px',
-            borderRadius: 10, background: HP_TOKENS.blueWash }}>
+            borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.blueWash }}>
             {selectedUsers.map(uid => {
               const u = users.find(x => x.id === uid);
               return u ? (
                 <span key={uid} onClick={() => toggleUser(uid)} style={{
-                  ...chipStyle, background: HP_TOKENS.blue, color: '#F4F7F9',
+                  ...chipStyle, background: HP_TOKENS.blue, color: HP_TOKENS.onPrimary,
                 }}>{u.name.split(' ')[0]} ✕</span>
               ) : null;
             })}
@@ -459,7 +459,7 @@ export default function NewChatModal({ onClose, onChannelCreated, defaultRecipie
       {/* Search */}
       <input value={search} onChange={e => setSearch(e.target.value)}
         placeholder="🔍 Cari nama atau departemen..."
-        style={{ width: '100%', padding: '12px 14px', borderRadius: 12,
+        style={{ width: '100%', padding: '12px 14px', borderRadius: HP_TOKENS.radiusSm,
           border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT,
           fontSize: 13, outline: 'none', boxSizing: 'border-box', marginBottom: 12 }} />
 
@@ -481,7 +481,7 @@ export default function NewChatModal({ onClose, onChannelCreated, defaultRecipie
                 {/* Department header */}
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '8px 10px', borderRadius: 10,
+                  padding: '8px 10px', borderRadius: HP_TOKENS.radiusSm,
                   background: HP_TOKENS.lineSoft,
                 }}>
                   <button onClick={() => toggleDeptCollapse(dept)} className="hp-tap" style={{
@@ -512,7 +512,7 @@ export default function NewChatModal({ onClose, onChannelCreated, defaultRecipie
                     <button key={u.id} onClick={() => toggleUser(u.id)} disabled={creating}
                       className="hp-tap" style={{
                         display: 'flex', alignItems: 'center', gap: 12,
-                        padding: '8px 12px 8px 28px', borderRadius: 10,
+                        padding: '8px 12px 8px 28px', borderRadius: HP_TOKENS.radiusSm,
                         background: isSelected ? HP_TOKENS.blueWash : 'transparent',
                         border: isSelected ? `1.5px solid ${HP_TOKENS.blue}30` : '1.5px solid transparent',
                         cursor: 'pointer', width: '100%', textAlign: 'left',
@@ -530,7 +530,7 @@ export default function NewChatModal({ onClose, onChannelCreated, defaultRecipie
                         background: isSelected ? HP_TOKENS.blue : 'transparent',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}>
-                        {isSelected && <HPGlyph name="check" size={11} color="#F4F7F9" />}
+                        {isSelected && <HPGlyph name="check" size={11} color={HP_TOKENS.onPrimary} />}
                       </div>
                     </button>
                   );
@@ -546,10 +546,10 @@ export default function NewChatModal({ onClose, onChannelCreated, defaultRecipie
         disabled={!groupName.trim() || selectedUsers.length < 1 || creating}
         className="hp-tap"
         style={{
-          width: '100%', padding: 16, borderRadius: 14, border: 'none',
+          width: '100%', padding: 16, borderRadius: HP_TOKENS.radiusMd, border: 'none',
           background: groupName.trim() && selectedUsers.length > 0 ? HP_TOKENS.blue : HP_TOKENS.lineSoft,
           color: groupName.trim() && selectedUsers.length > 0 ? '#fff' : HP_TOKENS.inkMute,
-          fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
+          fontFamily: HP_FONT, fontWeight: 700, fontSize: 15, cursor: 'pointer',
           marginTop: 14,
           opacity: creating || !groupName.trim() || selectedUsers.length < 1 ? 0.5 : 1,
           boxShadow: groupName.trim() && selectedUsers.length > 0 ? `0 4px 16px ${HP_TOKENS.blue}30` : 'none',

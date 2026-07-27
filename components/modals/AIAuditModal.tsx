@@ -66,15 +66,15 @@ function TaskRow({ t }: { t: any }) {
           </div>
         )}
         {t.metricValue !== null && t.metricValue !== undefined && (
-          <div style={{ fontSize: 10, fontWeight: 800, color: HP_TOKENS.blue }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: HP_TOKENS.blue }}>
             +{Number(t.metricValue).toLocaleString('id-ID')}
           </div>
         )}
         {t.status === 'revision' && (
-          <div style={{ background: HP_TOKENS.yellowWash, borderRadius: 6, padding: '2px 6px', fontSize: 9, fontWeight: 800, color: '#8A6814' }}>REVISI</div>
+          <div style={{ background: HP_TOKENS.yellowWash, borderRadius: 6, padding: '2px 6px', fontSize: 9, fontWeight: 700, color: HP_TOKENS.yellowDark }}>REVISI</div>
         )}
         {t.status === 'reject' && (
-          <div style={{ background: HP_TOKENS.coralSoft, borderRadius: 6, padding: '2px 6px', fontSize: 9, fontWeight: 800, color: HP_TOKENS.coral }}>TOLAK</div>
+          <div style={{ background: HP_TOKENS.coralSoft, borderRadius: 6, padding: '2px 6px', fontSize: 9, fontWeight: 700, color: HP_TOKENS.coral }}>TOLAK</div>
         )}
         {hasDetail && <HPGlyph name={open ? 'chevron-up' : 'chevron-down'} size={12} color={HP_TOKENS.inkMute} />}
       </div>
@@ -117,7 +117,7 @@ function WeeklyTargetRow({ wt, highlight }: { wt: any; highlight?: boolean }) {
   return (
     <div style={{
       border: `1.5px solid ${highlight ? sc + '60' : HP_TOKENS.lineSoft}`,
-      borderRadius: 12, marginBottom: 8, overflow: 'hidden',
+      borderRadius: HP_TOKENS.radiusSm, marginBottom: 8, overflow: 'hidden',
       background: highlight ? `${sc}06` : HP_TOKENS.card,
     }}>
       <div
@@ -128,21 +128,21 @@ function WeeklyTargetRow({ wt, highlight }: { wt: any; highlight?: boolean }) {
         <div style={{
           width: 28, height: 28, borderRadius: 8, background: `${sc}20`, flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 11, fontWeight: 900, color: sc
+          fontSize: 11, fontWeight: 700, color: sc
         }}>
           W{wt.weekNumber}
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 12, fontWeight: 800, color: HP_TOKENS.ink }}>{wt.title}</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: HP_TOKENS.ink }}>{wt.title}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
             <ProgressBar value={wt.currentValue} max={wt.targetValue} color={sc} />
-            <span style={{ fontSize: 11, fontWeight: 900, color: sc, flexShrink: 0 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: sc, flexShrink: 0 }}>
               {wt.currentValue}/{wt.targetValue} {wt.metricUnit}
             </span>
           </div>
         </div>
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <div style={{ fontSize: 16, fontWeight: 900, color: sc, fontFamily: HP_FONT }}>{wt.progress}%</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: sc, fontFamily: HP_FONT }}>{wt.progress}%</div>
           <div style={{ fontSize: 10, color: HP_TOKENS.inkMute }}>{doneTasks}/{wt.tasks.length} task</div>
         </div>
         <HPGlyph name={open ? 'chevron-up' : 'chevron-down'} size={14} color={HP_TOKENS.inkMute} />
@@ -177,7 +177,7 @@ function KpiAccordion({ kpi, type }: { kpi: any; type: 'weekly' | 'monthly' }) {
   return (
     <div style={{
       background: HP_TOKENS.card, border: `1.5px solid ${HP_TOKENS.line}`,
-      borderRadius: 16, overflow: 'hidden', marginBottom: 12,
+      borderRadius: HP_TOKENS.radiusMd, overflow: 'hidden', marginBottom: 12,
     }}>
       {/* KPI header */}
       <div
@@ -186,21 +186,21 @@ function KpiAccordion({ kpi, type }: { kpi: any; type: 'weekly' | 'monthly' }) {
         className="hp-tap"
       >
         <div style={{
-          width: 36, height: 36, borderRadius: 10, background: `${sc}20`, flexShrink: 0,
+          width: 36, height: 36, borderRadius: HP_TOKENS.radiusSm, background: `${sc}20`, flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
           <HPGlyph name="target" size={18} color={sc} />
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 800, color: HP_TOKENS.ink }}>{kpi.title}</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: HP_TOKENS.ink }}>{kpi.title}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
             <ProgressBar value={kpi.progress} color={sc} />
-            <span style={{ fontSize: 11, fontWeight: 900, color: sc, flexShrink: 0 }}>{kpi.progress}%</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: sc, flexShrink: 0 }}>{kpi.progress}%</span>
           </div>
         </div>
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
           <div style={{
-            fontSize: 10, fontWeight: 800, color: '#fff', background: HP_TOKENS.inkMute,
+            fontSize: 10, fontWeight: 700, color: '#fff', background: HP_TOKENS.inkMute,
             padding: '2px 6px', borderRadius: 5
           }}>
             {kpi.weight}%
@@ -227,7 +227,7 @@ function KpiAccordion({ kpi, type }: { kpi: any; type: 'weekly' | 'monthly' }) {
                     <div style={{ height: 40, background: HP_TOKENS.lineSoft, borderRadius: 6, overflow: 'hidden', display: 'flex', alignItems: 'flex-end' }}>
                       <div style={{ width: '100%', height: `${pct}%`, background: c, borderRadius: '0 0 6px 6px', transition: 'height 0.8s ease', minHeight: wt ? 2 : 0 }} />
                     </div>
-                    <div style={{ fontSize: 10, fontWeight: 800, color: c, marginTop: 3 }}>{wt ? `${pct}%` : '–'}</div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: c, marginTop: 3 }}>{wt ? `${pct}%` : '–'}</div>
                   </div>
                 );
               })}
@@ -247,7 +247,7 @@ function KpiAccordion({ kpi, type }: { kpi: any; type: 'weekly' | 'monthly' }) {
           {/* Unlinked tasks */}
           {kpi.unlinkedTasks?.length > 0 && (
             <div style={{ marginTop: 8 }}>
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 6 }}>TASK LANGSUNG KE KPI</div>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 6 }}>TASK LANGSUNG KE KPI</div>
               {kpi.unlinkedTasks.map((t: any) => <TaskRow key={t.id} t={t} />)}
             </div>
           )}
@@ -271,15 +271,15 @@ function AISummarySection({ member, type, accentColor, onGenerate, generating }:
       return (
         <div style={{
           background: `${accentColor}10`, border: `1.5px dashed ${accentColor}50`,
-          borderRadius: 16, padding: '16px', marginBottom: 16, textAlign: 'center'
+          borderRadius: HP_TOKENS.radiusMd, padding: '16px', marginBottom: 16, textAlign: 'center'
         }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: HP_TOKENS.inkSoft, marginBottom: 10 }}>
             Belum ada rangkuman AI untuk minggu ini.
           </div>
           <button onClick={onGenerate} disabled={generating} style={{
-            padding: '10px 20px', borderRadius: 12, border: 'none',
+            padding: '10px 20px', borderRadius: HP_TOKENS.radiusSm, border: 'none',
             background: generating ? HP_TOKENS.lineSoft : accentColor, color: '#fff',
-            fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: generating ? 'default' : 'pointer'
+            fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: generating ? 'default' : 'pointer'
           }} className="hp-tap">
             {generating ? '⏳ Generating...' : '🤖 Generate Rangkuman AI'}
           </button>
@@ -287,12 +287,12 @@ function AISummarySection({ member, type, accentColor, onGenerate, generating }:
       );
     }
     return (
-      <div style={{ background: `${accentColor}08`, border: `1px solid ${accentColor}30`, borderRadius: 16, padding: 14, marginBottom: 16 }}>
+      <div style={{ background: `${accentColor}08`, border: `1px solid ${accentColor}30`, borderRadius: HP_TOKENS.radiusMd, padding: 14, marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <div style={{ fontSize: 11, fontWeight: 800, color: accentColor }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: accentColor }}>
             🤖 RANGKUMAN AI — {new Date(summary.weekStart).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} – {new Date(summary.weekEnd).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
           </div>
-          <div style={{ padding: '2px 8px', borderRadius: 10, background: `${scoreColor(summary.score)}20`, fontSize: 10, fontWeight: 800, color: scoreColor(summary.score) }}>
+          <div style={{ padding: '2px 8px', borderRadius: HP_TOKENS.radiusSm, background: `${scoreColor(summary.score)}20`, fontSize: 10, fontWeight: 700, color: scoreColor(summary.score) }}>
             Skor {summary.score}
           </div>
         </div>
@@ -313,15 +313,15 @@ function AISummarySection({ member, type, accentColor, onGenerate, generating }:
     return (
       <div style={{
         background: `${accentColor}10`, border: `1.5px dashed ${accentColor}50`,
-        borderRadius: 16, padding: '16px', marginBottom: 16, textAlign: 'center'
+        borderRadius: HP_TOKENS.radiusMd, padding: '16px', marginBottom: 16, textAlign: 'center'
       }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: HP_TOKENS.inkSoft, marginBottom: 10 }}>
           Belum ada analisa AI bulan ini.
         </div>
         <button onClick={onGenerate} disabled={generating} style={{
-          padding: '10px 20px', borderRadius: 12, border: 'none',
+          padding: '10px 20px', borderRadius: HP_TOKENS.radiusSm, border: 'none',
           background: generating ? HP_TOKENS.lineSoft : accentColor, color: '#fff',
-          fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: generating ? 'default' : 'pointer'
+          fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: generating ? 'default' : 'pointer'
         }} className="hp-tap">
           {generating ? '⏳ Generating...' : '🔮 Generate Analisa Bulanan AI'}
         </button>
@@ -334,7 +334,7 @@ function AISummarySection({ member, type, accentColor, onGenerate, generating }:
       {/* Weekly summaries timeline */}
       {member.aiWeeklySummaries?.length > 0 && (
         <div style={{ marginBottom: 12 }}>
-          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 8 }}>PROGRES MINGGU</div>
+          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 8 }}>PROGRES MINGGU</div>
           <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
             {member.aiWeeklySummaries.map((s: any, i: number) => {
               const wn = i + 1;
@@ -342,14 +342,14 @@ function AISummarySection({ member, type, accentColor, onGenerate, generating }:
               return (
                 <details key={i} style={{ flex: '0 0 auto', width: 120 }}>
                   <summary style={{
-                    padding: '6px 10px', borderRadius: 10, background: `${sc}15`,
-                    border: `1.5px solid ${sc}40`, fontSize: 11, fontWeight: 800, color: sc,
+                    padding: '6px 10px', borderRadius: HP_TOKENS.radiusSm, background: `${sc}15`,
+                    border: `1.5px solid ${sc}40`, fontSize: 11, fontWeight: 700, color: sc,
                     cursor: 'pointer', listStyle: 'none', display: 'flex', justifyContent: 'space-between'
                   }}>
                     <span>W{wn}</span><span>{s.score}%</span>
                   </summary>
                   <div style={{
-                    marginTop: 4, padding: '8px', borderRadius: 10,
+                    marginTop: 4, padding: '8px', borderRadius: HP_TOKENS.radiusSm,
                     background: HP_TOKENS.paper, border: `1px solid ${HP_TOKENS.line}`,
                     fontSize: 11, lineHeight: 1.5, color: HP_TOKENS.inkSoft
                   }}>
@@ -364,8 +364,8 @@ function AISummarySection({ member, type, accentColor, onGenerate, generating }:
 
       {/* Monthly AI analysis */}
       {member.aiMonthlyAnalysis && (
-        <div style={{ background: `${accentColor}08`, border: `1px solid ${accentColor}30`, borderRadius: 16, padding: 14 }}>
-          <div style={{ fontSize: 11, fontWeight: 800, color: accentColor, marginBottom: 8 }}>🔮 ANALISA BULANAN AI</div>
+        <div style={{ background: `${accentColor}08`, border: `1px solid ${accentColor}30`, borderRadius: HP_TOKENS.radiusMd, padding: 14 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: accentColor, marginBottom: 8 }}>🔮 ANALISA BULANAN AI</div>
           <div style={{ fontSize: 13, lineHeight: 1.6, color: HP_TOKENS.ink }}>{member.aiMonthlyAnalysis}</div>
         </div>
       )}
@@ -467,7 +467,7 @@ async function exportExcel(members: any[], type: 'weekly' | 'monthly', periodLab
 export default function AIAuditModal({ onClose, type }: AIAuditModalProps) {
   const { user } = useHP();
   const isWeekly = type === 'weekly';
-  const accentColor = isWeekly ? HP_TOKENS.blue : '#6B5F8E';
+  const accentColor = isWeekly ? HP_TOKENS.blue : HP_TOKENS.primary;
 
   const now = new Date();
   const month = now.getMonth() + 1;
@@ -543,7 +543,7 @@ export default function AIAuditModal({ onClose, type }: AIAuditModalProps) {
       {loading ? (
         <div style={{ padding: '60px 20px', textAlign: 'center' }}>
           <div style={{
-            width: 80, height: 80, borderRadius: 40,
+            width: 80, height: 80, borderRadius: '50%',
             background: isWeekly ? HP_TOKENS.blueWash : HP_TOKENS.lavenderSoft,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             margin: '0 auto 20px', animation: 'hpPulse 1.5s infinite'
@@ -560,8 +560,8 @@ export default function AIAuditModal({ onClose, type }: AIAuditModalProps) {
           <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
           <div style={{ fontSize: 14, fontWeight: 700, color: HP_TOKENS.coral }}>{error}</div>
           <button onClick={fetchData} style={{
-            marginTop: 16, padding: '10px 20px', borderRadius: 10, border: 'none',
-            background: accentColor, color: '#fff', fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer'
+            marginTop: 16, padding: '10px 20px', borderRadius: HP_TOKENS.radiusSm, border: 'none',
+            background: accentColor, color: '#fff', fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: 'pointer'
           }} className="hp-tap">Coba Lagi</button>
         </div>
       ) : members.length === 0 ? (
@@ -578,7 +578,7 @@ export default function AIAuditModal({ onClose, type }: AIAuditModalProps) {
                 onChange={e => setSelectedIdx(Number(e.target.value))}
                 style={{
                   width: '100%', padding: '10px 36px 10px 12px',
-                  borderRadius: 12, border: `1.5px solid ${accentColor}40`,
+                  borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${accentColor}40`,
                   background: HP_TOKENS.card, fontFamily: HP_FONT, fontWeight: 700,
                   fontSize: 13, color: HP_TOKENS.ink, appearance: 'none', cursor: 'pointer'
                 }}
@@ -596,10 +596,10 @@ export default function AIAuditModal({ onClose, type }: AIAuditModalProps) {
               onClick={handleExport}
               disabled={exporting}
               style={{
-                flexShrink: 0, padding: '10px 14px', borderRadius: 12,
+                flexShrink: 0, padding: '10px 14px', borderRadius: HP_TOKENS.radiusSm,
                 border: `1.5px solid ${HP_TOKENS.sage}60`,
                 background: HP_TOKENS.sageWash, color: HP_TOKENS.sage,
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: exporting ? 'default' : 'pointer',
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, cursor: exporting ? 'default' : 'pointer',
                 display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap'
               }}
               className="hp-tap"
@@ -630,13 +630,13 @@ export default function AIAuditModal({ onClose, type }: AIAuditModalProps) {
               />
 
               {/* KPIs */}
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 8 }}>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 8 }}>
                 KPI · TARGET · TASK
               </div>
               {selectedMember.kpis.length === 0 ? (
                 <div style={{
                   padding: 20, textAlign: 'center', background: HP_TOKENS.lineSoft,
-                  borderRadius: 12, fontSize: 13, color: HP_TOKENS.inkMute
+                  borderRadius: HP_TOKENS.radiusSm, fontSize: 13, color: HP_TOKENS.inkMute
                 }}>
                   Belum ada KPI untuk anggota ini bulan ini.
                 </div>

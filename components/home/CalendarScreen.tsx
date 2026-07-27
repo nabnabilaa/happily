@@ -359,7 +359,7 @@ function CalendarScreenInner({ openModal }: Props) {
     day === selectedDate.getDate() && viewMonth === selectedDate.getMonth() && viewYear === selectedDate.getFullYear();
 
   const inputStyle: React.CSSProperties = {
-    width: '100%', padding: 12, borderRadius: 12,
+    width: '100%', padding: 12, borderRadius: HP_TOKENS.radiusSm,
     border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 13,
     outline: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink, boxSizing: 'border-box',
   };
@@ -410,10 +410,10 @@ function CalendarScreenInner({ openModal }: Props) {
           onClick={() => loginToGoogleCalendar()}
           className="hp-tap"
           style={{
-            padding: '8px 12px', borderRadius: 12, border: 'none',
+            padding: '8px 12px', borderRadius: HP_TOKENS.radiusSm, border: 'none',
             background: gCalToken ? HP_TOKENS.sageWash : HP_TOKENS.blueWash, 
             color: gCalToken ? HP_TOKENS.sage : HP_TOKENS.blue,
-            fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
+            fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap'
           }}
         >
@@ -428,17 +428,17 @@ function CalendarScreenInner({ openModal }: Props) {
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '14px 20px', borderBottom: `1px solid ${HP_TOKENS.lineSoft}`
         }}>
-          <button onClick={prevMonth} className="hp-tap" style={{ background: HP_TOKENS.paper, border: `1px solid ${HP_TOKENS.line}`, borderRadius: 12, cursor: 'pointer', padding: 8, display: 'flex' }}>
+          <button onClick={prevMonth} className="hp-tap" style={{ background: HP_TOKENS.paper, border: `1px solid ${HP_TOKENS.line}`, borderRadius: HP_TOKENS.radiusSm, cursor: 'pointer', padding: 8, display: 'flex' }}>
             <div style={{ transform: 'rotate(180deg)', display: 'flex' }}>
               <HPGlyph name="arrow" size={16} color={HP_TOKENS.inkMute} />
             </div>
           </button>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ color: HP_TOKENS.ink, fontWeight: 900, fontSize: 16, fontFamily: HP_FONT }}>
+            <div style={{ color: HP_TOKENS.ink, fontWeight: 700, fontSize: 16, fontFamily: HP_FONT }}>
               {MONTHS[viewMonth]} {viewYear}
             </div>
           </div>
-          <button onClick={nextMonth} className="hp-tap" style={{ background: HP_TOKENS.paper, border: `1px solid ${HP_TOKENS.line}`, borderRadius: 12, cursor: 'pointer', padding: 8, display: 'flex' }}>
+          <button onClick={nextMonth} className="hp-tap" style={{ background: HP_TOKENS.paper, border: `1px solid ${HP_TOKENS.line}`, borderRadius: HP_TOKENS.radiusSm, cursor: 'pointer', padding: 8, display: 'flex' }}>
             <div style={{ display: 'flex' }}>
               <HPGlyph name="arrow" size={16} color={HP_TOKENS.inkMute} />
             </div>
@@ -449,7 +449,7 @@ function CalendarScreenInner({ openModal }: Props) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', padding: '10px 10px 0' }}>
           {DAYS.map(d => (
             <div key={d} style={{
-              textAlign: 'center', fontSize: 10, fontWeight: 800,
+              textAlign: 'center', fontSize: 10, fontWeight: 700,
               color: HP_TOKENS.inkMute, padding: '4px 0', letterSpacing: 0.5,
             }}>{d}</div>
           ))}
@@ -470,7 +470,7 @@ function CalendarScreenInner({ openModal }: Props) {
                   : day && isToday(day) ? HP_TOKENS.ink
                   : day ? HP_TOKENS.ink : 'transparent',
                 border: day && isSelected(day) ? `1.5px solid ${HP_TOKENS.primary}` : '1.5px solid transparent',
-                borderRadius: 12, padding: '10px 0',
+                borderRadius: HP_TOKENS.radiusSm, padding: '10px 0',
                 fontSize: 13, fontWeight: isToday(day!) || isSelected(day!) ? 900 : 600,
                 fontFamily: HP_FONT, cursor: day ? 'pointer' : 'default',
                 position: 'relative', transition: 'all 0.15s',
@@ -481,14 +481,14 @@ function CalendarScreenInner({ openModal }: Props) {
               {day && eventDays.has(day) && (
                 <div style={{
                   position: 'absolute', bottom: 3, left: '50%', transform: 'translateX(-50%)',
-                  width: 4, height: 4, borderRadius: 2, background: HP_TOKENS.primary,
+                  width: 4, height: 4, borderRadius: '50%', background: HP_TOKENS.primary,
                 }} />
               )}
               {/* Task deadline dot */}
               {day && taskDeadlines.has(day) && !eventDays.has(day) && (
                 <div style={{
                   position: 'absolute', bottom: 3, left: '50%', transform: 'translateX(-50%)',
-                  width: 4, height: 4, borderRadius: 2, background: HP_TOKENS.yellow,
+                  width: 4, height: 4, borderRadius: '50%', background: HP_TOKENS.yellow,
                 }} />
               )}
             </button>
@@ -505,7 +505,7 @@ function CalendarScreenInner({ openModal }: Props) {
           <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>
             {eventsOnDate.length} agenda
             {isLastWorkingDayOfMonth(selectedDate) && (
-              <span style={{ color: HP_TOKENS.coral, fontWeight: 900 }}> • 📊 HARI KERJA AKHIR BULAN</span>
+              <span style={{ color: HP_TOKENS.coral, fontWeight: 700 }}> • 📊 HARI KERJA AKHIR BULAN</span>
             )}
           </div>
         </div>
@@ -513,11 +513,10 @@ function CalendarScreenInner({ openModal }: Props) {
           onClick={() => { setShowForm(!showForm); setDate(`${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(selectedDate.getDate()).padStart(2,'0')}`); }}
           className="hp-tap"
           style={{
-            padding: '10px 16px', borderRadius: 12, border: 'none',
+            padding: '10px 16px', borderRadius: HP_TOKENS.radiusSm, border: 'none',
             background: HP_TOKENS.card, color: HP_TOKENS.ink,
-            fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
+            fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: 6,
-            boxShadow: `0 4px 12px rgba(26,29,35,0.03)`,
             borderTop: `1px solid ${HP_TOKENS.lineSoft}`,
           }}
         >
@@ -535,15 +534,15 @@ function CalendarScreenInner({ openModal }: Props) {
           padding: 24, backdropFilter: 'blur(4px)'
         }} onClick={() => { setShowForm(false); resetForm(); }}>
           <div style={{
-            background: '#fff', borderRadius: 24, padding: 24,
+            background: '#fff', borderRadius: HP_TOKENS.radiusLg, padding: 24,
             width: '100%', maxWidth: 500, maxHeight: '85vh', overflowY: 'auto',
-            boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
+            boxShadow: HP_TOKENS.shadowLg,
             animation: 'hpPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <div style={{ ...HP_TEXT.h, fontSize: 18 }}>Buat Agenda</div>
               <button onClick={() => { setShowForm(false); resetForm(); }} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}>
-                <HPGlyph name="cross" size={16} color={HP_TOKENS.inkMute} />
+                <HPGlyph name="close" size={16} color={HP_TOKENS.inkMute} />
               </button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -553,22 +552,22 @@ function CalendarScreenInner({ openModal }: Props) {
 
             <div className="hp-form-row">
               <div style={{ flex: 1 }}>
-                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 4 }}>TANGGAL</div>
+                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 4 }}>TANGGAL</div>
                 <input type="date" value={date} onChange={e => setDate(e.target.value)} style={inputStyle} />
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 4 }}>MULAI</div>
+                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 4 }}>MULAI</div>
                 <input type="time" value={timeStart} onChange={e => setTimeStart(e.target.value)} style={inputStyle} />
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 4 }}>SELESAI</div>
+                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 4 }}>SELESAI</div>
                 <input type="time" value={timeEnd} onChange={e => setTimeEnd(e.target.value)} style={inputStyle} />
               </div>
             </div>
 
             <div className="hp-form-row" style={{ marginTop: 4 }}>
               <div style={{ flex: 1 }}>
-                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 4 }}>ULANGI</div>
+                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 4 }}>ULANGI</div>
                 <div style={{ position: 'relative' }}>
                   <div 
                     onClick={() => setShowRecurrenceDropdown(!showRecurrenceDropdown)}
@@ -580,13 +579,13 @@ function CalendarScreenInner({ openModal }: Props) {
                   {showRecurrenceDropdown && (
                     <>
                       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 }} onClick={() => setShowRecurrenceDropdown(false)} />
-                      <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(26,29,35,0.12)', border: `1px solid ${HP_TOKENS.line}`, zIndex: 101, maxHeight: 250, overflowY: 'auto', padding: 8 }}>
+                      <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: HP_TOKENS.cardRaised, borderRadius: HP_TOKENS.radiusMd, boxShadow: HP_TOKENS.shadowMd, border: `1px solid ${HP_TOKENS.line}`, zIndex: 101, maxHeight: 250, overflowY: 'auto', padding: 8 }}>
                         {RECURRENCE_OPTIONS.map(o => (
                           <div 
                             key={o.value} className="hp-tap"
                             onClick={() => { setRecurrence(o.value); setShowRecurrenceDropdown(false); }}
                             style={{
-                              padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                              padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm, cursor: 'pointer',
                               background: recurrence === o.value ? HP_TOKENS.blueWash : 'transparent',
                               ...HP_TEXT.body, color: recurrence === o.value ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: recurrence === o.value ? 700 : 500,
                               marginBottom: 4
@@ -601,7 +600,7 @@ function CalendarScreenInner({ openModal }: Props) {
                 </div>
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 4 }}>ALARM</div>
+                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 4 }}>ALARM</div>
                 <div style={{ position: 'relative' }}>
                   <div 
                     onClick={() => setShowOffsetDropdown(!showOffsetDropdown)}
@@ -613,13 +612,13 @@ function CalendarScreenInner({ openModal }: Props) {
                   {showOffsetDropdown && (
                     <>
                       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 }} onClick={() => setShowOffsetDropdown(false)} />
-                      <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(26,29,35,0.12)', border: `1px solid ${HP_TOKENS.line}`, zIndex: 101, maxHeight: 250, overflowY: 'auto', padding: 8 }}>
+                      <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: HP_TOKENS.cardRaised, borderRadius: HP_TOKENS.radiusMd, boxShadow: HP_TOKENS.shadowMd, border: `1px solid ${HP_TOKENS.line}`, zIndex: 101, maxHeight: 250, overflowY: 'auto', padding: 8 }}>
                         {OFFSET_OPTIONS.map(o => (
                           <div 
                             key={o.value} className="hp-tap"
                             onClick={() => { setOffset(Number(o.value)); setShowOffsetDropdown(false); }}
                             style={{
-                              padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                              padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm, cursor: 'pointer',
                               background: offset === Number(o.value) ? HP_TOKENS.blueWash : 'transparent',
                               ...HP_TEXT.body, color: offset === Number(o.value) ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: offset === Number(o.value) ? 700 : 500,
                               marginBottom: 4
@@ -637,7 +636,7 @@ function CalendarScreenInner({ openModal }: Props) {
 
             {/* Invite attendees - Notes Style */}
             <div style={{ marginTop: 6 }}>
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 6 }}>UNDANG ANGGOTA / BAGIKAN</div>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 6 }}>UNDANG ANGGOTA / BAGIKAN</div>
               <div style={{ position: 'relative' }}>
                 <div 
                   onClick={() => setShowVisibilityDropdown(!showVisibilityDropdown)}
@@ -653,7 +652,7 @@ function CalendarScreenInner({ openModal }: Props) {
                 {showVisibilityDropdown && (
                   <>
                     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 }} onClick={() => setShowVisibilityDropdown(false)} />
-                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(26,29,35,0.12)', border: `1px solid ${HP_TOKENS.line}`, zIndex: 101, maxHeight: 250, overflowY: 'auto', padding: 8 }}>
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: HP_TOKENS.cardRaised, borderRadius: HP_TOKENS.radiusMd, boxShadow: HP_TOKENS.shadowMd, border: `1px solid ${HP_TOKENS.line}`, zIndex: 101, maxHeight: 250, overflowY: 'auto', padding: 8 }}>
                       {[
                         { value: 'private', label: '🔒 Tidak Ada (Agenda Pribadi)' },
                         { value: 'company', label: '🏢 Seluruh Perusahaan' },
@@ -663,7 +662,7 @@ function CalendarScreenInner({ openModal }: Props) {
                           key={o.value} className="hp-tap"
                           onClick={() => { setVisibility(o.value); setSharedUsers([]); setShowVisibilityDropdown(false); }}
                           style={{
-                            padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                            padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm, cursor: 'pointer',
                             background: visibility === o.value ? HP_TOKENS.blueWash : 'transparent',
                             ...HP_TEXT.body, color: visibility === o.value ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: visibility === o.value ? 700 : 500,
                             marginBottom: 4
@@ -680,19 +679,19 @@ function CalendarScreenInner({ openModal }: Props) {
               {visibility === 'custom' && (
                 <div style={{ 
                   marginTop: 12, padding: 16, background: HP_TOKENS.card, 
-                  border: `1px solid ${HP_TOKENS.line}`, borderRadius: 12 
+                  border: `1px solid ${HP_TOKENS.line}`, borderRadius: HP_TOKENS.radiusSm 
                 }}>
                   {/* Selected users chips */}
                   {sharedUsers.length > 0 && (
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', padding: '8px 10px',
-                      borderRadius: 10, background: HP_TOKENS.blueWash, marginBottom: 12 }}>
+                      borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.blueWash, marginBottom: 12 }}>
                       {sharedUsers.map(uid => {
                         const u = users.find(x => String(x.id) === uid);
                         return u ? (
                           <span key={uid} onClick={() => toggleUser(uid)} style={{
                             padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700,
                             cursor: 'pointer', fontFamily: HP_FONT, border: 'none',
-                            background: HP_TOKENS.blue, color: '#F4F7F9',
+                            background: HP_TOKENS.blue, color: HP_TOKENS.onPrimary,
                           }}>{u.name.split(' ')[0]} ✕</span>
                         ) : null;
                       })}
@@ -702,7 +701,7 @@ function CalendarScreenInner({ openModal }: Props) {
                   {/* Search */}
                   <input value={search} onChange={e => setSearch(e.target.value)}
                     placeholder="🔍 Cari nama atau departemen..."
-                    style={{ width: '100%', padding: '12px 14px', borderRadius: 12,
+                    style={{ width: '100%', padding: '12px 14px', borderRadius: HP_TOKENS.radiusSm,
                       border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT,
                       fontSize: 13, outline: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink, boxSizing: 'border-box', marginBottom: 12 }} />
 
@@ -722,7 +721,7 @@ function CalendarScreenInner({ openModal }: Props) {
                             {/* Department header */}
                             <div style={{
                               display: 'flex', alignItems: 'center', gap: 8,
-                              padding: '8px 10px', borderRadius: 10,
+                              padding: '8px 10px', borderRadius: HP_TOKENS.radiusSm,
                               background: HP_TOKENS.lineSoft,
                             }}>
                               <button onClick={(e) => { e.preventDefault(); toggleDeptCollapse(dept); }} className="hp-tap" style={{
@@ -754,7 +753,7 @@ function CalendarScreenInner({ openModal }: Props) {
                                 <button key={u.id} onClick={(e) => { e.preventDefault(); toggleUser(String(u.id)); }} disabled={saving}
                                   className="hp-tap" style={{
                                     display: 'flex', alignItems: 'center', gap: 12,
-                                    padding: '8px 12px 8px 28px', borderRadius: 10,
+                                    padding: '8px 12px 8px 28px', borderRadius: HP_TOKENS.radiusSm,
                                     background: isSelected ? HP_TOKENS.blueWash : 'transparent',
                                     border: isSelected ? `1.5px solid ${HP_TOKENS.blue}30` : '1.5px solid transparent',
                                     cursor: 'pointer', width: '100%', textAlign: 'left',
@@ -772,7 +771,7 @@ function CalendarScreenInner({ openModal }: Props) {
                                     background: isSelected ? HP_TOKENS.blue : 'transparent',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                   }}>
-                                    {isSelected && <HPGlyph name="check" size={11} color="#F4F7F9" />}
+                                    {isSelected && <HPGlyph name="check" size={11} color={HP_TOKENS.onPrimary} />}
                                   </div>
                                 </button>
                               );
@@ -787,10 +786,10 @@ function CalendarScreenInner({ openModal }: Props) {
             </div>
 
             <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-              <button onClick={() => { setShowForm(false); resetForm(); }} style={{ flex: 1, padding: 12, borderRadius: 12, background: HP_TOKENS.card, border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>Batal</button>
+              <button onClick={() => { setShowForm(false); resetForm(); }} style={{ flex: 1, padding: 12, borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.card, border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Batal</button>
               <button onClick={handleSave} disabled={!title || !date || saving} style={{
-                flex: 2, padding: 12, borderRadius: 12, background: HP_TOKENS.blue, color: '#F4F7F9',
-                border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',
+                flex: 2, padding: 12, borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.blue, color: HP_TOKENS.onPrimary,
+                border: 'none', fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: 'pointer',
                 opacity: (!title || !date || saving) ? 0.5 : 1,
               }}>
                 {saving ? 'Menyimpan...' : '✓ Buat Agenda'}
@@ -803,11 +802,11 @@ function CalendarScreenInner({ openModal }: Props) {
 
       {/* Events List */}
       {syncEvent && (
-        <HPCard padding={16} style={{ marginBottom: 16, background: HP_TOKENS.yellowWash || '#FFF9E6', border: `1.5px solid ${HP_TOKENS.yellow}40` }}>
+        <HPCard padding={16} style={{ marginBottom: 16, background: HP_TOKENS.yellowWash, border: `1.5px solid ${HP_TOKENS.yellow}40` }}>
           <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
             <div style={{ fontSize: 28 }}>⚠️</div>
             <div style={{ flex: 1 }}>
-              <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.yellowDark || '#B28200' }}>Belum tersimpan di Google Calendar!</div>
+              <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.yellowDark }}>Belum tersimpan di Google Calendar!</div>
               <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkSoft, marginTop: 2 }}>
                 Agenda <strong>{syncEvent.title}</strong> sudah dibuat di Flowbee. 
                 {syncEvent.attendees && syncEvent.attendees.length > 0 ? (
@@ -822,9 +821,9 @@ function CalendarScreenInner({ openModal }: Props) {
                 onClick={() => setSyncEvent(null)}
                 className="hp-tap"
                 style={{
-                  padding: '10px 16px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.yellow}60`,
-                  background: 'transparent', color: HP_TOKENS.yellowDark || '#B28200',
-                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
+                  padding: '10px 16px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.yellow}60`,
+                  background: 'transparent', color: HP_TOKENS.yellowDark,
+                  fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, cursor: 'pointer',
                 }}
               >
                 Nanti Saja
@@ -836,9 +835,9 @@ function CalendarScreenInner({ openModal }: Props) {
                 onClick={() => setSyncEvent(null)}
                 className="hp-tap"
                 style={{
-                  padding: '10px 16px', borderRadius: 10, border: 'none',
+                  padding: '10px 16px', borderRadius: HP_TOKENS.radiusSm, border: 'none',
                   background: HP_TOKENS.yellow, color: HP_TOKENS.ink,
-                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
+                  fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, cursor: 'pointer',
                   textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6
                 }}
               >
@@ -878,7 +877,7 @@ function CalendarScreenInner({ openModal }: Props) {
                       <div style={{ flex: 1 }}>
                         <div style={{ ...HP_TEXT.h, fontSize: 15, textDecoration: isPast ? 'line-through' : 'none' }}>{ev.title}</div>
                         <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
-                          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 800 }}>
+                          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 700 }}>
                             {start.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} - {end.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                           </div>
                           {!isPast && (
@@ -889,13 +888,13 @@ function CalendarScreenInner({ openModal }: Props) {
                           {ev.recurrence && (
                             <div style={{
                               ...HP_TEXT.tiny, padding: '1px 6px', borderRadius: 4,
-                              background: HP_TOKENS.sageSoft, color: HP_TOKENS.sage, fontWeight: 800,
+                              background: HP_TOKENS.sageSoft, color: HP_TOKENS.sage, fontWeight: 700,
                             }}>🔁 {ev.recurrence}</div>
                           )}
                           {!isOwner && (
                             <div style={{
                               ...HP_TEXT.tiny, padding: '1px 6px', borderRadius: 4,
-                              background: HP_TOKENS.lavenderSoft, color: '#6B5F8E', fontWeight: 800,
+                              background: HP_TOKENS.lavenderSoft, color: HP_TOKENS.primary, fontWeight: 700,
                             }}>UNDANGAN</div>
                           )}
                         </div>
@@ -960,9 +959,9 @@ function CalendarScreenInner({ openModal }: Props) {
                 onClick={() => openModal('monthly_report')}
                 className="hp-tap"
                 style={{
-                  padding: '10px 16px', borderRadius: 10, border: 'none',
-                  background: HP_TOKENS.coral, color: '#F4F7F9',
-                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
+                  padding: '10px 16px', borderRadius: HP_TOKENS.radiusSm, border: 'none',
+                  background: HP_TOKENS.coral, color: HP_TOKENS.onPrimary,
+                  fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, cursor: 'pointer',
                 }}
               >
                 Lihat Laporan
@@ -981,12 +980,12 @@ function CalendarScreenInner({ openModal }: Props) {
           padding: 24, backdropFilter: 'blur(4px)'
         }}>
           <div style={{
-            background: '#fff', borderRadius: 24, padding: 32,
+            background: '#fff', borderRadius: HP_TOKENS.radiusLg, padding: 32,
             width: '100%', maxWidth: 400, textAlign: 'center',
-            boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
+            boxShadow: HP_TOKENS.shadowLg,
             animation: 'hpPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }}>
-            <div style={{ width: 64, height: 64, borderRadius: 32, background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
               <HPGlyph name="calendar" size={32} />
             </div>
             <div style={{ ...HP_TEXT.h, fontSize: 20, marginBottom: 8 }}>Hapus Agenda?</div>
@@ -995,17 +994,17 @@ function CalendarScreenInner({ openModal }: Props) {
             </div>
             <div style={{ display: 'flex', gap: 12, flexDirection: 'column' }}>
               <button onClick={handleDelete} className="hp-tap" style={{
-                padding: '16px', borderRadius: 16, border: 'none',
+                padding: '16px', borderRadius: HP_TOKENS.radiusMd, border: 'none',
                 background: HP_TOKENS.coral, color: '#fff',
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: 'pointer',
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, cursor: 'pointer',
                 width: '100%'
               }}>
                 Ya, Hapus
               </button>
               <button onClick={() => setEventToDelete(null)} className="hp-tap" style={{
-                padding: '16px', borderRadius: 16, border: 'none',
+                padding: '16px', borderRadius: HP_TOKENS.radiusMd, border: 'none',
                 background: HP_TOKENS.card, color: HP_TOKENS.inkSoft,
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: 'pointer',
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, cursor: 'pointer',
                 width: '100%'
               }}>
                 Batal

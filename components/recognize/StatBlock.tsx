@@ -13,7 +13,7 @@ interface StatBlockProps {
 
 export default function StatBlock({ label, value, icon, tone }: StatBlockProps) {
   const bg = { yellow: HP_TOKENS.yellowSoft, coral: HP_TOKENS.coralSoft, sage: HP_TOKENS.sageSoft, blue: HP_TOKENS.blueSoft, lavender: HP_TOKENS.lavenderSoft }[tone];
-  const fg = { yellow: '#8A6814', coral: '#B5574A', sage: HP_TOKENS.sage, blue: HP_TOKENS.blue, lavender: HP_TOKENS.lavender }[tone];
+  const fg = { yellow: HP_TOKENS.yellowDark, coral: HP_TOKENS.danger, sage: HP_TOKENS.sage, blue: HP_TOKENS.blue, lavender: HP_TOKENS.lavender }[tone];
   
   return (
     <div style={{ flex: 1 }}>
@@ -33,12 +33,11 @@ export default function StatBlock({ label, value, icon, tone }: StatBlockProps) 
         {label.toLowerCase().includes('poin') && (
           <div style={{
             width: 20, height: 20, borderRadius: '50%',
-            background: '#FFD43B',
-            border: '2px solid #F59F00',
+            background: HP_TOKENS.gold,
+            border: `2px solid `,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 2px 6px rgba(245, 159, 0, 0.3)'
           }}>
-            <HPGlyph name="star" size={10} color="#E67700" />
+            <HPGlyph name="star" size={10} color={HP_TOKENS.yellowDark} />
           </div>
         )}
         <div style={{ ...HP_TEXT.title, fontSize: 22 }}>{value}</div>

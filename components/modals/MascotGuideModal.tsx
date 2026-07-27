@@ -32,10 +32,9 @@ export default function MascotGuideModal({ onClose }: MascotGuideModalProps) {
     >
       <div 
         style={{
-          background: HP_TOKENS.paper, borderRadius: 24,
+          background: HP_TOKENS.paper, borderRadius: HP_TOKENS.radiusLg,
           padding: 24, width: '100%', maxWidth: 480,
           border: `1px solid ${HP_TOKENS.line}`,
-          boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
           display: 'flex', flexDirection: 'column', gap: 20,
           maxHeight: '85vh', overflowY: 'auto'
         }}
@@ -52,9 +51,9 @@ export default function MascotGuideModal({ onClose }: MascotGuideModalProps) {
           {guides.map(g => (
             <div key={g.mood} style={{ 
               display: 'flex', gap: 16, alignItems: 'center', 
-              padding: 12, borderRadius: 16, background: '#F8F9FA'
+              padding: 12, borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.sunken
             }}>
-              <div style={{ flexShrink: 0, width: 60, height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+              <div style={{ flexShrink: 0, width: 60, height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', borderRadius: HP_TOKENS.radiusSm }}>
                 <BeeMascot mood={g.mood} size={50} />
               </div>
               <div>

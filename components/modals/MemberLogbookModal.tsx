@@ -158,7 +158,7 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
             <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>{goalTitle || 'KPI Progress'}</div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 24, fontWeight: 900, color: HP_TOKENS.sage }}>{state?.goals?.find((g: any) => String(g.id) === String(goalId))?.alignment || 100}%</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: HP_TOKENS.sage }}>{state?.goals?.find((g: any) => String(g.id) === String(goalId))?.alignment || 100}%</div>
             <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade }}>Alignment</div>
           </div>
         </div>
@@ -176,7 +176,7 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
                   display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14,
                 }}>
                   <HPGlyph name="link" size={14} color={HP_TOKENS.blue} />
-                  <div style={{ ...HP_TEXT.tiny, fontWeight: 900, color: HP_TOKENS.blue, fontSize: 10, letterSpacing: '0.05em' }}>
+                  <div style={{ ...HP_TEXT.tiny, fontWeight: 700, color: HP_TOKENS.blue, fontSize: 10, letterSpacing: '0.05em' }}>
                     ALIGNED OKR ({childGoals.length})
                   </div>
                   <div style={{ height: 1.5, flex: 1, background: HP_TOKENS.lineSoft, opacity: 0.5 }} />
@@ -186,27 +186,26 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
                     <HPCard key={child.id} padding={16} style={{
                       border: `1.5px solid ${HP_TOKENS.blue}20`,
                       background: `${HP_TOKENS.blue}06`,
-                      borderRadius: 20,
+                      borderRadius: HP_TOKENS.radius,
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                         <div style={{
-                          width: 40, height: 40, borderRadius: 14,
+                          width: 40, height: 40, borderRadius: HP_TOKENS.radiusMd,
                           background: child.progress >= 100 ? HP_TOKENS.sage : HP_TOKENS.blue,
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          boxShadow: `0 4px 12px ${child.progress >= 100 ? HP_TOKENS.sage : HP_TOKENS.blue}30`
                         }}>
-                          <HPGlyph name="target" size={20} color="#F4F7F9" />
+                          <HPGlyph name="target" size={20} color={HP_TOKENS.onPrimary} />
                         </div>
                         <div style={{ flex: 1 }}>
                           <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.ink }}>{child.title}</div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
                             {child.progress >= 100 && (
-                              <div style={{ padding: '2px 7px', borderRadius: 5, background: HP_TOKENS.sageSoft, color: HP_TOKENS.sage, fontSize: 8, fontWeight: 900 }}>DONE</div>
+                              <div style={{ padding: '2px 7px', borderRadius: 5, background: HP_TOKENS.sageSoft, color: HP_TOKENS.sage, fontSize: 8, fontWeight: 700 }}>DONE</div>
                             )}
                             <div style={{
-                              padding: '3px 9px', borderRadius: 6, fontSize: 9, fontWeight: 900,
+                              padding: '3px 9px', borderRadius: 6, fontSize: 9, fontWeight: 700,
                               background: child.status === 'approved' ? HP_TOKENS.sageSoft : child.status === 'rejected' ? HP_TOKENS.coralSoft : HP_TOKENS.yellowSoft,
-                              color: child.status === 'approved' ? HP_TOKENS.sage : child.status === 'rejected' ? HP_TOKENS.coral : '#8A6814',
+                              color: child.status === 'approved' ? HP_TOKENS.sage : child.status === 'rejected' ? HP_TOKENS.coral : HP_TOKENS.yellowDark,
                             }}>
                               {(child.status || 'pending').toUpperCase()}
                             </div>
@@ -236,11 +235,11 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
                   position: 'sticky', top: 0, background: HP_TOKENS.card, zIndex: 10, padding: '8px 0'
                 }}>
                   <div style={{ 
-                    padding: '6px 14px', borderRadius: 12, 
+                    padding: '6px 14px', borderRadius: HP_TOKENS.radiusSm, 
                     background: (activePage === 1 && idx === 0) ? HP_TOKENS.blue : HP_TOKENS.paper,
                     border: `1.5px solid ${(activePage === 1 && idx === 0) ? HP_TOKENS.blue : HP_TOKENS.lineSoft}`,
                     color: (activePage === 1 && idx === 0) ? '#fff' : HP_TOKENS.inkSoft, 
-                    fontSize: 10, fontWeight: 900, letterSpacing: '0.05em',
+                    fontSize: 10, fontWeight: 700, letterSpacing: '0.05em',
                     boxShadow: (activePage === 1 && idx === 0) ? `0 4px 12px ${HP_TOKENS.blue}40` : 'none'
                   }}>
                     {day.label.toUpperCase()} — {new Date(day.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long' })}
@@ -251,7 +250,7 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {day.tasks.length === 0 ? (
                     <div style={{ 
-                      padding: '20px', textAlign: 'center', borderRadius: 20, 
+                      padding: '20px', textAlign: 'center', borderRadius: HP_TOKENS.radius, 
                       background: HP_TOKENS.paper, border: `1.5px dashed ${HP_TOKENS.line}`,
                       color: HP_TOKENS.inkFade, fontSize: 12, fontStyle: 'italic'
                     }}>
@@ -314,13 +313,12 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
                         <HPCard key={t.id} padding={16} style={{ 
                           border: cardBorder,
                           background: cardBg,
-                          boxShadow: '0 4px 20px rgba(26,29,35,0.02)',
-                          borderRadius: 22,
+                          borderRadius: HP_TOKENS.radius,
                           transition: 'transform 0.2s ease'
                         }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                             <div style={{ 
-                              width: 40, height: 40, borderRadius: 14, 
+                              width: 40, height: 40, borderRadius: HP_TOKENS.radiusMd, 
                               background: glyphBg,
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                               boxShadow: glyphShadow
@@ -332,32 +330,32 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
                                 <div style={{ 
                                   padding: '2px 8px', borderRadius: 6, background: HP_TOKENS.paper,
-                                  fontSize: 10, fontWeight: 800, color: HP_TOKENS.inkMute 
+                                  fontSize: 10, fontWeight: 700, color: HP_TOKENS.inkMute 
                                 }}>
                                   {t.est || '15m'}
                                 </div>
                                 {t.verified && (
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                                    <div style={{ width: 4, height: 4, borderRadius: 2, background: HP_TOKENS.sage }} />
-                                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 900, fontSize: 9 }}>VERIFIED</div>
+                                    <div style={{ width: 4, height: 4, borderRadius: '50%', background: HP_TOKENS.sage }} />
+                                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 700, fontSize: 9 }}>VERIFIED</div>
                                   </div>
                                 )}
                                 {!t.verified && t.done && (
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                                    <div style={{ width: 4, height: 4, borderRadius: 2, background: HP_TOKENS.yellow }} />
-                                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.yellow, fontWeight: 900, fontSize: 9 }}>WAITING FOR ACC</div>
+                                    <div style={{ width: 4, height: 4, borderRadius: '50%', background: HP_TOKENS.yellow }} />
+                                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.yellow, fontWeight: 700, fontSize: 9 }}>WAITING FOR ACC</div>
                                   </div>
                                 )}
                                 {isRejected && (
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                                    <div style={{ width: 4, height: 4, borderRadius: 2, background: HP_TOKENS.coral }} />
-                                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.coral, fontWeight: 900, fontSize: 9 }}>DITOLAK</div>
+                                    <div style={{ width: 4, height: 4, borderRadius: '50%', background: HP_TOKENS.coral }} />
+                                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.coral, fontWeight: 700, fontSize: 9 }}>DITOLAK</div>
                                   </div>
                                 )}
                                 {isRevision && (
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                                    <div style={{ width: 4, height: 4, borderRadius: 2, background: '#8A6814' }} />
-                                    <div style={{ ...HP_TEXT.tiny, color: '#8A6814', fontWeight: 900, fontSize: 9 }}>BUTUH REVISI</div>
+                                    <div style={{ width: 4, height: 4, borderRadius: '50%', background: HP_TOKENS.yellowDark }} />
+                                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.yellowDark, fontWeight: 700, fontSize: 9 }}>BUTUH REVISI</div>
                                   </div>
                                 )}
                               </div>
@@ -369,9 +367,9 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
                                   onClick={() => handleVerify(t.id, 'approve')}
                                   className="hp-tap"
                                   style={{
-                                    padding: '8px 16px', borderRadius: 10, border: 'none',
-                                    background: HP_TOKENS.sage, color: '#F4F7F9', fontSize: 11, fontWeight: 900, 
-                                    cursor: 'pointer', boxShadow: `0 4px 12px ${HP_TOKENS.sage}40`
+                                    padding: '8px 16px', borderRadius: HP_TOKENS.radiusSm, border: 'none',
+                                    background: HP_TOKENS.sage, color: HP_TOKENS.onPrimary, fontSize: 11, fontWeight: 700, 
+                                    cursor: 'pointer'
                                   }}
                                 >
                                   ACC
@@ -380,8 +378,8 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
                                   onClick={() => handleVerify(t.id, 'revision')}
                                   className="hp-tap"
                                   style={{
-                                    padding: '8px 12px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.yellow}`,
-                                    background: HP_TOKENS.card, color: '#8A6814', fontSize: 11, fontWeight: 900, 
+                                    padding: '8px 12px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.yellow}`,
+                                    background: HP_TOKENS.card, color: HP_TOKENS.yellowDark, fontSize: 11, fontWeight: 700, 
                                     cursor: 'pointer'
                                   }}
                                 >
@@ -391,8 +389,8 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
                                   onClick={() => handleVerify(t.id, 'reject')}
                                   className="hp-tap"
                                   style={{
-                                    padding: '8px 12px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.coral}`,
-                                    background: HP_TOKENS.card, color: HP_TOKENS.coral, fontSize: 11, fontWeight: 900, 
+                                    padding: '8px 12px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.coral}`,
+                                    background: HP_TOKENS.card, color: HP_TOKENS.coral, fontSize: 11, fontWeight: 700, 
                                     cursor: 'pointer'
                                   }}
                                 >
@@ -402,7 +400,7 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
                             )}
                             {t.verified && (
                               <div style={{ 
-                                width: 32, height: 32, borderRadius: 16, background: HP_TOKENS.sageWash,
+                                width: 32, height: 32, borderRadius: '50%', background: HP_TOKENS.sageWash,
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', color: HP_TOKENS.sage
                               }}>
                                 <HPGlyph name="check" size={20} stroke={3} />

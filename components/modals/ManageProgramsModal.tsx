@@ -59,7 +59,7 @@ export default function ManageProgramsModal({ onClose }: ManageProgramsModalProp
             <div 
               key={p.id} 
               style={{
-                display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: 16,
+                display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: HP_TOKENS.radiusMd,
                 background: HP_TOKENS.card, border: `1.5px solid ${HP_TOKENS.line}`,
               }}
             >
@@ -85,15 +85,15 @@ export default function ManageProgramsModal({ onClose }: ManageProgramsModalProp
             onChange={e => setNewTitle(e.target.value)}
             placeholder="Misal: Tantangan Plank 30 Hari"
             style={{
-              flex: 1, padding: 12, borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
+              flex: 1, padding: 12, borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.line}`,
               fontFamily: HP_FONT, fontSize: 13, outline: 'none',
             }}
           />
           <button 
             onClick={addProgram}
             style={{
-              padding: '0 20px', borderRadius: 12, border: 'none',
-              background: HP_TOKENS.sage, color: '#F4F7F9', fontFamily: HP_FONT, fontWeight: 800, cursor: 'pointer'
+              padding: '0 20px', borderRadius: HP_TOKENS.radiusSm, border: 'none',
+              background: HP_TOKENS.sage, color: HP_TOKENS.onPrimary, fontFamily: HP_FONT, fontWeight: 700, cursor: 'pointer'
             }}
           >
             Ikut

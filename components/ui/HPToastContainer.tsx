@@ -70,8 +70,7 @@ function ToastItem({ toast, onDismiss }: { toast: any, onDismiss: () => void }) 
       border: `1.5px solid ${config.color}30`,
       borderLeft: `4px solid ${config.color}`,
       padding: '12px 16px',
-      borderRadius: 14,
-      boxShadow: '0 8px 30px rgba(26,29,35,0.08)',
+      borderRadius: HP_TOKENS.radiusMd,
       display: 'flex',
       alignItems: 'flex-start',
       gap: 12,
@@ -83,7 +82,7 @@ function ToastItem({ toast, onDismiss }: { toast: any, onDismiss: () => void }) 
       cursor: 'pointer'
     }} onClick={() => handleClose()}>
       <div style={{ 
-        width: 28, height: 28, borderRadius: 10, background: config.bg,
+        width: 28, height: 28, borderRadius: HP_TOKENS.radiusSm, background: config.bg,
         display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
       }}>
         <HPGlyph name={config.icon} size={14} color={config.color} />
@@ -100,7 +99,7 @@ function ToastItem({ toast, onDismiss }: { toast: any, onDismiss: () => void }) 
         onClick={handleClose}
         style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', opacity: 0.5 }}
       >
-        <span style={{ fontSize: 14, color: HP_TOKENS.inkFade, fontWeight: 900 }}>×</span>
+        <span style={{ fontSize: 14, color: HP_TOKENS.inkFade, fontWeight: 700 }}>×</span>
       </button>
     </div>
   );

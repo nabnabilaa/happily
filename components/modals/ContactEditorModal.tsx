@@ -30,7 +30,7 @@ export default function ContactEditorModal({ onClose, contact, onSave }: Contact
   };
 
   const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '14px', borderRadius: 16, border: `1.5px solid ${HP_TOKENS.line}`,
+    width: '100%', padding: '14px', borderRadius: HP_TOKENS.radiusMd, border: `1.5px solid ${HP_TOKENS.line}`,
     fontFamily: HP_FONT, fontSize: 14, fontWeight: 700, outline: 'none', background: HP_TOKENS.card, boxSizing: 'border-box'
   };
 
@@ -38,7 +38,7 @@ export default function ContactEditorModal({ onClose, contact, onSave }: Contact
     <Modal onClose={onClose} title={contact ? "Edit Kontak 📞" : "Tambah Kontak Baru 📞"}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20, marginTop: 10 }}>
         <div>
-          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 8, display: 'block' }}>NAMA KONTAK</label>
+          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 700, marginBottom: 8, display: 'block' }}>NAMA KONTAK</label>
           <input 
             placeholder="e.g. Maya Sari" 
             value={form.name} 
@@ -48,7 +48,7 @@ export default function ContactEditorModal({ onClose, contact, onSave }: Contact
         </div>
 
         <div>
-          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 8, display: 'block' }}>DIVISI / PERAN</label>
+          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 700, marginBottom: 8, display: 'block' }}>DIVISI / PERAN</label>
           <input 
             placeholder="e.g. IT Support" 
             value={form.role} 
@@ -58,7 +58,7 @@ export default function ContactEditorModal({ onClose, contact, onSave }: Contact
         </div>
 
         <div>
-          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 8, display: 'block' }}>NOMOR TELEPON</label>
+          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 700, marginBottom: 8, display: 'block' }}>NOMOR TELEPON</label>
           <input 
             placeholder="0812-xxxx-xxxx" 
             value={form.phone} 
@@ -68,7 +68,7 @@ export default function ContactEditorModal({ onClose, contact, onSave }: Contact
         </div>
 
         <div>
-          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 8, display: 'block' }}>EMAIL (OPSIONAL)</label>
+          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 700, marginBottom: 8, display: 'block' }}>EMAIL (OPSIONAL)</label>
           <input 
             placeholder="name@company.com" 
             value={form.email} 
@@ -81,13 +81,13 @@ export default function ContactEditorModal({ onClose, contact, onSave }: Contact
           onClick={handleSave}
           className="hp-tap"
           style={{
-            marginTop: 10, width: '100%', padding: '18px', borderRadius: 20, 
-            background: HP_TOKENS.ink, color: '#F4F7F9',
-            border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
+            marginTop: 10, width: '100%', padding: '18px', borderRadius: HP_TOKENS.radius, 
+            background: HP_TOKENS.ink, color: HP_TOKENS.onPrimary,
+            border: 'none', fontFamily: HP_FONT, fontWeight: 700, fontSize: 15, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10
           }}
         >
-          <HPGlyph name="check" size={20} color="#F4F7F9" />
+          <HPGlyph name="check" size={20} color={HP_TOKENS.onPrimary} />
           <span>Simpan Kontak</span>
         </button>
       </div>

@@ -72,18 +72,18 @@ export default function KpiReviewModal({ onClose }: Props) {
 
   const reviewColor = (status: string | null) => {
     if (status === 'rejected') return HP_TOKENS.coral;
-    if (status === 'revision') return '#D4A017';
+    if (status === 'revision') return HP_TOKENS.warning;
     return HP_TOKENS.inkMute;
   };
 
   const reviewBg = (status: string | null) => {
     if (status === 'rejected') return HP_TOKENS.coralSoft;
-    if (status === 'revision') return '#FFF3CC';
+    if (status === 'revision') return HP_TOKENS.yellowWash;
     return HP_TOKENS.paper;
   };
 
   const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '10px 12px', borderRadius: 10, boxSizing: 'border-box',
+    width: '100%', padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm, boxSizing: 'border-box',
     border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 13,
     outline: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink,
   };
@@ -104,7 +104,7 @@ export default function KpiReviewModal({ onClose }: Props) {
           <>
             {/* Info Banner */}
             <div style={{
-              padding: '12px 14px', borderRadius: 12,
+              padding: '12px 14px', borderRadius: HP_TOKENS.radiusSm,
               background: HP_TOKENS.blueWash, border: `1px solid ${HP_TOKENS.blue}25`,
               fontFamily: HP_FONT, fontSize: 12, fontWeight: 700, color: HP_TOKENS.blue,
             }}>
@@ -130,7 +130,7 @@ export default function KpiReviewModal({ onClose }: Props) {
                       setAction(kpi.reviewStatus === 'rejected' ? 'rejected' : 'revision');
                     }}
                     style={{
-                      padding: 14, borderRadius: 14, cursor: 'pointer',
+                      padding: 14, borderRadius: HP_TOKENS.radiusMd, cursor: 'pointer',
                       border: `1.5px solid ${isSelected ? HP_TOKENS.blue : hasReview ? reviewColor(kpi.reviewStatus) + '50' : HP_TOKENS.line}`,
                       background: isSelected ? HP_TOKENS.blueWash : hasReview ? reviewBg(kpi.reviewStatus) : HP_TOKENS.card,
                       transition: 'all 0.15s',
@@ -138,7 +138,7 @@ export default function KpiReviewModal({ onClose }: Props) {
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, color: HP_TOKENS.ink, marginBottom: 2 }}>
+                        <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, color: HP_TOKENS.ink, marginBottom: 2 }}>
                           {kpi.title}
                         </div>
                         <div style={{ fontFamily: HP_FONT, fontSize: 11, color: HP_TOKENS.inkMute, marginBottom: 6 }}>
@@ -148,7 +148,7 @@ export default function KpiReviewModal({ onClose }: Props) {
                           <div style={{ flex: 1 }}>
                             <HPBar value={pct} tone="blue" height={5} />
                           </div>
-                          <span style={{ fontFamily: HP_FONT, fontSize: 12, fontWeight: 800, color: HP_TOKENS.blue, minWidth: 36 }}>
+                          <span style={{ fontFamily: HP_FONT, fontSize: 12, fontWeight: 700, color: HP_TOKENS.blue, minWidth: 36 }}>
                             {pct}%
                           </span>
                         </div>
@@ -161,7 +161,7 @@ export default function KpiReviewModal({ onClose }: Props) {
                           padding: '3px 8px', borderRadius: 6, flexShrink: 0,
                           background: reviewBg(kpi.reviewStatus),
                           color: reviewColor(kpi.reviewStatus),
-                          fontSize: 9, fontWeight: 900
+                          fontSize: 9, fontWeight: 700
                         }}>
                           {kpi.reviewStatus === 'rejected' ? '❌ DITOLAK' : '⚠️ REVISI'}
                         </div>
@@ -181,10 +181,10 @@ export default function KpiReviewModal({ onClose }: Props) {
             {/* Review Form — shown when KPI is selected */}
             {selectedKpi && (
               <div style={{
-                padding: 16, borderRadius: 14,
+                padding: 16, borderRadius: HP_TOKENS.radiusMd,
                 border: `1.5px solid ${HP_TOKENS.blue}30`, background: HP_TOKENS.blueWash,
               }}>
-                <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 12, color: HP_TOKENS.blue, marginBottom: 12 }}>
+                <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, color: HP_TOKENS.blue, marginBottom: 12 }}>
                   REVIEW: {selectedKpi.title}
                 </div>
 
@@ -193,7 +193,7 @@ export default function KpiReviewModal({ onClose }: Props) {
                   <div style={{ fontFamily: HP_FONT, fontSize: 11, fontWeight: 700, color: HP_TOKENS.inkMute, marginBottom: 6 }}>TINDAKAN</div>
                   <div style={{ display: 'flex', gap: 6 }}>
                     {([
-                      { key: 'revision', label: '⚠️ Minta Revisi', bg: '#FFF3CC', color: '#8A6814' },
+                      { key: 'revision', label: '⚠️ Minta Revisi', bg: HP_TOKENS.yellowWash, color: HP_TOKENS.yellowDark },
                       { key: 'rejected', label: '❌ Tolak', bg: HP_TOKENS.coralSoft, color: HP_TOKENS.coral },
                       ...(selectedKpi.reviewStatus ? [{ key: 'clear', label: '✅ Hapus Flag', bg: HP_TOKENS.sageSoft, color: HP_TOKENS.sage }] : [])
                     ] as const).map(opt => (
@@ -201,11 +201,11 @@ export default function KpiReviewModal({ onClose }: Props) {
                         key={opt.key}
                         onClick={() => setAction(opt.key as any)}
                         style={{
-                          flex: 1, padding: '9px 6px', borderRadius: 10, cursor: 'pointer',
+                          flex: 1, padding: '9px 6px', borderRadius: HP_TOKENS.radiusSm, cursor: 'pointer',
                           border: `1.5px solid ${action === opt.key ? opt.color + '60' : HP_TOKENS.line}`,
                           background: action === opt.key ? opt.bg : HP_TOKENS.card,
                           color: action === opt.key ? opt.color : HP_TOKENS.inkMute,
-                          fontFamily: HP_FONT, fontWeight: 800, fontSize: 11,
+                          fontFamily: HP_FONT, fontWeight: 700, fontSize: 11,
                           transition: 'all 0.15s',
                         }}
                       >
@@ -231,7 +231,7 @@ export default function KpiReviewModal({ onClose }: Props) {
                               flex: 1, padding: '8px 4px', borderRadius: 8, border: 'none', cursor: 'pointer',
                               background: penaltyPct === p ? HP_TOKENS.coral : HP_TOKENS.lineSoft,
                               color: penaltyPct === p ? '#fff' : HP_TOKENS.inkSoft,
-                              fontFamily: HP_FONT, fontWeight: 800, fontSize: 11,
+                              fontFamily: HP_FONT, fontWeight: 700, fontSize: 11,
                               transition: 'all 0.15s',
                             }}
                           >
@@ -269,7 +269,7 @@ export default function KpiReviewModal({ onClose }: Props) {
 
                 {action === 'clear' && (
                   <div style={{
-                    padding: '10px 14px', borderRadius: 10, marginBottom: 12,
+                    padding: '10px 14px', borderRadius: HP_TOKENS.radiusSm, marginBottom: 12,
                     background: HP_TOKENS.sageSoft, border: `1px solid ${HP_TOKENS.sage}40`,
                     fontFamily: HP_FONT, fontSize: 12, fontWeight: 700, color: HP_TOKENS.sage,
                   }}>
@@ -281,7 +281,7 @@ export default function KpiReviewModal({ onClose }: Props) {
                   <button
                     onClick={() => setSelectedKpi(null)}
                     style={{
-                      flex: 1, padding: 12, borderRadius: 10,
+                      flex: 1, padding: 12, borderRadius: HP_TOKENS.radiusSm,
                       border: `1.5px solid ${HP_TOKENS.line}`, background: HP_TOKENS.card,
                       fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: 'pointer', color: HP_TOKENS.inkMute,
                     }}
@@ -292,9 +292,9 @@ export default function KpiReviewModal({ onClose }: Props) {
                     onClick={handleSubmit}
                     disabled={submitting}
                     style={{
-                      flex: 2, padding: 12, borderRadius: 10, border: 'none',
-                      background: action === 'clear' ? HP_TOKENS.sage : action === 'rejected' ? HP_TOKENS.coral : '#D4A017',
-                      color: '#fff', fontFamily: HP_FONT, fontWeight: 800, fontSize: 13,
+                      flex: 2, padding: 12, borderRadius: HP_TOKENS.radiusSm, border: 'none',
+                      background: action === 'clear' ? HP_TOKENS.sage : action === 'rejected' ? HP_TOKENS.coral : HP_TOKENS.warning,
+                      color: '#fff', fontFamily: HP_FONT, fontWeight: 700, fontSize: 13,
                       cursor: submitting ? 'default' : 'pointer', opacity: submitting ? 0.7 : 1,
                     }}
                   >

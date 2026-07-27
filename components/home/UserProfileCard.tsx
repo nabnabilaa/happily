@@ -1,7 +1,20 @@
-import React from 'react';
-import { HP_TOKENS, HP_TEXT, HP_FONT } from "@/lib/constants";
-import HPAvatar from "@/components/ui/HPAvatar";
-import HPGlyph from "@/components/ui/HPGlyph";
+"use client";
+
+import React from "react";
+import {
+  HP_TOKENS,
+  HP_TEXT,
+  HPCard,
+  HPButton,
+  HPChip,
+  HPBar,
+  HPGlyph,
+  HPAvatar,
+  Stack,
+  Row,
+  Spacer,
+  Divider,
+} from "@/components/ui";
 
 interface UserProfileCardProps {
   user: any;
@@ -9,93 +22,102 @@ interface UserProfileCardProps {
   openModal: (name: string, props?: any) => void;
 }
 
+/**
+ * Who you are and how far along you are.
+ *
+ * This lives in a 340px rail, which is what the previous version got wrong: it
+ * put the name and the level chips on one row (a `.hp-profile-name-group`
+ * helper, now deleted with its last caller), and
+ * with the avatar, guide button and streak chip beside them the name was pushed
+ * out of the card entirely. Everything that can grow now has `minWidth: 0`, and
+ * the identity stacks instead of competing for the same line.
+ */
 export default function UserProfileCard({ user, levelProgress, openModal }: UserProfileCardProps) {
   if (!user) return null;
-  return (
-        <div style={{ 
-          background: HP_TOKENS.card,
-          borderRadius: 24,
-          padding: '24px',
-          marginTop: 16,
-          border: `1px solid ${HP_TOKENS.line}`,
-          boxShadow: 'var(--hp-shadow-sm)',
-          position: 'relative',
-          overflow: 'hidden',
-        }}>
-          <div 
-            onClick={() => openModal('profile_editor')}
-            className="hp-tap"
-            style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, cursor: 'pointer' }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ position: 'relative', flexShrink: 0 }}>
-                <HPAvatar 
-                  name={user.name} 
-                  size={56} 
-                  rank={user.rank}
-                  levelProgress={levelProgress} 
-                />
-              </div>
-              <div className="hp-profile-name-group">
-                <div style={{ ...HP_TEXT.h, fontSize: 18, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {user.name.split(' ')[0]}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                  <div style={{ 
-                    background: HP_TOKENS.primary, color: '#fff', fontSize: 10, fontWeight: 900, 
-                    padding: '2px 8px', borderRadius: 100, letterSpacing: 0.5 
-                  }}>
-                    Lv.{user.level}
-                  </div>
-                  <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 800, fontSize: 11 }}>
-                    Class {user.rank || 'E'}
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0, marginLeft: 12 }}>
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openModal('system_guide');
-                }}
-                style={{
-                  width: 36, height: 36, borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
-                  background: HP_TOKENS.card, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', boxShadow: '0 2px 8px rgba(26,29,35,0.04)'
-                }}
-                className="hp-tap"
-              >
-                <HPGlyph name="book" size={16} color={HP_TOKENS.blue} />
-              </button>
-              <div className="hp-tap" style={{
-                display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 100,
-                background: 'rgba(59, 130, 246, 0.08)', fontFamily: HP_FONT, fontWeight: 900, fontSize: 14, color: HP_TOKENS.primary,
-                border: '1.5px solid rgba(59, 130, 246, 0.25)',
-              }}>
-                <HPGlyph name="zap" size={14} color={HP_TOKENS.primary} />
-                <span>{user.streak}</span>
-              </div>
-            </div>
-          </div>
 
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 20, marginBottom: 16 }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 4 }}>Level Progress</div>
-              <div style={{ width: '100%', height: 6, background: 'var(--hp-border)', borderRadius: 100, overflow: 'hidden' }}>
-                <div style={{ 
-                  width: `${levelProgress * 100}%`, height: '100%', 
-                  background: '#3B82F6', 
-                  borderRadius: 100,
-                  transition: '1s cubic-bezier(0.2, 0.8, 0.2, 1)',
-                }} />
-              </div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 4 }}>Total Point</div>
-              <div style={{ ...HP_TEXT.h, fontSize: 24 }}>{user.points.toLocaleString()}</div>
-            </div>
-          </div>
-        </div>
+  const pct = Math.round(Math.max(0, Math.min(1, levelProgress)) * 100);
+
+  return (
+    <HPCard padding={18}>
+      <Row gap={3} align="flex-start">
+        {/* The identity is the button — the controls beside it are their own,
+            so nothing nests inside anything clickable. */}
+        <button
+          type="button"
+          onClick={() => openModal("profile_editor")}
+          className="hp-tap"
+          aria-label="Buka profil"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            flex: 1,
+            minWidth: 0,
+            padding: 0,
+            background: "transparent",
+            border: "none",
+            font: "inherit",
+            color: "inherit",
+            textAlign: "left",
+            cursor: "pointer",
+            borderRadius: HP_TOKENS.radiusSm,
+          }}
+        >
+          <HPAvatar name={user.name} size={52} rank={user.rank} levelProgress={levelProgress} />
+
+          <Stack gap={1} style={{ minWidth: 0 }}>
+            <span
+              style={{
+                ...HP_TEXT.h,
+                fontSize: 17,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {user.name.split(" ")[0]}
+            </span>
+            <Row gap={2} wrap>
+              <HPChip tone="primary">Lv.{user.level}</HPChip>
+              <span style={{ ...HP_TEXT.small }}>Class {user.rank || "E"}</span>
+            </Row>
+          </Stack>
+        </button>
+
+        <Row gap={2} style={{ flexShrink: 0 }}>
+          <HPChip tone="honey" size="lg">
+            <HPGlyph name="zap" size={13} color="currentColor" />
+            {user.streak}
+          </HPChip>
+          <HPButton
+            size="sm"
+            iconOnly
+            icon="book"
+            aria-label="Panduan sistem"
+            onClick={() => openModal("system_guide")}
+          />
+        </Row>
+      </Row>
+
+      <Divider spacing={4} />
+
+      <Row gap={4} align="flex-end">
+        <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
+          <Row gap={2}>
+            <span style={{ ...HP_TEXT.tiny }}>Level progress</span>
+            <Spacer />
+            <span style={{ ...HP_TEXT.small, fontVariantNumeric: "tabular-nums" }}>{pct}%</span>
+          </Row>
+          <HPBar value={pct} tone="honey" height={6} label={`Progres ke level ${user.level + 1}`} />
+        </Stack>
+
+        <Stack gap={1} align="flex-end" style={{ flexShrink: 0 }}>
+          <span style={{ ...HP_TEXT.tiny }}>Total poin</span>
+          <span style={{ ...HP_TEXT.title, fontVariantNumeric: "tabular-nums" }}>
+            {Number(user.points || 0).toLocaleString("id-ID")}
+          </span>
+        </Stack>
+      </Row>
+    </HPCard>
   );
 }

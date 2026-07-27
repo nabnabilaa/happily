@@ -75,7 +75,7 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
   if (!isInternal && survey?.url) {
     return (
       <Modal onClose={onClose} title={survey.title}>
-        <div style={{ width: '100%', height: '60vh', marginTop: 10, borderRadius: 16, overflow: 'hidden', background: '#f0f0f0' }}>
+        <div style={{ width: '100%', height: '60vh', marginTop: 10, borderRadius: HP_TOKENS.radiusMd, overflow: 'hidden', background: HP_TOKENS.lineSoft }}>
           <iframe src={survey.url} width="100%" height="100%" frameBorder="0" title={survey.title}>Loading…</iframe>
         </div>
         <button onClick={() => { 
@@ -84,9 +84,9 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
           awardXP('survey_complete', `Survey: ${survey.title}`); 
           onClose(); 
         }} className="hp-tap" disabled={submitting} style={{
-          width: '100%', padding: '16px', borderRadius: 16, marginTop: 16,
-          background: HP_TOKENS.lavender, color: '#F4F7F9', border: 'none',
-          fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: submitting ? 'default' : 'pointer',
+          width: '100%', padding: '16px', borderRadius: HP_TOKENS.radiusMd, marginTop: 16,
+          background: HP_TOKENS.lavender, color: HP_TOKENS.onPrimary, border: 'none',
+          fontFamily: HP_FONT, fontWeight: 700, fontSize: 15, cursor: submitting ? 'default' : 'pointer',
           opacity: submitting ? 0.7 : 1
         }}>
           {submitting ? "Memproses..." : "Saya sudah mengisi survey & Ambil 20 Poin 🎁"}
@@ -105,11 +105,11 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
           <div style={{ ...HP_TEXT.body, color: HP_TOKENS.inkSoft, marginTop: 8, lineHeight: 1.5 }}>
             Terima kasih sudah mengisi survey <strong>{survey.title}</strong>. Jawabanmu akan membantu perusahaan menjadi lebih baik.
           </div>
-          <div style={{ ...HP_TEXT.small, color: HP_TOKENS.sage, fontWeight: 800, marginTop: 16 }}>+20 Poin Earned 🎁</div>
+          <div style={{ ...HP_TEXT.small, color: HP_TOKENS.sage, fontWeight: 700, marginTop: 16 }}>+20 Poin Earned 🎁</div>
           <button onClick={onClose} className="hp-tap" style={{
             marginTop: 24, padding: '14px 40px', borderRadius: 99, border: 'none',
-            background: HP_TOKENS.lavender, color: '#F4F7F9',
-            fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
+            background: HP_TOKENS.lavender, color: HP_TOKENS.onPrimary,
+            fontFamily: HP_FONT, fontWeight: 700, fontSize: 15, cursor: 'pointer',
           }}>
             Tutup
           </button>
@@ -119,7 +119,7 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
   }
 
   const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '12px 14px', borderRadius: 12,
+    width: '100%', padding: '12px 14px', borderRadius: HP_TOKENS.radiusSm,
     border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 14,
     outline: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink, boxSizing: 'border-box',
   };
@@ -129,7 +129,7 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
       <div style={{ marginTop: 4 }}>
         {survey.description && (
           <div style={{
-            padding: '12px 16px', borderRadius: 14, marginBottom: 16,
+            padding: '12px 16px', borderRadius: HP_TOKENS.radiusMd, marginBottom: 16,
             background: HP_TOKENS.lavenderSoft, border: `1px solid ${HP_TOKENS.lavender}20`,
             ...HP_TEXT.body, fontSize: 13, color: HP_TOKENS.ink, lineHeight: 1.5,
           }}>
@@ -138,7 +138,7 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
         )}
 
         {survey.deadline && (
-          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.coral, fontWeight: 800, marginBottom: 16 }}>
+          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.coral, fontWeight: 700, marginBottom: 16 }}>
             ⏰ Deadline: {new Date(survey.deadline).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
           </div>
         )}
@@ -153,7 +153,7 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
                 <div style={{
                   width: 24, height: 24, borderRadius: 8, background: HP_TOKENS.lavenderSoft,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 11, fontWeight: 900, color: HP_TOKENS.lavender, fontFamily: HP_FONT, flexShrink: 0,
+                  fontSize: 11, fontWeight: 700, color: HP_TOKENS.lavender, fontFamily: HP_FONT, flexShrink: 0,
                 }}>{idx + 1}</div>
                 <div>
                   <div style={{ ...HP_TEXT.h, fontSize: 14, lineHeight: 1.4 }}>
@@ -196,7 +196,7 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
                 <div style={{ display: 'flex', gap: 8, justifyContent: 'center', padding: '8px 0' }}>
                   {Array.from({ length: q.maxRating || 5 }, (_, i) => i + 1).map(val => (
                     <button key={val} onClick={() => updateAnswer(q.id, val)} className="hp-tap" style={{
-                      width: 44, height: 44, borderRadius: 12, border: 'none', cursor: 'pointer',
+                      width: 44, height: 44, borderRadius: HP_TOKENS.radiusSm, border: 'none', cursor: 'pointer',
                       background: answers[q.id] >= val ? HP_TOKENS.yellow : HP_TOKENS.lineSoft,
                       fontSize: 18, transition: 'all 0.2s',
                       transform: answers[q.id] >= val ? 'scale(1.1)' : 'scale(1)',
@@ -213,12 +213,12 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
                 <div style={{ display: 'flex', gap: 10 }}>
                   {['Ya', 'Tidak'].map(opt => (
                     <button key={opt} onClick={() => updateAnswer(q.id, opt)} className="hp-tap" style={{
-                      flex: 1, padding: '12px', borderRadius: 12, border: 'none', cursor: 'pointer',
+                      flex: 1, padding: '12px', borderRadius: HP_TOKENS.radiusSm, border: 'none', cursor: 'pointer',
                       background: answers[q.id] === opt
                         ? (opt === 'Ya' ? HP_TOKENS.sage : HP_TOKENS.coral)
                         : HP_TOKENS.lineSoft,
                       color: answers[q.id] === opt ? '#fff' : HP_TOKENS.inkSoft,
-                      fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, transition: '0.2s',
+                      fontFamily: HP_FONT, fontWeight: 700, fontSize: 14, transition: '0.2s',
                     }}>
                       {opt === 'Ya' ? '✅' : '❌'} {opt}
                     </button>
@@ -232,18 +232,18 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
                   {q.options.map((opt: string, oi: number) => (
                     <button key={oi} onClick={() => updateAnswer(q.id, opt)} className="hp-tap" style={{
                       display: 'flex', alignItems: 'center', gap: 10,
-                      padding: '12px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
+                      padding: '12px 14px', borderRadius: HP_TOKENS.radiusSm, border: 'none', cursor: 'pointer',
                       background: answers[q.id] === opt ? `${HP_TOKENS.lavender}15` : HP_TOKENS.lineSoft,
                       outline: answers[q.id] === opt ? `2px solid ${HP_TOKENS.lavender}` : 'none',
                       transition: '0.2s', textAlign: 'left', width: '100%',
                     }}>
                       <div style={{
-                        width: 18, height: 18, borderRadius: 9,
+                        width: 18, height: 18, borderRadius: '50%',
                         border: `2px solid ${answers[q.id] === opt ? HP_TOKENS.lavender : HP_TOKENS.line}`,
                         background: answers[q.id] === opt ? HP_TOKENS.lavender : 'transparent',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                       }}>
-                        {answers[q.id] === opt && <HPGlyph name="check" size={10} color="#F4F7F9" />}
+                        {answers[q.id] === opt && <HPGlyph name="check" size={10} color={HP_TOKENS.onPrimary} />}
                       </div>
                       <span style={{ fontFamily: HP_FONT, fontWeight: 600, fontSize: 14, color: HP_TOKENS.ink }}>{opt}</span>
                     </button>
@@ -257,7 +257,7 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
         {/* Error */}
         {error && (
           <div style={{
-            marginTop: 16, padding: 12, borderRadius: 12,
+            marginTop: 16, padding: 12, borderRadius: HP_TOKENS.radiusSm,
             background: HP_TOKENS.coralSoft, color: HP_TOKENS.coral,
             fontSize: 13, fontWeight: 700, textAlign: 'center'
           }}>
@@ -271,10 +271,10 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
           disabled={!allRequiredFilled || submitting}
           className="hp-tap"
           style={{
-            width: '100%', padding: '16px', borderRadius: 16, border: 'none', marginTop: 20,
+            width: '100%', padding: '16px', borderRadius: HP_TOKENS.radiusMd, border: 'none', marginTop: 20,
             background: (!allRequiredFilled || submitting) ? HP_TOKENS.lineSoft : HP_TOKENS.lavender,
             color: (!allRequiredFilled || submitting) ? HP_TOKENS.inkMute : '#fff',
-            fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
+            fontFamily: HP_FONT, fontWeight: 700, fontSize: 15, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
             boxShadow: allRequiredFilled ? '0 6px 20px rgba(123,107,181,0.3)' : 'none',
           }}

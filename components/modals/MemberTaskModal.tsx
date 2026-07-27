@@ -68,12 +68,12 @@ export default function MemberTaskModal({ onClose, targetUserId, targetUserName 
 
             {/* Task List */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginTop: 4 }}>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginTop: 4 }}>
                 DAFTAR TASK
               </div>
               
               {tasks.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: 20, color: HP_TOKENS.inkMute, border: `1.5px dashed ${HP_TOKENS.line}`, borderRadius: 12 }}>
+                <div style={{ textAlign: 'center', padding: 20, color: HP_TOKENS.inkMute, border: `1.5px dashed ${HP_TOKENS.line}`, borderRadius: HP_TOKENS.radiusSm }}>
                   Belum ada task hari ini
                 </div>
               ) : (

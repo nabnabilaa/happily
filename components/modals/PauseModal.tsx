@@ -139,15 +139,15 @@ export default function PauseModal({ onClose }: PauseModalProps) {
       desc: 'Atur jumlah putaran sebelum mulai',
       scale: 1,
       color: HP_TOKENS.inkSoft,
-      bg: '#f8fafc',
+      bg: HP_TOKENS.sunken,
     },
     inhale: {
       label: 'Tarik Napas',
       desc: 'Perlahan melalui hidung (4 detik)',
       scale: 1.5,
-      color: '#0ea5e9', // Vibrant Blue
-      bg: '#eff6ff',
-      gradient: '#7dd3fc',
+      color: HP_TOKENS.info, // Vibrant Blue
+      bg: HP_TOKENS.infoWash,
+      gradient: HP_TOKENS.infoSoft,
       halo: 'rgba(56, 189, 248, 0.2)',
       shadow: 'rgba(14, 165, 233, 0.3)'
     },
@@ -155,9 +155,9 @@ export default function PauseModal({ onClose }: PauseModalProps) {
       label: 'Tahan',
       desc: 'Fokus dan rasakan ketenangan (7 detik)',
       scale: 1.5,
-      color: '#8b5cf6', // Purple
-      bg: '#f5f3ff',
-      gradient: '#c4b5fd',
+      color: HP_TOKENS.primary, // Purple
+      bg: HP_TOKENS.primaryWash,
+      gradient: HP_TOKENS.primarySoft,
       halo: 'rgba(167, 139, 250, 0.2)',
       shadow: 'rgba(139, 92, 246, 0.3)'
     },
@@ -165,9 +165,9 @@ export default function PauseModal({ onClose }: PauseModalProps) {
       label: 'Hembuskan',
       desc: 'Lepaskan secara perlahan lewat mulut (8 detik)',
       scale: 1,
-      color: '#10b981', // Emerald Green
-      bg: '#ecfdf5',
-      gradient: '#6ee7b7',
+      color: HP_TOKENS.success, // Emerald Green
+      bg: HP_TOKENS.successWash,
+      gradient: HP_TOKENS.successSoft,
       halo: 'rgba(52, 211, 153, 0.2)',
       shadow: 'rgba(16, 185, 129, 0.3)'
     },
@@ -176,7 +176,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
       desc: 'Kamu telah menyelesaikan semua putaran',
       scale: 1,
       color: HP_TOKENS.sage,
-      bg: '#f1f8f5',
+      bg: HP_TOKENS.successWash,
     }
   };
 
@@ -221,26 +221,25 @@ export default function PauseModal({ onClose }: PauseModalProps) {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ 
-            width: 40, height: 40, borderRadius: 20, 
+            width: 40, height: 40, borderRadius: '50%', 
             background: 'rgba(255,255,255,0.8)', 
             display: 'flex', alignItems: 'center', justifyContent: 'center' 
           }}>
             <HPGlyph name="sparkle" size={20} color={phase === 'setup' ? HP_TOKENS.inkFade : currentInfo.color} />
           </div>
           <div>
-            <div style={{ ...HP_TEXT.h, fontSize: 18, color: '#334155' }}>Pojok Tenang</div>
-            <div style={{ ...HP_TEXT.tiny, color: '#64748B', fontWeight: 600, letterSpacing: 0.5 }}>Metode 4-7-8</div>
+            <div style={{ ...HP_TEXT.h, fontSize: 18, color: HP_TOKENS.ink }}>Pojok Tenang</div>
+            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 600, letterSpacing: 0.5 }}>Metode 4-7-8</div>
           </div>
         </div>
         <button 
           onClick={onClose} 
           style={{
-            width: 44, height: 44, borderRadius: 22, border: 'none',
+            width: 44, height: 44, borderRadius: '50%', border: 'none',
             background: 'rgba(255,255,255,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
           }} 
         >
-          <HPGlyph name="close" size={20} color="#64748B"/>
+          <HPGlyph name="close" size={20} color={HP_TOKENS.inkMute}/>
         </button>
       </div>
 
@@ -259,7 +258,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20, marginBottom: 50 }}>
               <button 
                 onClick={() => setTargetCycles(Math.max(1, targetCycles - 1))}
-                style={{ width: 50, height: 50, borderRadius: 25, border: `1.5px solid ${HP_TOKENS.line}`, background: '#fff', fontSize: 24, cursor: 'pointer', color: HP_TOKENS.ink }}
+                style={{ width: 50, height: 50, borderRadius: '50%', border: `1.5px solid ${HP_TOKENS.line}`, background: '#fff', fontSize: 24, cursor: 'pointer', color: HP_TOKENS.ink }}
               >-</button>
               
               <div style={{ width: 100, textAlign: 'center' }}>
@@ -269,11 +268,11 @@ export default function PauseModal({ onClose }: PauseModalProps) {
 
               <button 
                 onClick={() => setTargetCycles(Math.min(20, targetCycles + 1))}
-                style={{ width: 50, height: 50, borderRadius: 25, border: `1.5px solid ${HP_TOKENS.line}`, background: '#fff', fontSize: 24, cursor: 'pointer', color: HP_TOKENS.ink }}
+                style={{ width: 50, height: 50, borderRadius: '50%', border: `1.5px solid ${HP_TOKENS.line}`, background: '#fff', fontSize: 24, cursor: 'pointer', color: HP_TOKENS.ink }}
               >+</button>
             </div>
 
-            <div style={{ ...HP_TEXT.body, fontSize: 12, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 12, marginTop: -20, letterSpacing: 0.5 }}>
+            <div style={{ ...HP_TEXT.body, fontSize: 12, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 12, marginTop: -20, letterSpacing: 0.5 }}>
               PILIH SUARA PENDUKUNG
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginBottom: 40, maxWidth: 400, margin: '0 auto 40px' }}>
@@ -309,8 +308,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
               style={{
                 padding: '16px 40px', borderRadius: 99, border: 'none',
                 background: HP_TOKENS.sage, color: '#fff',
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 18, cursor: 'pointer',
-                boxShadow: `0 8px 24px ${HP_TOKENS.sage}40`
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 18, cursor: 'pointer',
               }}
             >
               Mulai Sekarang
@@ -321,8 +319,8 @@ export default function PauseModal({ onClose }: PauseModalProps) {
             <BeeMascot mood="happy" size={120} showSpeech="Wah hebat banget!" />
             
             <div style={{ 
-              marginTop: 32, padding: 24, borderRadius: 24, 
-              background: '#fff', boxShadow: '0 8px 30px rgba(0,0,0,0.05)',
+              marginTop: 32, padding: 24, borderRadius: HP_TOKENS.radiusLg, 
+              background: '#fff',
               border: `1px solid ${HP_TOKENS.line}`
             }}>
               <div style={{ ...HP_TEXT.h, fontSize: 20, color: HP_TOKENS.ink, marginBottom: 12 }}>
@@ -334,7 +332,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
                 Dengan pikiran yang jernih, keputusanmu bakal jauh lebih tepat!
               </div>
               
-              <div style={{ marginTop: 24, padding: '12px', borderRadius: 12, background: HP_TOKENS.sageWash, color: HP_TOKENS.sage, fontWeight: 700, fontSize: 14 }}>
+              <div style={{ marginTop: 24, padding: '12px', borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.sageWash, color: HP_TOKENS.sage, fontWeight: 700, fontSize: 14 }}>
                 🎉 +5 Poin Well-being
               </div>
             </div>
@@ -347,11 +345,10 @@ export default function PauseModal({ onClose }: PauseModalProps) {
               background: 'rgba(255,255,255,0.9)',
               padding: '8px 20px',
               borderRadius: 99,
-              color: '#64748B', 
-              fontWeight: 800, 
+              color: HP_TOKENS.inkMute, 
+              fontWeight: 700, 
               letterSpacing: '0.1em',
               marginBottom: 50,
-              boxShadow: '0 4px 15px rgba(0,0,0,0.03)',
               border: '1px solid rgba(255,255,255,0.5)'
             }}>
               PUTARAN {currentCycle + 1} / {targetCycles}
@@ -391,7 +388,6 @@ export default function PauseModal({ onClose }: PauseModalProps) {
                   animation: 'blobMorph 8s ease-in-out infinite, blobSpin 20s linear infinite',
                   animationPlayState: isPlaying ? 'running' : 'paused',
                   transition: 'background 2s ease, box-shadow 2s ease',
-                  boxShadow: `0 15px 35px ${currentInfo.shadow}`
                 }} />
                 
                 {/* Layer 2: 3D Glossy Effect */}
@@ -411,7 +407,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
                   zIndex: 20,
                   ...HP_TEXT.h, 
                   fontSize: 56, 
-                  fontWeight: 800, 
+                  fontWeight: 700, 
                   color: 'white', 
                   fontVariantNumeric: 'tabular-nums',
                   textShadow: '0 4px 15px rgba(0,0,0,0.15)',
@@ -430,8 +426,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
               gap: 20, 
               background: 'rgba(255,255,255,0.7)', 
               padding: '16px 32px 16px 20px', 
-              borderRadius: 30,
-              boxShadow: '0 8px 30px rgba(0,0,0,0.03)',
+              borderRadius: HP_TOKENS.radiusXl,
               border: '1px solid rgba(255,255,255,0.5)',
               maxWidth: 400,
               minHeight: 100
@@ -443,7 +438,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
                 <div style={{ ...HP_TEXT.h, fontSize: 22, color: currentInfo.color, transition: 'color 1s ease-in-out', marginBottom: 4 }}>
                   {currentInfo.label}
                 </div>
-                <div style={{ ...HP_TEXT.body, fontSize: 14, color: '#64748B', lineHeight: 1.4 }}>
+                <div style={{ ...HP_TEXT.body, fontSize: 14, color: HP_TOKENS.inkMute, lineHeight: 1.4 }}>
                   {currentInfo.desc}
                 </div>
               </div>
@@ -476,7 +471,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
                 padding: '16px', borderRadius: 99, border: 'none',
                 background: HP_TOKENS.sage, color: '#fff',
                 fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, 
-                cursor: 'pointer', boxShadow: `0 4px 16px ${HP_TOKENS.sage}50`
+                cursor: 'pointer'
               }}
             >
               Selesai & Kembali
@@ -488,7 +483,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
           <button 
             onClick={() => setIsPlaying(!isPlaying)}
             style={{
-              background: 'transparent', border: 'none', color: '#64748B',
+              background: 'transparent', border: 'none', color: HP_TOKENS.inkMute,
               fontFamily: HP_FONT, fontSize: 15, fontWeight: 600, padding: 12,
               cursor: 'pointer', textDecoration: 'underline'
             }}

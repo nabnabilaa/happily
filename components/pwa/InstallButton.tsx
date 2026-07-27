@@ -58,8 +58,8 @@ export default function InstallButton() {
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
           padding: '6px 12px', borderRadius: 100,
           background: 'rgba(245, 107, 42, 0.1)',
-          color: '#F56B2A', border: '1.5px solid rgba(245, 107, 42, 0.3)', cursor: 'pointer',
-          fontFamily: HP_FONT, fontWeight: 800, fontSize: 12,
+          color: HP_TOKENS.warning, border: '1.5px solid rgba(245, 107, 42, 0.3)', cursor: 'pointer',
+          fontFamily: HP_FONT, fontWeight: 700, fontSize: 12,
         }}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

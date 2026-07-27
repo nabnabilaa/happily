@@ -94,7 +94,7 @@ export default function SenggolModal({ onClose, toUser }: SenggolModalProps) {
 
   const NUDGE_OPTIONS = [
     { key: 'greet', label: 'Sapa & Senggol', emoji: '👀', color: HP_TOKENS.ink },
-    { key: 'coffee', label: 'Ajak Ngopi/Rehat', emoji: '☕', color: '#8A6814', bg: HP_TOKENS.yellowSoft },
+    { key: 'coffee', label: 'Ajak Ngopi/Rehat', emoji: '☕', color: HP_TOKENS.yellowDark, bg: HP_TOKENS.yellowSoft },
     { key: 'help', label: 'Tawarkan Bantuan', emoji: '🤝', color: HP_TOKENS.coral },
   ];
 
@@ -103,9 +103,9 @@ export default function SenggolModal({ onClose, toUser }: SenggolModalProps) {
       <div style={{ marginTop: 4 }}>
         {error && (
           <div style={{ 
-            padding: 12, borderRadius: 12, marginBottom: 16,
-            background: '#FFF5F5', border: '1px solid #FFC9C9', 
-            color: '#E03131', fontSize: 13, fontWeight: 600, fontFamily: HP_FONT 
+            padding: 12, borderRadius: HP_TOKENS.radiusSm, marginBottom: 16,
+            background: HP_TOKENS.dangerWash, border: `1px solid ${HP_TOKENS.dangerSoft}`,
+            color: HP_TOKENS.danger, fontSize: 13, fontWeight: 600, fontFamily: HP_FONT 
           }}>
             {error}
           </div>
@@ -114,7 +114,7 @@ export default function SenggolModal({ onClose, toUser }: SenggolModalProps) {
         <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 700, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           KE SIAPA <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.6 }}>(Pilih 1 orang)</span>
           {to && (
-            <div style={{ color: HP_TOKENS.sage, fontSize: 11, fontWeight: 800 }}>
+            <div style={{ color: HP_TOKENS.sage, fontSize: 11, fontWeight: 700 }}>
               Terpilih: {to.name.split(' ')[0]}
             </div>
           )}
@@ -129,7 +129,7 @@ export default function SenggolModal({ onClose, toUser }: SenggolModalProps) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
-                width: '100%', padding: '10px 14px', borderRadius: 12,
+                width: '100%', padding: '10px 14px', borderRadius: HP_TOKENS.radiusSm,
                 border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT,
                 fontSize: 13, marginTop: 8, outline: 'none', background: HP_TOKENS.card
               }}
@@ -137,7 +137,7 @@ export default function SenggolModal({ onClose, toUser }: SenggolModalProps) {
 
             <div style={{ 
               marginTop: 10, maxHeight: 160, overflowY: 'auto', 
-              border: `1px solid ${HP_TOKENS.lineSoft}`, borderRadius: 12,
+              border: `1px solid ${HP_TOKENS.lineSoft}`, borderRadius: HP_TOKENS.radiusSm,
               background: HP_TOKENS.paper
             }}>
               {people.length === 0 ? (
@@ -163,7 +163,7 @@ export default function SenggolModal({ onClose, toUser }: SenggolModalProps) {
                   <div key={dept}>
                     <div style={{ 
                       background: HP_TOKENS.card, padding: '6px 12px', 
-                      ...HP_TEXT.tiny, fontWeight: 800, color: HP_TOKENS.inkMute,
+                      ...HP_TEXT.tiny, fontWeight: 700, color: HP_TOKENS.inkMute,
                       borderBottom: `1px solid ${HP_TOKENS.lineSoft}`, borderTop: `1px solid ${HP_TOKENS.lineSoft}`
                     }}>
                       {dept.toUpperCase()}
@@ -215,13 +215,13 @@ export default function SenggolModal({ onClose, toUser }: SenggolModalProps) {
           </>
         ) : (
           <div style={{ 
-            marginTop: 8, padding: 12, borderRadius: 12, 
+            marginTop: 8, padding: 12, borderRadius: HP_TOKENS.radiusSm, 
             background: HP_TOKENS.card, border: `1px solid ${HP_TOKENS.lineSoft}`,
             display: 'flex', alignItems: 'center', gap: 10 
           }}>
             <HPAvatar name={toUser.name} size={36}/>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 800, color: HP_TOKENS.ink }}>{toUser.name}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: HP_TOKENS.ink }}>{toUser.name}</div>
               <div style={{ fontSize: 12, color: HP_TOKENS.inkMute }}>{toUser.job_title || toUser.team || 'Team Member'}</div>
             </div>
           </div>
@@ -235,7 +235,7 @@ export default function SenggolModal({ onClose, toUser }: SenggolModalProps) {
               onClick={() => setType(opt.key as any)} 
               style={{
                 padding: '12px 14px', 
-                borderRadius: 12,
+                borderRadius: HP_TOKENS.radiusSm,
                 background: type === opt.key ? (opt.bg || `${HP_TOKENS.sageSoft}40`) : HP_TOKENS.card,
                 border: `1.5px solid ${type === opt.key ? (opt.bg ? opt.color : HP_TOKENS.sage) : HP_TOKENS.line}`,
                 fontFamily: HP_FONT, 
@@ -265,14 +265,13 @@ export default function SenggolModal({ onClose, toUser }: SenggolModalProps) {
             padding: '16px', 
             borderRadius: 99,
             background: HP_TOKENS.sage, 
-            color: '#F4F7F9', 
+            color: HP_TOKENS.onPrimary, 
             border: 'none',
             fontFamily: HP_FONT, 
-            fontWeight: 800, 
+            fontWeight: 700, 
             fontSize: 15, 
             cursor: 'pointer',
             opacity: !to || loading ? 0.4 : 1,
-            boxShadow: `0 4px 14px ${HP_TOKENS.sageSoft}`,
           }}
           className="hp-tap"
         >

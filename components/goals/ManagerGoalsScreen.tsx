@@ -108,10 +108,10 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
           { key: 'attendance', label: 'Absensi' },
         ] as const).map(t => (
           <button key={t.key} onClick={() => setActiveTab(t.key)} className="hp-tap" style={{
-            flex: '0 0 auto', padding: '10px 16px', borderRadius: 14,
+            flex: '0 0 auto', padding: '10px 16px', borderRadius: HP_TOKENS.radiusMd,
             background: activeTab === t.key ? HP_TOKENS.blue : HP_TOKENS.lineSoft,
             color: activeTab === t.key ? '#fff' : HP_TOKENS.inkSoft,
-            border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
+            border: 'none', fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, cursor: 'pointer',
             transition: 'all 0.2s',
           }}>
             {t.label}
@@ -180,12 +180,12 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
           padding: 24, backdropFilter: 'blur(4px)'
         }}>
           <div style={{
-            background: '#fff', borderRadius: 24, padding: 32,
+            background: '#fff', borderRadius: HP_TOKENS.radiusLg, padding: 32,
             width: '100%', maxWidth: 400, textAlign: 'center',
-            boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
+            boxShadow: HP_TOKENS.shadowLg,
             animation: 'hpPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }}>
-            <div style={{ width: 64, height: 64, borderRadius: 32, background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
               <HPGlyph name="target" size={32} />
             </div>
             <div style={{ ...HP_TEXT.h, fontSize: 20, marginBottom: 8 }}>Hapus Goal?</div>
@@ -194,17 +194,17 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
             </div>
             <div style={{ display: 'flex', gap: 12, flexDirection: 'column' }}>
               <button onClick={performDeleteGoal} className="hp-tap" style={{
-                padding: '16px', borderRadius: 16, border: 'none',
+                padding: '16px', borderRadius: HP_TOKENS.radiusMd, border: 'none',
                 background: HP_TOKENS.coral, color: '#fff',
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: 'pointer',
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, cursor: 'pointer',
                 width: '100%'
               }}>
                 Ya, Hapus
               </button>
               <button onClick={() => setGoalToDelete(null)} className="hp-tap" style={{
-                padding: '16px', borderRadius: 16, border: 'none',
+                padding: '16px', borderRadius: HP_TOKENS.radiusMd, border: 'none',
                 background: HP_TOKENS.lineSoft, color: HP_TOKENS.inkSoft,
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: 'pointer',
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, cursor: 'pointer',
                 width: '100%'
               }}>
                 Batal
@@ -223,12 +223,12 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
           padding: 24, backdropFilter: 'blur(4px)'
         }}>
           <div style={{
-            background: '#fff', borderRadius: 24, padding: 32,
+            background: '#fff', borderRadius: HP_TOKENS.radiusLg, padding: 32,
             width: '100%', maxWidth: 400, textAlign: 'center',
-            boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
+            boxShadow: HP_TOKENS.shadowLg,
             animation: 'hpPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }}>
-            <div style={{ width: 64, height: 64, borderRadius: 32, background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
               <HPGlyph name="trash" size={32} />
             </div>
             <div style={{ ...HP_TEXT.h, fontSize: 20, marginBottom: 8 }}>Hapus Task Harian?</div>
@@ -237,17 +237,17 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
             </div>
             <div style={{ display: 'flex', gap: 12, flexDirection: 'column' }}>
               <button onClick={executeDeleteTask} className="hp-tap" style={{
-                padding: '16px', borderRadius: 16, border: 'none',
+                padding: '16px', borderRadius: HP_TOKENS.radiusMd, border: 'none',
                 background: HP_TOKENS.coral, color: '#fff',
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: 'pointer',
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, cursor: 'pointer',
                 width: '100%'
               }}>
                 Ya, Hapus
               </button>
               <button onClick={() => setTaskToDelete(null)} className="hp-tap" style={{
-                padding: '16px', borderRadius: 16, border: 'none',
+                padding: '16px', borderRadius: HP_TOKENS.radiusMd, border: 'none',
                 background: HP_TOKENS.lineSoft, color: HP_TOKENS.inkSoft,
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: 'pointer',
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, cursor: 'pointer',
                 width: '100%'
               }}>
                 Batal

@@ -1,13 +1,13 @@
 "use client";
 
 import React from "react";
-import { HP_TOKENS, HP_FONT, HP_FONT_DISPLAY } from "@/lib/constants";
+import { HP_TOKENS, HP_FONT_DISPLAY } from "@/lib/constants";
 import { UserRole } from "@/lib/HPContext";
 import HPGlyph from "@/components/ui/HPGlyph";
-import BeeMascot from "@/components/ui/BeeMascot";
 import DownloadExtensionBtn from "@/components/pwa/DownloadExtensionBtn";
 import FontSelector from "@/components/ui/FontSelector";
 import ThemeSwitcher from "@/components/ui/ThemeSwitcher";
+import { motion, useReducedMotion, SPRING } from "@/components/ui/motion";
 
 interface TabNavProps {
   tab: string;
@@ -15,276 +15,163 @@ interface TabNavProps {
   userRole?: UserRole | null;
 }
 
-interface CategoryMeta {
-  color: string;
-  bg: string;
-  copy: string;
+interface TabItem {
+  key: string;
+  label: string;
+  /** Bottom-bar label. Must fit ~50px, so one short word. */
+  short: string;
+  icon: string;
+  /** Desktop-only supporting line. Describes the section, not a slogan. */
+  hint: string;
 }
 
-const CATEGORY_META: Record<string, CategoryMeta> = {
-  home: {
-    color: "#2563EB", // Blue (Energy)
-    bg: "#EFF6FF",
-    copy: "Check energy & focus",
-  },
-  calendar: {
-    color: "#7C3AED", // Purple (Sleep)
-    bg: "#F5F3FF",
-    copy: "Track sleep & schedule",
-  },
-  goals: {
-    color: "#EA580C", // Orange (Food / Target)
-    bg: "#FFF7ED",
-    copy: "Ready to log targets?",
-  },
-  my_kpi: {
-    color: "#EA580C", // Orange (Target / KPI)
-    bg: "#FFF7ED",
-    copy: "Track personal KPI",
-  },
-  team: {
-    color: "#9333EA", // Violet (Heart / Team)
-    bg: "#FDF4FF",
-    copy: "Connect with team",
-  },
-  recognize: {
-    color: "#DB2777", // Pink (Cycle / Rewards)
-    bg: "#FDF2F8",
-    copy: "Treat yourself today",
-  },
-  chat: {
-    color: "#0F172A", // Dark Slate (Activity / Chat)
-    bg: "#F8FAFC",
-    copy: "Catch up on activity",
-  },
+/**
+ * Navigation is neutral. Previously each tab carried its own colour, which
+ * made the sidebar compete with page content and left no colour available to
+ * mark the current location. Now only the active item is tinted.
+ */
+const TABS: Record<string, TabItem> = {
+  home:      { key: "home",      label: "Dashboard",    short: "Home",    icon: "home",     hint: "Ringkasan hari ini" },
+  calendar:  { key: "calendar",  label: "Kalender",     short: "Jadwal",  icon: "calendar", hint: "Jadwal & agenda" },
+  goals:     { key: "goals",     label: "Target & KPI", short: "Target",  icon: "target",   hint: "Sasaran dan progres" },
+  my_kpi:    { key: "my_kpi",    label: "KPI Saya",     short: "KPI",     icon: "target",   hint: "Target pribadi" },
+  team_goals:{ key: "goals",     label: "Tim & Target", short: "Target",  icon: "target",   hint: "Sasaran tim" },
+  people:    { key: "goals",     label: "People",       short: "People",  icon: "people",   hint: "Data karyawan" },
+  team:      { key: "team",      label: "Tim",          short: "Tim",     icon: "people",   hint: "Rekan kerja" },
+  recognize: { key: "recognize", label: "Rewards",      short: "Reward",  icon: "trophy",   hint: "Apresiasi & poin" },
+  chat:      { key: "chat",      label: "Chat",         short: "Chat",    icon: "activity", hint: "Pesan & aktivitas" },
 };
 
-const TAB_CONFIG: Record<UserRole, Array<{ key: string; label: string; icon: string }>> = {
-  employee: [
-    { key: "home",      label: "Dashboard",   icon: "home" },
-    { key: "calendar",  label: "Calendar",    icon: "calendar" },
-    { key: "goals",     label: "Target & KPI", icon: "target" },
-    { key: "team",      label: "Tim",         icon: "people" },
-    { key: "recognize", label: "Rewards",     icon: "trophy" },
-    { key: "chat",      label: "Chat",        icon: "activity" },
-  ],
-  manager: [
-    { key: "home",      label: "Dashboard",   icon: "home" },
-    { key: "calendar",  label: "Calendar",    icon: "calendar" },
-    { key: "my_kpi",    label: "KPI Saya",    icon: "target" },
-    { key: "goals",     label: "Tim & Target", icon: "target" },
-    { key: "team",      label: "Tim",         icon: "people" },
-    { key: "recognize", label: "Rewards",     icon: "trophy" },
-    { key: "chat",      label: "Chat",        icon: "activity" },
-  ],
-  hr: [
-    { key: "home",      label: "Dashboard",   icon: "home" },
-    { key: "calendar",  label: "Calendar",    icon: "calendar" },
-    { key: "goals",     label: "People",      icon: "people" },
-    { key: "team",      label: "Tim",         icon: "people" },
-    { key: "recognize", label: "Rewards",     icon: "trophy" },
-    { key: "chat",      label: "Chat",        icon: "activity" },
-  ],
+const TAB_CONFIG: Record<UserRole, TabItem[]> = {
+  employee: [TABS.home, TABS.calendar, TABS.goals, TABS.team, TABS.recognize, TABS.chat],
+  manager: [TABS.home, TABS.calendar, TABS.my_kpi, TABS.team_goals, TABS.team, TABS.recognize, TABS.chat],
+  hr: [TABS.home, TABS.calendar, TABS.people, TABS.team, TABS.recognize, TABS.chat],
 };
 
 export default function TabNav({ tab, setTab, userRole }: TabNavProps) {
+  const reduce = useReducedMotion();
   const roleKey = userRole && TAB_CONFIG[userRole] ? userRole : "employee";
   const tabs = TAB_CONFIG[roleKey];
 
   return (
-    <div className="hp-app-nav">
-      {/* Desktop Brand Logo */}
+    <nav className="hp-app-nav" aria-label="Navigasi utama">
+      {/* Brand — desktop sidebar only */}
       <div className="hp-nav-brand">
-        <div
-          style={{
-            position: "relative",
-            width: 44,
-            height: 44,
-            borderRadius: 14,
-            background: "linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: `0 4px 16px rgba(59, 130, 246, 0.12)`,
-            flexShrink: 0,
-            border: "1px solid rgba(59, 130, 246, 0.18)",
-          }}
-        >
-          <BeeMascot mood="happy" size={34} />
+        <div style={{
+          width: 44,
+          height: 44,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}>
+          <img
+            src="/maxy-logo.png"
+            alt="Maxy Academy"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+              transform: 'scale(1.6)', // Zoom in to cut out the transparent padding
+              transformOrigin: 'center center',
+            }}
+          />
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+        <div style={{ minWidth: 0 }}>
           <div
             style={{
               fontFamily: HP_FONT_DISPLAY,
-              fontWeight: 900,
-              fontSize: 22,
-              letterSpacing: -0.5,
-              display: "flex",
-              alignItems: "center",
-              lineHeight: 1.1,
+              fontWeight: 700,
+              fontSize: 18,
+              letterSpacing: "-0.028em",
+              lineHeight: 1.15,
+              color: HP_TOKENS.ink,
             }}
           >
-            <span style={{ color: "#0F172A" }}>Flow</span>
-            <span style={{ color: "#2563EB" }}>buddy</span>
+            Flowbuddy
           </div>
           <div
             style={{
-              fontFamily: HP_FONT,
-              fontSize: 10,
-              fontWeight: 700,
+              fontSize: 11,
+              fontWeight: 550,
               color: HP_TOKENS.inkMute,
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-              marginTop: 2,
+              lineHeight: 1.3,
             }}
           >
-            <span
-              style={{
-                fontSize: 10,
-                textTransform: "uppercase",
-                letterSpacing: 1,
-                color: "#64748B",
-                fontWeight: 800,
-              }}
-            >
-              by Maxy
-            </span>
-            <HPGlyph name="sparkle" size={10} color="#F59E0B" />
+            by Maxy
           </div>
         </div>
       </div>
 
+
       {tabs.map((t) => {
         const active = tab === t.key;
-        const meta = CATEGORY_META[t.key] || CATEGORY_META.home;
 
         return (
           <button
-            key={t.key}
+            key={t.label}
+            type="button"
             onClick={() => setTab(t.key)}
-            className={`hp-nav-btn hp-tap${active ? " active" : ""}`}
-            style={{
-              position: "relative",
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              width: "100%",
-              // Clean Modern Aesthetic
-              background: active ? "#2563EB" : `${meta.color}08`,
-              color: active ? "#FFFFFF" : "#0F172A",
-              borderRadius: 14,
-              marginBottom: 6,
-              border: active ? "1px solid #2563EB" : `1px solid ${meta.color}20`,
-              boxShadow: active ? "0 4px 14px rgba(37, 99, 235, 0.28)" : "none",
-              padding: "10px 14px",
-              cursor: "pointer",
-              transition: "all 0.18s ease-in-out",
-              textAlign: "left",
-            }}
+            className={`hp-nav-btn${active ? " active" : ""}`}
+            aria-current={active ? "page" : undefined}
           >
-            {/* Unified Single Icon on Left with subtle category tint */}
-            <div
-              className="hp-nav-btn-icon"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 34,
-                height: 34,
-                borderRadius: 10,
-                background: active ? "rgba(255, 255, 255, 0.2)" : meta.bg,
-                color: active ? "#FFFFFF" : meta.color,
-                flexShrink: 0,
-                transition: "transform 0.18s ease",
-              }}
-            >
-              <HPGlyph
-                name={t.icon}
-                size={18}
-                color={active ? "#FFFFFF" : meta.color}
-                stroke={2.2}
-              />
-            </div>
-
-            {/* Title + Conversational Subtext */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 1, overflow: "hidden", flex: 1 }}>
-              <div
+            {/* Mobile: a thin rule marks the active tab, since the sidebar's
+                tinted background isn't available in the bottom bar. */}
+            {active && (
+              <motion.span
+                aria-hidden
+                layoutId="nav-active"
+                transition={reduce ? { duration: 0.01 } : SPRING}
+                className="hp-desktop-hidden"
                 style={{
-                  fontFamily: HP_FONT,
-                  fontSize: 14,
-                  fontWeight: active ? 800 : 700,
-                  color: active ? "#FFFFFF" : "#0F172A",
-                  lineHeight: 1.2,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {t.label}
-              </div>
-              <div
-                style={{
-                  fontFamily: HP_FONT,
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: active ? "#DBEAFE" : "#64748B", // High contrast ratio >= 4.5:1
-                  lineHeight: 1.2,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {meta.copy}
-              </div>
-            </div>
-
-            {/* Sleek category dot indicator */}
-            {!active && (
-              <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: "50%",
-                  background: meta.color,
-                  opacity: 0.8,
-                  flexShrink: 0,
+                  position: "absolute",
+                  top: 0,
+                  left: "50%",
+                  translateX: "-50%",
+                  width: 22,
+                  height: 3,
+                  borderRadius: "0 0 3px 3px",
+                  background: HP_TOKENS.primary,
                 }}
               />
             )}
+
+            <span className="hp-nav-btn-icon">
+              <HPGlyph
+                name={t.icon}
+                size={21}
+                color="currentColor"
+                stroke={active ? 2.3 : 1.9}
+              />
+            </span>
+
+            <span style={{ minWidth: 0, overflow: "hidden" }}>
+              <span className="hp-nav-btn-text hp-nav-label-full">{t.label}</span>
+              <span className="hp-nav-btn-text hp-nav-label-short">{t.short}</span>
+              <span className="hp-nav-btn-sub">{t.hint}</span>
+            </span>
           </button>
         );
       })}
 
-      <div className="hp-mobile-hidden" style={{ flex: 1, minHeight: 12 }} />
+      {/* Sidebar footer — desktop only */}
+      <div className="hp-mobile-hidden" style={{ flex: 1, minHeight: 16 }} />
       <div
         className="hp-mobile-hidden"
         style={{
-          padding: "12px 0 8px 0",
-          width: "100%",
-          boxSizing: "border-box",
-          display: "flex",
           flexDirection: "column",
-          gap: 12,
+          gap: 10,
+          padding: "12px 4px 0",
+          borderTop: `1px solid ${HP_TOKENS.line}`,
+          marginTop: 8,
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            width: "100%",
-            gap: 8,
-            position: "relative",
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <FontSelector />
           <ThemeSwitcher />
         </div>
         <DownloadExtensionBtn />
       </div>
-    </div>
+    </nav>
   );
 }
-
-

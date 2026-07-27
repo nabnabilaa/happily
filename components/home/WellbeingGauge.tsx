@@ -80,7 +80,7 @@ export default function WellbeingGauge({ state, user, openModal }: Props) {
           <div style={{ 
             position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, 
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: HP_FONT, fontWeight: 900, fontSize: 16, color: color 
+            fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, color: color 
           }}>
             {Math.round(score)}
           </div>
@@ -122,7 +122,7 @@ export default function WellbeingGauge({ state, user, openModal }: Props) {
           <div style={{ 
             ...HP_TEXT.tiny, 
             color, 
-            fontWeight: 800, 
+            fontWeight: 700, 
             letterSpacing: 0.5,
             marginTop: 14,
             marginBottom: 10,
@@ -140,19 +140,18 @@ export default function WellbeingGauge({ state, user, openModal }: Props) {
                 style={{
                   display: 'flex', alignItems: 'center', gap: 12,
                   padding: '12px 14px',
-                  borderRadius: 14,
+                  borderRadius: HP_TOKENS.radiusMd,
                   background: HP_TOKENS.card,
                   border: `1.5px solid ${HP_TOKENS.line}`,
                   cursor: 'pointer',
                   textAlign: 'left' as const,
                   fontFamily: HP_FONT,
-                  boxShadow: '0 2px 8px rgba(26,29,35,0.03)',
                   transition: 'all 0.2s ease',
                   width: '100%',
                 }}
               >
                 <div style={{
-                  width: 38, height: 38, borderRadius: 10,
+                  width: 38, height: 38, borderRadius: HP_TOKENS.radiusSm,
                   background: `${color}12`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 18, flexShrink: 0,
@@ -168,7 +167,7 @@ export default function WellbeingGauge({ state, user, openModal }: Props) {
                   </div>
                 </div>
                 <div style={{ flexShrink: 0, opacity: 0.3 }}>
-                  <HPGlyph name="chevron-right" size={14} color={HP_TOKENS.ink} />
+                  <HPGlyph name="chevronRight" size={14} color={HP_TOKENS.ink} />
                 </div>
               </button>
             ))}

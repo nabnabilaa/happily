@@ -48,10 +48,9 @@ export default function NotificationBanner() {
         flexWrap: 'wrap',
         gap: 16,
         padding: '14px 20px',
-        borderRadius: 18,
+        borderRadius: HP_TOKENS.radius,
         background: 'var(--hp-yellow-wash)',
         border: `1.5px solid var(--hp-yellow-soft)`,
-        boxShadow: '0 4px 15px rgba(253, 185, 19, 0.05)',
         fontFamily: HP_FONT,
         marginBottom: 16,
         animation: 'hpFadeIn 0.3s ease-out',
@@ -62,7 +61,7 @@ export default function NotificationBanner() {
           style={{
             width: 38,
             height: 38,
-            borderRadius: 12,
+            borderRadius: HP_TOKENS.radiusSm,
             background: 'var(--hp-yellow-soft)',
             display: 'flex',
             alignItems: 'center',
@@ -73,7 +72,7 @@ export default function NotificationBanner() {
           <HPGlyph name="bell" size={20} color="var(--hp-yellow)" stroke={2.5} />
         </div>
         <div>
-          <div style={{ fontWeight: 800, fontSize: 14, color: HP_TOKENS.ink }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: HP_TOKENS.ink }}>
             Aktifkan Notifikasi Perangkat?
           </div>
           <div style={{ fontSize: 13, color: HP_TOKENS.inkSoft, marginTop: 2, fontWeight: 500 }}>
@@ -91,12 +90,11 @@ export default function NotificationBanner() {
             borderRadius: 99,
             border: 'none',
             background: 'var(--hp-yellow)',
-            color: '#F4F7F9',
+            color: HP_TOKENS.onPrimary,
             fontFamily: HP_FONT,
-            fontWeight: 800,
+            fontWeight: 700,
             fontSize: 12,
             cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(253, 185, 19, 0.25)',
           }}
         >
           Aktifkan

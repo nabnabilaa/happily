@@ -1,6 +1,7 @@
 'use client';
 
 import HPGlyph from '@/components/ui/HPGlyph';
+import { HP_TOKENS } from '@/lib/constants';
 import { useState, useEffect } from 'react';
 import { useHP } from '@/lib/HPContext';
 
@@ -38,21 +39,22 @@ export default function DownloadExtensionBtn() {
         justifyContent: 'center',
         gap: 8,
         width: '100%',
+        minHeight: 44,
         padding: '12px 16px',
-        borderRadius: 14,
-        background: 'var(--hp-yellow)',
-        color: '#fff',
-        border: 'none',
+        borderRadius: HP_TOKENS.radiusPill,
+        // White on honey is about 1.8:1 — unreadable. Honey carries dark ink,
+        // the way every other yellow surface in the app does.
+        background: isHovered ? HP_TOKENS.yellow : HP_TOKENS.yellowSoft,
+        color: HP_TOKENS.yellowDark,
+        border: '1px solid transparent',
         cursor: 'pointer',
         textDecoration: 'none',
-        transform: isHovered ? 'translateY(-2px)' : 'none',
-        transition: 'all 0.2s ease',
-        boxShadow: isHovered ? '0 4px 12px var(--hp-yellow-soft)' : 'none',
-        fontWeight: 800,
-        fontSize: 13
+        transition: 'background-color 180ms var(--hp-ease)',
+        fontWeight: 650,
+        fontSize: 13,
       }}
     >
-      <HPGlyph name="sparkle" size={18} stroke={2.5} color="#fff" />
+      <HPGlyph name="sparkle" size={17} stroke={2.2} color="currentColor" />
       <span>Download Extension</span>
     </button>
   );

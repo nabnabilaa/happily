@@ -2,8 +2,95 @@
 
 import React, { useState } from "react";
 import { useHP } from "@/lib/HPContext";
-import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
-import HPGlyph from "@/components/ui/HPGlyph";
+import {
+  HP_TOKENS,
+  HP_TEXT,
+  Stack,
+  Row,
+  Modal,
+  HPButton,
+  HPInput,
+  HPTextarea,
+  HPGlyph,
+  EmptyState,
+} from "@/components/ui";
+
+/**
+ * The small pill that carries a task's metadata (KPI, status, attachments).
+ * There are up to six of these on one card, so they stay quiet: wash
+ * background, no border, icon + one or two words.
+ */
+function Tag({
+  icon,
+  tone = HP_TOKENS.inkMute,
+  bg = HP_TOKENS.sunken,
+  children,
+}: {
+  icon: string;
+  tone?: string;
+  bg?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Row
+      gap={1}
+      style={{
+        background: bg,
+        padding: "3px 8px",
+        borderRadius: HP_TOKENS.radiusXs,
+        maxWidth: "100%",
+      }}
+    >
+      <HPGlyph name={icon} size={11} color={tone} />
+      <span
+        style={{
+          ...HP_TEXT.tiny,
+          color: tone,
+          textTransform: "none",
+          letterSpacing: 0,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {children}
+      </span>
+    </Row>
+  );
+}
+
+/** Labelled block used to present one piece of saved evidence. */
+function ProofBlock({
+  icon,
+  label,
+  tone,
+  bg,
+  children,
+}: {
+  icon: string;
+  label: string;
+  tone?: string;
+  bg?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Stack
+      gap={2}
+      style={{
+        padding: "12px 14px",
+        borderRadius: HP_TOKENS.radiusSm,
+        background: bg ?? HP_TOKENS.sunken,
+        border: `1px solid ${HP_TOKENS.lineSoft}`,
+      }}
+    >
+      <Row gap={2}>
+        <HPGlyph name={icon} size={13} color={tone ?? HP_TOKENS.inkMute} />
+        <span style={{ ...HP_TEXT.tiny, color: tone ?? HP_TOKENS.inkMute }}>{label}</span>
+      </Row>
+      {children}
+    </Stack>
+  );
+}
 
 interface PriorityCardProps {
   p: any;
@@ -102,15 +189,6 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit 
     return () => clearInterval(interval);
   }, [p.timer_started_at]);
 
-  const toneMap: Record<string, any> = {
-    sage: { bg: HP_TOKENS.yellowSoft, fg: HP_TOKENS.ink, wash: HP_TOKENS.yellowWash },
-    blue: { bg: HP_TOKENS.blueSoft, fg: HP_TOKENS.blue, wash: HP_TOKENS.blueWash },
-    lavender: { bg: HP_TOKENS.lavenderSoft, fg: '#6B5F8E', wash: HP_TOKENS.lavenderSoft },
-  };
-  
-  const t = toneMap[p.tone] || toneMap.sage;
-  const energyIcon = p.energy === 'high' ? 'zap' : p.energy === 'mid' ? 'activity' : 'sparkle';
-
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
 
@@ -197,589 +275,527 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit 
   return (
     <div style={{
       position: 'relative',
-      display: 'flex', 
-      alignItems: 'center', 
+      display: 'flex',
+      alignItems: 'center',
       flexWrap: 'wrap',
-      gap: '12px 16px', 
-      padding: '18px',
-      background: p.done ? HP_TOKENS.card : '#fff',
-      border: `1.5px solid ${state?.focusTaskId === p.id ? HP_TOKENS.yellow : (p.done ? HP_TOKENS.line : HP_TOKENS.line)}`,
-      borderRadius: 20, 
-      boxShadow: state?.focusTaskId === p.id ? `0 8px 24px ${HP_TOKENS.yellow}20` : (p.done ? 'none' : '0 4px 12px rgba(26,29,35,0.02)'),
-      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      gap: '12px 14px',
+      padding: 16,
+      // The focused task is marked with a border, not a coloured glow — it has
+      // to stand out in a list without shouting over the task titles.
+      background: HP_TOKENS.card,
+      border: `1px solid ${state?.focusTaskId === p.id ? HP_TOKENS.yellow : HP_TOKENS.line}`,
+      borderRadius: HP_TOKENS.radius,
+      opacity: p.done ? 0.7 : 1,
+      transition: 'border-color 220ms var(--hp-ease), opacity 220ms var(--hp-ease)',
     }}>
-      {/* Floating +30 Poin */}
+      {/* Points earned */}
       {showPoints && (
         <div style={{
-          position: 'absolute', top: -10, right: 20,
-          background: HP_TOKENS.ink, color: HP_TOKENS.yellow,
-          fontSize: 10, fontWeight: 900, fontFamily: HP_FONT,
-          padding: '4px 10px', borderRadius: 10,
-          animation: 'hpRise 1.2s ease-out forwards',
+          position: 'absolute', top: -10, right: 18,
+          background: HP_TOKENS.ink, color: HP_TOKENS.paper,
+          fontSize: 11, fontWeight: 650,
+          padding: '4px 10px', borderRadius: HP_TOKENS.radiusPill,
+          animation: 'hpRise 1.2s var(--hp-ease-out) forwards',
           pointerEvents: 'none', zIndex: 10,
-          boxShadow: '0 4px 12px rgba(26,29,35,0.1)'
         }}>
-          +{p.points || 30} Point
+          +{p.points || 30} poin
         </div>
       )}
 
-      {/* Focus Toast */}
+      {/* Focus confirmation */}
       {showFocusToast && (
-        <div style={{
-          position: 'absolute', top: -40, left: '50%', transform: 'translateX(-50%)',
-          background: HP_TOKENS.yellow, color: HP_TOKENS.ink,
-          fontSize: 11, fontWeight: 800, fontFamily: HP_FONT,
-          padding: '6px 12px', borderRadius: 10,
-          animation: 'hpRise 0.3s ease-out',
-          zIndex: 20, boxShadow: '0 4px 12px rgba(26,29,35,0.1)',
-          whiteSpace: 'nowrap'
-        }}>
-          🎯 Jadi Fokus Utama!
+        <div
+          role="status"
+          style={{
+            position: 'absolute', top: -38, left: '50%', transform: 'translateX(-50%)',
+            display: 'flex', alignItems: 'center', gap: 6,
+            background: HP_TOKENS.ink, color: HP_TOKENS.paper,
+            fontSize: 11.5, fontWeight: 600,
+            padding: '6px 12px', borderRadius: HP_TOKENS.radiusPill,
+            animation: 'hpRise 300ms var(--hp-ease-out)',
+            zIndex: 20, whiteSpace: 'nowrap',
+          }}
+        >
+          <HPGlyph name="target" size={12} color="currentColor" />
+          Jadi fokus utama
         </div>
       )}
 
-      <button 
-        onClick={handleToggle} 
-        className="hp-tap" 
+      {/*
+        Real checkbox semantics so screen readers announce the state. The box
+        reads as 26px but the button is 44px — the hit area grows with padding,
+        never the mark itself.
+      */}
+      <button
+        onClick={handleToggle}
+        className="hp-tap"
+        role="checkbox"
+        aria-checked={!!p.done}
+        aria-label={p.done ? `Batalkan penyelesaian: ${p.title}` : `Tandai selesai: ${p.title}`}
         style={{
-          width: 28, 
-          height: 28, 
-          borderRadius: 10, 
-          border: `2.5px solid ${p.done ? t.bg : HP_TOKENS.line}`,
-          background: p.done ? t.bg : 'transparent', 
-          cursor: 'pointer', 
-          flexShrink: 0, 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center', 
+          width: 44,
+          height: 44,
+          marginLeft: -9,
+          flexShrink: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "transparent",
+          border: "none",
           padding: 0,
-          transition: '0.2s'
         }}
       >
-        {p.done && <HPGlyph name="check" size={16} color={t.fg} stroke={4}/>}
+        <span
+          aria-hidden
+          style={{
+            width: 26,
+            height: 26,
+            borderRadius: HP_TOKENS.radiusXs,
+            border: `2px solid ${p.done ? HP_TOKENS.success : HP_TOKENS.lineStrong}`,
+            background: p.done ? HP_TOKENS.success : "transparent",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition:
+              "background-color 180ms var(--hp-ease), border-color 180ms var(--hp-ease)",
+          }}
+        >
+          {p.done && <HPGlyph name="check" size={15} color="#fff" stroke={3} />}
+        </span>
       </button>
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
-          ...HP_TEXT.h,
-          fontSize: 15,
-          color: HP_TOKENS.ink,
+          ...HP_TEXT.sub,
+          fontSize: 14.5,
           lineHeight: 1.4,
-          fontWeight: 700
+          textDecoration: p.done ? 'line-through' : undefined,
+          textDecorationColor: HP_TOKENS.inkFade,
         }}>
           {p.title}
         </div>
-        
+
         {p.description && (
-          <div style={{
+          <p style={{
             ...HP_TEXT.small,
-            color: HP_TOKENS.inkMute,
-            fontSize: 12,
-            marginTop: 4,
-            lineHeight: 1.4
+            fontSize: 12.5,
+            marginTop: 3,
           }}>
             {p.description}
-          </div>
+          </p>
         )}
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
-           {/* KPI Tag */}
-           {(() => {
-             const goalId = p.goal_id || p.kpi_id;
-             const fallbackTitle = p.kpi_title || p.goal;
-             if (!goalId && !fallbackTitle) return null;
-             const goal = state?.goals?.find((g: any) => String(g.id) === String(goalId));
-             if (!goal) {
-               return (
-                 <div style={{ 
-                   display: 'flex', alignItems: 'center', gap: 4, 
-                   background: p.done ? HP_TOKENS.lineSoft : `${HP_TOKENS.blueWash}80`, 
-                   padding: '2px 8px', borderRadius: 6 
-                 }}>
-                   <span style={{ fontSize: 10 }}>🎯</span>
-                   <span style={{ 
-                     ...HP_TEXT.tiny, 
-                     color: p.done ? HP_TOKENS.inkMute : HP_TOKENS.blue, 
-                     fontWeight: 800,
-                     fontSize: 10
-                   }}>
-                     {fallbackTitle || 'KPI'}
-                   </span>
-                 </div>
-               );
-             }
-             const parent = goal.parent_id ? state?.goals?.find((g: any) => String(g.id) === String(goal.parent_id)) : null;
-             const displayTag = parent ? `${goal.title} (Aligned to: ${parent.title})` : goal.title;
-             return (
-               <div style={{ 
-                 display: 'flex', alignItems: 'center', gap: 4, 
-                 background: p.done ? HP_TOKENS.lineSoft : `${HP_TOKENS.blueWash}80`, 
-                 padding: '2px 8px', borderRadius: 6 
-               }}>
-                 <span style={{ fontSize: 10 }}>🎯</span>
-                 <span style={{ 
-                   ...HP_TEXT.tiny, 
-                   color: p.done ? HP_TOKENS.inkMute : HP_TOKENS.blue, 
-                   fontWeight: 800,
-                   fontSize: 10
-                 }}>
-                   {displayTag}
-                 </span>
-               </div>
-             );
-           })()}
+        <Row gap={2} wrap style={{ marginTop: 6 }}>
+          {/* KPI this task rolls up to */}
+          {(() => {
+            const goalId = p.goal_id || p.kpi_id;
+            const fallbackTitle = p.kpi_title || p.goal;
+            if (!goalId && !fallbackTitle) return null;
 
-           {/* Status badge */}
-           {p.status === 'pending_review' && (
-             <div style={{
-               display: 'flex', alignItems: 'center', gap: 4,
-               background: HP_TOKENS.yellowSoft, padding: '2px 8px', borderRadius: 6,
-             }}>
-               <span style={{ fontSize: 10 }}>⏳</span>
-               <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.yellow, fontWeight: 800, fontSize: 10 }}>Menunggu Review</span>
-             </div>
-           )}
-           {p.status === 'revision' && (
-             <div style={{
-               display: 'flex', alignItems: 'center', gap: 4,
-               background: HP_TOKENS.coralSoft, padding: '2px 8px', borderRadius: 6,
-             }}>
-               <span style={{ fontSize: 10 }}>✍️</span>
-               <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.coral, fontWeight: 800, fontSize: 10 }}>Revisi</span>
-             </div>
-           )}
-           {p.status === 'rejected' && (
-             <div style={{
-               display: 'flex', alignItems: 'center', gap: 4,
-               background: HP_TOKENS.coralSoft, padding: '2px 8px', borderRadius: 6,
-             }}>
-               <span style={{ fontSize: 10 }}>❌</span>
-               <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.coral, fontWeight: 800, fontSize: 10 }}>Ditolak</span>
-             </div>
-           )}
-           
-           {/* Proof links badge */}
-           {p.proof_links && p.proof_links.length > 0 && (
-             <div style={{
-               display: 'flex', alignItems: 'center', gap: 3,
-               background: HP_TOKENS.sageSoft, padding: '2px 6px', borderRadius: 6,
-             }}>
-               <span style={{ fontSize: 9 }}>📎</span>
-               <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 800, fontSize: 9 }}>
-                 {p.proof_links.length}
-               </span>
-             </div>
-           )}
+            const goal = state?.goals?.find((g: any) => String(g.id) === String(goalId));
+            const parent = goal?.parent_id
+              ? state?.goals?.find((g: any) => String(g.id) === String(goal.parent_id))
+              : null;
+            const label = !goal
+              ? fallbackTitle || "KPI"
+              : parent
+                ? `${goal.title} → ${parent.title}`
+                : goal.title;
 
-           {/* Project badge */}
-           {p.is_project && (
-             <div style={{
-               display: 'flex', alignItems: 'center', gap: 3,
-               background: HP_TOKENS.lavenderSoft, padding: '2px 6px', borderRadius: 6,
-             }}>
-               <span style={{ fontSize: 9 }}>📁</span>
-               <span style={{ ...HP_TEXT.tiny, color: '#6B5F8E', fontWeight: 800, fontSize: 9 }}>Project</span>
-             </div>
-           )}
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
-             
-             {p.targetDate && (
-               <>
-                 <span style={{ color: HP_TOKENS.line, fontSize: 10 }}>•</span>
-                 <HPGlyph name="calendar" size={11} color={HP_TOKENS.inkMute} />
-                 <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>
-                   {p.targetDate}
-                 </span>
-               </>
-             )}
+            return (
+              <Tag
+                icon="target"
+                tone={p.done ? HP_TOKENS.inkMute : HP_TOKENS.info}
+                bg={p.done ? HP_TOKENS.sunken : HP_TOKENS.infoWash}
+              >
+                {label}
+              </Tag>
+            );
+          })()}
 
-             {/* Timesheet Tracked Badge */}
-             {(p.time_tracked > 0 || p.timer_started_at) && (
-               <>
-                 <span style={{ color: HP_TOKENS.line, fontSize: 10 }}>•</span>
-                 <span style={{ fontSize: 11, cursor: 'default' }}>⏱️</span>
-                 <span style={{ 
-                   ...HP_TEXT.tiny, 
-                   color: p.timer_started_at ? HP_TOKENS.sage : HP_TOKENS.inkMute, 
-                   fontWeight: 800,
-                   background: p.timer_started_at ? `${HP_TOKENS.sageSoft}50` : 'transparent',
-                   padding: p.timer_started_at ? '2px 6px' : '0',
-                   borderRadius: 6,
-                   animation: p.timer_started_at ? 'hpPulse 1.5s infinite' : 'none'
-                 }}>
-                   {p.timer_started_at ? 'Sedang kerja: ' : 'Durasi: '}
-                   {formatTrackedTime(p.time_tracked || 0, p.timer_started_at)}
-                 </span>
-               </>
-             )}
-          </div>
-          
-          {/* Partial progress badge */}
-          {!p.done && (p.partial_progress || 0) > 0 && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 3,
-              background: HP_TOKENS.blueWash, padding: '2px 8px', borderRadius: 6,
-            }}>
-              <span style={{ fontSize: 9 }}>📊</span>
-              <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 800, fontSize: 9 }}>
-                {p.partial_progress}% progress
-              </span>
-            </div>
+          {/* Review state */}
+          {p.status === "pending_review" && (
+            <Tag icon="hourglass" tone={HP_TOKENS.warning} bg={HP_TOKENS.warningWash}>
+              Menunggu review
+            </Tag>
+          )}
+          {p.status === "revision" && (
+            <Tag icon="pencil" tone={HP_TOKENS.danger} bg={HP_TOKENS.dangerWash}>
+              Revisi
+            </Tag>
+          )}
+          {p.status === "rejected" && (
+            <Tag icon="close" tone={HP_TOKENS.danger} bg={HP_TOKENS.dangerWash}>
+              Ditolak
+            </Tag>
           )}
 
-          {/* Progress Bar — partial_progress (for in-progress tasks) or focus progress */}
-          {(!p.done && (p.partial_progress || 0) > 0) || state?.focusTaskId === p.id ? (
-            <div style={{ width: '100%', height: 4, background: HP_TOKENS.lineSoft, borderRadius: 2, marginTop: 6, overflow: 'hidden' }}>
-              <div style={{
-                width: `${state?.focusTaskId === p.id ? (state?.focusProgress || 0) : (p.partial_progress || p.progress || 0)}%`,
-                height: '100%',
-                background: state?.focusTaskId === p.id ? HP_TOKENS.yellow : HP_TOKENS.blue,
-                borderRadius: 2,
-                transition: '0.3s ease'
-              }} />
-            </div>
-          ) : null}
-        </div>
-      </div>
+          {p.proof_links && p.proof_links.length > 0 && (
+            <Tag icon="paperclip" tone={HP_TOKENS.success} bg={HP_TOKENS.successWash}>
+              {p.proof_links.length} bukti
+            </Tag>
+          )}
 
-      <div className="hp-priority-actions">
-        {!p.done && (
-          <>
-             <button 
-              onClick={toggleTimer}
-              className="hp-tap"
-              title={p.timer_started_at ? "Jeda Pekerjaan" : "Mulai Pekerjaan"}
-              style={{ 
-                width: 32, height: 32, borderRadius: 16, 
-                background: p.timer_started_at ? HP_TOKENS.sageSoft : HP_TOKENS.lineSoft,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none',
-                cursor: 'pointer',
-                boxShadow: p.timer_started_at ? `0 0 8px ${HP_TOKENS.sage}50` : 'none',
-              }}
-            >
-               {p.timer_started_at ? (
-                 <span style={{ fontSize: 11, animation: 'hpPulse 1s infinite' }}>⏸️</span>
-               ) : (
-                 <span style={{ fontSize: 11 }}>▶️</span>
-               )}
-            </button>
+          {p.is_project && <Tag icon="folder">Project</Tag>}
 
-            <button 
-              onClick={setAsFocus}
-              className="hp-tap"
-              title="Set as Focus Today"
-              style={{ 
-                width: 32, height: 32, borderRadius: 16, background: HP_TOKENS.yellowSoft,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none',
-                cursor: 'pointer'
-              }}
+          {p.targetDate && <Tag icon="calendar">{p.targetDate}</Tag>}
+
+          {/* Time tracked. A running timer is the one thing here that animates. */}
+          {(p.time_tracked > 0 || p.timer_started_at) && (
+            <Tag
+              icon={p.timer_started_at ? "clock" : "history"}
+              tone={p.timer_started_at ? HP_TOKENS.success : HP_TOKENS.inkMute}
+              bg={p.timer_started_at ? HP_TOKENS.successWash : HP_TOKENS.sunken}
             >
-               <HPGlyph name="sparkle" size={14} color={HP_TOKENS.yellow} />
-            </button>
-          </>
-        )}
-        
-        {(onEdit && (!p.done || p.status === 'revision' || p.status === 'rejected')) && (
-          <button 
-            onClick={(e) => { e.stopPropagation(); onEdit(); }}
-            className="hp-tap"
-            title="Edit Task"
-            style={{ 
-              width: 32, height: 32, borderRadius: 16, background: HP_TOKENS.blueWash,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none',
-              cursor: 'pointer'
+              {p.timer_started_at ? "Sedang kerja " : ""}
+              {formatTrackedTime(p.time_tracked || 0, p.timer_started_at)}
+            </Tag>
+          )}
+
+          {!p.done && (p.partial_progress || 0) > 0 && (
+            <Tag icon="chart" tone={HP_TOKENS.info} bg={HP_TOKENS.infoWash}>
+              {p.partial_progress}% progress
+            </Tag>
+          )}
+        </Row>
+
+        {/* Progress — partial completion, or the focus task's live progress. */}
+        {(!p.done && (p.partial_progress || 0) > 0) || state?.focusTaskId === p.id ? (
+          <div
+            style={{
+              width: "100%",
+              height: 4,
+              background: HP_TOKENS.lineSoft,
+              borderRadius: HP_TOKENS.radiusPill,
+              marginTop: 8,
+              overflow: "hidden",
             }}
           >
-            <HPGlyph name="edit" size={14} color={HP_TOKENS.blue} />
-          </button>
+            <div
+              style={{
+                width: `${
+                  state?.focusTaskId === p.id
+                    ? state?.focusProgress || 0
+                    : p.partial_progress || p.progress || 0
+                }%`,
+                height: "100%",
+                background: state?.focusTaskId === p.id ? HP_TOKENS.yellow : HP_TOKENS.info,
+                borderRadius: HP_TOKENS.radiusPill,
+                transition: "width 320ms var(--hp-ease)",
+              }}
+            />
+          </div>
+        ) : null}
+      </div>
+
+      {/* Row actions. Icon-only, so each carries an explicit label. */}
+      <Row gap={1} className="hp-priority-actions">
+        {!p.done && (
+          <>
+            <HPButton
+              size="sm"
+              variant="ghost"
+              iconOnly
+              icon={p.timer_started_at ? "pause" : "play"}
+              onClick={toggleTimer}
+              aria-label={p.timer_started_at ? "Jeda pekerjaan" : "Mulai pekerjaan"}
+              aria-pressed={!!p.timer_started_at}
+              style={{
+                background: p.timer_started_at ? HP_TOKENS.successWash : HP_TOKENS.sunken,
+                color: p.timer_started_at ? HP_TOKENS.success : HP_TOKENS.inkSoft,
+              }}
+            />
+            <HPButton
+              size="sm"
+              variant="ghost"
+              iconOnly
+              icon="sparkle"
+              onClick={setAsFocus}
+              aria-label="Jadikan fokus utama hari ini"
+              aria-pressed={state?.focusTaskId === p.id}
+              style={{
+                background: HP_TOKENS.yellowWash,
+                color: HP_TOKENS.yellowDark,
+              }}
+            />
+          </>
         )}
 
-        <button 
-          onClick={handleDelete}
-          className="hp-tap"
-          title="Hapus Task"
-          style={{ 
-            width: 32, height: 32, borderRadius: 16, background: HP_TOKENS.coralSoft,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          <HPGlyph name="trash" size={14} color={HP_TOKENS.coral} />
-        </button>
+        {onEdit && (!p.done || p.status === "revision" || p.status === "rejected") && (
+          <HPButton
+            size="sm"
+            variant="ghost"
+            iconOnly
+            icon="edit"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
+            aria-label={`Edit task: ${p.title}`}
+            style={{ background: HP_TOKENS.infoWash, color: HP_TOKENS.info }}
+          />
+        )}
 
-      </div>
+        <HPButton
+          size="sm"
+          variant="ghost"
+          iconOnly
+          icon="trash"
+          onClick={handleDelete}
+          aria-label={`Hapus task: ${p.title}`}
+          style={{ background: HP_TOKENS.dangerWash, color: HP_TOKENS.danger }}
+        />
+      </Row>
 
       {/* Hasil Kerja — muncul saat click task yang sudah selesai */}
       {showResults && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.5)', zIndex: 9999,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: 24, backdropFilter: 'blur(4px)'
-        }} onClick={(e) => { e.stopPropagation(); setShowResults(false); setEditingBukti(false); }}>
-          <div style={{
-            background: '#fff', borderRadius: 24, padding: 24,
-            width: '100%', maxWidth: 400, maxHeight: '85vh', overflowY: 'auto',
-            boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
-          }} onClick={(e) => e.stopPropagation()}>
-            {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-              <div style={{
-                width: 44, height: 44, borderRadius: 22,
-                background: editingBukti ? HP_TOKENS.blueWash : HP_TOKENS.sageWash,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>
-                <HPGlyph name={editingBukti ? 'edit' : 'check'} size={22} color={editingBukti ? HP_TOKENS.blue : HP_TOKENS.sage} stroke={3} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 15, color: HP_TOKENS.ink }}>
-                  {editingBukti ? 'Edit Bukti Kerja' : 'Hasil Kerja'}
-                </div>
-                <div style={{ fontFamily: HP_FONT, fontSize: 12, color: HP_TOKENS.inkMute, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {p.title}
-                </div>
-              </div>
-              <button
-                onClick={(e) => { e.stopPropagation(); if (editingBukti) { setEditingBukti(false); } else { setShowResults(false); } }}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, flexShrink: 0 }}
-              >
-                <HPGlyph name="close" size={18} color={HP_TOKENS.inkMute} />
-              </button>
-            </div>
-
-            {editingBukti ? (
-              /* ─── Edit Mode ─── */
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div>
-                  <div style={{ fontFamily: HP_FONT, fontSize: 10, fontWeight: 800, color: HP_TOKENS.inkMute, marginBottom: 8 }}>
-                    📎 LINK HASIL KERJA
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {editProofLinks.map((link, i) => (
-                      <div key={i} style={{ display: 'flex', gap: 6 }}>
-                        <input
-                          type="url"
-                          value={link}
-                          onChange={e => {
-                            const next = [...editProofLinks];
-                            next[i] = e.target.value;
-                            setEditProofLinks(next);
-                          }}
-                          placeholder={`Link hasil kerja ${editProofLinks.length > 1 ? `#${i+1}` : ''}...`}
-                          style={{
-                            flex: 1, padding: '10px 12px', borderRadius: 10,
-                            border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT,
-                            fontSize: 13, outline: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink,
-                          }}
-                        />
-                        {editProofLinks.length > 1 && (
-                          <button
-                            onClick={() => setEditProofLinks(editProofLinks.filter((_, j) => j !== i))}
-                            style={{ background: HP_TOKENS.coralSoft, border: 'none', borderRadius: 10, width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
-                          >
-                            <HPGlyph name="close" size={12} color={HP_TOKENS.coral} />
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                    <button
-                      onClick={() => setEditProofLinks([...editProofLinks, ''])}
-                      style={{ background: 'none', border: `1.5px dashed ${HP_TOKENS.line}`, borderRadius: 10, padding: '8px', cursor: 'pointer', fontFamily: HP_FONT, fontSize: 12, fontWeight: 700, color: HP_TOKENS.blue }}
-                    >
-                      + Tambah Link
-                    </button>
-                  </div>
-                </div>
-                <div>
-                  <div style={{ fontFamily: HP_FONT, fontSize: 10, fontWeight: 800, color: HP_TOKENS.inkMute, marginBottom: 6 }}>
-                    📝 CATATAN
-                  </div>
-                  <textarea
-                    value={editNotes}
-                    onChange={e => setEditNotes(e.target.value)}
-                    placeholder="Catatan singkat..."
-                    style={{
-                      width: '100%', padding: '10px 12px', borderRadius: 10, minHeight: 60,
-                      border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT,
-                      fontSize: 13, outline: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink,
-                      resize: 'none', boxSizing: 'border-box',
-                    }}
-                  />
-                </div>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setEditingBukti(false); }}
-                    style={{ flex: 1, padding: '12px', borderRadius: 14, border: `1.5px solid ${HP_TOKENS.line}`, background: HP_TOKENS.card, fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: 'pointer', color: HP_TOKENS.inkMute }}
-                  >
-                    Batal
-                  </button>
-                  <button
-                    disabled={savingBukti}
-                    onClick={(e) => { e.stopPropagation(); handleSaveBukti(); }}
-                    style={{ flex: 2, padding: '12px', borderRadius: 14, border: 'none', background: HP_TOKENS.sage, color: '#fff', fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: savingBukti ? 'default' : 'pointer', opacity: savingBukti ? 0.7 : 1 }}
-                  >
-                    {savingBukti ? 'Menyimpan...' : 'Simpan Perubahan'}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              /* ─── View Mode ─── */
+        <Modal
+          onClose={() => {
+            setShowResults(false);
+            setEditingBukti(false);
+          }}
+          title={editingBukti ? "Edit bukti kerja" : "Hasil kerja"}
+          description={p.title}
+          footer={
+            editingBukti ? (
               <>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {p.completed_at && (
-                    <div style={{ padding: '10px 14px', borderRadius: 12, background: HP_TOKENS.sageWash, border: `1px solid ${HP_TOKENS.sage}25`, fontFamily: HP_FONT, fontSize: 12, fontWeight: 700, color: HP_TOKENS.sage }}>
-                      ✅ Selesai: {new Date(p.completed_at).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                    </div>
-                  )}
-                  {p.metric_value != null && (
-                    <div style={{ padding: '10px 14px', borderRadius: 12, background: HP_TOKENS.blueWash, border: `1px solid ${HP_TOKENS.blueSoft}`, fontFamily: HP_FONT, fontSize: 12, fontWeight: 700, color: HP_TOKENS.blue }}>
-                      📊 Pencapaian: {p.metric_value}
-                    </div>
-                  )}
-                  {(p.completion_notes || p.proof_notes) && (
-                    <div style={{ padding: '10px 14px', borderRadius: 12, background: HP_TOKENS.paper, border: `1.5px solid ${HP_TOKENS.line}` }}>
-                      <div style={{ fontFamily: HP_FONT, fontSize: 10, fontWeight: 800, color: HP_TOKENS.inkMute, marginBottom: 4 }}>📝 CATATAN</div>
-                      <div style={{ fontFamily: HP_FONT, fontSize: 13, color: HP_TOKENS.ink }}>{p.completion_notes || p.proof_notes}</div>
-                    </div>
-                  )}
-                  {((p.proof_links && p.proof_links.length > 0) || p.proof_link) && (
-                    <div style={{ padding: '10px 14px', borderRadius: 12, background: HP_TOKENS.paper, border: `1.5px solid ${HP_TOKENS.line}` }}>
-                      <div style={{ fontFamily: HP_FONT, fontSize: 10, fontWeight: 800, color: HP_TOKENS.inkMute, marginBottom: 8 }}>📎 BUKTI KERJA</div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        {(p.proof_links?.length > 0 ? p.proof_links : [p.proof_link]).filter(Boolean).map((link: string, i: number) => (
-                          <a key={i} href={link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
-                            style={{ display: 'block', fontFamily: HP_FONT, fontSize: 12, fontWeight: 700, color: HP_TOKENS.blue, textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            🔗 {link}
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {!p.completed_at && !p.metric_value && !(p.proof_links?.length) && !p.proof_link && !p.completion_notes && !p.proof_notes && (
-                    <div style={{ textAlign: 'center', padding: '16px 0', color: HP_TOKENS.inkMute, fontFamily: HP_FONT, fontSize: 13 }}>
-                      Tidak ada bukti kerja yang dilampirkan.
-                    </div>
-                  )}
-                </div>
-                <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setShowResults(false); }}
-                    style={{ flex: 1, padding: '12px', borderRadius: 14, border: `1.5px solid ${HP_TOKENS.line}`, background: HP_TOKENS.card, fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: 'pointer', color: HP_TOKENS.inkMute }}
-                  >
-                    Tutup
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleEditBukti(); }}
-                    style={{ flex: 1, padding: '12px', borderRadius: 14, border: 'none', background: HP_TOKENS.blueWash, color: HP_TOKENS.blue, fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer' }}
-                  >
-                    ✏️ Edit
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setShowResults(false); setShowUndoConfirm(true); }}
-                    style={{ flex: 1, padding: '12px', borderRadius: 14, border: 'none', background: HP_TOKENS.coralSoft, color: HP_TOKENS.coral, fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer' }}
-                  >
-                    ↩ Reset
-                  </button>
-                </div>
+                <HPButton fullWidth onClick={() => setEditingBukti(false)}>
+                  Batal
+                </HPButton>
+                <HPButton
+                  variant="primary"
+                  fullWidth
+                  loading={savingBukti}
+                  onClick={handleSaveBukti}
+                >
+                  Simpan perubahan
+                </HPButton>
               </>
-            )}
-          </div>
-        </div>
+            ) : (
+              <>
+                <HPButton icon="edit" fullWidth onClick={handleEditBukti}>
+                  Edit bukti
+                </HPButton>
+                <HPButton
+                  variant="danger"
+                  icon="undo"
+                  fullWidth
+                  onClick={() => {
+                    setShowResults(false);
+                    setShowUndoConfirm(true);
+                  }}
+                >
+                  Reset
+                </HPButton>
+              </>
+            )
+          }
+        >
+          {editingBukti ? (
+            <Stack gap={5}>
+              <Stack gap={2}>
+                {editProofLinks.map((link, i) => (
+                  <Row key={i} gap={2} align="flex-end">
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <HPInput
+                        type="url"
+                        inputMode="url"
+                        label={i === 0 ? "Link hasil kerja" : undefined}
+                        aria-label={i === 0 ? undefined : `Link hasil kerja #${i + 1}`}
+                        value={link}
+                        onChange={(e) => {
+                          const next = [...editProofLinks];
+                          next[i] = e.target.value;
+                          setEditProofLinks(next);
+                        }}
+                        placeholder="https://…"
+                      />
+                    </div>
+                    {editProofLinks.length > 1 && (
+                      <HPButton
+                        variant="ghost"
+                        iconOnly
+                        icon="close"
+                        aria-label={`Hapus link #${i + 1}`}
+                        onClick={() =>
+                          setEditProofLinks(editProofLinks.filter((_, j) => j !== i))
+                        }
+                        style={{ color: HP_TOKENS.danger }}
+                      />
+                    )}
+                  </Row>
+                ))}
+                <HPButton
+                  variant="ghost"
+                  icon="plus"
+                  onClick={() => setEditProofLinks([...editProofLinks, ""])}
+                  style={{ alignSelf: "flex-start", color: HP_TOKENS.primary }}
+                >
+                  Tambah link
+                </HPButton>
+              </Stack>
+
+              <HPTextarea
+                label="Catatan"
+                value={editNotes}
+                onChange={(e) => setEditNotes(e.target.value)}
+                placeholder="Catatan singkat…"
+              />
+            </Stack>
+          ) : (
+            <Stack gap={3}>
+              {p.completed_at && (
+                <ProofBlock
+                  icon="check"
+                  label="Selesai"
+                  tone={HP_TOKENS.success}
+                  bg={HP_TOKENS.successWash}
+                >
+                  <span style={{ ...HP_TEXT.bodyStrong, color: HP_TOKENS.ink }}>
+                    {new Date(p.completed_at).toLocaleDateString("id-ID", {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </span>
+                </ProofBlock>
+              )}
+
+              {p.metric_value != null && (
+                <ProofBlock
+                  icon="chart"
+                  label="Pencapaian"
+                  tone={HP_TOKENS.info}
+                  bg={HP_TOKENS.infoWash}
+                >
+                  <span style={{ ...HP_TEXT.bodyStrong, color: HP_TOKENS.ink }}>
+                    {p.metric_value}
+                  </span>
+                </ProofBlock>
+              )}
+
+              {(p.completion_notes || p.proof_notes) && (
+                <ProofBlock icon="note" label="Catatan">
+                  <p style={{ ...HP_TEXT.body, color: HP_TOKENS.ink, margin: 0 }}>
+                    {p.completion_notes || p.proof_notes}
+                  </p>
+                </ProofBlock>
+              )}
+
+              {((p.proof_links && p.proof_links.length > 0) || p.proof_link) && (
+                <ProofBlock icon="paperclip" label="Bukti kerja">
+                  <Stack gap={2}>
+                    {(p.proof_links?.length > 0 ? p.proof_links : [p.proof_link])
+                      .filter(Boolean)
+                      .map((link: string, i: number) => (
+                        <a
+                          key={i}
+                          href={link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            ...HP_TEXT.small,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6,
+                            color: HP_TOKENS.primary,
+                            minHeight: 32,
+                            minWidth: 0,
+                          }}
+                        >
+                          <HPGlyph name="link" size={13} color="currentColor" />
+                          <span
+                            style={{
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {link}
+                          </span>
+                        </a>
+                      ))}
+                  </Stack>
+                </ProofBlock>
+              )}
+
+              {!p.completed_at &&
+                !p.metric_value &&
+                !p.proof_links?.length &&
+                !p.proof_link &&
+                !p.completion_notes &&
+                !p.proof_notes && (
+                  <EmptyState
+                    compact
+                    icon="paperclip"
+                    title="Belum ada bukti kerja"
+                    description="Lampirkan link atau catatan supaya hasil task ini bisa ditinjau."
+                    action={
+                      <HPButton variant="primary" icon="plus" onClick={handleEditBukti}>
+                        Tambah bukti
+                      </HPButton>
+                    }
+                  />
+                )}
+            </Stack>
+          )}
+        </Modal>
       )}
 
-      {/* Undo Confirmation — triggered from Reset button in results panel */}
+      {/* Undo confirmation — reached from Reset in the results sheet */}
       {showUndoConfirm && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.5)', zIndex: 9999,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: 24, backdropFilter: 'blur(4px)'
-        }} onClick={(e) => { e.stopPropagation(); setShowUndoConfirm(false); }}>
-          <div style={{
-            background: '#fff', borderRadius: 24, padding: 28,
-            width: '100%', maxWidth: 380, textAlign: 'center',
-            boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
-          }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ width: 56, height: 56, borderRadius: 28, background: HP_TOKENS.coralSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-              <span style={{ fontSize: 26 }}>↩️</span>
-            </div>
-            <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 17, color: HP_TOKENS.ink, marginBottom: 8 }}>
-              Reset Progress?
-            </div>
-            <div style={{ fontFamily: HP_FONT, fontSize: 13, color: HP_TOKENS.inkSoft, marginBottom: 16 }}>
-              "{p.title}"
-            </div>
-            <div style={{ fontFamily: HP_FONT, fontSize: 12, color: HP_TOKENS.coral, fontWeight: 700, marginBottom: 20, padding: '8px 12px', borderRadius: 10, background: HP_TOKENS.coralSoft }}>
-              Task akan dikembalikan ke belum selesai dan semua progress direset.
-            </div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button
-                onClick={(e) => { e.stopPropagation(); setShowUndoConfirm(false); }}
-                style={{
-                  flex: 1, padding: '12px', borderRadius: 14, border: `1.5px solid ${HP_TOKENS.line}`,
-                  background: HP_TOKENS.card, fontFamily: HP_FONT, fontWeight: 700, fontSize: 13,
-                  cursor: 'pointer', color: HP_TOKENS.inkMute,
-                }}
-              >
+        <Modal
+          onClose={() => setShowUndoConfirm(false)}
+          title="Reset progress?"
+          description={p.title}
+          footer={
+            <>
+              <HPButton fullWidth onClick={() => setShowUndoConfirm(false)}>
                 Batal
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); setShowUndoConfirm(false); onToggle(); }}
-                style={{
-                  flex: 1, padding: '12px', borderRadius: 14, border: 'none',
-                  background: HP_TOKENS.coral, color: '#fff',
-                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',
+              </HPButton>
+              <HPButton
+                variant="danger"
+                icon="undo"
+                fullWidth
+                onClick={() => {
+                  setShowUndoConfirm(false);
+                  onToggle();
                 }}
               >
-                Ya, Reset
-              </button>
-            </div>
-          </div>
-        </div>
+                Ya, reset
+              </HPButton>
+            </>
+          }
+        >
+          <p style={{ ...HP_TEXT.body, margin: 0 }}>
+            Task dikembalikan ke belum selesai dan semua progress direset.
+          </p>
+        </Modal>
       )}
 
-      {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.5)', zIndex: 9999,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: 24, backdropFilter: 'blur(4px)'
-        }} onClick={(e) => { e.stopPropagation(); setShowDeleteModal(false); }}>
-          <div style={{
-            background: '#fff', borderRadius: 24, padding: 32,
-            width: '100%', maxWidth: 400, textAlign: 'center',
-            boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
-            animation: 'hpPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
-          }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ width: 64, height: 64, borderRadius: 32, background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-              <HPGlyph name="trash" size={32} />
-            </div>
-            <div style={{ ...HP_TEXT.h, fontSize: 20, marginBottom: 8 }}>Hapus Task?</div>
-            <div style={{ ...HP_TEXT.body, color: HP_TOKENS.inkSoft, marginBottom: 24 }}>
-              Apakah Anda yakin ingin menghapus task <b>"{p.title}"</b>?
-            </div>
-            <div style={{ display: 'flex', gap: 12, flexDirection: 'column' }}>
-              <button onClick={executeDelete} className="hp-tap" style={{
-                padding: '16px', borderRadius: 16, border: 'none',
-                background: HP_TOKENS.coral, color: '#fff',
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: 'pointer',
-                width: '100%'
-              }}>
-                Ya, Hapus
-              </button>
-              <button onClick={(e) => { e.stopPropagation(); setShowDeleteModal(false); }} className="hp-tap" style={{
-                padding: '16px', borderRadius: 16, border: 'none',
-                background: HP_TOKENS.lineSoft, color: HP_TOKENS.inkSoft,
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: 'pointer',
-                width: '100%'
-              }}>
+        <Modal
+          onClose={() => setShowDeleteModal(false)}
+          title="Hapus task?"
+          description={p.title}
+          footer={
+            <>
+              <HPButton fullWidth onClick={() => setShowDeleteModal(false)}>
                 Batal
-              </button>
-            </div>
-          </div>
-        </div>
+              </HPButton>
+              <HPButton variant="danger" icon="trash" fullWidth onClick={executeDelete}>
+                Ya, hapus
+              </HPButton>
+            </>
+          }
+        >
+          <p style={{ ...HP_TEXT.body, margin: 0 }}>
+            Task ini akan dihapus permanen, termasuk waktu dan bukti kerja yang sudah
+            tercatat.
+          </p>
+        </Modal>
       )}
     </div>
   );

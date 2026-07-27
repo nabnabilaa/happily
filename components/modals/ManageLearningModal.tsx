@@ -63,7 +63,7 @@ export default function ManageLearningModal({ onClose }: ManageLearningModalProp
             <div 
               key={l.id} 
               style={{
-                display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: 16,
+                display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: HP_TOKENS.radiusMd,
                 background: HP_TOKENS.card, border: `1.5px solid ${HP_TOKENS.line}`,
               }}
             >
@@ -82,14 +82,14 @@ export default function ManageLearningModal({ onClose }: ManageLearningModalProp
         </div>
 
         <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 12 }}>TAMBAH PEMBELAJARAN</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 16, borderRadius: 20, background: HP_TOKENS.blueWash }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 16, borderRadius: HP_TOKENS.radius, background: HP_TOKENS.blueWash }}>
           <input 
             type="text" 
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Judul pembelajaran baru"
             style={{
-              padding: 14, borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
+              padding: 14, borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.line}`,
               fontFamily: HP_FONT, fontSize: 14, background: HP_TOKENS.card, outline: 'none'
             }}
           />
@@ -113,9 +113,9 @@ export default function ManageLearningModal({ onClose }: ManageLearningModalProp
             onClick={addLearning}
             disabled={!title}
             style={{
-              marginTop: 4, padding: 14, borderRadius: 12, border: 'none',
-              background: HP_TOKENS.ink, color: '#F4F7F9',
-              fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',
+              marginTop: 4, padding: 14, borderRadius: HP_TOKENS.radiusSm, border: 'none',
+              background: HP_TOKENS.ink, color: HP_TOKENS.onPrimary,
+              fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: 'pointer',
               opacity: !title ? 0.5 : 1
             }}
           >

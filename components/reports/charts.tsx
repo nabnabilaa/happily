@@ -21,9 +21,9 @@ export function Donut({ value, color, size = 84, thickness = 3.5, children, titl
 
 export function DonutTile({ value, label, color }: { value: number; label: string; color: string }) {
   return (
-    <div style={{ flex: 1, minWidth: 96, textAlign: 'center', background: HP_TOKENS.lineSoft, borderRadius: 14, padding: '14px 8px' }}>
+    <div style={{ flex: 1, minWidth: 96, textAlign: 'center', background: HP_TOKENS.lineSoft, borderRadius: HP_TOKENS.radiusMd, padding: '14px 8px' }}>
       <Donut value={value} color={color}>
-        <span style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 20, color }}>{Math.round(value)}<span style={{ fontSize: 11 }}>%</span></span>
+        <span style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 20, color }}>{Math.round(value)}<span style={{ fontSize: 11 }}>%</span></span>
       </Donut>
       <div style={{ marginTop: 6, fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, color: HP_TOKENS.inkMute }}>{label}</div>
     </div>
@@ -41,7 +41,7 @@ export function WeeklyBars({ weekly, height = 150, onBarClick }: { weekly: { wee
           onClick={onBarClick ? () => onBarClick(w) : undefined}
           className={onBarClick ? 'hp-tap' : ''}
           style={{ width: spread ? undefined : 52, flex: spread ? 1 : undefined, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', cursor: onBarClick ? 'pointer' : 'default' }}>
-          <div style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, marginBottom: 4, color: HP_TOKENS.ink }}>{w.avgAchievement}%</div>
+          <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, marginBottom: 4, color: HP_TOKENS.ink }}>{w.avgAchievement}%</div>
           <div style={{ flex: 1, width: '100%', maxWidth: 40, background: HP_TOKENS.line, borderRadius: '8px 8px 4px 4px', display: 'flex', alignItems: 'flex-end', overflow: 'hidden' }}>
             <div style={{ width: '100%', height: `${Math.max(4, Math.min(100, w.avgAchievement))}%`, background: toneFor(w.avgAchievement), borderRadius: '8px 8px 0 0', transition: 'height 0.6s ease-out' }} />
           </div>
@@ -69,7 +69,7 @@ export function TargetBars({ targets, max, onTargetClick, showKpi }: { targets: 
             style={{ cursor: onTargetClick ? 'pointer' : 'default' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, marginBottom: 3 }}>
               <span style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 11.5, color: HP_TOKENS.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>{t.title || 'Target'}</span>
-              <span style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 11.5, color: toneFor(v), flexShrink: 0 }}>{t.achievement}%</span>
+              <span style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 11.5, color: toneFor(v), flexShrink: 0 }}>{t.achievement}%</span>
             </div>
             <div style={{ height: 8, background: HP_TOKENS.line, borderRadius: 5, overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${Math.max(3, v)}%`, background: toneFor(v), borderRadius: 5, transition: 'width 0.6s ease-out' }} />

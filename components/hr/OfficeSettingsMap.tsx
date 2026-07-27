@@ -11,7 +11,7 @@ const Map = dynamic(() => import("./LeafletMap"), {
   ssr: false,
   loading: () => (
     <div style={{
-      width: '100%', height: '500px', background: HP_TOKENS.lineSoft, borderRadius: 20,
+      width: '100%', height: '500px', background: HP_TOKENS.lineSoft, borderRadius: HP_TOKENS.radius,
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12
     }}>
       <div style={{
@@ -121,8 +121,8 @@ export default function OfficeSettingsMap() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <HPCard style={{ background: HP_TOKENS.blueSoft, border: 'none', marginBottom: 4 }} padding={16}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: HP_TOKENS.blue, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <HPGlyph name="target" size={18} color="#F4F7F9" />
+          <div style={{ width: 36, height: 36, borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.blue, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <HPGlyph name="target" size={18} color={HP_TOKENS.onPrimary} />
           </div>
           <div>
             <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.blue }}>Pengaturan Lokasi Kantor</div>
@@ -152,7 +152,7 @@ export default function OfficeSettingsMap() {
               <button 
                 onClick={() => handleDeleteOffice(office.id)}
                 style={{
-                  background: 'none', border: 'none', ...HP_TEXT.small, color: HP_TOKENS.coral, fontWeight: 800, cursor: 'pointer', fontFamily: HP_FONT
+                  background: 'none', border: 'none', ...HP_TEXT.small, color: HP_TOKENS.coral, fontWeight: 700, cursor: 'pointer', fontFamily: HP_FONT
                 }}
               >
                 Hapus
@@ -161,7 +161,7 @@ export default function OfficeSettingsMap() {
           </HPCard>
         ))}
         {offices.length === 0 && (
-          <div style={{ gridColumn: '1 / -1', padding: 40, textAlign: 'center', background: HP_TOKENS.lineSoft, borderRadius: 20, border: `1px dashed ${HP_TOKENS.line}` }}>
+          <div style={{ gridColumn: '1 / -1', padding: 40, textAlign: 'center', background: HP_TOKENS.lineSoft, borderRadius: HP_TOKENS.radius, border: `1px dashed ${HP_TOKENS.line}` }}>
             <p style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute }}>Belum ada lokasi kantor yang diatur.</p>
           </div>
         )}

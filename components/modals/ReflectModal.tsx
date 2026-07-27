@@ -116,7 +116,7 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
 
   const renderSelector = (title: string, options: any[], value: string, onChange: (k: string) => void) => (
     <div style={{ marginBottom: 20 }}>
-      <div style={{ ...HP_TEXT.small, fontWeight: 800, fontSize: 12, color: HP_TOKENS.inkFade, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>{title}</div>
+      <div style={{ ...HP_TEXT.small, fontWeight: 700, fontSize: 12, color: HP_TOKENS.inkFade, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>{title}</div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {options.map(opt => (
           <button
@@ -125,7 +125,7 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
             className="hp-tap"
             style={{
               flex: 1, minWidth: 'fit-content',
-              padding: '10px 14px', borderRadius: 16,
+              padding: '10px 14px', borderRadius: HP_TOKENS.radiusMd,
               background: value === opt.key ? HP_TOKENS.sageWash : HP_TOKENS.card,
               border: `1.5px solid ${value === opt.key ? HP_TOKENS.sage : HP_TOKENS.lineSoft}`,
               cursor: 'pointer', transition: '0.2s',
@@ -176,25 +176,25 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
       <div style={{ padding: '0 20px 40px', marginTop: -20, position: 'relative', zIndex: 2 }}>
         
         {/* 2. Visual Progress Bar */}
-        <HPCard padding={20} style={{ marginBottom: 24, boxShadow: '0 8px 24px rgba(0,0,0,0.06)', border: 'none' }}>
+        <HPCard padding={20} style={{ marginBottom: 24, border: 'none' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div style={{ ...HP_TEXT.h, fontSize: 15 }}>Target vs Realisasi</div>
             <div style={{ 
               ...HP_TEXT.small,
               background: done.length === totalCount && totalCount > 0 ? HP_TOKENS.sage : HP_TOKENS.sageWash, 
               color: done.length === totalCount && totalCount > 0 ? '#fff' : HP_TOKENS.sage, 
-              padding: '4px 10px', borderRadius: 100, fontWeight: 800, fontSize: 12 
+              padding: '4px 10px', borderRadius: 100, fontWeight: 700, fontSize: 12 
             }}>
               {totalCount > 0 ? Math.round((done.length / totalCount) * 100) : 0}% Selesai
             </div>
           </div>
 
-          <div style={{ width: '100%', height: 10, background: HP_TOKENS.lineSoft, borderRadius: 10, overflow: 'hidden', marginBottom: 16 }}>
+          <div style={{ width: '100%', height: 10, background: HP_TOKENS.lineSoft, borderRadius: HP_TOKENS.radiusSm, overflow: 'hidden', marginBottom: 16 }}>
             <div style={{ 
               width: totalCount > 0 ? `${(done.length / totalCount) * 100}%` : '0%', 
               height: '100%', 
               background: HP_TOKENS.sage, 
-              borderRadius: 10,
+              borderRadius: HP_TOKENS.radiusSm,
               transition: 'width 1s cubic-bezier(0.34, 1.56, 0.64, 1)' 
             }} />
           </div>
@@ -204,7 +204,7 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
               <div key={p.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                 <div style={{ 
                   marginTop: 2,
-                  width: 16, height: 16, borderRadius: 8, 
+                  width: 16, height: 16, borderRadius: '50%', 
                   background: p.done ? HP_TOKENS.sage : HP_TOKENS.lineSoft,
                   display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}>
@@ -227,7 +227,7 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
                 className="hp-tap"
                 style={{ 
                   background: 'none', border: 'none', padding: '8px 0 0', textAlign: 'center',
-                  ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 800, cursor: 'pointer',
+                  ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 700, cursor: 'pointer',
                   width: '100%', marginTop: 4
                 }}
               >
@@ -240,7 +240,7 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
                 onClick={onClose}
                 className="hp-tap"
                 style={{
-                  width: '100%', marginTop: 12, padding: '12px', borderRadius: 14,
+                  width: '100%', marginTop: 12, padding: '12px', borderRadius: HP_TOKENS.radiusMd,
                   background: 'transparent', color: HP_TOKENS.inkFade, border: `1.5px dashed ${HP_TOKENS.line}`,
                   fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: 'pointer',
                   textAlign: 'center'
@@ -253,7 +253,7 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
         </HPCard>
 
         {/* 3. Reflection Selectors - Sleeker Grid */}
-        <div style={{ background: HP_TOKENS.paper, borderRadius: 20, padding: 20, border: `1px solid ${HP_TOKENS.line}`, marginBottom: 24 }}>
+        <div style={{ background: HP_TOKENS.paper, borderRadius: HP_TOKENS.radius, padding: 20, border: `1px solid ${HP_TOKENS.line}`, marginBottom: 24 }}>
           {renderSelector("Perasaanmu?", HP_MOODS, mood, setMood)}
           {renderSelector("Produktivitas?", PRODUCTIVITY_OPTS, productivity, setProductivity)}
           {renderSelector("Work-Life Balance?", WORKLIFE_OPTS, workLife, setWorkLife)}
@@ -269,9 +269,9 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
             />
           </div>
 
-          <div style={{ marginTop: 16, background: `${HP_TOKENS.yellowWash}40`, padding: 16, borderRadius: 16, border: `1.5px solid ${HP_TOKENS.yellow}` }}>
-            <div style={{ ...HP_TEXT.h, fontSize: 14, marginBottom: 8, color: '#b45309' }}>Rencana Besok? <span style={{ color: '#ef4444' }}>*</span></div>
-            <div style={{ ...HP_TEXT.small, fontSize: 12, color: '#b45309', marginBottom: 12 }}>
+          <div style={{ marginTop: 16, background: `${HP_TOKENS.yellowWash}40`, padding: 16, borderRadius: HP_TOKENS.radiusMd, border: `1.5px solid ${HP_TOKENS.yellow}` }}>
+            <div style={{ ...HP_TEXT.h, fontSize: 14, marginBottom: 8, color: HP_TOKENS.warning }}>Rencana Besok? <span style={{ color: HP_TOKENS.danger }}>*</span></div>
+            <div style={{ ...HP_TEXT.small, fontSize: 12, color: HP_TOKENS.warning, marginBottom: 12 }}>
               Tuliskan garis besar prioritasmu untuk esok hari. Ini akan muncul di sapaan pagimu besok!
             </div>
             <textarea
@@ -289,10 +289,9 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
           onClick={handleFinish} 
           disabled={isSubmitting || tomorrowPlan.trim() === ''}
           style={{
-            width: '100%', padding: 20, borderRadius: 24,
+            width: '100%', padding: 20, borderRadius: HP_TOKENS.radiusLg,
             background: HP_TOKENS.primary, color: '#fff', border: 'none',
-            fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: (isSubmitting || tomorrowPlan.trim() === '') ? 'not-allowed' : 'pointer',
-            boxShadow: `0 8px 24px ${HP_TOKENS.primarySoft}`,
+            fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, cursor: (isSubmitting || tomorrowPlan.trim() === '') ? 'not-allowed' : 'pointer',
             opacity: (isSubmitting || tomorrowPlan.trim() === '') ? 0.6 : 1,
             transition: '0.2s',
             display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10
@@ -313,7 +312,7 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
 }
 
 const inputStyle: React.CSSProperties = {
-  width: '100%', marginTop: 8, padding: 12, borderRadius: 12,
+  width: '100%', marginTop: 8, padding: 12, borderRadius: HP_TOKENS.radiusSm,
   border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 14,
   outline: 'none', resize: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink,
   boxSizing: 'border-box',

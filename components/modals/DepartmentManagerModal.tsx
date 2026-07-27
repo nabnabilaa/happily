@@ -67,7 +67,7 @@ export default function DepartmentManagerModal({ onClose }: DepartmentManagerMod
   };
 
   const inputStyle: React.CSSProperties = {
-    flex: 1, padding: '12px 14px', borderRadius: 14,
+    flex: 1, padding: '12px 14px', borderRadius: HP_TOKENS.radiusMd,
     border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT,
     fontSize: 14, fontWeight: 700, outline: 'none', background: HP_TOKENS.card,
   };
@@ -89,8 +89,8 @@ export default function DepartmentManagerModal({ onClose }: DepartmentManagerMod
             onClick={handleAdd} disabled={loading || !newName.trim()}
             className="hp-tap"
             style={{
-              padding: '0 18px', borderRadius: 14, background: HP_TOKENS.ink, color: '#F4F7F9',
-              border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',
+              padding: '0 18px', borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.ink, color: HP_TOKENS.onPrimary,
+              border: 'none', fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: 'pointer',
               opacity: !newName.trim() ? 0.4 : 1,
             }}
           >
@@ -106,7 +106,7 @@ export default function DepartmentManagerModal({ onClose }: DepartmentManagerMod
           {departments.map(d => (
             <div key={d.id} style={{
               display: 'flex', alignItems: 'center', gap: 10,
-              padding: '12px 14px', borderRadius: 14,
+              padding: '12px 14px', borderRadius: HP_TOKENS.radiusMd,
               background: editingId === d.id ? HP_TOKENS.blueWash : HP_TOKENS.paper,
               border: `1.5px solid ${editingId === d.id ? `${HP_TOKENS.blue}40` : HP_TOKENS.lineSoft}`,
               transition: 'all 0.15s',
@@ -122,8 +122,8 @@ export default function DepartmentManagerModal({ onClose }: DepartmentManagerMod
                   />
                   <button onClick={() => handleEdit(d.id)} className="hp-tap" style={{
                     padding: '6px 12px', borderRadius: 8, border: 'none',
-                    background: HP_TOKENS.blue, color: '#F4F7F9',
-                    fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
+                    background: HP_TOKENS.blue, color: HP_TOKENS.onPrimary,
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, cursor: 'pointer',
                   }}>Simpan</button>
                   <button onClick={() => setEditingId(null)} style={{
                     background: 'none', border: 'none', cursor: 'pointer', padding: 4,
@@ -134,18 +134,18 @@ export default function DepartmentManagerModal({ onClose }: DepartmentManagerMod
               ) : (
                 <>
                   <div style={{
-                    width: 32, height: 32, borderRadius: 10,
+                    width: 32, height: 32, borderRadius: HP_TOKENS.radiusSm,
                     background: HP_TOKENS.blueSoft, display: 'flex',
                     alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0,
                   }}>🏢</div>
-                  <span style={{ ...HP_TEXT.small, fontWeight: 800, color: HP_TOKENS.ink, flex: 1 }}>{d.name}</span>
+                  <span style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.ink, flex: 1 }}>{d.name}</span>
                   <button
                     onClick={() => { setEditingId(d.id); setEditName(d.name); }}
                     className="hp-tap"
                     style={{
                       padding: '5px 10px', borderRadius: 8,
                       border: `1px solid ${HP_TOKENS.line}`, background: HP_TOKENS.card,
-                      fontFamily: HP_FONT, fontWeight: 800, fontSize: 10, cursor: 'pointer',
+                      fontFamily: HP_FONT, fontWeight: 700, fontSize: 10, cursor: 'pointer',
                       color: HP_TOKENS.blue,
                     }}
                   >✏️ Edit</button>

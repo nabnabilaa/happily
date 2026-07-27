@@ -85,19 +85,19 @@ export default function OfflineToast() {
   let iconColor = HP_TOKENS.ink;
 
   if (syncStatus === 'offline') {
-    bg = '#FFF2F2';
-    border = '#FFC1C1';
-    color = '#A82020';
+    bg = HP_TOKENS.dangerWash;
+    border = HP_TOKENS.dangerSoft;
+    color = HP_TOKENS.danger;
     message = 'Koneksi Terputus — Mode Offline Aktif';
     iconName = 'moon';
-    iconColor = '#A82020';
+    iconColor = HP_TOKENS.danger;
   } else if (syncStatus === 'syncing') {
     bg = 'var(--hp-yellow-wash)';
     border = 'var(--hp-yellow-soft)';
-    color = '#A06E00';
+    color = HP_TOKENS.yellowDark;
     message = 'Menyinkronkan data check-in...';
     iconName = 'refresh';
-    iconColor = '#A06E00';
+    iconColor = HP_TOKENS.yellowDark;
   } else if (syncStatus === 'success') {
     bg = 'var(--hp-sage-wash)';
     border = 'var(--hp-sage-soft)';
@@ -122,7 +122,6 @@ export default function OfflineToast() {
         borderRadius: 99,
         background: bg,
         border: `1.5px solid ${border}`,
-        boxShadow: '0 8px 30px rgba(26,29,35,0.08)',
         color: color,
         fontFamily: HP_FONT,
         fontWeight: 700,

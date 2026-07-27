@@ -75,7 +75,7 @@ function ResetPasswordContent() {
       height: "100dvh",
       width: "100%",
       overflowY: "auto",
-      background: "#F4F7F9",
+      background: HP_TOKENS.onPrimary,
       fontFamily: HP_FONT,
     }}>
       <style dangerouslySetInnerHTML={{ __html: `
@@ -103,9 +103,8 @@ function ResetPasswordContent() {
           background: "#fff",
           width: "100%",
           maxWidth: 440,
-          borderRadius: 24,
+          borderRadius: HP_TOKENS.radiusLg,
           padding: "clamp(32px, 5vw, 48px)",
-          boxShadow: "0 20px 60px rgba(59, 130, 246, 0.1)",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -117,7 +116,7 @@ function ResetPasswordContent() {
             <HPGlyph name="lock" size={32} />
           </div>
 
-          <h2 style={{ fontSize: 24, fontWeight: 800, color: HP_TOKENS.ink, marginBottom: 8, fontFamily: HP_FONT_DISPLAY, textAlign: "center" }}>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: HP_TOKENS.ink, marginBottom: 8, fontFamily: HP_FONT_DISPLAY, textAlign: "center" }}>
             Buat Password Baru
           </h2>
           <p style={{ fontSize: 14, color: HP_TOKENS.inkMute, fontWeight: 500, textAlign: "center", marginBottom: 32, lineHeight: 1.6 }}>
@@ -126,18 +125,18 @@ function ResetPasswordContent() {
 
           <form onSubmit={handleSubmit} style={{ width: "100%", display: "flex", flexDirection: "column", gap: 16 }}>
             {error && (
-              <div style={{ padding: "12px", borderRadius: 12, background: "#FFF0F0", color: "#F44", fontWeight: 700, textAlign: "center", fontSize: 13 }}>
+              <div style={{ padding: "12px", borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.dangerWash, color: HP_TOKENS.danger, fontWeight: 700, textAlign: "center", fontSize: 13 }}>
                 {error}
               </div>
             )}
             
             {success ? (
               <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
-                <div style={{ padding: "16px", width: "100%", borderRadius: 16, background: "#E8F5E9", color: "#2E7D32", fontWeight: 600, textAlign: "center", fontSize: 14, marginBottom: 24, border: "1px solid #C8E6C9" }}>
+                <div style={{ padding: "16px", width: "100%", borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.successWash, color: HP_TOKENS.success, fontWeight: 600, textAlign: "center", fontSize: 14, marginBottom: 24, border: `1px solid ${HP_TOKENS.successSoft}` }}>
                   {success}
                 </div>
                 <Link href="/" className="hp-btn-hover" style={{
-                  width: '100%', padding: '16px', borderRadius: 100, border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15,
+                  width: '100%', padding: '16px', borderRadius: 100, border: 'none', fontFamily: HP_FONT, fontWeight: 700, fontSize: 15,
                   background: HP_TOKENS.card, color: HP_TOKENS.ink, cursor: 'pointer', textAlign: 'center', textDecoration: 'none',
                   boxShadow: `inset 0 0 0 2px ${HP_TOKENS.line}`, display: 'block'
                 }}>
@@ -179,7 +178,7 @@ function ResetPasswordContent() {
 
                 <div style={{ position: "relative" }}>
                   <div style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: HP_TOKENS.inkSoft }}>
-                    <HPGlyph name="check-circle" size={18} />
+                    <HPGlyph name="check" size={18} />
                   </div>
                   <input
                     type={showPassword ? "text" : "password"}
@@ -203,7 +202,7 @@ function ResetPasswordContent() {
                   disabled={loading || !email || !token}
                   className={loading || !email || !token ? "" : "hp-btn-hover"}
                   style={{
-                    width: '100%', padding: '16px', borderRadius: 100, border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15,
+                    width: '100%', padding: '16px', borderRadius: 100, border: 'none', fontFamily: HP_FONT, fontWeight: 700, fontSize: 15,
                     background: loading || !email || !token ? HP_TOKENS.lineSoft : `${HP_TOKENS.primary}`,
                     color: loading || !email || !token ? HP_TOKENS.inkMute : '#fff', cursor: loading || !email || !token ? 'not-allowed' : 'pointer',
                     boxShadow: loading || !email || !token ? 'none' : `0 8px 24px rgba(59,130,246,0.3)`, transition: 'all 0.2s',
@@ -234,7 +233,7 @@ function ResetPasswordContent() {
 export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
-      <div style={{ height: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", background: "#F4F7F9" }}>
+      <div style={{ height: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", background: HP_TOKENS.onPrimary }}>
         Loading...
       </div>
     }>

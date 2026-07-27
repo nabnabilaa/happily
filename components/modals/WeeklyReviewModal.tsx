@@ -28,10 +28,10 @@ interface ReviewItem {
 const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
 const STATUS_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-  pending:  { bg: '#FFF3BF', color: '#E67700', label: 'Pending' },
-  approved: { bg: '#D3F9D8', color: '#2B8A3E', label: 'Approved' },
-  rejected: { bg: '#FFE3E3', color: '#C92A2A', label: 'Rejected' },
-  moved:    { bg: '#D0EBFF', color: '#1864AB', label: 'Dipindah' },
+  pending:  { bg: HP_TOKENS.warningWash, color: HP_TOKENS.warning, label: 'Pending' },
+  approved: { bg: HP_TOKENS.successWash, color: HP_TOKENS.success, label: 'Approved' },
+  rejected: { bg: HP_TOKENS.dangerWash, color: HP_TOKENS.danger, label: 'Rejected' },
+  moved:    { bg: HP_TOKENS.infoWash, color: HP_TOKENS.info, label: 'Dipindah' },
 };
 
 export default function WeeklyReviewModal({ onClose }: { onClose: () => void }) {
@@ -111,7 +111,7 @@ export default function WeeklyReviewModal({ onClose }: { onClose: () => void }) 
   );
 
   const selectStyle: React.CSSProperties = {
-    padding: 10, borderRadius: 10, border: `1.5px solid ${HP_TOKENS.line}`,
+    padding: 10, borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.line}`,
     fontFamily: HP_FONT, fontSize: 13, background: HP_TOKENS.card, outline: 'none',
   };
 
@@ -130,9 +130,9 @@ export default function WeeklyReviewModal({ onClose }: { onClose: () => void }) 
 
         {/* Summary Badge */}
         <div style={{
-          padding: '10px 14px', borderRadius: 12, marginBottom: 16,
-          background: totalPending > 0 ? '#FFF3BF' : HP_TOKENS.sageWash,
-          border: `1px solid ${totalPending > 0 ? '#FFD43B' : HP_TOKENS.sage}40`,
+          padding: '10px 14px', borderRadius: HP_TOKENS.radiusSm, marginBottom: 16,
+          background: totalPending > 0 ? HP_TOKENS.warningWash : HP_TOKENS.sageWash,
+          border: `1px solid ${totalPending > 0 ? HP_TOKENS.gold : HP_TOKENS.sage}40`,
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}>
           <span style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.inkSoft }}>
@@ -153,7 +153,7 @@ export default function WeeklyReviewModal({ onClose }: { onClose: () => void }) 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {paginatedReviews.map(kpi => (
               <div key={kpi.kpiId} style={{
-                borderRadius: 20, background: HP_TOKENS.card,
+                borderRadius: HP_TOKENS.radius, background: HP_TOKENS.card,
                 border: `1.5px solid ${HP_TOKENS.line}`, overflow: 'hidden',
               }}>
                 {/* KPI Header */}
@@ -167,7 +167,7 @@ export default function WeeklyReviewModal({ onClose }: { onClose: () => void }) 
                     <div style={{ ...HP_TEXT.h, fontSize: 14 }}>{kpi.kpiTitle}</div>
                     <div style={{ display: 'flex', gap: 8, marginTop: 4, alignItems: 'center' }}>
                       <span style={{
-                        padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 800,
+                        padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700,
                         background: HP_TOKENS.blueSoft, color: HP_TOKENS.blue, fontFamily: HP_FONT
                       }}>Bobot: {kpi.weight}%</span>
                       <HPAvatar name={kpi.employeeName} size={16} />
@@ -199,13 +199,13 @@ export default function WeeklyReviewModal({ onClose }: { onClose: () => void }) 
                         }}>
                           {/* Task Done Indicator */}
                           <div style={{ 
-                            width: 20, height: 20, borderRadius: 10,
+                            width: 20, height: 20, borderRadius: '50%',
                             background: link.taskDone ? HP_TOKENS.sage : 'transparent',
                             border: `1.5px solid ${link.taskDone ? HP_TOKENS.sage : HP_TOKENS.line}`,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             flexShrink: 0,
                           }}>
-                            {link.taskDone && <HPGlyph name="check" size={10} color="#F4F7F9" />}
+                            {link.taskDone && <HPGlyph name="check" size={10} color={HP_TOKENS.onPrimary} />}
                           </div>
 
                           {/* Task Info */}
@@ -232,8 +232,8 @@ export default function WeeklyReviewModal({ onClose }: { onClose: () => void }) 
                                 disabled={actionLoading === link.id}
                                 style={{
                                   padding: '5px 10px', borderRadius: 8, border: 'none',
-                                  background: HP_TOKENS.sage, color: '#F4F7F9',
-                                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 10, cursor: 'pointer',
+                                  background: HP_TOKENS.sage, color: HP_TOKENS.onPrimary,
+                                  fontFamily: HP_FONT, fontWeight: 700, fontSize: 10, cursor: 'pointer',
                                   opacity: actionLoading === link.id ? 0.5 : 1,
                                 }}
                               >✓</button>
@@ -242,8 +242,8 @@ export default function WeeklyReviewModal({ onClose }: { onClose: () => void }) 
                                 disabled={actionLoading === link.id}
                                 style={{
                                   padding: '5px 10px', borderRadius: 8, border: 'none',
-                                  background: HP_TOKENS.coral, color: '#F4F7F9',
-                                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 10, cursor: 'pointer',
+                                  background: HP_TOKENS.coral, color: HP_TOKENS.onPrimary,
+                                  fontFamily: HP_FONT, fontWeight: 700, fontSize: 10, cursor: 'pointer',
                                   opacity: actionLoading === link.id ? 0.5 : 1,
                                 }}
                               >✗</button>
@@ -254,13 +254,13 @@ export default function WeeklyReviewModal({ onClose }: { onClose: () => void }) 
                                   padding: '5px 8px', borderRadius: 8,
                                   border: `1px solid ${HP_TOKENS.line}`,
                                   background: HP_TOKENS.card, color: HP_TOKENS.blue,
-                                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 10, cursor: 'pointer',
+                                  fontFamily: HP_FONT, fontWeight: 700, fontSize: 10, cursor: 'pointer',
                                 }}
                               >↗</button>
                             </div>
                           ) : (
                             <span style={{
-                              padding: '3px 8px', borderRadius: 6, fontSize: 9, fontWeight: 800,
+                              padding: '3px 8px', borderRadius: 6, fontSize: 9, fontWeight: 700,
                               background: st.bg, color: st.color, fontFamily: HP_FONT,
                             }}>{st.label}</span>
                           )}

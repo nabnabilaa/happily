@@ -107,7 +107,7 @@ export default function ProfileEditorModal({ onClose }: ProfileEditorModalProps)
         <div 
           onClick={() => fileInputRef.current?.click()}
           style={{
-            width: 160, height: 160, borderRadius: 80,
+            width: 160, height: 160, borderRadius: '50%',
             background: HP_TOKENS.lineSoft,
             border: `2px dashed ${HP_TOKENS.line}`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -127,9 +127,9 @@ export default function ProfileEditorModal({ onClose }: ProfileEditorModalProps)
           
           <div style={{
             position: 'absolute', bottom: 0, left: 0, right: 0, height: 40,
-            background: 'rgba(26,29,35,0.4)', color: '#F4F7F9',
+            background: 'rgba(26,29,35,0.4)', color: HP_TOKENS.onPrimary,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: HP_FONT, fontSize: 10, fontWeight: 800,
+            fontFamily: HP_FONT, fontSize: 10, fontWeight: 700,
           }}>
             CLICK TO CHANGE
           </div>
@@ -150,7 +150,7 @@ export default function ProfileEditorModal({ onClose }: ProfileEditorModalProps)
             onChange={(e) => setName(e.target.value)}
             placeholder="Ketik nama Anda"
             style={{
-              width: '100%', padding: '12px 16px', borderRadius: 12, border: `1px solid ${HP_TOKENS.line}`,
+              width: '100%', padding: '12px 16px', borderRadius: HP_TOKENS.radiusSm, border: `1px solid ${HP_TOKENS.line}`,
               fontFamily: HP_FONT, fontSize: 14, fontWeight: 600, outline: 'none', background: HP_TOKENS.card
             }}
           />
@@ -159,7 +159,7 @@ export default function ProfileEditorModal({ onClose }: ProfileEditorModalProps)
         <div style={{ width: '100%' }}>
           <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 700, marginBottom: 6 }}>JAM PENGINGAT REALISASI (MID-DAY CHECK-IN)</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: HP_TOKENS.yellowSoft, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 44, height: 44, borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.yellowSoft, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <HPGlyph name="target" size={20} color={HP_TOKENS.ink} />
             </div>
             <input 
@@ -167,7 +167,7 @@ export default function ProfileEditorModal({ onClose }: ProfileEditorModalProps)
               value={midDayTime}
               onChange={(e) => setMidDayTime(e.target.value)}
               style={{
-                flex: 1, padding: '12px 16px', borderRadius: 12, border: `1px solid ${HP_TOKENS.line}`,
+                flex: 1, padding: '12px 16px', borderRadius: HP_TOKENS.radiusSm, border: `1px solid ${HP_TOKENS.line}`,
                 fontFamily: HP_FONT, fontSize: 16, fontWeight: 700, outline: 'none', background: HP_TOKENS.card
               }}
             />
@@ -186,7 +186,7 @@ export default function ProfileEditorModal({ onClose }: ProfileEditorModalProps)
             gap: 10,
             background: HP_TOKENS.lineSoft,
             padding: 4,
-            borderRadius: 14,
+            borderRadius: HP_TOKENS.radiusMd,
             border: `1.5px solid ${HP_TOKENS.line}`
           }}>
             <button
@@ -198,11 +198,11 @@ export default function ProfileEditorModal({ onClose }: ProfileEditorModalProps)
               }}
               style={{
                 padding: '12px 14px',
-                borderRadius: 10,
+                borderRadius: HP_TOKENS.radiusSm,
                 border: 'none',
                 fontFamily: HP_FONT,
                 fontSize: 13,
-                fontWeight: 800,
+                fontWeight: 700,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -226,11 +226,11 @@ export default function ProfileEditorModal({ onClose }: ProfileEditorModalProps)
               }}
               style={{
                 padding: '12px 14px',
-                borderRadius: 10,
+                borderRadius: HP_TOKENS.radiusSm,
                 border: 'none',
                 fontFamily: HP_FONT,
                 fontSize: 13,
-                fontWeight: 800,
+                fontWeight: 700,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -259,8 +259,8 @@ export default function ProfileEditorModal({ onClose }: ProfileEditorModalProps)
           <button 
             onClick={() => setShowIntegrations(true)}
             style={{
-              width: '100%', padding: '14px', borderRadius: 12,
-              background: '#F8FAFC', color: HP_TOKENS.ink,
+              width: '100%', padding: '14px', borderRadius: HP_TOKENS.radiusSm,
+              background: HP_TOKENS.sunken, color: HP_TOKENS.ink,
               border: `1px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontWeight: 700, fontSize: 14,
               cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
             }}
@@ -270,7 +270,7 @@ export default function ProfileEditorModal({ onClose }: ProfileEditorModalProps)
               <HPGlyph name="zap" size={18} color={HP_TOKENS.blue} />
               <span>Chrome Extension & Google Calendar</span>
             </div>
-            <HPGlyph name="chevron-right" size={16} color={HP_TOKENS.inkMute} />
+            <HPGlyph name="chevronRight" size={16} color={HP_TOKENS.inkMute} />
           </button>
         </div>
 
@@ -278,9 +278,9 @@ export default function ProfileEditorModal({ onClose }: ProfileEditorModalProps)
           <button 
             onClick={handleSave}
             style={{
-              width: '100%', padding: '16px', borderRadius: 16,
+              width: '100%', padding: '16px', borderRadius: HP_TOKENS.radiusMd,
               background: HP_TOKENS.yellow, color: HP_TOKENS.ink,
-              border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15,
+              border: 'none', fontFamily: HP_FONT, fontWeight: 700, fontSize: 15,
               cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10
             }}
             className="hp-tap"
@@ -293,7 +293,7 @@ export default function ProfileEditorModal({ onClose }: ProfileEditorModalProps)
             <button 
               onClick={handleRemove}
               style={{
-                width: '100%', padding: '14px', borderRadius: 16,
+                width: '100%', padding: '14px', borderRadius: HP_TOKENS.radiusMd,
                 background: 'transparent', color: HP_TOKENS.coral,
                 border: `1.5px solid ${HP_TOKENS.coral}40`, 
                 fontFamily: HP_FONT, fontWeight: 700, fontSize: 14,

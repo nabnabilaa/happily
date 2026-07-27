@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useHP } from "@/lib/HPContext";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
+import { PRINT } from "@/lib/palettes";
 import HPGlyph from "@/components/ui/HPGlyph";
 import HPAvatar from "@/components/ui/HPAvatar";
 import Modal from "@/components/ui/Modal";
@@ -127,7 +128,7 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
     const kpiHTML = kpiData.map(k => `
-      <div style="margin-bottom:12px;padding:12px;border:1px solid #ddd;border-radius:8px">
+      <div style="margin-bottom:12px;padding:12px;border:1px solid ${PRINT.line};border-radius:8px">
         <b>${k.title}</b> (Bobot: ${k.weight}%)<br/>
         <small>Target: ${k.targetDescription || '-'}</small><br/>
         <small>Tasks: ${k.links.total} total, ${k.links.approved} approved</small><br/>
@@ -139,7 +140,7 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
       <html><head><title>Laporan Bulanan - ${viewUserName} - ${MONTHS[month-1]} ${year}</title>
       <style>body{font-family:system-ui,sans-serif;padding:40px;max-width:700px;margin:0 auto}
       h1{font-size:20px}h2{font-size:16px;margin-top:24px}
-      .stat{display:inline-block;text-align:center;padding:12px 24px;border:1px solid #ddd;border-radius:8px;margin-right:8px}
+      .stat{display:inline-block;text-align:center;padding:12px 24px;border:1px solid ${PRINT.line};border-radius:8px;margin-right:8px}
       .stat b{font-size:24px;display:block}</style></head><body>
       <h1>📊 Laporan Bulanan — ${viewUserName}</h1>
       <p>Periode: ${MONTHS[month-1]} ${year}</p>
@@ -160,17 +161,17 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
   };
 
   const selectStyle: React.CSSProperties = {
-    padding: 10, borderRadius: 10, border: `1.5px solid ${HP_TOKENS.line}`,
+    padding: 10, borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.line}`,
     fontFamily: HP_FONT, fontSize: 13, background: HP_TOKENS.card, outline: 'none',
   };
 
   const statCard = (label: string, value: string | number, sub?: string, tone?: string) => (
     <div style={{
-      flex: 1, padding: '12px', borderRadius: 14, textAlign: 'center',
+      flex: 1, padding: '12px', borderRadius: HP_TOKENS.radiusMd, textAlign: 'center',
       background: tone === 'sage' ? HP_TOKENS.sageWash : tone === 'blue' ? HP_TOKENS.blueWash : HP_TOKENS.paper,
       border: `1px solid ${HP_TOKENS.line}`,
     }}>
-      <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 22, color: HP_TOKENS.ink }}>{value}</div>
+      <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 22, color: HP_TOKENS.ink }}>{value}</div>
       <div style={{ ...HP_TEXT.small, fontSize: 10, fontWeight: 700, color: HP_TOKENS.inkMute, marginTop: 2 }}>{label}</div>
       {sub && <div style={{ ...HP_TEXT.small, fontSize: 9, color: HP_TOKENS.inkSoft, marginTop: 1 }}>{sub}</div>}
     </div>
@@ -198,7 +199,7 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
         {/* Status Badge */}
         {submitted && (
           <div style={{
-            padding: '8px 14px', borderRadius: 10, marginBottom: 12,
+            padding: '8px 14px', borderRadius: HP_TOKENS.radiusSm, marginBottom: 12,
             background: HP_TOKENS.sageWash, border: `1px solid ${HP_TOKENS.sage}40`,
             display: 'flex', alignItems: 'center', gap: 8,
           }}>
@@ -239,7 +240,7 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
                   {kpiData.map(kpi => (
                     <div key={kpi.id} style={{
-                      padding: 14, borderRadius: 16, background: HP_TOKENS.card,
+                      padding: 14, borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.card,
                       border: `1.5px solid ${HP_TOKENS.line}`,
                     }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -252,21 +253,21 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
                           )}
                           <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
                             <span style={{
-                              padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 800,
+                              padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 700,
                               background: HP_TOKENS.blueSoft, color: HP_TOKENS.blue, fontFamily: HP_FONT
                             }}>Bobot: {kpi.weight}%</span>
                             <span style={{
-                              padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 800,
-                              background: '#D3F9D8', color: '#2B8A3E', fontFamily: HP_FONT
+                              padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 700,
+                              background: HP_TOKENS.successWash, color: HP_TOKENS.success, fontFamily: HP_FONT
                             }}>✓ {kpi.links.approved} approved</span>
                             {kpi.links.pending > 0 && (
                               <span style={{
-                                padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 800,
-                                background: '#FFF3BF', color: '#E67700', fontFamily: HP_FONT
+                                padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 700,
+                                background: HP_TOKENS.warningWash, color: HP_TOKENS.warning, fontFamily: HP_FONT
                               }}>⏳ {kpi.links.pending} pending</span>
                             )}
                             <span style={{
-                              padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 800,
+                              padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 700,
                               background: HP_TOKENS.paper, color: HP_TOKENS.inkMute, fontFamily: HP_FONT
                             }}>📋 {kpi.links.total} total tasks</span>
                           </div>
@@ -289,9 +290,9 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
                           <div style={{
                             width: 44, textAlign: 'center',
                             padding: '4px 0', borderRadius: 8,
-                            background: (kpiScores[kpi.id] || 0) >= 70 ? HP_TOKENS.sageWash : (kpiScores[kpi.id] || 0) >= 40 ? '#FFF3BF' : '#FFE3E3',
-                            fontFamily: HP_FONT, fontWeight: 900, fontSize: 14,
-                            color: (kpiScores[kpi.id] || 0) >= 70 ? HP_TOKENS.sage : (kpiScores[kpi.id] || 0) >= 40 ? '#E67700' : HP_TOKENS.coral,
+                            background: (kpiScores[kpi.id] || 0) >= 70 ? HP_TOKENS.sageWash : (kpiScores[kpi.id] || 0) >= 40 ? HP_TOKENS.warningWash : HP_TOKENS.dangerWash,
+                            fontFamily: HP_FONT, fontWeight: 700, fontSize: 14,
+                            color: (kpiScores[kpi.id] || 0) >= 70 ? HP_TOKENS.sage : (kpiScores[kpi.id] || 0) >= 40 ? HP_TOKENS.warning : HP_TOKENS.coral,
                           }}>
                             {kpiScores[kpi.id] || 0}
                           </div>
@@ -304,9 +305,9 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
                           <span style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.inkMute }}>Skor:</span>
                           <div style={{
                             padding: '4px 12px', borderRadius: 8,
-                            background: kpi.finalScore >= 70 ? HP_TOKENS.sageWash : kpi.finalScore >= 40 ? '#FFF3BF' : '#FFE3E3',
-                            fontFamily: HP_FONT, fontWeight: 900, fontSize: 16,
-                            color: kpi.finalScore >= 70 ? HP_TOKENS.sage : kpi.finalScore >= 40 ? '#E67700' : HP_TOKENS.coral,
+                            background: kpi.finalScore >= 70 ? HP_TOKENS.sageWash : kpi.finalScore >= 40 ? HP_TOKENS.warningWash : HP_TOKENS.dangerWash,
+                            fontFamily: HP_FONT, fontWeight: 700, fontSize: 16,
+                            color: kpi.finalScore >= 70 ? HP_TOKENS.sage : kpi.finalScore >= 40 ? HP_TOKENS.warning : HP_TOKENS.coral,
                           }}>
                             {kpi.finalScore}/100
                           </div>
@@ -316,7 +317,7 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
                       {/* Weekly Targets Progress */}
                       {kpi.weeklyTargets && kpi.weeklyTargets.length > 0 && (
                         <div style={{ marginTop: 12 }}>
-                          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 6 }}>TARGET MINGGUAN</div>
+                          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 6 }}>TARGET MINGGUAN</div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                             {kpi.weeklyTargets.map(wt => {
                               const pct = wt.targetValue > 0 ? Math.min(100, Math.round((wt.currentValue / wt.targetValue) * 100)) : 0;
@@ -324,10 +325,10 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
                                 <div key={wt.id}>
                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
                                     <span style={{ ...HP_TEXT.small, fontSize: 11, color: HP_TOKENS.ink }}>
-                                      <span style={{ fontWeight: 800, color: HP_TOKENS.blue, fontSize: 9, marginRight: 4 }}>W{wt.weekNumber}</span>
+                                      <span style={{ fontWeight: 700, color: HP_TOKENS.blue, fontSize: 9, marginRight: 4 }}>W{wt.weekNumber}</span>
                                       {wt.title}
                                     </span>
-                                    <span style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 10, color: pct >= 100 ? HP_TOKENS.sage : HP_TOKENS.inkSoft }}>
+                                    <span style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 10, color: pct >= 100 ? HP_TOKENS.sage : HP_TOKENS.inkSoft }}>
                                       {wt.currentValue}/{wt.targetValue} {wt.metricUnit}
                                     </span>
                                   </div>
@@ -344,11 +345,11 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
                       {/* Task Details */}
                       {kpi.tasks && kpi.tasks.length > 0 && (
                         <div style={{ marginTop: 12 }}>
-                          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 6 }}>DETAIL TASK ({kpi.tasks.length})</div>
+                          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 6 }}>DETAIL TASK ({kpi.tasks.length})</div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                             {kpi.tasks.map(t => (
                               <div key={t.id} style={{
-                                padding: '8px 10px', borderRadius: 10,
+                                padding: '8px 10px', borderRadius: HP_TOKENS.radiusSm,
                                 background: t.isDone ? HP_TOKENS.sageWash : t.partialProgress > 0 ? HP_TOKENS.blueWash : HP_TOKENS.paper,
                                 border: `1px solid ${t.isDone ? HP_TOKENS.sage + '30' : HP_TOKENS.line}`,
                                 display: 'flex', flexDirection: 'column', gap: 3,
@@ -358,7 +359,7 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
                                     {t.isDone ? '✅' : t.partialProgress > 0 ? '🔄' : '⬜'} {t.title}
                                   </span>
                                   <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-                                    {t.isProject && <span style={{ ...HP_TEXT.tiny, fontSize: 9, color: '#6B5F8E', background: HP_TOKENS.lavenderSoft, padding: '1px 5px', borderRadius: 4 }}>📁</span>}
+                                    {t.isProject && <span style={{ ...HP_TEXT.tiny, fontSize: 9, color: HP_TOKENS.primary, background: HP_TOKENS.lavenderSoft, padding: '1px 5px', borderRadius: 4 }}>📁</span>}
                                     {t.timeTrackedSeconds > 0 && (
                                       <span style={{ ...HP_TEXT.tiny, fontSize: 9, color: HP_TOKENS.sage, background: HP_TOKENS.sageSoft, padding: '1px 5px', borderRadius: 4 }}>
                                         ⏱ {Math.round(t.timeTrackedSeconds / 60)}m
@@ -400,14 +401,14 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
                 {/* Weighted Score Preview */}
                 {isManager && (
                   <div style={{
-                    padding: '14px', borderRadius: 16, marginBottom: 16,
+                    padding: '14px', borderRadius: HP_TOKENS.radiusMd, marginBottom: 16,
                     background: `${HP_TOKENS.ink}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   }}>
                     <span style={{ ...HP_TEXT.body, fontWeight: 700, color: 'rgba(255,255,255,0.7)' }}>
                       Skor KPI Tertimbang
                     </span>
-                    <span style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 28, color: '#F4F7F9' }}>
+                    <span style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 28, color: HP_TOKENS.onPrimary }}>
                       {calcWeightedScore()}<span style={{ fontSize: 14, opacity: 0.5 }}>/100</span>
                     </span>
                   </div>
@@ -428,7 +429,7 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
                   disabled={submitted}
                   rows={3}
                   style={{
-                    width: '100%', padding: 12, borderRadius: 12,
+                    width: '100%', padding: 12, borderRadius: HP_TOKENS.radiusSm,
                     border: `1.5px solid ${HP_TOKENS.line}`,
                     fontFamily: HP_FONT, fontSize: 13, background: HP_TOKENS.card, outline: 'none',
                     resize: 'none', boxSizing: 'border-box',
@@ -444,7 +445,7 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
                   CATATAN DARI MANAGER
                 </div>
                 <div style={{
-                  padding: 14, borderRadius: 14, background: HP_TOKENS.sageWash,
+                  padding: 14, borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.sageWash,
                   border: `1px solid ${HP_TOKENS.sage}30`,
                   ...HP_TEXT.body, fontSize: 13, color: HP_TOKENS.ink, lineHeight: 1.6,
                 }}>
@@ -460,11 +461,10 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
                   onClick={handleSubmit}
                   disabled={submitting}
                   style={{
-                    flex: 2, padding: 14, borderRadius: 14, border: 'none',
-                    background: HP_TOKENS.sage, color: '#F4F7F9',
-                    fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
+                    flex: 2, padding: 14, borderRadius: HP_TOKENS.radiusMd, border: 'none',
+                    background: HP_TOKENS.sage, color: HP_TOKENS.onPrimary,
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 15, cursor: 'pointer',
                     opacity: submitting ? 0.5 : 1,
-                    boxShadow: '0 4px 12px rgba(26,29,35,0.1)',
                   }}
                 >
                   {submitting ? 'Menyimpan...' : '✅ Finalisasi Laporan'}
@@ -473,10 +473,10 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
               <button
                 onClick={exportPDF}
                 style={{
-                  flex: 1, padding: 14, borderRadius: 14,
+                  flex: 1, padding: 14, borderRadius: HP_TOKENS.radiusMd,
                   border: `1.5px solid ${HP_TOKENS.line}`,
                   background: HP_TOKENS.card, color: HP_TOKENS.ink,
-                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',
+                  fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: 'pointer',
                 }}
               >
                 📄 Export PDF

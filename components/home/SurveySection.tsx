@@ -58,7 +58,7 @@ export default function SurveySection({ openModal }: SurveySectionProps) {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                 <div style={{
-                  width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+                  width: 44, height: 44, borderRadius: HP_TOKENS.radiusSm, flexShrink: 0,
                   background: isUrgent ? HP_TOKENS.coralSoft : HP_TOKENS.lavenderSoft,
                   display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}>
@@ -74,7 +74,7 @@ export default function SurveySection({ openModal }: SurveySectionProps) {
                   <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
                     {isInternal && (
                       <div style={{
-                        padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 800,
+                        padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 700,
                         background: HP_TOKENS.blueSoft, color: HP_TOKENS.blue, fontFamily: HP_FONT,
                       }}>
                         {questionCount} pertanyaan
@@ -82,15 +82,15 @@ export default function SurveySection({ openModal }: SurveySectionProps) {
                     )}
                     {deadlineStr && (
                       <div style={{
-                        padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 800,
+                        padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 700,
                         background: isUrgent ? HP_TOKENS.coralSoft : HP_TOKENS.yellowSoft,
-                        color: isUrgent ? HP_TOKENS.coral : '#8A6814', fontFamily: HP_FONT,
+                        color: isUrgent ? HP_TOKENS.coral : HP_TOKENS.yellowDark, fontFamily: HP_FONT,
                       }}>
                         ⏰ {deadlineStr}
                       </div>
                     )}
                     <div style={{
-                      padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 800,
+                      padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 700,
                       background: HP_TOKENS.sageWash, color: HP_TOKENS.sage, fontFamily: HP_FONT,
                     }}>
                       +20 Poin

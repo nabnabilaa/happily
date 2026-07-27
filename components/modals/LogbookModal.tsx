@@ -45,13 +45,13 @@ const MONTH_NAMES = ['Januari','Februari','Maret','April','Mei','Juni','Juli','A
 const DAY_NAMES = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 
 const STATUS_COLORS: Record<string, { bg: string; dot: string }> = {
-  present:  { bg: '#E8F5E9', dot: '#2D8A4E' },
-  late:     { bg: '#FFF3E0', dot: '#D4A017' },
-  absent:   { bg: '#FFEBEE', dot: '#E03131' },
-  sick:     { bg: '#FFF3E0', dot: '#E03131' },
-  izin:     { bg: '#EDE7F6', dot: '#7B6BB5' },
-  cuti:     { bg: '#E3F2FD', dot: '#2196F3' },
-  weekend:  { bg: '#F5F5F5', dot: '#CCCCCC' },
+  present:  { bg: HP_TOKENS.successWash, dot: HP_TOKENS.success },
+  late:     { bg: HP_TOKENS.warningWash, dot: HP_TOKENS.warning },
+  absent:   { bg: HP_TOKENS.dangerWash, dot: HP_TOKENS.danger },
+  sick:     { bg: HP_TOKENS.warningWash, dot: HP_TOKENS.danger },
+  izin:     { bg: HP_TOKENS.primaryWash, dot: HP_TOKENS.primary },
+  cuti:     { bg: HP_TOKENS.infoWash, dot: HP_TOKENS.info },
+  weekend:  { bg: HP_TOKENS.sunken, dot: HP_TOKENS.inkFade },
   future:   { bg: 'transparent', dot: 'transparent' },
 };
 
@@ -175,7 +175,7 @@ export default function LogbookModal({ onClose, targetUserId, targetUserName }: 
           disabled={isFuture}
           className="hp-tap"
           style={{
-            width: '100%', aspectRatio: '1', borderRadius: 10,
+            width: '100%', aspectRatio: '1', borderRadius: HP_TOKENS.radiusSm,
             background: isSelected ? HP_TOKENS.blue : colors.bg,
             border: isToday ? `2px solid ${HP_TOKENS.yellow}` : isSelected ? `2px solid ${HP_TOKENS.blue}` : '1px solid transparent',
             cursor: isFuture ? 'default' : 'pointer',
@@ -187,7 +187,7 @@ export default function LogbookModal({ onClose, targetUserId, targetUserName }: 
           }}
         >
           <div style={{
-            fontFamily: HP_FONT, fontWeight: 800,
+            fontFamily: HP_FONT, fontWeight: 700,
             fontSize: 12, color: isSelected ? '#fff' : HP_TOKENS.ink,
           }}>
             {d}
@@ -207,7 +207,7 @@ export default function LogbookModal({ onClose, targetUserId, targetUserName }: 
           {/* XP indicator */}
           {(daySummary?.totalXP || 0) > 0 && (
             <div style={{
-              fontSize: 7, fontWeight: 800,
+              fontSize: 7, fontWeight: 700,
               color: isSelected ? 'rgba(255,255,255,0.8)' : HP_TOKENS.sage,
               fontFamily: HP_FONT,
             }}>
@@ -229,7 +229,7 @@ export default function LogbookModal({ onClose, targetUserId, targetUserName }: 
         marginBottom: 16,
       }}>
         <button onClick={() => changeMonth(-1)} className="hp-tap" style={{
-          background: HP_TOKENS.lineSoft, border: 'none', borderRadius: 10,
+          background: HP_TOKENS.lineSoft, border: 'none', borderRadius: HP_TOKENS.radiusSm,
           width: 36, height: 36, cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
@@ -239,7 +239,7 @@ export default function LogbookModal({ onClose, targetUserId, targetUserName }: 
           {MONTH_NAMES[month - 1]} {year}
         </div>
         <button onClick={() => changeMonth(1)} className="hp-tap" style={{
-          background: HP_TOKENS.lineSoft, border: 'none', borderRadius: 10,
+          background: HP_TOKENS.lineSoft, border: 'none', borderRadius: HP_TOKENS.radiusSm,
           width: 36, height: 36, cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
@@ -252,28 +252,28 @@ export default function LogbookModal({ onClose, targetUserId, targetUserName }: 
           {/* Summary Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12 }}>
             <div style={{
-              padding: '12px 10px', borderRadius: 14, background: HP_TOKENS.sageWash,
+              padding: '12px 10px', borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.sageWash,
               border: `1px solid ${HP_TOKENS.sage}20`, textAlign: 'center'
             }}>
-              <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 22, color: HP_TOKENS.sage }}>
+              <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 22, color: HP_TOKENS.sage }}>
                 {attSummary.totalDays}
               </div>
               <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>Hadir</div>
             </div>
             <div style={{
-              padding: '12px 10px', borderRadius: 14, background: HP_TOKENS.coralSoft,
+              padding: '12px 10px', borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.coralSoft,
               border: `1px solid ${HP_TOKENS.coral}20`, textAlign: 'center'
             }}>
-              <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 22, color: HP_TOKENS.coral }}>
+              <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 22, color: HP_TOKENS.coral }}>
                 {attSummary.alphaDays}
               </div>
               <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>Alpha</div>
             </div>
             <div style={{
-              padding: '12px 10px', borderRadius: 14, background: HP_TOKENS.blueSoft,
+              padding: '12px 10px', borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.blueSoft,
               border: `1px solid ${HP_TOKENS.blue}20`, textAlign: 'center'
             }}>
-              <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 16, color: HP_TOKENS.blue }}>
+              <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, color: HP_TOKENS.blue }}>
                 {attSummary.avgHoursFormatted}
               </div>
               <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>Rata-rata</div>
@@ -281,10 +281,10 @@ export default function LogbookModal({ onClose, targetUserId, targetUserName }: 
           </div>
 
           {/* Completion Rate Bar */}
-          <div style={{ padding: '12px 16px', borderRadius: 14, background: HP_TOKENS.card, border: `1px solid ${HP_TOKENS.line}` }}>
+          <div style={{ padding: '12px 16px', borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.card, border: `1px solid ${HP_TOKENS.line}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
               <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>KEHADIRAN BULAN INI</div>
-              <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 14, color: HP_TOKENS.sage }}>{attSummary.completionRate}%</div>
+              <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 14, color: HP_TOKENS.sage }}>{attSummary.completionRate}%</div>
             </div>
             <div style={{ height: 6, borderRadius: 3, background: HP_TOKENS.lineSoft, overflow: 'hidden' }}>
               <div style={{
@@ -305,16 +305,16 @@ export default function LogbookModal({ onClose, targetUserId, targetUserName }: 
       {summary && (
         <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
           {[
-            { label: 'Sakit', value: summary.sick, color: '#E03131', bg: '#FFF3E0' },
-            { label: 'Izin', value: summary.izin, color: '#7B6BB5', bg: '#EDE7F6' },
-            { label: 'Cuti', value: summary.cuti, color: '#2196F3', bg: '#E3F2FD' },
+            { label: 'Sakit', value: summary.sick, color: HP_TOKENS.danger, bg: HP_TOKENS.warningWash },
+            { label: 'Izin', value: summary.izin, color: HP_TOKENS.primary, bg: HP_TOKENS.primaryWash },
+            { label: 'Cuti', value: summary.cuti, color: HP_TOKENS.info, bg: HP_TOKENS.infoWash },
             { label: 'EXP', value: `+${summary.totalXP}`, color: HP_TOKENS.sage, bg: HP_TOKENS.sageWash },
           ].map(s => (
             <div key={s.label} style={{
               padding: '4px 10px', borderRadius: 8, background: s.bg,
               display: 'flex', alignItems: 'center', gap: 4,
             }}>
-              <span style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 12, color: s.color }}>
+              <span style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, color: s.color }}>
                 {s.value}
               </span>
               <span style={{ fontFamily: HP_FONT, fontWeight: 600, fontSize: 9, color: s.color, opacity: 0.7 }}>
@@ -334,7 +334,7 @@ export default function LogbookModal({ onClose, targetUserId, targetUserName }: 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 3, marginBottom: 4 }}>
             {DAY_NAMES.map(d => (
               <div key={d} style={{
-                textAlign: 'center', fontFamily: HP_FONT, fontWeight: 800,
+                textAlign: 'center', fontFamily: HP_FONT, fontWeight: 700,
                 fontSize: 9, color: HP_TOKENS.inkMute, padding: '4px 0',
                 letterSpacing: 0.5,
               }}>
@@ -353,7 +353,7 @@ export default function LogbookModal({ onClose, targetUserId, targetUserName }: 
       {/* Day detail panel */}
       {selectedDay && (
         <div style={{
-          padding: 16, borderRadius: 16,
+          padding: 16, borderRadius: HP_TOKENS.radiusMd,
           background: HP_TOKENS.paper, border: `1.5px solid ${HP_TOKENS.line}`,
           marginBottom: 8,
         }}>
@@ -370,13 +370,13 @@ export default function LogbookModal({ onClose, targetUserId, targetUserName }: 
               {/* Attendance */}
               {dayDetail.attendance ? (
                 <div style={{
-                  display: 'flex', alignItems: 'center', gap: 10, padding: 12, borderRadius: 12,
+                  display: 'flex', alignItems: 'center', gap: 10, padding: 12, borderRadius: HP_TOKENS.radiusSm,
                   background: HP_TOKENS.sageWash, border: `1px solid ${HP_TOKENS.sage}20`,
                 }}>
                   <div style={{ fontSize: 18 }}>🕐</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>KEHADIRAN</div>
-                    <div style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, color: HP_TOKENS.sage }}>
+                    <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, color: HP_TOKENS.sage }}>
                       {dayDetail.attendance.check_in_at
                         ? new Date(typeof dayDetail.attendance.check_in_at === 'string' && !dayDetail.attendance.check_in_at.endsWith('Z') ? dayDetail.attendance.check_in_at.replace(' ', 'T') + 'Z' : dayDetail.attendance.check_in_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
                         : '-'
@@ -390,14 +390,14 @@ export default function LogbookModal({ onClose, targetUserId, targetUserName }: 
                   </div>
                   <div style={{
                     padding: '3px 8px', borderRadius: 6, background: HP_TOKENS.blueSoft,
-                    fontFamily: HP_FONT, fontWeight: 800, fontSize: 10, color: HP_TOKENS.blue,
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 10, color: HP_TOKENS.blue,
                   }}>
                     {dayDetail.attendance.check_in_type || 'WFO'}
                   </div>
                 </div>
               ) : (
                 <div style={{
-                  padding: 12, borderRadius: 12, background: HP_TOKENS.coralSoft,
+                  padding: 12, borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.coralSoft,
                   border: `1px solid ${HP_TOKENS.coral}20`, textAlign: 'center',
                   ...HP_TEXT.small, color: HP_TOKENS.coral, fontWeight: 700,
                 }}>
@@ -408,7 +408,7 @@ export default function LogbookModal({ onClose, targetUserId, targetUserName }: 
               {/* Mood */}
               {dayDetail.mood && (
                 <div style={{
-                  display: 'flex', alignItems: 'center', gap: 10, padding: 12, borderRadius: 12,
+                  display: 'flex', alignItems: 'center', gap: 10, padding: 12, borderRadius: HP_TOKENS.radiusSm,
                   background: HP_TOKENS.yellowSoft, border: `1px solid ${HP_TOKENS.yellow}20`,
                 }}>
                   <div style={{ fontSize: 18 }}>
@@ -416,7 +416,7 @@ export default function LogbookModal({ onClose, targetUserId, targetUserName }: 
                   </div>
                   <div>
                     <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>MOOD & ENERGY</div>
-                    <div style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, color: HP_TOKENS.ink }}>
+                    <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, color: HP_TOKENS.ink }}>
                       {dayDetail.mood.mood_key} · Energi: {dayDetail.mood.energy_key || '-'}
                     </div>
                   </div>
@@ -427,7 +427,7 @@ export default function LogbookModal({ onClose, targetUserId, targetUserName }: 
               {(dayDetail.xpBreakdown || []).length > 0 && (
                 <div>
                   <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 6 }}>
-                    EXP HARI INI: <span style={{ color: HP_TOKENS.sage, fontWeight: 900 }}>+{dayDetail.totalXP}</span>
+                    EXP HARI INI: <span style={{ color: HP_TOKENS.sage, fontWeight: 700 }}>+{dayDetail.totalXP}</span>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {(dayDetail.xpBreakdown || []).map((xp: any, i: number) => (
@@ -440,7 +440,7 @@ export default function LogbookModal({ onClose, targetUserId, targetUserName }: 
                           {xp.description || xp.action_type}
                         </div>
                         <div style={{
-                          fontFamily: HP_FONT, fontWeight: 800, fontSize: 11,
+                          fontFamily: HP_FONT, fontWeight: 700, fontSize: 11,
                           color: Number(xp.amount) >= 0 ? HP_TOKENS.sage : HP_TOKENS.coral,
                         }}>
                           {Number(xp.amount) >= 0 ? '+' : ''}{xp.amount}
@@ -454,7 +454,7 @@ export default function LogbookModal({ onClose, targetUserId, targetUserName }: 
               {/* Task Harian */}
               {(dayDetail.tasks || []).length > 0 && (
                 <div>
-                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 900, marginBottom: 8, letterSpacing: 1 }}>
+                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 8, letterSpacing: 1 }}>
                     TASK HARIAN ({dayDetail.tasks.length})
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -465,7 +465,7 @@ export default function LogbookModal({ onClose, targetUserId, targetUserName }: 
                       const statusBg = isDone ? HP_TOKENS.sageWash : pct > 0 ? HP_TOKENS.yellowSoft : HP_TOKENS.coralSoft;
                       return (
                         <div key={task.id} style={{
-                          padding: '10px 12px', borderRadius: 12,
+                          padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm,
                           background: HP_TOKENS.card, border: `1px solid ${statusColor}30`,
                         }}>
                           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
@@ -474,11 +474,11 @@ export default function LogbookModal({ onClose, targetUserId, targetUserName }: 
                               background: isDone ? HP_TOKENS.sage : pct > 0 ? HP_TOKENS.yellow : HP_TOKENS.lineSoft,
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                             }}>
-                              {isDone && <span style={{ color: '#fff', fontSize: 10, fontWeight: 900 }}>✓</span>}
-                              {!isDone && pct > 0 && <span style={{ color: '#fff', fontSize: 8, fontWeight: 900 }}>{pct}%</span>}
+                              {isDone && <span style={{ color: '#fff', fontSize: 10, fontWeight: 700 }}>✓</span>}
+                              {!isDone && pct > 0 && <span style={{ color: '#fff', fontSize: 8, fontWeight: 700 }}>{pct}%</span>}
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, color: HP_TOKENS.ink, textDecoration: isDone ? 'line-through' : 'none', opacity: isDone ? 0.7 : 1 }}>
+                              <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, color: HP_TOKENS.ink, textDecoration: isDone ? 'line-through' : 'none', opacity: isDone ? 0.7 : 1 }}>
                                 {task.title}
                               </div>
                               {/* KPI / Target linkage */}
@@ -544,7 +544,7 @@ export default function LogbookModal({ onClose, targetUserId, targetUserName }: 
                                   </span>
                                 )}
                                 {task.isProject && (
-                                  <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.lavender || '#7B6BB5', fontWeight: 700 }}>Proyek</span>
+                                  <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.lavender, fontWeight: 700 }}>Proyek</span>
                                 )}
                               </div>
                             </div>
@@ -564,7 +564,7 @@ export default function LogbookModal({ onClose, targetUserId, targetUserName }: 
                   </div>
                   {(dayDetail.logbookEntries || []).map((entry: any, i: number) => (
                     <div key={i} style={{
-                      padding: 10, borderRadius: 10, background: HP_TOKENS.blueWash,
+                      padding: 10, borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.blueWash,
                       border: `1px solid ${HP_TOKENS.blue}15`, marginBottom: 6,
                     }}>
                       {entry.title ? (
@@ -603,15 +603,15 @@ export default function LogbookModal({ onClose, targetUserId, targetUserName }: 
       {/* Legend */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center' }}>
         {[
-          { label: 'Hadir', color: '#2D8A4E' },
-          { label: 'Absen', color: '#E03131' },
-          { label: 'Sakit', color: '#E03131' },
-          { label: 'Izin', color: '#7B6BB5' },
-          { label: 'Cuti', color: '#2196F3' },
-          { label: 'Weekend', color: '#CCCCCC' },
+          { label: 'Hadir', color: HP_TOKENS.success },
+          { label: 'Absen', color: HP_TOKENS.danger },
+          { label: 'Sakit', color: HP_TOKENS.danger },
+          { label: 'Izin', color: HP_TOKENS.primary },
+          { label: 'Cuti', color: HP_TOKENS.info },
+          { label: 'Weekend', color: HP_TOKENS.inkFade },
         ].map(l => (
           <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <div style={{ width: 8, height: 8, borderRadius: 4, background: l.color }} />
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: l.color }} />
             <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontSize: 9 }}>{l.label}</span>
           </div>
         ))}

@@ -97,7 +97,7 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
   };
 
   const inputStyle: React.CSSProperties = {
-    width: '100%', padding: 12, borderRadius: 10,
+    width: '100%', padding: 12, borderRadius: HP_TOKENS.radiusSm,
     border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 13,
     outline: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink, boxSizing: 'border-box',
   };
@@ -108,17 +108,17 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
 
         {/* Task being completed */}
         <div style={{
-          padding: 14, borderRadius: 14,
+          padding: 14, borderRadius: HP_TOKENS.radiusMd,
           background: isPartial ? HP_TOKENS.blueWash : HP_TOKENS.sageWash,
           border: `1.5px solid ${isPartial ? HP_TOKENS.blue + '30' : HP_TOKENS.sage + '30'}`,
           display: 'flex', alignItems: 'center', gap: 12,
         }}>
           <div style={{
-            width: 28, height: 28, borderRadius: 14,
+            width: 28, height: 28, borderRadius: '50%',
             background: isPartial ? HP_TOKENS.blue : HP_TOKENS.sage,
             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}>
-            <HPGlyph name={isPartial ? 'activity' : 'check'} size={16} color="#F4F7F9" />
+            <HPGlyph name={isPartial ? 'activity' : 'check'} size={16} color={HP_TOKENS.onPrimary} />
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ ...HP_TEXT.h, fontSize: 14 }}>{task?.title}</div>
@@ -143,12 +143,12 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
                 key={pct}
                 onClick={() => { setCompletionPercent(pct); setCustomPercent(''); }}
                 style={{
-                  flex: 1, padding: '10px 4px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                  flex: 1, padding: '10px 4px', borderRadius: HP_TOKENS.radiusSm, border: 'none', cursor: 'pointer',
                   background: completionPercent === pct && !customPercent
                     ? (pct === 100 ? HP_TOKENS.sage : HP_TOKENS.blue)
                     : HP_TOKENS.lineSoft,
                   color: completionPercent === pct && !customPercent ? '#fff' : HP_TOKENS.inkSoft,
-                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 13,
+                  fontFamily: HP_FONT, fontWeight: 700, fontSize: 13,
                   transition: 'all 0.15s',
                 }}
               >
@@ -177,7 +177,7 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
 
           {/* Info banner */}
           <div style={{
-            marginTop: 10, padding: '10px 14px', borderRadius: 10,
+            marginTop: 10, padding: '10px 14px', borderRadius: HP_TOKENS.radiusSm,
             background: isPartial ? HP_TOKENS.blueWash : HP_TOKENS.sageWash,
             border: `1px solid ${isPartial ? HP_TOKENS.blue + '25' : HP_TOKENS.sage + '25'}`,
             fontFamily: HP_FONT, fontSize: 12, fontWeight: 700,
@@ -201,7 +201,7 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
               max={new Date().toISOString().split('T')[0]}
               onChange={e => setCompletedAt(e.target.value)}
               style={{
-                width: '100%', padding: 12, borderRadius: 10,
+                width: '100%', padding: 12, borderRadius: HP_TOKENS.radiusSm,
                 border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 13,
                 outline: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink, boxSizing: 'border-box',
               }}
@@ -235,7 +235,7 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
                   <button 
                     onClick={() => removeLinkSlot(i)}
                     style={{ 
-                      background: HP_TOKENS.coralSoft, border: 'none', borderRadius: 10,
+                      background: HP_TOKENS.coralSoft, border: 'none', borderRadius: HP_TOKENS.radiusSm,
                       width: 36, height: 36, cursor: 'pointer', flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}
@@ -251,7 +251,7 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
             onClick={addLinkSlot}
             style={{
               marginTop: 6, background: 'none', border: `1.5px dashed ${HP_TOKENS.line}`,
-              borderRadius: 10, padding: '8px 14px', cursor: 'pointer',
+              borderRadius: HP_TOKENS.radiusSm, padding: '8px 14px', cursor: 'pointer',
               fontFamily: HP_FONT, fontSize: 12, fontWeight: 700, color: HP_TOKENS.blue,
               display: 'flex', alignItems: 'center', gap: 6, width: '100%', justifyContent: 'center',
             }}
@@ -262,7 +262,7 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
           {/* Duplicate warning */}
           {duplicateWarning && (
             <div style={{
-              marginTop: 8, padding: 10, borderRadius: 10,
+              marginTop: 8, padding: 10, borderRadius: HP_TOKENS.radiusSm,
               background: HP_TOKENS.yellowSoft, border: `1.5px solid ${HP_TOKENS.yellow}`,
               display: 'flex', alignItems: 'center', gap: 10,
             }}>
@@ -274,7 +274,7 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
                 style={{
                   background: HP_TOKENS.yellow, border: 'none', borderRadius: 8,
                   padding: '6px 12px', cursor: 'pointer', flexShrink: 0,
-                  fontFamily: HP_FONT, fontSize: 11, fontWeight: 800, color: HP_TOKENS.ink,
+                  fontFamily: HP_FONT, fontSize: 11, fontWeight: 700, color: HP_TOKENS.ink,
                 }}
               >
                 Ya, Tandai
@@ -286,23 +286,22 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
         {/* Project Toggle */}
         <div style={{ 
           display: 'flex', alignItems: 'center', gap: 12, 
-          padding: 12, borderRadius: 12, background: isProject ? HP_TOKENS.lavenderSoft : HP_TOKENS.paper,
-          border: `1.5px solid ${isProject ? '#6B5F8E30' : HP_TOKENS.line}`,
+          padding: 12, borderRadius: HP_TOKENS.radiusSm, background: isProject ? HP_TOKENS.lavenderSoft : HP_TOKENS.paper,
+          border: `1.5px solid ${isProject ? HP_TOKENS.primarySoft : HP_TOKENS.line}`,
           transition: '0.2s',
         }}>
           <button
             onClick={() => setIsProject(!isProject)}
             style={{
-              width: 42, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
-              background: isProject ? '#6B5F8E' : HP_TOKENS.lineSoft,
+              width: 42, height: 24, borderRadius: HP_TOKENS.radiusSm, border: 'none', cursor: 'pointer',
+              background: isProject ? HP_TOKENS.primary : HP_TOKENS.lineSoft,
               position: 'relative', transition: '0.2s', flexShrink: 0,
             }}
           >
             <div style={{
-              width: 18, height: 18, borderRadius: 9, background: HP_TOKENS.card,
+              width: 18, height: 18, borderRadius: '50%', background: HP_TOKENS.card,
               position: 'absolute', top: 3,
               left: isProject ? 21 : 3, transition: '0.2s',
-              boxShadow: '0 1px 3px rgba(26,29,35,0.2)'
             }} />
           </button>
           <div>
@@ -361,7 +360,7 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
           <button 
             onClick={onClose}
             style={{
-              flex: 1, padding: 14, borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
+              flex: 1, padding: 14, borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.line}`,
               background: HP_TOKENS.card, fontFamily: HP_FONT, fontWeight: 700, fontSize: 14,
               cursor: 'pointer', color: HP_TOKENS.inkMute,
             }}
@@ -372,16 +371,16 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
             disabled={isSubmitting}
             onClick={handleConfirm}
             style={{
-              flex: 2, padding: 14, borderRadius: 12, border: 'none',
-              background: isPartial ? HP_TOKENS.blue : HP_TOKENS.sage, color: '#F4F7F9',
-              fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: isSubmitting ? 'default' : 'pointer',
+              flex: 2, padding: 14, borderRadius: HP_TOKENS.radiusSm, border: 'none',
+              background: isPartial ? HP_TOKENS.blue : HP_TOKENS.sage, color: HP_TOKENS.onPrimary,
+              fontFamily: HP_FONT, fontWeight: 700, fontSize: 14, cursor: isSubmitting ? 'default' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               opacity: isSubmitting ? 0.7 : 1,
             }}
           >
             {isSubmitting ? "Memproses..." : isPartial
               ? <>📊 Simpan Progress {completionPercent}%</>
-              : <><HPGlyph name="check" size={16} color="#F4F7F9" /> Selesai</>
+              : <><HPGlyph name="check" size={16} color={HP_TOKENS.onPrimary} /> Selesai</>
             }
           </button>
         </div>

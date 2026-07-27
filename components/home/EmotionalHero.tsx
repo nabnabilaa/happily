@@ -1,10 +1,9 @@
 "use client";
 
 import React from "react";
-import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
+import { HP_TOKENS, HP_TEXT } from "@/lib/constants";
 import HPGlyph from "@/components/ui/HPGlyph";
-import HPChip from "@/components/ui/HPChip";
-import Mascot from "@/components/home/Mascot";
+import HPCard from "@/components/ui/HPCard";
 
 interface EmotionalHeroProps {
   state: any;
@@ -15,84 +14,113 @@ interface EmotionalHeroProps {
   onOpenMidDay?: () => void;
 }
 
-export default function EmotionalHero({ 
-  state, 
-  moodObj, 
-  energyObj, 
-  onOpenCheckIn 
+/** Maps a mood tone onto the semantic palette. */
+const MOOD_TONE: Record<string, { fg: string; bg: string }> = {
+  yellow: { fg: HP_TOKENS.yellowDark, bg: HP_TOKENS.yellowSoft },
+  sage: { fg: HP_TOKENS.success, bg: HP_TOKENS.successSoft },
+  neutral: { fg: HP_TOKENS.inkSoft, bg: HP_TOKENS.sunken },
+  blue: { fg: HP_TOKENS.primary, bg: HP_TOKENS.primarySoft },
+  coral: { fg: HP_TOKENS.danger, bg: HP_TOKENS.dangerSoft },
+};
+
+export default function EmotionalHero({
+  state,
+  moodObj,
+  energyObj,
+  onOpenCheckIn,
 }: EmotionalHeroProps) {
-  if (moodObj && energyObj) {
-    return (
-      <div 
-        className="hp-tap" 
-        onClick={onOpenCheckIn} 
-        style={{
-          position: 'relative', 
-          borderRadius: 24, 
-          padding: '20px', 
-          cursor: 'pointer',
-          background: HP_TOKENS.card,
-          border: `1px solid ${HP_TOKENS.line}`,
-          boxShadow: '0 4px 12px rgba(26,29,35,0.02)',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{
-            width: 64, height: 64, borderRadius: 16,
-            background: moodObj.tone === 'yellow' ? HP_TOKENS.yellowSoft : HP_TOKENS.blueSoft,
-            display: 'flex', alignItems: 'center', justifyContent: 'center'
-          }}>
-            <HPGlyph name={moodObj.glyph} size={32} color={moodObj.tone === 'yellow' ? HP_TOKENS.yellow : HP_TOKENS.blue} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, textTransform: 'uppercase' }}>Kondisi Saat Ini</div>
-            <div style={{ ...HP_TEXT.h, fontSize: 18, marginTop: 4 }}>{moodObj.label}</div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 8, background: HP_TOKENS.blueWash, color: HP_TOKENS.blue, fontSize: 11, fontWeight: 700 }}>
-                <HPGlyph name="zap" size={10} color={HP_TOKENS.blue} /> {energyObj.label}
-              </div>
-              {state.tag && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 8, background: HP_TOKENS.yellowWash, color: HP_TOKENS.ink, fontSize: 11, fontWeight: 700 }}>
-                  #{state.tag}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const checkedIn = Boolean(moodObj && energyObj);
+  const tone = MOOD_TONE[moodObj?.tone as string] ?? MOOD_TONE.neutral;
 
   return (
-    <div 
-      className="hp-tap" 
-      onClick={onOpenCheckIn} 
-      style={{
-        position: 'relative', 
-        borderRadius: 24, 
-        padding: '24px 20px', 
-        cursor: 'pointer',
-        background: HP_TOKENS.paper,
-        border: `1px solid ${HP_TOKENS.line}`,
-      }}
+    <HPCard
+      onClick={onOpenCheckIn}
+      padding={18}
+      ariaLabel={checkedIn ? `Kondisi saat ini: ${moodObj.label}. Ubah check-in` : "Mulai check-in harian"}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <div style={{
-          width: 56, height: 56, borderRadius: 16,
-          background: HP_TOKENS.yellow,
-          display: 'flex', alignItems: 'center', justifyContent: 'center'
-        }}>
-          <HPGlyph name="sparkle" size={28} color={HP_TOKENS.ink} />
+      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <div
+          aria-hidden
+          style={{
+            width: 52,
+            height: 52,
+            borderRadius: HP_TOKENS.radiusMd,
+            flexShrink: 0,
+            background: checkedIn ? tone.bg : HP_TOKENS.yellowSoft,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <HPGlyph
+            name={checkedIn ? moodObj.glyph : "sparkle"}
+            size={24}
+            color={checkedIn ? tone.fg : HP_TOKENS.yellowDark}
+          />
         </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, textTransform: 'uppercase' }}>Sapa Diri Sendiri</div>
-          <div style={{ ...HP_TEXT.h, fontSize: 20, marginTop: 4 }}>Bagaimana perasaan Anda?</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10, color: HP_TOKENS.blue, fontSize: 13, fontWeight: 800 }}>
-            <span>Mulai check-in</span>
-            <HPGlyph name="arrow" size={14} color={HP_TOKENS.blue} />
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ ...HP_TEXT.tiny }}>
+            {checkedIn ? "Kondisi saat ini" : "Check-in harian"}
           </div>
+
+          <div style={{ ...HP_TEXT.h, fontSize: 17, marginTop: 3 }}>
+            {checkedIn ? moodObj.label : "Bagaimana perasaan Anda?"}
+          </div>
+
+          {checkedIn ? (
+            <div style={{ display: "flex", gap: 6, marginTop: 9, flexWrap: "wrap" }}>
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 5,
+                  padding: "4px 9px",
+                  borderRadius: HP_TOKENS.radiusPill,
+                  background: HP_TOKENS.sunken,
+                  color: HP_TOKENS.inkSoft,
+                  fontSize: 11.5,
+                  fontWeight: 600,
+                }}
+              >
+                <HPGlyph name="zap" size={11} color="currentColor" />
+                {energyObj.label}
+              </span>
+              {state?.tag && (
+                <span
+                  style={{
+                    padding: "4px 9px",
+                    borderRadius: HP_TOKENS.radiusPill,
+                    background: HP_TOKENS.sunken,
+                    color: HP_TOKENS.inkSoft,
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                  }}
+                >
+                  #{state.tag}
+                </span>
+              )}
+            </div>
+          ) : (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                marginTop: 7,
+                color: HP_TOKENS.primary,
+                fontSize: 13,
+                fontWeight: 600,
+              }}
+            >
+              Mulai check-in
+              <HPGlyph name="arrow" size={13} color="currentColor" />
+            </div>
+          )}
         </div>
+
+        <HPGlyph name="chevronRight" size={18} color={HP_TOKENS.inkFade} />
       </div>
-    </div>
+    </HPCard>
   );
 }

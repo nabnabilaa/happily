@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check:design": "node scripts/check-design.mjs",
+    "check:design:strict": "node scripts/check-design.mjs --strict",
+    "check:design:update": "node scripts/check-design.mjs --update",
+    "check": "tsc --noEmit && npm run check:design:strict"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -24,6 +28,7 @@
     "leaflet": "^1.9.4",
     "lucide-react": "^1.14.0",
     "marked": "^18.0.4",
+    "motion": "^12.42.2",
     "next": "16.2.4",
     "nodemailer": "^9.0.1",
     "open-location-code": "^1.0.3",

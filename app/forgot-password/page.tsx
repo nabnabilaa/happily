@@ -50,7 +50,7 @@ export default function ForgotPasswordPage() {
       height: "100dvh",
       width: "100%",
       overflowY: "auto",
-      background: "#F4F7F9",
+      background: HP_TOKENS.onPrimary,
       fontFamily: HP_FONT,
     }}>
       <style dangerouslySetInnerHTML={{ __html: `
@@ -79,9 +79,8 @@ export default function ForgotPasswordPage() {
           background: "#fff",
           width: "100%",
           maxWidth: 440,
-          borderRadius: 24,
+          borderRadius: HP_TOKENS.radiusLg,
           padding: "clamp(32px, 5vw, 48px)",
-          boxShadow: "0 20px 60px rgba(59, 130, 246, 0.1)",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -93,7 +92,7 @@ export default function ForgotPasswordPage() {
             <HPGlyph name="mail" size={32} />
           </div>
 
-          <h2 style={{ fontSize: 24, fontWeight: 800, color: HP_TOKENS.ink, marginBottom: 8, fontFamily: HP_FONT_DISPLAY, textAlign: "center" }}>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: HP_TOKENS.ink, marginBottom: 8, fontFamily: HP_FONT_DISPLAY, textAlign: "center" }}>
             Lupa Password?
           </h2>
           <p style={{ fontSize: 14, color: HP_TOKENS.inkMute, fontWeight: 500, textAlign: "center", marginBottom: 32, lineHeight: 1.6 }}>
@@ -102,11 +101,11 @@ export default function ForgotPasswordPage() {
 
           {success ? (
             <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
-              <div style={{ padding: "16px", borderRadius: 16, background: "#E8F5E9", color: "#2E7D32", fontWeight: 600, textAlign: "center", fontSize: 14, marginBottom: 24, border: "1px solid #C8E6C9" }}>
+              <div style={{ padding: "16px", borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.successWash, color: HP_TOKENS.success, fontWeight: 600, textAlign: "center", fontSize: 14, marginBottom: 24, border: `1px solid ${HP_TOKENS.successSoft}` }}>
                 Berhasil! Silakan periksa kotak masuk (inbox) atau folder spam pada email Anda.
               </div>
               <Link href="/" className="hp-btn-hover" style={{
-                width: '100%', padding: '16px', borderRadius: 100, border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15,
+                width: '100%', padding: '16px', borderRadius: 100, border: 'none', fontFamily: HP_FONT, fontWeight: 700, fontSize: 15,
                 background: HP_TOKENS.card, color: HP_TOKENS.ink, cursor: 'pointer', textAlign: 'center', textDecoration: 'none',
                 boxShadow: `inset 0 0 0 2px ${HP_TOKENS.line}`, display: 'block'
               }}>
@@ -116,7 +115,7 @@ export default function ForgotPasswordPage() {
           ) : (
             <form onSubmit={handleSubmit} style={{ width: "100%", display: "flex", flexDirection: "column", gap: 16 }}>
               {error && (
-                <div style={{ padding: "12px", borderRadius: 12, background: "#FFF0F0", color: "#F44", fontWeight: 700, textAlign: "center", fontSize: 13 }}>
+                <div style={{ padding: "12px", borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.dangerWash, color: HP_TOKENS.danger, fontWeight: 700, textAlign: "center", fontSize: 13 }}>
                   {error}
                 </div>
               )}
@@ -146,7 +145,7 @@ export default function ForgotPasswordPage() {
                 disabled={loading}
                 className={loading ? "" : "hp-btn-hover"}
                 style={{
-                  width: '100%', padding: '16px', borderRadius: 100, border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15,
+                  width: '100%', padding: '16px', borderRadius: 100, border: 'none', fontFamily: HP_FONT, fontWeight: 700, fontSize: 15,
                   background: loading ? HP_TOKENS.lineSoft : `${HP_TOKENS.primary}`,
                   color: loading ? HP_TOKENS.inkMute : '#fff', cursor: loading ? 'not-allowed' : 'pointer',
                   boxShadow: loading ? 'none' : `0 8px 24px rgba(59,130,246,0.3)`, transition: 'all 0.2s',

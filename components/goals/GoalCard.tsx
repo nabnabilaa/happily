@@ -25,7 +25,7 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
   const tones: Record<string, string> = { 
     sage: HP_TOKENS.sage, 
     blue: HP_TOKENS.blue, 
-    lavender: HP_TOKENS.lavender || '#6B5F8E',
+    lavender: HP_TOKENS.lavender,
     yellow: HP_TOKENS.yellow,
     coral: HP_TOKENS.coral,
   };
@@ -216,12 +216,11 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
   return (
     <HPCard padding={16} style={{ 
       border: `1.5px solid ${HP_TOKENS.line}`,
-      boxShadow: '0 4px 12px rgba(26,29,35,0.01)',
       transition: 'all 0.2s ease',
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
         <div style={{ 
-          width: 32, height: 32, borderRadius: 10, 
+          width: 32, height: 32, borderRadius: HP_TOKENS.radiusSm, 
           background: `${toneColor}15`, 
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexShrink: 0
@@ -236,8 +235,8 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
                 <div style={{
                   padding: '3px 8px', borderRadius: 6,
                   background: g.status === 'approved' ? HP_TOKENS.sageSoft : g.status === 'rejected' ? HP_TOKENS.coralSoft : g.status === 'revision' ? HP_TOKENS.yellowSoft : HP_TOKENS.yellowSoft,
-                  color: g.status === 'approved' ? HP_TOKENS.sage : g.status === 'rejected' ? HP_TOKENS.coral : '#8A6814',
-                  fontSize: 10, fontWeight: 900, letterSpacing: 0.5
+                  color: g.status === 'approved' ? HP_TOKENS.sage : g.status === 'rejected' ? HP_TOKENS.coral : HP_TOKENS.yellowDark,
+                  fontSize: 10, fontWeight: 700, letterSpacing: 0.5
                 }}>
                   {g.status === 'approved' ? 'ACCEPT' : g.status === 'revision' ? 'REVISI' : g.status === 'rejected' ? 'REJECT' : 'PENDING'}
                 </div>
@@ -246,22 +245,22 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
               {g.reviewStatus === 'revision' && (
                 <div style={{
                   padding: '3px 8px', borderRadius: 6,
-                  background: '#FFF3CC', color: '#8A6814',
-                  fontSize: 10, fontWeight: 900, letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 3
+                  background: HP_TOKENS.yellowWash, color: HP_TOKENS.yellowDark,
+                  fontSize: 10, fontWeight: 700, letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 3
                 }}>⚠️ PERLU REVISI</div>
               )}
               {g.reviewStatus === 'rejected' && (
                 <div style={{
                   padding: '3px 8px', borderRadius: 6,
                   background: HP_TOKENS.coralSoft, color: HP_TOKENS.coral,
-                  fontSize: 10, fontWeight: 900, letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 3
+                  fontSize: 10, fontWeight: 700, letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 3
                 }}>❌ DITOLAK</div>
               )}
               {displayProgress >= 100 && !g.reviewStatus && (
                 <div style={{
                   padding: '3px 8px', borderRadius: 6,
                   background: HP_TOKENS.sageSoft, color: HP_TOKENS.sage,
-                  fontSize: 10, fontWeight: 900, letterSpacing: 0.5
+                  fontSize: 10, fontWeight: 700, letterSpacing: 0.5
                 }}>DONE</div>
               )}
             </div>
@@ -271,8 +270,8 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
                 onClick={(e) => { e.stopPropagation(); setShowDeleteModal(true); }}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', flexShrink: 0 }}
               >
-                <div style={{ width: 18, height: 18, borderRadius: 9, background: HP_TOKENS.lineSoft, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ fontSize: 12, color: HP_TOKENS.inkFade, fontWeight: 900, lineHeight: 1 }}>×</span>
+                <div style={{ width: 18, height: 18, borderRadius: '50%', background: HP_TOKENS.lineSoft, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: 12, color: HP_TOKENS.inkFade, fontWeight: 700, lineHeight: 1 }}>×</span>
                 </div>
               </button>
             )}
@@ -285,8 +284,8 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
       </div>
 
       <div style={{ 
-        marginTop: 20, padding: 12, borderRadius: 12,
-        background: '#F9FAFB'
+        marginTop: 20, padding: 12, borderRadius: HP_TOKENS.radiusSm,
+        background: HP_TOKENS.sunken
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -295,7 +294,7 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
               Due: {g.due ? g.due.split(' ')[0] : '-'}
             </span>
           </div>
-          <div style={{ ...HP_TEXT.small, fontWeight: 800, color: HP_TOKENS.ink, fontSize: 12 }}>
+          <div style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.ink, fontSize: 12 }}>
             {weeklyTargets.length > 0
               ? `${weeklyTargets.length} target mingguan`
               : hasTodayTasks
@@ -311,7 +310,7 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-               <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800 }}>PROGRESS</span>
+               <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>PROGRESS</span>
                {editingProgress ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }} onClick={(e) => e.stopPropagation()}>
                     <input
@@ -322,7 +321,7 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
                         flex: 1, accentColor: toneColor, cursor: 'pointer', height: 6
                       }}
                     />
-                    <span style={{ fontSize: 13, fontWeight: 900, color: toneColor, minWidth: 35, textAlign: 'right' }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: toneColor, minWidth: 35, textAlign: 'right' }}>
                       {tempProgress}%
                     </span>
                     <button
@@ -334,9 +333,8 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
                       }}
                       style={{
                         padding: '5px 12px', borderRadius: 8, border: 'none',
-                        background: HP_TOKENS.sage, color: '#F4F7F9', fontSize: 11,
-                        fontWeight: 900, cursor: 'pointer',
-                        boxShadow: `0 2px 8px ${HP_TOKENS.sage}40`
+                        background: HP_TOKENS.sage, color: HP_TOKENS.onPrimary, fontSize: 11,
+                        fontWeight: 700, cursor: 'pointer',
                       }}
                     >
                       ✓ Simpan
@@ -346,7 +344,7 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
                       style={{
                         padding: '5px 8px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
                         background: HP_TOKENS.card, color: HP_TOKENS.inkFade, fontSize: 11,
-                        fontWeight: 900, cursor: 'pointer'
+                        fontWeight: 700, cursor: 'pointer'
                       }}
                     >
                       ✕ Batal
@@ -368,7 +366,7 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
                     <span style={{
                       fontSize: 10, color: toneColor, opacity: 0.6,
                       padding: '2px 6px', borderRadius: 6, background: `${toneColor}10`,
-                      fontWeight: 800
+                      fontWeight: 700
                     }}>✏️ edit</span>
                   )}
                 </div>
@@ -382,14 +380,14 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
       {/* Review Note Banner — shown to employee when flagged */}
       {g.reviewStatus && g.reviewNote && (
         <div style={{
-          marginTop: 10, padding: '10px 14px', borderRadius: 10,
-          background: g.reviewStatus === 'rejected' ? HP_TOKENS.coralSoft : '#FFF3CC',
-          border: `1px solid ${g.reviewStatus === 'rejected' ? HP_TOKENS.coral + '40' : '#F0C040'}`,
+          marginTop: 10, padding: '10px 14px', borderRadius: HP_TOKENS.radiusSm,
+          background: g.reviewStatus === 'rejected' ? HP_TOKENS.coralSoft : HP_TOKENS.yellowWash,
+          border: `1px solid ${g.reviewStatus === 'rejected' ? HP_TOKENS.coral + '40' : HP_TOKENS.yellow}`,
           display: 'flex', alignItems: 'flex-start', gap: 8,
         }}>
           <span style={{ fontSize: 14, flexShrink: 0 }}>{g.reviewStatus === 'rejected' ? '❌' : '⚠️'}</span>
           <div>
-            <div style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, color: g.reviewStatus === 'rejected' ? HP_TOKENS.coral : '#8A6814', marginBottom: 2 }}>
+            <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, color: g.reviewStatus === 'rejected' ? HP_TOKENS.coral : HP_TOKENS.yellowDark, marginBottom: 2 }}>
               {g.reviewStatus === 'rejected' ? 'KPI Ditolak oleh HR/Manager' : 'Catatan Revisi dari HR/Manager'}
             </div>
             <div style={{ fontFamily: HP_FONT, fontSize: 11, color: HP_TOKENS.inkSoft, lineHeight: 1.4 }}>{g.reviewNote}</div>
@@ -409,11 +407,10 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
             onClick={(e) => { e.stopPropagation(); onViewDetails(); }}
             className="hp-tap"
             style={{
-              width: '100%', padding: '12px', borderRadius: 12, border: `1.5px solid ${HP_TOKENS.lineSoft}`,
+              width: '100%', padding: '12px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.lineSoft}`,
               background: '#fff', color: HP_TOKENS.ink,
-              fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',
+              fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
             }}
           >
             Lihat Detail Target & Task <span>➔</span>
@@ -432,12 +429,12 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
           padding: 24, backdropFilter: 'blur(4px)'
         }}>
           <div style={{
-            background: '#fff', borderRadius: 24, padding: 32,
+            background: '#fff', borderRadius: HP_TOKENS.radiusLg, padding: 32,
             width: '100%', maxWidth: 400, textAlign: 'center',
-            boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
+            boxShadow: HP_TOKENS.shadowLg,
             animation: 'hpPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ width: 64, height: 64, borderRadius: 32, background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
               <HPGlyph name="target" size={32} />
             </div>
             <div style={{ ...HP_TEXT.h, fontSize: 20, marginBottom: 8 }}>Hapus Target/KPI?</div>
@@ -446,17 +443,17 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
             </div>
             <div style={{ display: 'flex', gap: 12, flexDirection: 'column' }}>
               <button onClick={(e) => { e.stopPropagation(); deleteGoal(); }} className="hp-tap" style={{
-                padding: '16px', borderRadius: 16, border: 'none',
+                padding: '16px', borderRadius: HP_TOKENS.radiusMd, border: 'none',
                 background: HP_TOKENS.coral, color: '#fff',
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: 'pointer',
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, cursor: 'pointer',
                 width: '100%'
               }}>
                 Ya, Hapus
               </button>
               <button onClick={(e) => { e.stopPropagation(); setShowDeleteModal(false); }} className="hp-tap" style={{
-                padding: '16px', borderRadius: 16, border: 'none',
+                padding: '16px', borderRadius: HP_TOKENS.radiusMd, border: 'none',
                 background: HP_TOKENS.lineSoft, color: HP_TOKENS.inkSoft,
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: 'pointer',
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, cursor: 'pointer',
                 width: '100%'
               }}>
                 Batal

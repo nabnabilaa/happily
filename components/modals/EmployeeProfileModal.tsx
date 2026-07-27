@@ -18,7 +18,7 @@ interface Props {
 }
 
 const MOOD_EMOJI: Record<string, string> = { joy: '😊', calm: '😌', neutral: '😐', tired: '😴', stress: '😫' };
-const MOOD_COLOR: Record<string, string> = { joy: '#4CAF50', calm: '#2196F3', neutral: '#9E9E9E', tired: '#FF9800', stress: '#F44336' };
+const MOOD_COLOR: Record<string, string> = { joy: HP_TOKENS.success, calm: HP_TOKENS.info, neutral: HP_TOKENS.inkMute, tired: HP_TOKENS.warning, stress: HP_TOKENS.danger };
 
 export default function EmployeeProfileModal({ onClose, employeeId, employeeName, openModal }: Props) {
   const { user } = useHP();
@@ -204,28 +204,28 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
         {/* Detail target (muncul saat chart diklik) */}
         {detail && (
           <div onClick={() => setDetail(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-            <div onClick={e => e.stopPropagation()} style={{ background: HP_TOKENS.card, borderRadius: 18, padding: 18, maxWidth: 420, width: '100%', maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 12px 40px rgba(0,0,0,0.25)' }}>
+            <div onClick={e => e.stopPropagation()} style={{ background: HP_TOKENS.card, borderRadius: HP_TOKENS.radius, padding: 18, maxWidth: 420, width: '100%', maxHeight: '80vh', overflowY: 'auto' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  {detail.kpiTitle && <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800 }}>{detail.kpiTitle}</div>}
+                  {detail.kpiTitle && <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>{detail.kpiTitle}</div>}
                   <div style={{ ...HP_TEXT.h, fontSize: 16 }}>{detail.title || 'Target'}</div>
                   {detail.timeframe && <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>{detail.timeframe}</div>}
                 </div>
-                <button onClick={() => setDetail(null)} className="hp-tap" style={{ border: 'none', background: HP_TOKENS.lineSoft, borderRadius: 8, width: 28, height: 28, cursor: 'pointer', fontFamily: HP_FONT, fontWeight: 800, color: HP_TOKENS.inkMute }}>✕</button>
+                <button onClick={() => setDetail(null)} className="hp-tap" style={{ border: 'none', background: HP_TOKENS.lineSoft, borderRadius: 8, width: 28, height: 28, cursor: 'pointer', fontFamily: HP_FONT, fontWeight: 700, color: HP_TOKENS.inkMute }}>✕</button>
               </div>
               <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
-                <div style={{ flex: 1, background: HP_TOKENS.lineSoft, borderRadius: 10, padding: 10, textAlign: 'center' }}>
-                  <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 20, color: toneFor(detail.achievement || 0) }}>{detail.achievement || 0}%</div>
+                <div style={{ flex: 1, background: HP_TOKENS.lineSoft, borderRadius: HP_TOKENS.radiusSm, padding: 10, textAlign: 'center' }}>
+                  <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 20, color: toneFor(detail.achievement || 0) }}>{detail.achievement || 0}%</div>
                   <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>pencapaian</div>
                 </div>
                 {(detail.target != null) && (
-                  <div style={{ flex: 1, background: HP_TOKENS.lineSoft, borderRadius: 10, padding: 10, textAlign: 'center' }}>
-                    <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 20, color: HP_TOKENS.ink }}>{detail.current ?? 0}/{detail.target ?? 0}</div>
+                  <div style={{ flex: 1, background: HP_TOKENS.lineSoft, borderRadius: HP_TOKENS.radiusSm, padding: 10, textAlign: 'center' }}>
+                    <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 20, color: HP_TOKENS.ink }}>{detail.current ?? 0}/{detail.target ?? 0}</div>
                     <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>{detail.unit || 'progres'}</div>
                   </div>
                 )}
               </div>
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, margin: '14px 0 8px' }}>TASK TERKAIT ({detailTasks.length})</div>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, margin: '14px 0 8px' }}>TASK TERKAIT ({detailTasks.length})</div>
               {detailLoading ? (
                 <div style={{ ...HP_TEXT.small, textAlign: 'center', padding: 16, color: HP_TOKENS.inkMute }}>Memuat...</div>
               ) : detailTasks.length === 0 ? (
@@ -233,7 +233,7 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {detailTasks.map((r: any, i: number) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '8px 10px', borderRadius: 10, background: HP_TOKENS.paper, border: `1px solid ${HP_TOKENS.lineSoft}` }}>
+                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '8px 10px', borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.paper, border: `1px solid ${HP_TOKENS.lineSoft}` }}>
                       <div style={{ fontSize: 14 }}>{r.is_done ? '✅' : '⏳'}</div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ ...HP_TEXT.small, fontWeight: 700, fontSize: 12.5, color: HP_TOKENS.ink }}>{r.title}</div>
@@ -252,7 +252,7 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
 
         {/* Header Card */}
         <div style={{
-          padding: '20px', borderRadius: 20, marginBottom: 16,
+          padding: '20px', borderRadius: HP_TOKENS.radius, marginBottom: 16,
           background: `${HP_TOKENS.lavenderSoft}`,
           border: `1.5px solid ${HP_TOKENS.lavender}20`,
         }}>
@@ -265,15 +265,15 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
               </div>
               <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
                 <div style={{
-                  padding: '3px 10px', borderRadius: 8, fontSize: 10, fontWeight: 800,
-                  background: u.role === 'hr' ? '#EDE8F5' : u.role === 'manager' ? HP_TOKENS.blueSoft : HP_TOKENS.yellowSoft,
-                  color: u.role === 'hr' ? '#7B6BB5' : u.role === 'manager' ? HP_TOKENS.blue : HP_TOKENS.yellow,
+                  padding: '3px 10px', borderRadius: 8, fontSize: 10, fontWeight: 700,
+                  background: u.role === 'hr' ? HP_TOKENS.primaryWash : u.role === 'manager' ? HP_TOKENS.blueSoft : HP_TOKENS.yellowSoft,
+                  color: u.role === 'hr' ? HP_TOKENS.primary : u.role === 'manager' ? HP_TOKENS.blue : HP_TOKENS.yellow,
                   fontFamily: HP_FONT,
                 }}>
                   {(u.role || 'employee').toUpperCase()}
                 </div>
                 <div style={{
-                  padding: '3px 10px', borderRadius: 8, fontSize: 10, fontWeight: 800,
+                  padding: '3px 10px', borderRadius: 8, fontSize: 10, fontWeight: 700,
                   background: HP_TOKENS.sageWash, color: HP_TOKENS.sage, fontFamily: HP_FONT,
                 }}>
                   Lvl {u.level || 1} · {u.points || 0} Point
@@ -287,14 +287,14 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
             {[
               { label: 'Hadir', value: p.attendanceSummary?.totalDays || 0, color: HP_TOKENS.sage },
               { label: 'Avg Jam', value: p.attendanceSummary?.avgHours ? `${Math.floor(p.attendanceSummary.avgHours)}j` : '-', color: HP_TOKENS.blue },
-              { label: 'Task', value: p.taskSummary?.completed || 0, color: '#8A6814' },
+              { label: 'Task', value: p.taskSummary?.completed || 0, color: HP_TOKENS.yellowDark },
               { label: 'Mood', value: MOOD_EMOJI[p.latestMood] || '😐', color: HP_TOKENS.ink },
             ].map(s => (
               <div key={s.label} style={{
-                padding: '8px', borderRadius: 10, background: 'rgba(255,255,255,0.7)',
+                padding: '8px', borderRadius: HP_TOKENS.radiusSm, background: 'rgba(255,255,255,0.7)',
                 textAlign: 'center',
               }}>
-                <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 16, color: s.color }}>{s.value}</div>
+                <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, color: s.color }}>{s.value}</div>
                 <div style={{ fontSize: 9, fontWeight: 700, color: HP_TOKENS.inkMute }}>{s.label}</div>
               </div>
             ))}
@@ -305,7 +305,7 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
         <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
           {(() => {
             const selStyle: React.CSSProperties = {
-              flex: 1, padding: '7px 8px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.line}`,
+              flex: 1, padding: '7px 8px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.line}`,
               fontFamily: HP_FONT, fontSize: 11, fontWeight: 700, background: HP_TOKENS.card, color: HP_TOKENS.ink, outline: 'none',
             };
             const MONTHS_S = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
@@ -335,10 +335,10 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
             { key: 'onboarding', label: '📝 Onboarding' },
           ].map(t => (
             <button key={t.key} onClick={() => setActiveTab(t.key as any)} className="hp-tap" style={{
-              flex: '0 0 auto', padding: '8px 14px', borderRadius: 12,
+              flex: '0 0 auto', padding: '8px 14px', borderRadius: HP_TOKENS.radiusSm,
               background: activeTab === t.key ? HP_TOKENS.ink : HP_TOKENS.lineSoft,
               color: activeTab === t.key ? '#fff' : HP_TOKENS.inkSoft,
-              border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
+              border: 'none', fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, cursor: 'pointer',
             }}>
               {t.label}
             </button>
@@ -351,16 +351,16 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
             {/* Capaian Kinerja (donut skor + tren mingguan) */}
             {agg && (
               <HPCard padding={16} style={{ background: `${HP_TOKENS.sageWash}`, border: `1.5px solid ${HP_TOKENS.sage}20` }}>
-                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 12 }}>🎯 CAPAIAN KINERJA BULAN INI</div>
+                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 12 }}>🎯 CAPAIAN KINERJA BULAN INI</div>
                 <div style={{ display: 'flex', gap: 10, justifyContent: 'space-around' }}>
                   {[
                     { v: agg.kpiScore, l: 'Skor KPI', c: toneFor(agg.kpiScore) },
                     { v: agg.completionRate, l: 'Task', c: HP_TOKENS.blue },
-                    { v: agg.qualityScore, l: 'Kualitas', c: '#8B5CF6' },
+                    { v: agg.qualityScore, l: 'Kualitas', c: HP_TOKENS.primary },
                   ].map(d => (
                     <div key={d.l} style={{ textAlign: 'center' }}>
                       <Donut value={d.v} color={d.c} size={72} thickness={4}>
-                        <span style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 17, color: d.c }}>{d.v}<span style={{ fontSize: 9 }}>%</span></span>
+                        <span style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 17, color: d.c }}>{d.v}<span style={{ fontSize: 9 }}>%</span></span>
                       </Donut>
                       <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 4, fontSize: 10 }}>{d.l}</div>
                     </div>
@@ -368,7 +368,7 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
                 </div>
                 {agg.targets?.length > 0 && (
                   <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${HP_TOKENS.sage}20` }}>
-                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 8 }}>CAPAIAN PER TARGET · ketuk untuk detail</div>
+                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 8 }}>CAPAIAN PER TARGET · ketuk untuk detail</div>
                     <TargetBars targets={agg.targets} showKpi onTargetClick={openTargetDetail} />
                   </div>
                 )}
@@ -377,7 +377,7 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
 
             {/* Attendance Summary — cukup hadir vs tidak hadir */}
             <HPCard padding={14}>
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 10 }}>📅 KEHADIRAN BULAN INI</div>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 10 }}>📅 KEHADIRAN BULAN INI</div>
               {(() => {
                 const hadir = agg?.attendanceDays ?? p.attendanceSummary?.totalDays ?? 0;
                 const kerja = agg?.workingDays ?? 0;
@@ -385,22 +385,22 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
                 return (
                   <div style={{ display: 'flex', gap: 12 }}>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 22, color: HP_TOKENS.sage }}>{hadir}</div>
+                      <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 22, color: HP_TOKENS.sage }}>{hadir}</div>
                       <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>hari hadir</div>
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 22, color: tidak > 0 ? HP_TOKENS.coral : HP_TOKENS.inkMute }}>{tidak}</div>
+                      <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 22, color: tidak > 0 ? HP_TOKENS.coral : HP_TOKENS.inkMute }}>{tidak}</div>
                       <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>tidak hadir</div>
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 22, color: HP_TOKENS.blue }}>{kerja || '-'}</div>
+                      <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 22, color: HP_TOKENS.blue }}>{kerja || '-'}</div>
                       <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>hari kerja</div>
                     </div>
                   </div>
                 );
               })()}
               <button onClick={() => setActiveTab('logbook')} className="hp-tap" style={{
-                width: '100%', marginTop: 10, padding: '8px', borderRadius: 10,
+                width: '100%', marginTop: 10, padding: '8px', borderRadius: HP_TOKENS.radiusSm,
                 background: HP_TOKENS.paper, border: `1px solid ${HP_TOKENS.lineSoft}`,
                 fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, color: HP_TOKENS.blue, cursor: 'pointer',
               }}>
@@ -410,10 +410,10 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
 
             {/* Task Summary */}
             <HPCard padding={14}>
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 10 }}>✅ TASK PERFORMANCE</div>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 10 }}>✅ TASK PERFORMANCE</div>
               <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                 <div>
-                  <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 28, color: HP_TOKENS.ink }}>
+                  <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 28, color: HP_TOKENS.ink }}>
                     {p.taskSummary?.completionRate || 0}%
                   </div>
                   <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>completion rate</div>
@@ -430,7 +430,7 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
             {/* Mood Summary */}
             {p.latestMood && (
               <HPCard padding={14}>
-                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 10 }}>💭 MOOD TERAKHIR</div>
+                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 10 }}>💭 MOOD TERAKHIR</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div style={{ fontSize: 32 }}>{MOOD_EMOJI[p.latestMood] || '😐'}</div>
                   <div>
@@ -444,7 +444,7 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
             {/* Manager info */}
             {p.manager && (
               <HPCard padding={14}>
-                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 10 }}>👤 MANAGER</div>
+                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 10 }}>👤 MANAGER</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <HPAvatar name={p.manager.name} size={36} />
                   <div>
@@ -461,7 +461,7 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
         {activeTab === 'kpi' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {kpis.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: 30, color: HP_TOKENS.inkMute, border: `1.5px dashed ${HP_TOKENS.line}`, borderRadius: 16 }}>
+              <div style={{ textAlign: 'center', padding: 30, color: HP_TOKENS.inkMute, border: `1.5px dashed ${HP_TOKENS.line}`, borderRadius: HP_TOKENS.radiusMd }}>
                 Belum ada KPI bulan ini
               </div>
             ) : (
@@ -473,9 +473,9 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                       <div style={{ ...HP_TEXT.h, fontSize: 14 }}>{k.title}</div>
                       <div style={{
-                        padding: '3px 10px', borderRadius: 8, fontSize: 10, fontWeight: 800,
+                        padding: '3px 10px', borderRadius: 8, fontSize: 10, fontWeight: 700,
                         background: k.status === 'completed' ? HP_TOKENS.sageWash : HP_TOKENS.yellowSoft,
-                        color: k.status === 'completed' ? HP_TOKENS.sage : '#8A6814', fontFamily: HP_FONT,
+                        color: k.status === 'completed' ? HP_TOKENS.sage : HP_TOKENS.yellowDark, fontFamily: HP_FONT,
                       }}>
                         {(k.status || 'active').toUpperCase()}
                       </div>
@@ -487,7 +487,7 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
                     </div>
                     {kpiTargets.length > 0 && (
                       <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${HP_TOKENS.lineSoft}` }}>
-                        <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 8 }}>TARGET · ketuk untuk detail</div>
+                        <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 8 }}>TARGET · ketuk untuk detail</div>
                         <TargetBars targets={kpiTargets} onTargetClick={openTargetDetail} />
                       </div>
                     )}
@@ -512,7 +512,7 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
                 return (
                   <HPCard key={i} padding={12}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                      <div style={{ width: 8, height: 8, borderRadius: 4, marginTop: 6, flexShrink: 0, background: dot }} />
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', marginTop: 6, flexShrink: 0, background: dot }} />
                       <div style={{ fontSize: 16, lineHeight: '20px', flexShrink: 0 }}>{entry.icon}</div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ ...HP_TEXT.small, fontWeight: 700, fontSize: 13, color: HP_TOKENS.ink }}>{entry.title}</div>
@@ -525,7 +525,7 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
                         </div>
                       </div>
                       {entry.xp > 0 && (
-                        <div style={{ padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 800, background: HP_TOKENS.yellowSoft, color: '#8A6814', fontFamily: HP_FONT, flexShrink: 0 }}>
+                        <div style={{ padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 700, background: HP_TOKENS.yellowSoft, color: HP_TOKENS.yellowDark, fontFamily: HP_FONT, flexShrink: 0 }}>
                           +{entry.xp} Point
                         </div>
                       )}
@@ -541,14 +541,14 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
         {activeTab === 'onboarding' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <HPCard padding={14}>
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 10 }}>🏢 DIVISI</div>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 10 }}>🏢 DIVISI</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ ...HP_TEXT.h, fontSize: 15 }}>{u.department || 'Belum dipilih'}</div>
                 {u.department_status && (
                   <div style={{
-                    padding: '3px 10px', borderRadius: 8, fontSize: 10, fontWeight: 800, fontFamily: HP_FONT,
-                    background: u.department_status === 'approved' ? HP_TOKENS.sageWash : u.department_status === 'rejected' ? '#FAEAEA' : HP_TOKENS.yellowSoft,
-                    color: u.department_status === 'approved' ? HP_TOKENS.sage : u.department_status === 'rejected' ? HP_TOKENS.coral : '#8A6814',
+                    padding: '3px 10px', borderRadius: 8, fontSize: 10, fontWeight: 700, fontFamily: HP_FONT,
+                    background: u.department_status === 'approved' ? HP_TOKENS.sageWash : u.department_status === 'rejected' ? HP_TOKENS.dangerWash : HP_TOKENS.yellowSoft,
+                    color: u.department_status === 'approved' ? HP_TOKENS.sage : u.department_status === 'rejected' ? HP_TOKENS.coral : HP_TOKENS.yellowDark,
                   }}>
                     {u.department_status === 'approved' ? 'DISETUJUI' : u.department_status === 'rejected' ? 'DITOLAK' : 'MENUNGGU HR'}
                   </div>
@@ -557,13 +557,13 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
             </HPCard>
 
             {(p.onboardingAnswers || []).length === 0 ? (
-              <div style={{ textAlign: 'center', padding: 30, color: HP_TOKENS.inkMute, border: `1.5px dashed ${HP_TOKENS.line}`, borderRadius: 16 }}>
+              <div style={{ textAlign: 'center', padding: 30, color: HP_TOKENS.inkMute, border: `1.5px dashed ${HP_TOKENS.line}`, borderRadius: HP_TOKENS.radiusMd }}>
                 Belum ada data onboarding tercatat untuk karyawan ini.
               </div>
             ) : (
               (p.onboardingAnswers || []).map((qa: any, i: number) => (
                 <HPCard key={i} padding={14}>
-                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 6 }}>{qa.question}</div>
+                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 6 }}>{qa.question}</div>
                   <div style={{ ...HP_TEXT.h, fontSize: 14 }}>{qa.answer || '—'}</div>
                 </HPCard>
               ))

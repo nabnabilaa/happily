@@ -296,10 +296,10 @@ Jawab dengan tone yang asik dan menyemangati.`,
 
   return (
     <Modal onClose={onClose} title="Mid-Day Check-In 🍯">
-      <div style={{ marginBottom: 24, padding: '24px 20px', background: `${HP_TOKENS.sageWash}`, borderRadius: 24, border: `1px solid ${HP_TOKENS.sage}30`, boxShadow: '0 8px 32px rgba(26,29,35,0.03)' }}>
+      <div style={{ marginBottom: 24, padding: '24px 20px', background: `${HP_TOKENS.sageWash}`, borderRadius: HP_TOKENS.radiusLg, border: `1px solid ${HP_TOKENS.sage}30`, boxShadow: HP_TOKENS.shadowLg }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div>
-            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 900, letterSpacing: 1, marginBottom: 4 }}>OVERALL PROGRESS</div>
+            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 700, letterSpacing: 1, marginBottom: 4 }}>OVERALL PROGRESS</div>
             <div style={{ ...HP_TEXT.h, fontSize: 24 }}>{Math.round(progress)}% <span style={{ fontSize: 14, color: HP_TOKENS.inkFade, fontWeight: 600 }}>Tercapai</span></div>
           </div>
           <div style={{ textAlign: 'right' }}>
@@ -312,7 +312,6 @@ Jawab dengan tone yang asik dan menyemangati.`,
             width: `${progress}%`, height: '100%', 
             background: `${HP_TOKENS.sage}`,
             transition: '1.5s cubic-bezier(0.2, 0.8, 0.2, 1)',
-            boxShadow: `0 0 12px ${HP_TOKENS.sage}40`
           }} />
         </div>
       </div>
@@ -320,7 +319,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
 
 
 
-      <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 900, fontSize: 10, letterSpacing: 1, marginBottom: 12 }}>DAFTAR TARGET HARI INI</div>
+      <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 700, fontSize: 10, letterSpacing: 1, marginBottom: 12 }}>DAFTAR TARGET HARI INI</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
         {priorities.map((p: any) => {
           const isExpanded = expandedTaskId === p.id;
@@ -343,7 +342,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
                   transition: '0.2s'
                 }}
               >
-                {p.done && <HPGlyph name="check" size={14} color="#F4F7F9" stroke={4}/>}
+                {p.done && <HPGlyph name="check" size={14} color={HP_TOKENS.onPrimary} stroke={4}/>}
               </button>
               <div
                 style={{ flex: 1, cursor: 'pointer' }}
@@ -394,9 +393,9 @@ Jawab dengan tone yang asik dan menyemangati.`,
                 {/* Status chip */}
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   <span style={{
-                    padding: '2px 8px', borderRadius: 6, fontSize: 10, fontFamily: HP_FONT, fontWeight: 800,
+                    padding: '2px 8px', borderRadius: 6, fontSize: 10, fontFamily: HP_FONT, fontWeight: 700,
                     background: p.done ? HP_TOKENS.sageWash : pct > 0 ? HP_TOKENS.yellowSoft : HP_TOKENS.coralSoft,
-                    color: p.done ? HP_TOKENS.sage : pct > 0 ? '#B45309' : HP_TOKENS.coral,
+                    color: p.done ? HP_TOKENS.sage : pct > 0 ? HP_TOKENS.warning : HP_TOKENS.coral,
                   }}>
                     {p.done ? 'Selesai' : pct > 0 ? `${pct}% berjalan` : 'Belum dimulai'}
                   </span>
@@ -455,7 +454,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
                   <div style={{ marginTop: 4 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, alignItems: 'center' }}>
                       <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>Update Progres:</div>
-                      <div style={{ ...HP_TEXT.small, fontWeight: 800, color: HP_TOKENS.yellow }}>
+                      <div style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.yellow }}>
                         {localProgress[p.id] !== undefined ? localProgress[p.id] : (p.progress || 0)}%
                       </div>
                     </div>
@@ -475,7 +474,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
           );
         })}
         {totalCount === 0 && (
-          <div style={{ textAlign: 'center', padding: '24px 20px', color: HP_TOKENS.inkMute, background: HP_TOKENS.card, borderRadius: 16, border: `1.5px dashed ${HP_TOKENS.line}` }}>
+          <div style={{ textAlign: 'center', padding: '24px 20px', color: HP_TOKENS.inkMute, background: HP_TOKENS.card, borderRadius: HP_TOKENS.radiusMd, border: `1.5px dashed ${HP_TOKENS.line}` }}>
             <div style={{ marginBottom: 16, fontSize: 14, fontWeight: 500 }}>Belum ada target untuk hari ini.</div>
             <button 
               onClick={() => {
@@ -486,8 +485,8 @@ Jawab dengan tone yang asik dan menyemangati.`,
               style={{
                 padding: '12px 24px', borderRadius: 99,
                 background: 'var(--hp-primary)', color: '#fff',
-                border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 13,
-                cursor: 'pointer', boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+                border: 'none', fontFamily: HP_FONT, fontWeight: 700, fontSize: 13,
+                cursor: 'pointer'
               }}
             >
               + Tambah Task
@@ -496,8 +495,8 @@ Jawab dengan tone yang asik dan menyemangati.`,
         )}
       </div>
 
-      <div style={{ background: HP_TOKENS.card, padding: 16, borderRadius: 16, border: `1px solid ${HP_TOKENS.line}`, marginBottom: 24 }}>
-        <div style={{ ...HP_TEXT.small, fontWeight: 800, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div style={{ background: HP_TOKENS.card, padding: 16, borderRadius: HP_TOKENS.radiusMd, border: `1px solid ${HP_TOKENS.line}`, marginBottom: 24 }}>
+        <div style={{ ...HP_TEXT.small, fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
           <HPGlyph name="book" size={14} color={HP_TOKENS.ink} />
           Catatan Mid-Day Jurnal
         </div>
@@ -507,7 +506,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
           value={notes}
           onChange={e => setNotes(e.target.value)}
           style={{
-            width: '100%', padding: '14px', borderRadius: 12, border: `1px solid ${HP_TOKENS.lineSoft}`,
+            width: '100%', padding: '14px', borderRadius: HP_TOKENS.radiusSm, border: `1px solid ${HP_TOKENS.lineSoft}`,
             fontFamily: HP_FONT, fontSize: 13, minHeight: 100, boxSizing: 'border-box',
             background: HP_TOKENS.card, outline: 'none', transition: '0.2s',
             lineHeight: 1.5, resize: 'vertical'
@@ -519,7 +518,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
           <div style={{ display: 'flex', gap: 8 }}>
             {['joy', 'calm', 'tired', 'stress'].map(m => (
               <button key={m} onClick={() => setSelectedMood(m)} style={{
-                flex: 1, padding: '8px 0', borderRadius: 12,
+                flex: 1, padding: '8px 0', borderRadius: HP_TOKENS.radiusSm,
                 background: selectedMood === m ? `${getMoodColor(m)}20` : HP_TOKENS.paper,
                 border: selectedMood === m ? `1.5px solid ${getMoodColor(m)}` : `1.5px solid ${HP_TOKENS.lineSoft}`,
                 cursor: 'pointer', transition: '0.2s',
@@ -539,11 +538,11 @@ Jawab dengan tone yang asik dan menyemangati.`,
           disabled={!notes.trim()}
           className="hp-tap"
           style={{ 
-            marginTop: 16, width: '100%', padding: '14px', borderRadius: 12,
+            marginTop: 16, width: '100%', padding: '14px', borderRadius: HP_TOKENS.radiusSm,
             background: notes.trim() ? HP_TOKENS.ink : HP_TOKENS.line, 
             color: notes.trim() ? HP_TOKENS.yellow : HP_TOKENS.inkFade, 
             border: 'none',
-            fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: notes.trim() ? 'pointer' : 'default',
+            fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: notes.trim() ? 'pointer' : 'default',
             boxShadow: notes.trim() ? '0 4px 12px rgba(26,29,35,0.1)' : 'none'
           }}
         >

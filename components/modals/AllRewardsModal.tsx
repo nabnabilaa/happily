@@ -12,11 +12,11 @@ interface AllRewardsModalProps {
 }
 
 const TONE_CONFIG: Record<string, any> = {
-  blue:   { bg: HP_TOKENS.blueWash,   accent: HP_TOKENS.blue,   text: '#00558A', glow: 'rgba(77,168,218,0.12)' },
-  yellow: { bg: HP_TOKENS.yellowWash, accent: HP_TOKENS.yellow, text: '#7A5F10', glow: 'rgba(255,190,11,0.12)' },
-  sage:   { bg: HP_TOKENS.sageWash,   accent: HP_TOKENS.sage,   text: '#2D5A3D', glow: 'rgba(74,124,89,0.12)' },
-  coral:  { bg: '#FEF0ED',            accent: HP_TOKENS.coral,  text: '#8B3A2F', glow: 'rgba(232,139,125,0.15)' },
-  lavender: { bg: HP_TOKENS.lavenderSoft, accent: HP_TOKENS.lavender, text: '#4A3A6E', glow: 'rgba(123,104,238,0.12)' },
+  blue:   { bg: HP_TOKENS.blueWash,   accent: HP_TOKENS.blue,   text: HP_TOKENS.blue, glow: 'rgba(77,168,218,0.12)' },
+  yellow: { bg: HP_TOKENS.yellowWash, accent: HP_TOKENS.yellow, text: HP_TOKENS.yellowDark, glow: 'rgba(255,190,11,0.12)' },
+  sage:   { bg: HP_TOKENS.sageWash,   accent: HP_TOKENS.sage,   text: HP_TOKENS.success, glow: 'rgba(74,124,89,0.12)' },
+  coral:  { bg: HP_TOKENS.dangerWash,            accent: HP_TOKENS.coral,  text: HP_TOKENS.danger, glow: 'rgba(232,139,125,0.15)' },
+  lavender: { bg: HP_TOKENS.lavenderSoft, accent: HP_TOKENS.lavender, text: HP_TOKENS.primary, glow: 'rgba(123,104,238,0.12)' },
 };
 
 const GLYPH_MAP: Record<string, string> = {
@@ -77,7 +77,7 @@ export default function AllRewardsModal({ onClose, selected }: AllRewardsModalPr
         rewards: s.rewards.map((r: any) => r.id === reward.id ? { ...r, stock: r.stock - 1 } : r),
         rewardHistory: [
           ...(s.rewardHistory || []),
-          { id: Date.now(), title: reward.title, points: reward.points, date: new Date().toLocaleDateString('id-ID'), glyph: reward.glyph || 'trophy' }
+          { id: Date.now(), title: reward.title, points: reward.points, date: new Date().toISOString(), glyph: reward.glyph || 'trophy' }
         ]
       }));
       updateUser({ points: data.pointsRemaining, coins: data.pointsRemaining });
@@ -112,11 +112,10 @@ export default function AllRewardsModal({ onClose, selected }: AllRewardsModalPr
         padding: '24px 16px', textAlign: 'center'
       }}>
         <div style={{ 
-          width: 80, height: 80, borderRadius: 24, 
+          width: 80, height: 80, borderRadius: HP_TOKENS.radiusLg, 
           background: cfg.bg,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           marginBottom: 20, border: `2px solid ${cfg.accent}30`,
-          boxShadow: `0 8px 24px ${cfg.glow}`
         }}>
           <HPGlyph name={icon} size={40} color={cfg.accent} />
         </div>
@@ -132,7 +131,7 @@ export default function AllRewardsModal({ onClose, selected }: AllRewardsModalPr
             onClick={onClose}
             disabled={redeeming}
             style={{
-              flex: 1, padding: '14px', borderRadius: 14, border: `1.5px solid ${HP_TOKENS.line}`,
+              flex: 1, padding: '14px', borderRadius: HP_TOKENS.radiusMd, border: `1.5px solid ${HP_TOKENS.line}`,
               background: HP_TOKENS.paper, color: HP_TOKENS.inkSoft,
               fontFamily: HP_FONT, fontWeight: 700, fontSize: 14,
               cursor: redeeming ? 'default' : 'pointer'
@@ -144,12 +143,11 @@ export default function AllRewardsModal({ onClose, selected }: AllRewardsModalPr
             onClick={executeRedeem}
             disabled={redeeming}
             style={{
-              flex: 1, padding: '14px', borderRadius: 14, border: 'none',
+              flex: 1, padding: '14px', borderRadius: HP_TOKENS.radiusMd, border: 'none',
               background: cfg.accent, color: '#fff',
-              fontFamily: HP_FONT, fontWeight: 800, fontSize: 14,
+              fontFamily: HP_FONT, fontWeight: 700, fontSize: 14,
               cursor: redeeming ? 'default' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              boxShadow: `0 4px 12px ${cfg.glow}`
             }}
           >
             {redeeming ? 'Memproses...' : 'Tukar'}

@@ -52,7 +52,7 @@ export default function DivisionTargetsView({ openModal }: Props) {
   const overallApprovalRate = totalTasks > 0 ? Math.round((totalApproved / totalTasks) * 100) : 0;
 
   const selectStyle: React.CSSProperties = {
-    padding: '8px 12px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.line}`,
+    padding: '8px 12px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.line}`,
     fontFamily: HP_FONT, fontSize: 12, fontWeight: 700, background: HP_TOKENS.card, outline: 'none',
     color: HP_TOKENS.ink,
   };
@@ -71,7 +71,7 @@ export default function DivisionTargetsView({ openModal }: Props) {
 
       <div style={{
         display: 'flex', alignItems: 'center', gap: 10,
-        background: HP_TOKENS.paper, borderRadius: 14, padding: '10px 14px', marginBottom: 16,
+        background: HP_TOKENS.paper, borderRadius: HP_TOKENS.radiusMd, padding: '10px 14px', marginBottom: 16,
         border: `1.5px solid ${HP_TOKENS.line}`,
       }}>
         <HPGlyph name="search" size={16} color={HP_TOKENS.blue} />
@@ -88,17 +88,17 @@ export default function DivisionTargetsView({ openModal }: Props) {
       {/* Summary */}
       <div style={{
         display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8, marginBottom: 16,
-        padding: '14px', borderRadius: 16, background: HP_TOKENS.lavenderSoft,
+        padding: '14px', borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.lavenderSoft,
         border: `1px solid ${HP_TOKENS.lavender}20`,
       }}>
         {[
           { label: 'Divisi', value: departments.length, color: HP_TOKENS.lavender },
           { label: 'Karyawan', value: totalHeadcount, color: HP_TOKENS.blue },
-          { label: 'KPI Aktif', value: totalKpis, color: '#8A6814' },
+          { label: 'KPI Aktif', value: totalKpis, color: HP_TOKENS.yellowDark },
           { label: 'Approval', value: `${overallApprovalRate}%`, color: HP_TOKENS.sage },
         ].map(s => (
           <div key={s.label} style={{ textAlign: 'center' }}>
-            <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 18, color: s.color }}>{s.value}</div>
+            <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 18, color: s.color }}>{s.value}</div>
             <div style={{ fontSize: 9, fontWeight: 700, color: HP_TOKENS.inkMute }}>{s.label}</div>
           </div>
         ))}
@@ -131,10 +131,10 @@ export default function DivisionTargetsView({ openModal }: Props) {
                   }}
                 >
                   <div style={{
-                    width: 40, height: 40, borderRadius: 12,
+                    width: 40, height: 40, borderRadius: HP_TOKENS.radiusSm,
                     background: isExpanded ? HP_TOKENS.lavender : HP_TOKENS.lineSoft,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontFamily: HP_FONT, fontWeight: 900, fontSize: 14,
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 14,
                     color: isExpanded ? '#fff' : HP_TOKENS.inkSoft,
                   }}>
                     {dept.department.charAt(0).toUpperCase()}
@@ -145,15 +145,15 @@ export default function DivisionTargetsView({ openModal }: Props) {
                       <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>👥 {dept.headcount}</span>
                       <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>🎯 {dept.totalKpis} KPI</span>
                       {dept.avgScore > 0 && (
-                        <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS[scoreTone], fontWeight: 800 }}>⭐ {dept.avgScore}%</span>
+                        <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS[scoreTone], fontWeight: 700 }}>⭐ {dept.avgScore}%</span>
                       )}
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <div style={{
-                      padding: '3px 10px', borderRadius: 8, fontSize: 10, fontWeight: 800,
+                      padding: '3px 10px', borderRadius: 8, fontSize: 10, fontWeight: 700,
                       background: approvalRate >= 70 ? HP_TOKENS.sageWash : approvalRate >= 40 ? HP_TOKENS.yellowSoft : HP_TOKENS.coralSoft,
-                      color: approvalRate >= 70 ? HP_TOKENS.sage : approvalRate >= 40 ? '#8A6814' : HP_TOKENS.coral,
+                      color: approvalRate >= 70 ? HP_TOKENS.sage : approvalRate >= 40 ? HP_TOKENS.yellowDark : HP_TOKENS.coral,
                       fontFamily: HP_FONT,
                     }}>
                       {approvalRate}%
@@ -183,7 +183,7 @@ export default function DivisionTargetsView({ openModal }: Props) {
                           className="hp-tap"
                           style={{
                             width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px',
-                            borderRadius: 10, background: HP_TOKENS.paper, border: `1px solid ${HP_TOKENS.lineSoft}`,
+                            borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.paper, border: `1px solid ${HP_TOKENS.lineSoft}`,
                             cursor: 'pointer', textAlign: 'left',
                           }}
                         >
@@ -195,17 +195,17 @@ export default function DivisionTargetsView({ openModal }: Props) {
                           <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                             {u.kpiCount > 0 && (
                               <span style={{
-                                padding: '2px 6px', borderRadius: 4, fontSize: 9, fontWeight: 800,
-                                background: HP_TOKENS.yellowSoft, color: '#8A6814', fontFamily: HP_FONT,
+                                padding: '2px 6px', borderRadius: 4, fontSize: 9, fontWeight: 700,
+                                background: HP_TOKENS.yellowSoft, color: HP_TOKENS.yellowDark, fontFamily: HP_FONT,
                               }}>
                                 {u.kpiCount} KPI
                               </span>
                             )}
                             {u.avgScore !== null && (
                               <span style={{
-                                padding: '2px 6px', borderRadius: 4, fontSize: 9, fontWeight: 800,
+                                padding: '2px 6px', borderRadius: 4, fontSize: 9, fontWeight: 700,
                                 background: u.avgScore >= 80 ? HP_TOKENS.sageWash : u.avgScore >= 50 ? HP_TOKENS.yellowSoft : HP_TOKENS.coralSoft,
-                                color: u.avgScore >= 80 ? HP_TOKENS.sage : u.avgScore >= 50 ? '#8A6814' : HP_TOKENS.coral,
+                                color: u.avgScore >= 80 ? HP_TOKENS.sage : u.avgScore >= 50 ? HP_TOKENS.yellowDark : HP_TOKENS.coral,
                                 fontFamily: HP_FONT,
                               }}>
                                 {u.avgScore}%

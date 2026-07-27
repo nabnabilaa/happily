@@ -62,13 +62,13 @@ export default function CentralNudgeOverlay({ nudge, onClose }: CentralNudgeOver
       <Confetti show={showConfetti} />
       
       <div style={{
-        background: nudge?.type === 'kudos' ? '#FFBE0B' : '#38bdf8',
+        background: nudge?.type === 'kudos' ? HP_TOKENS.yellow : HP_TOKENS.info,
         borderRadius: '32px',
         padding: '24px',
         width: '100%',
         maxWidth: '320px',
         textAlign: 'center',
-        boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
+        boxShadow: HP_TOKENS.shadowLg,
         transform: visible ? 'scale(1) translateY(0)' : 'scale(0.9) translateY(20px)',
         transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
         position: 'relative',
@@ -91,11 +91,11 @@ export default function CentralNudgeOverlay({ nudge, onClose }: CentralNudgeOver
         </div>
 
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ ...HP_TEXT.tiny, color: 'rgba(255,255,255,0.9)', textTransform: 'uppercase', letterSpacing: 1.5, fontWeight: 900, marginBottom: 8 }}>
+          <div style={{ ...HP_TEXT.tiny, color: 'rgba(255,255,255,0.9)', textTransform: 'uppercase', letterSpacing: 1.5, fontWeight: 700, marginBottom: 8 }}>
             {nudge?.type === 'kudos' ? '✨ Apresiasi Baru ✨' : '👀 Senggolan Masuk'}
           </div>
           
-          <div style={{ fontSize: '22px', fontWeight: 900, marginBottom: 16, lineHeight: 1.3 }}>
+          <div style={{ fontSize: '22px', fontWeight: 700, marginBottom: 16, lineHeight: 1.3 }}>
             {nudge?.type === 'kudos' 
               ? `Wah! Kamu dapat pesan manis dari ${nudge?.from}!` 
               : `${nudge?.from} baru saja menyenggolmu!`}
@@ -124,12 +124,11 @@ export default function CentralNudgeOverlay({ nudge, onClose }: CentralNudgeOver
               borderRadius: '100px',
               border: 'none',
               background: '#fff',
-              color: nudge?.type === 'kudos' ? '#FF9F1C' : '#38bdf8',
+              color: nudge?.type === 'kudos' ? HP_TOKENS.yellowDark : HP_TOKENS.info,
               fontFamily: HP_FONT,
-              fontWeight: 900,
+              fontWeight: 700,
               fontSize: '16px',
               cursor: 'pointer',
-              boxShadow: '0 8px 16px rgba(0,0,0,0.1)'
             }}
           >
             {nudge?.type === 'kudos' ? 'Yeay, Terima Kasih! 💛' : 'Oke, Siap! 🚀'}

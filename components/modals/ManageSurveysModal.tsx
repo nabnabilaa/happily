@@ -187,7 +187,7 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
   };
 
   const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '12px 14px', borderRadius: 12,
+    width: '100%', padding: '12px 14px', borderRadius: HP_TOKENS.radiusSm,
     border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 14,
     outline: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink, boxSizing: 'border-box',
   };
@@ -199,20 +199,20 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
         <div style={{ marginTop: 4 }}>
           {/* Create button */}
           <button onClick={() => { resetBuilder(); setView('builder'); }} className="hp-tap" style={{
-            width: '100%', padding: '16px', borderRadius: 16, border: 'none',
+            width: '100%', padding: '16px', borderRadius: HP_TOKENS.radiusMd, border: 'none',
             background: `${HP_TOKENS.lavender}`,
-            color: '#F4F7F9', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
+            color: HP_TOKENS.onPrimary, fontFamily: HP_FONT, fontWeight: 700, fontSize: 15, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-            marginBottom: 20, boxShadow: '0 6px 20px rgba(123,107,181,0.3)',
+            marginBottom: 20,
           }}>
-            <HPGlyph name="plus" size={18} color="#F4F7F9" />
+            <HPGlyph name="plus" size={18} color={HP_TOKENS.onPrimary} />
             Buat Survey Baru
           </button>
 
           {loading ? (
             <div style={{ textAlign: 'center', padding: 30, color: HP_TOKENS.inkMute }}>Memuat...</div>
           ) : surveys.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px 20px', background: HP_TOKENS.lineSoft, borderRadius: 20, border: `1.5px dashed ${HP_TOKENS.line}` }}>
+            <div style={{ textAlign: 'center', padding: '40px 20px', background: HP_TOKENS.lineSoft, borderRadius: HP_TOKENS.radius, border: `1.5px dashed ${HP_TOKENS.line}` }}>
               <div style={{ fontSize: 32, marginBottom: 8 }}>📝</div>
               <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.inkMute }}>Belum ada survey</div>
             </div>
@@ -228,7 +228,7 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
                     <HPCard key={sr.id} padding={14} style={{ border: `1.5px solid ${sr.status === 'active' ? `${HP_TOKENS.sage}40` : HP_TOKENS.line}` }}>
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                         <div style={{
-                          width: 42, height: 42, borderRadius: 12, flexShrink: 0,
+                          width: 42, height: 42, borderRadius: HP_TOKENS.radiusSm, flexShrink: 0,
                           background: sr.status === 'active' ? HP_TOKENS.lavenderSoft : HP_TOKENS.lineSoft,
                           display: 'flex', alignItems: 'center', justifyContent: 'center'
                         }}>
@@ -238,7 +238,7 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <div style={{ ...HP_TEXT.h, fontSize: 14 }}>{sr.title}</div>
                             <div style={{
-                              padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 900,
+                              padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 700,
                               background: sr.status === 'active' ? HP_TOKENS.sageWash : HP_TOKENS.lineSoft,
                               color: sr.status === 'active' ? HP_TOKENS.sage : HP_TOKENS.inkMute,
                               fontFamily: HP_FONT
@@ -270,24 +270,24 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
                       <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
                         {(sr.response_count || 0) > 0 && (
                           <button onClick={() => openModal?.('survey_results', { surveyId: sr.id })} className="hp-tap" style={{
-                            flex: 1, padding: '8px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.blue}40`,
+                            flex: 1, padding: '8px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.blue}40`,
                             background: HP_TOKENS.blueSoft, color: HP_TOKENS.blue,
-                            fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
+                            fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, cursor: 'pointer',
                           }}>
                             📊 Lihat Hasil
                           </button>
                         )}
                         <button onClick={() => loadSurveyForEdit(sr)} className="hp-tap" style={{
-                          flex: 1, padding: '8px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.line}`,
+                          flex: 1, padding: '8px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.line}`,
                           background: HP_TOKENS.card, color: HP_TOKENS.inkSoft,
-                          fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
+                          fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, cursor: 'pointer',
                         }}>
                           ✏️ Edit
                         </button>
                         <button onClick={() => deleteSurvey(sr.id)} className="hp-tap" style={{
-                          padding: '8px 12px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.coral}40`,
+                          padding: '8px 12px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.coral}40`,
                           background: HP_TOKENS.coralSoft, color: HP_TOKENS.coral,
-                          fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
+                          fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, cursor: 'pointer',
                         }}>
                           🗑
                         </button>
@@ -369,8 +369,8 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
             {showDeptDropdown && (
               <div style={{
                 position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, zIndex: 10,
-                background: HP_TOKENS.card, borderRadius: 14, padding: 12,
-                boxShadow: '0 4px 20px rgba(26,29,35,0.1)', border: `1.5px solid ${HP_TOKENS.blue}30`,
+                background: HP_TOKENS.card, borderRadius: HP_TOKENS.radiusMd, padding: 12,
+ border: `1.5px solid ${HP_TOKENS.blue}30`,
               }}>
                 <div 
                   onClick={() => { setTargetAudience('company'); setTargetDepts([]); setShowDeptDropdown(false); }}
@@ -386,11 +386,11 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
                 
                 <div style={{ height: 1, background: HP_TOKENS.lineSoft, margin: '8px 0' }} />
                 
-                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 800, marginBottom: 8 }}>👥 DIVISI TERTENTU:</div>
+                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 700, marginBottom: 8 }}>👥 DIVISI TERTENTU:</div>
                 
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 10,
-                  background: HP_TOKENS.blueWash, borderRadius: 10, padding: '8px 12px', marginBottom: 12,
+                  background: HP_TOKENS.blueWash, borderRadius: HP_TOKENS.radiusSm, padding: '8px 12px', marginBottom: 12,
                   border: `1px solid ${HP_TOKENS.blue}40`,
                 }}>
                   <HPGlyph name="search" size={14} color={HP_TOKENS.blue} />
@@ -440,22 +440,22 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
 
         {/* Questions */}
         <div>
-          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, letterSpacing: 1, marginBottom: 10 }}>
+          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, letterSpacing: 1, marginBottom: 10 }}>
             PERTANYAAN ({questions.length})
           </div>
 
           {questions.map((q, idx) => (
             <div key={q.id} style={{
-              padding: '14px', borderRadius: 16, marginBottom: 10,
+              padding: '14px', borderRadius: HP_TOKENS.radiusMd, marginBottom: 10,
               background: HP_TOKENS.card, border: `1.5px solid ${HP_TOKENS.line}`,
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                 <div style={{
                   width: 24, height: 24, borderRadius: 8, background: HP_TOKENS.lavenderSoft,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 11, fontWeight: 900, color: HP_TOKENS.lavender, fontFamily: HP_FONT
+                  fontSize: 11, fontWeight: 700, color: HP_TOKENS.lavender, fontFamily: HP_FONT
                 }}>{idx + 1}</div>
-                <div style={{ flex: 1, ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800 }}>
+                <div style={{ flex: 1, ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>
                   {QUESTION_TYPES.find(t => t.key === q.type)?.icon} {QUESTION_TYPES.find(t => t.key === q.type)?.label}
                 </div>
                 <div style={{ display: 'flex', gap: 4 }}>
@@ -482,7 +482,7 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 8 }}>
                   {q.options.map((opt, oi) => (
                     <div key={oi} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                      <div style={{ width: 14, height: 14, borderRadius: 7, border: `2px solid ${HP_TOKENS.line}` }} />
+                      <div style={{ width: 14, height: 14, borderRadius: '50%', border: `2px solid ${HP_TOKENS.line}` }} />
                       <input value={opt} onChange={e => updateOption(q.id, oi, e.target.value)} style={{ ...inputStyle, flex: 1, padding: '8px 12px', fontSize: 13 }} />
                       {(q.options?.length || 0) > 2 && (
                         <button onClick={() => removeOption(q.id, oi)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}>
@@ -502,13 +502,12 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
               {/* Required toggle */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <button onClick={() => updateQuestion(q.id, 'required', !q.required)} style={{
-                  width: 34, height: 18, borderRadius: 9, border: 'none', cursor: 'pointer', position: 'relative',
+                  width: 34, height: 18, borderRadius: HP_TOKENS.radiusXs, border: 'none', cursor: 'pointer', position: 'relative',
                   background: q.required ? HP_TOKENS.sage : HP_TOKENS.lineSoft, transition: '0.2s',
                 }}>
                   <div style={{
-                    width: 14, height: 14, borderRadius: 7, background: HP_TOKENS.card,
+                    width: 14, height: 14, borderRadius: '50%', background: HP_TOKENS.card,
                     position: 'absolute', top: 2, left: q.required ? 18 : 2, transition: '0.2s',
-                    boxShadow: '0 1px 2px rgba(26,29,35,0.2)',
                   }} />
                 </button>
                 <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>Wajib diisi</span>
@@ -518,14 +517,14 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
 
           {/* Add question buttons */}
           <div style={{
-            padding: '12px', borderRadius: 16, border: `1.5px dashed ${HP_TOKENS.lavender}50`,
+            padding: '12px', borderRadius: HP_TOKENS.radiusMd, border: `1.5px dashed ${HP_TOKENS.lavender}50`,
             background: HP_TOKENS.lavenderSoft,
           }}>
-            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.lavender, fontWeight: 800, marginBottom: 8 }}>+ TAMBAH PERTANYAAN</div>
+            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.lavender, fontWeight: 700, marginBottom: 8 }}>+ TAMBAH PERTANYAAN</div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {QUESTION_TYPES.map(t => (
                 <button key={t.key} onClick={() => addQuestion(t.key)} className="hp-tap" style={{
-                  padding: '8px 12px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.lavender}30`,
+                  padding: '8px 12px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.lavender}30`,
                   background: HP_TOKENS.card, fontFamily: HP_FONT, fontWeight: 700, fontSize: 11,
                   color: HP_TOKENS.ink, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
                 }}>
@@ -539,20 +538,20 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
         {/* Actions */}
         <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={() => { resetBuilder(); setView('list'); }} style={{
-            flex: 1, padding: '14px', borderRadius: 14, border: `1.5px solid ${HP_TOKENS.line}`,
+            flex: 1, padding: '14px', borderRadius: HP_TOKENS.radiusMd, border: `1.5px solid ${HP_TOKENS.line}`,
             background: HP_TOKENS.card, color: HP_TOKENS.inkSoft,
-            fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer',
+            fontFamily: HP_FONT, fontWeight: 700, fontSize: 14, cursor: 'pointer',
           }}>
             Batal
           </button>
           <button onClick={saveSurvey} disabled={!title || questions.length === 0 || saving} className="hp-tap" style={{
-            flex: 2, padding: '14px', borderRadius: 14, border: 'none',
+            flex: 2, padding: '14px', borderRadius: HP_TOKENS.radiusMd, border: 'none',
             background: (!title || questions.length === 0 || saving) ? HP_TOKENS.lineSoft : HP_TOKENS.lavender,
             color: (!title || questions.length === 0 || saving) ? HP_TOKENS.inkMute : '#fff',
-            fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer',
+            fontFamily: HP_FONT, fontWeight: 700, fontSize: 14, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           }}>
-            <HPGlyph name={editingId ? "sparkle" : "plus"} size={16} color="#F4F7F9" />
+            <HPGlyph name={editingId ? "sparkle" : "plus"} size={16} color={HP_TOKENS.onPrimary} />
             {saving ? "Menyimpan..." : editingId ? "Update Survey" : "Terbitkan Survey"}
           </button>
         </div>

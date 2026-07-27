@@ -1,5 +1,21 @@
 @AGENTS.md
 
+# Design system — WAJIB DIBACA SEBELUM MENULIS UI
+
+Baca `DESIGN_SYSTEM.md` sebelum membuat atau mengubah komponen visual apa pun.
+
+Ringkasnya:
+- Jangan pernah hardcode hex. Semua warna dari `HP_TOKENS`.
+- Jangan set `fontWeight` manual. Pakai role dari `HP_TEXT` (skala berhenti di 700).
+- Kedalaman dari nilai permukaan + garis rambut, bukan shadow.
+- Susun dari `@/components/ui` (`Stack`, `Row`, `Grid`, `HPCard`, `HPButton`, `ListRow`, …),
+  jangan tulis objek flex inline sendiri.
+- Motion diimpor dari `@/components/ui`, bukan langsung dari `motion/react`.
+
+Jalankan `npm run check` sebelum selesai — ini type-check plus gagal kalau ada
+regresi token. Kalau kamu memigrasi file lama, jalankan
+`npm run check:design:update` untuk menurunkan baseline lalu commit.
+
 # Arsitektur Role Screen — WAJIB DIBACA SEBELUM GENERATE KODE
 
 ## Prinsip utama: Fitur di shared component, bukan di role screen

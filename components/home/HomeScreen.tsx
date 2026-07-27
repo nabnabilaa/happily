@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import { useHP, calculateLevelProgress } from "@/lib/HPContext";
-import { HP_TOKENS, HP_FONT, HP_MOODS, HP_ENERGY } from "@/lib/constants";
+import { HP_TOKENS, HP_TEXT, HP_MOODS, HP_ENERGY } from "@/lib/constants";
 import { generateAIInsights } from "@/lib/aiInsights";
 import { isMidDayWindow } from "@/lib/timeUtils";
 
@@ -13,7 +13,6 @@ import { useHabitManager } from "@/hooks/useHabitManager";
 
 // Components
 import HPGlyph from "@/components/ui/HPGlyph";
-import BlobBackground from "@/components/home/BlobBackground";
 import Confetti from "@/components/home/Confetti";
 import EmotionalHero from "@/components/home/EmotionalHero";
 import SectionHeader from "@/components/home/SectionHeader";
@@ -31,6 +30,7 @@ import NotificationBanner from "@/components/pwa/NotificationBanner";
 import CentralNudgeOverlay from "@/components/ui/CentralNudgeOverlay";
 import MorningPlanPopup from "@/components/ui/MorningPlanPopup";
 import HPCard from "@/components/ui/HPCard";
+import { PageGrid, ActionList, Stack, Row, IconBadge } from "@/components/ui";
 
 // Extracted
 import UserProfileCard from "@/components/home/UserProfileCard";
@@ -135,283 +135,276 @@ export default function HomeScreen({ openModal }: any) {
   };
 
   return (
-    <div style={{ position: 'relative', minHeight: '100%', paddingBottom: 120, fontFamily: HP_FONT }}>
-      <BlobBackground colors={[HP_TOKENS.primaryWash, HP_TOKENS.card, HP_TOKENS.paper]}/>
+    <div style={{ position: 'relative', minHeight: '100%' }}>
       <Confetti show={confetti}/>
       <CelebrationOverlay show={celebrate.show} points={celebrate.points} message={celebrate.message} onComplete={() => setCelebrate({show: false})} />
       <CentralNudgeOverlay nudge={centralNudge} onClose={() => setCentralNudge(null)} />
       <MorningPlanPopup planText={yesterdayPlan} userId={rawUser?.id} />
 
-      <div style={{ position: 'relative', zIndex: 1, padding: '0 16px', paddingTop: 72 }} className="hp-stagger">
-        
-        <NotificationBanner />
+      {/*
+        Layout note: the order below is deliberate and is the whole point of
+        this screen. `main` is the work — what am I doing today, and how far
+        along am I. `rail` is everything that merely *informs* that work.
 
-        {/* 🕛 Mid-Day Check-In Banner */}
-        {isMidDayWindow() ? (
-              <div 
+        Previously this was one column of sixteen equal-weight cards with the
+        task list buried at position twelve, under the profile card and a
+        "Riwayat & Logbook" button. Nothing said what mattered.
+      */}
+      <div style={{ position: 'relative', zIndex: 1 }} className="hp-stagger">
+        <PageGrid
+          main={<>
+            <NotificationBanner />
+
+            {/* Mid-day check-in — time-sensitive, so it outranks everything
+                while its window is open, and disappears entirely after. */}
+            {isMidDayWindow() ? (
+              <HPCard
                 onClick={() => openModal('work_checkin')}
-                className="hp-tap"
-                style={{
-                  background: `${HP_TOKENS.yellowWash}`,
-                  border: `1.5px solid ${HP_TOKENS.yellow}60`,
-                  borderRadius: 20,
-                  padding: '16px',
-                  marginBottom: 16,
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  cursor: 'pointer',
-                  boxShadow: `0 4px 16px ${HP_TOKENS.yellow}15`
-                }}
+                padding={15}
+                style={{ background: HP_TOKENS.yellowWash, borderColor: HP_TOKENS.yellowSoft }}
+                ariaLabel="Mid-day check-in siap. Catat progres tengah hari"
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                  <div style={{ 
-                    width: 44, height: 44, borderRadius: 14, 
-                    background: HP_TOKENS.yellow, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: '0 4px 12px rgba(26,29,35,0.02)'
-                  }}>
-                    <HPGlyph name="book" size={20} color={HP_TOKENS.ink} />
-                  </div>
-                  <div>
-                    <div style={{ color: HP_TOKENS.ink, fontSize: 15, fontWeight: 800 }}>Mid-Day Check-in Siap!</div>
-                    <div style={{ color: HP_TOKENS.inkSoft, fontSize: 13, marginTop: 2 }}>
-                      Catat progresmu di pertengahan hari.
-                    </div>
-                  </div>
+                <Row gap={3}>
+                  <IconBadge size={40} tone={HP_TOKENS.yellowSoft}>
+                    <HPGlyph name="book" size={18} color={HP_TOKENS.yellowDark} />
+                  </IconBadge>
+                  <Stack gap={0} style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ ...HP_TEXT.sub, fontSize: 14.5 }}>Mid-day check-in siap</span>
+                    <span style={{ ...HP_TEXT.small }}>Catat progresmu di pertengahan hari</span>
+                  </Stack>
+                  <HPGlyph name="chevronRight" size={17} color={HP_TOKENS.inkFade} />
+                </Row>
+              </HPCard>
+            ) : null}
+
+            <CoachNudgeBanner coachNudge={coachNudge} beeMood={beeMood as any} openModal={openModal} />
+
+            {/* Time-based reminder. Announced politely so a screen reader picks
+                it up when it appears without interrupting the current task. */}
+            {reminder && (() => {
+          const REMINDER = {
+            break:    { glyph: 'pause',  fg: HP_TOKENS.warning, bg: HP_TOKENS.warningSoft, title: 'Waktunya istirahat' },
+            meeting:  { glyph: 'people', fg: HP_TOKENS.primary, bg: HP_TOKENS.primarySoft, title: 'Meeting sebentar lagi' },
+            clockout: { glyph: 'moon',   fg: HP_TOKENS.info,    bg: HP_TOKENS.infoSoft,    title: 'Bentar lagi pulang' },
+          } as const;
+          const r = REMINDER[reminder.type as keyof typeof REMINDER] ?? REMINDER.clockout;
+
+          return (
+            <HPCard padding={15} role="status" aria-live="polite" style={{ background: r.bg, borderColor: 'transparent' }}>
+              <div className="hp-form-row" style={{ alignItems: 'center', gap: 13 }}>
+                <div
+                  aria-hidden
+                  style={{
+                    width: 40, height: 40, borderRadius: HP_TOKENS.radiusSm, flexShrink: 0,
+                    background: HP_TOKENS.card,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
+                  <HPGlyph name={r.glyph} size={18} color={r.fg} />
                 </div>
-                <HPGlyph name="chevron-right" size={20} color={HP_TOKENS.inkSoft} />
-              </div>
-        ) : null}
 
-        <WellbeingGauge state={state} user={user} openModal={openModal} />
-
-        <UserProfileCard user={user} levelProgress={levelProgress} openModal={openModal} />
-
-        <CoachNudgeBanner coachNudge={coachNudge} beeMood={beeMood as any} openModal={openModal} />
-
-        {/* Attendance & Schedule Card */}
-        <HPCard padding={20} style={{ marginTop: 16, border: `1.5px solid ${HP_TOKENS.lineSoft}` }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-            <HPGlyph name="calendar" size={18} color={HP_TOKENS.inkSoft} />
-            <div style={{ fontSize: 16, fontWeight: 800 }}>Jadwal & Kehadiran</div>
-          </div>
-          
-          <div style={{ 
-            display: 'flex', gap: 12, padding: '12px 16px', borderRadius: 16, 
-            background: HP_TOKENS.paper, border: `1px solid ${HP_TOKENS.line}`,
-            marginBottom: 16
-          }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ color: HP_TOKENS.inkMute, fontWeight: 700, fontSize: 11, marginBottom: 2 }}>JAM KERJA</div>
-              <div style={{ fontSize: 13, fontWeight: 800 }}>
-                {state.workSchedule?.start || '08:00'} - {state.workSchedule?.end || '17:00'}
-              </div>
-            </div>
-            <div style={{ width: 1, background: HP_TOKENS.line }} />
-            <div style={{ flex: 1 }}>
-              <div style={{ color: HP_TOKENS.inkMute, fontWeight: 700, fontSize: 11, marginBottom: 2 }}>ISTIRAHAT</div>
-              <div style={{ fontSize: 13, fontWeight: 800 }}>
-                {state.workSchedule?.breakStart} - {state.workSchedule?.breakEnd}
-              </div>
-            </div>
-          </div>
-
-          <AttendanceWidget openModal={openModal} />
-        </HPCard>
-
-        {/* Logbook */}
-        <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <button onClick={() => openModal('logbook')} className="hp-tap" style={{
-            width: '100%', padding: '16px', borderRadius: 100,
-            background: 'transparent', color: HP_TOKENS.inkMute,
-            border: `2px solid var(--hp-border)`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-            fontFamily: HP_FONT, fontWeight: 700, fontSize: 14,
-          }}>
-            <HPGlyph name="book" size={18} color={HP_TOKENS.inkMute}/>
-            <span>Lihat Riwayat & Logbook Calendar</span>
-          </button>
-        </div>
-
-        {/* HERO — Emotional check-in */}
-        <div style={{ marginTop: 16 }}>
-          <EmotionalHero 
-            state={state} 
-            moodObj={moodObj} 
-            energyObj={energyObj} 
-            onOpenCheckIn={() => openModal('checkin')}
-            showMidDay={isMidDayWindow()}
-            onOpenMidDay={() => openModal('work_checkin')}
-          />
-        </div>
-
-        {/* Mindful Breathing Reset Card */}
-        <div style={{ marginTop: 16 }}>
-          <style dangerouslySetInnerHTML={{__html: `
-            @media (max-width: 500px) {
-              .hp-breathing-mobile { flex-direction: column !important; text-align: center !important; }
-            }
-          `}} />
-          <HPCard 
-            padding={16} 
-            style={{ 
-              background: `${HP_TOKENS.sageWash}`, 
-              border: `1.5px solid ${HP_TOKENS.sage}20`,
-              boxShadow: '0 8px 24px rgba(74, 124, 89, 0.04)',
-              position: 'relative',
-              overflow: 'hidden'
-            }}
-          >
-            <div className="hp-breathing-mobile" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
-              <div style={{ 
-                width: 44, height: 44, borderRadius: 14, 
-                background: HP_TOKENS.card, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(26,29,35,0.02)', fontSize: 20
-              }}>
-                🧘‍♂️
-              </div>
-              <div style={{ flex: 1, minWidth: 240 }}>
-                <div style={{ fontSize: 14, fontWeight: 800, color: HP_TOKENS.ink }}>
-                  Butuh Jeda Sejenak?
-                </div>
-                <div style={{ fontSize: 12, color: HP_TOKENS.inkSoft, marginTop: 2, lineHeight: 1.4 }}>
-                  Latihan bernapas Box Breathing 1 menit untuk menurunkan stress dan mengembalikan fokusmu.
-                </div>
-              </div>
-              <button 
-                onClick={() => openModal('pause')}
-                className="hp-tap hp-btn-mobile-full"
-                style={{
-                  padding: '10px 16px', borderRadius: 12, border: 'none',
-                  background: HP_TOKENS.sage, color: '#F4F7F9',
-                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
-                  boxShadow: `0 4px 12px ${HP_TOKENS.sage}30`,
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                Mulai Reset
-              </button>
-            </div>
-          </HPCard>
-        </div>
-
-        {/* Smart Reminders */}
-        {reminder && (
-          <div style={{ marginTop: 16 }}>
-            <HPCard padding={16} style={{ 
-              background: reminder.type === 'break' ? HP_TOKENS.yellowWash : HP_TOKENS.sageWash, 
-              border: `1.5px solid ${reminder.type === 'break' ? HP_TOKENS.yellow : HP_TOKENS.sage}`,
-              animation: 'hpPulse 3s infinite'
-            }}>
-              <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-                <div style={{ 
-                  width: 44, height: 44, borderRadius: 14, 
-                  background: reminder.type === 'break' ? HP_TOKENS.yellow : reminder.type === 'meeting' ? HP_TOKENS.blue : HP_TOKENS.sage,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20
-                }}>
-                  {reminder.type === 'break' ? '🥪' : reminder.type === 'meeting' ? '🎥' : '🌙'}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 15, fontWeight: 800 }}>
-                    {reminder.type === 'break' ? 'Waktunya Istirahat!' : 'Bentar lagi Pulang!'}
-                  </div>
-                  <div style={{ fontSize: 13, marginTop: 2 }}>
-                    {reminder.type === 'break' && `${reminder.mins} menit lagi istirahat. Yuk, siap-siap rehat sejenak! 🌿`}
-                    {reminder.type === 'meeting' && `${reminder.mins} menit lagi meeting dengan ${reminder.sessionWith}. Link Meet sudah siap! 🚀`}
-                    {reminder.type === 'clockout' && `${reminder.mins} menit lagi jam kerja selesai. Yuk, persiapkan refleksi Tutup Hari kamu! ✨`}
-                  </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ ...HP_TEXT.sub, fontSize: 14 }}>{r.title}</div>
+                  <p style={{ ...HP_TEXT.small, marginTop: 2 }}>
+                    {reminder.type === 'break' && `${reminder.mins} menit lagi istirahat. Siap-siap rehat sejenak.`}
+                    {reminder.type === 'meeting' && `${reminder.mins} menit lagi meeting dengan ${reminder.sessionWith}.`}
+                    {reminder.type === 'clockout' && `${reminder.mins} menit lagi jam kerja selesai. Siapkan refleksi tutup hari.`}
+                  </p>
                 </div>
 
                 {reminder.type === 'clockout' && (
-                  <button 
+                  <button
                     onClick={() => openModal('reflect')}
-                    className="hp-tap"
-                    style={{ 
-                      padding: '8px 14px', borderRadius: 10, border: 'none', 
-                      background: HP_TOKENS.sage, color: '#F4F7F9', 
-                      fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer'
+                    className="hp-tap hp-btn-mobile-full"
+                    style={{
+                      flexShrink: 0, minHeight: 40, padding: '0 16px',
+                      borderRadius: HP_TOKENS.radiusPill,
+                      background: HP_TOKENS.card, color: r.fg,
+                      fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap',
                     }}
                   >
-                    Tutup Hari
+                    Tutup hari
                   </button>
                 )}
                 {reminder.type === 'meeting' && (
-                  <button 
-                    onClick={() => state.coaching?.meetLink && window.open(state.coaching.meetLink, '_blank')}
-                    className="hp-tap"
-                    style={{ 
-                      padding: '8px 14px', borderRadius: 10, border: 'none', 
-                      background: HP_TOKENS.blue, color: '#F4F7F9', 
-                      fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', gap: 6
+                  <button
+                    onClick={() => state.coaching?.meetLink && window.open(state.coaching.meetLink, '_blank', 'noopener,noreferrer')}
+                    className="hp-tap hp-btn-mobile-full"
+                    style={{
+                      flexShrink: 0, minHeight: 40, padding: '0 16px',
+                      borderRadius: HP_TOKENS.radiusPill,
+                      background: HP_TOKENS.card, color: r.fg,
+                      fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap',
+                      display: 'flex', alignItems: 'center', gap: 6,
                     }}
                   >
-                    <HPGlyph name="video" size={12} color="#F4F7F9" />
+                    <HPGlyph name="chat" size={13} color="currentColor" />
                     Join Meet
                   </button>
                 )}
               </div>
             </HPCard>
-          </div>
-        )}
+          );
+        })()}
 
-        <CoworkingWidget openModal={openModal} />
+            {/* ── The actual work, in the order you do it ────────────────── */}
 
-        <div id="task-section">
-          <TaskHarianWidget 
-            openModal={openModal} 
-            onTaskComplete={(taskName?: string) => {
-              setConfetti(true);
-              setCelebrate({show: true, points: 50, message: taskName ? `Selesai: ${taskName}` : "Hebat! Satu langkah lebih dekat."});
-              setTimeout(() => setConfetti(false), 1200);
-            }} 
-          />
-        </div>
-
-        <DailyChallengeWidget 
-          openModal={openModal} 
-          onClaimReward={(points: number, title: string) => {
-            setConfetti(true);
-            setCelebrate({show: true, points, message: `Misi Selesai: ${title}`});
-            setTimeout(() => setConfetti(false), 1500);
-          }}
-        />
-
-        <SurveySection openModal={openModal} />
-
-        {/* Daily Training Habits */}
-        <div id="daily-training-section" style={{ marginTop: 24 }}>
-          <SectionHeader 
-            icon="leaf" 
-            label="Daily Training" 
-            action="Settings"
-            onAction={() => openModal('manage_habits')}
-          />
-          {(!state.habits || state.habits.length === 0) ? (
-            <HabitEmptyState openModal={openModal} />
-          ) : (
-            <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', alignItems: 'stretch' }}>
-              {state.habits.map((h: any, i: number) => (
-                <div key={i} style={{ minWidth: 260, flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
-                  <HabitCell 
-                    h={h} 
-                    onToggle={(date, isToday, done) => handleHabitDayClick(h.name, date, isToday, done)}
-                    onQuickComplete={(date, isToday, wasDone, newDone) => handleQuickComplete(h.name, date, isToday, wasDone, newDone)}
-                    onFinish={() => handleFinishTraining(h.name)}
-                  />
-                </div>
-              ))}
+            <div id="task-section">
+              <TaskHarianWidget
+                openModal={openModal}
+                onTaskComplete={(taskName?: string) => {
+                  setConfetti(true);
+                  setCelebrate({show: true, points: 50, message: taskName ? `Selesai: ${taskName}` : "Hebat! Satu langkah lebih dekat."});
+                  setTimeout(() => setConfetti(false), 1200);
+                }}
+              />
             </div>
-          )}
-        </div>
 
-        {/* Professional Growth */}
-        <div style={{ marginTop: 24 }}>
-          <SectionHeader icon="heart" label="AI Coach Insights" />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {aiInsights.map((ins, i) => (
-              <InsightCard key={i} ins={ins} idx={i} onClick={() => handleInsightClick(ins.action)} />
-            ))}
-          </div>
-        </div>
+            <DailyChallengeWidget
+              openModal={openModal}
+              onClaimReward={(points: number, title: string) => {
+                setConfetti(true);
+                setCelebrate({show: true, points, message: `Misi Selesai: ${title}`});
+                setTimeout(() => setConfetti(false), 1500);
+              }}
+            />
 
+            {/* Daily training habits */}
+            <section id="daily-training-section">
+              <SectionHeader
+                icon="leaf"
+                label="Daily Training"
+                action="Atur"
+                onAction={() => openModal('manage_habits')}
+              />
+              {(!state.habits || state.habits.length === 0) ? (
+                <HabitEmptyState openModal={openModal} />
+              ) : (
+                <div
+                  className="hp-scroll-hidden"
+                  style={{
+                    display: 'flex', gap: 12, overflowX: 'auto', alignItems: 'stretch',
+                    paddingBottom: 4, WebkitOverflowScrolling: 'touch',
+                    scrollSnapType: 'x proximity',
+                  }}
+                >
+                  {state.habits.map((h: any, i: number) => (
+                    <div
+                      key={i}
+                      style={{ minWidth: 252, flexShrink: 0, display: 'flex', flexDirection: 'column', scrollSnapAlign: 'start' }}
+                    >
+                      <HabitCell
+                        h={h}
+                        onToggle={(date, isToday, done) => handleHabitDayClick(h.name, date, isToday, done)}
+                        onQuickComplete={(date, isToday, wasDone, newDone) => handleQuickComplete(h.name, date, isToday, wasDone, newDone)}
+                        onFinish={() => handleFinishTraining(h.name)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* Live coworking rooms — real content, not a shortcut, so it keeps
+                its own block rather than collapsing into the action list. */}
+            <CoworkingWidget openModal={openModal} />
+
+            <SurveySection openModal={openModal} />
+          </>}
+
+          rail={<>
+            {/* ── Context: where you stand, not what you do ─────────────── */}
+
+            {/* Identity first. Level, streak and points are what you look up
+                here, so they lead the rail rather than sitting under four
+                cards where they get scrolled past. */}
+            <UserProfileCard user={user} levelProgress={levelProgress} openModal={openModal} />
+
+            {/* Attendance is the one rail item with a daily action in it, so it
+                comes next — and on a phone it lands right after the task list. */}
+            <HPCard padding={16}>
+              <SectionHeader tight icon="calendar" label="Jadwal & Kehadiran" />
+
+              <Row
+                gap={0}
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: HP_TOKENS.radiusMd,
+                  background: HP_TOKENS.sunken,
+                  marginBottom: 12,
+                }}
+              >
+                <Stack gap={0} style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ ...HP_TEXT.tiny }}>Jam kerja</span>
+                  <span style={{ ...HP_TEXT.bodyStrong, fontSize: 13.5, marginTop: 2, fontVariantNumeric: 'tabular-nums' }}>
+                    {state.workSchedule?.start || '08:00'} – {state.workSchedule?.end || '17:00'}
+                  </span>
+                </Stack>
+                <div style={{ width: 1, alignSelf: 'stretch', background: HP_TOKENS.line, margin: '0 14px' }} />
+                <Stack gap={0} style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ ...HP_TEXT.tiny }}>Istirahat</span>
+                  <span style={{ ...HP_TEXT.bodyStrong, fontSize: 13.5, marginTop: 2, fontVariantNumeric: 'tabular-nums' }}>
+                    {state.workSchedule?.breakStart} – {state.workSchedule?.breakEnd}
+                  </span>
+                </Stack>
+              </Row>
+
+              <AttendanceWidget openModal={openModal} />
+            </HPCard>
+
+            {/* Emotional check-in */}
+            <EmotionalHero
+              state={state}
+              moodObj={moodObj}
+              energyObj={energyObj}
+              onOpenCheckIn={() => openModal('checkin')}
+              showMidDay={isMidDayWindow()}
+              onOpenMidDay={() => openModal('work_checkin')}
+            />
+
+            <WellbeingGauge state={state} user={user} openModal={openModal} />
+
+            {/* AI coach insights */}
+            {aiInsights.length > 0 && (
+              <section>
+                <SectionHeader tight icon="sparkle" label="Insight dari Coach" />
+                <Stack gap={2}>
+                  {aiInsights.map((ins, i) => (
+                    <InsightCard key={i} ins={ins} idx={i} onClick={() => handleInsightClick(ins.action)} />
+                  ))}
+                </Stack>
+              </section>
+            )}
+
+            {/*
+              Five shortcuts that each used to own a full-width card. As rows
+              they cost about one card between them, and stop a 40px action
+              from outranking the day's work.
+            */}
+            <ActionList
+              title="Lainnya"
+              items={[
+                {
+                  icon: 'leaf',
+                  label: 'Jeda 1 menit',
+                  hint: 'Box breathing untuk menurunkan stres',
+                  tone: HP_TOKENS.success,
+                  onClick: () => openModal('pause'),
+                },
+                {
+                  icon: 'book',
+                  label: 'Riwayat & logbook',
+                  onClick: () => openModal('logbook'),
+                },
+                {
+                  icon: 'history',
+                  label: 'Riwayat kehadiran',
+                  onClick: () => openModal('attendance_history'),
+                },
+              ]}
+            />
+          </>}
+        />
       </div>
 
       {selectedHabitDay && (

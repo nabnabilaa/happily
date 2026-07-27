@@ -99,7 +99,7 @@ function HabitCell({ h, onToggle, onQuickComplete, onFinish }: HabitCellProps) {
       style={{
         flex: 1,
         padding: '16px',
-        borderRadius: 20,
+        borderRadius: HP_TOKENS.radius,
         background: h.done ? HP_TOKENS.yellowSoft : HP_TOKENS.card,
         border: `1.5px solid ${h.done ? HP_TOKENS.yellow : HP_TOKENS.line}`,
         display: 'flex',
@@ -118,7 +118,7 @@ function HabitCell({ h, onToggle, onQuickComplete, onFinish }: HabitCellProps) {
           position: 'absolute', top: 10, right: 14,
           background: HP_TOKENS.ink, color: HP_TOKENS.yellow,
           padding: '2px 8px', borderRadius: 8,
-          fontSize: 11, fontWeight: 800, fontFamily: HP_FONT,
+          fontSize: 11, fontWeight: 700, fontFamily: HP_FONT,
           animation: 'hpRise 1.2s ease-out forwards',
           pointerEvents: 'none', zIndex: 10,
         }}>
@@ -130,7 +130,7 @@ function HabitCell({ h, onToggle, onQuickComplete, onFinish }: HabitCellProps) {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
-            width: 36, height: 36, borderRadius: 10,
+            width: 36, height: 36, borderRadius: HP_TOKENS.radiusSm,
             background: h.done ? HP_TOKENS.yellow : HP_TOKENS.lineSoft,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             transition: '0.3s',
@@ -156,7 +156,7 @@ function HabitCell({ h, onToggle, onQuickComplete, onFinish }: HabitCellProps) {
           className="hp-tap"
           style={{
             background: HP_TOKENS.lineSoft, border: 'none', padding: '6px 10px', margin: 0,
-            color: HP_TOKENS.blue, fontFamily: HP_FONT, fontWeight: 800, fontSize: 11,
+            color: HP_TOKENS.blue, fontFamily: HP_FONT, fontWeight: 700, fontSize: 11,
             cursor: 'pointer', borderRadius: 8, flexShrink: 0,
             display: 'flex', alignItems: 'center', gap: 4
           }}
@@ -180,7 +180,7 @@ function HabitCell({ h, onToggle, onQuickComplete, onFinish }: HabitCellProps) {
               style={{
                 width: 24, height: 24, borderRadius: 6, background: HP_TOKENS.lineSoft,
                 border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', color: HP_TOKENS.inkMute, fontSize: 12, fontFamily: HP_FONT, fontWeight: 800
+                cursor: 'pointer', color: HP_TOKENS.inkMute, fontSize: 12, fontFamily: HP_FONT, fontWeight: 700
               }}
             >
               &lt;
@@ -193,7 +193,7 @@ function HabitCell({ h, onToggle, onQuickComplete, onFinish }: HabitCellProps) {
                 width: 24, height: 24, borderRadius: 6, background: HP_TOKENS.lineSoft,
                 border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: monthOffset === 0 ? 'default' : 'pointer', color: HP_TOKENS.inkMute, 
-                fontSize: 12, fontFamily: HP_FONT, fontWeight: 800, opacity: monthOffset === 0 ? 0.3 : 1
+                fontSize: 12, fontFamily: HP_FONT, fontWeight: 700, opacity: monthOffset === 0 ? 0.3 : 1
               }}
             >
               &gt;
@@ -256,7 +256,7 @@ function HabitCell({ h, onToggle, onQuickComplete, onFinish }: HabitCellProps) {
                   {cell.date.getDate()}
                 </span>
                 {cell.done && cell.isCurrentMonth && (
-                  <div style={{ position: 'absolute', bottom: -2, right: -2, background: HP_TOKENS.yellow, borderRadius: 10, padding: 1 }}>
+                  <div style={{ position: 'absolute', bottom: -2, right: -2, background: HP_TOKENS.yellow, borderRadius: HP_TOKENS.radiusSm, padding: 1 }}>
                     <HPGlyph name="check" size={8} color={HP_TOKENS.ink} stroke={3} />
                   </div>
                 )}
@@ -298,7 +298,7 @@ function HabitCell({ h, onToggle, onQuickComplete, onFinish }: HabitCellProps) {
         style={{
           width: '100%',
           padding: '12px',
-          borderRadius: 12,
+          borderRadius: HP_TOKENS.radiusSm,
           border: 'none',
           background: h.done ? 'transparent' : HP_TOKENS.yellow,
           borderStyle: h.done ? 'solid' : 'none',
@@ -306,7 +306,7 @@ function HabitCell({ h, onToggle, onQuickComplete, onFinish }: HabitCellProps) {
           borderColor: h.done ? HP_TOKENS.line : 'transparent',
           color: h.done ? HP_TOKENS.inkMute : HP_TOKENS.ink,
           fontFamily: HP_FONT,
-          fontWeight: 800,
+          fontWeight: 700,
           fontSize: 13,
           cursor: 'pointer',
           marginTop: 4,

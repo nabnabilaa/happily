@@ -49,7 +49,7 @@ export default function CreateUserModal({ onClose, onSave }: CreateUserModalProp
   };
 
   const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '14px', borderRadius: 16, border: `1.5px solid ${HP_TOKENS.line}`,
+    width: '100%', padding: '14px', borderRadius: HP_TOKENS.radiusMd, border: `1.5px solid ${HP_TOKENS.line}`,
     fontFamily: HP_FONT, fontSize: 14, fontWeight: 700, outline: 'none', background: HP_TOKENS.card, boxSizing: 'border-box'
   };
 
@@ -65,7 +65,7 @@ export default function CreateUserModal({ onClose, onSave }: CreateUserModalProp
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 10 }}>
         
         <div>
-          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 6, display: 'block' }}>NAMA LENGKAP</label>
+          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 700, marginBottom: 6, display: 'block' }}>NAMA LENGKAP</label>
           <input 
             placeholder="e.g. John Doe" 
             value={form.name} 
@@ -75,7 +75,7 @@ export default function CreateUserModal({ onClose, onSave }: CreateUserModalProp
         </div>
 
         <div>
-          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 6, display: 'block' }}>EMAIL</label>
+          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 700, marginBottom: 6, display: 'block' }}>EMAIL</label>
           <input 
             type="email"
             placeholder="name@company.com" 
@@ -86,7 +86,7 @@ export default function CreateUserModal({ onClose, onSave }: CreateUserModalProp
         </div>
 
         <div>
-          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 6, display: 'block' }}>PASSWORD</label>
+          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 700, marginBottom: 6, display: 'block' }}>PASSWORD</label>
           <input 
             type="password"
             placeholder="Min. 6 karakter" 
@@ -98,7 +98,7 @@ export default function CreateUserModal({ onClose, onSave }: CreateUserModalProp
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <div>
-            <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 6, display: 'block' }}>ROLE</label>
+            <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 700, marginBottom: 6, display: 'block' }}>ROLE</label>
             <select 
               value={form.role} 
               onChange={e => setForm({...form, role: e.target.value})} 
@@ -110,7 +110,7 @@ export default function CreateUserModal({ onClose, onSave }: CreateUserModalProp
             </select>
           </div>
           <div>
-            <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 6, display: 'block' }}>DEPARTMENT</label>
+            <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 700, marginBottom: 6, display: 'block' }}>DEPARTMENT</label>
             <select 
               value={form.department} 
               onChange={e => setForm({...form, department: e.target.value})} 
@@ -125,7 +125,7 @@ export default function CreateUserModal({ onClose, onSave }: CreateUserModalProp
         </div>
 
         <div>
-          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 6, display: 'block' }}>JOB TITLE</label>
+          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 700, marginBottom: 6, display: 'block' }}>JOB TITLE</label>
           <input
             placeholder="e.g. Account Executive"
             value={form.jobTitle}
@@ -138,17 +138,17 @@ export default function CreateUserModal({ onClose, onSave }: CreateUserModalProp
         {form.role !== 'hr' && (
           <label style={{
             display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer',
-            padding: 14, borderRadius: 16, border: `1.5px solid ${form.hrAccess ? '#7B6BB5' : HP_TOKENS.line}`,
-            background: form.hrAccess ? '#EDE8F5' : HP_TOKENS.card,
+            padding: 14, borderRadius: HP_TOKENS.radiusMd, border: `1.5px solid ${form.hrAccess ? HP_TOKENS.primary : HP_TOKENS.line}`,
+            background: form.hrAccess ? HP_TOKENS.primaryWash : HP_TOKENS.card,
           }}>
             <input
               type="checkbox"
               checked={form.hrAccess}
               onChange={e => setForm({ ...form, hrAccess: e.target.checked })}
-              style={{ marginTop: 2, width: 18, height: 18, accentColor: '#7B6BB5', cursor: 'pointer' }}
+              style={{ marginTop: 2, width: 18, height: 18, accentColor: HP_TOKENS.primary, cursor: 'pointer' }}
             />
             <div>
-              <div style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, color: HP_TOKENS.ink }}>
+              <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, color: HP_TOKENS.ink }}>
                 Beri akses HR-Admin
               </div>
               <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>
@@ -163,15 +163,15 @@ export default function CreateUserModal({ onClose, onSave }: CreateUserModalProp
           disabled={loading}
           className="hp-tap"
           style={{
-            marginTop: 10, width: '100%', padding: '18px', borderRadius: 20, 
-            background: loading ? HP_TOKENS.line : HP_TOKENS.ink, color: '#F4F7F9',
-            border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: loading ? 'default' : 'pointer',
+            marginTop: 10, width: '100%', padding: '18px', borderRadius: HP_TOKENS.radius, 
+            background: loading ? HP_TOKENS.line : HP_TOKENS.ink, color: HP_TOKENS.onPrimary,
+            border: 'none', fontFamily: HP_FONT, fontWeight: 700, fontSize: 15, cursor: loading ? 'default' : 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10
           }}
         >
           {loading ? 'Memproses...' : (
             <>
-              <HPGlyph name="check" size={20} color="#F4F7F9" />
+              <HPGlyph name="check" size={20} color={HP_TOKENS.onPrimary} />
               <span>Buat Akun Sekarang</span>
             </>
           )}

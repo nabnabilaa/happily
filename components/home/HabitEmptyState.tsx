@@ -12,7 +12,7 @@ export default function HabitEmptyState({ openModal }: Props) {
   return (
     <div style={{
       padding: '20px',
-      borderRadius: 20,
+      borderRadius: HP_TOKENS.radius,
       background: HP_TOKENS.sageWash,
       border: `2px dashed ${HP_TOKENS.sageSoft}`,
       display: 'flex',
@@ -24,13 +24,12 @@ export default function HabitEmptyState({ openModal }: Props) {
       <div style={{
         width: 48,
         height: 48,
-        borderRadius: 24,
+        borderRadius: HP_TOKENS.radiusLg,
         background: '#fff',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 12,
-        boxShadow: '0 4px 12px rgba(133, 179, 137, 0.15)'
       }}>
         <HPGlyph name="leaf" size={24} color={HP_TOKENS.sage} />
       </div>
@@ -41,12 +40,12 @@ export default function HabitEmptyState({ openModal }: Props) {
       <button style={{
         marginTop: 16,
         padding: '10px 20px',
-        borderRadius: 14,
+        borderRadius: HP_TOKENS.radiusMd,
         background: HP_TOKENS.sage,
         color: '#fff',
         border: 'none',
         fontFamily: HP_FONT,
-        fontWeight: 800,
+        fontWeight: 700,
         fontSize: 13,
         display: 'flex',
         alignItems: 'center',

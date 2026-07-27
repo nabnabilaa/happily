@@ -39,7 +39,7 @@ export default function RewardEditorModal({ onClose, reward, onSave }: RewardEdi
   };
 
   const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '14px', borderRadius: 16, border: `1.5px solid ${HP_TOKENS.line}`,
+    width: '100%', padding: '14px', borderRadius: HP_TOKENS.radiusMd, border: `1.5px solid ${HP_TOKENS.line}`,
     fontFamily: HP_FONT, fontSize: 14, fontWeight: 700, outline: 'none', background: HP_TOKENS.card, boxSizing: 'border-box'
   };
 
@@ -47,7 +47,7 @@ export default function RewardEditorModal({ onClose, reward, onSave }: RewardEdi
     <Modal onClose={onClose} title={reward ? "Edit Reward 🎁" : "Tambah Reward Baru 🎁"}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20, marginTop: 10 }}>
         <div>
-          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 8, display: 'block' }}>NAMA REWARD</label>
+          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 700, marginBottom: 8, display: 'block' }}>NAMA REWARD</label>
           <input 
             placeholder="e.g. Voucher Kopi" 
             value={form.title} 
@@ -58,7 +58,7 @@ export default function RewardEditorModal({ onClose, reward, onSave }: RewardEdi
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <div>
-            <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 8, display: 'block' }}>HARGA (POIN)</label>
+            <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 700, marginBottom: 8, display: 'block' }}>HARGA (POIN)</label>
             <input 
               type="number"
               placeholder="0" 
@@ -68,7 +68,7 @@ export default function RewardEditorModal({ onClose, reward, onSave }: RewardEdi
             />
           </div>
           <div>
-            <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 8, display: 'block' }}>STOK</label>
+            <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 700, marginBottom: 8, display: 'block' }}>STOK</label>
             <input 
               type="number"
               placeholder="0" 
@@ -80,7 +80,7 @@ export default function RewardEditorModal({ onClose, reward, onSave }: RewardEdi
         </div>
 
         <div>
-          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 8, display: 'block' }}>KATEGORI</label>
+          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 700, marginBottom: 8, display: 'block' }}>KATEGORI</label>
           <input 
             placeholder="e.g. Wellness, Lifestyle, Growth" 
             value={form.category} 
@@ -90,7 +90,7 @@ export default function RewardEditorModal({ onClose, reward, onSave }: RewardEdi
         </div>
 
         <div>
-          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 8, display: 'block' }}>DESKRIPSI REWARD</label>
+          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 700, marginBottom: 8, display: 'block' }}>DESKRIPSI REWARD</label>
           <textarea 
             placeholder="Tulis penjelasan singkat tentang reward ini..." 
             value={form.description} 
@@ -100,7 +100,7 @@ export default function RewardEditorModal({ onClose, reward, onSave }: RewardEdi
         </div>
 
         <div>
-          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 8, display: 'block' }}>IKON REWARD</label>
+          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 700, marginBottom: 8, display: 'block' }}>IKON REWARD</label>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {[
               { key: 'gift', label: '🎁' },
@@ -117,7 +117,7 @@ export default function RewardEditorModal({ onClose, reward, onSave }: RewardEdi
                 type="button"
                 onClick={() => setForm({...form, glyph: item.key})}
                 style={{
-                  width: 40, height: 40, borderRadius: 12, border: form.glyph === item.key ? `2.5px solid ${HP_TOKENS.ink}` : `1px solid ${HP_TOKENS.line}`,
+                  width: 40, height: 40, borderRadius: HP_TOKENS.radiusSm, border: form.glyph === item.key ? `2.5px solid ${HP_TOKENS.ink}` : `1px solid ${HP_TOKENS.line}`,
                   background: form.glyph === item.key ? HP_TOKENS.yellowSoft : '#fff', cursor: 'pointer',
                   fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}
@@ -129,14 +129,14 @@ export default function RewardEditorModal({ onClose, reward, onSave }: RewardEdi
         </div>
 
         <div>
-          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 900, marginBottom: 8, display: 'block' }}>WARNA TEMA TAMPILAN</label>
+          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 700, marginBottom: 8, display: 'block' }}>WARNA TEMA TAMPILAN</label>
           <div style={{ display: 'flex', gap: 10 }}>
             {['blue', 'sage', 'yellow', 'coral', 'lavender'].map(t => (
               <button 
                 key={t}
                 onClick={() => setForm({...form, tone: t})}
                 style={{
-                  width: 36, height: 36, borderRadius: 12,
+                  width: 36, height: 36, borderRadius: HP_TOKENS.radiusSm,
                   background: HP_TOKENS[t as keyof typeof HP_TOKENS] || t,
                   border: form.tone === t ? `3px solid ${HP_TOKENS.ink}` : 'none',
                   cursor: 'pointer'
@@ -150,13 +150,13 @@ export default function RewardEditorModal({ onClose, reward, onSave }: RewardEdi
           onClick={handleSave}
           className="hp-tap"
           style={{
-            marginTop: 10, width: '100%', padding: '18px', borderRadius: 20, 
-            background: HP_TOKENS.ink, color: '#F4F7F9',
-            border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
+            marginTop: 10, width: '100%', padding: '18px', borderRadius: HP_TOKENS.radius, 
+            background: HP_TOKENS.ink, color: HP_TOKENS.onPrimary,
+            border: 'none', fontFamily: HP_FONT, fontWeight: 700, fontSize: 15, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10
           }}
         >
-          <HPGlyph name="check" size={20} color="#F4F7F9" />
+          <HPGlyph name="check" size={20} color={HP_TOKENS.onPrimary} />
           <span>Simpan Reward</span>
         </button>
       </div>

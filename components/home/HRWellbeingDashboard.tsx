@@ -60,21 +60,21 @@ export default function HRWellbeingDashboard({ state, openModal, onGoToBurnout }
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ 
-              width: 40, height: 40, borderRadius: 12, 
+              width: 40, height: 40, borderRadius: HP_TOKENS.radiusSm, 
               background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: `0 4px 12px ${HP_TOKENS.blue}15`, fontSize: 20
+              fontSize: 20
             }}>
               📡
             </div>
             <div>
-              <div style={{ ...HP_TEXT.small, fontWeight: 900, color: HP_TOKENS.blue, letterSpacing: 0.5 }}>WELLBEING RADAR (ALL)</div>
+              <div style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.blue, letterSpacing: 0.5 }}>WELLBEING RADAR (ALL)</div>
               <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkSoft, marginTop: 2 }}>
                 Avg Score: <strong style={{ color: HP_TOKENS.ink }}>{wellbeingAvg}/100</strong> • {atRisk} at risk
               </div>
             </div>
           </div>
           <div style={{ 
-            width: 32, height: 32, borderRadius: 16, background: 'rgba(255,255,255,0.5)',
+            width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.5)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease'
           }}>
@@ -88,7 +88,7 @@ export default function HRWellbeingDashboard({ state, openModal, onGoToBurnout }
         {isOpen && (
           <div style={{ marginTop: 16, paddingTop: 16, borderTop: `1px dashed ${HP_TOKENS.blue}40`, animation: 'hpFadeIn 0.3s ease' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-              <div style={{ padding: '12px', background: 'rgba(255,255,255,0.7)', borderRadius: 12 }}>
+              <div style={{ padding: '12px', background: 'rgba(255,255,255,0.7)', borderRadius: HP_TOKENS.radiusSm }}>
                 <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 4 }}>Company Avg</div>
                 <div style={{ ...HP_TEXT.h, fontSize: 20, color: HP_TOKENS.sage }}>{wellbeingAvg}</div>
                 <div style={{ ...HP_TEXT.small, color: isWbTrendPos ? HP_TOKENS.sage : HP_TOKENS.coral, marginTop: 2, fontSize: 11 }}>
@@ -98,13 +98,13 @@ export default function HRWellbeingDashboard({ state, openModal, onGoToBurnout }
               <div 
                 className="hp-tap"
                 onClick={handleRiskClick}
-                style={{ padding: '12px', background: 'rgba(255,255,255,0.7)', borderRadius: 12, cursor: 'pointer', border: `1.5px solid transparent` }}
+                style={{ padding: '12px', background: 'rgba(255,255,255,0.7)', borderRadius: HP_TOKENS.radiusSm, cursor: 'pointer', border: `1.5px solid transparent` }}
                 onMouseEnter={(e) => (e.currentTarget.style.borderColor = HP_TOKENS.coralSoft)}
                 onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'transparent')}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 4 }}>Total At Risk</div>
-                  <HPGlyph name="arrow-up-right" size={14} color={HP_TOKENS.inkSoft} />
+                  <HPGlyph name="arrowUpRight" size={14} color={HP_TOKENS.inkSoft} />
                 </div>
                 <div style={{ ...HP_TEXT.h, fontSize: 20, color: HP_TOKENS.coral }}>{atRisk}</div>
                 <div style={{ ...HP_TEXT.small, color: atRisk > 0 ? HP_TOKENS.coral : HP_TOKENS.sage, marginTop: 2, fontSize: 11 }}>
@@ -113,11 +113,11 @@ export default function HRWellbeingDashboard({ state, openModal, onGoToBurnout }
               </div>
             </div>
 
-            <div style={{ ...HP_TEXT.small, fontWeight: 800, color: HP_TOKENS.ink, marginBottom: 10 }}>Status Departemen</div>
+            <div style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.ink, marginBottom: 10 }}>Status Departemen</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {currentDepts.map((dept: any, i: number) => (
                 <div key={i} style={{ 
-                  background: '#fff', padding: '10px 14px', borderRadius: 12, border: `1px solid ${expandedDept === dept.dept ? HP_TOKENS.blue : HP_TOKENS.lineSoft}`,
+                  background: '#fff', padding: '10px 14px', borderRadius: HP_TOKENS.radiusSm, border: `1px solid ${expandedDept === dept.dept ? HP_TOKENS.blue : HP_TOKENS.lineSoft}`,
                   transition: 'all 0.2s', overflow: 'hidden'
                 }}>
                   <div 
@@ -126,7 +126,7 @@ export default function HRWellbeingDashboard({ state, openModal, onGoToBurnout }
                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}
                   >
                     <div>
-                      <div style={{ ...HP_TEXT.body, fontSize: 13, fontWeight: 800 }}>{dept.dept}</div>
+                      <div style={{ ...HP_TEXT.body, fontSize: 13, fontWeight: 700 }}>{dept.dept}</div>
                       <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>{dept.headcount} anggota</div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -134,12 +134,12 @@ export default function HRWellbeingDashboard({ state, openModal, onGoToBurnout }
                         padding: '4px 8px', borderRadius: 8,
                         background: dept.wellbeing > 80 ? HP_TOKENS.sageWash : dept.wellbeing > 70 ? HP_TOKENS.yellowWash : HP_TOKENS.coralSoft,
                         color: dept.wellbeing > 80 ? HP_TOKENS.sage : dept.wellbeing > 70 ? HP_TOKENS.yellow : HP_TOKENS.coral,
-                        fontWeight: 900, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4
+                        fontWeight: 700, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4
                       }}>
                         {dept.wellbeing} <span style={{fontSize:10, opacity:0.8}}>SCORE</span>
                       </div>
                       <div style={{ transform: expandedDept === dept.dept ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', display: 'flex' }}>
-                        <HPGlyph name="chevron-right" size={16} color={HP_TOKENS.inkMute} />
+                        <HPGlyph name="chevronRight" size={16} color={HP_TOKENS.inkMute} />
                       </div>
                     </div>
                   </div>
@@ -151,18 +151,18 @@ export default function HRWellbeingDashboard({ state, openModal, onGoToBurnout }
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', background: HP_TOKENS.paper, borderRadius: 8 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <div style={{ width: 24, height: 24, borderRadius: 12, background: HP_TOKENS.sageSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}>W</div>
+                            <div style={{ width: 24, height: 24, borderRadius: '50%', background: HP_TOKENS.sageSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}>W</div>
                             <span style={{ fontSize: 12, fontWeight: 700, color: HP_TOKENS.ink }}>Wawan (Manager)</span>
                           </div>
-                          <span style={{ fontSize: 11, fontWeight: 800, color: HP_TOKENS.sage }}>92 Score</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: HP_TOKENS.sage }}>92 Score</span>
                         </div>
                         {dept.atRisk > 0 && (
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', background: HP_TOKENS.coralSoft, borderRadius: 8 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <div style={{ width: 24, height: 24, borderRadius: 12, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}>A</div>
+                              <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}>A</div>
                               <span style={{ fontSize: 12, fontWeight: 700, color: HP_TOKENS.coral }}>Andi (Staff)</span>
                             </div>
-                            <span style={{ fontSize: 11, fontWeight: 800, color: HP_TOKENS.coral }}>54 Score</span>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: HP_TOKENS.coral }}>54 Score</span>
                           </div>
                         )}
                       </div>
@@ -171,7 +171,7 @@ export default function HRWellbeingDashboard({ state, openModal, onGoToBurnout }
                           e.stopPropagation(); 
                           window.dispatchEvent(new CustomEvent('hp_switch_tab', { detail: 'goals' }));
                         }}
-                        style={{ width: '100%', padding: '6px 0', marginTop: 8, background: 'transparent', border: `1px solid ${HP_TOKENS.blue}40`, borderRadius: 8, color: HP_TOKENS.blue, fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
+                        style={{ width: '100%', padding: '6px 0', marginTop: 8, background: 'transparent', border: `1px solid ${HP_TOKENS.blue}40`, borderRadius: 8, color: HP_TOKENS.blue, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
                       >
                         Lihat Seluruh Anggota
                       </button>
@@ -192,13 +192,13 @@ export default function HRWellbeingDashboard({ state, openModal, onGoToBurnout }
                     padding: '6px 12px', borderRadius: 8, border: 'none', cursor: currentDeptPage === 1 ? 'not-allowed' : 'pointer',
                     background: currentDeptPage === 1 ? 'rgba(255,255,255,0.4)' : '#fff',
                     color: currentDeptPage === 1 ? HP_TOKENS.inkMute : HP_TOKENS.blue,
-                    fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, transition: 'all 0.2s',
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, transition: 'all 0.2s',
                     boxShadow: currentDeptPage === 1 ? 'none' : `0 2px 8px ${HP_TOKENS.blue}20`
                   }}
                 >
                   Prev
                 </button>
-                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkSoft, fontWeight: 800 }}>
+                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkSoft, fontWeight: 700 }}>
                   Page {currentDeptPage} / {totalDeptPages}
                 </div>
                 <button
@@ -209,7 +209,7 @@ export default function HRWellbeingDashboard({ state, openModal, onGoToBurnout }
                     padding: '6px 12px', borderRadius: 8, border: 'none', cursor: currentDeptPage === totalDeptPages ? 'not-allowed' : 'pointer',
                     background: currentDeptPage === totalDeptPages ? 'rgba(255,255,255,0.4)' : '#fff',
                     color: currentDeptPage === totalDeptPages ? HP_TOKENS.inkMute : HP_TOKENS.blue,
-                    fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, transition: 'all 0.2s',
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, transition: 'all 0.2s',
                     boxShadow: currentDeptPage === totalDeptPages ? 'none' : `0 2px 8px ${HP_TOKENS.blue}20`
                   }}
                 >

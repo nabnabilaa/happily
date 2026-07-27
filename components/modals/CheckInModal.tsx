@@ -22,13 +22,12 @@ interface CheckInModalProps {
 
 const primaryBtn: React.CSSProperties = {
   padding: '14px', borderRadius: 99, border: 'none', background: HP_TOKENS.sage,
-  color: '#F4F7F9', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
-  boxShadow: `0 4px 14px ${HP_TOKENS.sageSoft}`,
+  color: HP_TOKENS.onPrimary, fontFamily: HP_FONT, fontWeight: 700, fontSize: 15, cursor: 'pointer',
 };
 
 const ghostBtn: React.CSSProperties = {
   padding: '14px', borderRadius: 99, border: `1.5px solid ${HP_TOKENS.line}`, background: '#FFFFFF',
-  color: HP_TOKENS.inkSoft, fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
+  color: HP_TOKENS.inkSoft, fontFamily: HP_FONT, fontWeight: 700, fontSize: 15, cursor: 'pointer',
 };
 
 export default function CheckInModal({ onClose }: CheckInModalProps) {
@@ -103,7 +102,7 @@ export default function CheckInModal({ onClose }: CheckInModalProps) {
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
           <BeeMascot mood="happy" size={80} />
         </div>
-        <div style={{ ...HP_TEXT.small, color: HP_TOKENS.sage, fontWeight: 800 }}>
+        <div style={{ ...HP_TEXT.small, color: HP_TOKENS.sage, fontWeight: 700 }}>
           LANGKAH {step} DARI 3
         </div>
         <div style={{ ...HP_TEXT.display, fontSize: 26, marginTop: 8 }}>
@@ -120,7 +119,7 @@ export default function CheckInModal({ onClose }: CheckInModalProps) {
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6, marginTop: 26 }}>
               {(state?.moods || HP_MOODS).map(m => (
                 <button key={m.key} onClick={() => setMood(m.key)} style={{
-                  flex: 1, padding: '16px 4px', borderRadius: 18,
+                  flex: 1, padding: '16px 4px', borderRadius: HP_TOKENS.radius,
                   background: mood === m.key ? HP_TOKENS.sage : HP_TOKENS.card,
                   border: `1.5px solid ${mood === m.key ? HP_TOKENS.sage : HP_TOKENS.line}`,
                   cursor: 'pointer', fontFamily: HP_FONT, display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center',
@@ -129,7 +128,7 @@ export default function CheckInModal({ onClose }: CheckInModalProps) {
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <HPGlyph name={m.glyph} size={30} color={mood === m.key ? '#fff' : HP_TOKENS[m.tone as keyof typeof HP_TOKENS] || HP_TOKENS.ink} />
                   </div>
-                  <div style={{ fontSize: 11, fontWeight: 800, color: mood === m.key ? '#fff' : HP_TOKENS.inkSoft }}>{m.label}</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: mood === m.key ? '#fff' : HP_TOKENS.inkSoft }}>{m.label}</div>
                 </button>
               ))}
             </div>
@@ -139,13 +138,13 @@ export default function CheckInModal({ onClose }: CheckInModalProps) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 26 }}>
               {(state?.energyOpts || HP_ENERGY).map(e => (
                 <button key={e.key} onClick={() => setEnergy(e.key)} style={{
-                  padding: 16, borderRadius: 16, background: HP_TOKENS.card,
+                  padding: 16, borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.card,
                   border: `1.5px solid ${energy === e.key ? HP_TOKENS.sage : HP_TOKENS.line}`,
                   cursor: 'pointer', fontFamily: HP_FONT, textAlign: 'left',
                   display: 'flex', alignItems: 'center', gap: 12,
                 }}>
                   <div style={{
-                    width: 44, height: 44, borderRadius: 12,
+                    width: 44, height: 44, borderRadius: HP_TOKENS.radiusSm,
                     background: e.key === 'low' ? HP_TOKENS.blueSoft : e.key === 'mid' ? HP_TOKENS.sageSoft : HP_TOKENS.yellowSoft,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
@@ -156,8 +155,8 @@ export default function CheckInModal({ onClose }: CheckInModalProps) {
                     <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkSoft, fontWeight: 600, marginTop: 2 }}>{e.hint}</div>
                   </div>
                   {energy === e.key && (
-                    <div style={{ width: 22, height: 22, borderRadius: 11, background: HP_TOKENS.sage, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <HPGlyph name="check" size={14} color="#F4F7F9" stroke={2.5}/>
+                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: HP_TOKENS.sage, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <HPGlyph name="check" size={14} color={HP_TOKENS.onPrimary} stroke={2.5}/>
                     </div>
                   )}
                 </button>

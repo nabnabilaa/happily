@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import HPGlyph from "@/components/ui/HPGlyph";
+import { HP_TOKENS } from "@/lib/constants";
 
 export interface FontOption {
   id: string;
@@ -66,26 +67,30 @@ export default function FontSelector() {
   const activeOption = FONT_OPTIONS.find((f) => f.id === currentFont) || FONT_OPTIONS[0];
 
   return (
-    <div ref={dropdownRef} style={{ position: "relative", display: "inline-block" }}>
+    // Fills whatever it is dropped into. In the sidebar footer it shares a row
+    // with the 38px theme toggle, and an inline-block trigger left a dead gap
+    // between the two instead of one aligned pair.
+    <div ref={dropdownRef} style={{ position: "relative", flex: 1, minWidth: 0 }}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="hp-tap"
         id="font-selector-btn"
         aria-label="Pilih Font Aplikasi"
+        aria-expanded={isOpen}
         title="Pilih Font Aplikasi"
         style={{
           display: "flex",
           alignItems: "center",
-          gap: 6,
-          padding: "6px 12px",
+          gap: 8,
+          width: "100%",
+          padding: "0 10px",
           height: 38,
-          borderRadius: 20,
-          border: "1.5px solid var(--hp-border)",
+          borderRadius: "var(--hp-radius-pill)",
+          border: "1px solid var(--hp-border)",
           background: "var(--hp-card)",
           color: "var(--hp-ink)",
           cursor: "pointer",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-          transition: "all 0.2s ease",
+          transition: "border-color 180ms var(--hp-ease)",
           outline: "none",
         }}
       >
@@ -93,13 +98,13 @@ export default function FontSelector() {
           style={{
             width: 24,
             height: 24,
-            borderRadius: 12,
+            borderRadius: HP_TOKENS.radiusSm,
             background: "var(--hp-primary-soft)",
             color: "var(--hp-primary)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontWeight: 900,
+            fontWeight: 700,
             fontSize: 13,
             fontFamily: activeOption.cssFamily,
           }}
@@ -108,11 +113,13 @@ export default function FontSelector() {
         </div>
         <span
           style={{
-            fontSize: 12,
-            fontWeight: 800,
+            flex: 1,
+            minWidth: 0,
+            textAlign: "left",
+            fontSize: 12.5,
+            fontWeight: 600,
             color: "var(--hp-ink)",
             fontFamily: activeOption.cssFamily,
-            maxWidth: 85,
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -120,7 +127,10 @@ export default function FontSelector() {
         >
           {activeOption.name}
         </span>
-        <HPGlyph name="chevron_down" size={14} color="var(--hp-ink-mute)" />
+        {/* The glyph map keys this as "chevron-down"; "chevron_down" fell
+            through to HPGlyph's unknown-icon fallback, which is why a faded
+            info circle sat in the sidebar instead of a chevron. */}
+        <HPGlyph name="chevron-down" size={14} color="var(--hp-ink-mute)" />
       </button>
 
       {isOpen && (
@@ -133,9 +143,8 @@ export default function FontSelector() {
             maxHeight: 320,
             overflowY: "auto",
             background: "var(--hp-card)",
-            borderRadius: 18,
+            borderRadius: HP_TOKENS.radius,
             border: "1.5px solid var(--hp-border)",
-            boxShadow: "0 12px 36px rgba(0,0,0,0.2)",
             padding: 8,
             zIndex: 9999,
             animation: "hp-pop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
@@ -145,7 +154,7 @@ export default function FontSelector() {
             style={{
               padding: "6px 10px 8px 10px",
               fontSize: 11,
-              fontWeight: 800,
+              fontWeight: 700,
               color: "var(--hp-ink-mute)",
               textTransform: "uppercase",
               letterSpacing: 0.5,
@@ -169,7 +178,7 @@ export default function FontSelector() {
                     alignItems: "center",
                     justifyContent: "space-between",
                     padding: "8px 10px",
-                    borderRadius: 12,
+                    borderRadius: HP_TOKENS.radiusSm,
                     border: "none",
                     background: isSelected ? "var(--hp-primary-soft)" : "transparent",
                     color: isSelected ? "var(--hp-primary)" : "var(--hp-ink)",
@@ -183,7 +192,7 @@ export default function FontSelector() {
                       <span
                         style={{
                           fontFamily: opt.cssFamily,
-                          fontWeight: 800,
+                          fontWeight: 700,
                           fontSize: 14,
                         }}
                       >
@@ -193,7 +202,7 @@ export default function FontSelector() {
                         <span
                           style={{
                             fontSize: 9,
-                            fontWeight: 900,
+                            fontWeight: 700,
                             padding: "2px 6px",
                             borderRadius: 6,
                             background: "var(--hp-primary)",
