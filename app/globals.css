@@ -592,6 +592,59 @@ div, section, article, aside, nav, header, footer, main {
   }
 }
 
+/* ═══ BENTO GRID LAYOUT SYSTEM (Samsung Health / OneUI Style) ═══ */
+.hp-bento-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (min-width: 680px) {
+  .hp-bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+  }
+
+  .hp-bento-full {
+    grid-column: span 2;
+  }
+}
+
+.hp-bento-card {
+  position: relative;
+  background: var(--hp-card, #FFFFFF);
+  border: 1px solid var(--hp-border, #E2E8F0);
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.hp-bento-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.hp-bento-anchor-3d {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
 /* ═══ MODAL / SHEET (Gercep Style) ═══ */
 .hp-modal-overlay {
   position: fixed;
