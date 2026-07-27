@@ -49,66 +49,58 @@ const FlowBuddyApp = {
   },
 
   loadUserData() {
-    if (typeof chrome !== 'undefined' && chrome.storage) {
-      chrome.storage.local.get('flowbuddy-user', (res) => {
-        if (res['flowbuddy-user']) {
-          document.getElementById('login-overlay').style.display = 'none';
-          const user = res['flowbuddy-user'];
-          this.userName = user.name || 'Budi';
-          this.userLevel = user.level || 1;
-          this.attendanceStreak = user.streak || 0;
-          FlowBuddyRBAC.setRole(user.role || 'employee');
-          this.updateHeader();
-          this.renderTabs();
-          this.showView(FlowBuddyRBAC.getConfig().defaultView);
-          // Initialize mascot with current state
-          if (typeof window.updateBuddySVG === 'function') {
-            window.updateBuddySVG(window.getFbState ? window.getFbState() : 'IDLE');
-          }
-        } else {
-          document.getElementById('login-overlay').style.display = 'flex';
+    const applyUserSession = (user, userId) => {
+      const loginOverlay = document.getElementById('login-overlay');
+      if (user || userId) {
+        if (loginOverlay) loginOverlay.style.display = 'none';
+        const userData = user || {};
+        this.userName = userData.name || 'Budi';
+        this.userLevel = userData.level || 1;
+        this.attendanceStreak = userData.streak || 0;
+        FlowBuddyRBAC.setRole(userData.role || 'employee');
+        this.updateHeader();
+        this.renderTabs();
+        this.showView(FlowBuddyRBAC.getConfig().defaultView);
+        if (typeof window.updateBuddySVG === 'function') {
+          window.updateBuddySVG(window.getFbState ? window.getFbState() : 'IDLE');
         }
+      } else {
+        if (loginOverlay) loginOverlay.style.display = 'flex';
+      }
+    };
+
+    if (typeof chrome !== 'undefined' && chrome.storage) {
+      chrome.storage.local.get(['flowbuddy-user', 'flowbee_user', 'flowbee_user_id'], (res) => {
+        const user = res['flowbuddy-user'] || res['flowbee_user'];
+        let userId = res['flowbee_user_id'] || (user ? user.id : null);
+        if (!userId) {
+          try { userId = localStorage.getItem('hp_user_id'); } catch(e){}
+        }
+        applyUserSession(user, userId);
       });
       
       chrome.storage.onChanged.addListener((changes, area) => {
-        if (area === 'local' && changes['flowbuddy-user']) {
-          const user = changes['flowbuddy-user'].newValue;
-          if (user) {
-            document.getElementById('login-overlay').style.display = 'none';
-            this.userName = user.name || 'Budi';
-            this.userLevel = user.level || 1;
-            this.attendanceStreak = user.streak || 0;
-            
-            const oldRole = FlowBuddyRBAC.currentRole;
-            const newRole = user.role || 'employee';
-            
-            FlowBuddyRBAC.setRole(newRole);
-            this.updateHeader();
-            
-            if (oldRole !== newRole) {
-              this.renderTabs();
-              if (this.currentView === 'chat-detail' && typeof ChatView !== 'undefined') {
-                 ChatView.closeChat();
-              }
-              this.showView(FlowBuddyRBAC.getConfig().defaultView);
+        if (area === 'local' && (changes['flowbuddy-user'] || changes['flowbee_user'] || changes['flowbee_user_id'])) {
+          chrome.storage.local.get(['flowbuddy-user', 'flowbee_user', 'flowbee_user_id'], (res) => {
+            const user = res['flowbuddy-user'] || res['flowbee_user'];
+            let userId = res['flowbee_user_id'] || (user ? user.id : null);
+            if (!userId) {
+              try { userId = localStorage.getItem('hp_user_id'); } catch(e){}
             }
-          } else {
-            document.getElementById('login-overlay').style.display = 'flex';
-          }
+            applyUserSession(user, userId);
+          });
         }
       });
+    } else {
+      let localUser = null;
+      let localUserId = null;
+      try {
+        const saved = localStorage.getItem('flowbuddy-user');
+        if (saved) localUser = JSON.parse(saved);
+        localUserId = localStorage.getItem('hp_user_id');
+      } catch(e) {}
+      applyUserSession(localUser, localUserId);
     }
-
-    // Fallback default
-    // Fallback default removed to prevent bypassing login screen
-    try {
-      const saved = localStorage.getItem('flowbuddy-user');
-      if (saved) {
-        document.getElementById('login-overlay').style.display = 'none';
-        const user = JSON.parse(saved);
-        this.userName = user.name || 'Budi';
-      }
-    } catch(e) {}
   },
 
   updateHeader() {
