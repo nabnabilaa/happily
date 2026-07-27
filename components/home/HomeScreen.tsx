@@ -357,36 +357,75 @@ export default function HomeScreen({ openModal }: any) {
           </div>
 
           <div className="hp-bento-col-6">
-            <div className="hp-bento-card">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                <div>
-                  <div style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, color: '#0F172A' }}>AI Coach Insights</div>
-                  <div style={{ fontSize: 11, color: '#64748B', fontWeight: 600, marginTop: 2 }}>Rekomendasi & saran personal untukmu</div>
+            <div style={{ marginTop: 24 }}>
+              <SectionHeader icon="sparkle" label="AI Coach Insights" />
+              <div style={{
+                border: `1.5px solid ${HP_TOKENS.lineSoft}`,
+                boxShadow: '0 8px 32px rgba(59, 130, 246, 0.05)',
+                borderRadius: 24,
+                background: '#fff',
+                overflow: 'hidden',
+              }}>
+                {/* Executive Blue Header Banner */}
+                <div style={{
+                  padding: '16px 20px',
+                  background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 100%)',
+                  color: '#fff',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', marginBottom: 2 }}>
+                    AI COACH INSIGHTS
+                  </div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>
+                    Rekomendasi & Analisis Personal Hari Ini
+                  </div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)', marginTop: 4 }}>
+                    Didorong oleh data mood, energi, dan progres kerja kamu.
+                  </div>
                 </div>
-                <div className="hp-bento-anchor-3d" style={{ background: '#FFF7ED', border: '1px solid #FFEDD5' }}>
-                  💡
+
+                {/* Insights List */}
+                <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {aiInsights.map((ins, i) => (
+                    <InsightCard key={i} ins={ins} idx={i} onClick={() => handleInsightClick(ins.action)} />
+                  ))}
+
+                  {/* Quick AI Prompt Chips */}
+                  <div style={{ marginTop: 4 }}>
+                    <div style={{ fontSize: 10, fontWeight: 800, color: '#64748B', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                      Tanya Coach AI Sekujur Hari
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      <button onClick={() => openModal('coach')} className="hp-tap" style={{ padding: '6px 12px', borderRadius: 20, background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#2563EB', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+                        💡 Cara atasi distraksi?
+                      </button>
+                      <button onClick={() => openModal('coach')} className="hp-tap" style={{ padding: '6px 12px', borderRadius: 20, background: '#F5F3FF', border: '1px solid #DDD6FE', color: '#7C3AED', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+                        🌱 Tips kelola stress
+                      </button>
+                      <button onClick={() => openModal('coach')} className="hp-tap" style={{ padding: '6px 12px', borderRadius: 20, background: '#FFF7ED', border: '1px solid #FFEDD5', color: '#EA580C', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+                        ⚡ Boost energi kerja
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Consultation Button */}
+                  <button 
+                    onClick={() => openModal('coach')}
+                    className="hp-tap"
+                    style={{
+                      width: '100%', padding: '12px 16px', borderRadius: 14,
+                      background: '#2563EB', color: '#FFFFFF', border: 'none',
+                      fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 4,
+                      boxShadow: '0 4px 14px rgba(37, 99, 235, 0.25)'
+                    }}
+                  >
+                    <HPGlyph name="sparkle" size={16} color="#FFFFFF" />
+                    <span>Buka Chat Coach AI</span>
+                  </button>
                 </div>
               </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1, marginTop: 4 }}>
-                {aiInsights.map((ins, i) => (
-                  <InsightCard key={i} ins={ins} idx={i} onClick={() => handleInsightClick(ins.action)} />
-                ))}
-              </div>
-
-              <button 
-                onClick={() => openModal('coach')}
-                className="hp-tap"
-                style={{
-                  width: '100%', padding: '10px 14px', borderRadius: 12,
-                  background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#2563EB',
-                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 8
-                }}
-              >
-                <HPGlyph name="sparkle" size={14} color="#2563EB" />
-                <span>Konsultasi dengan Coach AI</span>
-              </button>
             </div>
           </div>
 
