@@ -15,129 +15,269 @@ interface TabNavProps {
   userRole?: UserRole | null;
 }
 
-const TAB_CONFIG: Record<UserRole, Array<{ key: string; label: string; icon: string }>> = {
-  employee: [
-    { key: 'home',      label: 'Home',       icon: 'home' },
-    { key: 'calendar',  label: 'Calendar',   icon: 'calendar' },
-    { key: 'goals',     label: 'Target / KPI', icon: 'target' },
-    { key: 'team',      label: 'Tim',        icon: 'people' },
-    { key: 'recognize', label: 'Rewards',    icon: 'trophy' },
-    { key: 'chat',      label: 'Chat',       icon: 'activity' },
-  ],
-  manager: [
-    { key: 'home',      label: 'Dashboard',  icon: 'home' },
-    { key: 'calendar',  label: 'Calendar',   icon: 'calendar' },
-    { key: 'my_kpi',    label: 'KPI Saya',   icon: 'target' },
-    { key: 'goals',     label: 'Tim & Target/KPI', icon: 'target' },
-    { key: 'team',      label: 'Tim',        icon: 'people' },
-    { key: 'recognize', label: 'Rewards',    icon: 'trophy' },
-    { key: 'chat',      label: 'Chat',       icon: 'activity' },
-  ],
-// HR = konsol admin/pengawas bersih (tanpa KPI Saya / fitur personal karyawan).
-  hr: [
-    { key: 'home',      label: 'Dashboard',  icon: 'home' },
-    { key: 'calendar',  label: 'Calendar',   icon: 'calendar' },
-    { key: 'goals',     label: 'People',     icon: 'people' },
-    { key: 'team',      label: 'Tim',        icon: 'people' },
-    { key: 'recognize', label: 'Rewards',    icon: 'trophy' },
-    { key: 'chat',      label: 'Chat',       icon: 'activity' },
-  ],
+interface CategoryMeta {
+  color: string;
+  bg: string;
+  copy: string;
+}
+
+const CATEGORY_META: Record<string, CategoryMeta> = {
+  home: {
+    color: "#2563EB", // Blue (Energy)
+    bg: "#EFF6FF",
+    copy: "Check energy & focus",
+  },
+  calendar: {
+    color: "#7C3AED", // Purple (Sleep)
+    bg: "#F5F3FF",
+    copy: "Track sleep & schedule",
+  },
+  goals: {
+    color: "#EA580C", // Orange (Food / Target)
+    bg: "#FFF7ED",
+    copy: "Ready to log targets?",
+  },
+  my_kpi: {
+    color: "#EA580C", // Orange (Target / KPI)
+    bg: "#FFF7ED",
+    copy: "Track personal KPI",
+  },
+  team: {
+    color: "#9333EA", // Violet (Heart / Team)
+    bg: "#FDF4FF",
+    copy: "Connect with team",
+  },
+  recognize: {
+    color: "#DB2777", // Pink (Cycle / Rewards)
+    bg: "#FDF2F8",
+    copy: "Treat yourself today",
+  },
+  chat: {
+    color: "#0F172A", // Dark Slate (Activity / Chat)
+    bg: "#F8FAFC",
+    copy: "Catch up on activity",
+  },
 };
 
-const TAB_COLORS: Record<string, string> = {
-  home: '#3B82F6', // Blue
-  calendar: '#8B5CF6', // Purple
-  goals: '#F97316', // Orange
-  my_kpi: '#F97316', 
-  team: '#10B981', // Green
-  recognize: '#F59E0B', // Yellow
-  chat: '#EF4444' // Red
+const TAB_CONFIG: Record<UserRole, Array<{ key: string; label: string; icon: string }>> = {
+  employee: [
+    { key: "home",      label: "Dashboard",   icon: "home" },
+    { key: "calendar",  label: "Calendar",    icon: "calendar" },
+    { key: "goals",     label: "Target & KPI", icon: "target" },
+    { key: "team",      label: "Tim",         icon: "people" },
+    { key: "recognize", label: "Rewards",     icon: "trophy" },
+    { key: "chat",      label: "Chat",        icon: "activity" },
+  ],
+  manager: [
+    { key: "home",      label: "Dashboard",   icon: "home" },
+    { key: "calendar",  label: "Calendar",    icon: "calendar" },
+    { key: "my_kpi",    label: "KPI Saya",    icon: "target" },
+    { key: "goals",     label: "Tim & Target", icon: "target" },
+    { key: "team",      label: "Tim",         icon: "people" },
+    { key: "recognize", label: "Rewards",     icon: "trophy" },
+    { key: "chat",      label: "Chat",        icon: "activity" },
+  ],
+  hr: [
+    { key: "home",      label: "Dashboard",   icon: "home" },
+    { key: "calendar",  label: "Calendar",    icon: "calendar" },
+    { key: "goals",     label: "People",      icon: "people" },
+    { key: "team",      label: "Tim",         icon: "people" },
+    { key: "recognize", label: "Rewards",     icon: "trophy" },
+    { key: "chat",      label: "Chat",        icon: "activity" },
+  ],
 };
 
 export default function TabNav({ tab, setTab, userRole }: TabNavProps) {
-  const tabs = TAB_CONFIG[userRole ?? 'employee'];
+  const roleKey = userRole && TAB_CONFIG[userRole] ? userRole : "employee";
+  const tabs = TAB_CONFIG[roleKey];
 
   return (
     <div className="hp-app-nav">
       {/* Desktop Brand Logo */}
       <div className="hp-nav-brand">
-        <div style={{ 
-          position: 'relative', 
-          width: 46, height: 46, 
-          borderRadius: 14, 
-          background: HP_TOKENS.primarySoft,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: `0 4px 16px rgba(59, 130, 246, 0.15)`,
-          flexShrink: 0
-        }}>
-          <BeeMascot mood="happy" size={36} />
+        <div
+          style={{
+            position: "relative",
+            width: 44,
+            height: 44,
+            borderRadius: 14,
+            background: "linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: `0 4px 16px rgba(59, 130, 246, 0.12)`,
+            flexShrink: 0,
+            border: "1px solid rgba(59, 130, 246, 0.18)",
+          }}
+        >
+          <BeeMascot mood="happy" size={34} />
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-          <div style={{ 
-            fontFamily: HP_FONT_DISPLAY, 
-            fontWeight: 900, 
-            fontSize: 24, 
-            letterSpacing: -0.5,
-            display: 'flex',
-            alignItems: 'center',
-            lineHeight: 1.1
-          }}>
-            <span style={{ color: HP_TOKENS.ink }}>Flow</span>
-            <span style={{ color: HP_TOKENS.primary }}>buddy</span>
+        <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+          <div
+            style={{
+              fontFamily: HP_FONT_DISPLAY,
+              fontWeight: 900,
+              fontSize: 22,
+              letterSpacing: -0.5,
+              display: "flex",
+              alignItems: "center",
+              lineHeight: 1.1,
+            }}
+          >
+            <span style={{ color: "#0F172A" }}>Flow</span>
+            <span style={{ color: "#2563EB" }}>buddy</span>
           </div>
-          <div style={{ 
-            fontFamily: HP_FONT, 
-            fontSize: 11, 
-            fontWeight: 700, 
-            color: HP_TOKENS.inkMute,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
-            marginTop: 2
-          }}>
-            <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, color: HP_TOKENS.inkFade }}>by Maxy</span>
-            <HPGlyph name="sparkle" size={10} color={HP_TOKENS.yellow} />
+          <div
+            style={{
+              fontFamily: HP_FONT,
+              fontSize: 10,
+              fontWeight: 700,
+              color: HP_TOKENS.inkMute,
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              marginTop: 2,
+            }}
+          >
+            <span
+              style={{
+                fontSize: 10,
+                textTransform: "uppercase",
+                letterSpacing: 1,
+                color: "#64748B",
+                fontWeight: 800,
+              }}
+            >
+              by Maxy
+            </span>
+            <HPGlyph name="sparkle" size={10} color="#F59E0B" />
           </div>
         </div>
       </div>
 
-      {tabs.map(t => {
+      {tabs.map((t) => {
         const active = tab === t.key;
-        const baseColor = TAB_COLORS[t.key] || HP_TOKENS.primary;
+        const meta = CATEGORY_META[t.key] || CATEGORY_META.home;
+
         return (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`hp-nav-btn hp-tap${active ? ' active' : ''}`}
+            className={`hp-nav-btn hp-tap${active ? " active" : ""}`}
             style={{
-              color: active ? '#FFFFFF' : baseColor,
-              background: active ? baseColor : `${baseColor}15`,
-              borderRadius: 16,
-              marginBottom: 8,
-              border: active ? '1px solid transparent' : `1px solid ${baseColor}30`,
-              boxShadow: active ? `0 6px 16px ${baseColor}35` : 'none',
-              padding: '12px 18px',
-              transition: 'all 0.2s cubic-bezier(0.34, 1.2, 0.64, 1)'
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              width: "100%",
+              // Clean Modern Aesthetic
+              background: active ? "#2563EB" : `${meta.color}08`,
+              color: active ? "#FFFFFF" : "#0F172A",
+              borderRadius: 14,
+              marginBottom: 6,
+              border: active ? "1px solid #2563EB" : `1px solid ${meta.color}20`,
+              boxShadow: active ? "0 4px 14px rgba(37, 99, 235, 0.28)" : "none",
+              padding: "10px 14px",
+              cursor: "pointer",
+              transition: "all 0.18s ease-in-out",
+              textAlign: "left",
             }}
           >
-            <div className="hp-nav-btn-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {/* Unified Single Icon on Left with subtle category tint */}
+            <div
+              className="hp-nav-btn-icon"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 34,
+                height: 34,
+                borderRadius: 10,
+                background: active ? "rgba(255, 255, 255, 0.2)" : meta.bg,
+                color: active ? "#FFFFFF" : meta.color,
+                flexShrink: 0,
+                transition: "transform 0.18s ease",
+              }}
+            >
               <HPGlyph
                 name={t.icon}
-                size={22}
-                color={active ? '#FFFFFF' : baseColor}
-                stroke={active ? 2.5 : 2.5}
+                size={18}
+                color={active ? "#FFFFFF" : meta.color}
+                stroke={2.2}
               />
             </div>
-            <div className="hp-nav-btn-text" style={{ opacity: 1, fontWeight: active ? 800 : 700 }}>
-              {t.label}
+
+            {/* Title + Conversational Subtext */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 1, overflow: "hidden", flex: 1 }}>
+              <div
+                style={{
+                  fontFamily: HP_FONT,
+                  fontSize: 14,
+                  fontWeight: active ? 800 : 700,
+                  color: active ? "#FFFFFF" : "#0F172A",
+                  lineHeight: 1.2,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {t.label}
+              </div>
+              <div
+                style={{
+                  fontFamily: HP_FONT,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: active ? "#DBEAFE" : "#64748B", // High contrast ratio >= 4.5:1
+                  lineHeight: 1.2,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {meta.copy}
+              </div>
             </div>
+
+            {/* Sleek category dot indicator */}
+            {!active && (
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: meta.color,
+                  opacity: 0.8,
+                  flexShrink: 0,
+                }}
+              />
+            )}
           </button>
         );
       })}
 
       <div className="hp-mobile-hidden" style={{ flex: 1, minHeight: 12 }} />
-      <div className="hp-mobile-hidden" style={{ padding: '12px 0 8px 0', width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: 8, position: 'relative' }}>
+      <div
+        className="hp-mobile-hidden"
+        style={{
+          padding: "12px 0 8px 0",
+          width: "100%",
+          boxSizing: "border-box",
+          display: "flex",
+          flexDirection: "column",
+          gap: 12,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            width: "100%",
+            gap: 8,
+            position: "relative",
+          }}
+        >
           <FontSelector />
           <ThemeSwitcher />
         </div>
@@ -146,3 +286,5 @@ export default function TabNav({ tab, setTab, userRole }: TabNavProps) {
     </div>
   );
 }
+
+
