@@ -827,6 +827,9 @@ a { color: var(--hp-primary); text-decoration: none; }
 .hp-form-row { display: flex; gap: 12px; align-items: flex-end; }
 @media (max-width: 500px) { .hp-form-row { flex-direction: column; align-items: stretch; } }
 
+.hp-profile-name-group { display: flex; align-items: center; gap: 12px; min-width: 0; }
+@media (max-width: 600px) { .hp-profile-name-group { flex-direction: column; align-items: flex-start; gap: 4px; } }
+
 /* ═══ DARK MODE SAFETY NET ═══
    Was a wall of attribute-selector overrides catching hardcoded light-mode
    hexes on unmigrated screens. Every one of those hexes is now a token, so the
