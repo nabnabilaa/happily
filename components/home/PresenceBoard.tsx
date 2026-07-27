@@ -139,6 +139,23 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
     );
   }
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 4; // 2x2 items per page
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, nameSearch]);
+
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const displayedUsers = filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const getPageNumbers = (current: number, total: number) => {
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    if (current <= 4) return [1, 2, 3, 4, 5, '...', total];
+    if (current >= total - 3) return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+    return [1, '...', current - 1, current, current + 1, '...', total];
+  };
+
   return (
     <div style={{ position: 'relative' }}>
       {toastMsg && (
@@ -248,225 +265,287 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
         style={{
           width: '100%', padding: '12px 16px', borderRadius: 14,
           border: `1.5px solid ${HP_TOKENS.lineSoft}`, fontFamily: HP_FONT,
-          fontSize: 14, outline: 'none', background: HP_TOKENS.card, marginBottom: 12,
+          fontSize: 14, outline: 'none', background: HP_TOKENS.card, marginBottom: 16,
           boxSizing: 'border-box'
         }}
       />
 
-      {/* User List */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {filteredUsers.length === 0 ? (
-          <HPCard padding={24} style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 32, marginBottom: 8 }}>🔍</div>
-            <div style={{ ...HP_TEXT.h, fontSize: 14 }}>Tidak ada anggota tim dengan status ini</div>
-          </HPCard>
-        ) : (
-          (showAll ? filteredUsers : filteredUsers.slice(0, 4)).map(u => (
-            <HPCard key={u.id} padding={12} style={{
-              border: `1.5px solid ${u.id === user?.id ? `${HP_TOKENS.yellow}40` : HP_TOKENS.line}`,
-              background: u.id === user?.id ? HP_TOKENS.yellowSoft + '20' : HP_TOKENS.card,
-              cursor: 'pointer'
-            }} onClick={() => openModal('member_tasks', { targetUserId: u.id, targetUserName: u.name })}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  {/* Avatar with status dot */}
-                  <div style={{ position: 'relative', flexShrink: 0 }}>
-                    <HPAvatar name={u.name} size={44} />
-                    <div style={{
-                      position: 'absolute', bottom: -1, right: -1,
-                      width: 14, height: 14, borderRadius: 7,
-                      background: getStatusDotColor(u.status),
-                      border: '2.5px solid #fff',
-                      boxShadow: '0 1px 3px rgba(26,29,35,0.15)',
-                    }} />
-                  </div>
-
-                  {/* Info */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                      <div style={{ ...HP_TEXT.h, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {u.name}
-                      </div>
-                      <div style={{
-                        padding: '1px 6px', borderRadius: 4, fontSize: 8, fontWeight: 800,
-                        background: 'rgba(59, 130, 246, 0.08)', color: 'var(--hp-primary)', fontFamily: HP_FONT, border: '1px solid rgba(59, 130, 246, 0.25)'
-                      }}>
-                        Lv {u.level} • {u.points} pts
-                      </div>
-                      {u.id === user?.id && (
+      {/* User List Grid (2x2 items) */}
+      {filteredUsers.length === 0 ? (
+        <HPCard padding={24} style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 32, marginBottom: 8 }}>🔍</div>
+          <div style={{ ...HP_TEXT.h, fontSize: 14 }}>Tidak ada anggota tim dengan status ini</div>
+        </HPCard>
+      ) : (
+        <>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+            gap: 12
+          }}>
+            {displayedUsers.map(u => (
+              <HPCard key={u.id} padding={14} style={{
+                border: `1.5px solid ${u.id === user?.id ? `${HP_TOKENS.yellow}60` : HP_TOKENS.line}`,
+                background: u.id === user?.id ? HP_TOKENS.yellowSoft + '20' : HP_TOKENS.card,
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between'
+              }} onClick={() => openModal('member_tasks', { targetUserId: u.id, targetUserName: u.name })}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+                      {/* Avatar with status dot */}
+                      <div style={{ position: 'relative', flexShrink: 0 }}>
+                        <HPAvatar name={u.name} size={42} />
                         <div style={{
-                          padding: '1px 6px', borderRadius: 4, fontSize: 8, fontWeight: 800,
-                          background: HP_TOKENS.yellowSoft, color: '#8A6814', fontFamily: HP_FONT,
-                        }}>KAMU</div>
+                          position: 'absolute', bottom: -1, right: -1,
+                          width: 13, height: 13, borderRadius: 7,
+                          background: getStatusDotColor(u.status),
+                          border: '2px solid #fff',
+                          boxShadow: '0 1px 3px rgba(26,29,35,0.15)',
+                        }} />
+                      </div>
+
+                      {/* Info */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
+                          <div style={{ ...HP_TEXT.h, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {u.name}
+                          </div>
+                          <div style={{
+                            padding: '1px 5px', borderRadius: 4, fontSize: 8, fontWeight: 800,
+                            background: 'rgba(59, 130, 246, 0.08)', color: 'var(--hp-primary)', fontFamily: HP_FONT, border: '1px solid rgba(59, 130, 246, 0.25)',
+                            whiteSpace: 'nowrap'
+                          }}>
+                            Lv {u.level} • {u.points} pts
+                          </div>
+                          {u.id === user?.id && (
+                            <div style={{
+                              padding: '1px 5px', borderRadius: 4, fontSize: 8, fontWeight: 800,
+                              background: HP_TOKENS.yellowSoft, color: '#8A6814', fontFamily: HP_FONT,
+                            }}>KAMU</div>
+                          )}
+                        </div>
+                        <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {u.jobTitle || u.team}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Status badge */}
+                    <div style={{
+                      display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2,
+                      flexShrink: 0
+                    }}>
+                      <div style={{
+                        padding: '3px 8px', borderRadius: 8,
+                        background: `${getStatusDotColor(u.status)}15`,
+                        border: `1px solid ${getStatusDotColor(u.status)}30`,
+                        display: 'flex', alignItems: 'center', gap: 4,
+                      }}>
+                        <span style={{ fontSize: 10 }}>{u.statusEmoji}</span>
+                        <span style={{
+                          fontFamily: HP_FONT, fontWeight: 800, fontSize: 10,
+                          color: getStatusDotColor(u.status),
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {u.statusLabel}
+                        </span>
+                      </div>
+                      {u.checkInType && u.todayCheckin && (
+                        <div style={{
+                          ...HP_TEXT.tiny, fontSize: 8, color: HP_TOKENS.inkFade,
+                        }}>
+                          {u.checkInType} · {new Date(u.todayCheckin).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                        </div>
                       )}
                     </div>
-                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 1 }}>
-                      {u.jobTitle || u.team}
-                    </div>
-                    {u.reason && (
-                      <div style={{
-                        ...HP_TEXT.tiny, color: u.status === 'stuck' ? HP_TOKENS.coral : HP_TOKENS.inkSoft, marginTop: 3,
-                        fontStyle: 'italic', fontSize: 10,
-                        background: u.status === 'stuck' ? HP_TOKENS.coralSoft : 'transparent',
-                        padding: u.status === 'stuck' ? '4px 6px' : 0, borderRadius: 4
-                      }}>
-                        "{u.reason}"
-                      </div>
-                    )}
                   </div>
 
-                  {/* Status badge */}
-                  <div style={{
-                    display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4,
-                    flexShrink: 0,
-                  }}>
+                  {u.reason && (
                     <div style={{
-                      padding: '4px 10px', borderRadius: 8,
-                      background: `${getStatusDotColor(u.status)}15`,
-                      border: `1px solid ${getStatusDotColor(u.status)}30`,
-                      display: 'flex', alignItems: 'center', gap: 4,
+                      ...HP_TEXT.tiny, color: u.status === 'stuck' ? HP_TOKENS.coral : HP_TOKENS.inkSoft,
+                      fontStyle: 'italic', fontSize: 10,
+                      background: u.status === 'stuck' ? HP_TOKENS.coralSoft : '#F8FAFC',
+                      padding: '4px 8px', borderRadius: 6
                     }}>
-                      <span style={{ fontSize: 11 }}>{u.statusEmoji}</span>
-                      <span style={{
-                        fontFamily: HP_FONT, fontWeight: 800, fontSize: 10,
-                        color: getStatusDotColor(u.status),
-                      }}>
-                        {u.statusLabel}
-                      </span>
+                      "{u.reason}"
                     </div>
-                    {u.checkInType && u.todayCheckin && (
-                      <div style={{
-                        ...HP_TEXT.tiny, fontSize: 9, color: HP_TOKENS.inkFade,
-                      }}>
-                        {u.checkInType} · {new Date(u.todayCheckin).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                  )}
 
-                {/* Quick Actions (Only for other users) */}
-                {u.id !== user?.id && (
-                  <div style={{ display: 'flex', gap: 6, borderTop: `1px solid ${HP_TOKENS.lineSoft}`, paddingTop: 10, marginTop: -4 }}>
-                    <button 
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        try {
-                          await fetch("/api/status/greet", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ senderId: user?.id, senderName: user?.name, receiverId: u.id, type: 'greet' })
-                          });
-                          showToast(`Kamu menyapa ${u.name.split(' ')[0]}! 👋`);
-                        } catch (e) {
-                          showToast("Gagal menyapa 😥");
-                        }
-                      }}
-                      className="hp-tap"
-                      style={{ 
-                        flex: 1, padding: '6px', borderRadius: 8, background: HP_TOKENS.paper, 
-                        border: `1px solid ${HP_TOKENS.line}`, color: HP_TOKENS.ink, fontSize: 11,
-                        fontFamily: HP_FONT, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
-                      }}>
-                      👀 Senggol
-                    </button>
-                    <button 
+                  {/* Quick Actions */}
+                  {u.id !== user?.id && (
+                    <div style={{ display: 'flex', gap: 6, borderTop: `1px solid ${HP_TOKENS.lineSoft}`, paddingTop: 10, marginTop: 4 }}>
+                      <button 
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          try {
+                            await fetch("/api/status/greet", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ senderId: user?.id, senderName: user?.name, receiverId: u.id, type: 'greet' })
+                            });
+                            showToast(`Kamu menyapa ${u.name.split(' ')[0]}! 👋`);
+                          } catch (e) {
+                            showToast("Gagal menyapa 😥");
+                          }
+                        }}
+                        className="hp-tap"
+                        style={{ 
+                          flex: 1, padding: '6px 4px', borderRadius: 8, background: HP_TOKENS.paper, 
+                          border: `1px solid ${HP_TOKENS.line}`, color: HP_TOKENS.ink, fontSize: 11,
+                          fontFamily: HP_FONT, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3,
+                          whiteSpace: 'nowrap'
+                        }}>
+                        👀 Senggol
+                      </button>
+                      <button 
                         onClick={(e) => {
                           e.stopPropagation();
                           openModal('appreciate', { toUser: u })
                         }}
+                        className="hp-tap"
+                        style={{ 
+                          flex: 1, padding: '6px 4px', borderRadius: 8, background: HP_TOKENS.sageWash, 
+                          border: `1px solid ${HP_TOKENS.sage}40`, color: HP_TOKENS.sage, fontSize: 11,
+                          fontFamily: HP_FONT, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3,
+                          whiteSpace: 'nowrap'
+                        }}>
+                        🌱 Apresiasi
+                      </button>
+                      {(u.status === 'break' || u.status === 'away') && (
+                        <button 
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            try {
+                              await fetch("/api/status/greet", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ senderId: user?.id, senderName: user?.name, receiverId: u.id, type: 'coffee' })
+                              });
+                              showToast(`Ajakan ngopi terkirim ke ${u.name.split(' ')[0]}! ☕`);
+                            } catch (e) {
+                              showToast("Gagal mengajak ngopi 😥");
+                            }
+                          }}
+                          className="hp-tap"
+                          style={{ 
+                            flex: 1, padding: '6px 4px', borderRadius: 8, background: HP_TOKENS.yellowSoft, 
+                            border: `1px solid ${HP_TOKENS.yellow}40`, color: '#8A6814', fontSize: 11,
+                            fontFamily: HP_FONT, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3,
+                            whiteSpace: 'nowrap'
+                          }}>
+                          ☕ Ngopi
+                        </button>
+                      )}
+                      {u.status === 'stuck' && (
+                        <button 
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            try {
+                              await fetch("/api/status/greet", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ senderId: user?.id, senderName: user?.name, receiverId: u.id, type: 'help' })
+                              });
+                              showToast(`Bantuan ditawarkan ke ${u.name.split(' ')[0]}! 🤝`);
+                            } catch (err) {
+                              showToast("Gagal menawarkan bantuan 😥");
+                            }
+                          }}
+                          className="hp-tap"
+                          style={{ 
+                            flex: 1, padding: '6px 4px', borderRadius: 8, background: HP_TOKENS.coral, 
+                            border: `1px solid ${HP_TOKENS.coral}`, color: '#fff', fontSize: 11,
+                            fontFamily: HP_FONT, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3,
+                            whiteSpace: 'nowrap'
+                          }}>
+                          🤝 Bantu
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </HPCard>
+            ))}
+          </div>
+
+          {/* Pagination Controls */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 12,
+            marginTop: 20
+          }}>
+            <div style={{ fontSize: 12, color: HP_TOKENS.inkMute, fontWeight: 700, fontFamily: HP_FONT }}>
+              Menampilkan {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredUsers.length)} dari {filteredUsers.length} anggota
+            </div>
+
+            {totalPages > 1 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="hp-tap"
+                  style={{
+                    padding: '8px 14px', borderRadius: 10,
+                    border: `1px solid ${HP_TOKENS.line}`,
+                    background: currentPage === 1 ? '#F1F5F9' : '#FFFFFF',
+                    color: currentPage === 1 ? '#94A3B8' : HP_TOKENS.ink,
+                    fontFamily: HP_FONT, fontWeight: 800, fontSize: 12,
+                    cursor: currentPage === 1 ? 'default' : 'pointer'
+                  }}
+                >
+                  ← Prev
+                </button>
+
+                {getPageNumbers(currentPage, totalPages).map((p, idx) => (
+                  typeof p === 'number' ? (
+                    <button
+                      key={p}
+                      onClick={() => setCurrentPage(p)}
                       className="hp-tap"
-                      style={{ 
-                        flex: 1, padding: '6px', borderRadius: 8, background: HP_TOKENS.sageWash, 
-                        border: `1px solid ${HP_TOKENS.sage}40`, color: HP_TOKENS.sage, fontSize: 11,
-                        fontFamily: HP_FONT, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
-                      }}>
-                      🌱 Apresiasi
+                      style={{
+                        width: 36, height: 36, borderRadius: 10,
+                        border: p === currentPage ? 'none' : `1px solid ${HP_TOKENS.line}`,
+                        background: p === currentPage ? '#2563EB' : '#FFFFFF',
+                        color: p === currentPage ? '#FFFFFF' : HP_TOKENS.ink,
+                        fontFamily: HP_FONT, fontWeight: 800, fontSize: 12,
+                        cursor: 'pointer',
+                        boxShadow: p === currentPage ? '0 4px 12px rgba(37, 99, 235, 0.25)' : 'none'
+                      }}
+                    >
+                      {p}
                     </button>
-                    {(u.status === 'break' || u.status === 'away') && (
-                      <button 
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          try {
-                            await fetch("/api/status/greet", {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ senderId: user?.id, senderName: user?.name, receiverId: u.id, type: 'coffee' })
-                            });
-                            showToast(`Ajakan ngopi terkirim ke ${u.name.split(' ')[0]}! ☕`);
-                          } catch (e) {
-                            showToast("Gagal mengajak ngopi 😥");
-                          }
-                        }}
-                        className="hp-tap"
-                        style={{ 
-                          flex: 1, padding: '6px', borderRadius: 8, background: HP_TOKENS.yellowSoft, 
-                          border: `1px solid ${HP_TOKENS.yellow}40`, color: '#8A6814', fontSize: 11,
-                          fontFamily: HP_FONT, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
-                        }}>
-                        ☕ Ajak Ngopi
-                      </button>
-                    )}
-                    {u.status === 'stuck' && (
-                      <button 
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          try {
-                            await fetch("/api/status/greet", {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ senderId: user?.id, senderName: user?.name, receiverId: u.id, type: 'help' })
-                            });
-                            showToast(`Bantuan ditawarkan ke ${u.name.split(' ')[0]}! 🤝`);
-                          } catch (err) {
-                            showToast("Gagal menawarkan bantuan 😥");
-                          }
-                        }}
-                        className="hp-tap"
-                        style={{ 
-                          flex: 1, padding: '6px', borderRadius: 8, background: HP_TOKENS.coral, 
-                          border: `1px solid ${HP_TOKENS.coral}`, color: '#fff', fontSize: 11,
-                          fontFamily: HP_FONT, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
-                        }}>
-                        🤝 Tawarkan Bantuan
-                      </button>
-                    )}
-                  </div>
-                )}
+                  ) : (
+                    <span key={`dots-${idx}`} style={{ padding: '0 4px', color: HP_TOKENS.inkMute, fontWeight: 800, fontSize: 12 }}>
+                      ...
+                    </span>
+                  )
+                ))}
+
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="hp-tap"
+                  style={{
+                    padding: '8px 14px', borderRadius: 10,
+                    border: `1px solid ${HP_TOKENS.line}`,
+                    background: currentPage === totalPages ? '#F1F5F9' : '#FFFFFF',
+                    color: currentPage === totalPages ? '#94A3B8' : HP_TOKENS.ink,
+                    fontFamily: HP_FONT, fontWeight: 800, fontSize: 12,
+                    cursor: currentPage === totalPages ? 'default' : 'pointer'
+                  }}
+                >
+                  Next →
+                </button>
               </div>
-            </HPCard>
-          ))
-        )}
-
-        {!showAll && filteredUsers.length > 4 && (
-          <button 
-            onClick={() => setShowAll(true)}
-            className="hp-tap"
-            style={{
-              width: '100%', padding: '12px', borderRadius: 14,
-              background: HP_TOKENS.lineSoft, color: HP_TOKENS.inkSoft,
-              border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 13,
-              cursor: 'pointer', marginTop: 4
-            }}
-          >
-            Tampilkan {filteredUsers.length - 4} anggota lainnya
-          </button>
-        )}
-
-        {showAll && filteredUsers.length > 4 && (
-          <button 
-            onClick={() => setShowAll(false)}
-            className="hp-tap"
-            style={{
-              width: '100%', padding: '12px', borderRadius: 14,
-              background: 'transparent', color: HP_TOKENS.inkMute,
-              border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 13,
-              cursor: 'pointer', marginTop: 4
-            }}
-          >
-            Sembunyikan
-          </button>
-        )}
-      </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
