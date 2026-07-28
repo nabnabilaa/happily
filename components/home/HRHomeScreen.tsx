@@ -423,6 +423,13 @@ export default function HRHomeScreen({ openModal }: Props) {
                   title="Lainnya"
                   items={[
                     {
+                      icon: 'gift',
+                      label: 'Kelola Reward',
+                      hint: 'Pemenuhan penukaran reward karyawan',
+                      tone: HP_TOKENS.info,
+                      onClick: () => openModal('reward_fulfillment'),
+                    },
+                    {
                       icon: 'leaf',
                       label: 'Jeda 1 menit',
                       hint: 'Box breathing untuk menurunkan stres',

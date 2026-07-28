@@ -72,15 +72,33 @@ export default function RedeemHistoryList({ history, limit = 10 }: RedeemHistory
           title={h.title}
           subtitle={formatDate(h.date)}
           trailing={
-            <span
-              style={{
-                ...HP_TEXT.bodyStrong,
-                color: HP_TOKENS.inkMute,
-                fontVariantNumeric: "tabular-nums",
-              }}
-            >
-              −{Number(h.points).toLocaleString("id-ID")}
-            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+              <span
+                style={{
+                  ...HP_TEXT.bodyStrong,
+                  color: HP_TOKENS.inkMute,
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                −{Number(h.points).toLocaleString("id-ID")}
+              </span>
+              {h.status && (
+                <span style={{ 
+                  ...HP_TEXT.tiny, 
+                  background: h.status === 'fulfilled' ? HP_TOKENS.successWash : (h.status === 'rejected' ? HP_TOKENS.dangerWash : HP_TOKENS.warningWash),
+                  color: h.status === 'fulfilled' ? HP_TOKENS.success : (h.status === 'rejected' ? HP_TOKENS.danger : HP_TOKENS.warning),
+                  padding: '2px 6px',
+                  borderRadius: 4
+                }}>
+                  {h.status === 'pending_manager' ? 'Menunggu Manager' : (h.status === 'pending_hr' ? 'Menunggu HR' : h.status.toUpperCase())}
+                </span>
+              )}
+              {h.status === 'fulfilled' && h.proofLink && (
+                <a href={h.proofLink} target="_blank" rel="noopener noreferrer" style={{ ...HP_TEXT.tiny, color: HP_TOKENS.primary, textDecoration: 'underline' }}>
+                  Lihat Bukti
+                </a>
+              )}
+            </div>
           }
         />
       ))}

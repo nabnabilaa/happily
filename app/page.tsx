@@ -72,6 +72,7 @@ const NotificationsModal = safeDynamic(() => import("@/components/modals/Notific
 
 
 const WorkCheckInModal = safeDynamic(() => import("@/components/modals/WorkCheckInModal"));
+const RewardFulfillmentModal = safeDynamic(() => import("@/components/modals/RewardFulfillmentModal"));
 const ManagePrioritiesModal = safeDynamic(() => import("@/components/modals/ManagePrioritiesModal"));
 const ManageHabitsModal = safeDynamic(() => import("@/components/modals/ManageHabitsModal"));
 const ManageLearningModal = safeDynamic(() => import("@/components/modals/ManageLearningModal"));
@@ -618,6 +619,7 @@ function AppContent() {
       {modal?.name === 'notifications'    && <NotificationsModal onClose={closeModal} openModal={openModal} />}
 
       {modal?.name === 'work_checkin'     && <WorkCheckInModal onClose={closeModal} openModal={openModal} {...modal.props} />}
+      {modal?.name === 'reward_fulfillment' && <RewardFulfillmentModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'manage_priorities'&& <ManagePrioritiesModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'manage_habits'    && <ManageHabitsModal onClose={closeModal} />}
       {modal?.name === 'manage_learning'  && <ManageLearningModal onClose={closeModal} />}

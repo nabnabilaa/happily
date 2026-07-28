@@ -20,8 +20,8 @@ export async function GET(request: Request) {
             (SELECT COUNT(*) FROM daily_priorities WHERE user_id = u.id AND DATE(created_at) = CURDATE()) as tasks_total,
             (SELECT COUNT(*) FROM daily_priorities WHERE user_id = u.id AND is_done = 1) as all_tasks_done,
             (SELECT COUNT(*) FROM daily_priorities WHERE user_id = u.id) as all_tasks_total
-            FROM users u WHERE u.department = ? AND u.id != ?`,
-      args: [managerDept, userId]
+            FROM users u WHERE (u.manager_id = ? OR (u.department = ? AND u.id != ?))`,
+      args: [userId, managerDept, userId]
     });
 
     const members = membersRes.rows.map(m => ({
@@ -38,10 +38,26 @@ export async function GET(request: Request) {
 
     // Legacy goals are replaced by KPIs, which are fetched separately via /api/kpi
     const goals: any[] = [];
-    const approvals: any[] = [];
+    let approvals: any[] = [];
 
     const memberIdsOnly = members.map(m => String(m.id));
     const memberPlaceholders = memberIdsOnly.length > 0 ? memberIdsOnly.map(() => '?').join(',') : "''";
+
+    if (memberIdsOnly.length > 0) {
+      const apprRes = await db.execute({
+        sql: `SELECT g.id, g.title as desc, u.name as from_name, 'Pengajuan Target' as type 
+              FROM goals g
+              JOIN users u ON g.owner_id = u.id
+              WHERE g.status = 'pending' AND g.owner_id IN (${memberPlaceholders})`,
+        args: memberIdsOnly
+      });
+      approvals = apprRes.rows.map(r => ({
+        id: r.id,
+        desc: r.desc,
+        from: r.from_name,
+        type: r.type
+      }));
+    }
 
     // 4. Fetch Team Tasks (for verification)
     let teamTasks: any[] = [];

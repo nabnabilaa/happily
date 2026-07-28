@@ -43,13 +43,15 @@ export default function AllRewardsModal({ onClose, selected }: AllRewardsModalPr
     }
   }, [selected, state?.rewards]);
 
+  const [userNotes, setUserNotes] = useState("");
+
   const executeRedeem = async () => {
     if (!state || !user || !confirmReward) return;
     const reward = confirmReward;
     
     setRedeeming(true);
     try {
-      const res = await fetch('/api/rewards/redeem', {
+      const res = await fetch('/api/rewards/redemptions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -58,7 +60,8 @@ export default function AllRewardsModal({ onClose, selected }: AllRewardsModalPr
           rewardId: reward.id,
           rewardTitle: reward.title,
           rewardPoints: reward.points,
-          rewardType: reward.category
+          rewardType: reward.category,
+          userNotes
         })
       });
 
@@ -77,7 +80,7 @@ export default function AllRewardsModal({ onClose, selected }: AllRewardsModalPr
         rewards: s.rewards.map((r: any) => r.id === reward.id ? { ...r, stock: r.stock - 1 } : r),
         rewardHistory: [
           ...(s.rewardHistory || []),
-          { id: Date.now(), title: reward.title, points: reward.points, date: new Date().toISOString(), glyph: reward.glyph || 'trophy' }
+          { id: data.id, title: reward.title, points: reward.points, date: new Date().toISOString(), glyph: reward.glyph || 'trophy', status: data.status }
         ]
       }));
       updateUser({ points: data.pointsRemaining, coins: data.pointsRemaining });
@@ -122,10 +125,33 @@ export default function AllRewardsModal({ onClose, selected }: AllRewardsModalPr
         <div style={{ ...HP_TEXT.h, fontSize: 22, marginBottom: 8, color: HP_TOKENS.ink }}>
           Tukar Poin?
         </div>
-        <div style={{ ...HP_TEXT.body, marginBottom: 32, lineHeight: 1.6, color: HP_TOKENS.inkMute }}>
+        <div style={{ ...HP_TEXT.body, marginBottom: 20, lineHeight: 1.6, color: HP_TOKENS.inkMute }}>
           Kamu akan menukarkan <strong style={{ color: HP_TOKENS.ink }}>{confirmReward.points} poin</strong> untuk mendapatkan <br/>
           <strong style={{ color: HP_TOKENS.ink }}>&quot;{confirmReward.title}&quot;</strong>.
         </div>
+        
+        <div style={{ width: '100%', maxWidth: 300, marginBottom: 24, textAlign: 'left' }}>
+          <label style={{ ...HP_TEXT.small, color: HP_TOKENS.inkSoft, marginBottom: 8, display: 'block' }}>
+            Catatan Tambahan (Opsional)
+          </label>
+          <input
+            type="text"
+            placeholder="Misal: Nomor HP untuk isi pulsa..."
+            value={userNotes}
+            onChange={(e) => setUserNotes(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '10px 12px',
+              borderRadius: HP_TOKENS.radiusMd,
+              border: `1px solid ${HP_TOKENS.line}`,
+              background: HP_TOKENS.paper,
+              color: HP_TOKENS.ink,
+              fontFamily: HP_FONT,
+              fontSize: 14
+            }}
+          />
+        </div>
+
         <div style={{ display: 'flex', gap: 12, width: '100%', maxWidth: 300 }}>
           <button
             onClick={onClose}

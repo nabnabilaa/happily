@@ -222,11 +222,14 @@ export async function GET(request: Request) {
     }));
 
     const rewardHistoryRes = await db.execute({
-      sql: "SELECT * FROM user_rewards WHERE user_id = ? ORDER BY date DESC LIMIT 10",
+      sql: `SELECT r.id, rew.title, r.points_spent as points, r.created_at as date, rew.glyph, r.status, r.proof_link, r.reviewer_notes 
+            FROM reward_redemptions r 
+            JOIN rewards rew ON r.reward_id = rew.id 
+            WHERE r.user_id = ? ORDER BY r.created_at DESC LIMIT 10`,
       args: [userId]
     });
     const rewardHistory = rewardHistoryRes.rows.map(r => ({
-      id: r.id, title: r.title, points: r.points, date: r.date, glyph: r.glyph
+      id: r.id, title: r.title, points: r.points, date: r.date, glyph: r.glyph, status: r.status, proofLink: r.proof_link, reviewerNotes: r.reviewer_notes
     }));
 
     // Fetch logbook entries (recent 10)

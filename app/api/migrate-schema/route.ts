@@ -71,6 +71,24 @@ export async function POST() {
       )`
     },
     {
+      desc: "Create reward_redemptions table",
+      sql: `CREATE TABLE IF NOT EXISTS reward_redemptions (
+        id VARCHAR(100) PRIMARY KEY,
+        reward_id VARCHAR(100) NOT NULL,
+        user_id VARCHAR(100) NOT NULL,
+        points_spent INT NOT NULL,
+        status VARCHAR(50) DEFAULT 'pending',
+        user_notes TEXT,
+        proof_link TEXT,
+        reviewer_notes TEXT,
+        reviewed_by VARCHAR(100),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (reward_id) REFERENCES rewards(id),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      )`
+    },
+    {
       desc: "Create user_status table (Presence Board)",
       sql: `CREATE TABLE IF NOT EXISTS user_status (
         user_id VARCHAR(100) PRIMARY KEY,
