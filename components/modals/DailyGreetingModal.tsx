@@ -109,7 +109,7 @@ export default function DailyGreetingModal({ userName, streak, level, onClose, o
           filter: brightness(1.1);
         }
         .dg-gradient-text {
-          background: #60A5FA;
+          background: var(--hp-primary);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
@@ -119,9 +119,9 @@ export default function DailyGreetingModal({ userName, streak, level, onClose, o
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: 360,
-          borderRadius: 24,
+          borderRadius: HP_TOKENS.radiusLg,
           background: 'var(--hp-card)',
-          boxShadow: '0 8px 32px rgba(29,53,87,0.12)',
+          boxShadow: HP_TOKENS.shadowLg,
           border: '1px solid var(--hp-border)',
           position: 'relative',
           padding: '40px 20px 24px',
@@ -152,7 +152,7 @@ export default function DailyGreetingModal({ userName, streak, level, onClose, o
         <div style={{ position: 'relative', zIndex: 2, textAlign: 'center' }}>
           
           <h2 style={{
-            fontFamily: HP_FONT_DISPLAY, fontSize: 24, fontWeight: 800,
+            fontFamily: HP_FONT_DISPLAY, fontSize: 24, fontWeight: 700,
             lineHeight: 1.2, marginBottom: 8, letterSpacing: '-0.02em',
             color: 'var(--hp-ink)'
           }}>
@@ -165,7 +165,7 @@ export default function DailyGreetingModal({ userName, streak, level, onClose, o
             {greeting.intro}
           </p>
           <div style={{
-            background: 'rgba(255,190,11,0.1)', padding: '16px', borderRadius: 16,
+            background: 'rgba(255,190,11,0.1)', padding: '16px', borderRadius: HP_TOKENS.radiusMd,
             marginBottom: 24, border: '1px dashed rgba(255,190,11,0.4)'
           }}>
             <p style={{
@@ -182,10 +182,10 @@ export default function DailyGreetingModal({ userName, streak, level, onClose, o
               onClick={handleCheckIn}
               className="hp-tap-btn"
               style={{
-                width: '100%', padding: '14px', borderRadius: 16, border: 'none',
-                background: '#3B82F6', color: '#fff',
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 15,
-                cursor: 'pointer', boxShadow: '0 4px 16px rgba(59,130,246,0.3)',
+                width: '100%', padding: '14px', borderRadius: HP_TOKENS.radiusMd, border: 'none',
+                background: HP_TOKENS.primary, color: '#fff',
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 15,
+                cursor: 'pointer',
               }}
             >
               Lanjut Check-in
@@ -194,7 +194,7 @@ export default function DailyGreetingModal({ userName, streak, level, onClose, o
               onClick={handleClose}
               className="hp-tap-btn"
               style={{
-                width: '100%', padding: '12px', borderRadius: 16,
+                width: '100%', padding: '12px', borderRadius: HP_TOKENS.radiusMd,
                 border: '1px solid var(--hp-line)',
                 background: 'transparent', color: 'var(--hp-ink-fade)',
                 fontFamily: HP_FONT, fontWeight: 700, fontSize: 14,

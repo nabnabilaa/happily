@@ -75,7 +75,7 @@ export default function AttendanceDashboard({ logs, users }: AttendanceDashboard
         <select 
           value={filterType} 
           onChange={e => setFilterType(e.target.value as any)}
-          style={{ padding: '8px 12px', borderRadius: 10, border: `1px solid ${HP_TOKENS.line}`, outline: 'none', fontFamily: HP_FONT }}
+          style={{ padding: '8px 12px', borderRadius: HP_TOKENS.radiusSm, border: `1px solid ${HP_TOKENS.line}`, outline: 'none', fontFamily: HP_FONT }}
         >
           <option value="day">Harian</option>
           <option value="month">Bulanan</option>
@@ -87,7 +87,7 @@ export default function AttendanceDashboard({ logs, users }: AttendanceDashboard
             type="date" 
             value={selectedDate} 
             onChange={e => setSelectedDate(e.target.value)}
-            style={{ padding: '8px 12px', borderRadius: 10, border: `1px solid ${HP_TOKENS.line}`, outline: 'none', fontFamily: HP_FONT }}
+            style={{ padding: '8px 12px', borderRadius: HP_TOKENS.radiusSm, border: `1px solid ${HP_TOKENS.line}`, outline: 'none', fontFamily: HP_FONT }}
           />
         )}
         {filterType === 'month' && (
@@ -95,14 +95,14 @@ export default function AttendanceDashboard({ logs, users }: AttendanceDashboard
             type="month" 
             value={selectedMonth} 
             onChange={e => setSelectedMonth(e.target.value)}
-            style={{ padding: '8px 12px', borderRadius: 10, border: `1px solid ${HP_TOKENS.line}`, outline: 'none', fontFamily: HP_FONT }}
+            style={{ padding: '8px 12px', borderRadius: HP_TOKENS.radiusSm, border: `1px solid ${HP_TOKENS.line}`, outline: 'none', fontFamily: HP_FONT }}
           />
         )}
         {filterType === 'year' && (
           <select 
             value={selectedYear} 
             onChange={e => setSelectedYear(e.target.value)}
-            style={{ padding: '8px 12px', borderRadius: 10, border: `1px solid ${HP_TOKENS.line}`, outline: 'none', fontFamily: HP_FONT }}
+            style={{ padding: '8px 12px', borderRadius: HP_TOKENS.radiusSm, border: `1px solid ${HP_TOKENS.line}`, outline: 'none', fontFamily: HP_FONT }}
           >
             {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
           </select>
@@ -112,19 +112,19 @@ export default function AttendanceDashboard({ logs, users }: AttendanceDashboard
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <HPCard padding={16} style={{ background: HP_TOKENS.blueSoft, border: 'none' }}>
           <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 700, marginBottom: 4 }}>TOTAL KEHADIRAN</div>
-          <div style={{ fontSize: 28, fontWeight: 900, color: HP_TOKENS.blue }}>{stats.totalPresent}</div>
+          <div style={{ fontSize: 28, fontWeight: 700, color: HP_TOKENS.blue }}>{stats.totalPresent}</div>
         </HPCard>
         
         {stats.absent >= 0 && (
           <HPCard padding={16} style={{ background: HP_TOKENS.coralSoft, border: 'none' }}>
             <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.coral, fontWeight: 700, marginBottom: 4 }}>TIDAK MASUK</div>
-            <div style={{ fontSize: 28, fontWeight: 900, color: HP_TOKENS.coral }}>{stats.absent}</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: HP_TOKENS.coral }}>{stats.absent}</div>
           </HPCard>
         )}
         {stats.absent < 0 && (
           <HPCard padding={16} style={{ background: HP_TOKENS.sageSoft, border: 'none' }}>
             <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 700, marginBottom: 4 }}>TEPAT WAKTU</div>
-            <div style={{ fontSize: 28, fontWeight: 900, color: HP_TOKENS.sage }}>{stats.onTime}</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: HP_TOKENS.sage }}>{stats.onTime}</div>
           </HPCard>
         )}
       </div>
@@ -135,9 +135,9 @@ export default function AttendanceDashboard({ logs, users }: AttendanceDashboard
           { label: 'WFA', value: stats.wfa, color: HP_TOKENS.lavender },
           { label: 'Dinas', value: stats.dinas, color: HP_TOKENS.yellow },
         ].map(item => (
-          <div key={item.label} style={{ background: HP_TOKENS.card, border: `1px solid ${HP_TOKENS.lineSoft}`, borderRadius: 12, padding: 12, textAlign: 'center' }}>
+          <div key={item.label} style={{ background: HP_TOKENS.card, border: `1px solid ${HP_TOKENS.lineSoft}`, borderRadius: HP_TOKENS.radiusSm, padding: 12, textAlign: 'center' }}>
             <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>{item.label}</div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: item.color, marginTop: 4 }}>{item.value}</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: item.color, marginTop: 4 }}>{item.value}</div>
           </div>
         ))}
       </div>

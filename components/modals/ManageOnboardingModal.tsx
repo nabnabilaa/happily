@@ -69,7 +69,7 @@ export default function ManageOnboardingModal({ onClose }: Props) {
       tag: `✨ LANGKAH ${steps.length + 1} / ${steps.length + 1}`,
       q: 'Pertanyaan baru?',
       hint: 'Penjelasan tambahan...',
-      opts: [{ e: '🌟', bg: '#EAF4FD', l: 'Opsi 1' }]
+      opts: [{ e: '🌟', bg: HP_TOKENS.infoWash, l: 'Opsi 1' }]
     }];
     newSteps.forEach((s, i) => {
       s.tag = s.tag.replace(/LANGKAH \d+ \/ \d+/, `LANGKAH ${i+1} / ${newSteps.length}`);
@@ -91,7 +91,7 @@ export default function ManageOnboardingModal({ onClose }: Props) {
         <button onClick={() => setPreviewMode(false)} style={{
           position: 'absolute', top: 20, right: 20, zIndex: 100001,
           padding: '12px 24px', background: HP_TOKENS.ink, color: '#fff',
-          borderRadius: 20, border: 'none', cursor: 'pointer', fontFamily: HP_FONT, fontWeight: 700
+          borderRadius: HP_TOKENS.radius, border: 'none', cursor: 'pointer', fontFamily: HP_FONT, fontWeight: 700
         }}>
           Tutup Preview
         </button>
@@ -128,7 +128,7 @@ export default function ManageOnboardingModal({ onClose }: Props) {
             </div>
           </div>
           <button onClick={onClose} className="hp-tap" style={{
-            width: 36, height: 36, borderRadius: 18, background: HP_TOKENS.lineSoft,
+            width: 36, height: 36, borderRadius: '50%', background: HP_TOKENS.lineSoft,
             border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'
           }}>
             <HPGlyph name="close" size={16} color={HP_TOKENS.ink} />
@@ -143,12 +143,12 @@ export default function ManageOnboardingModal({ onClose }: Props) {
                   <input 
                     value={step.q} 
                     onChange={e => { const n = [...steps]; n[idx].q = e.target.value; setSteps(n); }}
-                    style={{ width: '100%', padding: '12px', borderRadius: 12, border: `1px solid ${HP_TOKENS.line}`, marginBottom: 8, fontFamily: HP_FONT, fontSize: 16, fontWeight: 700 }}
+                    style={{ width: '100%', padding: '12px', borderRadius: HP_TOKENS.radiusSm, border: `1px solid ${HP_TOKENS.line}`, marginBottom: 8, fontFamily: HP_FONT, fontSize: 16, fontWeight: 700 }}
                   />
                   <input 
                     value={step.hint} 
                     onChange={e => { const n = [...steps]; n[idx].hint = e.target.value; setSteps(n); }}
-                    style={{ width: '100%', padding: '12px', borderRadius: 12, border: `1px solid ${HP_TOKENS.line}`, marginBottom: 16, fontFamily: HP_FONT, fontSize: 14 }}
+                    style={{ width: '100%', padding: '12px', borderRadius: HP_TOKENS.radiusSm, border: `1px solid ${HP_TOKENS.line}`, marginBottom: 16, fontFamily: HP_FONT, fontSize: 14 }}
                   />
                   <div style={{ fontSize: 13, fontWeight: 700, color: HP_TOKENS.inkMute, marginBottom: 8 }}>Opsi Jawaban</div>
                   {step.dynamicSource === 'departments' ? (
@@ -158,7 +158,7 @@ export default function ManageOnboardingModal({ onClose }: Props) {
                       </div>
                       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                         {resolveStepOptions(step, departments).map((o: any, oi: number) => (
-                          <div key={oi} style={{ padding: '4px 10px', borderRadius: 20, background: o.bg, fontSize: 12, fontWeight: 600 }}>{o.e} {o.l}</div>
+                          <div key={oi} style={{ padding: '4px 10px', borderRadius: HP_TOKENS.radius, background: o.bg, fontSize: 12, fontWeight: 600 }}>{o.e} {o.l}</div>
                         ))}
                         {departments.length === 0 && (
                           <div style={{ fontSize: 12, color: HP_TOKENS.inkMute }}>Belum ada departemen terdaftar di HR.</div>
@@ -175,11 +175,11 @@ export default function ManageOnboardingModal({ onClose }: Props) {
                           <button onClick={() => { const n = [...steps]; n[idx].opts.splice(oidx,1); setSteps(n); }} style={{ background: 'transparent', border: 'none', color: HP_TOKENS.coral, cursor: 'pointer' }}>Hapus</button>
                         </div>
                       ))}
-                      <button onClick={() => { const n = [...steps]; n[idx].opts.push({e:'✨', bg:'#f0f0f0', l:'Opsi baru'}); setSteps(n); }} style={{ background: HP_TOKENS.lineSoft, padding: '6px 12px', borderRadius: 8, border: 'none', fontSize: 12, cursor: 'pointer', marginBottom: 16 }}>+ Tambah Opsi</button>
+                      <button onClick={() => { const n = [...steps]; n[idx].opts.push({e:'✨', bg:HP_TOKENS.lineSoft, l:'Opsi baru'}); setSteps(n); }} style={{ background: HP_TOKENS.lineSoft, padding: '6px 12px', borderRadius: 8, border: 'none', fontSize: 12, cursor: 'pointer', marginBottom: 16 }}>+ Tambah Opsi</button>
                     </>
                   )}
                   <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <button onClick={() => setEditingIndex(null)} style={{ background: HP_TOKENS.lavender, color: '#fff', padding: '8px 16px', borderRadius: 12, border: 'none', fontWeight: 700, cursor: 'pointer' }}>Selesai Edit</button>
+                    <button onClick={() => setEditingIndex(null)} style={{ background: HP_TOKENS.lavender, color: '#fff', padding: '8px 16px', borderRadius: HP_TOKENS.radiusSm, border: 'none', fontWeight: 700, cursor: 'pointer' }}>Selesai Edit</button>
                   </div>
                 </div>
               ) : (
@@ -189,14 +189,14 @@ export default function ManageOnboardingModal({ onClose }: Props) {
                     <button onClick={() => moveStep(idx, 1)} disabled={idx===steps.length-1} style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: idx===steps.length-1?0.2:1 }}>⬇️</button>
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 12, fontWeight: 800, color: HP_TOKENS.lavender, marginBottom: 4 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: HP_TOKENS.lavender, marginBottom: 4 }}>
                       LANGKAH {idx + 1}{step.dynamicSource === 'departments' ? ' · 🔗 Terhubung ke Departemen HR' : ''}
                     </div>
-                    <div style={{ fontSize: 16, fontWeight: 800, color: HP_TOKENS.ink }}>{step.q}</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: HP_TOKENS.ink }}>{step.q}</div>
                     <div style={{ fontSize: 13, color: HP_TOKENS.inkSoft, marginTop: 2, marginBottom: 12 }}>{step.hint}</div>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       {resolveStepOptions(step, departments).map((o: any, oi: number) => (
-                        <div key={oi} style={{ padding: '4px 10px', borderRadius: 20, background: o.bg, fontSize: 12, fontWeight: 600 }}>{o.e} {o.l}</div>
+                        <div key={oi} style={{ padding: '4px 10px', borderRadius: HP_TOKENS.radius, background: o.bg, fontSize: 12, fontWeight: 600 }}>{o.e} {o.l}</div>
                       ))}
                     </div>
                   </div>
@@ -210,14 +210,14 @@ export default function ManageOnboardingModal({ onClose }: Props) {
               )}
             </HPCard>
           ))}
-          <button onClick={addStep} style={{ width: '100%', padding: 16, border: `2px dashed ${HP_TOKENS.line}`, borderRadius: 16, background: 'transparent', cursor: 'pointer', fontWeight: 700, color: HP_TOKENS.inkMute, marginBottom: 32 }}>+ Tambah Langkah Baru</button>
+          <button onClick={addStep} style={{ width: '100%', padding: 16, border: `2px dashed ${HP_TOKENS.line}`, borderRadius: HP_TOKENS.radiusMd, background: 'transparent', cursor: 'pointer', fontWeight: 700, color: HP_TOKENS.inkMute, marginBottom: 32 }}>+ Tambah Langkah Baru</button>
         </div>
 
         <div style={{ display: 'flex', gap: 12, paddingTop: 16, borderTop: `1px solid ${HP_TOKENS.line}` }}>
-          <button onClick={() => setPreviewMode(true)} style={{ flex: 1, padding: 16, borderRadius: 16, background: HP_TOKENS.lineSoft, color: HP_TOKENS.ink, border: 'none', fontWeight: 700, cursor: 'pointer', fontFamily: HP_FONT }}>
+          <button onClick={() => setPreviewMode(true)} style={{ flex: 1, padding: 16, borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.lineSoft, color: HP_TOKENS.ink, border: 'none', fontWeight: 700, cursor: 'pointer', fontFamily: HP_FONT }}>
             👁️ Preview
           </button>
-          <button onClick={handleSave} style={{ flex: 2, padding: 16, borderRadius: 16, background: HP_TOKENS.lavender, color: '#fff', border: 'none', fontWeight: 700, cursor: 'pointer', fontFamily: HP_FONT }}>
+          <button onClick={handleSave} style={{ flex: 2, padding: 16, borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.lavender, color: '#fff', border: 'none', fontWeight: 700, cursor: 'pointer', fontFamily: HP_FONT }}>
             Simpan Pengaturan
           </button>
         </div>

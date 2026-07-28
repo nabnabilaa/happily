@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useId } from "react";
 import "./BeeMascot.css";
+import { MASCOT_MOODS } from "@/lib/palettes";
 
 interface BeeMascotProps {
   mood?: 'happy' | 'neutral' | 'sad' | 'sleepy' | 'surprised' | 'focus' | 'eating' | 'stretching' | 'excited' | 'annoyed' | 'waiting' | string;
@@ -34,20 +35,7 @@ export function getMascotAnimated() {
 }
 
 
-const stateMapping: Record<string, { svgState: string; w1: string; w2: string; wp: string; mouth: string; color: string }> = {
-  idle: { color: '#3B82F6', svgState: 'idle', w1: '#D6E4FF', w2: '#3B82F6', wp: '#93C5FD', mouth: 'M 90 125 Q 100 130 110 125' },
-  neutral: { color: '#3B82F6', svgState: 'idle', w1: '#D6E4FF', w2: '#3B82F6', wp: '#93C5FD', mouth: 'M 90 125 Q 100 130 110 125' },
-  happy: { color: '#F06595', svgState: 'senang', w1: '#FEEAF1', w2: '#F06595', wp: '#FAA2C1', mouth: 'M 80 125 Q 100 155 120 125' },
-  sad: { color: '#7A92A8', svgState: 'sedih', w1: '#E5E9F0', w2: '#7A92A8', wp: '#B8C6D6', mouth: 'M 85 135 Q 100 115 115 135' },
-  sleepy: { color: '#A89BC9', svgState: 'ngantuk', w1: '#EAE6F4', w2: '#A89BC9', wp: '#D3CCEB', mouth: 'M 95 130 Q 100 132 105 130' },
-  focus: { color: '#FFBE0B', svgState: 'fokus', w1: '#FFF8CC', w2: '#FFBE0B', wp: '#FFDCA8', mouth: 'M 92 128 L 108 128' },
-  eating: { color: '#FF6B35', svgState: 'makan', w1: '#FFE6D6', w2: '#FF6B35', wp: '#FFB899', mouth: 'M 85 125 Q 100 155 115 125' },
-  stretching: { color: '#20C997', svgState: 'olahraga', w1: '#E6FCF5', w2: '#20C997', wp: '#96F2D7', mouth: 'M 85 125 Q 100 115 115 125' },
-  excited: { color: '#F59F00', svgState: 'semangat', w1: '#FFF3BF', w2: '#F59F00', wp: '#FFD43B', mouth: 'M 80 130 Q 100 160 120 130' },
-  surprised: { color: '#845EF7', svgState: 'idle', w1: '#E5DBFF', w2: '#845EF7', wp: '#B197FC', mouth: 'M 95 125 A 5 5 0 1 1 105 125 A 5 5 0 1 1 95 125' },
-  annoyed: { color: '#FF4444', svgState: 'kesal', w1: '#FFE5E5', w2: '#FF4444', wp: '#FFAAAA', mouth: 'M 85 135 Q 100 115 115 135' },
-  waiting: { color: '#15AABF', svgState: 'menunggu', w1: '#E3FAFC', w2: '#15AABF', wp: '#66D9E8', mouth: 'M 95 125 A 5 5 0 1 1 105 125 A 5 5 0 1 1 95 125' },
-};
+const stateMapping = MASCOT_MOODS;
 
 
 const BeeMascot = React.memo(function BeeMascot({ mood = 'neutral', size = 80, showSpeech, animated: animatedProp, onClick }: BeeMascotProps) {

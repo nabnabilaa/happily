@@ -9,13 +9,7 @@ import HPGlyph from "@/components/ui/HPGlyph";
 import ScreenHeader from "@/components/ui/ScreenHeader";
 import HPAvatar from "@/components/ui/HPAvatar";
 
-const NOTE_THEMES = [
-  { id: 'yellow', bg: '#FFF9E6', border: '#F59F00', blob: '#FFE8A1', label: 'Kuning' },
-  { id: 'blue', bg: '#EBF5FF', border: '#339AF0', blob: '#A5D8FF', label: 'Biru' },
-  { id: 'green', bg: '#EBFBEE', border: '#51CF66', blob: '#B2F2BB', label: 'Hijau' },
-  { id: 'purple', bg: '#F3F0FF', border: '#845EF7', blob: '#D0BFFF', label: 'Ungu' },
-  { id: 'pink', bg: '#FFF0F6', border: '#F06595', blob: '#FCC2D7', label: 'Pink' },
-];
+import { NOTE_THEMES } from "@/lib/palettes";
 
 export default function NotesScreen() {
   const { user } = useHP();
@@ -241,7 +235,7 @@ export default function NotesScreen() {
   };
 
   const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '16px 20px', borderRadius: 16,
+    width: '100%', padding: '16px 20px', borderRadius: HP_TOKENS.radiusMd,
     border: `1.5px solid ${HP_TOKENS.lineSoft}`, fontFamily: HP_FONT, fontSize: 15,
     outline: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink, boxSizing: 'border-box',
     transition: 'all 0.2s ease'
@@ -292,11 +286,10 @@ export default function NotesScreen() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           {/* SECTION 1: AKSES & BAGIKAN CATATAN */}
           <div style={{ 
-            background: HP_TOKENS.card, borderRadius: 24, padding: 24, 
+            background: HP_TOKENS.card, borderRadius: HP_TOKENS.radiusLg, padding: 24, 
             border: `1.5px solid ${HP_TOKENS.line}`, 
-            boxShadow: '0 8px 24px rgba(26,29,35,0.03)'
           }}>
-            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 16, letterSpacing: 0.5 }}>
+            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 16, letterSpacing: 0.5 }}>
               AKSES & BAGIKAN CATATAN
             </div>
             
@@ -316,7 +309,7 @@ export default function NotesScreen() {
                 {showVisibilityDropdown && (
                   <>
                     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 }} onClick={() => setShowVisibilityDropdown(false)} />
-                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(26,29,35,0.12)', border: `1px solid ${HP_TOKENS.line}`, zIndex: 101, maxHeight: 250, overflowY: 'auto', padding: 8 }}>
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: HP_TOKENS.cardRaised, borderRadius: HP_TOKENS.radiusMd, boxShadow: HP_TOKENS.shadowMd, border: `1px solid ${HP_TOKENS.line}`, zIndex: 101, maxHeight: 250, overflowY: 'auto', padding: 8 }}>
                       {[
                         { value: 'private', label: '🔒 Pribadi (Hanya Saya)' },
                         { value: 'company', label: '🏢 Seluruh Perusahaan' },
@@ -326,7 +319,7 @@ export default function NotesScreen() {
                           key={o.value} className="hp-tap"
                           onClick={() => { setVisibility(o.value); setSharedUsers([]); setShowVisibilityDropdown(false); }}
                           style={{
-                            padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                            padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm, cursor: 'pointer',
                             background: visibility === o.value ? HP_TOKENS.blueWash : 'transparent',
                             ...HP_TEXT.body, color: visibility === o.value ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: visibility === o.value ? 700 : 500,
                             marginBottom: 4
@@ -354,7 +347,7 @@ export default function NotesScreen() {
                   {showPermissionDropdown && (
                     <>
                       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 }} onClick={() => setShowPermissionDropdown(false)} />
-                      <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(26,29,35,0.12)', border: `1px solid ${HP_TOKENS.line}`, zIndex: 101, maxHeight: 250, overflowY: 'auto', padding: 8 }}>
+                      <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: HP_TOKENS.cardRaised, borderRadius: HP_TOKENS.radiusMd, boxShadow: HP_TOKENS.shadowMd, border: `1px solid ${HP_TOKENS.line}`, zIndex: 101, maxHeight: 250, overflowY: 'auto', padding: 8 }}>
                         {[
                           { value: 'view', label: '👁️ Bisa Lihat' },
                           { value: 'edit', label: '✏️ Bisa Ikut Edit' }
@@ -363,7 +356,7 @@ export default function NotesScreen() {
                             key={o.value} className="hp-tap"
                             onClick={() => { setSharedPermission(o.value); setShowPermissionDropdown(false); }}
                             style={{
-                              padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                              padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm, cursor: 'pointer',
                               background: sharedPermission === o.value ? HP_TOKENS.blueWash : 'transparent',
                               ...HP_TEXT.body, color: sharedPermission === o.value ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: sharedPermission === o.value ? 700 : 500,
                               marginBottom: 4
@@ -382,22 +375,22 @@ export default function NotesScreen() {
             {visibility === 'custom' && (
               <div style={{ 
                 marginTop: 20, padding: 24, background: HP_TOKENS.paper, 
-                border: `1.5px solid ${HP_TOKENS.line}`, borderRadius: 20 
+                border: `1.5px solid ${HP_TOKENS.line}`, borderRadius: HP_TOKENS.radius 
               }}>
                 {sharedUsers.length > 0 && (
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: '16px',
-                    borderRadius: 16, background: HP_TOKENS.blueWash, marginBottom: 20 }}>
+                    borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.blueWash, marginBottom: 20 }}>
                     {sharedUsers.map(uid => {
                       const u = allUsers.find((x: any) => String(x.id) === uid);
                       return u ? (
                         <span key={uid} onClick={() => toggleUser(uid)} style={{
-                          padding: '8px 16px', borderRadius: 12, fontSize: 13, fontWeight: 800,
+                          padding: '8px 16px', borderRadius: HP_TOKENS.radiusSm, fontSize: 13, fontWeight: 700,
                           cursor: 'pointer', fontFamily: HP_FONT, border: 'none',
-                          background: HP_TOKENS.blue, color: '#F4F7F9',
+                          background: HP_TOKENS.blue, color: HP_TOKENS.onPrimary,
                           display: 'inline-flex', alignItems: 'center', gap: 6
                         }}>
                           {u.name.split(' ')[0]} 
-                          <HPGlyph name="close" size={14} color="#F4F7F9" />
+                          <HPGlyph name="close" size={14} color={HP_TOKENS.onPrimary} />
                         </span>
                       ) : null;
                     })}
@@ -406,7 +399,7 @@ export default function NotesScreen() {
 
                 <input value={searchUser} onChange={e => setSearchUser(e.target.value)}
                   placeholder="🔍 Cari nama atau departemen..."
-                  style={{ ...inputStyle, padding: '16px 20px', borderRadius: 16, marginBottom: 20 }} />
+                  style={{ ...inputStyle, padding: '16px 20px', borderRadius: HP_TOKENS.radiusMd, marginBottom: 20 }} />
 
                 <div className="hp-user-list" style={{ maxHeight: 320, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12, paddingRight: 8 }}>
                   {deptNames.length === 0 ? (
@@ -422,7 +415,7 @@ export default function NotesScreen() {
                         <div key={dept} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                           <div style={{
                             display: 'flex', alignItems: 'center', gap: 12,
-                            padding: '12px 16px', borderRadius: 16,
+                            padding: '12px 16px', borderRadius: HP_TOKENS.radiusMd,
                             background: HP_TOKENS.card, border: `1.5px solid ${HP_TOKENS.lineSoft}`
                           }}>
                             <button onClick={(e) => { e.preventDefault(); toggleDeptCollapse(dept); }} className="hp-tap" style={{
@@ -437,7 +430,7 @@ export default function NotesScreen() {
                               {dept} ({deptUsers.length})
                             </div>
                             <button onClick={(e) => { e.preventDefault(); selectAllInDept(dept); }} className="hp-tap" style={{
-                              padding: '6px 14px', borderRadius: 10, fontSize: 12, fontWeight: 800,
+                              padding: '6px 14px', borderRadius: HP_TOKENS.radiusSm, fontSize: 12, fontWeight: 700,
                               cursor: 'pointer', fontFamily: HP_FONT,
                               background: allInDeptSelected ? HP_TOKENS.blue : someInDeptSelected ? `${HP_TOKENS.blue}30` : HP_TOKENS.lineSoft,
                               color: allInDeptSelected ? '#fff' : HP_TOKENS.blue,
@@ -455,7 +448,7 @@ export default function NotesScreen() {
                                   <button key={u.id} onClick={(e) => { e.preventDefault(); toggleUser(String(u.id)); }}
                                     className="hp-tap" style={{
                                       display: 'flex', alignItems: 'center', gap: 16,
-                                      padding: '12px 16px', borderRadius: 16,
+                                      padding: '12px 16px', borderRadius: HP_TOKENS.radiusMd,
                                       background: isSelected ? HP_TOKENS.blueWash : 'transparent',
                                       border: isSelected ? `1.5px solid ${HP_TOKENS.blue}30` : '1.5px solid transparent',
                                       cursor: 'pointer', width: '100%', textAlign: 'left', transition: 'all 0.2s'
@@ -474,7 +467,7 @@ export default function NotesScreen() {
                                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                                       transition: 'all 0.2s'
                                     }}>
-                                      {isSelected && <HPGlyph name="check" size={14} color="#F4F7F9" />}
+                                      {isSelected && <HPGlyph name="check" size={14} color={HP_TOKENS.onPrimary} />}
                                     </div>
                                   </button>
                                 );
@@ -492,11 +485,10 @@ export default function NotesScreen() {
 
           {/* SECTION 2: TEMA WARNA */}
           <div style={{ 
-            background: HP_TOKENS.card, borderRadius: 24, padding: 24, 
+            background: HP_TOKENS.card, borderRadius: HP_TOKENS.radiusLg, padding: 24, 
             border: `1.5px solid ${HP_TOKENS.line}`, 
-            boxShadow: '0 8px 24px rgba(26,29,35,0.03)'
           }}>
-            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 16, letterSpacing: 0.5 }}>
+            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 16, letterSpacing: 0.5 }}>
               TEMA WARNA
             </div>
             <div style={{ display: 'flex', gap: 16 }}>
@@ -506,7 +498,7 @@ export default function NotesScreen() {
                   onClick={() => setNoteColor(theme.id)}
                   className="hp-tap"
                   style={{
-                    width: 44, height: 44, borderRadius: 22, background: theme.bg,
+                    width: 44, height: 44, borderRadius: '50%', background: theme.bg,
                     border: `3px solid ${noteColor === theme.id ? theme.border : 'transparent'}`,
                     cursor: 'pointer',
                     transition: 'all 0.2s',
@@ -520,28 +512,27 @@ export default function NotesScreen() {
 
           {/* SECTION 3: KONTEN */}
           <div style={{ 
-            background: HP_TOKENS.card, borderRadius: 24, padding: 24, 
+            background: HP_TOKENS.card, borderRadius: HP_TOKENS.radiusLg, padding: 24, 
             border: `1.5px solid ${HP_TOKENS.line}`, 
-            boxShadow: '0 8px 24px rgba(26,29,35,0.03)',
             display: 'flex', flexDirection: 'column', gap: 24
           }}>
             <div>
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 12, letterSpacing: 0.5 }}>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 12, letterSpacing: 0.5 }}>
                 JUDUL CATATAN
               </div>
               <input
                 value={noteTitle}
                 onChange={(e) => setNoteTitle(e.target.value)}
                 placeholder="Rapat Mingguan, Ide Kreatif, dll."
-                style={{ ...inputStyle, fontWeight: 800, fontSize: 18, padding: '18px 20px' }}
+                style={{ ...inputStyle, fontWeight: 700, fontSize: 18, padding: '18px 20px' }}
               />
             </div>
             
             <div>
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 12, letterSpacing: 0.5 }}>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 12, letterSpacing: 0.5 }}>
                 ISI CATATAN
               </div>
-              <div style={{ background: HP_TOKENS.card, borderRadius: 16, overflow: 'hidden', maxWidth: '100%', border: `1.5px solid ${HP_TOKENS.lineSoft}` }}>
+              <div style={{ background: HP_TOKENS.card, borderRadius: HP_TOKENS.radiusMd, overflow: 'hidden', maxWidth: '100%', border: `1.5px solid ${HP_TOKENS.lineSoft}` }}>
                 <Editor
                   tinymceScriptSrc="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js"
                   value={newNote}
@@ -574,9 +565,9 @@ export default function NotesScreen() {
               onClick={cancelForm}
               className="hp-tap"
               style={{
-                padding: '16px 28px', borderRadius: 16, border: `1.5px solid ${HP_TOKENS.line}`,
+                padding: '16px 28px', borderRadius: HP_TOKENS.radiusMd, border: `1.5px solid ${HP_TOKENS.line}`,
                 background: HP_TOKENS.card, color: HP_TOKENS.inkSoft,
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 15, cursor: 'pointer',
               }}
             >
               Batal
@@ -586,10 +577,10 @@ export default function NotesScreen() {
               disabled={!newNote.trim() || (visibility === 'custom' && sharedUsers.length === 0)}
               className="hp-tap"
               style={{
-                padding: '16px 32px', borderRadius: 16, border: 'none',
+                padding: '16px 32px', borderRadius: HP_TOKENS.radiusMd, border: 'none',
                 background: (!newNote.trim() || (visibility === 'custom' && sharedUsers.length === 0)) ? HP_TOKENS.lineSoft : HP_TOKENS.primaryWash,
                 color: (!newNote.trim() || (visibility === 'custom' && sharedUsers.length === 0)) ? HP_TOKENS.inkMute : HP_TOKENS.primary,
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, 
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 15, 
                 cursor: (!newNote.trim() || (visibility === 'custom' && sharedUsers.length === 0)) ? 'default' : 'pointer',
                 boxShadow: 'none'
               }}
@@ -613,7 +604,7 @@ export default function NotesScreen() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           style={{
-            flex: '1 1 200px', padding: '14px 16px', borderRadius: 16,
+            flex: '1 1 200px', padding: '14px 16px', borderRadius: HP_TOKENS.radiusMd,
             border: `1.5px solid ${HP_TOKENS.lineSoft}`, fontFamily: HP_FONT, fontSize: 14,
             outline: 'none', background: HP_TOKENS.card, boxSizing: 'border-box'
           }}
@@ -623,11 +614,10 @@ export default function NotesScreen() {
           className="hp-tap"
           style={{
             flex: '1 1 auto',
-            padding: '14px 20px', borderRadius: 16, border: 'none',
+            padding: '14px 20px', borderRadius: HP_TOKENS.radiusMd, border: 'none',
             background: HP_TOKENS.card, color: HP_TOKENS.ink,
-            fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer',
+            fontFamily: HP_FONT, fontWeight: 700, fontSize: 14, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, whiteSpace: 'nowrap',
-            boxShadow: `0 4px 12px rgba(26,29,35,0.03)`,
             borderTop: `1px solid ${HP_TOKENS.lineSoft}`,
           }}
         >
@@ -641,7 +631,7 @@ export default function NotesScreen() {
       ) : notes.length === 0 ? (
         <div style={{ 
           textAlign: 'center', padding: '60px 20px', color: HP_TOKENS.inkMute, 
-          background: HP_TOKENS.card, borderRadius: 24, border: `1.5px dashed ${HP_TOKENS.line}`
+          background: HP_TOKENS.card, borderRadius: HP_TOKENS.radiusLg, border: `1.5px dashed ${HP_TOKENS.line}`
         }}>
           <div style={{ fontSize: 32, marginBottom: 12 }}>📝</div>
           <div style={{ ...HP_TEXT.h, fontSize: 14 }}>Belum ada catatan.</div>
@@ -703,7 +693,7 @@ export default function NotesScreen() {
                   <div style={{ position: 'absolute', top: -20, right: -20, width: 80, height: 80, borderRadius: '50%', background: theme.blob, opacity: 0.6 }} />
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12, position: 'relative', zIndex: 2 }}>
-                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
                       📝 CATATAN
                     </div>
                     
@@ -722,12 +712,12 @@ export default function NotesScreen() {
                   </div>
 
                   {isNoteLocked(note) && (
-                    <div style={{ position: 'relative', zIndex: 2, marginBottom: 8, fontSize: 9, fontWeight: 800, background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, padding: '4px 8px', borderRadius: 8, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <div style={{ position: 'relative', zIndex: 2, marginBottom: 8, fontSize: 9, fontWeight: 700, background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, padding: '4px 8px', borderRadius: 8, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                       <HPGlyph name="edit" size={10} color={HP_TOKENS.coral} /> SEDANG DIEDIT OLEH {note.lockedByName?.split(' ')[0].toUpperCase()}
                     </div>
                   )}
 
-                  <div style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 18, color: theme.border, marginBottom: 8, position: 'relative', zIndex: 2 }}>
+                  <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 18, color: theme.border, marginBottom: 8, position: 'relative', zIndex: 2 }}>
                     {note.title || 'Catatan Tanpa Judul'}
                   </div>
 
@@ -740,13 +730,13 @@ export default function NotesScreen() {
                   <div style={{ 
                     marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', zIndex: 2 
                   }}>
-                    <div style={{ fontSize: 12, fontWeight: 800, color: theme.border }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: theme.border }}>
                       {new Date(note.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
                     </div>
                     
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       {note.visibility !== 'private' && (
-                        <div style={{ padding: '4px 8px', borderRadius: 8, fontSize: 9, fontWeight: 800, background: '#fff', color: theme.border, border: `1px solid ${theme.blob}` }}>
+                        <div style={{ padding: '4px 8px', borderRadius: 8, fontSize: 9, fontWeight: 700, background: '#fff', color: theme.border, border: `1px solid ${theme.blob}` }}>
                           {note.visibility === 'custom' ? 'KUSTOM' : note.visibility.toUpperCase()}
                         </div>
                       )}
@@ -767,7 +757,7 @@ export default function NotesScreen() {
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={activePageNotes === 1}
                 style={{
-                  padding: '8px 16px', borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
+                  padding: '8px 16px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.line}`,
                   background: activePageNotes === 1 ? HP_TOKENS.lineSoft : '#fff',
                   color: activePageNotes === 1 ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
                   fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, 
@@ -784,7 +774,7 @@ export default function NotesScreen() {
                 onClick={() => setCurrentPage(p => Math.min(totalPagesNotes, p + 1))}
                 disabled={activePageNotes === totalPagesNotes}
                 style={{
-                  padding: '8px 16px', borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
+                  padding: '8px 16px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.line}`,
                   background: activePageNotes === totalPagesNotes ? HP_TOKENS.lineSoft : '#fff',
                   color: activePageNotes === totalPagesNotes ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
                   fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, 
@@ -815,12 +805,12 @@ export default function NotesScreen() {
           padding: 24, backdropFilter: 'blur(4px)'
         }}>
           <div style={{
-            background: '#fff', borderRadius: 24, padding: 32,
+            background: '#fff', borderRadius: HP_TOKENS.radiusLg, padding: 32,
             width: '100%', maxWidth: 400, textAlign: 'center',
-            boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
+            boxShadow: HP_TOKENS.shadowLg,
             animation: 'hpPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }}>
-            <div style={{ width: 64, height: 64, borderRadius: 32, background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
               <HPGlyph name="trash" size={32} />
             </div>
             <div style={{ ...HP_TEXT.h, fontSize: 20, marginBottom: 8 }}>Hapus Catatan?</div>
@@ -829,17 +819,17 @@ export default function NotesScreen() {
             </div>
             <div style={{ display: 'flex', gap: 12, flexDirection: 'column' }}>
               <button onClick={deleteNote} className="hp-tap" style={{
-                padding: '16px', borderRadius: 16, border: 'none',
+                padding: '16px', borderRadius: HP_TOKENS.radiusMd, border: 'none',
                 background: HP_TOKENS.coral, color: '#fff',
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: 'pointer',
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, cursor: 'pointer',
                 width: '100%'
               }}>
                 Ya, Hapus
               </button>
               <button onClick={() => setNoteToDelete(null)} className="hp-tap" style={{
-                padding: '16px', borderRadius: 16, border: 'none',
+                padding: '16px', borderRadius: HP_TOKENS.radiusMd, border: 'none',
                 background: HP_TOKENS.card, color: HP_TOKENS.inkSoft,
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: 'pointer',
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, cursor: 'pointer',
                 width: '100%'
               }}>
                 Batal

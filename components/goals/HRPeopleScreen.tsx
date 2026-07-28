@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
+import { HP_TOKENS, HP_FONT, HP_TEXT, HP_CATEGORICAL } from "@/lib/constants";
 import HPGlyph from "@/components/ui/HPGlyph";
 import HPCard from "@/components/ui/HPCard";
 import HPAvatar from "@/components/ui/HPAvatar";
@@ -22,7 +22,8 @@ const DEPT_EMOJIS: Record<string, string> = {
   'Product': '🚀', 'Engineering': '⚙️', 'Marketing': '📣', 'HR': '👥',
   'Finance': '💰', 'Operations': '📦', 'Design': '🎨', 'Sales': '📈',
 };
-const DEPT_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444', '#06B6D4', '#EC4899', '#6366F1'];
+// Departments differ in kind, not in quality — categorical ramp, never status.
+const DEPT_COLORS = HP_CATEGORICAL;
 
 const scoreTone = (v: number) => (v >= 80 ? HP_TOKENS.sage : v >= 50 ? HP_TOKENS.yellow : HP_TOKENS.coral);
 
@@ -35,7 +36,7 @@ function MiniDonut({ value, size = 40 }: { value: number; size?: number }) {
         <path d="M18 2.0845a15.9155 15.9155 0 0 1 0 31.831a15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={`${color}22`} strokeWidth={4} />
         <path d="M18 2.0845a15.9155 15.9155 0 0 1 0 31.831a15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={color} strokeWidth={4} strokeLinecap="round" strokeDasharray={`${v}, 100`} />
       </svg>
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: HP_FONT, fontWeight: 900, fontSize: size * 0.28, color }}>{Math.round(v)}</div>
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: HP_FONT, fontWeight: 700, fontSize: size * 0.28, color }}>{Math.round(v)}</div>
     </div>
   );
 }
@@ -316,7 +317,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
   }, [deptUsers, currentPagePeople]);
 
   const inputStyle: React.CSSProperties = {
-    width: '100%', marginTop: 8, padding: 12, borderRadius: 12,
+    width: '100%', marginTop: 8, padding: 12, borderRadius: HP_TOKENS.radiusSm,
     border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 14,
     outline: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink, boxSizing: 'border-box',
   };
@@ -384,10 +385,10 @@ export default function HRPeopleScreen({ openModal }: Props) {
           { key: 'surveys', label: 'Surveys' },
         ].filter(Boolean).map((t: any) => (
           <button key={t.key} onClick={() => { setActiveTab(t.key); setSelectedDept(null); }} className="hp-tap" style={{
-            flex: '0 0 auto', padding: '10px 16px', borderRadius: 14,
+            flex: '0 0 auto', padding: '10px 16px', borderRadius: HP_TOKENS.radiusMd,
             background: activeTab === t.key ? HP_TOKENS.lavender : HP_TOKENS.lineSoft,
             color: activeTab === t.key ? '#fff' : HP_TOKENS.inkSoft,
-            border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
+            border: 'none', fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, cursor: 'pointer',
           }}>
             {t.label}
           </button>
@@ -402,9 +403,9 @@ export default function HRPeopleScreen({ openModal }: Props) {
             <button
               onClick={() => openModal('kpi_review')}
               style={{
-                width: '100%', padding: '12px 16px', borderRadius: 14, border: 'none', cursor: 'pointer',
-                background: '#FFF3CC', color: '#8A6814',
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 13,
+                width: '100%', padding: '12px 16px', borderRadius: HP_TOKENS.radiusMd, border: 'none', cursor: 'pointer',
+                background: HP_TOKENS.yellowWash, color: HP_TOKENS.yellowDark,
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 13,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}
             >
@@ -415,18 +416,18 @@ export default function HRPeopleScreen({ openModal }: Props) {
           {/* Action Bar */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
             <button onClick={() => openModal('create_user', { onSave: handleCreateUser })} className="hp-tap" style={{
-              flex: 1, padding: '12px', borderRadius: 14, border: 'none',
-              background: HP_TOKENS.ink, color: '#F4F7F9',
-              fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
+              flex: 1, padding: '12px', borderRadius: HP_TOKENS.radiusMd, border: 'none',
+              background: HP_TOKENS.ink, color: HP_TOKENS.onPrimary,
+              fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}>
-              <HPGlyph name="plus" size={14} color="#F4F7F9" />
+              <HPGlyph name="plus" size={14} color={HP_TOKENS.onPrimary} />
               Tambah Akun
             </button>
             <button onClick={() => openModal('manage_depts')} className="hp-tap" style={{
-              padding: '12px 16px', borderRadius: 14,
+              padding: '12px 16px', borderRadius: HP_TOKENS.radiusMd,
               border: `1.5px solid ${HP_TOKENS.line}`, background: HP_TOKENS.card,
-              fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
+              fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, cursor: 'pointer',
               display: 'flex', alignItems: 'center', gap: 8, color: HP_TOKENS.ink,
             }}>
               🏢 Departemen
@@ -435,9 +436,9 @@ export default function HRPeopleScreen({ openModal }: Props) {
 
           {/* Dashboard & Unduh Laporan (semua divisi) — hasil lebur tab Laporan ke People */}
           <button onClick={() => setShowAllDash(s => !s)} className="hp-tap" style={{
-            width: '100%', padding: '13px 16px', borderRadius: 14, border: 'none', cursor: 'pointer', marginBottom: 12,
-            background: showAllDash ? HP_TOKENS.sage : `${HP_TOKENS.sage}`, color: '#F4F7F9',
-            fontFamily: HP_FONT, fontWeight: 800, fontSize: 13,
+            width: '100%', padding: '13px 16px', borderRadius: HP_TOKENS.radiusMd, border: 'none', cursor: 'pointer', marginBottom: 12,
+            background: showAllDash ? HP_TOKENS.sage : `${HP_TOKENS.sage}`, color: HP_TOKENS.onPrimary,
+            fontFamily: HP_FONT, fontWeight: 700, fontSize: 13,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           }}>
             📊 {showAllDash ? 'Tutup Dashboard' : 'Dashboard & Unduh Laporan (semua divisi)'}
@@ -462,8 +463,8 @@ export default function HRPeopleScreen({ openModal }: Props) {
                     {deptRequests.length > 0 && (
                       <span style={{
                         background: HP_TOKENS.lavender, color: '#fff',
-                        borderRadius: 20, padding: '2px 8px',
-                        fontFamily: HP_FONT, fontWeight: 800, fontSize: 11,
+                        borderRadius: HP_TOKENS.radius, padding: '2px 8px',
+                        fontFamily: HP_FONT, fontWeight: 700, fontSize: 11,
                       }}>{deptRequests.length}</span>
                     )}
                   </div>
@@ -484,9 +485,9 @@ export default function HRPeopleScreen({ openModal }: Props) {
                                   fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, color: HP_TOKENS.blue,
                                 }}>{req.department || '—'}</span>
                                 <span style={{
-                                  background: '#FEF3C7', color: '#D97706',
-                                  borderRadius: 20, padding: '2px 8px',
-                                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 10,
+                                  background: HP_TOKENS.warningWash, color: HP_TOKENS.warning,
+                                  borderRadius: HP_TOKENS.radius, padding: '2px 8px',
+                                  fontFamily: HP_FONT, fontWeight: 700, fontSize: 10,
                                 }}>pending</span>
                               </div>
                               {/* Ubah divisi input */}
@@ -497,7 +498,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
                                     onChange={e => setChangeDeptVal(e.target.value)}
                                     placeholder="Nama divisi baru..."
                                     style={{
-                                      flex: 1, padding: '8px 12px', borderRadius: 10,
+                                      flex: 1, padding: '8px 12px', borderRadius: HP_TOKENS.radiusSm,
                                       border: `1.5px solid ${HP_TOKENS.line}`,
                                       fontFamily: HP_FONT, fontSize: 13, outline: 'none',
                                       background: HP_TOKENS.card, color: HP_TOKENS.ink,
@@ -512,18 +513,18 @@ export default function HRPeopleScreen({ openModal }: Props) {
                                     }}
                                     className="hp-tap"
                                     style={{
-                                      padding: '8px 12px', borderRadius: 10, border: 'none',
+                                      padding: '8px 12px', borderRadius: HP_TOKENS.radiusSm, border: 'none',
                                       background: HP_TOKENS.blue, color: '#fff',
-                                      fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
+                                      fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, cursor: 'pointer',
                                     }}
                                   >Simpan</button>
                                   <button
                                     onClick={() => { setChangeDeptId(null); setChangeDeptVal(''); }}
                                     className="hp-tap"
                                     style={{
-                                      padding: '8px 12px', borderRadius: 10, border: 'none',
+                                      padding: '8px 12px', borderRadius: HP_TOKENS.radiusSm, border: 'none',
                                       background: HP_TOKENS.lineSoft, color: HP_TOKENS.inkSoft,
-                                      fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
+                                      fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, cursor: 'pointer',
                                     }}
                                   >Batal</button>
                                 </div>
@@ -536,27 +537,27 @@ export default function HRPeopleScreen({ openModal }: Props) {
                                   onClick={() => handleDeptRequestAction(String(req.id), 'approve')}
                                   className="hp-tap"
                                   style={{
-                                    padding: '6px 12px', borderRadius: 10, border: 'none',
-                                    background: '#D1FAE5', color: '#065F46',
-                                    fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
+                                    padding: '6px 12px', borderRadius: HP_TOKENS.radiusSm, border: 'none',
+                                    background: HP_TOKENS.successWash, color: HP_TOKENS.success,
+                                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, cursor: 'pointer',
                                   }}
                                 >✓ Setuju</button>
                                 <button
                                   onClick={() => { setChangeDeptId(String(req.id)); setChangeDeptVal(req.department || ''); }}
                                   className="hp-tap"
                                   style={{
-                                    padding: '6px 12px', borderRadius: 10, border: 'none',
+                                    padding: '6px 12px', borderRadius: HP_TOKENS.radiusSm, border: 'none',
                                     background: HP_TOKENS.blueSoft, color: HP_TOKENS.blue,
-                                    fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
+                                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, cursor: 'pointer',
                                   }}
                                 >✎ Ubah</button>
                                 <button
                                   onClick={() => handleDeptRequestAction(String(req.id), 'reject')}
                                   className="hp-tap"
                                   style={{
-                                    padding: '6px 12px', borderRadius: 10, border: 'none',
-                                    background: '#FEE2E2', color: '#B91C1C',
-                                    fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
+                                    padding: '6px 12px', borderRadius: HP_TOKENS.radiusSm, border: 'none',
+                                    background: HP_TOKENS.dangerWash, color: HP_TOKENS.danger,
+                                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, cursor: 'pointer',
                                   }}
                                 >✕ Tolak</button>
                               </div>
@@ -577,10 +578,10 @@ export default function HRPeopleScreen({ openModal }: Props) {
                   { label: 'Manager', value: managers.length, color: HP_TOKENS.sage, bg: HP_TOKENS.sageSoft },
                 ].map(s => (
                   <div key={s.label} style={{
-                    flex: 1, padding: '14px 10px', borderRadius: 16, textAlign: 'center',
+                    flex: 1, padding: '14px 10px', borderRadius: HP_TOKENS.radiusMd, textAlign: 'center',
                     background: s.bg, border: `1px solid ${s.color}20`,
                   }}>
-                    <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 24, color: s.color }}>{s.value}</div>
+                    <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 24, color: s.color }}>{s.value}</div>
                     <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>{s.label}</div>
                   </div>
                 ))}
@@ -597,7 +598,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
                       onClick={() => setSelectedDept(dept)}
                       className="hp-tap"
                       style={{
-                        padding: '18px 16px', borderRadius: 20,
+                        padding: '18px 16px', borderRadius: HP_TOKENS.radius,
                         background: HP_TOKENS.card, border: `1.5px solid ${HP_TOKENS.line}`,
                         cursor: 'pointer', textAlign: 'left',
                         display: 'flex', flexDirection: 'column', gap: 8,
@@ -609,7 +610,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
                         fontSize: 50, opacity: 0.08,
                       }}>{emoji}</div>
                       <div style={{
-                        width: 42, height: 42, borderRadius: 14,
+                        width: 42, height: 42, borderRadius: HP_TOKENS.radiusMd,
                         background: `${color}15`, display: 'flex',
                         alignItems: 'center', justifyContent: 'center', fontSize: 20,
                       }}>{emoji}</div>
@@ -621,10 +622,10 @@ export default function HRPeopleScreen({ openModal }: Props) {
                       </div>
                       {/* Scorecard divisi (KPI + penyelesaian task) */}
                       {divScores[dept] && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 2, padding: '8px 10px', borderRadius: 12, background: HP_TOKENS.lineSoft }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 2, padding: '8px 10px', borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.lineSoft }}>
                           <MiniDonut value={divScores[dept].avgKpi} size={38} />
                           <div style={{ minWidth: 0 }}>
-                            <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 13, color: scoreTone(divScores[dept].avgKpi) }}>{divScores[dept].avgKpi}% <span style={{ fontSize: 9, fontWeight: 800, color: HP_TOKENS.inkMute }}>KPI</span></div>
+                            <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, color: scoreTone(divScores[dept].avgKpi) }}>{divScores[dept].avgKpi}% <span style={{ fontSize: 9, fontWeight: 700, color: HP_TOKENS.inkMute }}>KPI</span></div>
                             <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontSize: 9 }}>{divScores[dept].avgCompletion}% task</div>
                           </div>
                         </div>
@@ -638,10 +639,10 @@ export default function HRPeopleScreen({ openModal }: Props) {
                         ))}
                         {users.length > 4 && (
                           <div style={{
-                            width: 24, height: 24, borderRadius: 12, marginLeft: -8,
+                            width: 24, height: 24, borderRadius: '50%', marginLeft: -8,
                             background: HP_TOKENS.lineSoft, display: 'flex',
                             alignItems: 'center', justifyContent: 'center',
-                            fontSize: 9, fontWeight: 900, color: HP_TOKENS.inkMute, fontFamily: HP_FONT,
+                            fontSize: 9, fontWeight: 700, color: HP_TOKENS.inkMute, fontFamily: HP_FONT,
                           }}>+{users.length - 4}</div>
                         )}
                       </div>
@@ -656,9 +657,9 @@ export default function HRPeopleScreen({ openModal }: Props) {
               {/* Back button + dept header */}
               <button onClick={() => { setSelectedDept(null); setSearch(''); }} className="hp-tap" style={{
                 display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12,
-                padding: '10px 16px', borderRadius: 14,
+                padding: '10px 16px', borderRadius: HP_TOKENS.radiusMd,
                 background: HP_TOKENS.lineSoft, border: 'none', cursor: 'pointer',
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, color: HP_TOKENS.ink,
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, color: HP_TOKENS.ink,
               }}>
                 <HPGlyph name="chevronLeft" size={14} color={HP_TOKENS.ink} />
                 {DEPT_EMOJIS[selectedDept] || '📁'} {selectedDept}
@@ -673,12 +674,12 @@ export default function HRPeopleScreen({ openModal }: Props) {
               </div>
 
               {/* Satu daftar: kinerja + aksi admin (profil, edit, role) dalam satu tempat */}
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 900, margin: '0 4px 8px' }}>ANGGOTA & KINERJA</div>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, margin: '0 4px 8px' }}>ANGGOTA & KINERJA</div>
 
               {/* Search */}
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 10,
-                background: HP_TOKENS.paper, borderRadius: 14, padding: '10px 14px', marginBottom: 12,
+                background: HP_TOKENS.paper, borderRadius: HP_TOKENS.radiusMd, padding: '10px 14px', marginBottom: 12,
                 border: `1.5px solid ${HP_TOKENS.line}`,
               }}>
                 <HPGlyph name="leaf" size={16} color={HP_TOKENS.blue} />
@@ -706,9 +707,9 @@ export default function HRPeopleScreen({ openModal }: Props) {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                           <div style={{ ...HP_TEXT.h, fontSize: 15 }}>{u.name}</div>
                           <div style={{
-                            padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 900,
-                            background: u.role === 'hr' ? '#EDE8F5' : u.role === 'manager' ? HP_TOKENS.blueSoft : HP_TOKENS.yellowSoft,
-                            color: u.role === 'hr' ? '#7B6BB5' : u.role === 'manager' ? HP_TOKENS.blue : HP_TOKENS.yellow,
+                            padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 700,
+                            background: u.role === 'hr' ? HP_TOKENS.primaryWash : u.role === 'manager' ? HP_TOKENS.blueSoft : HP_TOKENS.yellowSoft,
+                            color: u.role === 'hr' ? HP_TOKENS.primary : u.role === 'manager' ? HP_TOKENS.blue : HP_TOKENS.yellow,
                             fontFamily: HP_FONT,
                           }}>
                             {u.role.toUpperCase()}
@@ -723,7 +724,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                           <MiniDonut value={deptPeopleScores[String(u.id)].kpiScore} size={34} />
                           <div>
-                            <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 12, color: scoreTone(deptPeopleScores[String(u.id)].kpiScore) }}>{deptPeopleScores[String(u.id)].kpiScore}%</div>
+                            <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, color: scoreTone(deptPeopleScores[String(u.id)].kpiScore) }}>{deptPeopleScores[String(u.id)].kpiScore}%</div>
                             <div style={{ ...HP_TEXT.tiny, fontSize: 8, color: HP_TOKENS.inkMute }}>{deptPeopleScores[String(u.id)].completionRate}% task</div>
                           </div>
                         </div>
@@ -731,7 +732,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
                       <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                         <button onClick={() => openModal('employee_profile', { employeeId: u.id, employeeName: u.name })} className="hp-tap" style={{
                            padding: '6px 10px', borderRadius: 8, border: `1px solid ${HP_TOKENS.blue}30`,
-                           background: HP_TOKENS.blueSoft, fontSize: 10, fontWeight: 800, color: HP_TOKENS.blue,
+                           background: HP_TOKENS.blueSoft, fontSize: 10, fontWeight: 700, color: HP_TOKENS.blue,
                            fontFamily: HP_FONT, cursor: 'pointer',
                         }}>Profil</button>
                         {deptPeopleScores[String(u.id)] && (
@@ -743,7 +744,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
                             } catch (e) { console.error(e); }
                           }} className="hp-tap" style={{
                             padding: '6px 9px', borderRadius: 8, border: `1px solid ${HP_TOKENS.sage}30`,
-                            background: HP_TOKENS.sageWash, fontSize: 10, fontWeight: 800, color: HP_TOKENS.sage,
+                            background: HP_TOKENS.sageWash, fontSize: 10, fontWeight: 700, color: HP_TOKENS.sage,
                             fontFamily: HP_FONT, cursor: 'pointer',
                           }}>⬇</button>
                         )}
@@ -753,7 +754,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
                           onDelete: () => handleDeleteUser(u.id)
                         })} className="hp-tap" style={{
                           padding: '6px 10px', borderRadius: 8, border: `1px solid ${HP_TOKENS.line}`,
-                          background: HP_TOKENS.card, fontSize: 10, fontWeight: 800, color: HP_TOKENS.inkMute,
+                          background: HP_TOKENS.card, fontSize: 10, fontWeight: 700, color: HP_TOKENS.inkMute,
                           fontFamily: HP_FONT, cursor: 'pointer',
                         }}>Edit</button>
                       </div>
@@ -828,8 +829,8 @@ export default function HRPeopleScreen({ openModal }: Props) {
         <>
           <HPCard style={{ background: HP_TOKENS.lavenderSoft, border: `1.5px solid ${HP_TOKENS.lavender}20`, marginBottom: 16 }} padding={16}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: HP_TOKENS.lavender, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <HPGlyph name="book" size={22} color="#F4F7F9" />
+              <div style={{ width: 44, height: 44, borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.lavender, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <HPGlyph name="book" size={22} color={HP_TOKENS.onPrimary} />
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ ...HP_TEXT.h, fontSize: 15 }}>Survey Internal</div>
@@ -840,13 +841,12 @@ export default function HRPeopleScreen({ openModal }: Props) {
             </div>
           </HPCard>
           <button onClick={() => openModal('manage_surveys')} className="hp-tap" style={{
-            width: '100%', padding: '16px', borderRadius: 16, border: 'none',
+            width: '100%', padding: '16px', borderRadius: HP_TOKENS.radiusMd, border: 'none',
             background: `${HP_TOKENS.lavender}`,
-            color: '#F4F7F9', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-            boxShadow: '0 6px 20px rgba(123,107,181,0.3)',
+            color: HP_TOKENS.onPrimary, fontFamily: HP_FONT, fontWeight: 700, fontSize: 15, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
           }}>
-            <HPGlyph name="book" size={18} color="#F4F7F9" />
+            <HPGlyph name="book" size={18} color={HP_TOKENS.onPrimary} />
             Kelola Survey
           </button>
         </>
@@ -856,8 +856,8 @@ export default function HRPeopleScreen({ openModal }: Props) {
         <>
           <HPCard style={{ background: HP_TOKENS.sageSoft, border: 'none', marginBottom: 16 }} padding={16}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: HP_TOKENS.sage, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <HPGlyph name="calendar" size={24} color="#F4F7F9" />
+              <div style={{ width: 44, height: 44, borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.sage, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <HPGlyph name="calendar" size={24} color={HP_TOKENS.onPrimary} />
               </div>
               <div>
                 <div style={{ ...HP_TEXT.h, fontSize: 16 }}>Jam Kerja Organisasi</div>
@@ -914,7 +914,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
           
           <div style={{
             display: 'flex', alignItems: 'center', gap: 10,
-            background: HP_TOKENS.paper, borderRadius: 14, padding: '10px 14px', marginBottom: 16,
+            background: HP_TOKENS.paper, borderRadius: HP_TOKENS.radiusMd, padding: '10px 14px', marginBottom: 16,
             border: `1.5px solid ${HP_TOKENS.line}`,
           }}>
             <HPGlyph name="search" size={16} color={HP_TOKENS.blue} />
@@ -932,7 +932,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
             {paginatedContacts.map((contact: any) => (
               <HPCard key={contact.id} padding={14} style={{ border: `1.5px solid ${HP_TOKENS.lineSoft}`, transition: 'all 0.2s', ':hover': { borderColor: HP_TOKENS.blue } } as any}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                  <div style={{ width: 44, height: 44, borderRadius: 14, background: `${HP_TOKENS.blueSoft}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: 44, height: 44, borderRadius: HP_TOKENS.radiusMd, background: `${HP_TOKENS.blueSoft}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <HPGlyph name="people" size={22} color={HP_TOKENS.blue} />
                   </div>
                   <div style={{ flex: 1 }}>
@@ -940,7 +940,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
                     <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>{contact.role}</div>
                   </div>
                   <div style={{ textAlign: 'right', marginRight: 8 }}>
-                    <div style={{ ...HP_TEXT.small, fontWeight: 800, color: HP_TOKENS.ink }}>{contact.phone}</div>
+                    <div style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.ink }}>{contact.phone}</div>
                     <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, marginTop: 2 }}>{contact.email}</div>
                   </div>
                   <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>

@@ -36,7 +36,7 @@ export default function HPAvatar({
   const avatarToDisplay = imageError ? null : baseAvatar;
 
   const initials = safeName.split(' ').filter(Boolean).map(n => n[0]).slice(0,2).join('').toUpperCase() || '?';
-  const palette = [HP_TOKENS.sage, HP_TOKENS.blue, HP_TOKENS.coral, HP_TOKENS.lavender, '#B5884A'];
+  const palette = [HP_TOKENS.sage, HP_TOKENS.blue, HP_TOKENS.coral, HP_TOKENS.lavender, HP_TOKENS.honey];
   const bg = color || palette[safeName.charCodeAt(0) % palette.length];
   
   const ringSize = size + 8;
@@ -80,12 +80,12 @@ export default function HPAvatar({
         height: size, 
         borderRadius: size / 2,
         background: avatarToDisplay ? 'transparent' : bg, 
-        color: '#F4F7F9',
+        color: HP_TOKENS.onPrimary,
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center',
         fontFamily: HP_FONT, 
-        fontWeight: 800, 
+        fontWeight: 700, 
         fontSize: size * 0.38,
         flexShrink: 0, 
         letterSpacing: 0.2,
@@ -106,10 +106,10 @@ export default function HPAvatar({
       </div>
       {rank && (
         <div style={{
-          position: 'absolute', bottom: 4, right: 4, width: 22, height: 22, borderRadius: 11,
-          background: HP_TOKENS.yellow, color: '#8A6814', fontSize: 11, fontWeight: 900,
+          position: 'absolute', bottom: 4, right: 4, width: 22, height: 22, borderRadius: '50%',
+          background: HP_TOKENS.yellow, color: HP_TOKENS.yellowDark, fontSize: 11, fontWeight: 700,
           display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #fff',
-          zIndex: 2, boxShadow: '0 2px 4px rgba(26,29,35,0.1)',
+          zIndex: 2,
           animation: 'hpPop 0.3s ease-out'
         }}>
           {rank.substring(0, 1).toUpperCase()}

@@ -6,6 +6,7 @@ import './OnboardingScreen.css';
 import BeeMascot from '@/components/ui/BeeMascot';
 import { useHP } from '@/lib/HPContext';
 import { normalizeOnboardingSteps, resolveStepOptions, DEFAULT_ONBOARDING_STEPS } from '@/lib/onboardingUtils';
+import { ONBOARDING_CONFETTI, ONBOARDING_SPLASH } from '@/lib/palettes';
 
 export default function OnboardingScreen({ userName, onFinish, skipSplash, previewConfig }: { userName?: string, onFinish?: (data: { job: string, answers: { question: string, answer: string | null }[] }) => void, skipSplash?: boolean, previewConfig?: any[] }) {
     const { state } = useHP();
@@ -89,7 +90,7 @@ function initS1(){
 
   // Orbs
   const ob=$('s1orbs');
-  [{bg:'#FF4D0040',w:280,h:280,t:-60,l:-40,bx:'30px',by:'-20px'},{bg:'#7C5CFC30',w:200,h:200,b:-60,r:-30,bx:'-20px',by:'30px'},{bg:'#FFD16625',w:160,h:160,b:'40%',l:-30,bx:'40px',by:'-40px'}].forEach(c=>{
+  [{bg:ONBOARDING_SPLASH.blobWarm,w:280,h:280,t:-60,l:-40,bx:'30px',by:'-20px'},{bg:ONBOARDING_SPLASH.blobViolet,w:200,h:200,b:-60,r:-30,bx:'-20px',by:'30px'},{bg:ONBOARDING_SPLASH.blobHoney,w:160,h:160,b:'40%',l:-30,bx:'40px',by:'-40px'}].forEach(c=>{
     const o=window.document.createElement('div');o.className='orb mesh-blob';
     o.style.cssText=`background:${c.bg};width:${c.w}px;height:${c.h}px;${c.t!=null?`top:${c.t}px`:''};${c.b!=null?`bottom:${c.b}${typeof c.b==='number'?'px':''}`:''};${c.l!=null?`left:${c.l}px`:''};${c.r!=null?`right:${c.r}px`:''};--bd:${8+Math.random()*6}s;--bde:${Math.random()*3}s;--bx:${c.bx};--by:${c.by};--bs:${1.05+Math.random()*.1}`;
     ob.appendChild(o);
@@ -132,7 +133,7 @@ function initS2(){
 
 function spawnPring(){
   const ring=$('s2pring');ring.innerHTML='';
-  const colors=['#FF4D00','#FFD166','#00D68F','#7C5CFC','#FF6B9D'];
+  const colors=ONBOARDING_CONFETTI.slice(0,5);
   for(let i=0;i<8;i++){
     const d=window.document.createElement('div');d.className='pring-dot';
     const angle=(i/8)*360;const r=68;
@@ -275,7 +276,7 @@ function initCeleb(){
 
   // Confetti
   const wrap=$('confwrap');wrap.innerHTML='';
-  const cols=['#FF4D00','#FFD166','#00D68F','#7C5CFC','#FF6B9D','#3EA6FF','#FF8040','#AEFF6E'];
+  const cols=ONBOARDING_CONFETTI;
   for(let i=0;i<80;i++){
     const c=window.document.createElement('div');c.className='conf';
     const w=5+Math.random()*10;const isRect=Math.random()>.35;
@@ -427,9 +428,9 @@ function restart(){
       <svg className="logo-ring-svg" viewBox="0 0 108 108" fill="none">
         <circle cx="54" cy="54" r="50" stroke="url(#ringGrad)" strokeWidth="2" strokeDasharray="6 4" opacity=".6"/>
         <defs><linearGradient id="ringGrad" x1="0" y1="0" x2="108" y2="108" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#FF4D00"/>
-          <stop offset="50%" stopColor="#FFD166"/>
-          <stop offset="100%" stopColor="#FF4D00"/>
+          <stop offset="0%" stopColor={ONBOARDING_SPLASH.gradientFrom}/>
+          <stop offset="50%" stopColor={ONBOARDING_SPLASH.gradientMid}/>
+          <stop offset="100%" stopColor={ONBOARDING_SPLASH.gradientFrom}/>
         </linearGradient></defs>
       </svg>
       <div className="logo-inner" id="logoInner"><BeeMascot mood="neutral" size={60} animated /></div>

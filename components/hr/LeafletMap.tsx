@@ -159,7 +159,7 @@ export default function LeafletMap({ offices, onAddOffice, onDeleteOffice, onUpd
   };
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '500px', background: HP_TOKENS.card, borderRadius: 20, overflow: 'hidden', border: `1px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT }}>
+    <div style={{ position: 'relative', width: '100%', height: '500px', background: HP_TOKENS.card, borderRadius: HP_TOKENS.radius, overflow: 'hidden', border: `1px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT }}>
       
       {/* Search Bar Overlay */}
       <div style={{ position: 'absolute', top: 16, left: 56, zIndex: 1000, display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -174,9 +174,8 @@ export default function LeafletMap({ offices, onAddOffice, onDeleteOffice, onUpd
               onChange={handleSearchChange}
               placeholder="Cari nama tempat / kota..."
               style={{
-                padding: '10px 10px 10px 36px', borderRadius: 12, border: `1px solid ${HP_TOKENS.line}`,
+                padding: '10px 10px 10px 36px', borderRadius: HP_TOKENS.radiusSm, border: `1px solid ${HP_TOKENS.line}`,
                 fontFamily: HP_FONT, outline: 'none', width: 260, fontSize: 13,
-                boxShadow: '0 4px 12px rgba(26,29,35,0.08)'
               }}
             />
           </div>
@@ -185,8 +184,8 @@ export default function LeafletMap({ offices, onAddOffice, onDeleteOffice, onUpd
         {/* Dropdown Recommendations */}
         {searchResults.length > 0 && (
           <div style={{
-            background: HP_TOKENS.card, borderRadius: 12, border: `1px solid ${HP_TOKENS.line}`,
-            boxShadow: '0 8px 24px rgba(26,29,35,0.12)', overflow: 'hidden', width: 320,
+            background: HP_TOKENS.card, borderRadius: HP_TOKENS.radiusSm, border: `1px solid ${HP_TOKENS.line}`,
+ overflow: 'hidden', width: 320,
             display: 'flex', flexDirection: 'column'
           }}>
             {searchResults.map((result, idx) => (
@@ -231,10 +230,10 @@ export default function LeafletMap({ offices, onAddOffice, onDeleteOffice, onUpd
                     style={{
                       display: 'flex', alignItems: 'center', gap: 6, padding: '4px 8px',
                       background: HP_TOKENS.coralSoft, color: HP_TOKENS.coral, borderRadius: 8,
-                      border: 'none', fontSize: 11, fontWeight: 800, cursor: 'pointer', fontFamily: HP_FONT
+                      border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: HP_FONT
                     }}
                   >
-                    <HPGlyph name="cross" size={12} color={HP_TOKENS.coral} /> Hapus
+                    <HPGlyph name="close" size={12} color={HP_TOKENS.coral} /> Hapus
                   </button>
                 </div>
               </Popup>
@@ -265,8 +264,8 @@ export default function LeafletMap({ offices, onAddOffice, onDeleteOffice, onUpd
       {draftLocation && (
         <div style={{
           position: 'absolute', top: 16, right: 16, zIndex: 1000,
-          background: HP_TOKENS.card, padding: 16, borderRadius: 16, width: 300,
-          boxShadow: '0 8px 32px rgba(26,29,35,0.12)', border: `1px solid ${HP_TOKENS.line}`
+          background: HP_TOKENS.card, padding: 16, borderRadius: HP_TOKENS.radiusMd, width: 300,
+          boxShadow: HP_TOKENS.shadowLg, border: `1px solid ${HP_TOKENS.line}`
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
             <HPGlyph name="target" size={18} color={HP_TOKENS.blue} />
@@ -281,7 +280,7 @@ export default function LeafletMap({ offices, onAddOffice, onDeleteOffice, onUpd
                 value={draftName}
                 onChange={(e) => setDraftName(e.target.value)}
                 placeholder="mis. Kantor Pusat"
-                style={{ width: '100%', padding: '10px', borderRadius: 10, border: `1px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, outline: 'none' }}
+                style={{ width: '100%', padding: '10px', borderRadius: HP_TOKENS.radiusSm, border: `1px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, outline: 'none' }}
               />
             </div>
             
@@ -291,21 +290,21 @@ export default function LeafletMap({ offices, onAddOffice, onDeleteOffice, onUpd
                 type="number" 
                 value={draftRadius}
                 onChange={(e) => setDraftRadius(parseInt(e.target.value) || 0)}
-                style={{ width: '100%', padding: '10px', borderRadius: 10, border: `1px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, outline: 'none' }}
+                style={{ width: '100%', padding: '10px', borderRadius: HP_TOKENS.radiusSm, border: `1px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, outline: 'none' }}
               />
             </div>
 
             <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
               <button 
                 onClick={() => setDraftLocation(null)}
-                style={{ flex: 1, padding: '10px', background: HP_TOKENS.lineSoft, color: HP_TOKENS.ink, borderRadius: 10, border: 'none', fontFamily: HP_FONT, fontWeight: 800, cursor: 'pointer' }}
+                style={{ flex: 1, padding: '10px', background: HP_TOKENS.lineSoft, color: HP_TOKENS.ink, borderRadius: HP_TOKENS.radiusSm, border: 'none', fontFamily: HP_FONT, fontWeight: 700, cursor: 'pointer' }}
               >
                 Batal
               </button>
               <button 
                 onClick={handleSaveDraft}
                 disabled={!draftName}
-                style={{ flex: 1, padding: '10px', background: HP_TOKENS.blue, color: '#F4F7F9', borderRadius: 10, border: 'none', fontFamily: HP_FONT, fontWeight: 800, cursor: 'pointer', opacity: draftName ? 1 : 0.5 }}
+                style={{ flex: 1, padding: '10px', background: HP_TOKENS.blue, color: HP_TOKENS.onPrimary, borderRadius: HP_TOKENS.radiusSm, border: 'none', fontFamily: HP_FONT, fontWeight: 700, cursor: 'pointer', opacity: draftName ? 1 : 0.5 }}
               >
                 Simpan
               </button>
@@ -318,7 +317,7 @@ export default function LeafletMap({ offices, onAddOffice, onDeleteOffice, onUpd
         <div style={{
           position: 'absolute', top: 16, right: 16, zIndex: 1000,
           background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(4px)', padding: '8px 16px',
-          borderRadius: 12, border: `1px solid ${HP_TOKENS.lineSoft}`,
+          borderRadius: HP_TOKENS.radiusSm, border: `1px solid ${HP_TOKENS.lineSoft}`,
           ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 700
         }}>
           Klik pada peta untuk menambah lokasi

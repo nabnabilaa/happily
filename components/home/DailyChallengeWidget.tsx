@@ -5,24 +5,25 @@ import { useHP } from "@/lib/HPContext";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
 import HPGlyph from "@/components/ui/HPGlyph";
 import HPCard from "@/components/ui/HPCard";
+import { HPButton } from "@/components/ui";
 import SectionHeader from "@/components/home/SectionHeader";
 
 // ── Daily Nudges (Wellbeing-focused) ──────────────────────────
 const getTodayStr = () => new Date().toISOString().slice(0, 10);
 
 const DAILY_MISSIONS = [
-  { id: 'dm_mood', title: 'Cek Ombak Pagi', desc: 'Isi Mood Check-in untuk memulai hari.', emoji: '🌤️', color: '#38bdf8', points: 10, actionLabel: 'Cek Mood', action: (openModal: any) => openModal('checkin'), check: (s: any) => !!s.lastMoodCheckIn && s.lastMoodCheckIn.startsWith(getTodayStr()) },
-  { id: 'dm_focus', title: 'Fokus 15 Menit', desc: 'Lakukan sesi Pomodoro untuk pemanasan kerja.', emoji: '🍅', color: '#fb7185', points: 20, actionLabel: 'Mulai Fokus', action: (openModal: any) => openModal('focus'), check: (s: any) => (s.logbook || []).some((l: any) => l.type === 'focus_session' && (l.created_at || '').startsWith(getTodayStr())) },
-  { id: 'dm_task', title: 'Pecah Telur', desc: 'Pilih 1 tugas prioritas dan selesaikan hari ini.', emoji: '🎯', color: '#a78bfa', points: 20, actionLabel: 'Fokus Task', action: () => document.getElementById('daily-training-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), check: (s: any) => (s.priorities || []).filter((p: any) => p.done).length >= 1 },
-  { id: 'dm_plan', title: 'Rencana Jitu', desc: 'Tambahkan minimal 3 tugas ke daftar prioritasmu.', emoji: '📝', color: '#34d399', points: 10, actionLabel: 'Susun Task', action: (openModal: any) => openModal('manage_priorities'), check: (s: any) => (s.priorities || []).length >= 3 },
-  { id: 'dm_kudos', title: 'Tebar Kebaikan', desc: 'Kirim apresiasi atau kudos ke rekan kerjamu.', emoji: '🌟', color: '#fbbf24', points: 15, actionLabel: 'Kirim Kudos', action: (openModal: any) => openModal('appreciate'), check: (s: any) => (s.logbook || []).some((l: any) => l.type === 'kudos_sent' && (l.created_at || '').startsWith(getTodayStr())) },
-  { id: 'dm_coach', title: 'Sapa Sang Pelatih', desc: 'Buka Coach AI dan minta 1 saran hari ini.', emoji: '🤖', color: '#818cf8', points: 10, actionLabel: 'Tanya Coach', action: (openModal: any) => openModal('coach'), check: (s: any) => (s.logbook || []).some((l: any) => l.type === 'ai_coach' && (l.created_at || '').startsWith(getTodayStr())) },
-  { id: 'dm_pause', title: 'Jeda Sejenak', desc: 'Lakukan sesi pernapasan singkat (1 menit).', emoji: '🧘‍♂️', color: '#2dd4bf', points: 15, actionLabel: 'Mulai Napas', action: (openModal: any) => openModal('pause'), check: (s: any) => (s.logbook || []).some((l: any) => l.type === 'pause_session' && (l.created_at || '').startsWith(getTodayStr())) },
+  { id: 'dm_mood', title: 'Cek Ombak Pagi', desc: 'Isi Mood Check-in untuk memulai hari.', glyph: 'heart', points: 10, actionLabel: 'Cek Mood', action: (openModal: any) => openModal('checkin'), check: (s: any) => !!s.lastMoodCheckIn && s.lastMoodCheckIn.startsWith(getTodayStr()) },
+  { id: 'dm_focus', title: 'Fokus 15 Menit', desc: 'Lakukan sesi Pomodoro untuk pemanasan kerja.', glyph: 'hourglass', points: 20, actionLabel: 'Mulai Fokus', action: (openModal: any) => openModal('focus'), check: (s: any) => (s.logbook || []).some((l: any) => l.type === 'focus_session' && (l.created_at || '').startsWith(getTodayStr())) },
+  { id: 'dm_task', title: 'Pecah Telur', desc: 'Pilih 1 tugas prioritas dan selesaikan hari ini.', glyph: 'target', points: 20, actionLabel: 'Fokus Task', action: () => document.getElementById('daily-training-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), check: (s: any) => (s.priorities || []).filter((p: any) => p.done).length >= 1 },
+  { id: 'dm_plan', title: 'Rencana Jitu', desc: 'Tambahkan minimal 3 tugas ke daftar prioritasmu.', glyph: 'note', points: 10, actionLabel: 'Susun Task', action: (openModal: any) => openModal('manage_priorities'), check: (s: any) => (s.priorities || []).length >= 3 },
+  { id: 'dm_kudos', title: 'Tebar Kebaikan', desc: 'Kirim apresiasi atau kudos ke rekan kerjamu.', glyph: 'star', points: 15, actionLabel: 'Kirim Kudos', action: (openModal: any) => openModal('appreciate'), check: (s: any) => (s.logbook || []).some((l: any) => l.type === 'kudos_sent' && (l.created_at || '').startsWith(getTodayStr())) },
+  { id: 'dm_coach', title: 'Sapa Sang Pelatih', desc: 'Buka Coach AI dan minta 1 saran hari ini.', glyph: 'sparkle', points: 10, actionLabel: 'Tanya Coach', action: (openModal: any) => openModal('coach'), check: (s: any) => (s.logbook || []).some((l: any) => l.type === 'ai_coach' && (l.created_at || '').startsWith(getTodayStr())) },
+  { id: 'dm_pause', title: 'Jeda Sejenak', desc: 'Lakukan sesi pernapasan singkat (1 menit).', glyph: 'leaf', points: 15, actionLabel: 'Mulai Napas', action: (openModal: any) => openModal('pause'), check: (s: any) => (s.logbook || []).some((l: any) => l.type === 'pause_session' && (l.created_at || '').startsWith(getTodayStr())) },
   {
     id: 'dm_training',
     title: 'Daily Training',
     desc: 'Tandai selesai minimal 1 latihan/habit hari ini.',
-    emoji: '💪', color: '#f87171', points: 20,
+    glyph: 'activity', points: 20,
     actionLabel: (s: any) => (s.habits && s.habits.length > 0) ? 'Buka Latihan' : 'Buat Latihan',
     action: (openModal: any, s: any) => {
       if (s.habits && s.habits.length > 0) {
@@ -33,8 +34,8 @@ const DAILY_MISSIONS = [
     },
     check: (s: any) => (s.habits || []).some((h: any) => h.done)
   },
-  { id: 'dm_midday', title: 'Cek Progres Siang', desc: 'Isi Mid-day Check-in di jam 11.30 - 13.30 sebelum terlewat.', emoji: '☀️', color: '#facc15', points: 15, actionLabel: 'Cek Progres', action: (openModal: any) => openModal('work_checkin'), check: (s: any) => (s.logbook || []).some((l: any) => l.type === 'realization_check' && (l.created_at || '').startsWith(getTodayStr())) },
-  { id: 'dm_chat', title: 'Sapa Tim', desc: 'Buka fitur Chat dan lihat pembaruan dari tim.', emoji: '💬', color: '#60a5fa', points: 10, actionLabel: 'Buka Chat', action: (_openModal: any, _s: any, onActioned?: () => void) => { window.dispatchEvent(new CustomEvent('set_tab', { detail: 'chat' })); onActioned?.(); }, check: (s: any) => false },
+  { id: 'dm_midday', title: 'Cek Progres Siang', desc: 'Isi Mid-day Check-in di jam 11.30 - 13.30 sebelum terlewat.', glyph: 'sun', points: 15, actionLabel: 'Cek Progres', action: (openModal: any) => openModal('work_checkin'), check: (s: any) => (s.logbook || []).some((l: any) => l.type === 'realization_check' && (l.created_at || '').startsWith(getTodayStr())) },
+  { id: 'dm_chat', title: 'Sapa Tim', desc: 'Buka fitur Chat dan lihat pembaruan dari tim.', glyph: 'chat', points: 10, actionLabel: 'Buka Chat', action: (_openModal: any, _s: any, onActioned?: () => void) => { window.dispatchEvent(new CustomEvent('set_tab', { detail: 'chat' })); onActioned?.(); }, check: (s: any) => false },
 ];
 
 // Seeded random for daily rotation
@@ -92,9 +93,9 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
 
   // Define Chest Milestones
   const milestones = [
-    { target: Math.floor(maxXP * 0.33), icon: '🥉', label: 'Bronze', color: '#cd7f32' },
-    { target: Math.floor(maxXP * 0.66), icon: '🥈', label: 'Silver', color: '#94a3b8' },
-    { target: maxXP, icon: '🏆', label: 'Gold', color: '#fbbf24' }, 
+    { target: Math.floor(maxXP * 0.33), glyph: 'medal', label: 'Bronze' },
+    { target: Math.floor(maxXP * 0.66), glyph: 'medal', label: 'Silver' },
+    { target: maxXP, glyph: 'trophy', label: 'Gold' },
   ];
 
   const claimReward = (mission: typeof DAILY_MISSIONS[0]) => {
@@ -118,7 +119,9 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
   };
 
   return (
-    <div style={{ marginTop: 24 }}>
+    // Spacing between blocks belongs to the screen's layout gap, not to the
+    // widget — a self-applied marginTop stacks on top of it and breaks rhythm.
+    <section>
       <style>{`
         .daily-mission-content {
           display: flex;
@@ -165,119 +168,119 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
         count={`${claimedIds.size}/${activeMissions.length}`}
       />
 
-      <div style={{ 
+      <div style={{
         overflow: 'hidden',
-        border: `1.5px solid ${HP_TOKENS.lineSoft}`,
-        boxShadow: '0 8px 32px rgba(255, 190, 11, 0.05)',
-        borderRadius: 24,
-        background: '#fff'
+        border: `1px solid var(--hp-line)`,
+        borderRadius: HP_TOKENS.radiusLg,
+        background: HP_TOKENS.card,
+        boxShadow: HP_TOKENS.shadowSm,
       }}>
-        {/* Top Header: Progress Bar & Chests */}
-        <div style={{ 
-          padding: '16px 20px', 
-          background: '#3B82F6', // Corporate blue
-          color: '#fff',
-          position: 'relative',
-          overflow: 'hidden'
-        }}>
-          {/* Decos from prototype */}
-          <div style={{ position: 'absolute', width: 150, height: 150, background: 'rgba(255,255,255,0.07)', borderRadius: '50%', right: -30, top: -50, pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', width: 80, height: 80, background: 'rgba(255,255,255,0.05)', borderRadius: '50%', right: 70, bottom: -40, pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', width: 50, height: 50, background: 'rgba(255,255,255,0.06)', borderRadius: '50%', left: '55%', bottom: 8, pointerEvents: 'none' }} />
+        {/*
+          Header: the day's XP and the three milestones on the way to it.
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, position: 'relative', zIndex: 1 }}>
-            <div>
-              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)', marginBottom: 2 }}>
-                Daily Quests
-              </div>
-              <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>
-                Selesaikan misi, kumpulkan poin!
+          Two wrong answers before this one. First a saturated primary block
+          with white text and emoji medals — the loudest thing on the dashboard
+          for what is only a status. Then a grey `sunken` slab, which fixed the
+          shouting by making the whole widget look disabled.
+
+          The energy has to come from hierarchy, not fill: the card surface
+          stays white, and the XP count carries the weight as a real metric
+          figure. Honey marks what you've earned, and nothing else is tinted.
+        */}
+        <div style={{
+          padding: '20px 20px 16px',
+          borderBottom: `1px solid ${HP_TOKENS.lineSoft}`,
+          background: `linear-gradient(135deg, rgba(232, 163, 23, 0.08) 0%, transparent 100%)`,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, marginBottom: 18 }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ ...HP_TEXT.tiny, marginBottom: 4, color: HP_TOKENS.yellowDark, fontWeight: 750, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Daily quests</div>
+              <div style={{ ...HP_TEXT.h, color: HP_TOKENS.ink }}>
+                Selesaikan misi, kumpulkan poin
               </div>
             </div>
-            {/* XP Bubble */}
-            <div style={{ 
-              background: 'rgba(0,0,0,0.18)', borderRadius: 12, padding: '8px 12px', 
-              textAlign: 'center', minWidth: 60, flexShrink: 0 
-            }}>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#FDE68A', lineHeight: 1 }}>
-                {currentXP}
-              </div>
-              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)', marginTop: 2 }}>
-                / {maxXP} XP
-              </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, flexShrink: 0, background: HP_TOKENS.yellowSoft, padding: '4px 12px', borderRadius: HP_TOKENS.radiusPill, border: `1px solid ${HP_TOKENS.yellow}` }}>
+              <span style={{ ...HP_TEXT.metric, color: HP_TOKENS.yellowDark }}>{currentXP}</span>
+              <span style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute }}>/ {maxXP} XP</span>
             </div>
           </div>
 
-          {/* Progress Wrap */}
-          <div style={{ position: 'relative', zIndex: 1, paddingBottom: 16 }}>
-            {/* Track */}
-            <div style={{ 
-              height: 10, background: 'rgba(0,0,0,0.22)', borderRadius: 99, 
-              position: 'relative', marginBottom: 12 
+          {/* Track. The milestone markers sit on it, so the bar is hand-built
+              rather than an HPBar — same radius, one step thicker so the
+              markers have something to sit on. */}
+          <div style={{ position: 'relative', marginBottom: 10 }}>
+            <div style={{
+              height: 10,
+              background: `rgba(232, 163, 23, 0.18)`,
+              borderRadius: HP_TOKENS.radiusPill,
+              border: `1px solid ${HP_TOKENS.yellowSoft}`,
             }}>
-              {/* Fill */}
               <div style={{
                 width: `${Math.min(100, (currentXP / maxXP) * 100)}%`,
                 height: '100%',
-                background: '#FDE68A',
-                borderRadius: 99,
-                transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative'
-              }}>
-                <div style={{
-                  position: 'absolute', right: -6, top: '50%', transform: 'translateY(-50%)',
-                  width: 16, height: 16, borderRadius: '50%', background: '#FDE68A',
-                  border: '2px solid #3B82F6', boxShadow: '0 0 0 3px rgba(59,130,246,0.35)'
-                }} />
-              </div>
-
-              {/* Milestones Dots overlay */}
-              <div style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', left: 0, right: 0, height: '100%', pointerEvents: 'none' }}>
-                {milestones.map((ms, idx) => {
-                  const progressPct = (ms.target / maxXP) * 100;
-                  const isAchieved = currentXP >= ms.target;
-                    return (
-                      <div key={`dot-${idx}`} style={{
-                        position: 'absolute', top: '50%', left: `${progressPct}%`,
-                        transform: isAchieved ? 'translate(-50%, -50%) scale(1.2)' : 'translate(-50%, -50%)',
-                        width: 36, height: 36, borderRadius: '50%',
-                        background: isAchieved ? '#fff' : 'rgba(255,255,255,0.2)',
-                        border: `2px solid ${isAchieved ? '#fff' : 'rgba(255,255,255,0.35)'}`,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 18, transition: 'all 0.4s', zIndex: 2,
-                        boxShadow: isAchieved ? '0 4px 12px rgba(0,0,0,0.15)' : '0 2px 4px rgba(0,0,0,0.05)'
-                      }}>
-                        {ms.icon}
-                      </div>
-                    );
-                })}
-              </div>
+                background: `linear-gradient(90deg, ${HP_TOKENS.yellow}, ${HP_TOKENS.yellowDark})`,
+                borderRadius: HP_TOKENS.radiusPill,
+                transition: 'width 320ms var(--hp-ease-out)',
+                boxShadow: HP_TOKENS.shadowSm,
+              }} />
             </div>
 
-            {/* Labels under the track */}
-            <div style={{ position: 'relative', height: 16 }}>
+            <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
               {milestones.map((ms, idx) => {
                 const progressPct = (ms.target / maxXP) * 100;
                 const isAchieved = currentXP >= ms.target;
                 return (
-                  <div key={`lbl-${idx}`} style={{
-                    position: 'absolute', left: `${progressPct}%`,
-                    transform: 'translateX(-50%)',
-                    fontSize: 11, textAlign: 'center',
-                    color: isAchieved ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.55)',
-                    fontWeight: isAchieved ? 700 : 500,
-                    whiteSpace: 'nowrap'
-                  }}>
-                    {ms.target} XP
+                  <div
+                    key={`dot-${idx}`}
+                    title={`${ms.label} · ${ms.target} XP`}
+                    style={{
+                      position: 'absolute', top: '50%', left: `${progressPct}%`,
+                      transform: 'translate(-50%, -50%)',
+                      width: 28, height: 28, borderRadius: HP_TOKENS.radiusPill,
+                      background: isAchieved ? HP_TOKENS.yellow : HP_TOKENS.card,
+                      // A hairline on a pale track made these vanish. An
+                      // unearned milestone still has to be legible — it is the
+                      // thing you're aiming at.
+                      border: `2px solid ${isAchieved ? HP_TOKENS.yellow : HP_TOKENS.lineStrong}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'background-color 220ms var(--hp-ease), border-color 220ms var(--hp-ease)',
+                    }}
+                  >
+                    <HPGlyph
+                      name={ms.glyph}
+                      size={14}
+                      color={isAchieved ? HP_TOKENS.yellowDark : HP_TOKENS.inkMute}
+                    />
                   </div>
                 );
               })}
             </div>
           </div>
+
+          {/* Labels under the track */}
+          <div style={{ position: 'relative', height: 14 }}>
+            {milestones.map((ms, idx) => {
+              const progressPct = (ms.target / maxXP) * 100;
+              const isAchieved = currentXP >= ms.target;
+              return (
+                <div key={`lbl-${idx}`} style={{
+                  ...HP_TEXT.small,
+                  position: 'absolute', left: `${progressPct}%`,
+                  transform: 'translateX(-50%)',
+                  fontSize: 11,
+                  fontVariantNumeric: 'tabular-nums',
+                  color: isAchieved ? HP_TOKENS.ink : HP_TOKENS.inkMute,
+                  whiteSpace: 'nowrap',
+                }}>
+                  {ms.target} XP
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* Misi List */}
-        <div style={{ padding: '16px' }}>
+        <div style={{ padding: '12px 16px 16px' }}>
           {activeMissions.map((c, i) => {
             // Because some missions are manual triggers without strict logic, we might 
             // fallback to 'claimed' or checking simple true/false if they just view it.
@@ -297,45 +300,59 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
                 className="daily-mission-item"
                 onMouseEnter={() => setHoveredMission(c.id)}
                 onMouseLeave={() => setHoveredMission(null)}
-                style={{ 
+                style={{
                   display: 'flex', alignItems: 'center', gap: 12,
                   padding: '12px 14px',
-                  borderRadius: 16,
+                  borderRadius: HP_TOKENS.radiusMd,
                   marginBottom: 8,
-                  background: canClaim ? `${HP_TOKENS.yellowWash}60` : isHovered && !isClaimed ? '#f9fafb' : '#fff',
-                  border: canClaim ? `2px solid ${HP_TOKENS.yellow}` : `2px solid ${isHovered && !isClaimed ? '#e5e7eb' : '#f3f4f6'}`,
-                  opacity: isClaimed ? 0.5 : 1,
-                  transition: 'all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
-                  transform: isHovered && !isClaimed ? 'translateY(-2px)' : 'none',
-                  boxShadow: canClaim ? `0 8px 24px ${HP_TOKENS.yellow}30` : isHovered && !isClaimed ? '0 8px 16px rgba(0,0,0,0.04)' : 'none'
+                  background: isClaimed
+                    ? 'transparent'
+                    : canClaim
+                    ? HP_TOKENS.yellowWash
+                    : 'transparent',
+                  border: `1px solid ${
+                    canClaim ? HP_TOKENS.yellowSoft
+                    : isClaimed ? HP_TOKENS.lineSoft
+                    : HP_TOKENS.lineSoft
+                  }`,
+                  opacity: isClaimed ? 0.6 : 1,
+                  boxShadow: canClaim ? `0 4px 12px rgba(232,163,23,0.12)` : (isHovered && !isClaimed ? '0 2px 8px rgba(0,0,0,0.03)' : 'none'),
+                  transform: (isHovered && !isClaimed) ? 'translateY(-1px)' : 'none',
+                  transition: 'all 220ms var(--hp-ease)',
                 }}
               >
                 <div className="daily-mission-info" style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
-                  {/* Vibrant Emoji Icon */}
-                  <div style={{ 
-                    width: 44, height: 44, borderRadius: 14, flexShrink: 0,
-                    background: isClaimed ? HP_TOKENS.sageSoft : effectivelyCompleted ? HP_TOKENS.yellowSoft : `${c.color}15`,
+                  {/* Three states, three tints — claimed, ready to claim, and
+                      still to do. Grey for all three read as four disabled
+                      rows; the tint is state, not decoration, so it stays
+                      inside the one-accent rule. */}
+                  <div style={{
+                    width: 44, height: 44, borderRadius: HP_TOKENS.radiusMd, flexShrink: 0,
+                    background: isClaimed
+                      ? HP_TOKENS.successSoft
+                      : effectivelyCompleted ? HP_TOKENS.yellowSoft : HP_TOKENS.yellowWash,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    transition: 'all 0.3s',
-                    border: `2px solid ${isClaimed ? HP_TOKENS.sage : effectivelyCompleted ? HP_TOKENS.yellow : `${c.color}30`}`,
-                    boxShadow: canClaim ? `inset 0 0 12px ${HP_TOKENS.yellow}40` : 'none'
+                    transition: 'background-color 220ms var(--hp-ease)',
                   }}>
                     {isClaimed ? (
-                      <HPGlyph name="check" size={24} color={HP_TOKENS.sage} stroke={4} />
+                      <HPGlyph name="check" size={22} color={HP_TOKENS.success} stroke={3} />
                     ) : (
-                      <span style={{ fontSize: 24, filter: effectivelyCompleted ? 'none' : 'grayscale(10%) opacity(0.9)' }}>{c.emoji}</span>
+                      <HPGlyph
+                        name={c.glyph}
+                        size={20}
+                        color={effectivelyCompleted ? HP_TOKENS.yellowDark : HP_TOKENS.yellowDark}
+                      />
                     )}
                   </div>
 
-                  {/* Title */}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ 
-                      ...HP_TEXT.body, fontSize: 14, fontWeight: 900, 
-                      color: isClaimed ? HP_TOKENS.inkFade : HP_TOKENS.ink,
+                    <div style={{
+                      ...HP_TEXT.sub, fontSize: 14,
+                      color: isClaimed ? HP_TOKENS.inkMute : HP_TOKENS.ink,
                     }}>
                       {c.title}
                     </div>
-                    <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkSoft, marginTop: 2, fontSize: 12, lineHeight: 1.3, fontWeight: 600 }}>
+                    <div style={{ ...HP_TEXT.small, marginTop: 2, lineHeight: 1.35 }}>
                       {c.desc}
                     </div>
                   </div>
@@ -343,71 +360,52 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
 
                 {/* Action Area */}
                 <div className="daily-mission-action">
-                    <div className="daily-mission-xp" style={{ 
-                      ...HP_TEXT.tiny, color: isClaimed ? HP_TOKENS.inkMute : '#FF9F1C', 
-                      fontWeight: 900, fontSize: 13,
-                      display: 'flex', alignItems: 'center', gap: 4
+                    <div className="daily-mission-xp" style={{
+                      ...HP_TEXT.tiny,
+                      color: isClaimed ? HP_TOKENS.inkMute : HP_TOKENS.yellowDark,
+                      display: 'flex', alignItems: 'center', gap: 4,
                     }}>
-                      <span style={{ fontSize: 14 }}>⚡</span> +{c.points} XP
+                      <HPGlyph name="zap" size={12} color="currentColor" />
+                      +{c.points} XP
                     </div>
 
                     {canClaim ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                        <button
-                          onClick={() => claimReward(c)}
-                          className="hp-tap"
-                          style={{
-                            padding: '8px 20px', borderRadius: 100, border: 'none',
-                            background: `#FFBE0B`, 
-                            color: '#fff',
-                            fontFamily: HP_FONT, fontWeight: 900, fontSize: 12,
-                            cursor: 'pointer',
-                            boxShadow: `0 4px 16px rgba(255,159,28,0.5)`,
-                            animation: 'hpPulse 1.5s infinite',
-                            textTransform: 'uppercase',
-                            letterSpacing: 1
-                          }}
-                        >
-                          Klaim!
-                        </button>
-                      </div>
+                      <HPButton
+                        size="sm"
+                        variant="primary"
+                        onClick={() => claimReward(c)}
+                        style={{ background: HP_TOKENS.yellow, color: HP_TOKENS.ink }}
+                      >
+                        Klaim
+                      </HPButton>
                     ) : isClaimed ? (
-                      <div style={{ 
-                        ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 900, fontSize: 12,
-                        padding: '6px 14px', borderRadius: 100, background: HP_TOKENS.sageWash,
-                        border: `1.5px solid ${HP_TOKENS.sage}`
+                      <div style={{
+                        ...HP_TEXT.tiny,
+                        display: 'inline-flex', alignItems: 'center', gap: 4,
+                        color: HP_TOKENS.success,
+                        padding: '6px 12px', borderRadius: HP_TOKENS.radiusPill,
+                        background: HP_TOKENS.successWash,
                       }}>
-                        Selesai ✓
+                        <HPGlyph name="check" size={12} color="currentColor" stroke={3} />
+                        Selesai
                       </div>
                     ) : (
-                      <button
+                      <HPButton
+                        size="sm"
+                        variant="secondary"
+                        iconEnd="chevronRight"
+                        style={{ 
+                          border: isHovered ? `1px solid ${HP_TOKENS.yellow}` : '1px solid var(--hp-line)',
+                          color: isHovered ? HP_TOKENS.yellowDark : undefined, 
+                          background: isHovered ? HP_TOKENS.yellowWash : undefined 
+                        }}
                         onClick={() => {
                           const onActioned = () => setActionedIds(prev => new Set([...prev, c.id]));
                           openModal && c.action(openModal, state, onActioned);
                         }}
-                        className="hp-tap"
-                        style={{
-                          padding: '8px 14px', borderRadius: 100, 
-                          border: `none`,
-                          background: `${HP_TOKENS.blue}`, color: '#fff',
-                          fontFamily: HP_FONT, fontWeight: 900, fontSize: 12,
-                          cursor: 'pointer',
-                          display: 'flex', alignItems: 'center', gap: 4,
-                          transition: 'all 0.2s',
-                          boxShadow: `0 4px 12px ${HP_TOKENS.blue}40`
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = `0 6px 16px ${HP_TOKENS.blue}60`;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'none';
-                          e.currentTarget.style.boxShadow = `0 4px 12px ${HP_TOKENS.blue}40`;
-                        }}
                       >
                         {typeof c.actionLabel === 'function' ? c.actionLabel(state) : c.actionLabel}
-                        <HPGlyph name="chevron-right" size={16} color="currentColor" />
-                      </button>
+                      </HPButton>
                     )}
                 </div>
               </div>
@@ -415,6 +413,6 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
           })}
         </div>
       </div>
-    </div>
+    </section>
   );
 }

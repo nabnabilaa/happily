@@ -116,21 +116,21 @@ export default function SurveyResultsModal({ onClose, surveyId }: SurveyResultsM
         {/* Stats header */}
         <div style={{
           display: 'flex', gap: 10, marginBottom: 16,
-          padding: '14px', borderRadius: 16, background: HP_TOKENS.lavenderSoft,
+          padding: '14px', borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.lavenderSoft,
           border: `1px solid ${HP_TOKENS.lavender}20`,
         }}>
           <div style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 24, color: HP_TOKENS.lavender }}>{totalResponses}</div>
+            <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 24, color: HP_TOKENS.lavender }}>{totalResponses}</div>
             <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>Responden</div>
           </div>
           <div style={{ width: 1, background: `${HP_TOKENS.lavender}20` }} />
           <div style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 24, color: HP_TOKENS.ink }}>{survey.questions?.length || 0}</div>
+            <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 24, color: HP_TOKENS.ink }}>{survey.questions?.length || 0}</div>
             <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>Pertanyaan</div>
           </div>
           <div style={{ width: 1, background: `${HP_TOKENS.lavender}20` }} />
           <div style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 13, color: HP_TOKENS.inkSoft, marginTop: 4 }}>
+            <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, color: HP_TOKENS.inkSoft, marginTop: 4 }}>
               {survey.target_audience === 'department' ? `${(survey.target_departments || []).length} Divisi` : 'Semua Divisi'}
             </div>
             <div 
@@ -146,18 +146,18 @@ export default function SurveyResultsModal({ onClose, surveyId }: SurveyResultsM
         <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
           {(['summary', 'responses'] as const).map(t => (
             <button key={t} onClick={() => { setActiveTab(t); setCurrentPageResponses(1); }} className="hp-tap" style={{
-              flex: 1, padding: '10px', borderRadius: 12,
+              flex: 1, padding: '10px', borderRadius: HP_TOKENS.radiusSm,
               background: activeTab === t ? HP_TOKENS.lavender : HP_TOKENS.lineSoft,
               color: activeTab === t ? '#fff' : HP_TOKENS.inkSoft,
-              border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
+              border: 'none', fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, cursor: 'pointer',
             }}>
               {t === 'summary' ? '📊 Ringkasan' : '📋 Jawaban Individual'}
             </button>
           ))}
           <button onClick={exportToExcel} className="hp-tap" style={{
-            padding: '10px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
+            padding: '10px 14px', borderRadius: HP_TOKENS.radiusSm, border: 'none', cursor: 'pointer',
             background: HP_TOKENS.sageSoft, color: HP_TOKENS.sage,
-            fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, display: 'flex', alignItems: 'center', gap: 6
+            fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, display: 'flex', alignItems: 'center', gap: 6
           }}>
             <HPGlyph name="book" size={14} color={HP_TOKENS.sage} />
             Excel
@@ -173,7 +173,7 @@ export default function SurveyResultsModal({ onClose, surveyId }: SurveyResultsM
                   <div style={{
                     width: 22, height: 22, borderRadius: 7, background: HP_TOKENS.lavenderSoft,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 10, fontWeight: 900, color: HP_TOKENS.lavender, fontFamily: HP_FONT, flexShrink: 0,
+                    fontSize: 10, fontWeight: 700, color: HP_TOKENS.lavender, fontFamily: HP_FONT, flexShrink: 0,
                   }}>{idx + 1}</div>
                   <div style={{ ...HP_TEXT.h, fontSize: 13, lineHeight: 1.4 }}>{q.question}</div>
                 </div>
@@ -185,7 +185,7 @@ export default function SurveyResultsModal({ onClose, surveyId }: SurveyResultsM
                 {q.type === 'rating' && (
                   <div>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
-                      <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 28, color: HP_TOKENS.yellow }}>{q.average}</div>
+                      <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 28, color: HP_TOKENS.yellow }}>{q.average}</div>
                       <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute }}>/ {q.distribution?.length || 5}</div>
                     </div>
                     <div style={{ display: 'flex', gap: 6 }}>
@@ -200,7 +200,7 @@ export default function SurveyResultsModal({ onClose, surveyId }: SurveyResultsM
                                 transition: '0.5s',
                               }} />
                             </div>
-                            <div style={{ fontSize: 10, fontWeight: 800, color: HP_TOKENS.inkMute }}>{d.value}⭐</div>
+                            <div style={{ fontSize: 10, fontWeight: 700, color: HP_TOKENS.inkMute }}>{d.value}⭐</div>
                             <div style={{ fontSize: 9, color: HP_TOKENS.inkFade }}>{d.count}</div>
                           </div>
                         );
@@ -238,7 +238,7 @@ export default function SurveyResultsModal({ onClose, surveyId }: SurveyResultsM
                   <div style={{ maxHeight: 200, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {q.answers.map((a: string, ai: number) => (
                       <div key={ai} style={{
-                        padding: '8px 12px', borderRadius: 10, background: HP_TOKENS.paper,
+                        padding: '8px 12px', borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.paper,
                         ...HP_TEXT.body, fontSize: 13, color: HP_TOKENS.ink, lineHeight: 1.4,
                         borderLeft: `3px solid ${HP_TOKENS.lavender}`,
                       }}>
@@ -267,9 +267,9 @@ export default function SurveyResultsModal({ onClose, surveyId }: SurveyResultsM
                       style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
                     >
                       <div style={{
-                        width: 32, height: 32, borderRadius: 10, background: HP_TOKENS.blueSoft,
+                        width: 32, height: 32, borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.blueSoft,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontFamily: HP_FONT, fontWeight: 900, fontSize: 12, color: HP_TOKENS.blue,
+                        fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, color: HP_TOKENS.blue,
                         flexShrink: 0
                       }}>
                         {r.user_name?.charAt(0) || '?'}

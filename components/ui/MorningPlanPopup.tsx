@@ -75,7 +75,7 @@ export default function MorningPlanPopup({ planText, userId }: MorningPlanPopupP
         width: '100%',
         maxWidth: '400px',
         textAlign: 'center',
-        boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
+        boxShadow: HP_TOKENS.shadowLg,
         position: 'relative',
         color: HP_TOKENS.ink,
         fontFamily: HP_FONT,
@@ -131,10 +131,9 @@ export default function MorningPlanPopup({ planText, userId }: MorningPlanPopupP
               background: HP_TOKENS.primary,
               color: '#fff',
               fontFamily: HP_FONT,
-              fontWeight: 900,
+              fontWeight: 700,
               fontSize: '16px',
               cursor: 'pointer',
-              boxShadow: `0 8px 16px ${HP_TOKENS.primarySoft}`
             }}
           >
             Siap Laksanakan! 🚀

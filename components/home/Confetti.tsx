@@ -14,8 +14,18 @@ export default function Confetti({ show }: ConfettiProps) {
     if (show) {
       // Generate 150 particles for a rich confetti effect similar to the HTML concept
       const newPieces = Array.from({ length: 150 }).map((_, i) => {
-        // Use Flowbuddy's token colors + some bright accents
-        const colors = [HP_TOKENS.sage, HP_TOKENS.blue, HP_TOKENS.yellow, HP_TOKENS.coral, '#F97316', '#FCA5A5', '#93C5FD', '#FFF'];
+        // Celebration is the one place we spend the whole palette at once. Every
+        // shade is still a token, so confetti repaints with the theme.
+        const colors = [
+          HP_TOKENS.success,
+          HP_TOKENS.info,
+          HP_TOKENS.yellow,
+          HP_TOKENS.danger,
+          HP_TOKENS.warning,
+          HP_TOKENS.primary,
+          HP_TOKENS.honey,
+          HP_TOKENS.gold,
+        ];
         const color = colors[Math.floor(Math.random() * colors.length)];
         
         const size = Math.random() * 8 + 5; // 5px to 13px

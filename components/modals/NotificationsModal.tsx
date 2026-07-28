@@ -176,12 +176,12 @@ export default function NotificationsModal({ onClose, openModal }: Notifications
   return (
     <Modal onClose={onClose} title="🔔 Notifikasi">
       {/* Tab Nav Controls */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 16, background: HP_TOKENS.paper, padding: 4, borderRadius: 12 }}>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 16, background: HP_TOKENS.paper, padding: 4, borderRadius: HP_TOKENS.radiusSm }}>
         <button 
           onClick={() => setActiveTab('unread')}
           style={{
-            flex: 1, padding: '10px 0', border: 'none', borderRadius: 9,
-            fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',
+            flex: 1, padding: '10px 0', border: 'none', borderRadius: HP_TOKENS.radiusXs,
+            fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: 'pointer',
             background: activeTab === 'unread' ? HP_TOKENS.card : 'transparent',
             color: activeTab === 'unread' ? HP_TOKENS.ink : HP_TOKENS.inkSoft,
             boxShadow: activeTab === 'unread' ? '0 2px 8px rgba(26,29,35,0.04)' : 'none',
@@ -193,8 +193,8 @@ export default function NotificationsModal({ onClose, openModal }: Notifications
         <button 
           onClick={() => setActiveTab('all')}
           style={{
-            flex: 1, padding: '10px 0', border: 'none', borderRadius: 9,
-            fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',
+            flex: 1, padding: '10px 0', border: 'none', borderRadius: HP_TOKENS.radiusXs,
+            fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: 'pointer',
             background: activeTab === 'all' ? HP_TOKENS.card : 'transparent',
             color: activeTab === 'all' ? HP_TOKENS.ink : HP_TOKENS.inkSoft,
             boxShadow: activeTab === 'all' ? '0 2px 8px rgba(26,29,35,0.04)' : 'none',
@@ -207,7 +207,7 @@ export default function NotificationsModal({ onClose, openModal }: Notifications
 
       {/* Action Header bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800 }}>
+        <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>
           {loading ? 'Memuat...' : `${notifs.length} Notifikasi`}
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
@@ -259,7 +259,7 @@ export default function NotificationsModal({ onClose, openModal }: Notifications
                 key={n.id} 
                 style={{
                   display: 'flex', flexDirection: 'column',
-                  padding: 14, borderRadius: 16,
+                  padding: 14, borderRadius: HP_TOKENS.radiusMd,
                   background: colors.bg, 
                   border: `1.5px solid ${colors.border}`,
                   transition: 'all 0.2s',
@@ -273,7 +273,7 @@ export default function NotificationsModal({ onClose, openModal }: Notifications
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <div style={{ ...HP_TEXT.h, fontSize: 14, lineHeight: 1.3, fontWeight: n.isRead ? 700 : 800 }}>{n.title}</div>
                       {!n.isRead && (
-                        <span style={{ width: 6, height: 6, borderRadius: 3, background: HP_TOKENS.sage, display: 'inline-block' }} />
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: HP_TOKENS.sage, display: 'inline-block' }} />
                       )}
                     </div>
                     {n.message && (
@@ -317,9 +317,9 @@ export default function NotificationsModal({ onClose, openModal }: Notifications
                     onClick={() => handleDeepLink(n)}
                     className="hp-tap"
                     style={{
-                      marginTop: 10, padding: '8px 12px', borderRadius: 10,
+                      marginTop: 10, padding: '8px 12px', borderRadius: HP_TOKENS.radiusSm,
                       background: HP_TOKENS.card, border: `1px solid ${HP_TOKENS.line}`,
-                      fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
+                      fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, cursor: 'pointer',
                       color: HP_TOKENS.blue, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                     }}
                   >

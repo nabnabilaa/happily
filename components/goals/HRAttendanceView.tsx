@@ -133,7 +133,7 @@ export default function HRAttendanceView({ currentUser, openModal }: HRAttendanc
           value={month} 
           onChange={e => setMonth(Number(e.target.value))}
           style={{
-            flex: 1, padding: '10px 12px', borderRadius: 12,
+            flex: 1, padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm,
             border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT,
             fontWeight: 700, fontSize: 13, outline: 'none', background: HP_TOKENS.card
           }}
@@ -146,7 +146,7 @@ export default function HRAttendanceView({ currentUser, openModal }: HRAttendanc
           value={year} 
           onChange={e => setYear(Number(e.target.value))}
           style={{
-            width: 100, padding: '10px 12px', borderRadius: 12,
+            width: 100, padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm,
             border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT,
             fontWeight: 700, fontSize: 13, outline: 'none', background: HP_TOKENS.card
           }}
@@ -157,17 +157,17 @@ export default function HRAttendanceView({ currentUser, openModal }: HRAttendanc
         </select>
         <button onClick={() => fetchLogs()} style={{ 
           background: HP_TOKENS.blue, border: 'none', cursor: 'pointer', 
-          padding: '10px 14px', borderRadius: 12, display: 'flex', alignItems: 'center'
+          padding: '10px 14px', borderRadius: HP_TOKENS.radiusSm, display: 'flex', alignItems: 'center'
         }}>
-          <HPGlyph name="refresh" size={14} color="#F4F7F9" />
+          <HPGlyph name="refresh" size={14} color={HP_TOKENS.onPrimary} />
         </button>
         {['hr', 'manager'].includes(currentUser?.role) && (
           <button onClick={handleExportCSV} style={{ 
             background: HP_TOKENS.sage, border: 'none', cursor: 'pointer', 
-            padding: '10px 14px', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 6,
-            color: '#F4F7F9', fontFamily: HP_FONT, fontWeight: 700, fontSize: 13
+            padding: '10px 14px', borderRadius: HP_TOKENS.radiusSm, display: 'flex', alignItems: 'center', gap: 6,
+            color: HP_TOKENS.onPrimary, fontFamily: HP_FONT, fontWeight: 700, fontSize: 13
           }}>
-            <HPGlyph name="sparkle" size={14} color="#F4F7F9" />
+            <HPGlyph name="sparkle" size={14} color={HP_TOKENS.onPrimary} />
             CSV
           </button>
         )}
@@ -177,15 +177,15 @@ export default function HRAttendanceView({ currentUser, openModal }: HRAttendanc
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8 }}>
         {[
           { label: 'Total Log', value: totalLogs, color: HP_TOKENS.blue, bg: HP_TOKENS.blueSoft },
-          { label: 'Unik Users', value: uniqueUsers, color: '#7B6BB5', bg: '#EDE8F5' },
+          { label: 'Unik Users', value: uniqueUsers, color: HP_TOKENS.primary, bg: HP_TOKENS.primaryWash },
           { label: 'Clock-out', value: `${withCheckout}/${totalLogs}`, color: HP_TOKENS.sage, bg: HP_TOKENS.sageWash },
-          { label: 'Avg Jam', value: avgDuration > 0 ? `${Math.floor(avgDuration/60)}j${avgDuration%60}m` : '-', color: '#8A6814', bg: HP_TOKENS.yellowSoft },
+          { label: 'Avg Jam', value: avgDuration > 0 ? `${Math.floor(avgDuration/60)}j${avgDuration%60}m` : '-', color: HP_TOKENS.yellowDark, bg: HP_TOKENS.yellowSoft },
         ].map(s => (
           <div key={s.label} style={{
-            padding: '12px 8px', borderRadius: 14, background: s.bg,
+            padding: '12px 8px', borderRadius: HP_TOKENS.radiusMd, background: s.bg,
             textAlign: 'center', border: `1px solid ${s.color}15`
           }}>
-            <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 18, color: s.color }}>{s.value}</div>
+            <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 18, color: s.color }}>{s.value}</div>
             <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>{s.label}</div>
           </div>
         ))}
@@ -228,11 +228,11 @@ export default function HRAttendanceView({ currentUser, openModal }: HRAttendanc
                   </div>
                   <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                     <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, color: HP_TOKENS.sage }}>{data.days}</div>
+                      <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 14, color: HP_TOKENS.sage }}>{data.days}</div>
                       <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade }}>hadir</div>
                     </div>
                     <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, color: HP_TOKENS.blue }}>
+                      <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 14, color: HP_TOKENS.blue }}>
                         {data.withCheckout > 0 ? `${Math.floor(data.totalMinutes / data.withCheckout / 60)}j` : '-'}
                       </div>
                       <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade }}>avg</div>
@@ -292,7 +292,7 @@ export default function HRAttendanceView({ currentUser, openModal }: HRAttendanc
         {loading ? (
           <div style={{ textAlign: 'center', padding: 20, color: HP_TOKENS.inkMute }}>Loading...</div>
         ) : logs.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 40, border: `1.5px dashed ${HP_TOKENS.line}`, borderRadius: 20, color: HP_TOKENS.inkMute }}>
+          <div style={{ textAlign: 'center', padding: 40, border: `1.5px dashed ${HP_TOKENS.line}`, borderRadius: HP_TOKENS.radius, color: HP_TOKENS.inkMute }}>
             Belum ada data absensi bulan ini
           </div>
         ) : (() => {
@@ -320,14 +320,14 @@ export default function HRAttendanceView({ currentUser, openModal }: HRAttendanc
                       <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                         {log.duration_minutes && (
                           <div style={{
-                            padding: '3px 8px', borderRadius: 8, fontSize: 10, fontWeight: 800, fontFamily: HP_FONT,
-                            background: HP_TOKENS.yellowSoft, color: '#8A6814'
+                            padding: '3px 8px', borderRadius: 8, fontSize: 10, fontWeight: 700, fontFamily: HP_FONT,
+                            background: HP_TOKENS.yellowSoft, color: HP_TOKENS.yellowDark
                           }}>
                             {Math.floor(log.duration_minutes / 60)}j{log.duration_minutes % 60}m
                           </div>
                         )}
                         <div style={{
-                          padding: '3px 8px', borderRadius: 8, fontSize: 10, fontWeight: 800, fontFamily: HP_FONT,
+                          padding: '3px 8px', borderRadius: 8, fontSize: 10, fontWeight: 700, fontFamily: HP_FONT,
                           background: log.check_out_at ? HP_TOKENS.sageWash : HP_TOKENS.coralSoft,
                           color: log.check_out_at ? HP_TOKENS.sage : HP_TOKENS.coral
                         }}>

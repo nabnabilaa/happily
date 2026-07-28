@@ -220,9 +220,8 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
       width: '100%',
       background: HP_TOKENS.paper,
       fontFamily: HP_FONT,
-      borderRadius: 24,
+      borderRadius: HP_TOKENS.radiusLg,
       overflow: 'hidden',
-      boxShadow: '0 10px 30px rgba(26,29,35,0.03)',
       border: `1px solid ${HP_TOKENS.line}`,
     }}>
       <style>{`
@@ -250,16 +249,15 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
           borderBottom: `1px solid ${HP_TOKENS.line}`,
         }}>
           <div>
-            <div style={{ ...HP_TEXT.h, fontSize: 20, fontWeight: 900, color: HP_TOKENS.ink }}>💬 Chat</div>
+            <div style={{ ...HP_TEXT.h, fontSize: 20, fontWeight: 700, color: HP_TOKENS.ink }}>💬 Chat</div>
             <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>Kolaborasi tim</div>
           </div>
           <button onClick={handleCreateDM} className="hp-tap" style={{
-            padding: '8px 14px', borderRadius: 12,
+            padding: '8px 14px', borderRadius: HP_TOKENS.radiusSm,
             background: HP_TOKENS.card,
             color: HP_TOKENS.ink, border: 'none',
-            fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
+            fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: 6,
-            boxShadow: `0 4px 12px rgba(26,29,35,0.03)`,
             borderTop: `1px solid ${HP_TOKENS.lineSoft}`,
           }}>
             <HPGlyph name="plus" size={12} color={HP_TOKENS.ink} />
@@ -288,7 +286,7 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
                   className="hp-tap"
                   style={{
                     display: 'flex', alignItems: 'center', gap: 10,
-                    padding: '10px 12px', borderRadius: 14,
+                    padding: '10px 12px', borderRadius: HP_TOKENS.radiusMd,
                     background: activeChannel?.id === ch.id
                       ? HP_TOKENS.lineSoft
                       : (ch.unreadCount > 0 ? 'transparent' : 'transparent'),
@@ -297,16 +295,16 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
                     transition: 'all 0.2s',
                   }}
                   onMouseEnter={(e) => {
-                    if (activeChannel?.id !== ch.id) e.currentTarget.style.background = '#F8FAFC';
+                    if (activeChannel?.id !== ch.id) e.currentTarget.style.background = HP_TOKENS.sunken;
                   }}
                   onMouseLeave={(e) => {
-                    if (activeChannel?.id !== ch.id) e.currentTarget.style.background = ch.unreadCount > 0 ? '#F8FAFC' : 'transparent';
+                    if (activeChannel?.id !== ch.id) e.currentTarget.style.background = ch.unreadCount > 0 ? HP_TOKENS.sunken : 'transparent';
                   }}
                 >
                   <div style={{
-                    width: 40, height: 40, borderRadius: 12,
+                    width: 40, height: 40, borderRadius: HP_TOKENS.radiusSm,
                     background: ch.type === 'broadcast'
-                      ? '#F59E0B'
+                      ? HP_TOKENS.warning
                       : (ch.type === 'dm' ? HP_TOKENS.yellowSoft : HP_TOKENS.blueSoft),
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 20, flexShrink: 0,
@@ -343,10 +341,10 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
                       )}
                       {ch.unreadCount > 0 && (
                         <div style={{
-                          width: 16, height: 16, borderRadius: 8,
-                          background: ch.type === 'broadcast' ? '#F59E0B' : '#3B82F6',
-                          color: '#F4F7F9',
-                          fontFamily: HP_FONT, fontWeight: 900, fontSize: 9,
+                          width: 16, height: 16, borderRadius: '50%',
+                          background: ch.type === 'broadcast' ? HP_TOKENS.warning : HP_TOKENS.primary,
+                          color: HP_TOKENS.onPrimary,
+                          fontFamily: HP_FONT, fontWeight: 700, fontSize: 9,
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           marginLeft: 4, flexShrink: 0,
                         }}>
@@ -379,13 +377,12 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
               backdropFilter: 'blur(12px)',
               borderBottom: `1px solid ${HP_TOKENS.line}`,
               position: 'sticky', top: 0, zIndex: 10,
-              boxShadow: '0 4px 20px rgba(26,29,35,0.02)',
             }}>
               <button
                 onClick={() => { setActiveChannel(null); if (pollRef.current) clearInterval(pollRef.current); fetchChannels(); }}
                 className="hp-tap"
                 style={{
-                  background: 'rgba(26, 29, 35, 0.04)', border: 'none', borderRadius: 12,
+                  background: 'rgba(26, 29, 35, 0.04)', border: 'none', borderRadius: HP_TOKENS.radiusSm,
                   width: 36, height: 36, cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   transition: 'background 0.2s',
@@ -396,19 +393,18 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
                 <HPGlyph name="chevronLeft" size={16} color={HP_TOKENS.ink} />
               </button>
               <div style={{
-                width: 42, height: 42, borderRadius: 14,
+                width: 42, height: 42, borderRadius: HP_TOKENS.radiusMd,
                 background: activeChannel.type === 'broadcast'
-                  ? '#F59E0B'
+                  ? HP_TOKENS.warning
                   : (activeChannel.type === 'dm' ? HP_TOKENS.yellowSoft : HP_TOKENS.blueSoft),
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 20, flexShrink: 0,
-                boxShadow: '0 2px 6px rgba(26,29,35,0.05)',
               }}>
                 {activeChannel.type === 'dm' ? <HPAvatar name={activeChannel.name} size={38} /> : activeChannel.emoji}
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ ...HP_TEXT.h, fontSize: 16, fontWeight: 800, color: HP_TOKENS.ink }}>{activeChannel.name}</div>
-                <div style={{ ...HP_TEXT.tiny, color: activeChannel.type === 'broadcast' ? '#D97706' : HP_TOKENS.inkSoft, fontWeight: 600 }}>
+                <div style={{ ...HP_TEXT.h, fontSize: 16, fontWeight: 700, color: HP_TOKENS.ink }}>{activeChannel.name}</div>
+                <div style={{ ...HP_TEXT.tiny, color: activeChannel.type === 'broadcast' ? HP_TOKENS.warning : HP_TOKENS.inkSoft, fontWeight: 600 }}>
                   {activeChannel.type === 'dm' ? 'Direct Message' : activeChannel.type === 'broadcast' ? '📢 Pesan Siaran' : activeChannel.type === 'group' ? 'Grup Chat' : 'Team Channel'}
                 </div>
               </div>
@@ -512,7 +508,7 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } }}
                   placeholder="Ketik pesan..."
                   style={{
-                    width: '100%', padding: '14px 16px', borderRadius: 16,
+                    width: '100%', padding: '14px 16px', borderRadius: HP_TOKENS.radiusMd,
                     border: `1.5px solid ${HP_TOKENS.line}`,
                     fontFamily: HP_FONT, fontSize: 14, outline: 'none',
                     background: HP_TOKENS.paper,
@@ -535,7 +531,7 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
                 disabled={!newMessage.trim() || sending}
                 className="hp-tap"
                 style={{
-                  width: 48, height: 48, borderRadius: 16,
+                  width: 48, height: 48, borderRadius: HP_TOKENS.radiusMd,
                   background: newMessage.trim() ? HP_TOKENS.primaryWash : HP_TOKENS.lineSoft,
                   border: 'none', cursor: newMessage.trim() ? 'pointer' : 'default',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',

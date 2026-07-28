@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import PusherClient from "pusher-js";
+import { HP_TOKENS } from "@/lib/constants";
 import BeeMascot from "@/components/ui/BeeMascot";
 
 type Phase = "loading" | "ready" | "running" | "ended" | "failed";
@@ -208,14 +209,14 @@ export default function FocusSyncPage() {
 
   const rootStyle: React.CSSProperties = {
     minHeight: "100dvh",
-    background: "#2D6A4F",
+    background: HP_TOKENS.success,
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
     padding: "32px 24px",
     fontFamily: "'Nunito', sans-serif",
-    color: "#F4F7F9",
+    color: HP_TOKENS.onPrimary,
     textAlign: "center",
   };
 
@@ -224,7 +225,7 @@ export default function FocusSyncPage() {
     return (
       <div style={rootStyle}>
         <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
-        <div style={{ fontSize: 24, fontWeight: 800, marginBottom: 8 }}>Menghubungkan...</div>
+        <div style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Menghubungkan...</div>
         <div style={{ fontSize: 14, opacity: 0.7 }}>Memuat data ruang fokus</div>
       </div>
     );
@@ -235,7 +236,7 @@ export default function FocusSyncPage() {
     return (
       <div style={rootStyle}>
         <div style={{ fontSize: 64, marginBottom: 16 }}>❌</div>
-        <div style={{ fontSize: 24, fontWeight: 800, marginBottom: 8 }}>Sesi Gagal</div>
+        <div style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Sesi Gagal</div>
         <div style={{ fontSize: 14, opacity: 0.75, maxWidth: 300 }}>{errorMsg || "Terjadi kesalahan."}</div>
       </div>
     );
@@ -244,15 +245,15 @@ export default function FocusSyncPage() {
   // ── Render: Ended ───────────────────────────────────────────────────────
   if (phase === "ended") {
     return (
-      <div style={{ ...rootStyle, background: "#1a472a" }}>
+      <div style={{ ...rootStyle, background: HP_TOKENS.success }}>
         <div style={{ fontSize: 64, marginBottom: 16 }}>🎉</div>
-        <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>Fokus Selesai!</div>
+        <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Fokus Selesai!</div>
         <div style={{ fontSize: 14, opacity: 0.75, maxWidth: 300, marginBottom: 32 }}>
           Hebat! {room?.name ? `Sesi "${room.name}"` : "Sesi fokus"} berhasil diselesaikan.
         </div>
         <button 
           onClick={() => window.location.href = '/'} 
-          style={{ padding: '14px 24px', borderRadius: 99, background: '#4ade80', color: '#064e3b', border: 'none', fontWeight: 800, cursor: 'pointer', fontFamily: "'Nunito', sans-serif" }}
+          style={{ padding: '14px 24px', borderRadius: 99, background: HP_TOKENS.success, color: HP_TOKENS.onPrimary, border: 'none', fontWeight: 700, cursor: 'pointer', fontFamily: "'Nunito', sans-serif" }}
         >
           Kembali ke Dashboard
         </button>
@@ -269,7 +270,7 @@ export default function FocusSyncPage() {
           @keyframes spin { to{transform:rotate(360deg)} }
         `}</style>
         <div style={{ fontSize: 64, marginBottom: 16 }}>✅</div>
-        <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>HP Tersambung!</div>
+        <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>HP Tersambung!</div>
         <div style={{ fontSize: 14, opacity: 0.75, marginBottom: 32, maxWidth: 300 }}>
           Ruang: <strong>{room?.name || sessionId}</strong>
           <br /><br />
@@ -279,10 +280,10 @@ export default function FocusSyncPage() {
         <div style={{
           background: "rgba(239,68,68,0.15)",
           border: "1px solid rgba(239,68,68,0.4)",
-          borderRadius: 16,
+          borderRadius: HP_TOKENS.radiusMd,
           padding: "12px 20px",
           fontSize: 13,
-          color: "#fca5a5",
+          color: HP_TOKENS.dangerSoft,
           fontWeight: 700,
           marginBottom: 24,
           maxWidth: 300,
@@ -293,7 +294,7 @@ export default function FocusSyncPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 8, opacity: 0.6, fontSize: 13 }}>
           <span style={{
             width: 8, height: 8, borderRadius: "50%",
-            background: "#4ade80", display: "inline-block",
+            background: HP_TOKENS.success, display: "inline-block",
             animation: "pulse 1.5s infinite",
           }} />
           Terhubung ke server
@@ -316,8 +317,7 @@ export default function FocusSyncPage() {
       <div style={{ position: 'relative', marginTop: 16, marginBottom: 16 }}>
         <div style={{
           position: 'absolute', top: -30, right: -20, background: '#000', color: '#fff', 
-          padding: '4px 10px', borderRadius: 12, fontSize: 12, fontWeight: 800,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+          padding: '4px 10px', borderRadius: HP_TOKENS.radiusSm, fontSize: 12, fontWeight: 700,
         }}>
           Fokus!
         </div>
@@ -327,11 +327,11 @@ export default function FocusSyncPage() {
       {/* Timer */}
       <div style={{
         background: "rgba(0,0,0,0.25)",
-        borderRadius: 24,
+        borderRadius: HP_TOKENS.radiusLg,
         padding: "32px 48px",
         marginBottom: 32,
       }}>
-        <div style={{ fontSize: 72, fontWeight: 800, letterSpacing: -2, fontFamily: "monospace" }}>
+        <div style={{ fontSize: 72, fontWeight: 700, letterSpacing: -2, fontFamily: "monospace" }}>
           {String(displayMins).padStart(2, "0")}:{String(displaySecs).padStart(2, "0")}
         </div>
 
@@ -346,7 +346,7 @@ export default function FocusSyncPage() {
         }}>
           <div style={{
             height: "100%",
-            background: "#F5C842",
+            background: HP_TOKENS.yellow,
             borderRadius: 99,
             width: `${progress}%`,
             transition: "width 1s linear",
@@ -357,10 +357,10 @@ export default function FocusSyncPage() {
       <div style={{
         background: "rgba(239,68,68,0.15)",
         border: "1px solid rgba(239,68,68,0.4)",
-        borderRadius: 16,
+        borderRadius: HP_TOKENS.radiusMd,
         padding: "12px 20px",
         fontSize: 13,
-        color: "#fca5a5",
+        color: HP_TOKENS.dangerSoft,
         fontWeight: 700,
         marginBottom: 16,
         maxWidth: 300,

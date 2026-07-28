@@ -3,40 +3,79 @@
 import React from "react";
 import { HP_TOKENS } from "@/lib/constants";
 
+type Tone =
+  | "primary"
+  | "success"
+  | "warning"
+  | "danger"
+  | "info"
+  | "honey"
+  // legacy names
+  | "sage"
+  | "blue"
+  | "yellow"
+  | "coral"
+  | "lavender"
+  | "teal";
+
 interface HPBarProps {
+  /** 0–100. Clamped. */
   value: number;
-  tone?: 'sage' | 'blue' | 'yellow' | 'coral' | 'lavender' | 'primary' | 'teal';
+  tone?: Tone;
   height?: number;
+  /** Describes what the bar measures, for screen readers. */
+  label?: string;
+  /** @deprecated flat fills only — gradients muddy the progress read */
   gradient?: boolean;
 }
 
-export default function HPBar({ 
-  value, 
-  tone = 'primary', 
+const TONES: Record<Tone, string> = {
+  primary: HP_TOKENS.primary,
+  success: HP_TOKENS.success,
+  warning: HP_TOKENS.warning,
+  danger: HP_TOKENS.danger,
+  info: HP_TOKENS.info,
+  honey: HP_TOKENS.yellow,
+  sage: HP_TOKENS.success,
+  blue: HP_TOKENS.primary,
+  yellow: HP_TOKENS.yellow,
+  coral: HP_TOKENS.danger,
+  lavender: HP_TOKENS.info,
+  teal: HP_TOKENS.success,
+};
+
+export default function HPBar({
+  value,
+  tone = "primary",
   height = 6,
-  gradient = false
+  label,
 }: HPBarProps) {
-  const map: Record<string, string> = { 
-    sage: HP_TOKENS.sage, 
-    blue: HP_TOKENS.blue, 
-    yellow: HP_TOKENS.yellow, 
-    coral: HP_TOKENS.coral, 
-    lavender: HP_TOKENS.lavender,
-    primary: HP_TOKENS.primary,
-    teal: HP_TOKENS.teal,
-  };
-  
-  const fillBg = map[tone] || HP_TOKENS.primary;
+  const pct = Math.max(0, Math.min(100, Number.isFinite(value) ? value : 0));
 
   return (
-    <div style={{ width: '100%', height, background: 'var(--hp-border)', borderRadius: 99, overflow: 'hidden' }}>
-      <div style={{
-        width: `${Math.max(0, Math.min(100, value))}%`, 
-        height: '100%',
-        background: fillBg, 
-        borderRadius: 99,
-        transition: 'width 600ms cubic-bezier(.4,0,.2,1)',
-      }} />
+    <div
+      role="progressbar"
+      aria-valuenow={Math.round(pct)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={label}
+      style={{
+        width: "100%",
+        height,
+        background: HP_TOKENS.sunken,
+        borderRadius: HP_TOKENS.radiusPill,
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          width: `${pct}%`,
+          height: "100%",
+          background: TONES[tone] ?? HP_TOKENS.primary,
+          borderRadius: HP_TOKENS.radiusPill,
+          transition: "width 320ms var(--hp-ease-out)",
+        }}
+      />
     </div>
   );
 }

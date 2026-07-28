@@ -118,9 +118,38 @@ const ManageOnboardingModal = safeDynamic(() => import("@/components/modals/Mana
 
 // ─── Role pill badge colors (Gercep Palette) ────────────────────────────────
 const ROLE_META: Record<UserRole, { label: string; color: string; bg: string; glyph: string }> = {
-  employee: { label: 'Employee', color: '#3B82F6', bg: 'rgba(59,130,246,0.1)', glyph: 'target' },
-  manager:  { label: 'Manager',  color: '#1D3557', bg: 'rgba(29,53,87,0.08)',  glyph: 'people' },
-  hr:       { label: 'HR Admin',  color: '#7B6BB5', bg: '#EDE8F5',              glyph: 'medal' },
+  employee: { label: 'Employee', color: HP_TOKENS.primary, bg: HP_TOKENS.primarySoft, glyph: 'target' },
+  manager:  { label: 'Manager',  color: HP_TOKENS.info,    bg: HP_TOKENS.infoSoft,    glyph: 'people' },
+  hr:       { label: 'HR Admin', color: HP_TOKENS.success, bg: HP_TOKENS.successSoft, glyph: 'medal' },
+};
+
+/** Compact pill used by the header controls. */
+const headerPill: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 6,
+  minHeight: 34,
+  padding: '0 12px',
+  borderRadius: 999,
+  fontSize: 12,
+  fontWeight: 600,
+  letterSpacing: '-0.005em',
+  whiteSpace: 'nowrap',
+};
+
+/** Circular icon button. 38px visual, 44px hit area via padding on the row. */
+const headerIconBtn: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: 38,
+  height: 38,
+  borderRadius: '50%',
+  border: `1px solid ${HP_TOKENS.border}`,
+  background: HP_TOKENS.card,
+  color: HP_TOKENS.ink,
+  position: 'relative',
+  flexShrink: 0,
 };
 
 function AppContent() {
@@ -440,10 +469,22 @@ function AppContent() {
 
       {/* Main content */}
       <div className="hp-app-content">
-        {/* Role pill & Logout — top right */}
+        {/* App bar. Sticky rather than absolute so it stays reachable while
+            scrolling, and so screens no longer need to reserve space under it. */}
         <div style={{
-          position: 'absolute', top: 16, right: 16, zIndex: 40,
-          display: 'flex', alignItems: 'center', gap: 8,
+          position: 'sticky', top: 0, zIndex: 40,
+          display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8,
+          padding: '10px 16px',
+          // Kept in step with --hp-appbar-h, which the dashboard rail offsets
+          // from so it pins below this bar instead of behind it.
+          minHeight: 'var(--hp-appbar-h)',
+          // Solid, not translucent-with-blur. At 82% opacity the content
+          // scrolling underneath showed through as a smeared band across the
+          // top of every screen — the bar read as a smudge rather than as
+          // chrome. A flat surface plus a hairline is both cleaner and cheaper.
+          background: HP_TOKENS.paper,
+          borderBottom: `1px solid ${HP_TOKENS.line}`,
+          flexWrap: 'wrap',
         }}>
           <InstallButton />
 
@@ -451,42 +492,34 @@ function AppContent() {
             onClick={() => openModal('notifications')}
             className="hp-tap"
             title="Notifikasi"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 38,
-              height: 38,
-              borderRadius: "50%",
-              border: `1.5px solid var(--hp-line)`,
-              background: "var(--hp-card)",
-              color: "var(--hp-ink)",
-              boxShadow: "0 2px 10px rgba(26,29,35,0.06)",
-              cursor: "pointer",
-              position: "relative",
-              transition: "all 0.2s ease",
-            }}
+            aria-label={
+              state?.notifications
+                ? `Notifikasi, ${state.notifications} belum dibaca`
+                : "Notifikasi"
+            }
+            style={headerIconBtn}
           >
-            <HPGlyph name="bell" size={18} stroke={2.5} color={HP_TOKENS.ink} />
+            <HPGlyph name="bell" size={18} stroke={2} color="currentColor" />
             {state?.notifications && state.notifications > 0 ? (
               <span
+                aria-hidden
                 style={{
                   position: "absolute",
-                  top: -2,
-                  right: -2,
-                  background: HP_TOKENS.coral,
-                  color: '#F4F7F9',
+                  top: -1,
+                  right: -1,
+                  background: HP_TOKENS.danger,
+                  color: "#fff",
                   fontSize: 10,
-                  fontWeight: 800,
-                  borderRadius: 99,
-                  minWidth: 16,
-                  height: 16,
+                  fontWeight: 650,
+                  fontVariantNumeric: "tabular-nums",
+                  borderRadius: 999,
+                  minWidth: 17,
+                  height: 17,
                   padding: "0 4px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  boxShadow: "0 2px 6px rgba(232, 139, 125, 0.4)",
-                  border: "1.5px solid var(--hp-card)",
+                  border: `2px solid ${HP_TOKENS.paper}`,
                 }}
               >
                 {state.notifications}
@@ -501,32 +534,25 @@ function AppContent() {
               className="hp-tap"
               title={currentRole === 'hr' ? 'Kembali ke tampilan karyawan' : 'Buka konsol HR-Admin'}
               style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '6px 12px', borderRadius: 99,
-                background: currentRole === 'hr' ? '#EDE8F5' : HP_TOKENS.card,
-                border: `1.5px solid ${currentRole === 'hr' ? '#7B6BB5' : HP_TOKENS.line}`,
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 11,
-                color: currentRole === 'hr' ? '#7B6BB5' : HP_TOKENS.inkSoft,
-                boxShadow: '0 2px 8px rgba(26,29,35,0.06)', cursor: 'pointer',
+                ...headerPill,
+                background: currentRole === 'hr' ? HP_TOKENS.successSoft : HP_TOKENS.card,
+                border: `1px solid ${currentRole === 'hr' ? 'transparent' : HP_TOKENS.border}`,
+                color: currentRole === 'hr' ? HP_TOKENS.success : HP_TOKENS.inkSoft,
               }}
             >
-              <HPGlyph name={currentRole === 'hr' ? 'home' : 'medal'} size={11} color={currentRole === 'hr' ? '#7B6BB5' : HP_TOKENS.inkSoft} />
+              <HPGlyph name={currentRole === 'hr' ? 'home' : 'medal'} size={13} color="currentColor" />
               <span>{currentRole === 'hr' ? 'Mode Karyawan' : 'Konsol HR'}</span>
             </button>
           )}
 
           <div
             style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '6px 12px', borderRadius: 99,
+              ...headerPill,
               background: meta.bg,
-              border: `1.5px solid ${meta.color}30`,
-              fontFamily: HP_FONT, fontWeight: 800, fontSize: 11,
               color: meta.color,
-              boxShadow: '0 2px 8px rgba(26,29,35,0.06)',
             }}
           >
-            <HPGlyph name={meta.glyph} size={11} color={meta.color} />
+            <HPGlyph name={meta.glyph} size={13} color="currentColor" />
             <span>{meta.label}</span>
           </div>
 
@@ -534,18 +560,14 @@ function AppContent() {
             onClick={() => openModal('confirm_logout')}
             className="hp-tap"
             style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '6px 14px', borderRadius: 99,
-              background: HP_TOKENS.coralSoft,
-              border: `1.5px solid ${HP_TOKENS.coral}30`,
-              fontFamily: HP_FONT, fontWeight: 800, fontSize: 11,
-              color: HP_TOKENS.coral,
-              boxShadow: '0 2px 8px rgba(26,29,35,0.06)',
-              cursor: 'pointer',
+              ...headerPill,
+              background: 'transparent',
+              border: `1px solid ${HP_TOKENS.border}`,
+              color: HP_TOKENS.inkMute,
             }}
             title="Keluar (Logout)"
           >
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
               <polyline points="16 17 21 12 16 7" />
               <line x1="21" y1="12" x2="9" y2="12" />
@@ -563,28 +585,25 @@ function AppContent() {
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
+            aria-label="Buka AI Coach"
             style={{
-              position: 'fixed', 
-              right: 24 - coachPos.x, 
-              bottom: 106 - coachPos.y,
+              position: 'fixed',
+              right: 20 - coachPos.x,
+              // Clears the bottom tab bar plus the device gesture area.
+              bottom: `calc(84px + env(safe-area-inset-bottom) - ${coachPos.y}px)`,
               zIndex: 100,
-              width: 56, height: 56, borderRadius: 28, border: 'none',
-              background: currentRole === 'manager' ? '#1D3557' :
-                         currentRole === 'hr' ? '#7B6BB5' :
-                         '#3B82F6',
+              width: 54, height: 54, borderRadius: '50%',
+              background: HP_TOKENS.primary,
+              color: HP_TOKENS.onPrimary,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: isDragging ? 'grabbing' : 'pointer',
               touchAction: 'none',
-              boxShadow: `0 8px 24px ${
-                currentRole === 'manager' ? 'rgba(29,53,87,0.45)' :
-                currentRole === 'hr' ? 'rgba(123,107,181,0.4)' :
-                'rgba(59,130,246,0.45)'
-              }`,
-              transition: 'transform 0.1s ease-out',
-              transform: isDragging ? 'scale(1.05)' : 'scale(1)',
+              boxShadow: HP_TOKENS.shadowMd,
+              transition: 'transform 120ms var(--hp-ease)',
+              transform: isDragging ? 'scale(1.04)' : 'scale(1)',
             }}
           >
-            <HPGlyph name="sparkle" size={26} color="#fff" />
+            <HPGlyph name="sparkle" size={24} color="currentColor" />
         </button>
       </div>
 

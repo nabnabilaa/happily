@@ -42,6 +42,8 @@ next-env.d.ts
 
 # scratch
 /scratch
+/cek*.png
+/Maxy Academy_Logogram-*.png
 
 # Dummy scripts
 delete_dummy_tasks.js

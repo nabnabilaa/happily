@@ -31,6 +31,7 @@ export async function GET(request: Request) {
     let query = `
       SELECT 
         u.id, u.name, u.job_title, u.avatar_image, u.role, u.points, u.level,
+        u.department,
         t.name as team_name,
         us.status, us.reason, us.attachment_url, us.updated_at as status_since,
         a.check_in_at as today_checkin, a.check_out_at as today_checkout, a.check_in_type
@@ -89,6 +90,9 @@ export async function GET(request: Request) {
         points: r.points || 0,
         level: r.level || 1,
         team: r.team_name || 'Unassigned',
+        // "Divisi" in the UI. Kept separate from `team`: a team is a reporting
+        // unit, a department is the org division the presence board filters on.
+        department: (r.department as string) || '',
         status: effectiveStatus,
         statusLabel: meta.label,
         statusEmoji: meta.emoji,

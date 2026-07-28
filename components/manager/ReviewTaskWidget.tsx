@@ -70,7 +70,7 @@ export default function ReviewTaskWidget() {
             <HPCard key={t.id} padding={16} style={{ border: `1.5px solid ${HP_TOKENS.yellowWash}`, background: '#fff' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800 }}>{t.userName}</div>
+                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>{t.userName}</div>
                   <div style={{ ...HP_TEXT.h, fontSize: 16, color: HP_TOKENS.ink, marginTop: 4 }}>{t.title}</div>
                   {t.goalTitle && (
                     <div style={{ 
@@ -78,7 +78,7 @@ export default function ReviewTaskWidget() {
                       background: HP_TOKENS.blueWash, padding: '2px 8px', borderRadius: 6, marginTop: 6 
                     }}>
                       <span style={{ fontSize: 10 }}>🎯</span>
-                      <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 800, fontSize: 10 }}>{t.goalTitle}</span>
+                      <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 700, fontSize: 10 }}>{t.goalTitle}</span>
                     </div>
                   )}
                   {t.proofLink && (
@@ -97,19 +97,19 @@ export default function ReviewTaskWidget() {
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
                   <button onClick={() => handleAction(t.id, 'approved')} className="hp-tap" style={{
-                    padding: '8px 16px', borderRadius: 10, border: 'none', background: HP_TOKENS.sage, color: '#fff',
+                    padding: '8px 16px', borderRadius: HP_TOKENS.radiusSm, border: 'none', background: HP_TOKENS.sage, color: '#fff',
                     fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, cursor: 'pointer', width: '100px'
                   }}>
                     Terima
                   </button>
                   <button onClick={() => handleAction(t.id, 'revision')} className="hp-tap" style={{
-                    padding: '8px 16px', borderRadius: 10, border: 'none', background: HP_TOKENS.coralWash, color: HP_TOKENS.coral,
+                    padding: '8px 16px', borderRadius: HP_TOKENS.radiusSm, border: 'none', background: HP_TOKENS.coralWash, color: HP_TOKENS.coral,
                     fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, cursor: 'pointer', width: '100px'
                   }}>
                     Revisi
                   </button>
                   <button onClick={() => handleAction(t.id, 'rejected')} className="hp-tap" style={{
-                    padding: '8px 16px', borderRadius: 10, border: 'none', background: HP_TOKENS.lineSoft, color: HP_TOKENS.inkMute,
+                    padding: '8px 16px', borderRadius: HP_TOKENS.radiusSm, border: 'none', background: HP_TOKENS.lineSoft, color: HP_TOKENS.inkMute,
                     fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, cursor: 'pointer', width: '100px'
                   }}>
                     Tolak

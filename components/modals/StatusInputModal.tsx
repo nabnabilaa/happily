@@ -21,15 +21,15 @@ type StatusOption = {
 };
 
 const STATUS_OPTIONS: StatusOption[] = [
-  { key: 'working',  label: 'Sedang Bekerja',  emoji: '💻', color: '#2D8A4E', needsReason: false, needsAttachment: false, placeholder: '' },
-  { key: 'deepwork',label: 'Deep Work',       emoji: '🎯', color: '#5C3C92', needsReason: false, needsAttachment: false, placeholder: '' },
-  { key: 'meeting',  label: 'Dalam Meeting',   emoji: '📞', color: '#3B6FA0', needsReason: false, needsAttachment: false, placeholder: '' },
-  { key: 'break',    label: 'Istirahat',        emoji: '☕', color: '#D4A017', needsReason: false, needsAttachment: false, placeholder: '' },
-  { key: 'away',     label: 'Away / AFK',       emoji: '🚶', color: '#8A8A8A', needsReason: false, needsAttachment: false, placeholder: '' },
-  { key: 'stuck',    label: 'Butuh Bantuan',    emoji: '🆘', color: '#E03131', needsReason: true,  needsAttachment: false, placeholder: 'Jelaskan apa yang sedang memblokirmu...' },
-  { key: 'sick',     label: 'Sakit',            emoji: '🤒', color: '#E03131', needsReason: true,  needsAttachment: true, placeholder: 'Jelaskan kondisi kesehatan...' },
-  { key: 'izin',     label: 'Izin',             emoji: '📋', color: '#7B6BB5', needsReason: true,  needsAttachment: false, placeholder: 'Alasan izin...' },
-  { key: 'cuti',     label: 'Cuti',             emoji: '🏖️', color: '#2196F3', needsReason: true,  needsAttachment: false, placeholder: 'Keterangan cuti...' },
+  { key: 'working',  label: 'Sedang Bekerja',  emoji: '💻', color: HP_TOKENS.success, needsReason: false, needsAttachment: false, placeholder: '' },
+  { key: 'deepwork',label: 'Deep Work',       emoji: '🎯', color: HP_TOKENS.primary, needsReason: false, needsAttachment: false, placeholder: '' },
+  { key: 'meeting',  label: 'Dalam Meeting',   emoji: '📞', color: HP_TOKENS.info, needsReason: false, needsAttachment: false, placeholder: '' },
+  { key: 'break',    label: 'Istirahat',        emoji: '☕', color: HP_TOKENS.warning, needsReason: false, needsAttachment: false, placeholder: '' },
+  { key: 'away',     label: 'Away / AFK',       emoji: '🚶', color: HP_TOKENS.inkMute, needsReason: false, needsAttachment: false, placeholder: '' },
+  { key: 'stuck',    label: 'Butuh Bantuan',    emoji: '🆘', color: HP_TOKENS.danger, needsReason: true,  needsAttachment: false, placeholder: 'Jelaskan apa yang sedang memblokirmu...' },
+  { key: 'sick',     label: 'Sakit',            emoji: '🤒', color: HP_TOKENS.danger, needsReason: true,  needsAttachment: true, placeholder: 'Jelaskan kondisi kesehatan...' },
+  { key: 'izin',     label: 'Izin',             emoji: '📋', color: HP_TOKENS.primary, needsReason: true,  needsAttachment: false, placeholder: 'Alasan izin...' },
+  { key: 'cuti',     label: 'Cuti',             emoji: '🏖️', color: HP_TOKENS.info, needsReason: true,  needsAttachment: false, placeholder: 'Keterangan cuti...' },
 ];
 
 export default function StatusInputModal({ onClose }: StatusInputModalProps) {
@@ -93,16 +93,16 @@ export default function StatusInputModal({ onClose }: StatusInputModalProps) {
         {/* Current status indicator */}
         {currentStatus && (
           <div style={{
-            padding: '10px 14px', borderRadius: 12, marginBottom: 16,
+            padding: '10px 14px', borderRadius: HP_TOKENS.radiusSm, marginBottom: 16,
             background: HP_TOKENS.paper, border: `1px solid ${HP_TOKENS.line}`,
             display: 'flex', alignItems: 'center', gap: 8,
           }}>
             <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>Status saat ini:</div>
             <div style={{
               padding: '3px 10px', borderRadius: 8,
-              background: `${STATUS_OPTIONS.find(s => s.key === currentStatus)?.color || '#ccc'}15`,
-              fontFamily: HP_FONT, fontWeight: 800, fontSize: 11,
-              color: STATUS_OPTIONS.find(s => s.key === currentStatus)?.color || '#ccc',
+              background: `${STATUS_OPTIONS.find(s => s.key === currentStatus)?.color || HP_TOKENS.inkFade}15`,
+              fontFamily: HP_FONT, fontWeight: 700, fontSize: 11,
+              color: STATUS_OPTIONS.find(s => s.key === currentStatus)?.color || HP_TOKENS.inkFade,
             }}>
               {STATUS_OPTIONS.find(s => s.key === currentStatus)?.emoji}{' '}
               {STATUS_OPTIONS.find(s => s.key === currentStatus)?.label || currentStatus}
@@ -126,7 +126,7 @@ export default function StatusInputModal({ onClose }: StatusInputModalProps) {
               }}
               className="hp-tap"
               style={{
-                padding: '14px 12px', borderRadius: 14, border: 'none',
+                padding: '14px 12px', borderRadius: HP_TOKENS.radiusMd, border: 'none',
                 background: selectedStatus === s.key ? s.color : HP_TOKENS.card,
                 cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10,
                 transition: 'all 0.2s',
@@ -136,7 +136,7 @@ export default function StatusInputModal({ onClose }: StatusInputModalProps) {
             >
               <div style={{ fontSize: 22 }}>{s.emoji}</div>
               <div style={{
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 13,
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 13,
                 color: selectedStatus === s.key ? '#fff' : HP_TOKENS.ink,
                 textAlign: 'left',
               }}>
@@ -157,7 +157,7 @@ export default function StatusInputModal({ onClose }: StatusInputModalProps) {
               onChange={(e) => setReason(e.target.value)}
               placeholder={selectedOption.placeholder}
               style={{
-                width: '100%', padding: 14, borderRadius: 12,
+                width: '100%', padding: 14, borderRadius: HP_TOKENS.radiusSm,
                 border: `1.5px solid ${reason.trim() ? HP_TOKENS.sage : HP_TOKENS.line}`,
                 fontFamily: HP_FONT, fontSize: 13, minHeight: 80,
                 boxSizing: 'border-box', outline: 'none', resize: 'none',
@@ -175,7 +175,7 @@ export default function StatusInputModal({ onClose }: StatusInputModalProps) {
               📎 UPLOAD SURAT KETERANGAN (OPSIONAL)
             </div>
             <div style={{
-              padding: 10, borderRadius: 10, background: HP_TOKENS.blueWash,
+              padding: 10, borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.blueWash,
               border: `1px solid ${HP_TOKENS.blue}20`, marginBottom: 8,
               ...HP_TEXT.small, fontSize: 11, color: HP_TOKENS.inkSoft,
             }}>
@@ -187,7 +187,7 @@ export default function StatusInputModal({ onClose }: StatusInputModalProps) {
               onChange={(e) => setAttachmentUrl(e.target.value)}
               placeholder="https://drive.google.com/..."
               style={{
-                width: '100%', padding: 14, borderRadius: 12,
+                width: '100%', padding: 14, borderRadius: HP_TOKENS.radiusSm,
                 border: `1.5px solid ${HP_TOKENS.line}`,
                 fontFamily: HP_FONT, fontSize: 13, boxSizing: 'border-box',
                 outline: 'none',
@@ -199,7 +199,7 @@ export default function StatusInputModal({ onClose }: StatusInputModalProps) {
         {/* Excused absence info */}
         {selectedOption && ['sick', 'izin', 'cuti'].includes(selectedOption.key) && (
           <div style={{
-            padding: 12, borderRadius: 12,
+            padding: 12, borderRadius: HP_TOKENS.radiusSm,
             background: HP_TOKENS.sageWash, border: `1px solid ${HP_TOKENS.sage}20`,
             marginBottom: 16,
           }}>
@@ -215,10 +215,10 @@ export default function StatusInputModal({ onClose }: StatusInputModalProps) {
           disabled={!selectedStatus || saving || (selectedOption?.needsReason && !reason.trim())}
           className="hp-tap"
           style={{
-            width: '100%', padding: '16px', borderRadius: 14, border: 'none',
+            width: '100%', padding: '16px', borderRadius: HP_TOKENS.radiusMd, border: 'none',
             background: selectedStatus ? (selectedOption?.color || HP_TOKENS.sage) : HP_TOKENS.lineSoft,
             color: selectedStatus ? '#fff' : HP_TOKENS.inkMute,
-            fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: selectedStatus ? 'pointer' : 'default',
+            fontFamily: HP_FONT, fontWeight: 700, fontSize: 15, cursor: selectedStatus ? 'pointer' : 'default',
             opacity: (!selectedStatus || saving || (selectedOption?.needsReason && !reason.trim())) ? 0.5 : 1,
             transition: 'all 0.2s',
             boxShadow: selectedStatus ? `0 4px 16px ${selectedOption?.color || HP_TOKENS.sage}30` : 'none',

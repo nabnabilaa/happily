@@ -118,15 +118,14 @@ export default function AnnouncementFeed() {
               minWidth: 280, 
               maxWidth: 280,
               flexShrink: 0,
-              borderLeft: `6px solid ${HP_TOKENS[a.tone as keyof typeof HP_TOKENS] || HP_TOKENS.blue}`,
-              boxShadow: '0 4px 12px rgba(26,29,35,0.05)',
+              borderLeft: `6px solid ${HP_TOKENS[a.tone as keyof typeof HP_TOKENS] || HP_TOKENS.blue}`,
               background: HP_TOKENS.card
             }}
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ 
-                  width: 40, height: 40, borderRadius: 12, 
+                  width: 40, height: 40, borderRadius: HP_TOKENS.radiusSm, 
                   background: (HP_TOKENS as any)[`${a.tone}Soft`] || HP_TOKENS.lineSoft,
                   display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}>
@@ -138,7 +137,7 @@ export default function AnnouncementFeed() {
                   padding: '4px 8px', 
                   borderRadius: 6,
                   color: HP_TOKENS.inkMute,
-                  fontWeight: 800
+                  fontWeight: 700
                 }}>
                   {new Date(a.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }).toUpperCase()}
                 </div>
@@ -163,7 +162,7 @@ export default function AnnouncementFeed() {
           </HPCard>
         ))}
         {announcements.length === 0 && (
-          <div style={{ textAlign: 'center', padding: 40, background: HP_TOKENS.lineSoft, borderRadius: 20 }}>
+          <div style={{ textAlign: 'center', padding: 40, background: HP_TOKENS.lineSoft, borderRadius: HP_TOKENS.radius }}>
             <HPGlyph name="bullhorn" size={32} color={HP_TOKENS.inkFade} />
             <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, marginTop: 12 }}>Belum ada pengumuman terbaru.</div>
           </div>
@@ -174,11 +173,11 @@ export default function AnnouncementFeed() {
 }
 
 const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '10px 14px', borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
+  width: '100%', padding: '10px 14px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.line}`,
   fontFamily: HP_FONT, fontSize: 14, outline: 'none', background: HP_TOKENS.card, boxSizing: 'border-box'
 };
 
 const buttonStyle: React.CSSProperties = {
-  width: '100%', padding: '12px', borderRadius: 12, border: 'none',
-  background: HP_TOKENS.blue, color: '#F4F7F9', fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer'
+  width: '100%', padding: '12px', borderRadius: HP_TOKENS.radiusSm, border: 'none',
+  background: HP_TOKENS.blue, color: HP_TOKENS.onPrimary, fontFamily: HP_FONT, fontWeight: 700, fontSize: 14, cursor: 'pointer'
 };

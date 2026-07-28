@@ -148,7 +148,7 @@ export default function ManagerDailyTasksView({
             className="hp-tap"
             style={{
               padding: '12px 8px',
-              borderRadius: 16,
+              borderRadius: HP_TOKENS.radiusMd,
               border: filterMode === f.key ? `2px solid ${f.color}` : `1.5px solid ${HP_TOKENS.lineSoft}`,
               background: filterMode === f.key ? `${f.color}12` : HP_TOKENS.card,
               cursor: 'pointer',
@@ -188,7 +188,7 @@ export default function ManagerDailyTasksView({
             style={{
               width: '100%',
               padding: '12px 16px 12px 40px',
-              borderRadius: 14,
+              borderRadius: HP_TOKENS.radiusMd,
               border: `1.5px solid ${HP_TOKENS.line}`,
               background: HP_TOKENS.card,
               fontFamily: HP_FONT,
@@ -211,7 +211,7 @@ export default function ManagerDailyTasksView({
           style={{
             width: '100%',
             padding: '12px 16px',
-            borderRadius: 14,
+            borderRadius: HP_TOKENS.radiusMd,
             border: `1.5px solid ${HP_TOKENS.line}`,
             background: HP_TOKENS.card,
             fontFamily: HP_FONT,
@@ -308,11 +308,11 @@ export default function ManagerDailyTasksView({
                 }}>
                   <div style={{
                     padding: '4px 10px',
-                    borderRadius: 10,
+                    borderRadius: HP_TOKENS.radiusSm,
                     background: completionPct === 100 ? HP_TOKENS.sageSoft : completionPct > 50 ? HP_TOKENS.yellowSoft : HP_TOKENS.lineSoft,
-                    color: completionPct === 100 ? HP_TOKENS.sage : completionPct > 50 ? '#8A6814' : HP_TOKENS.inkMute,
+                    color: completionPct === 100 ? HP_TOKENS.sage : completionPct > 50 ? HP_TOKENS.yellowDark : HP_TOKENS.inkMute,
                     fontFamily: HP_FONT,
-                    fontWeight: 900,
+                    fontWeight: 700,
                     fontSize: 11,
                   }}>
                     {doneTasks}/{totalTasks}
@@ -376,7 +376,7 @@ export default function ManagerDailyTasksView({
                         <div style={{
                           width: 28,
                           height: 28,
-                          borderRadius: 9,
+                          borderRadius: HP_TOKENS.radiusXs,
                           background: t.verified
                             ? HP_TOKENS.sageSoft
                             : t.done
@@ -391,7 +391,7 @@ export default function ManagerDailyTasksView({
                           <HPGlyph
                             name={t.verified ? 'check' : t.done ? 'zap' : 'activity'}
                             size={14}
-                            color={t.verified ? HP_TOKENS.sage : t.done ? '#8A6814' : HP_TOKENS.inkMute}
+                            color={t.verified ? HP_TOKENS.sage : t.done ? HP_TOKENS.yellowDark : HP_TOKENS.inkMute}
                           />
                         </div>
 
@@ -420,7 +420,7 @@ export default function ManagerDailyTasksView({
                               padding: '2px 8px',
                               borderRadius: 6,
                               fontSize: 9,
-                              fontWeight: 900,
+                              fontWeight: 700,
                               fontFamily: HP_FONT,
                               letterSpacing: '0.03em',
                               background: t.verified
@@ -433,7 +433,7 @@ export default function ManagerDailyTasksView({
                               color: t.verified
                                 ? HP_TOKENS.sage
                                 : t.done
-                                ? '#8A6814'
+                                ? HP_TOKENS.yellowDark
                                 : t.status === 'revision'
                                 ? HP_TOKENS.coral
                                 : HP_TOKENS.inkMute,
@@ -454,7 +454,7 @@ export default function ManagerDailyTasksView({
                                 borderRadius: 5,
                                 background: HP_TOKENS.lineSoft,
                                 fontSize: 9,
-                                fontWeight: 800,
+                                fontWeight: 700,
                                 color: HP_TOKENS.inkFade,
                                 fontFamily: HP_FONT,
                               }}>
@@ -469,7 +469,7 @@ export default function ManagerDailyTasksView({
                                 borderRadius: 5,
                                 background: HP_TOKENS.lineSoft,
                                 fontSize: 9,
-                                fontWeight: 800,
+                                fontWeight: 700,
                                 color: HP_TOKENS.inkFade,
                                 fontFamily: HP_FONT,
                               }}>
@@ -487,15 +487,14 @@ export default function ManagerDailyTasksView({
                               className="hp-tap"
                               style={{
                                 padding: '7px 14px',
-                                borderRadius: 10,
+                                borderRadius: HP_TOKENS.radiusSm,
                                 border: 'none',
                                 background: HP_TOKENS.sage,
-                                color: '#F4F7F9',
+                                color: HP_TOKENS.onPrimary,
                                 fontSize: 11,
-                                fontWeight: 900,
+                                fontWeight: 700,
                                 fontFamily: HP_FONT,
-                                cursor: 'pointer',
-                                boxShadow: `0 3px 8px ${HP_TOKENS.sage}30`,
+                                cursor: 'pointer',
                               }}
                             >
                               ACC
@@ -505,12 +504,12 @@ export default function ManagerDailyTasksView({
                               className="hp-tap"
                               style={{
                                 padding: '7px 10px',
-                                borderRadius: 10,
+                                borderRadius: HP_TOKENS.radiusSm,
                                 border: `1px solid ${HP_TOKENS.yellow}`,
                                 background: HP_TOKENS.card,
-                                color: '#8A6814',
+                                color: HP_TOKENS.yellowDark,
                                 fontSize: 11,
-                                fontWeight: 900,
+                                fontWeight: 700,
                                 fontFamily: HP_FONT,
                                 cursor: 'pointer',
                               }}
@@ -522,12 +521,12 @@ export default function ManagerDailyTasksView({
                               className="hp-tap"
                               style={{
                                 padding: '7px 10px',
-                                borderRadius: 10,
+                                borderRadius: HP_TOKENS.radiusSm,
                                 border: `1px solid ${HP_TOKENS.coral}`,
                                 background: HP_TOKENS.card,
                                 color: HP_TOKENS.coral,
                                 fontSize: 11,
-                                fontWeight: 900,
+                                fontWeight: 700,
                                 fontFamily: HP_FONT,
                                 cursor: 'pointer',
                               }}
@@ -554,7 +553,7 @@ export default function ManagerDailyTasksView({
             className="hp-tap"
             style={{ 
               padding: '8px 16px', 
-              borderRadius: 10, 
+              borderRadius: HP_TOKENS.radiusSm, 
               background: HP_TOKENS.card, 
               border: `1.5px solid ${HP_TOKENS.line}`, 
               cursor: currentPage === 1 ? 'not-allowed' : 'pointer', 
@@ -576,7 +575,7 @@ export default function ManagerDailyTasksView({
             className="hp-tap"
             style={{ 
               padding: '8px 16px', 
-              borderRadius: 10, 
+              borderRadius: HP_TOKENS.radiusSm, 
               background: HP_TOKENS.card, 
               border: `1.5px solid ${HP_TOKENS.line}`, 
               cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', 

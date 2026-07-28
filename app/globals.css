@@ -1,492 +1,422 @@
+/* ═══════════════════════════════════════════════════════════════════
+   FLOWBUDDY DESIGN SYSTEM
+   Calm, neutral, content-first. Hierarchy comes from weight, size and
+   surface contrast — not from shadows, glows or saturated fills.
+   ═══════════════════════════════════════════════════════════════════ */
+
 :root {
-  /* ── Primary: Soft Blue (Flowbuddy Corporate Accent) ── */
-  --hp-primary: #3B82F6;
-  --hp-primary-dark: #2563EB;
-  --hp-primary-light: #60A5FA;
-  --hp-primary-soft: rgba(59, 130, 246, 0.10);
-  --hp-primary-wash: rgba(59, 130, 246, 0.04);
+  /* ── Accent: Flowbuddy Blue ──
+     One accent, used sparingly. Everything else is neutral. */
+  --hp-primary: #2F6BFF;
+  --hp-primary-dark: #1E4FD8;
+  --hp-primary-light: #6D9BFF;
+  --hp-primary-soft: rgba(47, 107, 255, 0.09);
+  --hp-primary-wash: rgba(47, 107, 255, 0.045);
+  --hp-on-primary: #FFFFFF;
 
-  /* ── Brand: Navy (Secondary) ── */
-  --hp-blue: #1D3557;
-  --hp-blue-light: #457B9D;
-  --hp-blue-soft: rgba(29, 53, 87, 0.08);
-  --hp-blue-wash: rgba(29, 53, 87, 0.03);
+  /* ── Secondary: Deep neutral blue (headings, brand marks) ── */
+  --hp-blue: #16233A;
+  --hp-blue-light: #40536F;
+  --hp-blue-soft: rgba(22, 35, 58, 0.07);
+  --hp-blue-wash: rgba(22, 35, 58, 0.03);
 
-  /* ── Brand: Gold (Accent) ── */
-  --hp-yellow: #FFBE0B;
-  --hp-yellow-dark: #E5A800;
-  --hp-yellow-light: #FFD060;
-  --hp-yellow-soft: rgba(255, 190, 11, 0.12);
-  --hp-yellow-wash: rgba(255, 190, 11, 0.04);
+  /* ── Accent: Honey (brand warmth — mascot, streaks, rewards) ── */
+  --hp-yellow: #E8A317;
+  --hp-yellow-dark: #C2860B;
+  --hp-yellow-light: #F5C455;
+  --hp-yellow-soft: rgba(232, 163, 23, 0.11);
+  --hp-yellow-wash: rgba(232, 163, 23, 0.05);
+  --hp-honey: #E8A317;
+  --hp-honey-soft: rgba(232, 163, 23, 0.07);
+  --hp-gold: #E8A317;
 
-  /* ── Brand: Teal (Success/Accent) ── */
-  --hp-teal: #2EC4B6;
-  --hp-teal-light: #C5F5F1;
-  --hp-teal-soft: rgba(46, 196, 182, 0.10);
+  /* ── Semantic ── */
+  --hp-success: #17915E;
+  --hp-success-soft: rgba(23, 145, 94, 0.10);
+  --hp-success-wash: rgba(23, 145, 94, 0.045);
 
-  /* ── Semantic: Sage (Calm) ── */
-  --hp-sage-soft: #E3EDE6;
-  --hp-sage-wash: #F3F7F4;
+  --hp-warning: #C77A1A;
+  --hp-warning-soft: rgba(199, 122, 26, 0.11);
+  --hp-warning-wash: rgba(199, 122, 26, 0.05);
 
-  /* ── Semantic: Coral (Warning/Danger) ── */
-  --hp-coral-soft: #FFF0F0;
-  --hp-coral-wash: #FFF8F8;
+  --hp-danger: #D2382F;
+  --hp-danger-soft: rgba(210, 56, 47, 0.09);
+  --hp-danger-wash: rgba(210, 56, 47, 0.04);
 
-  /* ── Semantic: Lavender (Info) ── */
-  --hp-lavender-soft: #E9E4F1;
-  --hp-lavender-wash: #F6F4FA;
+  --hp-info: #5B62D6;
+  --hp-info-soft: rgba(91, 98, 214, 0.09);
+  --hp-info-wash: rgba(91, 98, 214, 0.04);
 
-  /* ── Amber ── */
-  --hp-amber: #F2994A;
-  --hp-amber-soft: #FEF6ED;
+  /* ── Categorical ──
+     For series that are merely *different* — departments, chart lines — not
+     better or worse. Status colours must never be used for this: a red
+     department does not mean the department is failing. Hues are spaced around
+     the wheel and held at similar lightness so no series shouts over another. */
+  --hp-cat-1: #2F6BFF;
+  --hp-cat-2: #17915E;
+  --hp-cat-3: #C2721B;
+  --hp-cat-4: #7B4FD4;
+  --hp-cat-5: #C2415C;
+  --hp-cat-6: #0F8B9E;
+  --hp-cat-7: #A8571C;
+  --hp-cat-8: #55688A;
 
-  /* ── Gold / Honey ── */
-  --hp-honey: #FFBE0B;
-  --hp-honey-soft: rgba(255, 190, 11, 0.06);
-  --hp-gold: #FFBE0B;
+  /* ── Sticky notes ──
+     User-chosen, so these are the one place a colour means nothing but itself.
+     They are large light surfaces, which is why they get real dark-mode values
+     rather than an opacity trick — a paper-white note on a dark page glares. */
+  --hp-note-yellow-bg: #FFF9E6;
+  --hp-note-yellow-line: #F59F00;
+  --hp-note-yellow-blob: #FFE8A1;
+  --hp-note-blue-bg: #EBF5FF;
+  --hp-note-blue-line: #339AF0;
+  --hp-note-blue-blob: #A5D8FF;
+  --hp-note-green-bg: #EBFBEE;
+  --hp-note-green-line: #51CF66;
+  --hp-note-green-blob: #B2F2BB;
+  --hp-note-purple-bg: #F3F0FF;
+  --hp-note-purple-line: #845EF7;
+  --hp-note-purple-blob: #D0BFFF;
+  --hp-note-pink-bg: #FFF0F6;
+  --hp-note-pink-line: #F06595;
+  --hp-note-pink-blob: #FCC2D7;
 
-  /* ── Neutrals ── */
-  --hp-paper: #F2F3F5;
-  --hp-card: #FFFFFF;
-  --hp-ink: #1A1A2E;
-  --hp-ink-soft: #3D3D50;
-  --hp-ink-mute: #8A8A9A;
-  --hp-ink-fade: #C0B8B2;
-  --hp-line: rgba(0, 0, 0, 0.07);
-  --hp-line-soft: rgba(0, 0, 0, 0.04);
-  --hp-border: #E0E2E6;
+  /* Legacy semantic aliases — mapped onto the new scale */
+  --hp-teal: var(--hp-success);
+  --hp-teal-light: rgba(23, 145, 94, 0.22);
+  --hp-teal-soft: var(--hp-success-soft);
+  --hp-sage-soft: var(--hp-success-soft);
+  --hp-sage-wash: var(--hp-success-wash);
+  --hp-coral-soft: var(--hp-danger-soft);
+  --hp-coral-wash: var(--hp-danger-wash);
+  --hp-lavender-soft: var(--hp-info-soft);
+  --hp-lavender-wash: var(--hp-info-wash);
+  --hp-amber: var(--hp-warning);
+  --hp-amber-soft: var(--hp-warning-soft);
 
-  /* ── Layout ── */
-  --hp-radius: 24px;
-  --hp-radius-sm: 18px;
-  --hp-radius-pill: 100px;
-  --hp-shadow: 0 8px 32px rgba(59, 130, 246, 0.12);
-  --hp-shadow-sm: 0 2px 12px rgba(59, 130, 246, 0.08), 0 1px 3px rgba(0,0,0,0.04);
-  --hp-shadow-orange: 0 8px 28px rgba(59, 130, 246, 0.20);
+  /* ── Surfaces ──
+     Depth is expressed by surface value, never by shadow. */
+  --hp-paper: #F4F5F7;        /* app background */
+  --hp-card: #FFFFFF;         /* raised surface */
+  --hp-card-raised: #FFFFFF;  /* surface on top of a card */
+  --hp-sunken: #ECEEF1;       /* inset wells, tracks, disabled fills */
+  --hp-overlay: rgba(18, 22, 28, 0.42);
+
+  /* ── Text ── */
+  --hp-ink: #12161C;          /* primary — 15.9:1 on card */
+  --hp-ink-soft: #464C57;     /* secondary — 8.7:1 */
+  --hp-ink-mute: #6B7280;     /* tertiary — 4.9:1 */
+  --hp-ink-fade: #9AA1AC;     /* placeholder / disabled — 2.7:1, decorative only */
+
+  /* ── Lines ── */
+  --hp-line: rgba(16, 22, 30, 0.08);
+  --hp-line-soft: rgba(16, 22, 30, 0.045);
+  --hp-line-strong: rgba(16, 22, 30, 0.14);
+  --hp-border: #E3E6EA;
+
+  /* ── Radius ── */
+  --hp-radius-xs: 8px;
+  --hp-radius-sm: 12px;
+  --hp-radius-md: 16px;
+  --hp-radius: 20px;
+  --hp-radius-lg: 26px;
+  --hp-radius-xl: 32px;
+  --hp-radius-pill: 999px;
+
+  /* Height of the sticky app bar (10px padding + 38px control + 10px + rule).
+     Anything that pins below it offsets by this, so the two can't drift. */
+  --hp-appbar-h: 59px;
+
+  /* ── Spacing (4pt rhythm) ── */
+  --hp-space-1: 4px;
+  --hp-space-2: 8px;
+  --hp-space-3: 12px;
+  --hp-space-4: 16px;
+  --hp-space-5: 20px;
+  --hp-space-6: 24px;
+  --hp-space-8: 32px;
+  --hp-space-10: 40px;
+  --hp-space-12: 48px;
+
+  /* ── Elevation ──
+     Deliberately minimal. Level 1 is a hairline, not a glow. */
+  --hp-shadow-none: none;
+  --hp-shadow-sm: 0 1px 2px rgba(16, 22, 30, 0.05);
+  --hp-shadow: 0 2px 8px rgba(16, 22, 30, 0.06);
+  --hp-shadow-md: 0 6px 20px rgba(16, 22, 30, 0.08);
+  --hp-shadow-lg: 0 16px 44px rgba(16, 22, 30, 0.12);
+  /* legacy alias — no longer an orange glow */
+  --hp-shadow-orange: 0 2px 8px rgba(16, 22, 30, 0.06);
+
+  /* ── Motion ── */
+  --hp-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --hp-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --hp-ease-spring: cubic-bezier(0.34, 1.4, 0.5, 1);
+  --hp-dur-fast: 140ms;
+  --hp-dur: 220ms;
+  --hp-dur-slow: 320ms;
+
+  /* ── Focus ── */
+  --hp-focus-ring: 0 0 0 3px rgba(47, 107, 255, 0.35);
 }
 
+/* ═══ DARK ═══
+   Neutral charcoal with a faint cool cast. Not navy, not pure black —
+   it reads as "lights off", and lets the blue accent stay the only
+   saturated thing on screen. */
 .dark {
-  /* ── Primary: Soft Blue (Brighter for dark mode) ── */
-  --hp-primary: #60A5FA;
-  --hp-primary-dark: #3B82F6;
-  --hp-primary-light: #93C5FD;
-  --hp-primary-soft: rgba(96, 165, 250, 0.15);
-  --hp-primary-wash: rgba(96, 165, 250, 0.06);
+  --hp-primary: #6E9BFF;
+  --hp-primary-dark: #4B7EF5;
+  --hp-primary-light: #9CBAFF;
+  --hp-primary-soft: rgba(110, 155, 255, 0.14);
+  --hp-primary-wash: rgba(110, 155, 255, 0.07);
+  --hp-on-primary: #0B0E13;
 
-  /* ── Brand: Navy ── */
-  --hp-blue: #457B9D;
-  --hp-blue-light: #6BA3C0;
-  --hp-blue-soft: rgba(69, 123, 157, 0.12);
-  --hp-blue-wash: rgba(69, 123, 157, 0.05);
+  --hp-blue: #C3CBD8;
+  --hp-blue-light: #8B95A5;
+  --hp-blue-soft: rgba(195, 203, 216, 0.10);
+  --hp-blue-wash: rgba(195, 203, 216, 0.05);
 
-  /* ── Brand: Gold ── */
-  --hp-yellow: #FFD060;
-  --hp-yellow-dark: #FFBE0B;
-  --hp-yellow-light: #FFE090;
-  --hp-yellow-soft: rgba(255, 208, 96, 0.10);
-  --hp-yellow-wash: rgba(255, 208, 96, 0.04);
+  --hp-yellow: #F0BB55;
+  --hp-yellow-dark: #E8A317;
+  --hp-yellow-light: #F7D389;
+  --hp-yellow-soft: rgba(240, 187, 85, 0.14);
+  --hp-yellow-wash: rgba(240, 187, 85, 0.06);
+  --hp-honey: #F0BB55;
+  --hp-honey-soft: rgba(240, 187, 85, 0.08);
+  --hp-gold: #F0BB55;
 
-  /* ── Brand: Teal ── */
-  --hp-teal: #3DD4C6;
-  --hp-teal-light: #80E8DF;
-  --hp-teal-soft: rgba(61, 212, 198, 0.12);
+  --hp-success: #45C48B;
+  --hp-success-soft: rgba(69, 196, 139, 0.14);
+  --hp-success-wash: rgba(69, 196, 139, 0.06);
 
-  /* ── Semantic: Sage ── */
-  --hp-sage-soft: rgba(78, 159, 61, 0.12);
-  --hp-sage-wash: rgba(78, 159, 61, 0.05);
+  --hp-warning: #E8A951;
+  --hp-warning-soft: rgba(232, 169, 81, 0.14);
+  --hp-warning-wash: rgba(232, 169, 81, 0.06);
 
-  /* ── Semantic: Coral ── */
-  --hp-coral-soft: rgba(255, 68, 68, 0.12);
-  --hp-coral-wash: rgba(255, 68, 68, 0.05);
+  --hp-danger: #F0665C;
+  --hp-danger-soft: rgba(240, 102, 92, 0.14);
+  --hp-danger-wash: rgba(240, 102, 92, 0.06);
 
-  /* ── Semantic: Lavender ── */
-  --hp-lavender-soft: rgba(168, 155, 201, 0.12);
-  --hp-lavender-wash: rgba(168, 155, 201, 0.05);
+  --hp-info: #8E93E8;
+  --hp-info-soft: rgba(142, 147, 232, 0.14);
+  --hp-info-wash: rgba(142, 147, 232, 0.06);
 
-  /* ── Amber ── */
-  --hp-amber: #ffb74d;
-  --hp-amber-soft: rgba(255, 183, 77, 0.06);
+  /* Categorical, lifted for dark surfaces — same hue order, higher lightness
+     so each series still clears contrast against #171B22. */
+  --hp-cat-1: #6E9BFF;
+  --hp-cat-2: #45C48B;
+  --hp-cat-3: #E0A250;
+  --hp-cat-4: #A98BEA;
+  --hp-cat-5: #EE7C93;
+  --hp-cat-6: #4FBECE;
+  --hp-cat-7: #D08B54;
+  --hp-cat-8: #94A6C4;
 
-  /* ── Gold / Honey ── */
-  --hp-honey: #FFD060;
-  --hp-honey-soft: rgba(255, 208, 96, 0.05);
-  --hp-gold: #FFD060;
+  /* Notes in dark: the hue survives, the value inverts. Backgrounds sit just
+     above the card surface; the rule and blob carry the identity. */
+  --hp-note-yellow-bg: #2B2618;
+  --hp-note-yellow-line: #D9A21B;
+  --hp-note-yellow-blob: #4A3F1F;
+  --hp-note-blue-bg: #17242F;
+  --hp-note-blue-line: #4DA3E8;
+  --hp-note-blue-blob: #1F3B52;
+  --hp-note-green-bg: #17281D;
+  --hp-note-green-line: #5CC46F;
+  --hp-note-green-blob: #1F4029;
+  --hp-note-purple-bg: #21203A;
+  --hp-note-purple-line: #9277E8;
+  --hp-note-purple-blob: #322F5C;
+  --hp-note-pink-bg: #2E1B26;
+  --hp-note-pink-line: #E8759F;
+  --hp-note-pink-blob: #4A2839;
 
-  /* ── Neutrals (Deep Navy dark, elegant shading) ── */
-  --hp-paper: #0B1329;
-  --hp-card: rgba(15, 23, 42, 0.7);
-  --hp-ink: #F8FAFC;
-  --hp-ink-soft: #CBD5E1;
-  --hp-ink-mute: #64748B;
-  --hp-ink-fade: #475569;
-  --hp-line: rgba(96, 165, 250, 0.15);
-  --hp-line-soft: rgba(96, 165, 250, 0.06);
-  --hp-border: rgba(255, 255, 255, 0.08);
+  --hp-teal: var(--hp-success);
+  --hp-teal-light: rgba(69, 196, 139, 0.28);
+  --hp-teal-soft: var(--hp-success-soft);
+  --hp-sage-soft: var(--hp-success-soft);
+  --hp-sage-wash: var(--hp-success-wash);
+  --hp-coral-soft: var(--hp-danger-soft);
+  --hp-coral-wash: var(--hp-danger-wash);
+  --hp-lavender-soft: var(--hp-info-soft);
+  --hp-lavender-wash: var(--hp-info-wash);
+  --hp-amber: var(--hp-warning);
+  --hp-amber-soft: var(--hp-warning-soft);
 
-  /* ── Layout overrides ── */
-  --hp-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
-  --hp-shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.25);
-  --hp-shadow-orange: 0 8px 28px rgba(96, 165, 250, 0.15);
+  /* Surfaces step up in value as they step up in elevation */
+  --hp-paper: #0E1116;
+  --hp-card: #171B22;
+  --hp-card-raised: #1F242C;
+  --hp-sunken: #10141A;
+  --hp-overlay: rgba(0, 0, 0, 0.62);
+
+  --hp-ink: #F2F4F7;          /* 15.2:1 on card */
+  --hp-ink-soft: #BBC2CD;     /* 8.9:1 */
+  --hp-ink-mute: #8A929F;     /* 5.0:1 */
+  --hp-ink-fade: #616A78;     /* 2.9:1 — decorative only */
+
+  --hp-line: rgba(255, 255, 255, 0.09);
+  --hp-line-soft: rgba(255, 255, 255, 0.05);
+  --hp-line-strong: rgba(255, 255, 255, 0.16);
+  --hp-border: #2A3039;
+
+  --hp-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --hp-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  --hp-shadow-md: 0 6px 20px rgba(0, 0, 0, 0.5);
+  --hp-shadow-lg: 0 16px 44px rgba(0, 0, 0, 0.6);
+  --hp-shadow-orange: 0 2px 8px rgba(0, 0, 0, 0.45);
+
+  --hp-focus-ring: 0 0 0 3px rgba(110, 155, 255, 0.45);
 }
 
-/* ── Dynamic Font Tokens ── */
+/* ═══ TYPOGRAPHY TOKENS ═══ */
 :root {
-  --hp-font: var(--font-nunito), sans-serif;
-  --hp-font-display: var(--font-nunito), sans-serif;
+  --hp-font: var(--font-manrope), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --hp-font-display: var(--font-manrope), system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
-html[data-font="nunito"] {
-  --hp-font: var(--font-nunito), sans-serif;
-  --hp-font-display: var(--font-nunito), sans-serif;
-}
+html[data-font="manrope"] { --hp-font: var(--font-manrope), system-ui, sans-serif; --hp-font-display: var(--font-manrope), system-ui, sans-serif; }
+html[data-font="inter"]   { --hp-font: var(--font-inter), system-ui, sans-serif;   --hp-font-display: var(--font-inter), system-ui, sans-serif; }
+html[data-font="nunito"]  { --hp-font: var(--font-nunito), system-ui, sans-serif;  --hp-font-display: var(--font-nunito), system-ui, sans-serif; }
+html[data-font="poppins"] { --hp-font: var(--font-poppins), system-ui, sans-serif; --hp-font-display: var(--font-poppins), system-ui, sans-serif; }
+html[data-font="baloo2"]  { --hp-font: var(--font-baloo2), system-ui, sans-serif;  --hp-font-display: var(--font-baloo2), system-ui, sans-serif; }
+html[data-font="fredoka"] { --hp-font: var(--font-fredoka), system-ui, sans-serif; --hp-font-display: var(--font-fredoka), system-ui, sans-serif; }
 
-html[data-font="manrope"] {
-  --hp-font: var(--font-manrope), sans-serif;
-  --hp-font-display: var(--font-manrope), sans-serif;
-}
-
-html[data-font="inter"] {
-  --hp-font: var(--font-inter), sans-serif;
-  --hp-font-display: var(--font-inter), sans-serif;
-}
-
-html[data-font="feather"] {
-  --hp-font: 'Feather', var(--font-nunito), sans-serif;
-  --hp-font-display: 'Feather', var(--font-nunito), sans-serif;
-}
-
-html[data-font="baloo2"] {
-  --hp-font: var(--font-baloo2), sans-serif;
-  --hp-font-display: var(--font-baloo2), sans-serif;
-}
-
-html[data-font="fredoka"] {
-  --hp-font: var(--font-fredoka), sans-serif;
-  --hp-font-display: var(--font-fredoka), sans-serif;
-}
-
-html[data-font="poppins"] {
-  --hp-font: var(--font-poppins), sans-serif;
-  --hp-font-display: var(--font-poppins), sans-serif;
-}
-
+/* ═══ RESET ═══ */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
-  font-family: var(--hp-font), var(--hp-font-display), sans-serif !important;
-  font-weight: 800 !important;
 }
 
 html, body {
   background: var(--hp-paper);
-  background-attachment: fixed;
   min-height: 100vh;
   color: var(--hp-ink);
   overflow-x: hidden;
   position: relative;
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  font-family: var(--hp-font);
+  font-weight: 450;
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-synthesis-weight: none;
 }
 
-/* Background ambient gradients for Dark Mode */
-.dark html, .dark body {
-  background: 
-    rgba(59,130,246,0.05 0%, transparent 40%),
-    rgba(29,53,87,0.08 0%, transparent 40%),
-    #0F1F33;
-  background-attachment: fixed;
-}
-
-body {
-  padding: 0;
-}
-
+/* Type hierarchy: size AND weight both carry meaning.
+   Larger text gets tighter tracking and lighter relative weight. */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--hp-font-display);
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  color: var(--hp-ink);
+  text-wrap: balance;
 }
+h1 { font-size: clamp(28px, 6.5vw, 34px); font-weight: 700; line-height: 1.18; letter-spacing: -0.028em; }
+h2 { font-size: clamp(22px, 5vw, 26px);   font-weight: 700; line-height: 1.24; letter-spacing: -0.022em; }
+h3 { font-size: clamp(18px, 4vw, 20px);   font-weight: 650; line-height: 1.3;  letter-spacing: -0.016em; }
+h4 { font-size: 17px;                      font-weight: 650; line-height: 1.35; letter-spacing: -0.012em; }
+h5 { font-size: 15px;                      font-weight: 600; line-height: 1.4;  letter-spacing: -0.008em; }
+h6 { font-size: 13px;                      font-weight: 600; line-height: 1.4;  letter-spacing: 0; }
 
-button {
-  font-family: inherit;
-  cursor: pointer;
-}
+p { text-wrap: pretty; }
 
-input, button, select, textarea { font-family: inherit; }
+button, input, select, textarea { font-family: inherit; font-size: inherit; color: inherit; }
+button { cursor: pointer; background: none; border: none; }
+button:disabled { cursor: not-allowed; }
 input::placeholder, textarea::placeholder { color: var(--hp-ink-fade); }
 
+a { color: var(--hp-primary); text-decoration: none; }
 
-/* ═══ GERCEP ANIMATIONS ═══ */
-@keyframes hpFadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes hpSlideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-@keyframes hpRise { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-@keyframes hpSparkle { 0%, 100% { opacity: 0; transform: scale(0.6) rotate(0); } 50% { opacity: 1; transform: scale(1) rotate(180deg); } }
-@keyframes hpFloatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 80% { opacity: 1; transform: translateY(-28px) scale(1.05); } 100% { opacity: 0; transform: translateY(-40px) scale(0.9); } }
-
-/* Gercep-specific animations */
-@keyframes hpFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-@keyframes hpBounce { 0%, 100% { transform: translateY(0) scale(1); } 40% { transform: translateY(-14px) scale(1.05); } 70% { transform: translateY(-4px) scale(0.98); } }
-@keyframes hpPopIn { 0% { transform: scale(0) rotate(-10deg); opacity: 0; } 60% { transform: scale(1.15) rotate(3deg); } 100% { transform: scale(1) rotate(0); opacity: 1; } }
-@keyframes hpFadeUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes hpConfetti { 0% { transform: translateY(-20px) rotate(0deg); opacity: 1; } 100% { transform: translateY(115vh) rotate(580deg); opacity: 0; } }
-@keyframes hpGlowPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(59,130,246,0.4); } 50% { box-shadow: 0 0 0 16px rgba(59,130,246,0); } }
-@keyframes hpRipple { 0% { transform: scale(0); opacity: 0.7; } 100% { transform: scale(4.5); opacity: 0; } }
-@keyframes hpStreakIn { 0% { transform: scale(0.3) translateY(30px); opacity: 0; } 60% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
-@keyframes hpHeartbeat { 0%, 100% { transform: scale(1); } 20% { transform: scale(1.2); } 40% { transform: scale(1); } }
-@keyframes hpCheckIn { 0% { transform: scale(0); opacity: 0; } 50% { transform: scale(1.2); } 100% { transform: scale(1); opacity: 1; } }
-@keyframes hpPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.08); opacity: 0.85; } }
-@keyframes hpShimmer { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
-@keyframes hpXpFloat { 0% { transform: translateY(0) scale(0.8); opacity: 0; } 20% { opacity: 1; transform: translateY(-10px) scale(1); } 80% { opacity: 1; transform: translateY(-60px) scale(1); } 100% { opacity: 0; transform: translateY(-90px) scale(0.9); } }
-@keyframes hpSplashBar { from { width: 0; } to { width: 100%; } }
-@keyframes hpScreenSlideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-@keyframes hpScreenSlideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(-100%); opacity: 0; } }
-
-
-/* ═══ UTILITIES ═══ */
-.hp-stagger > * { animation: hpFadeUp 420ms cubic-bezier(.2,.8,.2,1) backwards; }
-.hp-stagger > *:nth-child(1) { animation-delay: 60ms; }
-.hp-stagger > *:nth-child(2) { animation-delay: 140ms; }
-.hp-stagger > *:nth-child(3) { animation-delay: 220ms; }
-.hp-stagger > *:nth-child(4) { animation-delay: 300ms; }
-.hp-stagger > *:nth-child(5) { animation-delay: 380ms; }
-.hp-stagger > *:nth-child(6) { animation-delay: 460ms; }
-
-.hp-tap { transition: transform 180ms cubic-bezier(.2,.8,.2,1); }
-.hp-tap:active { transform: scale(0.96); }
-
-.hp-float { animation: hpFloat 2.8s ease-in-out infinite; }
-.hp-bounce { animation: hpBounce 1.9s ease-in-out infinite; }
-.hp-glow { animation: hpGlowPulse 2s ease infinite; }
-
-
-/* ═══ DARK MODE PREMIUM EFFECTS ═══ */
-.dark .hp-app-nav {
-  backdrop-filter: blur(20px) saturate(1.3);
-  -webkit-backdrop-filter: blur(20px) saturate(1.3);
-  border-color: rgba(59,130,246,0.12);
-  background: rgba(15,31,51,0.85);
-  box-shadow: 0 -4px 30px rgba(0,0,0,0.4);
+/* ═══ FOCUS ═══
+   Never remove focus visibility. Pointer users don't see it; keyboard users need it. */
+:focus { outline: none; }
+:focus-visible {
+  outline: none;
+  box-shadow: var(--hp-focus-ring);
+  border-radius: var(--hp-radius-xs);
 }
 
-.dark .hp-nav-btn:hover {
-  background: rgba(59,130,246,0.08);
+::selection { background: var(--hp-primary-soft); color: var(--hp-ink); }
+
+/* Visually hidden, still announced. Use to name an icon or a bare number that
+   reads fine sighted but says nothing to a screen reader. */
+.hp-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-.dark .hp-modal-overlay {
-  background: rgba(10,15,25,0.75);
-  backdrop-filter: blur(12px);
-}
+/* ═══ MOTION ═══ */
+@keyframes hpFadeIn   { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hpFadeUp   { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes hpRise     { from { opacity: 0; transform: translateY(12px) scale(0.985); } to { opacity: 1; transform: none; } }
+@keyframes hpSlideUp  { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes hpPopIn    { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+@keyframes hpShimmer  { from { background-position: -200% 0; } to { background-position: 200% 0; } }
+@keyframes hpSpin     { to { transform: rotate(360deg); } }
+@keyframes hpPulse    { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+@keyframes hpFloat    { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes hpBounce   { 0%, 100% { transform: translateY(0); } 45% { transform: translateY(-8px); } }
+@keyframes hpCheckIn  { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: scale(1); } }
+@keyframes hpXpFloat  { 0% { opacity: 0; transform: translateY(0) scale(0.9); } 25% { opacity: 1; transform: translateY(-12px) scale(1); } 100% { opacity: 0; transform: translateY(-56px) scale(0.95); } }
+@keyframes hpFloatUp  { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-32px); } }
+@keyframes hpConfetti { 0% { opacity: 1; transform: translateY(-10px) rotate(0); } 100% { opacity: 0; transform: translateY(105vh) rotate(520deg); } }
+@keyframes hpSparkle  { 0%, 100% { opacity: 0; transform: scale(0.7); } 50% { opacity: 1; transform: scale(1); } }
+@keyframes hpStreakIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+@keyframes hpHeartbeat{ 0%, 100% { transform: scale(1); } 25% { transform: scale(1.12); } 50% { transform: scale(1); } }
+@keyframes hpGlowPulse{ 0%, 100% { box-shadow: 0 0 0 0 var(--hp-primary-soft); } 50% { box-shadow: 0 0 0 10px transparent; } }
+@keyframes hpRipple   { from { transform: scale(0); opacity: 0.4; } to { transform: scale(3.6); opacity: 0; } }
+@keyframes hpSplashBar{ from { width: 0; } to { width: 100%; } }
+@keyframes hpScreenSlideIn  { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: none; } }
+@keyframes hpScreenSlideOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(-12px); } }
 
-.dark .hp-modal-content {
-  background: rgba(15,31,51,0.9);
-  backdrop-filter: blur(32px) saturate(1.4);
-  -webkit-backdrop-filter: blur(32px) saturate(1.4);
-  border: 1px solid rgba(59,130,246,0.15);
-  box-shadow: 0 -10px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04);
-}
+/* Staggered entrance — short, small displacement, quick total reveal */
+.hp-stagger > * { animation: hpFadeUp var(--hp-dur-slow) var(--hp-ease-out) backwards; }
+.hp-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.hp-stagger > *:nth-child(2) { animation-delay: 40ms; }
+.hp-stagger > *:nth-child(3) { animation-delay: 80ms; }
+.hp-stagger > *:nth-child(4) { animation-delay: 120ms; }
+.hp-stagger > *:nth-child(5) { animation-delay: 160ms; }
+.hp-stagger > *:nth-child(6) { animation-delay: 200ms; }
+.hp-stagger > *:nth-child(n+7) { animation-delay: 240ms; }
 
-/* Smooth transitions on interactive elements */
-button, input, textarea, select, a, [role="button"] {
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
-}
+/* Press feedback. Scale only — never touches layout bounds. */
+.hp-tap { transition: transform var(--hp-dur-fast) var(--hp-ease), background-color var(--hp-dur-fast) var(--hp-ease); }
+.hp-tap:active { transform: scale(0.975); }
 
-div, section, article, aside, nav, header, footer, main {
-  transition: background-color 0.3s ease, border-color 0.3s ease;
-}
+.hp-float  { animation: hpFloat 3.2s ease-in-out infinite; }
+.hp-bounce { animation: hpBounce 2.2s ease-in-out infinite; }
+.hp-glow   { animation: hpGlowPulse 2.4s var(--hp-ease) infinite; }
 
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .hp-tap:active { transform: none; }
+}
 
 /* ═══ LAYOUT ═══ */
-.hp-shell {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-  margin: 0;
-}
+.hp-shell { position: relative; width: 100%; min-height: 100dvh; }
 
-/* Scrollbar Hide */
-::-webkit-scrollbar { width: 0; height: 0; }
-
-/* PWA Install Button */
-.hp-install-btn {
-  position: fixed;
-  right: 16px;
-  bottom: 100px;
-  background: var(--hp-ink);
-  color: var(--hp-primary);
-  padding: 8px 16px;
-  border-radius: var(--hp-radius-pill);
-  border: none;
-  font-weight: 800;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: var(--hp-shadow-orange);
-  z-index: 90;
-  animation: hpFadeUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
-  transition: transform 0.2s ease, background 0.2s ease;
-}
-
-@media (min-width: 768px) {
-  .hp-install-btn {
-    right: 24px;
-    bottom: 24px;
-  }
-}
-
-@media (hover: hover) {
-  .hp-install-btn:hover {
-    background: #0F1F33;
-  }
-}
-
-/* AuthScreen Mobile Responsive */
-@media (max-width: 768px) {
-  .hp-mobile-hidden {
-    display: none !important;
-  }
-  .hp-auth-hero { display: none !important; }
-  .hp-auth-wrapper { flex-direction: column !important; }
-  .hp-auth-wrapper ~ .hp-install-btn { display: none !important; }
-}
-
-
-/* ═══ APP CONTAINER ═══ */
 .hp-app-container {
   display: flex;
   flex-direction: column-reverse;
   height: 100dvh;
-  width: 100vw;
+  width: 100%;
   overflow: hidden;
-  background: transparent;
-}
-
-/* Responsive Profile Layout */
-.hp-profile-name-group {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-}
-@media (max-width: 600px) {
-  .hp-profile-name-group {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
-}
-
-.hp-btn-mobile-full {
-  white-space: nowrap;
-}
-@media (max-width: 500px) {
-  .hp-btn-mobile-full {
-    width: 100%;
-    text-align: center;
-  }
-}
-
-.hp-priority-actions {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  flex-shrink: 0;
-}
-@media (max-width: 500px) {
-  .hp-priority-actions {
-    width: 100%;
-    margin-top: 8px;
-  }
-}
-
-.hp-form-row {
-  display: flex;
-  gap: 12px;
-  align-items: flex-end;
-}
-@media (max-width: 500px) {
-  .hp-form-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
-
-/* ═══ BOTTOM TAB BAR (Responsive Mobile & Desktop) ═══ */
-.hp-app-nav {
-  flex-shrink: 0;
-  height: 64px;
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid var(--hp-border, #E2E8F0);
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-around;
-  padding: 4px 6px max(6px, env(safe-area-inset-bottom));
-  z-index: 90;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
-}
-
-.hp-nav-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  background: transparent;
-  border: 1px solid transparent;
-  cursor: pointer;
-  padding: 6px 4px;
-  border-radius: 12px;
-  transition: all 0.18s ease;
-  flex: 1;
-  min-width: 0;
-  position: relative;
-  text-decoration: none;
-}
-
-.hp-nav-btn.active {
-  background: #EFF6FF;
-  border-color: #BFDBFE;
-  color: #2563EB;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.12);
-}
-
-.hp-nav-btn-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  transition: transform 0.2s ease;
-}
-
-.hp-nav-btn.active .hp-nav-btn-icon {
-  transform: scale(1.1);
-}
-
-.hp-nav-btn-text {
-  font-family: var(--hp-font);
-  font-weight: 800;
-  font-size: 10px;
-  line-height: 1.1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: center;
-}
-
-.hp-nav-subtext {
-  display: none;
-}
-
-.hp-nav-brand {
-  display: none;
+  background: var(--hp-paper);
 }
 
 .hp-app-content {
@@ -495,397 +425,485 @@ div, section, article, aside, nav, header, footer, main {
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
   display: flex;
   flex-direction: column;
 }
 
+/* Content insets keep scroll content clear of the fixed bottom bar
+   and the device gesture area. */
 .hp-screen-container {
   width: 100%;
   max-width: 100%;
   margin: 0 auto;
-  padding: 56px 16px 80px;
-  box-sizing: border-box;
+  padding: 24px 20px calc(112px + env(safe-area-inset-bottom));
 }
 
-/* ═══ DESKTOP OVERRIDES (>=768px) ═══ */
-@media (min-width: 768px) {
-  .hp-desktop-hidden {
-    display: none !important;
-  }
-  
-  .hp-mobile-hidden {
-    display: flex !important;
+/* ═══ DASHBOARD GRID ═══
+   One column by default — phones, and narrow desktop windows, get the plain
+   priority order. The rail only appears once there is genuinely room for a
+   second column beside a readable main measure. */
+.hp-page-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .hp-page-grid {
+    /* 340px is wide enough for a stat pair or a labelled list row, and narrow
+       enough that main keeps a comfortable measure. */
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 24px;
+    align-items: start;
   }
 
-  .hp-app-container {
-    flex-direction: row;
+  /* The rail is reference material — it parks while the main column scrolls.
+
+     It pins *below* the sticky app bar, not behind it. The old `top: 24px` was
+     measured from the top of the scroll container, which put the rail's first
+     30-odd pixels underneath the translucent bar — so scrolling the main column
+     visibly dragged the rail up under the bar and the rail's own bottom was cut
+     off past the viewport. Both offsets now derive from --hp-appbar-h. */
+  .hp-page-grid > aside {
+    position: sticky;
+    top: calc(var(--hp-appbar-h) + 16px);
+    max-height: calc(100dvh - var(--hp-appbar-h) - 32px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
   }
-  
+  .hp-page-grid > aside::-webkit-scrollbar { display: none; }
+}
+
+/* Reduced motion users often also want less movement from sticky elements. */
+@media (prefers-reduced-motion: reduce) {
+  .hp-page-grid > aside { position: static; max-height: none; }
+}
+
+/* Thin, unobtrusive scrollbars — visible enough to signal overflow */
+* { scrollbar-width: thin; scrollbar-color: var(--hp-line-strong) transparent; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--hp-line-strong); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--hp-ink-fade); }
+.hp-scroll-hidden { scrollbar-width: none; }
+.hp-scroll-hidden::-webkit-scrollbar { display: none; }
+
+/* ═══ BOTTOM TAB BAR (mobile) ═══ */
+.hp-app-nav {
+  flex-shrink: 0;
+  background: var(--hp-card);
+  border-top: 1px solid var(--hp-line);
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: stretch;
+  gap: 2px;
+  padding: 6px 8px max(8px, env(safe-area-inset-bottom));
+  z-index: 50;
+}
+
+.hp-nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  /* 44pt minimum touch target */
+  min-height: 48px;
+  padding: 6px 4px;
+  border-radius: var(--hp-radius-sm);
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  color: var(--hp-ink-mute);
+  transition: color var(--hp-dur-fast) var(--hp-ease), background-color var(--hp-dur-fast) var(--hp-ease);
+}
+
+.hp-nav-btn.active { color: var(--hp-primary); }
+.hp-nav-btn:active { background: var(--hp-line-soft); }
+
+@media (hover: hover) {
+  .hp-nav-btn:hover { color: var(--hp-ink-soft); background: var(--hp-line-soft); }
+  .hp-nav-btn.active:hover { color: var(--hp-primary); }
+}
+
+.hp-nav-btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--hp-dur) var(--hp-ease-spring);
+}
+.hp-nav-btn.active .hp-nav-btn-icon { transform: translateY(-1px); }
+
+.hp-nav-btn-text {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: 1;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hp-nav-btn.active .hp-nav-btn-text { font-weight: 700; }
+
+.hp-nav-btn-sub { display: none; }
+.hp-nav-brand { display: none; }
+
+/* The bottom bar has ~50px per item, so it uses a shortened label.
+   The sidebar has room for the full one. */
+.hp-nav-label-full { display: none; }
+.hp-nav-label-short { display: block; }
+
+/* ═══ DESKTOP ═══ */
+@media (min-width: 768px) {
+  .hp-desktop-hidden { display: none !important; }
+  .hp-mobile-hidden { display: flex !important; }
+
+  .hp-app-container { flex-direction: row; }
+
   .hp-app-nav {
     flex-direction: column;
     justify-content: flex-start;
-    width: 260px;
-    height: 100vh;
-    position: sticky;
-    top: 0;
+    align-items: stretch;
+    width: 272px;
+    flex-shrink: 0;
     border-top: none;
-    border-right: 1px solid var(--hp-border, #E2E8F0);
-    padding: 24px 16px;
-    gap: 6px;
-    background: var(--hp-paper, #F8FAFC);
-    box-shadow: none;
-    backdrop-filter: none;
+    border-right: 1px solid var(--hp-line);
+    background: var(--hp-card);
+    padding: 20px 12px 16px;
+    gap: 2px;
+    height: 100dvh;
     overflow-y: auto;
   }
-  
+
   .hp-nav-btn {
     flex-direction: row;
-    flex: 0 0 auto;
     justify-content: flex-start;
-    width: 100%;
-    padding: 10px 14px;
-    gap: 12px;
-    border-radius: 14px;
-    text-align: left;
-    border: 1px solid transparent;
-  }
-
-  .hp-nav-btn.active {
-    background: #2563EB;
-    border-color: #2563EB;
-    color: #FFFFFF;
-    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
-  }
-
-  .hp-nav-btn-icon {
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-  }
-
-  .hp-nav-btn-text {
-    font-size: 14px;
+    align-items: center;
+    flex: 0 0 auto;
+    gap: 14px;
+    min-height: 46px;
+    padding: 9px 12px;
+    border-radius: var(--hp-radius-sm);
     text-align: left;
   }
 
-  .hp-nav-subtext {
+  .hp-nav-btn.active { background: var(--hp-primary-soft); }
+  .hp-nav-btn.active .hp-nav-btn-icon { transform: none; }
+
+  .hp-nav-btn-text { font-size: 14.5px; font-weight: 600; }
+  .hp-nav-btn.active .hp-nav-btn-text { font-weight: 700; }
+
+  .hp-nav-label-full { display: block; }
+  .hp-nav-label-short { display: none; }
+
+  .hp-nav-btn-sub {
     display: block;
-    font-family: var(--hp-font);
-    font-size: 11px;
-    font-weight: 600;
-    line-height: 1.2;
-    white-space: nowrap;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--hp-ink-mute);
+    line-height: 1.3;
+    margin-top: 1px;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
   }
+  .hp-nav-btn.active .hp-nav-btn-sub { color: var(--hp-primary); opacity: 0.8; }
 
   .hp-nav-brand {
     display: flex !important;
     align-items: center;
-    gap: 12px;
-    padding: 0 8px 12px;
-    margin-bottom: 8px;
+    gap: 10px;
+    padding: 6px 10px 20px;
   }
 
-  .hp-screen-container {
-    padding: 24px 32px 48px;
-    max-width: 1360px;
-    margin: 0 auto;
-  }
+  /* Wider gutters and a readable measure on large screens */
+  .hp-screen-container { padding: 32px 32px 48px; max-width: 1100px; }
 }
 
-/* ═══ 12-COLUMN BENTO GRID SYSTEM (Samsung Health / OneUI Style) ═══ */
-.hp-bento-grid {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 16px;
-  margin-top: 12px;
-  width: 100%;
-  box-sizing: border-box;
-  align-items: stretch;
+@media (min-width: 1280px) {
+  .hp-screen-container { padding: 40px 48px 56px; }
 }
 
-.hp-bento-col-12 { grid-column: span 12; }
-.hp-bento-col-6  { grid-column: span 12; }
-.hp-bento-col-4  { grid-column: span 12; }
-
-@media (min-width: 768px) {
-  .hp-bento-grid {
-    gap: 16px;
-  }
-  .hp-bento-col-6 { grid-column: span 6; }
-  .hp-bento-col-4 { grid-column: span 4; }
-}
-
-.hp-bento-card {
-  position: relative;
-  background: var(--hp-card, #FFFFFF);
-  border: 1px solid var(--hp-border, #E2E8F0);
-  border-radius: 20px;
-  padding: 18px 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  gap: 14px;
-  overflow: hidden;
-  box-sizing: border-box;
-  height: 100%;
-}
-
-.hp-bento-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-}
-
-.hp-bento-anchor-3d {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-/* ═══ MODAL / SHEET (Gercep Style) ═══ */
+/* ═══ MODAL / SHEET ═══ */
 .hp-modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(26,26,46,0.45);
-  backdrop-filter: blur(4px);
+  background: var(--hp-overlay);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  animation: hpFadeIn 250ms ease;
+  animation: hpFadeIn var(--hp-dur) var(--hp-ease);
 }
 
 .hp-modal-content {
   width: 100%;
-  max-height: 90dvh;
-  border-top-left-radius: 28px;
-  border-top-right-radius: 28px;
-  box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
+  max-height: 92dvh;
+  background: var(--hp-card);
+  border-top-left-radius: var(--hp-radius-xl);
+  border-top-right-radius: var(--hp-radius-xl);
+  box-shadow: var(--hp-shadow-lg);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: hpSlideUp 400ms cubic-bezier(.32,.82,.26,1);
+  padding-bottom: env(safe-area-inset-bottom);
+  animation: hpSlideUp var(--hp-dur-slow) var(--hp-ease-out);
+}
+
+.hp-modal-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--hp-line-strong);
+  margin: 10px auto 2px;
+  flex-shrink: 0;
 }
 
 @media (min-width: 768px) {
-  .hp-modal-overlay {
-    align-items: center;
-  }
-
+  .hp-modal-overlay { align-items: center; padding: 24px; }
   .hp-modal-content {
-    width: 90%;
-    max-width: 480px;
-    border-radius: var(--hp-radius);
-    max-height: 85vh;
-    animation: hpRise 350ms cubic-bezier(.2,.8,.2,1);
+    width: 100%;
+    max-width: 520px;
+    border-radius: var(--hp-radius-lg);
+    max-height: 86dvh;
+    padding-bottom: 0;
+    animation: hpRise var(--hp-dur-slow) var(--hp-ease-out);
   }
-  
-  .hp-modal-handle {
-    display: none !important;
-  }
-
-  .hp-mobile-only {
-    display: none !important;
-  }
+  .hp-modal-handle { display: none !important; }
+  .hp-mobile-only { display: none !important; }
 }
 
-
-/* ═══ DARK MODE SAFETY NET OVERRIDES ═══ */
-.dark input:not([type="checkbox"]):not([type="radio"]), 
-.dark textarea, 
-.dark select {
-  background-color: var(--hp-card) !important;
-  color: var(--hp-ink) !important;
-  border-color: var(--hp-line) !important;
+@media (max-width: 767px) {
+  .hp-mobile-hidden { display: none !important; }
+  .hp-auth-hero { display: none !important; }
+  .hp-auth-wrapper { flex-direction: column !important; }
 }
 
-.dark input::placeholder,
-.dark textarea::placeholder {
-  color: var(--hp-ink-mute) !important;
-}
+/* ═══ COMPONENT CLASSES ═══ */
 
-/* Override hardcoded white inline-style backgrounds in dark mode */
-.dark [style*="background"][style*="#fff"],
-.dark [style*="background"][style*="#ffffff"],
-.dark [style*="background"][style*="white"],
-.dark [style*="background"][style*="rgb(255, 255, 255)"],
-.dark [style*="background"][style*="255,255,255"],
-.dark [style*="background"][style*="#fafafa"],
-.dark [style*="background"][style*="#FBF7F4"],
-.dark [style*="background"][style*="#FFFFFF"] {
-  background-image: none !important;
-  background-color: var(--hp-card) !important;
-  background: var(--hp-card) !important;
-}
-
-/* Override hardcoded dark text color in dark mode */
-.dark [style*="color: #1A1A2E"],
-.dark [style*="color:#1A1A2E"],
-.dark [style*="color: #1F1D1B"],
-.dark [style*="color:#1F1D1B"],
-.dark [style*="color: #524E49"],
-.dark [style*="color:#524E49"],
-.dark [style*="color: #3a3f4a"],
-.dark [style*="color:#3a3f4a"],
-.dark [style*="color: #0b0f19"],
-.dark [style*="color:#0b0f19"] {
-  color: var(--hp-ink) !important;
-}
-
-/* Card and Glassmorphism styling overrides */
-.dark .hp-card,
-.dark [class*="card"] {
-  background-color: var(--hp-card) !important;
-  backdrop-filter: blur(12px) saturate(1.2);
-  -webkit-backdrop-filter: blur(12px) saturate(1.2);
-}
-
-/* Active states and border glow in dark mode */
-.dark .hp-tap:hover,
-.dark button:hover,
-.dark .hp-nav-btn:hover {
-  border-color: rgba(59,130,246,0.3) !important;
-  box-shadow: 0 0 12px rgba(59,130,246,0.1) !important;
-}
-
-
-/* ═══ GERCEP COMPONENT CLASSES ═══ */
-
-/* Primary Button (Pill, Orange) */
 .hp-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 13px 28px;
   background: var(--hp-primary);
-  color: #fff;
-  border: none;
+  color: var(--hp-on-primary);
   border-radius: var(--hp-radius-pill);
-  padding: 17px 48px;
-  font-size: 16px;
-  font-weight: 800;
-  letter-spacing: 0.3px;
-  box-shadow: var(--hp-shadow-orange);
-  transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
   white-space: nowrap;
-  cursor: pointer;
+  transition: background-color var(--hp-dur-fast) var(--hp-ease), transform var(--hp-dur-fast) var(--hp-ease);
 }
-.hp-btn-primary:active { transform: scale(0.95); box-shadow: 0 3px 12px rgba(59,130,246,0.3); }
-.hp-btn-primary:disabled { background: var(--hp-border); color: var(--hp-ink-fade); box-shadow: none; cursor: not-allowed; transform: none; }
+@media (hover: hover) { .hp-btn-primary:hover { background: var(--hp-primary-dark); } }
+.hp-btn-primary:active { transform: scale(0.975); }
+.hp-btn-primary:disabled { background: var(--hp-sunken); color: var(--hp-ink-fade); transform: none; }
 
-/* Choice Card (Selection) */
+.hp-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 13px 24px;
+  background: var(--hp-card);
+  color: var(--hp-ink);
+  border: 1px solid var(--hp-border);
+  border-radius: var(--hp-radius-pill);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  transition: background-color var(--hp-dur-fast) var(--hp-ease), transform var(--hp-dur-fast) var(--hp-ease);
+}
+@media (hover: hover) { .hp-btn-secondary:hover { background: var(--hp-line-soft); } }
+.hp-btn-secondary:active { transform: scale(0.975); }
+.hp-btn-secondary:disabled { color: var(--hp-ink-fade); transform: none; }
+
+.hp-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 10px 16px;
+  color: var(--hp-ink-soft);
+  border-radius: var(--hp-radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color var(--hp-dur-fast) var(--hp-ease);
+}
+@media (hover: hover) { .hp-btn-ghost:hover { background: var(--hp-line-soft); color: var(--hp-ink); } }
+
 .hp-choice {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 16px 20px;
-  border-radius: var(--hp-radius-sm);
-  border: 2.5px solid var(--hp-border);
-  background: var(--hp-card);
   width: 100%;
+  padding: 16px 18px;
+  border-radius: var(--hp-radius-md);
+  border: 1px solid var(--hp-border);
+  background: var(--hp-card);
+  color: var(--hp-ink);
   text-align: left;
-  transition: border-color 0.2s, background 0.2s, transform 0.15s;
-  position: relative;
-  overflow: hidden;
-  cursor: pointer;
+  font-weight: 550;
+  transition: border-color var(--hp-dur-fast) var(--hp-ease), background-color var(--hp-dur-fast) var(--hp-ease), transform var(--hp-dur-fast) var(--hp-ease);
 }
-.hp-choice:active { transform: scale(0.98); }
-.hp-choice.on { border-color: var(--hp-primary); background: var(--hp-primary-soft); }
+.hp-choice:active { transform: scale(0.99); }
+.hp-choice.on { border-color: var(--hp-primary); background: var(--hp-primary-soft); font-weight: 650; }
 
-/* Progress Track */
 .hp-prog-track {
   height: 6px;
-  background: var(--hp-border);
-  border-radius: var(--hp-radius-pill);
+  background: var(--hp-sunken);
+  border-radius: 999px;
   overflow: hidden;
 }
 .hp-prog-fill {
   height: 100%;
   background: var(--hp-primary);
-  border-radius: var(--hp-radius-pill);
-  transition: width 0.6s cubic-bezier(.4,0,.2,1);
+  border-radius: 999px;
+  transition: width var(--hp-dur-slow) var(--hp-ease-out);
 }
 
-/* Bubble (Speech) */
 .hp-bubble {
-  background: var(--hp-card);
-  border-radius: 20px;
-  padding: 14px 20px;
-  box-shadow: var(--hp-shadow);
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--hp-ink);
-  text-align: center;
-  line-height: 1.5;
-  position: relative;
-  z-index: 2;
   max-width: 90%;
+  padding: 13px 18px;
+  border-radius: var(--hp-radius-md);
+  background: var(--hp-card);
+  border: 1px solid var(--hp-line);
+  color: var(--hp-ink);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: center;
 }
 
-@media (min-width: 768px) {
-  .hp-mobile-only {
-    display: none !important;
-  }
+/* Loading skeleton */
+.hp-skeleton {
+  background: linear-gradient(90deg, var(--hp-sunken) 25%, var(--hp-line-soft) 37%, var(--hp-sunken) 63%);
+  background-size: 200% 100%;
+  animation: hpShimmer 1.4s linear infinite;
+  border-radius: var(--hp-radius-xs);
 }
 
-/* ═══ ONBOARDING CUSTOM STYLES ═══ */
-#ob-app {
-  background: #1a0a00;
+/* PWA install prompt */
+.hp-install-btn {
+  position: fixed;
+  right: 16px;
+  bottom: calc(96px + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 18px;
+  background: var(--hp-ink);
+  color: var(--hp-paper);
+  border-radius: var(--hp-radius-pill);
+  font-size: 13.5px;
+  font-weight: 600;
+  box-shadow: var(--hp-shadow-md);
+  z-index: 90;
+  animation: hpFadeUp var(--hp-dur-slow) var(--hp-ease-out);
 }
+@media (min-width: 768px) { .hp-install-btn { right: 24px; bottom: 24px; } }
+
+/* ═══ RESPONSIVE HELPERS ═══ */
+.hp-btn-mobile-full { white-space: nowrap; }
+@media (max-width: 500px) { .hp-btn-mobile-full { width: 100%; text-align: center; } }
+
+.hp-priority-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; flex-shrink: 0; }
+@media (max-width: 500px) { .hp-priority-actions { width: 100%; margin-top: 8px; } }
+
+.hp-form-row { display: flex; gap: 12px; align-items: flex-end; }
+@media (max-width: 500px) { .hp-form-row { flex-direction: column; align-items: stretch; } }
+
+.hp-profile-name-group { display: flex; align-items: center; gap: 12px; min-width: 0; }
+@media (max-width: 600px) { .hp-profile-name-group { flex-direction: column; align-items: flex-start; gap: 4px; } }
+
+/* ═══ DARK MODE SAFETY NET ═══
+   Was a wall of attribute-selector overrides catching hardcoded light-mode
+   hexes on unmigrated screens. Every one of those hexes is now a token, so the
+   colour rules are gone. What's left is not legacy:
+
+   - Form controls: inputs built by hand rather than with <HPInput> still
+     inherit the UA's white. Delete once nothing hand-rolls a field.
+   - White backgrounds: `#fff` is deliberately allowed by the token checker
+     (avatar text on a photo, text on a saturated reward card), so a handful of
+     surfaces still set it directly and need flipping in dark mode. */
+.dark input:not([type="checkbox"]):not([type="radio"]),
+.dark textarea,
+.dark select {
+  background-color: var(--hp-card-raised) !important;
+  color: var(--hp-ink) !important;
+  border-color: var(--hp-border) !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder { color: var(--hp-ink-fade) !important; }
+
+.dark [style*="background"][style*="#fff"],
+.dark [style*="background"][style*="#ffffff"],
+.dark [style*="background"][style*="#FFFFFF"],
+.dark [style*="background"][style*="white"],
+.dark [style*="background"][style*="rgb(255, 255, 255)"],
+.dark [style*="background"][style*="255,255,255"] {
+  background-image: none !important;
+  background-color: var(--hp-card) !important;
+}
+
+/* ═══ ONBOARDING (standalone flow — keeps its own look) ═══ */
+#ob-app { background: #0E1116; }
 .ob-frame {
   width: 390px; height: 844px; max-height: 100dvh; max-width: 100vw;
-  position: relative; overflow: hidden; border-radius: 50px;
-  box-shadow: 0 0 0 1px rgba(255,255,255,.07), 0 50px 100px rgba(0,0,0,.8), 0 0 120px rgba(255,77,0,.08);
-  background: #08112B;
+  position: relative; overflow: hidden; border-radius: 44px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.06), 0 40px 90px rgba(0,0,0,.7);
+  background: #0E1116;
 }
-@media (max-width: 500px) {
-  .ob-frame { border-radius: 0; }
-}
-.ob-wipe {
-  position: absolute; inset: 0; background: #FF4D00; z-index: 100; pointer-events: none;
-  transform: scaleX(0); transform-origin: left;
-}
-.ob-wipe.active {
-  animation: wipeIn 0.32s cubic-bezier(.7,0,.3,1) forwards, wipeOut 0.32s 0.32s cubic-bezier(.7,0,.3,1) forwards;
-}
-@keyframes wipeIn { 0% { transform: scaleX(0); transform-origin: left; } 100% { transform: scaleX(1); transform-origin: left; } }
-@keyframes wipeOut { 0% { transform: scaleX(1); transform-origin: right; } 100% { transform: scaleX(0); transform-origin: right; } }
+@media (max-width: 500px) { .ob-frame { border-radius: 0; } }
 
-.ob-screen { position: absolute; inset: 0; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+.ob-wipe { position: absolute; inset: 0; background: var(--hp-primary); z-index: 100; pointer-events: none; transform: scaleX(0); transform-origin: left; }
+.ob-wipe.active { animation: wipeIn 0.3s var(--hp-ease) forwards, wipeOut 0.3s 0.3s var(--hp-ease) forwards; }
+@keyframes wipeIn  { from { transform: scaleX(0); transform-origin: left; }  to { transform: scaleX(1); transform-origin: left; } }
+@keyframes wipeOut { from { transform: scaleX(1); transform-origin: right; } to { transform: scaleX(0); transform-origin: right; } }
+
+.ob-screen { position: absolute; inset: 0; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity var(--hp-dur-slow); }
 .ob-screen.active { opacity: 1; pointer-events: all; }
 
-/* Typography */
-.syne { font-family: 'Syne', sans-serif; font-weight: 800; }
-
-/* Animations */
-@keyframes blobDrift { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(20px, -30px) scale(1.1); } }
-@keyframes glowPulse { 0%, 100% { opacity: .6; transform: translateX(-50%) scaleY(1); } 50% { opacity: 1; transform: translateX(-50%) scaleY(1.2); } }
-@keyframes spinRing { to { transform: rotate(360deg); } }
-@keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
-@keyframes ringDotPulse { 0%, 100% { opacity: .3; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.3); } }
-@keyframes starTwink { 0%, 100% { opacity: 0; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.4); } }
-@keyframes auroraWave { 0% { transform: scaleX(1) skewX(0deg); } 100% { transform: scaleX(1.05) skewX(2deg); } }
-@keyframes pulsate { 0% { opacity: .8; transform: scale(1); } 100% { opacity: 0; transform: scale(1.4); } }
-@keyframes conicSpin { to { transform: rotate(360deg); } }
-@keyframes floatNum { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-90px) scale(.6); } }
-@keyframes confDrop { 0% { opacity: 1; transform: translateY(0) rotate(0); } 100% { opacity: .1; transform: translateY(900px) rotate(480deg); } }
-@keyframes popIn { from { opacity: 0; transform: scale(0.9) translateY(20px); } to { opacity: 1; transform: none; } }
-@keyframes slideLeft { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: none; } }
-
-/* Shared */
-.pop-anim { animation: popIn 0.6s cubic-bezier(0.34, 1.2, 0.64, 1) both; }
-.slide-anim { animation: slideLeft 0.4s cubic-bezier(0.34, 1.2, 0.64, 1) both; }
-
 .ob-btn {
-  width: 100%; padding: 18px 24px; border-radius: 18px; border: none;
-  background: #FF6030; color: #fff;
-  font-weight: 700; font-size: 16px; cursor: pointer; box-shadow: 0 10px 30px rgba(255,68,0,.4);
-  transition: transform 0.2s, opacity 0.2s;
+  width: 100%; min-height: 52px; padding: 15px 24px;
+  border-radius: var(--hp-radius-md);
+  background: var(--hp-primary); color: var(--hp-on-primary);
+  font-weight: 650; font-size: 16px;
+  transition: transform var(--hp-dur-fast) var(--hp-ease), opacity var(--hp-dur-fast) var(--hp-ease);
 }
-.ob-btn:active { transform: scale(0.97); }
-.ob-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.ob-btn:active { transform: scale(0.98); }
+.ob-btn:disabled { opacity: 0.4; }
+
+.pop-anim   { animation: hpRise var(--hp-dur-slow) var(--hp-ease-out) both; }
+.slide-anim { animation: hpFadeUp var(--hp-dur-slow) var(--hp-ease-out) both; }
+
+@keyframes blobDrift   { from { transform: translate(0,0) scale(1); } to { transform: translate(16px, -24px) scale(1.08); } }
+@keyframes glowPulse   { 0%, 100% { opacity: .5; } 50% { opacity: .9; } }
+@keyframes spinRing    { to { transform: rotate(360deg); } }
+@keyframes shimmer     { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+@keyframes ringDotPulse{ 0%, 100% { opacity: .3; transform: scale(.85); } 50% { opacity: 1; transform: scale(1.2); } }
+@keyframes starTwink   { 0%, 100% { opacity: 0; } 50% { opacity: .5; } }
+@keyframes auroraWave  { from { transform: scaleX(1); } to { transform: scaleX(1.04); } }
+@keyframes pulsate     { from { opacity: .7; transform: scale(1); } to { opacity: 0; transform: scale(1.35); } }
+@keyframes conicSpin   { to { transform: rotate(360deg); } }
+@keyframes floatNum    { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(-70px) scale(.7); } }
+@keyframes confDrop    { from { opacity: 1; transform: translateY(0) rotate(0); } to { opacity: .1; transform: translateY(880px) rotate(460deg); } }
+@keyframes popIn       { from { opacity: 0; transform: scale(0.94) translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes slideLeft   { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: none; } }
+
+.syne { font-family: var(--hp-font-display); font-weight: 700; letter-spacing: -0.02em; }

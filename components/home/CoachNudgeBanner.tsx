@@ -14,7 +14,7 @@ export default function CoachNudgeBanner({ coachNudge, beeMood, openModal }: Coa
           style={{ 
             background: coachNudge.type === 'warning' ? HP_TOKENS.yellowWash : coachNudge.type === 'cheer' ? HP_TOKENS.primaryWash : HP_TOKENS.sageWash,
             border: `1.5px solid ${coachNudge.type === 'warning' ? HP_TOKENS.yellow : coachNudge.type === 'cheer' ? HP_TOKENS.primary : HP_TOKENS.sage}40`,
-            borderRadius: 20,
+            borderRadius: HP_TOKENS.radius,
             padding: '16px 20px',
             marginTop: 16,
             display: 'flex',
@@ -29,7 +29,7 @@ export default function CoachNudgeBanner({ coachNudge, beeMood, openModal }: Coa
             className="hp-tap"
             style={{ flex: 1, cursor: 'pointer', padding: '4px 0' }}
           >
-            <div style={{ ...HP_TEXT.body, fontSize: 13, fontWeight: 800, lineHeight: 1.5, color: HP_TOKENS.ink }}>
+            <div style={{ ...HP_TEXT.bodyStrong, fontSize: 13, lineHeight: 1.5, color: HP_TOKENS.ink }}>
               {coachNudge.text}
             </div>
           </div>

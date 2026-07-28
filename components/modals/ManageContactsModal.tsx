@@ -51,7 +51,7 @@ export default function ManageContactsModal({ onClose }: ManageContactsModalProp
         className="hp-pop"
         style={{
           width: '100%', maxWidth: 400, background: HP_TOKENS.paper,
-          borderRadius: 32, overflow: 'hidden', boxShadow: '0 20px 40px rgba(26,29,35,0.1)'
+          borderRadius: HP_TOKENS.radiusXl, overflow: 'hidden'
         }}
       >
         <div style={{ padding: 24, borderBottom: `1px solid ${HP_TOKENS.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -95,8 +95,8 @@ export default function ManageContactsModal({ onClose }: ManageContactsModalProp
               onClick={handleAdd}
               className="hp-tap"
               style={{
-                width: '100%', padding: '14px', borderRadius: 16, background: HP_TOKENS.ink,
-                color: '#F4F7F9', border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer'
+                width: '100%', padding: '14px', borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.ink,
+                color: HP_TOKENS.onPrimary, border: 'none', fontFamily: HP_FONT, fontWeight: 700, fontSize: 14, cursor: 'pointer'
               }}
             >
               + Tambah Kontak
@@ -133,6 +133,6 @@ export default function ManageContactsModal({ onClose }: ManageContactsModalProp
 }
 
 const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '12px 16px', borderRadius: 14, border: `1.5px solid ${HP_TOKENS.line}`,
+  width: '100%', padding: '12px 16px', borderRadius: HP_TOKENS.radiusMd, border: `1.5px solid ${HP_TOKENS.line}`,
   fontFamily: HP_FONT, fontSize: 14, outline: 'none', background: HP_TOKENS.card, boxSizing: 'border-box'
 };

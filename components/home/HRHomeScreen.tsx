@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useHP, calculateLevelProgress } from "@/lib/HPContext";
-import { HP_TOKENS, HP_FONT, HP_TEXT, HP_MOODS, HP_ENERGY } from "@/lib/constants";
+import { HP_TOKENS, HP_TEXT, HP_MOODS, HP_ENERGY } from "@/lib/constants";
 import { generateAIInsights } from "@/lib/aiInsights";
 import { isMidDayWindow } from "@/lib/timeUtils";
 
@@ -15,7 +15,7 @@ import { useHabitManager } from "@/hooks/useHabitManager";
 import HPGlyph from "@/components/ui/HPGlyph";
 import HPCard from "@/components/ui/HPCard";
 import HPAvatar from "@/components/ui/HPAvatar";
-import BlobBackground from "@/components/home/BlobBackground";
+import { Stack, Row, Grid, IconBadge, HPChip, HPBar, HPButton, PageGrid, ActionList } from "@/components/ui";
 import Confetti from "@/components/home/Confetti";
 import CelebrationOverlay from "@/components/ui/CelebrationOverlay";
 import CentralNudgeOverlay from "@/components/ui/CentralNudgeOverlay";
@@ -120,7 +120,11 @@ export default function HRHomeScreen({ openModal }: Props) {
   }, [state?.logbook]);
 
   if (!user || !state?.hrData) return (
-    <div style={{ padding: 40, textAlign: 'center', opacity: 0.5 }}>Memuat data HR...</div>
+    <Stack gap={3} aria-busy="true" aria-label="Memuat data HR">
+      <div className="hp-skeleton" style={{ height: 132 }} />
+      <div className="hp-skeleton" style={{ height: 88 }} />
+      <div className="hp-skeleton" style={{ height: 88 }} />
+    </Stack>
   );
 
   const { metrics: m } = state.hrData;
@@ -150,198 +154,289 @@ export default function HRHomeScreen({ openModal }: Props) {
   };
 
   return (
-    <div style={{ position: 'relative', minHeight: '100%', paddingBottom: 120, fontFamily: HP_FONT }}>
-      <BlobBackground colors={[HP_TOKENS.lavenderSoft, HP_TOKENS.yellowWash, HP_TOKENS.blueWash]} />
+    <div style={{ position: 'relative', minHeight: '100%' }}>
       <Confetti show={confetti} />
       <CelebrationOverlay show={celebrate.show} points={celebrate.points} message={celebrate.message} onComplete={() => setCelebrate({show: false})} />
       <CentralNudgeOverlay nudge={centralNudge} onClose={() => setCentralNudge(null)} />
       <MorningPlanPopup planText={yesterdayPlan} userId={user?.id} />
 
-      <div style={{ position: 'relative', zIndex: 1, padding: '0 16px', paddingTop: 8 }} className="hp-stagger">
+      {/*
+        HR's job is the org's wellbeing, so the analytics lead. The screen
+        already distinguished "personal" from HR work via `showPersonal`; the
+        grid now makes that split spatial instead of just sequential.
+      */}
+      <div style={{ position: 'relative', zIndex: 1 }} className="hp-stagger">
+        <PageGrid
+          main={<>
         <NotificationBanner />
 
-        {/* ═══ 12-COLUMN BENTO GRID CONTAINER ═══ */}
-        <div className="hp-bento-grid">
-          
-          {/* BENTO CARD 1: HR Profile Header (Col 12 - Hero) */}
-          <div className="hp-bento-col-12">
-            <div style={{
-              background: 'linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%)',
-              borderRadius: 24, padding: '24px 22px', color: '#FFFFFF',
-              boxShadow: '0 10px 30px rgba(49, 46, 129, 0.18)',
-              position: 'relative', overflow: 'hidden'
-            }}>
-              <div style={{ position: 'absolute', top: -15, right: 10, fontSize: 100, fontWeight: 900, color: 'rgba(255,255,255,0.06)' }}>
-                HR
+        {/* Mid-day check-in prompt */}
+        {showPersonal && isMidDayWindow() && (
+          <HPCard
+            onClick={() => openModal('work_checkin')}
+            padding={15}
+            style={{ background: HP_TOKENS.yellowWash, borderColor: HP_TOKENS.yellowSoft }}
+            ariaLabel="Mid-day check-in siap. Catat progres tengah hari"
+          >
+            <Row gap={3}>
+              <IconBadge size={40} tone={HP_TOKENS.yellowSoft}>
+                <HPGlyph name="book" size={18} color={HP_TOKENS.yellowDark} />
+              </IconBadge>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ ...HP_TEXT.sub, fontSize: 14.5 }}>Mid-day check-in siap</div>
+                <div style={{ ...HP_TEXT.small, marginTop: 1 }}>Catat progresmu di pertengahan hari</div>
               </div>
+              <HPGlyph name="chevronRight" size={17} color={HP_TOKENS.inkFade} />
+            </Row>
+          </HPCard>
+        )}
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-                <div
+        {showPersonal && (
+          <CoachNudgeBanner coachNudge={coachNudge} beeMood={beeMood as any} openModal={openModal} />
+        )}
+
+        {/* HR's actual job: how the organisation is holding up. */}
+        <HRAnalyticsTabs state={state} openModal={openModal} />
+
+
+        {/* Smart Reminders */}
+        {showPersonal && reminder && (
+          <div>
+            {(() => {
+              // One tone per reminder kind, so the card's colour carries meaning
+              // rather than decoration.
+              const kind = {
+                break: { tone: HP_TOKENS.warning, wash: HP_TOKENS.warningWash, soft: HP_TOKENS.warningSoft, icon: 'pause' },
+                meeting: { tone: HP_TOKENS.info, wash: HP_TOKENS.infoWash, soft: HP_TOKENS.infoSoft, icon: 'video' },
+                clockout: { tone: HP_TOKENS.success, wash: HP_TOKENS.successWash, soft: HP_TOKENS.successSoft, icon: 'moon' },
+              }[reminder.type as 'break' | 'meeting' | 'clockout'] ?? {
+                tone: HP_TOKENS.info, wash: HP_TOKENS.infoWash, soft: HP_TOKENS.infoSoft, icon: 'bell',
+              };
+
+              return (
+                <HPCard padding={16} style={{ background: kind.wash, borderColor: kind.soft }}>
+                  <Row gap={4} stackOnMobile>
+                    <IconBadge size={44} tone={kind.soft}>
+                      <HPGlyph name={kind.icon} size={20} color={kind.tone} />
+                    </IconBadge>
+                    <Stack gap={1} style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ ...HP_TEXT.sub }}>
+                        {reminder.type === 'break' ? 'Waktunya istirahat' : 'Sebentar lagi pulang'}
+                      </span>
+                      <span style={{ ...HP_TEXT.small }}>
+                        {reminder.type === 'break' && `${reminder.mins} menit lagi istirahat. Siap-siap rehat sejenak.`}
+                        {reminder.type === 'meeting' && `${reminder.mins} menit lagi meeting dengan ${reminder.sessionWith}. Link Meet sudah siap.`}
+                        {reminder.type === 'clockout' && `${reminder.mins} menit lagi jam kerja selesai. Siapkan refleksi Tutup Hari kamu.`}
+                      </span>
+                    </Stack>
+                    {reminder.type === 'clockout' && (
+                      <HPButton size="sm" variant="primary" onClick={() => openModal('reflect')}>
+                        Tutup hari
+                      </HPButton>
+                    )}
+                    {reminder.type === 'meeting' && (
+                      <HPButton
+                        size="sm"
+                        variant="primary"
+                        icon="video"
+                        onClick={() => state.coaching?.meetLink && window.open(state.coaching.meetLink, '_blank')}
+                      >
+                        Join Meet
+                      </HPButton>
+                    )}
+                  </Row>
+                </HPCard>
+              );
+            })()}
+          </div>
+        )}
+
+        {/*
+          The four things HR actually administers. These were a 2×1 button grid
+          plus a lone full-width button plus a separate "Kelola survey" card at
+          the very bottom of the page — one group now, in one place.
+        */}
+        <ActionList
+          title="Kelola"
+          items={[
+            {
+              icon: 'target',
+              label: 'KPI karyawan',
+              hint: 'Susun dan tinjau target per orang',
+              onClick: () => openModal('manage_kpi'),
+            },
+            {
+              icon: 'note',
+              label: 'Survey internal',
+              hint: 'Buat, edit, dan lihat hasilnya',
+              onClick: () => openModal('manage_surveys'),
+            },
+            {
+              icon: 'sparkle',
+              label: 'Alur onboarding',
+              hint: 'Langkah untuk karyawan baru',
+              onClick: () => openModal('manage_onboarding'),
+            },
+            {
+              icon: 'bell',
+              label: 'Buat pengumuman',
+              hint: 'Kirim ke seluruh perusahaan',
+              onClick: () => openModal('announcement'),
+            },
+          ]}
+        />
+
+        {showPersonal && (
+        <>
+        {/* Focus tools */}
+        <CoworkingWidget openModal={openModal} />
+
+        {/* Task Harian with confetti */}
+        <div id="task-section">
+          <TaskHarianWidget
+            openModal={openModal}
+            onTaskComplete={(taskName?: string) => {
+              setConfetti(true);
+              setCelebrate({show: true, points: 50, message: taskName ? `Selesai: ${taskName}` : "Hebat! Satu langkah lebih dekat."});
+              setTimeout(() => setConfetti(false), 1200);
+            }}
+          />
+        </div>
+
+        {/* Daily Challenge */}
+        <DailyChallengeWidget
+          openModal={openModal}
+          onClaimReward={(points: number, title: string) => {
+            setConfetti(true);
+            setCelebrate({show: true, points, message: `Misi Selesai: ${title}`});
+            setTimeout(() => setConfetti(false), 1500);
+          }}
+        />
+
+        <SurveySection openModal={openModal} />
+
+        {/* Daily Training Habits */}
+        <div id="daily-training-section">
+          <SectionHeader
+            icon="leaf"
+            label="Daily Training"
+            action="Settings"
+            onAction={() => openModal('manage_habits')}
+          />
+          {(!state.habits || state.habits.length === 0) ? (
+            <HabitEmptyState openModal={openModal} />
+          ) : (
+            <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', alignItems: 'stretch' }}>
+              {state.habits.map((h: any, i: number) => (
+                <div key={i} style={{ minWidth: 260, flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
+                  <HabitCell
+                    h={h}
+                    onToggle={(date, isToday, done) => handleHabitDayClick(h.name, date, isToday, done)}
+                    onQuickComplete={(date, isToday, wasDone, newDone) => handleQuickComplete(h.name, date, isToday, wasDone, newDone)}
+                    onFinish={() => handleFinishTraining(h.name)}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        </>
+        )}
+          </>}
+
+          rail={<>
+            {/* HR profile */}
+            <HPCard padding={16}>
+              <Row gap={3} align="flex-start">
+                <button
+                  type="button"
                   className="hp-tap"
                   onClick={() => openModal('profile_editor')}
-                  style={{ display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer' }}
+                  aria-label="Edit profil"
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'none', border: 'none', flex: 1, minWidth: 0, textAlign: 'left' }}
                 >
-                  <HPAvatar name={user.name} size={54} rank={user.rank} levelProgress={levelProgress} />
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 20, color: '#FFFFFF' }}>
-                        {(user.name || "User").split(' ')[0]}
-                      </div>
-                      <div style={{ background: '#7C3AED', color: '#FFFFFF', fontSize: 10, fontWeight: 900, padding: '2px 8px', borderRadius: 6 }}>
-                        HR EXECUTIVE
-                      </div>
-                    </div>
-                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2, fontWeight: 700 }}>
-                      Level {user.level} · Class {user.rank || 'E'}
-                    </div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.65)', marginTop: 1 }}>
-                      {user.role} · {m.totalEmployees} karyawan terdaftar
-                    </div>
-                  </div>
-                </div>
+                  <HPAvatar name={user.name} size={44} rank={user.rank} levelProgress={levelProgress} />
+                  <Stack gap={0} style={{ minWidth: 0 }}>
+                    <Row gap={2}>
+                      <span style={{ ...HP_TEXT.sub, fontSize: 15 }}>{(user.name || "User").split(' ')[0]}</span>
+                      <HPChip tone="info">HR</HPChip>
+                    </Row>
+                    <span style={{ ...HP_TEXT.small, marginTop: 2 }}>
+                      Level {user.level} · {m.totalEmployees} karyawan
+                    </span>
+                  </Stack>
+                </button>
 
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 99,
-                  background: 'rgba(255,255,255,0.12)', fontFamily: HP_FONT, fontWeight: 900, fontSize: 14, color: '#FFFFFF',
-                  border: '1px solid rgba(255,255,255,0.2)'
-                }}>
-                  🔥 <span>{user.streak} Hari</span>
-                </div>
-              </div>
+                <Row
+                  gap={1}
+                  aria-label={`Streak ${user.streak} hari`}
+                  style={{
+                    padding: '6px 10px', borderRadius: HP_TOKENS.radiusPill,
+                    background: HP_TOKENS.yellowSoft, color: HP_TOKENS.yellowDark,
+                    flexShrink: 0,
+                  }}
+                >
+                  <HPGlyph name="zap" size={13} color="currentColor" />
+                  <span style={{ ...HP_TEXT.small, color: 'currentColor' }}>{user.streak}</span>
+                </Row>
+              </Row>
 
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 20, marginTop: 16 }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginBottom: 4, fontWeight: 700 }}>Level Progress</div>
-                  <div style={{ width: '100%', height: 6, background: 'rgba(255,255,255,0.18)', borderRadius: 100, overflow: 'hidden' }}>
-                    <div style={{
-                      width: `${levelProgress * 100}%`, height: '100%',
-                      background: '#A78BFA', borderRadius: 100,
-                      transition: '1s cubic-bezier(0.2, 0.8, 0.2, 1)',
-                    }} />
-                  </div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginBottom: 4, fontWeight: 700 }}>Total Point</div>
-                  <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 24, color: '#FFFFFF' }}>{user.points.toLocaleString()}</div>
-                </div>
-              </div>
-            </div>
-          </div>
+              <Row align="flex-end" gap={4} style={{ marginTop: 14 }}>
+                <Stack gap={1} style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ ...HP_TEXT.tiny }}>Level progress</span>
+                  <HPBar value={levelProgress * 100} tone="info" label="Progress menuju level berikutnya" />
+                </Stack>
+                <Stack gap={0} style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <span style={{ ...HP_TEXT.tiny }}>Total poin</span>
+                  <span style={{ ...HP_TEXT.metric, fontSize: 20 }}>{user.points.toLocaleString('id-ID')}</span>
+                </Stack>
+              </Row>
+            </HPCard>
 
-          {/* BENTO CARD 2: HR Analytics Radar & Burnout (Col 12) */}
-          <div className="hp-bento-col-12">
-            <HRAnalyticsTabs state={state} openModal={openModal} />
-          </div>
+            {showPersonal && (
+              <>
+                <AttendanceWidget openModal={openModal} />
 
-          {/* BENTO CARD 3: Pengumuman Tim (Col 6) */}
-          <div className="hp-bento-col-6">
-            <div className="hp-bento-card" style={{ background: '#ECFDF5', border: '1px solid #A7F3D0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <span style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, color: '#065F46' }}>📢 Pengumuman</span>
-                <div className="hp-bento-anchor-3d" style={{ background: '#FFFFFF', border: '1px solid #A7F3D0' }}>
-                  📢
-                </div>
-              </div>
-              <p style={{ fontSize: 12, color: '#047857', lineHeight: 1.45, margin: '0 0 14px' }}>
-                Buat broadcast pengumuman resmi ke seluruh anggota tim.
-              </p>
-              <button 
-                onClick={() => openModal('announcement')}
-                className="hp-tap"
-                style={{
-                  width: '100%', padding: '10px', borderRadius: 12, border: 'none',
-                  background: '#059669', color: '#FFFFFF',
-                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(5, 150, 105, 0.25)'
-                }}
-              >
-                Buat Pengumuman
-              </button>
-            </div>
-          </div>
+                <EmotionalHero
+                  state={state}
+                  moodObj={moodObj}
+                  energyObj={energyObj}
+                  onOpenCheckIn={() => openModal('checkin')}
+                  showMidDay={isMidDayWindow()}
+                  onOpenMidDay={() => openModal('work_checkin')}
+                />
 
-          {/* BENTO CARD 4: Kelola KPI (Col 6) */}
-          <div className="hp-bento-col-6">
-            <div className="hp-bento-card" style={{ background: '#EFF6FF', border: '1px solid #BFDBFE' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <span style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, color: '#1E40AF' }}>🎯 Kelola KPI</span>
-                <div className="hp-bento-anchor-3d" style={{ background: '#FFFFFF', border: '1px solid #BFDBFE' }}>
-                  🎯
-                </div>
-              </div>
-              <p style={{ fontSize: 12, color: '#1D4ED8', lineHeight: 1.45, margin: '0 0 14px' }}>
-                Atur target KPI perusahaan, alokasikan ke Manager dan karyawan.
-              </p>
-              <button 
-                onClick={() => openModal('manage_kpi')}
-                className="hp-tap"
-                style={{
-                  width: '100%', padding: '10px', borderRadius: 12, border: 'none',
-                  background: '#2563EB', color: '#FFFFFF',
-                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)'
-                }}
-              >
-                Buka KPI Manager
-              </button>
-            </div>
-          </div>
+                <WellbeingGauge state={state} user={user} openModal={openModal} />
 
-          {/* BENTO CARD 5: Kelola Survey (Col 6) */}
-          <div className="hp-bento-col-6">
-            <div className="hp-bento-card" style={{ background: '#F5F3FF', border: '1px solid #DDD6FE' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <span style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, color: '#5B21B6' }}>📋 Kelola Survey</span>
-                <div className="hp-bento-anchor-3d" style={{ background: '#FFFFFF', border: '1px solid #DDD6FE' }}>
-                  📋
-                </div>
-              </div>
-              <p style={{ fontSize: 12, color: '#6D28D9', lineHeight: 1.45, margin: '0 0 14px' }}>
-                Buat, sunting, dan analisis survey kepuasan serta eNPS tim.
-              </p>
-              <button 
-                onClick={() => openModal('manage_surveys')}
-                className="hp-tap"
-                style={{
-                  width: '100%', padding: '10px', borderRadius: 12, border: 'none',
-                  background: '#7C3AED', color: '#FFFFFF',
-                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(124, 58, 237, 0.25)'
-                }}
-              >
-                Kelola Survey
-              </button>
-            </div>
-          </div>
+                {aiInsights.length > 0 && (
+                  <section>
+                    <SectionHeader tight icon="heart" label="Insight dari Coach" />
+                    <Stack gap={2}>
+                      {aiInsights.map((ins, i) => (
+                        <InsightCard key={i} ins={ins} idx={i} onClick={() => handleInsightClick(ins.action)} />
+                      ))}
+                    </Stack>
+                  </section>
+                )}
 
-          {/* BENTO CARD 6: Kelola Onboarding (Col 6) */}
-          <div className="hp-bento-col-6">
-            <div className="hp-bento-card" style={{ background: '#FFF7ED', border: '1px solid #FFEDD5' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <span style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, color: '#9A3412' }}>✨ Onboarding</span>
-                <div className="hp-bento-anchor-3d" style={{ background: '#FFFFFF', border: '1px solid #FFEDD5' }}>
-                  ✨
-                </div>
-              </div>
-              <p style={{ fontSize: 12, color: '#C2410C', lineHeight: 1.45, margin: '0 0 14px' }}>
-                Atur program dan tugas onboarding bagi karyawan baru.
-              </p>
-              <button 
-                onClick={() => openModal('manage_onboarding')}
-                className="hp-tap"
-                style={{
-                  width: '100%', padding: '10px', borderRadius: 12, border: 'none',
-                  background: '#EA580C', color: '#FFFFFF',
-                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(234, 88, 12, 0.25)'
-                }}
-              >
-                Kelola Onboarding
-              </button>
-            </div>
-          </div>
-
-        </div>
+                <ActionList
+                  title="Lainnya"
+                  items={[
+                    {
+                      icon: 'leaf',
+                      label: 'Jeda 1 menit',
+                      hint: 'Box breathing untuk menurunkan stres',
+                      tone: HP_TOKENS.success,
+                      onClick: () => openModal('pause'),
+                    },
+                    { icon: 'book', label: 'Riwayat & logbook', onClick: () => openModal('logbook') },
+                    { icon: 'history', label: 'Riwayat kehadiran', onClick: () => openModal('attendance_history') },
+                  ]}
+                />
+              </>
+            )}
+          </>}
+        />
       </div>
 
       {selectedHabitDay && (

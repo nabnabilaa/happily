@@ -45,9 +45,9 @@ export default function OvertimePromptModal({ onClose }: OvertimePromptModalProp
           className="hp-tap"
           disabled={isSubmitting}
           style={{
-            width: '100%', padding: '16px', borderRadius: 16,
+            width: '100%', padding: '16px', borderRadius: HP_TOKENS.radiusMd,
             background: HP_TOKENS.yellowWash, border: `1.5px solid ${HP_TOKENS.yellow}`,
-            color: HP_TOKENS.ink, fontFamily: HP_FONT, fontWeight: 800, fontSize: 14,
+            color: HP_TOKENS.ink, fontFamily: HP_FONT, fontWeight: 700, fontSize: 14,
             cursor: isSubmitting ? 'default' : 'pointer', display: 'flex', alignItems: 'center', gap: 12,
             opacity: isSubmitting ? 0.7 : 1
           }}
@@ -64,9 +64,9 @@ export default function OvertimePromptModal({ onClose }: OvertimePromptModalProp
           className="hp-tap"
           disabled={isSubmitting}
           style={{
-            width: '100%', padding: '16px', borderRadius: 16,
+            width: '100%', padding: '16px', borderRadius: HP_TOKENS.radiusMd,
             background: HP_TOKENS.sageWash, border: `1.5px solid ${HP_TOKENS.sage}`,
-            color: HP_TOKENS.sage, fontFamily: HP_FONT, fontWeight: 800, fontSize: 14,
+            color: HP_TOKENS.sage, fontFamily: HP_FONT, fontWeight: 700, fontSize: 14,
             cursor: isSubmitting ? 'default' : 'pointer', display: 'flex', alignItems: 'center', gap: 12,
             opacity: isSubmitting ? 0.7 : 1
           }}

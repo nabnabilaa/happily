@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
 import HPCard from "@/components/ui/HPCard";
 import HPGlyph from "@/components/ui/HPGlyph";
+import { Row, Modal, HPButton, HPInput } from "@/components/ui";
 import { useHP } from "@/lib/HPContext";
 import SectionHeader from "./SectionHeader";
 
@@ -162,7 +163,9 @@ export default function CoworkingWidget({ openModal }: CoworkingWidgetProps) {
   };
 
   return (
-    <div style={{ marginTop: 24 }}>
+    // Spacing between blocks belongs to the screen's layout gap, not to the
+    // widget — a self-applied marginTop stacks on top of it and breaks rhythm.
+    <section>
       <SectionHeader icon="compass" label="Live Coworking Lounge" />
       
       <style>{`
@@ -170,14 +173,17 @@ export default function CoworkingWidget({ openModal }: CoworkingWidgetProps) {
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
       
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        <input 
-          placeholder="Cari ruang atau masukkan kode..." 
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-          style={{ flex: 1, padding: '12px 16px', borderRadius: 16, border: `1px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 14, outline: 'none' }}
-        />
-        <button 
+      <Row gap={2} align="flex-start" style={{ marginBottom: 16 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <HPInput
+            aria-label="Cari ruang atau masukkan kode"
+            placeholder="Cari ruang atau masukkan kode…"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <HPButton
+          variant="primary"
           onClick={() => {
             const found = activeRooms.find(r => r.code === searchQuery.toUpperCase());
             if (found) {
@@ -191,17 +197,19 @@ export default function CoworkingWidget({ openModal }: CoworkingWidgetProps) {
               });
               setSearchQuery("");
             } else {
-              setErrorStr("Ruang tidak ditemukan.");
-              // Fallback to notify if useHP doesn't have notify exposed correctly here, wait notify is from useHP
-              alert("Kode tidak valid atau ruang tidak ditemukan.");
+              setErrorStr("Kode tidak valid atau ruang tidak ditemukan.");
             }
           }}
-          className="hp-tap"
-          style={{ padding: '0 20px', borderRadius: 16, border: 'none', background: HP_TOKENS.sage, color: '#fff', fontWeight: 800, cursor: 'pointer', fontFamily: HP_FONT, fontSize: 14 }}
         >
           Gabung
-        </button>
-      </div>
+        </HPButton>
+      </Row>
+
+      {errorStr && (
+        <p role="alert" style={{ ...HP_TEXT.small, color: HP_TOKENS.danger, marginTop: -8, marginBottom: 12 }}>
+          {errorStr}
+        </p>
+      )}
 
       <div className="hide-scroll" style={{ display: 'flex', overflowX: 'auto', gap: 16, paddingBottom: 12, margin: '0 -4px', paddingLeft: 4, paddingRight: 4 }}>
         <button 
@@ -209,7 +217,7 @@ export default function CoworkingWidget({ openModal }: CoworkingWidgetProps) {
           disabled={loading}
           className="hp-tap"
           style={{
-            minWidth: 160, flexShrink: 0, padding: '16px', borderRadius: 24,
+            minWidth: 160, flexShrink: 0, padding: '16px', borderRadius: HP_TOKENS.radiusLg,
             background: 'transparent', color: HP_TOKENS.inkMute,
             border: `2px dashed ${HP_TOKENS.line}`, cursor: loading ? 'wait' : 'pointer',
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10,
@@ -217,7 +225,7 @@ export default function CoworkingWidget({ openModal }: CoworkingWidgetProps) {
             transition: 'all 0.2s', opacity: loading ? 0.5 : 1
           }}
         >
-          <div style={{ width: 48, height: 48, borderRadius: 24, background: HP_TOKENS.sageWash, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 48, height: 48, borderRadius: '50%', background: HP_TOKENS.successWash, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <HPGlyph name="plus" size={24} color={HP_TOKENS.sage}/>
           </div>
           Buat Ruang
@@ -245,7 +253,7 @@ export default function CoworkingWidget({ openModal }: CoworkingWidgetProps) {
                       {room.name}
                     </div>
                     <div style={{ 
-                      padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 800,
+                      ...HP_TEXT.tiny, padding: '2px 8px', borderRadius: HP_TOKENS.radiusXs,
                       background: room.mode === 'hardcore' ? HP_TOKENS.coralWash : HP_TOKENS.blueWash,
                       color: room.mode === 'hardcore' ? HP_TOKENS.coral : HP_TOKENS.blue,
                       whiteSpace: 'nowrap'
@@ -269,16 +277,27 @@ export default function CoworkingWidget({ openModal }: CoworkingWidgetProps) {
 
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
                 {room.participants?.map((p, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, background: p.isHost ? 'rgba(245,200,66,0.15)' : 'rgba(0,0,0,0.04)', padding: '4px 12px 4px 4px', borderRadius: 20 }}>
-                    <div style={{ 
-                      width: 24, height: 24, borderRadius: 12, 
-                      background: p.isHost ? HP_TOKENS.yellow : '#fff',
+                  <div key={i} style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    background: p.isHost ? HP_TOKENS.yellowWash : HP_TOKENS.sunken,
+                    padding: '4px 12px 4px 4px', borderRadius: HP_TOKENS.radiusPill,
+                  }}>
+                    <div style={{
+                      ...HP_TEXT.tiny,
+                      width: 24, height: 24, borderRadius: '50%',
+                      background: p.isHost ? HP_TOKENS.yellow : HP_TOKENS.card,
                       color: HP_TOKENS.ink, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 11, fontWeight: 800
+                      overflow: 'hidden',
                     }}>
-                      {p.avatar ? <img src={p.avatar} style={{width: '100%', height: '100%', borderRadius: 12, objectFit: 'cover'}} /> : p.name.charAt(0).toUpperCase()}
+                      {p.avatar
+                        ? <img src={p.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        : p.name.charAt(0).toUpperCase()}
                     </div>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: HP_TOKENS.ink }}>{p.name.split(' ')[0]} {p.isHost ? '👑' : ''}</span>
+                    <span style={{ ...HP_TEXT.small, color: HP_TOKENS.ink }}>
+                      {p.name.split(' ')[0]}
+                      {p.isHost && <span className="hp-sr-only"> (host)</span>}
+                    </span>
+                    {p.isHost && <HPGlyph name="star" size={11} color={HP_TOKENS.yellowDark} />}
                   </div>
                 ))}
               </div>
@@ -289,8 +308,11 @@ export default function CoworkingWidget({ openModal }: CoworkingWidgetProps) {
                 
                 if (isAlreadyParticipant) {
                   return (
-                    <button 
-                      onClick={() => openModal('focus', { 
+                    <HPButton
+                      size="sm"
+                      fullWidth
+                      icon="arrow"
+                      onClick={() => openModal('focus', {
                         initialMultiplayer: true,
                         initialRoomCode: room.id,
                         initialMode: room.mode,
@@ -298,34 +320,24 @@ export default function CoworkingWidget({ openModal }: CoworkingWidgetProps) {
                         initialRemainingMins: room.remainingMins,
                         isGuest: !room.participants?.find(p => String(p.id) === String(user?.id))?.isHost
                       })}
-                      className="hp-tap"
-                      style={{
-                        width: '100%', marginTop: 8, padding: '12px', borderRadius: 14, border: `1.5px solid ${HP_TOKENS.sage}`, background: 'transparent', color: HP_TOKENS.sage, fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer'
-                      }}
+                      style={{ marginTop: 8, color: HP_TOKENS.success, borderColor: HP_TOKENS.success }}
                     >
-                      Masuk Kembali
-                    </button>
+                      Masuk kembali
+                    </HPButton>
                   );
                 }
 
                 return (
-                  <button 
-                    onClick={() => !isBanned && handleJoinClick(room)}
+                  <HPButton
+                    size="sm"
+                    variant="primary"
+                    fullWidth
+                    onClick={() => handleJoinClick(room)}
                     disabled={isBanned || room.status === 'started'}
-                    className={!isBanned ? "hp-tap" : ""}
-                    style={{
-                      width: '100%',
-                      marginTop: 8,
-                      padding: '12px', borderRadius: 14, border: 'none',
-                      background: isBanned || room.status === 'started' ? HP_TOKENS.lineSoft : HP_TOKENS.sage, 
-                      color: isBanned || room.status === 'started' ? HP_TOKENS.inkFade : '#fff',
-                      fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, 
-                      cursor: isBanned || room.status === 'started' ? 'not-allowed' : 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all 0.2s'
-                    }}
+                    style={{ marginTop: 8 }}
                   >
-                    {isBanned ? 'Dilarang Masuk' : room.status === 'started' ? 'Sesi Berlangsung' : 'Ikut (Minta Kode)'}
-                  </button>
+                    {isBanned ? 'Dilarang masuk' : room.status === 'started' ? 'Sesi berlangsung' : 'Ikut (minta kode)'}
+                  </HPButton>
                 );
               })()}
             </HPCard>
@@ -334,51 +346,39 @@ export default function CoworkingWidget({ openModal }: CoworkingWidgetProps) {
       </div>
 
       {promptRoom && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(26,29,35,0.7)',
-          backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24
-        }}>
-          <div style={{ background: '#fff', padding: 24, borderRadius: 24, width: '100%', maxWidth: 320 }}>
-            <div style={{ ...HP_TEXT.h, fontSize: 20, color: HP_TOKENS.ink }}>Masukkan Kode Room</div>
-            <div style={{ ...HP_TEXT.body, fontSize: 13, color: HP_TOKENS.inkMute, marginTop: 4, marginBottom: 20 }}>
-              Minta kode dari Host ({promptRoom.participants?.find(p=>p.isHost)?.name || 'Host'}) untuk bergabung ke {promptRoom.name}. (Kode Asli: {promptRoom.code})
-            </div>
-            
-            <input 
-              autoFocus
-              value={inputCode}
-              onChange={e => {
-                setInputCode(e.target.value.toUpperCase());
-                setErrorStr("");
-              }}
-              placeholder="Contoh: D8F2"
-              maxLength={4}
-              style={{
-                width: '100%', padding: '16px', borderRadius: 12, border: `2px solid ${errorStr ? HP_TOKENS.coral : HP_TOKENS.line}`,
-                fontFamily: HP_FONT, fontSize: 24, fontWeight: 800, textAlign: 'center', letterSpacing: 8,
-                background: HP_TOKENS.paper, color: HP_TOKENS.ink, marginBottom: 8
-              }}
-            />
-            {errorStr && <div style={{ color: HP_TOKENS.coral, fontSize: 12, fontWeight: 700, textAlign: 'center', marginBottom: 12 }}>{errorStr}</div>}
-
-            <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-              <button 
-                onClick={() => setPromptRoom(null)}
-                style={{ flex: 1, padding: '12px', borderRadius: 12, background: HP_TOKENS.paper, color: HP_TOKENS.ink, border: 'none', fontWeight: 800, cursor: 'pointer' }}
-              >
-                Batal
-              </button>
-              <button 
-                onClick={handleVerifyJoin}
-                style={{ flex: 1, padding: '12px', borderRadius: 12, background: HP_TOKENS.yellow, color: HP_TOKENS.ink, border: 'none', fontWeight: 800, cursor: 'pointer' }}
-              >
-                Gabung
-              </button>
-            </div>
-          </div>
-        </div>
+        <Modal
+          onClose={() => setPromptRoom(null)}
+          title="Masukkan kode room"
+          description={`Minta kode dari ${promptRoom.participants?.find(p => p.isHost)?.name || 'host'} untuk bergabung ke ${promptRoom.name}.`}
+          footer={
+            <>
+              <HPButton fullWidth onClick={() => setPromptRoom(null)}>Batal</HPButton>
+              <HPButton variant="primary" fullWidth onClick={handleVerifyJoin}>Gabung</HPButton>
+            </>
+          }
+        >
+          <HPInput
+            autoFocus
+            aria-label="Kode room"
+            value={inputCode}
+            onChange={e => {
+              setInputCode(e.target.value.toUpperCase());
+              setErrorStr("");
+            }}
+            onKeyDown={e => e.key === 'Enter' && handleVerifyJoin()}
+            placeholder="D8F2"
+            maxLength={4}
+            error={errorStr || undefined}
+            style={{
+              ...HP_TEXT.metric,
+              textAlign: 'center',
+              letterSpacing: 8,
+              textTransform: 'uppercase',
+            }}
+          />
+        </Modal>
       )}
-    </div>
+    </section>
   );
 }
 

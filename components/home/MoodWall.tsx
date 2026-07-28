@@ -75,12 +75,14 @@ export default function MoodWall() {
   };
 
   return (
-    <div style={{ marginTop: 24 }}>
-      <SectionHeader icon="messageCircle" label="Anonymous Mood Wall" />
+    // Spacing is the placing screen's job; "messageCircle" is not a glyph name
+    // (the map calls it "chat") and was rendering the unknown-icon fallback.
+    <section>
+      <SectionHeader icon="chat" label="Anonymous Mood Wall" />
       
       {/* Input Box */}
       <HPCard padding={16} style={{ marginBottom: 16, background: HP_TOKENS.paper }}>
-        <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 8 }}>
+        <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 8 }}>
           TULIS SECARA ANONIM
         </div>
         <textarea
@@ -88,7 +90,7 @@ export default function MoodWall() {
           onChange={e => setContent(e.target.value)}
           placeholder="Bagaimana perasaanmu hari ini? Tidak ada yang tahu siapa kamu..."
           style={{
-            width: '100%', padding: 12, borderRadius: 12,
+            width: '100%', padding: 12, borderRadius: HP_TOKENS.radiusSm,
             border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 13,
             outline: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink, boxSizing: 'border-box',
             minHeight: 80, resize: 'none'
@@ -100,7 +102,7 @@ export default function MoodWall() {
               <button key={m} onClick={() => setSelectedMood(m)} style={{
                 background: selectedMood === m ? `${getMoodColor(m)}20` : 'transparent',
                 border: selectedMood === m ? `1.5px solid ${getMoodColor(m)}` : '1.5px solid transparent',
-                borderRadius: 20, padding: '4px 8px', cursor: 'pointer',
+                borderRadius: HP_TOKENS.radius, padding: '4px 8px', cursor: 'pointer',
                 fontSize: 16, transition: 'all 0.2s'
               }}>
                 {getMoodEmoji(m)}
@@ -109,7 +111,7 @@ export default function MoodWall() {
           </div>
           <button onClick={handleSubmit} disabled={isSubmitting || !content.trim()} style={{
             padding: '8px 16px', borderRadius: 99, border: 'none',
-            background: HP_TOKENS.blue, color: '#F4F7F9', fontFamily: HP_FONT, fontWeight: 800,
+            background: HP_TOKENS.blue, color: HP_TOKENS.onPrimary, fontFamily: HP_FONT, fontWeight: 700,
             cursor: (!content.trim() || isSubmitting) ? 'not-allowed' : 'pointer',
             opacity: (!content.trim() || isSubmitting) ? 0.5 : 1
           }}>
@@ -144,6 +146,6 @@ export default function MoodWall() {
           ))}
         </div>
       )}
-    </div>
+    </section>
   );
 }

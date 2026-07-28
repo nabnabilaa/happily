@@ -9,48 +9,59 @@ import { HPProvider } from "@/lib/HPContext";
 import Script from "next/script";
 import GlobalClickInterceptor from "@/components/ui/GlobalClickInterceptor";
 
-const nunito = Nunito({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
-  variable: "--font-nunito",
-});
-
+// Manrope is the UI face. Loaded as a variable font so the type scale can use
+// intermediate weights (450 body, 650 headings) instead of jumping 400 → 700.
 const manrope = Manrope({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
   variable: "--font-manrope",
 });
 
 const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
   variable: "--font-inter",
+});
+
+const nunito = Nunito({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-nunito",
 });
 
 const baloo2 = Baloo_2({
   subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
+  display: "swap",
   variable: "--font-baloo2",
 });
 
 const fredoka = Fredoka({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  display: "swap",
   variable: "--font-fredoka",
 });
 
+// Poppins has no variable cut on Google Fonts — static weights only.
 const poppins = Poppins({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
   variable: "--font-poppins",
 });
 
 export const viewport: Viewport = {
-  themeColor: "#0F1F33",
+  // Browser chrome (address bar, task switcher) is painted by the OS, which
+  // never sees our stylesheet — these must be literal and must be kept in step
+  // with --hp-paper in globals.css by hand.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F4F5F7" }, // design-ok: OS chrome, no CSS vars
+    { media: "(prefers-color-scheme: dark)", color: "#0E1116" },  // design-ok: OS chrome, no CSS vars
+  ],
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  // Pinch-zoom left enabled: disabling it fails WCAG 1.4.4 and blocks users
+  // who need to magnify.
+  viewportFit: "cover",
 };
 
 export const metadata: Metadata = {
@@ -86,7 +97,7 @@ export default function RootLayout({
         <Script id="font-loader" strategy="beforeInteractive" dangerouslySetInnerHTML={{
           __html: `
             try {
-              var savedFont = localStorage.getItem('hp-font') || 'nunito';
+              var savedFont = localStorage.getItem('hp-font') || 'manrope';
               document.documentElement.setAttribute('data-font', savedFont);
             } catch (e) {}
           `
@@ -95,7 +106,8 @@ export default function RootLayout({
           __html: `
             try {
               var saved = localStorage.getItem('hp-theme');
-              var theme = saved || 'light';
+              // Fall back to the OS preference when the user hasn't chosen.
+              var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
               if (theme === 'dark') {
                 document.documentElement.classList.add('dark');
               } else {

@@ -41,8 +41,8 @@ export default function ExtensionGuideModal({ onClose }: ExtensionGuideModalProp
           fontFamily: HP_FONT,
           background: HP_TOKENS.card,
           overflow: 'hidden',
-          borderRadius: 24,
-          boxShadow: '0 24px 48px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)',
+          borderRadius: HP_TOKENS.radiusLg,
+          boxShadow: HP_TOKENS.shadowLg,
           animation: 'hpPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
         }}
       >
@@ -67,7 +67,7 @@ export default function ExtensionGuideModal({ onClose }: ExtensionGuideModalProp
             className="hp-tap"
             style={{ 
               position: 'absolute', top: 16, right: 16, zIndex: 10,
-              width: 32, height: 32, borderRadius: 16, background: 'rgba(0,0,0,0.04)',
+              width: 32, height: 32, borderRadius: '50%', background: 'rgba(0,0,0,0.04)',
               border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer', backdropFilter: 'blur(10px)', color: HP_TOKENS.inkSoft,
               transition: 'all 0.2s'
@@ -75,7 +75,7 @@ export default function ExtensionGuideModal({ onClose }: ExtensionGuideModalProp
             onMouseOver={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.08)'; e.currentTarget.style.color = HP_TOKENS.ink; }}
             onMouseOut={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; e.currentTarget.style.color = HP_TOKENS.inkSoft; }}
           >
-            <HPGlyph name="x" size={16} />
+            <HPGlyph name="close" size={16} />
           </button>
 
           <div style={{ position: 'relative', zIndex: 1, marginBottom: 8 }}>
@@ -94,7 +94,7 @@ export default function ExtensionGuideModal({ onClose }: ExtensionGuideModalProp
         <div style={{ padding: '32px 24px', background: HP_TOKENS.paper, flex: 1, overflowY: 'auto', minHeight: 0 }}>
           {isExtensionInstalled ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px', textAlign: 'center', gap: 16 }}>
-              <div style={{ width: 64, height: 64, borderRadius: 32, background: HP_TOKENS.sageWash, color: HP_TOKENS.sage, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+              <div style={{ width: 64, height: 64, borderRadius: '50%', background: HP_TOKENS.sageWash, color: HP_TOKENS.sage, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
                 <HPGlyph name="check" size={32} stroke={3} />
               </div>
               <h3 style={{ ...HP_TEXT.h, fontSize: 20, color: HP_TOKENS.ink, margin: 0 }}>Ekstensi Terpasang!</h3>
@@ -174,11 +174,11 @@ export default function ExtensionGuideModal({ onClose }: ExtensionGuideModalProp
                 gap: 8,
                 width: '100%',
                 padding: '16px 24px',
-                borderRadius: 16,
+                borderRadius: HP_TOKENS.radiusMd,
                 background: HP_TOKENS.ink,
                 color: '#fff',
                 fontSize: 16,
-                fontWeight: 800,
+                fontWeight: 700,
                 border: 'none',
                 cursor: 'pointer'
               }}
@@ -201,13 +201,12 @@ export default function ExtensionGuideModal({ onClose }: ExtensionGuideModalProp
                 gap: 8,
                 width: '100%',
                 padding: '16px 24px',
-                borderRadius: 16,
+                borderRadius: HP_TOKENS.radiusMd,
                 background: `${HP_TOKENS.yellowLight}`,
                 color: '#fff',
                 fontSize: 16,
-                fontWeight: 800,
+                fontWeight: 700,
                 border: 'none',
-                boxShadow: `0 8px 24px ${HP_TOKENS.yellowSoft}`,
                 position: 'relative',
                 overflow: 'hidden'
               }}
@@ -244,7 +243,7 @@ function StepItem({ num, title, text, icon, isLast, isHovered, onHover, onLeave 
       onMouseLeave={onLeave}
       style={{ 
         display: 'flex', gap: 16, alignItems: 'flex-start', position: 'relative',
-        padding: '12px 16px', borderRadius: 16,
+        padding: '12px 16px', borderRadius: HP_TOKENS.radiusMd,
         background: isHovered ? HP_TOKENS.card : 'transparent',
         boxShadow: isHovered ? '0 4px 12px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.02)' : 'none',
         border: `1px solid ${isHovered ? HP_TOKENS.line : 'transparent'}`,
@@ -263,19 +262,18 @@ function StepItem({ num, title, text, icon, isLast, isHovered, onHover, onLeave 
       )}
       
       <div style={{ 
-        width: 34, height: 34, borderRadius: 17, flexShrink: 0,
+        width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
         background: isHovered ? HP_TOKENS.yellowDark : HP_TOKENS.card, 
         color: isHovered ? '#fff' : HP_TOKENS.inkMute, 
         border: `2px solid ${isHovered ? HP_TOKENS.yellowDark : HP_TOKENS.line}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: HP_FONT, fontWeight: 900, fontSize: 14,
-        boxShadow: `0 0 0 4px ${isHovered ? HP_TOKENS.yellowSoft : HP_TOKENS.paper}, inset 0 0 0 1px ${isHovered ? 'transparent' : HP_TOKENS.line}`,
+        fontFamily: HP_FONT, fontWeight: 700, fontSize: 14,
         transition: 'all 0.2s ease', zIndex: 1
       }}>
         {num}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingTop: 6 }}>
-        <div style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, color: HP_TOKENS.ink, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 14, color: HP_TOKENS.ink, display: 'flex', alignItems: 'center', gap: 6 }}>
           <HPGlyph name={icon} size={14} color={isHovered ? HP_TOKENS.yellowDark : HP_TOKENS.inkMute} stroke={isHovered ? 2.5 : 2} />
           {title}
         </div>

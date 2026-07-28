@@ -230,7 +230,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
     const exceededNames = weightEntries.filter(e => e.totalWeight > 100).map(e => e.name.split(' ')[0]).join(', ');
     statusText = `⚠️ Bobot ${exceededNames} melebihi 100%!`;
     statusColor = HP_TOKENS.coral;
-    statusBg = '#FFF5F5';
+    statusBg = HP_TOKENS.dangerWash;
   } else if (all100) {
     statusText = 'Bobot semua anggota pas 100% ✅';
     statusColor = HP_TOKENS.sage;
@@ -243,7 +243,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
   }
 
   const selectStyle: React.CSSProperties = {
-    padding: 12, borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
+    padding: 12, borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.line}`,
     fontFamily: HP_FONT, fontSize: 13, background: HP_TOKENS.card, outline: 'none', width: '100%',
     boxSizing: 'border-box',
   };
@@ -264,13 +264,13 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
             {showMonthDropdown && (
               <>
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 }} onClick={() => setShowMonthDropdown(false)} />
-                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(26,29,35,0.12)', border: `1px solid ${HP_TOKENS.line}`, zIndex: 101, maxHeight: 250, overflowY: 'auto', padding: 8 }}>
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: HP_TOKENS.cardRaised, borderRadius: HP_TOKENS.radiusMd, boxShadow: HP_TOKENS.shadowMd, border: `1px solid ${HP_TOKENS.line}`, zIndex: 101, maxHeight: 250, overflowY: 'auto', padding: 8 }}>
                   {MONTHS.map((m, i) => (
                     <div 
                       key={i} className="hp-tap"
                       onClick={() => { setMonth(i + 1); setShowMonthDropdown(false); }}
                       style={{
-                        padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                        padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm, cursor: 'pointer',
                         background: month === (i + 1) ? HP_TOKENS.blueWash : 'transparent',
                         ...HP_TEXT.body, color: month === (i + 1) ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: month === (i + 1) ? 700 : 500,
                         marginBottom: 4
@@ -294,13 +294,13 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
             {showYearDropdown && (
               <>
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 }} onClick={() => setShowYearDropdown(false)} />
-                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(26,29,35,0.12)', border: `1px solid ${HP_TOKENS.line}`, zIndex: 101, maxHeight: 250, overflowY: 'auto', padding: 8 }}>
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: HP_TOKENS.cardRaised, borderRadius: HP_TOKENS.radiusMd, boxShadow: HP_TOKENS.shadowMd, border: `1px solid ${HP_TOKENS.line}`, zIndex: 101, maxHeight: 250, overflowY: 'auto', padding: 8 }}>
                   {[2025, 2026, 2027].map(y => (
                     <div 
                       key={y} className="hp-tap"
                       onClick={() => { setYear(y); setShowYearDropdown(false); }}
                       style={{
-                        padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                        padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm, cursor: 'pointer',
                         background: year === y ? HP_TOKENS.blueWash : 'transparent',
                         ...HP_TEXT.body, color: year === y ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: year === y ? 700 : 500,
                         marginBottom: 4
@@ -317,16 +317,16 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
 
         {/* 1. Add Form (Always visible at top) */}
         <div style={{ 
-          padding: 16, borderRadius: 20, background: HP_TOKENS.sageWash,
+          padding: 16, borderRadius: HP_TOKENS.radius, background: HP_TOKENS.sageWash,
           display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20,
           border: `1px solid ${HP_TOKENS.sage}20`
         }}>
-          <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.sage, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800 }}>
+          <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.sage, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}>
             <span>🎯</span> Buat KPI Baru
           </div>
 
           {error && (
-            <div style={{ padding: 10, borderRadius: 10, background: '#FFF5F5', color: '#E03131', fontSize: 12, fontWeight: 700 }}>
+            <div style={{ padding: 10, borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.dangerWash, color: HP_TOKENS.danger, fontSize: 12, fontWeight: 700 }}>
               {error}
             </div>
           )}
@@ -349,7 +349,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
               type="button"
               onClick={() => { setScope('assigned'); setAssignTo(''); }}
               style={{
-                flex: 1, padding: '10px', borderRadius: 12, fontSize: 12, fontWeight: 800,
+                flex: 1, padding: '10px', borderRadius: HP_TOKENS.radiusSm, fontSize: 12, fontWeight: 700,
                 background: scope === 'assigned' ? HP_TOKENS.blue : '#fff',
                 color: scope === 'assigned' ? '#fff' : HP_TOKENS.ink,
                 border: `1.5px solid ${scope === 'assigned' ? HP_TOKENS.blue : HP_TOKENS.line}`,
@@ -363,7 +363,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
               type="button"
               onClick={() => { setScope('team'); setAssignTo(teamId || 'team_1'); }}
               style={{
-                flex: 1, padding: '10px', borderRadius: 12, fontSize: 12, fontWeight: 800,
+                flex: 1, padding: '10px', borderRadius: HP_TOKENS.radiusSm, fontSize: 12, fontWeight: 700,
                 background: scope === 'team' ? HP_TOKENS.blue : '#fff',
                 color: scope === 'team' ? '#fff' : HP_TOKENS.ink,
                 border: `1.5px solid ${scope === 'team' ? HP_TOKENS.blue : HP_TOKENS.line}`,
@@ -379,7 +379,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
           <div style={{ display: 'flex', gap: 6 }}>
             {[10, 20, 25, 30, 40, 50].map(w => (
               <button key={w} onClick={() => setWeight(w)} style={{
-                flex: 1, padding: 8, borderRadius: 8, fontSize: 12, fontWeight: 800,
+                flex: 1, padding: 8, borderRadius: 8, fontSize: 12, fontWeight: 700,
                 background: weight === w ? HP_TOKENS.sage : '#fff',
                 color: weight === w ? '#fff' : HP_TOKENS.ink,
                 border: `1px solid ${weight === w ? HP_TOKENS.sage : HP_TOKENS.line}`,
@@ -406,12 +406,12 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
                 {showAssignDropdown && (
                   <>
                     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 }} onClick={() => setShowAssignDropdown(false)} />
-                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(26,29,35,0.12)', border: `1px solid ${HP_TOKENS.line}`, zIndex: 101, maxHeight: 200, overflowY: 'auto', padding: 8 }}>
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: HP_TOKENS.cardRaised, borderRadius: HP_TOKENS.radiusMd, boxShadow: HP_TOKENS.shadowMd, border: `1px solid ${HP_TOKENS.line}`, zIndex: 101, maxHeight: 200, overflowY: 'auto', padding: 8 }}>
                       <div 
                         className="hp-tap"
                         onClick={() => { setAssignTo(""); setShowAssignDropdown(false); }}
                         style={{
-                          padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                          padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm, cursor: 'pointer',
                           background: assignTo === "" ? HP_TOKENS.blueWash : 'transparent',
                           ...HP_TEXT.body, color: assignTo === '' ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: assignTo === "" ? 700 : 500,
                           marginBottom: 4
@@ -424,7 +424,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
                           key={m.id} className="hp-tap"
                           onClick={() => { setAssignTo(m.id); setShowAssignDropdown(false); }}
                           style={{
-                            padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                            padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm, cursor: 'pointer',
                             background: assignTo === m.id ? HP_TOKENS.blueWash : 'transparent',
                             ...HP_TEXT.body, color: assignTo === m.id ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13, fontWeight: assignTo === m.id ? 700 : 500,
                             marginBottom: 4
@@ -439,7 +439,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
               </div>
             </>
           ) : (
-            <div style={{ padding: 12, borderRadius: 12, background: HP_TOKENS.blueWash, border: `1px solid ${HP_TOKENS.blueSoft}` }}>
+            <div style={{ padding: 12, borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.blueWash, border: `1px solid ${HP_TOKENS.blueSoft}` }}>
               <div style={{ ...HP_TEXT.small, color: HP_TOKENS.blue, fontWeight: 700 }}>
                 👥 Target KPI Tim
               </div>
@@ -458,12 +458,12 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
                 width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 background: metricEnabled ? HP_TOKENS.blueWash : 'transparent',
                 border: `1.5px solid ${metricEnabled ? HP_TOKENS.blue : HP_TOKENS.line}`,
-                borderRadius: 12, padding: '10px 14px', cursor: 'pointer', fontFamily: HP_FONT,
+                borderRadius: HP_TOKENS.radiusSm, padding: '10px 14px', cursor: 'pointer', fontFamily: HP_FONT,
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 15 }}>📊</span>
-                <span style={{ fontSize: 13, fontWeight: 800, color: metricEnabled ? HP_TOKENS.blue : HP_TOKENS.inkSoft }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: metricEnabled ? HP_TOKENS.blue : HP_TOKENS.inkSoft }}>
                   Lacak dengan Angka
                 </span>
                 <span style={{ fontSize: 11, color: HP_TOKENS.inkMute, fontWeight: 500 }}>
@@ -471,15 +471,14 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
                 </span>
               </div>
               <div style={{
-                width: 36, height: 20, borderRadius: 10,
+                width: 36, height: 20, borderRadius: HP_TOKENS.radiusSm,
                 background: metricEnabled ? HP_TOKENS.blue : HP_TOKENS.lineSoft,
                 position: 'relative', transition: '0.2s', flexShrink: 0,
               }}>
                 <div style={{
-                  width: 14, height: 14, borderRadius: 7, background: '#fff',
+                  width: 14, height: 14, borderRadius: '50%', background: '#fff',
                   position: 'absolute', top: 3,
                   left: metricEnabled ? 19 : 3, transition: '0.2s',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
                 }} />
               </div>
             </button>
@@ -518,7 +517,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
                         type="button"
                         onClick={() => setMetricPeriod(p)}
                         style={{
-                          flex: 1, padding: '9px 8px', borderRadius: 10, fontSize: 12, fontWeight: 800,
+                          flex: 1, padding: '9px 8px', borderRadius: HP_TOKENS.radiusSm, fontSize: 12, fontWeight: 700,
                           background: metricPeriod === p ? HP_TOKENS.blue : '#fff',
                           color: metricPeriod === p ? '#fff' : HP_TOKENS.ink,
                           border: `1.5px solid ${metricPeriod === p ? HP_TOKENS.blue : HP_TOKENS.line}`,
@@ -533,7 +532,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
 
                 {metricTargetNum && metricUnit && (
                   <div style={{
-                    padding: '10px 14px', borderRadius: 10,
+                    padding: '10px 14px', borderRadius: HP_TOKENS.radiusSm,
                     background: HP_TOKENS.blueWash, border: `1px solid ${HP_TOKENS.blueSoft}`,
                     fontFamily: HP_FONT, fontSize: 12, fontWeight: 700, color: HP_TOKENS.blue,
                   }}>
@@ -547,9 +546,9 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
           </div>
 
           <button onClick={handleCreate} disabled={!title || !assignTo || saving} style={{
-            width: '100%', padding: 12, borderRadius: 12, border: 'none',
-            background: HP_TOKENS.sage, color: '#F4F7F9',
-            fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer',
+            width: '100%', padding: 12, borderRadius: HP_TOKENS.radiusSm, border: 'none',
+            background: HP_TOKENS.sage, color: HP_TOKENS.onPrimary,
+            fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: 'pointer',
             opacity: !title || !assignTo || saving ? 0.5 : 1,
             marginTop: 4
           }}>
@@ -560,7 +559,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
         <div style={{ margin: '24px 0 16px', height: 1, background: HP_TOKENS.line }} />
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <div style={{ ...HP_TEXT.h, fontSize: 15, color: HP_TOKENS.ink, fontWeight: 800 }}>
+          <div style={{ ...HP_TEXT.h, fontSize: 15, color: HP_TOKENS.ink, fontWeight: 700 }}>
             📋 Daftar KPI Terdaftar
           </div>
           <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 700 }}>
@@ -571,12 +570,12 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
         {/* Weight status indicator */}
         <div style={{ 
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: '10px 14px', borderRadius: 12, marginBottom: 16,
+          padding: '10px 14px', borderRadius: HP_TOKENS.radiusSm, marginBottom: 16,
           background: statusBg,
           border: `1px solid ${statusColor}30`
         }}>
           <span style={{ 
-            fontFamily: HP_FONT, fontWeight: 800, fontSize: 13,
+            fontFamily: HP_FONT, fontWeight: 700, fontSize: 13,
             color: statusColor
           }}>
             {statusText}
@@ -599,12 +598,12 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 4px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span style={{ fontSize: 14 }}>👤</span>
-                    <span style={{ ...HP_TEXT.small, fontWeight: 800, color: HP_TOKENS.inkSoft }}>
+                    <span style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.inkSoft }}>
                       {group.name}
                     </span>
                   </div>
                   <span style={{ 
-                    fontFamily: HP_FONT, fontSize: 12, fontWeight: 900,
+                    fontFamily: HP_FONT, fontSize: 12, fontWeight: 700,
                     color: group.totalWeight === 100 ? HP_TOKENS.sage : group.totalWeight > 100 ? HP_TOKENS.coral : HP_TOKENS.blue 
                   }}>
                     Total Bobot: {group.totalWeight}% {group.totalWeight > 100 ? '⚠️' : ''}
@@ -614,7 +613,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {group.items.map(k => (
                     <div key={k.id} style={{
-                      padding: 14, borderRadius: 16, background: HP_TOKENS.card,
+                      padding: 14, borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.card,
                       border: `1.5px solid ${HP_TOKENS.line}`,
                     }}>
                       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
@@ -627,7 +626,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
                           )}
                           <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center' }}>
                             <div style={{
-                              padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 800,
+                              padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700,
                               background: HP_TOKENS.blueSoft, color: HP_TOKENS.blue, fontFamily: HP_FONT
                             }}>
                               Bobot: {k.weight}%
@@ -638,7 +637,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
                               style={{
                                 background: expandedKpiId === k.id ? HP_TOKENS.blue : HP_TOKENS.blueWash,
                                 color: expandedKpiId === k.id ? '#fff' : HP_TOKENS.blue,
-                                padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 800,
+                                padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700,
                                 border: 'none', cursor: 'pointer', fontFamily: HP_FONT,
                                 display: 'flex', alignItems: 'center', gap: 4
                               }}
@@ -656,10 +655,10 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
 
                       {expandedKpiId === k.id && (
                         <div style={{ 
-                          marginTop: 12, padding: 12, borderRadius: 12, 
+                          marginTop: 12, padding: 12, borderRadius: HP_TOKENS.radiusSm, 
                           background: HP_TOKENS.paper, border: `1.5px solid ${HP_TOKENS.line}` 
                         }}>
-                          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 8, fontSize: 9, letterSpacing: '0.05em' }}>
+                          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 8, fontSize: 9, letterSpacing: '0.05em' }}>
                             📅 TARGET MINGGUAN (KPI BREAKDOWN)
                           </div>
                           
@@ -678,19 +677,19 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
                                 (weeklyTargetsMap[k.id] || []).map((wt: any) => (
                                   <div key={wt.id} style={{ 
                                     display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
-                                    padding: '8px 10px', borderRadius: 10, background: '#fff', border: `1px solid ${HP_TOKENS.lineSoft}` 
+                                    padding: '8px 10px', borderRadius: HP_TOKENS.radiusSm, background: '#fff', border: `1px solid ${HP_TOKENS.lineSoft}` 
                                   }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
                                       <div style={{ 
                                         padding: '2px 6px', borderRadius: 4, background: HP_TOKENS.blueSoft, color: HP_TOKENS.blue, 
-                                        fontSize: 9, fontWeight: 900 
+                                        fontSize: 9, fontWeight: 700 
                                       }}>M{wt.weekNumber}</div>
                                       <div style={{ ...HP_TEXT.small, fontSize: 11, fontWeight: 700, color: HP_TOKENS.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                         {wt.title}
                                       </div>
                                     </div>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                      <span style={{ fontSize: 10, fontWeight: 800, color: HP_TOKENS.inkMute }}>
+                                      <span style={{ fontSize: 10, fontWeight: 700, color: HP_TOKENS.inkMute }}>
                                         {wt.targetValue} {wt.metricUnit}
                                       </span>
                                       <button 
@@ -698,7 +697,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
                                         onClick={() => handleDeleteWeeklyTarget(k.id, wt.id)}
                                         style={{ background: 'none', border: 'none', padding: 2, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                                       >
-                                        <span style={{ color: HP_TOKENS.coral, fontSize: 16, fontWeight: 800, lineHeight: 1 }}>×</span>
+                                        <span style={{ color: HP_TOKENS.coral, fontSize: 16, fontWeight: 700, lineHeight: 1 }}>×</span>
                                       </button>
                                     </div>
                                   </div>
@@ -709,7 +708,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
 
                           {/* Add Form */}
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 8, borderTop: `1px dashed ${HP_TOKENS.line}` }}>
-                            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkSoft, fontWeight: 800, fontSize: 9 }}>+ Tambah Target Mingguan</div>
+                            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkSoft, fontWeight: 700, fontSize: 9 }}>+ Tambah Target Mingguan</div>
                             {wtError && (
                               <div style={{ fontSize: 10, color: HP_TOKENS.coral, fontWeight: 700 }}>{wtError}</div>
                             )}
@@ -766,7 +765,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
                                 style={{
                                   padding: '6px 12px', borderRadius: 8, border: 'none',
                                   background: HP_TOKENS.sage, color: '#fff',
-                                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 11, cursor: 'pointer',
+                                  fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, cursor: 'pointer',
                                   opacity: (!newWtTitle || wtSaving) ? 0.5 : 1, marginLeft: 'auto'
                                 }}
                               >

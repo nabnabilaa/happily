@@ -454,7 +454,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
   };
 
   const inputStyle: React.CSSProperties = {
-    width: '100%', padding: 14, borderRadius: 12, 
+    width: '100%', padding: 14, borderRadius: HP_TOKENS.radiusSm, 
     border: `1.5px solid ${HP_TOKENS.line}`,
     fontFamily: HP_FONT, fontSize: 14, background: HP_TOKENS.card, outline: 'none',
     boxSizing: 'border-box',
@@ -484,7 +484,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                 setNewDescription("");
                 setSelectedWeeklyTargetId("");
               }}
-              style={{ background: 'none', border: 'none', color: HP_TOKENS.blue, fontWeight: 800, cursor: 'pointer', marginLeft: 8 }}
+              style={{ background: 'none', border: 'none', color: HP_TOKENS.blue, fontWeight: 700, cursor: 'pointer', marginLeft: 8 }}
             >
               (Batal Edit)
             </button>
@@ -492,7 +492,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
         </div>
         <div style={{ 
           display: 'flex', flexDirection: 'column', gap: 10, 
-          padding: 16, borderRadius: 16, background: HP_TOKENS.paper, border: `1.5px solid ${HP_TOKENS.line}`,
+          padding: 16, borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.paper, border: `1.5px solid ${HP_TOKENS.line}`,
           marginBottom: 24
         }}>
           <input 
@@ -587,15 +587,15 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                     />
                     <div style={{
                       position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4,
-                      background: '#fff', borderRadius: 16,
-                      boxShadow: '0 8px 32px rgba(26,29,35,0.12)', border: `1px solid ${HP_TOKENS.line}`,
+                      background: '#fff', borderRadius: HP_TOKENS.radiusMd,
+                      boxShadow: HP_TOKENS.shadowLg, border: `1px solid ${HP_TOKENS.line}`,
                       zIndex: 101, maxHeight: 260, overflowY: 'auto', padding: 8,
                     }}>
                       <div
                         className="hp-tap"
                         onClick={() => { setSelectedWeeklyTargetId(""); setShowWeeklyTargetDropdown(false); }}
                         style={{
-                          padding: '10px 12px', borderRadius: 10, cursor: 'pointer', marginBottom: 4,
+                          padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm, cursor: 'pointer', marginBottom: 4,
                           background: selectedWeeklyTargetId === "" ? HP_TOKENS.blueWash : 'transparent',
                           ...HP_TEXT.body, color: selectedWeeklyTargetId === '' ? HP_TOKENS.blue : HP_TOKENS.inkMute, fontSize: 13,
                         }}
@@ -611,7 +611,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
 
                       {sortedWeeklyTargetGroups.map(group => (
                         <div key={group.kpiId} style={{ marginBottom: 6 }}>
-                          <div style={{ padding: '4px 12px', ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800 }}>
+                          <div style={{ padding: '4px 12px', ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>
                             🎯 {group.kpiTitle}
                           </div>
                           {group.targets.map((w: any) => {
@@ -622,13 +622,13 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                                 className="hp-tap"
                                 onClick={() => { setSelectedWeeklyTargetId(w.id); setShowWeeklyTargetDropdown(false); }}
                                 style={{
-                                  padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                                  padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm, cursor: 'pointer',
                                   background: isSelected ? HP_TOKENS.blueWash : 'transparent',
                                   ...HP_TEXT.body, color: isSelected ? HP_TOKENS.blue : HP_TOKENS.ink, fontSize: 13,
                                   display: 'flex', alignItems: 'center', gap: 8,
                                 }}
                               >
-                                <div style={{ padding: '2px 6px', borderRadius: 4, background: HP_TOKENS.blueSoft, color: HP_TOKENS.blue, fontSize: 9, fontWeight: 900 }}>
+                                <div style={{ padding: '2px 6px', borderRadius: 4, background: HP_TOKENS.blueSoft, color: HP_TOKENS.blue, fontSize: 9, fontWeight: 700 }}>
                                   W{w.weekNumber}
                                 </div>
                                 <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -648,7 +648,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
 
           {/* Info */}
           <div style={{ 
-            padding: 10, borderRadius: 10, background: HP_TOKENS.sageWash, border: `1px solid ${HP_TOKENS.sage}20`,
+            padding: 10, borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.sageWash, border: `1px solid ${HP_TOKENS.sage}20`,
             ...HP_TEXT.small, fontSize: 11, color: HP_TOKENS.sage, fontWeight: 600,
           }}>
             💡 Link bukti pengerjaan diisi nanti saat mencentang task selesai. Poin masuk setelah Manager ACC.
@@ -658,9 +658,9 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
             onClick={savePriority}
             disabled={!canAdd || isSubmitting}
             style={{
-              padding: 14, borderRadius: 12, border: 'none',
-              background: HP_TOKENS.sage, color: '#F4F7F9',
-              fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: canAdd && !isSubmitting ? 'pointer' : 'default',
+              padding: 14, borderRadius: HP_TOKENS.radiusSm, border: 'none',
+              background: HP_TOKENS.sage, color: HP_TOKENS.onPrimary,
+              fontFamily: HP_FONT, fontWeight: 700, fontSize: 14, cursor: canAdd && !isSubmitting ? 'pointer' : 'default',
               opacity: (!canAdd || isSubmitting) ? 0.5 : 1,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}
@@ -673,7 +673,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
         <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 8 }}>TASK AKTIF HARI INI</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
           {state.priorities.length === 0 ? (
-            <div style={{ padding: 20, textAlign: 'center', background: HP_TOKENS.paper, borderRadius: 16, border: `1.5px dashed ${HP_TOKENS.line}` }}>
+            <div style={{ padding: 20, textAlign: 'center', background: HP_TOKENS.paper, borderRadius: HP_TOKENS.radiusMd, border: `1.5px dashed ${HP_TOKENS.line}` }}>
               <div style={{ fontSize: 24, marginBottom: 6 }}>📝</div>
               <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute }}>Belum ada task. Tambahkan di atas.</div>
             </div>
@@ -682,7 +682,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
               <div 
                 key={p.id} 
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 14,
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: HP_TOKENS.radiusMd,
                   background: p.done ? HP_TOKENS.sageWash : HP_TOKENS.card, 
                   border: `1.5px solid ${p.done ? HP_TOKENS.sage + '30' : HP_TOKENS.line}`,
                 }}
@@ -690,13 +690,13 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                 <button 
                   onClick={() => togglePriority(p.id)}
                   style={{ 
-                    width: 22, height: 22, borderRadius: 11, flexShrink: 0,
+                    width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
                     background: p.done ? HP_TOKENS.sage : 'transparent',
                     border: `2px solid ${p.done ? HP_TOKENS.sage : HP_TOKENS.line}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     cursor: 'pointer', padding: 0
                   }}>
-                  {p.done && <HPGlyph name="check" size={12} color="#F4F7F9"/>}
+                  {p.done && <HPGlyph name="check" size={12} color={HP_TOKENS.onPrimary}/>}
                 </button>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ 
@@ -725,7 +725,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                           background: HP_TOKENS.blueSoft, 
                         }}>
                           <span style={{ fontSize: 10 }}>🎯</span>
-                          <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 800, fontSize: 9 }}>
+                          <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 700, fontSize: 9 }}>
                             {fallbackTitle}
                           </span>
                         </div>
@@ -740,7 +740,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                         background: HP_TOKENS.blueSoft, 
                       }}>
                         <span style={{ fontSize: 10 }}>🎯</span>
-                        <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 800, fontSize: 9 }}>
+                        <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 700, fontSize: 9 }}>
                           {displayTag}
                         </span>
                       </div>
@@ -751,7 +751,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                     <div style={{ marginTop: 6 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
                         <span style={{ ...HP_TEXT.tiny, fontSize: 9, color: HP_TOKENS.blue }}>Progress hari ini</span>
-                        <span style={{ fontFamily: HP_FONT, fontSize: 9, fontWeight: 900, color: HP_TOKENS.blue }}>{p.partial_progress}%</span>
+                        <span style={{ fontFamily: HP_FONT, fontSize: 9, fontWeight: 700, color: HP_TOKENS.blue }}>{p.partial_progress}%</span>
                       </div>
                       <div style={{ height: 5, background: HP_TOKENS.lineSoft, borderRadius: 99, overflow: 'hidden' }}>
                         <div style={{
@@ -769,7 +769,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                       padding: '2px 8px', borderRadius: 6, background: HP_TOKENS.sageSoft,
                     }}>
                       <span style={{ fontSize: 10 }}>📎</span>
-                      <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 800, fontSize: 9 }}>
+                      <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 700, fontSize: 9 }}>
                         {p.proof_links.length} link
                       </span>
                     </div>
@@ -781,7 +781,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                       padding: '2px 8px', borderRadius: 6, background: HP_TOKENS.lavenderSoft,
                     }}>
                       <span style={{ fontSize: 10 }}>📁</span>
-                      <span style={{ ...HP_TEXT.tiny, color: '#6B5F8E', fontWeight: 800, fontSize: 9 }}>
+                      <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.primary, fontWeight: 700, fontSize: 9 }}>
                         Jangka Panjang
                       </span>
                     </div>
@@ -868,12 +868,12 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
           padding: 24, backdropFilter: 'blur(4px)'
         }}>
           <div style={{
-            background: '#fff', borderRadius: 24, padding: 32,
+            background: '#fff', borderRadius: HP_TOKENS.radiusLg, padding: 32,
             width: '100%', maxWidth: 400, textAlign: 'center',
-            boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
+            boxShadow: HP_TOKENS.shadowLg,
             animation: 'hpPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }}>
-            <div style={{ width: 64, height: 64, borderRadius: 32, background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
               <HPGlyph name="trash" size={32} />
             </div>
             <div style={{ ...HP_TEXT.h, fontSize: 20, marginBottom: 8 }}>Hapus Task Harian?</div>
@@ -882,17 +882,17 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
             </div>
             <div style={{ display: 'flex', gap: 12, flexDirection: 'column' }}>
               <button onClick={executeDeletePriority} className="hp-tap" style={{
-                padding: '16px', borderRadius: 16, border: 'none',
+                padding: '16px', borderRadius: HP_TOKENS.radiusMd, border: 'none',
                 background: HP_TOKENS.coral, color: '#fff',
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: 'pointer',
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, cursor: 'pointer',
                 width: '100%'
               }}>
                 Ya, Hapus
               </button>
               <button onClick={() => setTaskToDelete(null)} className="hp-tap" style={{
-                padding: '16px', borderRadius: 16, border: 'none',
+                padding: '16px', borderRadius: HP_TOKENS.radiusMd, border: 'none',
                 background: HP_TOKENS.lineSoft, color: HP_TOKENS.inkSoft,
-                fontFamily: HP_FONT, fontWeight: 800, fontSize: 16, cursor: 'pointer',
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, cursor: 'pointer',
                 width: '100%'
               }}>
                 Batal

@@ -47,11 +47,11 @@ export default function HabitDetailsModal({
 
             {!selectedHabitDay.isToday && !selectedHabitDay.done && (
               <div style={{
-                background: HP_TOKENS.yellowSoft, padding: 12, borderRadius: 12, marginBottom: 16,
+                background: HP_TOKENS.yellowSoft, padding: 12, borderRadius: HP_TOKENS.radiusSm, marginBottom: 16,
                 border: `1px solid ${HP_TOKENS.yellow}`, display: 'flex', gap: 10, alignItems: 'flex-start'
               }}>
                 <span style={{ fontSize: 16 }}>⚠️</span>
-                <div style={{ ...HP_TEXT.small, color: '#8A6814', lineHeight: 1.4 }}>
+                <div style={{ ...HP_TEXT.small, color: HP_TOKENS.yellowDark, lineHeight: 1.4 }}>
                   <strong>Konfirmasi:</strong> Kamu sedang mengubah data untuk hari yang sudah lewat. Apakah kamu terlewat atau salah pencet?
                 </div>
               </div>
@@ -76,7 +76,7 @@ export default function HabitDetailsModal({
 
               return (
                 <div style={{ marginBottom: 16 }}>
-                  <div style={{ padding: 16, background: HP_TOKENS.yellowSoft, borderRadius: 16, border: `1.5px solid ${HP_TOKENS.yellow}` }}>
+                  <div style={{ padding: 16, background: HP_TOKENS.yellowSoft, borderRadius: HP_TOKENS.radiusMd, border: `1.5px solid ${HP_TOKENS.yellow}` }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                       <HPGlyph name="check" size={16} color={HP_TOKENS.ink} stroke={3} />
                       <span style={{ ...HP_TEXT.h, fontSize: 15 }}>Selesai</span>
@@ -93,7 +93,7 @@ export default function HabitDetailsModal({
                         }
                       }}
                       className="hp-tap"
-                      style={{ background: 'transparent', color: HP_TOKENS.coral, border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: 'pointer' }}
+                      style={{ background: 'transparent', color: HP_TOKENS.coral, border: 'none', fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
                     >
                       Batalkan Status Selesai
                     </button>
@@ -110,7 +110,7 @@ export default function HabitDetailsModal({
                   onChange={(e) => setHabitNote(e.target.value)}
                   placeholder="Ada yang ingin dicatat untuk sesi ini? (Sesi curhat / progres)"
                   style={{
-                    width: '100%', padding: 12, borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
+                    width: '100%', padding: 12, borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.line}`,
                     background: HP_TOKENS.card, color: HP_TOKENS.ink, fontFamily: HP_FONT, fontSize: 14, minHeight: 80, resize: 'vertical'
                   }}
                 />
@@ -119,9 +119,9 @@ export default function HabitDetailsModal({
                     onClick={() => saveHabitDay(true)}
                     className="hp-tap"
                     style={{
-                      width: '100%', padding: '16px', borderRadius: 14, border: 'none',
+                      width: '100%', padding: '16px', borderRadius: HP_TOKENS.radiusMd, border: 'none',
                       background: HP_TOKENS.yellow, color: HP_TOKENS.ink,
-                      fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer'
+                      fontFamily: HP_FONT, fontWeight: 700, fontSize: 14, cursor: 'pointer'
                     }}
                   >
                     Tandai Selesai

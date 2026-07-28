@@ -206,7 +206,7 @@ export default function ReportExportModal({ onClose }: Props) {
       border: `2px solid ${on ? color : HP_TOKENS.line}`, background: on ? color : 'transparent',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
-      {on && <HPGlyph name="check" size={size * 0.55} color="#F4F7F9" />}
+      {on && <HPGlyph name="check" size={size * 0.55} color={HP_TOKENS.onPrimary} />}
     </div>
   );
 
@@ -235,7 +235,7 @@ export default function ReportExportModal({ onClose }: Props) {
               const on = selectedTypes.includes(t.key);
               return (
                 <button key={t.key} onClick={() => toggleType(t.key)} className="hp-tap" style={{
-                  display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 12,
+                  display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm,
                   border: `1.5px solid ${on ? HP_TOKENS.sage : HP_TOKENS.line}`,
                   background: on ? HP_TOKENS.sageWash : HP_TOKENS.card, cursor: 'pointer', textAlign: 'left',
                 }}>
@@ -255,7 +255,7 @@ export default function ReportExportModal({ onClose }: Props) {
 
           {/* Toggle "Semua orang" */}
           <button onClick={() => setSelectAll(s => !s)} className="hp-tap" style={{
-            display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 12,
+            display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm,
             border: `1.5px solid ${selectAll ? HP_TOKENS.blue : HP_TOKENS.line}`,
             background: selectAll ? HP_TOKENS.blueWash : HP_TOKENS.card, cursor: 'pointer', marginBottom: 8,
           }}>
@@ -270,7 +270,7 @@ export default function ReportExportModal({ onClose }: Props) {
           {!selectAll && (
             <>
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 Cari nama / divisi..."
-                style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.line}`,
+                style={{ width: '100%', padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.line}`,
                   fontFamily: HP_FONT, fontSize: 12, outline: 'none', boxSizing: 'border-box', marginBottom: 8 }} />
 
               {selectedUserIds.length > 0 && (
@@ -279,7 +279,7 @@ export default function ReportExportModal({ onClose }: Props) {
                     const u = users.find(x => String(x.id) === id);
                     return u ? (
                       <span key={id} onClick={() => toggleUser(id)} style={{
-                        padding: '3px 8px', borderRadius: 6, background: HP_TOKENS.blue, color: '#F4F7F9',
+                        padding: '3px 8px', borderRadius: 6, background: HP_TOKENS.blue, color: HP_TOKENS.onPrimary,
                         fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: HP_FONT,
                       }}>{u.name?.split(' ')[0]} ✕</span>
                     ) : null;
@@ -288,7 +288,7 @@ export default function ReportExportModal({ onClose }: Props) {
               )}
 
               <div style={{ maxHeight: 240, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4,
-                border: `1px solid ${HP_TOKENS.line}`, borderRadius: 10, padding: 4 }}>
+                border: `1px solid ${HP_TOKENS.line}`, borderRadius: HP_TOKENS.radiusSm, padding: 4 }}>
                 {loading ? (
                   <div style={{ textAlign: 'center', padding: 20, color: HP_TOKENS.inkMute }}>Memuat...</div>
                 ) : deptNames.length === 0 ? (
@@ -300,7 +300,7 @@ export default function ReportExportModal({ onClose }: Props) {
                   const someSel = du.some(u => selectedUserIds.includes(String(u.id)));
                   return (
                     <div key={dept}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 10, background: HP_TOKENS.lineSoft }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.lineSoft }}>
                         <button onClick={() => toggleCollapse(dept)} className="hp-tap" style={{
                           background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex',
                           transform: isCol ? 'rotate(0)' : 'rotate(90deg)', transition: 'transform 0.2s',
@@ -318,7 +318,7 @@ export default function ReportExportModal({ onClose }: Props) {
                         const sel = selectedUserIds.includes(String(u.id));
                         return (
                           <button key={u.id} onClick={() => toggleUser(String(u.id))} className="hp-tap" style={{
-                            display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px 8px 28px', borderRadius: 10,
+                            display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px 8px 28px', borderRadius: HP_TOKENS.radiusSm,
                             background: sel ? HP_TOKENS.blueWash : 'transparent',
                             border: sel ? `1.5px solid ${HP_TOKENS.blue}30` : '1.5px solid transparent',
                             cursor: 'pointer', width: '100%', textAlign: 'left',
@@ -342,10 +342,10 @@ export default function ReportExportModal({ onClose }: Props) {
 
         {/* Download */}
         <button onClick={handleExport} disabled={!canExport} className="hp-tap" style={{
-          width: '100%', padding: 16, borderRadius: 14, border: 'none',
+          width: '100%', padding: 16, borderRadius: HP_TOKENS.radiusMd, border: 'none',
           background: canExport ? HP_TOKENS.sage : HP_TOKENS.lineSoft,
           color: canExport ? '#fff' : HP_TOKENS.inkMute,
-          fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: canExport ? 'pointer' : 'default',
+          fontFamily: HP_FONT, fontWeight: 700, fontSize: 15, cursor: canExport ? 'pointer' : 'default',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
           boxShadow: canExport ? `0 4px 16px ${HP_TOKENS.sage}30` : 'none',
         }}>
@@ -357,7 +357,7 @@ export default function ReportExportModal({ onClose }: Props) {
 }
 
 const selectStyle: React.CSSProperties = {
-  width: '100%', padding: 12, borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
+  width: '100%', padding: 12, borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.line}`,
   fontFamily: HP_FONT, fontSize: 14, fontWeight: 700, outline: 'none', background: HP_TOKENS.card,
   color: HP_TOKENS.ink, boxSizing: 'border-box', height: 44,
 };

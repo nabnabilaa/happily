@@ -138,8 +138,8 @@ export default function ReportDashboard({ openModal, lockedDept, compact, teamOn
       {/* Header */}
       <HPCard padding={0} style={{ overflow: 'hidden' }}>
         {!compact && (
-          <div style={{ background: HP_TOKENS.sage, padding: 20, color: '#F4F7F9' }}>
-            <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 20 }}>📊 Dashboard Laporan Kinerja</div>
+          <div style={{ background: HP_TOKENS.sage, padding: 20, color: HP_TOKENS.onPrimary }}>
+            <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 20 }}>📊 Dashboard Laporan Kinerja</div>
             <div style={{ fontSize: 13, fontWeight: 600, opacity: 0.9, marginTop: 2 }}>{scopeLabel} · {periodLabel}</div>
           </div>
         )}
@@ -179,8 +179,8 @@ export default function ReportDashboard({ openModal, lockedDept, compact, teamOn
             {dlOpen && (
               <div style={{
                 position: 'absolute', top: '110%', left: 0, right: 0, zIndex: 30,
-                background: HP_TOKENS.card, borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
-                boxShadow: '0 8px 24px rgba(0,0,0,0.14)', overflow: 'hidden',
+                background: HP_TOKENS.card, borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.line}`,
+ overflow: 'hidden',
               }}>
                 {[
                   { k: 'excel', label: '📊 Excel Divisi', sub: 'Rangkuman (chart) + tab per orang' },
@@ -191,7 +191,7 @@ export default function ReportDashboard({ openModal, lockedDept, compact, teamOn
                     display: 'block', width: '100%', textAlign: 'left', padding: '10px 12px', border: 'none',
                     borderBottom: `1px solid ${HP_TOKENS.lineSoft}`, background: 'transparent', cursor: 'pointer', fontFamily: HP_FONT,
                   }}>
-                    <div style={{ fontWeight: 800, fontSize: 12, color: HP_TOKENS.ink }}>{item.label}</div>
+                    <div style={{ fontWeight: 700, fontSize: 12, color: HP_TOKENS.ink }}>{item.label}</div>
                     <div style={{ fontSize: 10, color: HP_TOKENS.inkMute, fontWeight: 600 }}>{item.sub}</div>
                   </button>
                 ))}
@@ -216,7 +216,7 @@ export default function ReportDashboard({ openModal, lockedDept, compact, teamOn
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <DonutTile value={team.avgCompletion} label="Penyelesaian Task" color={HP_TOKENS.blue} />
               <DonutTile value={team.avgKpiScore} label="Skor KPI" color={HP_TOKENS.sage} />
-              <DonutTile value={team.avgQuality} label="Kualitas" color="#8B5CF6" />
+              <DonutTile value={team.avgQuality} label="Kualitas" color={HP_TOKENS.primary} />
             </div>
             <div style={{ display: 'flex', gap: 12, marginTop: 12, flexWrap: 'wrap' }}>
               <Stat big={`${team.headcount}`} label="Karyawan" />
@@ -264,19 +264,19 @@ export default function ReportDashboard({ openModal, lockedDept, compact, teamOn
               .sort((a, b) => (b.k.achievement || 0) - (a.k.achievement || 0));
             return (
               <div onClick={() => setKpiDetail(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-                <div onClick={e => e.stopPropagation()} style={{ background: HP_TOKENS.card, borderRadius: 18, padding: 18, maxWidth: 440, width: '100%', maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 12px 40px rgba(0,0,0,0.25)' }}>
+                <div onClick={e => e.stopPropagation()} style={{ background: HP_TOKENS.card, borderRadius: HP_TOKENS.radius, padding: 18, maxWidth: 440, width: '100%', maxHeight: '80vh', overflowY: 'auto' }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 4 }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800 }}>CAPAIAN KPI · rata-rata {kpiDetail.avgAchievement}%</div>
+                      <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>CAPAIAN KPI · rata-rata {kpiDetail.avgAchievement}%</div>
                       <div style={{ ...HP_TEXT.h, fontSize: 16 }}>{kpiDetail.title}</div>
                     </div>
-                    <button onClick={() => setKpiDetail(null)} className="hp-tap" style={{ border: 'none', background: HP_TOKENS.lineSoft, borderRadius: 8, width: 28, height: 28, cursor: 'pointer', fontFamily: HP_FONT, fontWeight: 800, color: HP_TOKENS.inkMute }}>✕</button>
+                    <button onClick={() => setKpiDetail(null)} className="hp-tap" style={{ border: 'none', background: HP_TOKENS.lineSoft, borderRadius: 8, width: 28, height: 28, cursor: 'pointer', fontFamily: HP_FONT, fontWeight: 700, color: HP_TOKENS.inkMute }}>✕</button>
                   </div>
-                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, margin: '10px 0 8px' }}>KONTRIBUTOR ({contributors.length})</div>
+                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, margin: '10px 0 8px' }}>KONTRIBUTOR ({contributors.length})</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {contributors.map(({ p, k }) => (
                       <button key={p.id} onClick={() => { setKpiDetail(null); openModal('employee_profile', { employeeId: p.id, employeeName: p.name }); }} className="hp-tap"
-                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 10, background: HP_TOKENS.paper, border: `1px solid ${HP_TOKENS.lineSoft}`, cursor: 'pointer', textAlign: 'left', fontFamily: HP_FONT }}>
+                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.paper, border: `1px solid ${HP_TOKENS.lineSoft}`, cursor: 'pointer', textAlign: 'left', fontFamily: HP_FONT }}>
                         <HPAvatar name={p.name} size={30} image={p.avatarImage} />
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ ...HP_TEXT.small, fontWeight: 700, fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
@@ -298,7 +298,7 @@ export default function ReportDashboard({ openModal, lockedDept, compact, teamOn
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {team.byDivision.map((d: any) => (
                   <div key={d.department} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 110, fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, color: HP_TOKENS.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.department}</div>
+                    <div style={{ width: 110, fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, color: HP_TOKENS.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.department}</div>
                     <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, width: 48 }}>{d.headcount} org</span>
                     <div style={{ flex: 1 }}><Meter value={d.avgKpi} color={toneFor(d.avgKpi)} width={120} /></div>
                   </div>
@@ -318,7 +318,7 @@ export default function ReportDashboard({ openModal, lockedDept, compact, teamOn
               gap: 12, 
               margin: '0 4px 12px' 
             }}>
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 900, fontSize: 12 }}>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, fontSize: 12 }}>
                 DETAIL PER ORANG ({filteredPeople.length}{data?.people?.length !== filteredPeople.length ? ` / ${data?.people?.length}` : ''})
               </div>
 
@@ -328,11 +328,10 @@ export default function ReportDashboard({ openModal, lockedDept, compact, teamOn
                 alignItems: 'center',
                 gap: 8,
                 background: HP_TOKENS.card,
-                borderRadius: 12,
+                borderRadius: HP_TOKENS.radiusSm,
                 padding: '6px 12px',
                 border: `1.5px solid ${HP_TOKENS.line}`,
                 minWidth: 240,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
               }}>
                 <span style={{ fontSize: 14 }}>🔍</span>
                 <input
@@ -373,7 +372,7 @@ export default function ReportDashboard({ openModal, lockedDept, compact, teamOn
             {filteredPeople.length === 0 ? (
               <div style={{
                 background: HP_TOKENS.card,
-                borderRadius: 16,
+                borderRadius: HP_TOKENS.radiusMd,
                 border: `1.5px dashed ${HP_TOKENS.line}`,
                 padding: '36px 20px',
                 textAlign: 'center',
@@ -389,7 +388,7 @@ export default function ReportDashboard({ openModal, lockedDept, compact, teamOn
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
                   {paginatedPeopleList.map(p => (
                     <button key={p.id} onClick={() => openModal('employee_profile', { employeeId: p.id, employeeName: p.name })} className="hp-tap"
-                      style={{ textAlign: 'left', cursor: 'pointer', background: HP_TOKENS.card, border: `1.5px solid ${HP_TOKENS.line}`, borderRadius: 16, padding: 14, display: 'flex', flexDirection: 'column', gap: 10, fontFamily: HP_FONT }}>
+                      style={{ textAlign: 'left', cursor: 'pointer', background: HP_TOKENS.card, border: `1.5px solid ${HP_TOKENS.line}`, borderRadius: HP_TOKENS.radiusMd, padding: 14, display: 'flex', flexDirection: 'column', gap: 10, fontFamily: HP_FONT }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <HPAvatar name={p.name} size={40} image={p.avatarImage} />
                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -397,7 +396,7 @@ export default function ReportDashboard({ openModal, lockedDept, compact, teamOn
                           <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontSize: 10 }}>{p.jobTitle || p.department}</div>
                         </div>
                         <Donut value={p.kpiScore} color={toneFor(p.kpiScore)} size={48} thickness={4}>
-                          <span style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 13, color: toneFor(p.kpiScore) }}>{p.kpiScore}</span>
+                          <span style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, color: toneFor(p.kpiScore) }}>{p.kpiScore}</span>
                         </Donut>
                       </div>
                       <div style={{ display: 'flex', gap: 6 }}>
@@ -411,7 +410,7 @@ export default function ReportDashboard({ openModal, lockedDept, compact, teamOn
                         <span role="button" tabIndex={0}
                           onClick={(e) => { e.stopPropagation(); downloadOnePerson(p); }}
                           onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); downloadOnePerson(p); } }}
-                          style={{ ...HP_TEXT.tiny, fontSize: 10, color: HP_TOKENS.sage, fontWeight: 800, padding: '3px 8px', borderRadius: 8, background: HP_TOKENS.sageWash, cursor: 'pointer' }}>
+                          style={{ ...HP_TEXT.tiny, fontSize: 10, color: HP_TOKENS.sage, fontWeight: 700, padding: '3px 8px', borderRadius: 8, background: HP_TOKENS.sageWash, cursor: 'pointer' }}>
                           ⬇ Excel
                         </span>
                       </div>
@@ -430,7 +429,7 @@ export default function ReportDashboard({ openModal, lockedDept, compact, teamOn
                     marginTop: 16,
                     padding: '12px 16px',
                     background: HP_TOKENS.card,
-                    borderRadius: 16,
+                    borderRadius: HP_TOKENS.radiusMd,
                     border: `1.5px solid ${HP_TOKENS.line}`
                   }}>
                     <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontSize: 12, fontWeight: 700 }}>
@@ -444,12 +443,12 @@ export default function ReportDashboard({ openModal, lockedDept, compact, teamOn
                         className="hp-tap"
                         style={{
                           padding: '6px 12px',
-                          borderRadius: 10,
+                          borderRadius: HP_TOKENS.radiusSm,
                           border: `1px solid ${HP_TOKENS.line}`,
                           background: peoplePage === 1 ? HP_TOKENS.lineSoft : HP_TOKENS.paper,
                           color: peoplePage === 1 ? HP_TOKENS.inkMute : HP_TOKENS.ink,
                           fontFamily: HP_FONT,
-                          fontWeight: 800,
+                          fontWeight: 700,
                           fontSize: 12,
                           cursor: peoplePage === 1 ? 'default' : 'pointer',
                           opacity: peoplePage === 1 ? 0.5 : 1
@@ -458,7 +457,7 @@ export default function ReportDashboard({ openModal, lockedDept, compact, teamOn
                         ◀ Sebelumnya
                       </button>
 
-                      <span style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, color: HP_TOKENS.ink, padding: '0 4px' }}>
+                      <span style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, color: HP_TOKENS.ink, padding: '0 4px' }}>
                         {peoplePage} / {totalPeoplePages}
                       </span>
 
@@ -468,12 +467,12 @@ export default function ReportDashboard({ openModal, lockedDept, compact, teamOn
                         className="hp-tap"
                         style={{
                           padding: '6px 12px',
-                          borderRadius: 10,
+                          borderRadius: HP_TOKENS.radiusSm,
                           border: `1px solid ${HP_TOKENS.line}`,
                           background: peoplePage === totalPeoplePages ? HP_TOKENS.lineSoft : HP_TOKENS.paper,
                           color: peoplePage === totalPeoplePages ? HP_TOKENS.inkMute : HP_TOKENS.ink,
                           fontFamily: HP_FONT,
-                          fontWeight: 800,
+                          fontWeight: 700,
                           fontSize: 12,
                           cursor: peoplePage === totalPeoplePages ? 'default' : 'pointer',
                           opacity: peoplePage === totalPeoplePages ? 0.5 : 1
@@ -498,23 +497,23 @@ export default function ReportDashboard({ openModal, lockedDept, compact, teamOn
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800, marginBottom: 4 }}>{label}</div>
+      <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginBottom: 4 }}>{label}</div>
       {children}
     </div>
   );
 }
 function Stat({ big, label }: { big: string; label: string }) {
   return (
-    <div style={{ flex: 1, minWidth: 100, background: HP_TOKENS.lineSoft, borderRadius: 12, padding: '12px 14px' }}>
-      <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 22, color: HP_TOKENS.ink }}>{big}</div>
+    <div style={{ flex: 1, minWidth: 100, background: HP_TOKENS.lineSoft, borderRadius: HP_TOKENS.radiusSm, padding: '12px 14px' }}>
+      <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 22, color: HP_TOKENS.ink }}>{big}</div>
       <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>{label}</div>
     </div>
   );
 }
 function MiniStat({ b, s }: { b: string; s: string }) {
   return (
-    <div style={{ flex: 1, background: HP_TOKENS.lineSoft, borderRadius: 10, padding: '6px 4px', textAlign: 'center' }}>
-      <div style={{ fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, color: HP_TOKENS.ink }}>{b}</div>
+    <div style={{ flex: 1, background: HP_TOKENS.lineSoft, borderRadius: HP_TOKENS.radiusSm, padding: '6px 4px', textAlign: 'center' }}>
+      <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, color: HP_TOKENS.ink }}>{b}</div>
       <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 9, color: HP_TOKENS.inkMute }}>{s}</div>
     </div>
   );
@@ -544,14 +543,14 @@ function inlineMd(s: string): string {
 }
 
 const selectStyle: React.CSSProperties = {
-  width: '100%', padding: 10, borderRadius: 12, border: `1.5px solid ${HP_TOKENS.line}`,
+  width: '100%', padding: 10, borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.line}`,
   fontFamily: HP_FONT, fontSize: 13, fontWeight: 700, outline: 'none', background: HP_TOKENS.card,
   color: HP_TOKENS.ink, boxSizing: 'border-box', height: 42,
 };
 function actionBtn(color: string, disabled: boolean): React.CSSProperties {
   return {
-    flex: 1, minWidth: 100, padding: '11px 12px', borderRadius: 12, border: 'none',
-    background: disabled ? HP_TOKENS.lineSoft : color, color: disabled ? HP_TOKENS.inkMute : '#F4F7F9',
-    fontFamily: HP_FONT, fontWeight: 800, fontSize: 13, cursor: disabled ? 'default' : 'pointer',
+    flex: 1, minWidth: 100, padding: '11px 12px', borderRadius: HP_TOKENS.radiusSm, border: 'none',
+    background: disabled ? HP_TOKENS.lineSoft : color, color: disabled ? HP_TOKENS.inkMute : HP_TOKENS.onPrimary,
+    fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: disabled ? 'default' : 'pointer',
   };
 }

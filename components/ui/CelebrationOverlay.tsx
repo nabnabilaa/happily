@@ -48,10 +48,10 @@ export default function CelebrationOverlay({ show, onComplete, message = "Hebat!
         style={{
           position: 'absolute', top: 24, right: 24,
           background: HP_TOKENS.lineSoft, border: 'none',
-          width: 40, height: 40, borderRadius: 20,
+          width: 40, height: 40, borderRadius: '50%',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer', color: HP_TOKENS.inkFade,
-          fontSize: 20, fontWeight: 900
+          fontSize: 20, fontWeight: 700
         }}
       >
         ×
@@ -63,7 +63,7 @@ export default function CelebrationOverlay({ show, onComplete, message = "Hebat!
       <div style={{ ...HP_TEXT.display, fontSize: 24, textAlign: 'center', maxWidth: 280, marginBottom: 12 }}>{message}</div>
       <div style={{ 
         background: HP_TOKENS.yellow, color: HP_TOKENS.ink, padding: '8px 16px', borderRadius: 99,
-        fontFamily: HP_FONT, fontWeight: 900, fontSize: 18,
+        fontFamily: HP_FONT, fontWeight: 700, fontSize: 18,
         animation: 'hpBounce 0.5s ease-out'
       }}>
         +{points} Point

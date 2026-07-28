@@ -37,7 +37,7 @@ export default function ScheduleCoachingModal({ onClose }: ScheduleCoachingModal
           onChange={e => setCoach(e.target.value)}
           placeholder="Nama coach kamu"
           style={{
-            width: '100%', marginTop: 10, padding: 14, borderRadius: 14,
+            width: '100%', marginTop: 10, padding: 14, borderRadius: HP_TOKENS.radiusMd,
             border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 14,
             color: HP_TOKENS.ink, outline: 'none', background: HP_TOKENS.card, boxSizing: 'border-box',
           }}
@@ -50,7 +50,7 @@ export default function ScheduleCoachingModal({ onClose }: ScheduleCoachingModal
           onChange={e => setTime(e.target.value)}
           placeholder="Misal: Kamis, 10:00"
           style={{
-            width: '100%', marginTop: 10, padding: 14, borderRadius: 14,
+            width: '100%', marginTop: 10, padding: 14, borderRadius: HP_TOKENS.radiusMd,
             border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 14,
             color: HP_TOKENS.ink, outline: 'none', background: HP_TOKENS.card, boxSizing: 'border-box',
           }}
@@ -63,7 +63,7 @@ export default function ScheduleCoachingModal({ onClose }: ScheduleCoachingModal
           onChange={e => setMeetLink(e.target.value)}
           placeholder="https://meet.google.com/..."
           style={{
-            width: '100%', marginTop: 10, padding: 14, borderRadius: 14,
+            width: '100%', marginTop: 10, padding: 14, borderRadius: HP_TOKENS.radiusMd,
             border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 14,
             color: HP_TOKENS.ink, outline: 'none', background: HP_TOKENS.card, boxSizing: 'border-box',
           }}
@@ -74,9 +74,8 @@ export default function ScheduleCoachingModal({ onClose }: ScheduleCoachingModal
           onClick={save} 
           style={{
             width: '100%', marginTop: 32, padding: '16px', borderRadius: 99,
-            background: HP_TOKENS.blue, color: '#F4F7F9', border: 'none',
-            fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: 'pointer',
-            boxShadow: `0 8px 24px ${HP_TOKENS.blueSoft}`,
+            background: HP_TOKENS.blue, color: HP_TOKENS.onPrimary, border: 'none',
+            fontFamily: HP_FONT, fontWeight: 700, fontSize: 15, cursor: 'pointer',
           }}
           className="hp-tap"
         >

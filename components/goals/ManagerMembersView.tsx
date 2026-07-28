@@ -45,9 +45,9 @@ export default function ManagerMembersView({ membersList }: ManagerMembersViewPr
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div style={{
-                  fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 10, fontFamily: HP_FONT,
+                  fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: HP_TOKENS.radiusSm, fontFamily: HP_FONT,
                   background: m.statusTone === 'sage' ? HP_TOKENS.sageSoft : m.statusTone === 'yellow' ? HP_TOKENS.yellowSoft : HP_TOKENS.coralSoft,
-                  color: m.statusTone === 'sage' ? HP_TOKENS.sage : m.statusTone === 'yellow' ? '#8A6814' : HP_TOKENS.coral,
+                  color: m.statusTone === 'sage' ? HP_TOKENS.sage : m.statusTone === 'yellow' ? HP_TOKENS.yellowDark : HP_TOKENS.coral,
                   marginBottom: 4,
                 }}>
                   {m.status}

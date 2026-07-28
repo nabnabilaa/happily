@@ -3,8 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import HPCard from '@/components/ui/HPCard';
 import HPAvatar from '@/components/ui/HPAvatar';
-import { HP_TOKENS, HP_FONT, HP_TEXT } from '@/lib/constants';
+import { HP_TOKENS, HP_TEXT } from '@/lib/constants';
 import HPGlyph from '@/components/ui/HPGlyph';
+import { TabBar } from '@/components/ui';
 
 type Period = 'weekly' | 'monthly' | 'all_time';
 
@@ -32,13 +33,21 @@ export default function LeaderboardWidget({ currentUserId }: { currentUserId?: s
   const top3 = leaderboard.slice(0, 3);
   const rest = leaderboard.slice(3, 10);
 
-  // Helper to get podium style based on rank (1, 2, 3)
+  /**
+   * Podium styling per rank. `stroke` is the readable text colour, `bg` the
+   * block fill — gold/silver/bronze mapped onto the honey and neutral ramps so
+   * the podium survives a theme flip.
+   *
+   * The blocks used to be 120/90/70px of empty fill under each avatar, which
+   * put the whole podium past 300px tall to rank three people. They are now
+   * sized to hold the rank medal and nothing more.
+   */
   const getPodiumStyle = (rank: number) => {
     switch (rank) {
-      case 1: return { color: '#FCD34D', bg: '#FEF3C7', height: 120, label: '🥇 Emas', stroke: '#F59E0B' };
-      case 2: return { color: '#D1D5DB', bg: '#F3F4F6', height: 90, label: '🥈 Perak', stroke: '#9CA3AF' };
-      case 3: return { color: '#FDBA74', bg: '#FFF7ED', height: 70, label: '🥉 Perunggu', stroke: '#EA580C' };
-      default: return { color: '#ccc', bg: '#eee', height: 50, label: '', stroke: '#999' };
+      case 1: return { bg: HP_TOKENS.yellowWash, height: 56, label: 'Emas', stroke: HP_TOKENS.yellowDark };
+      case 2: return { bg: HP_TOKENS.sunken, height: 42, label: 'Perak', stroke: HP_TOKENS.inkSoft };
+      case 3: return { bg: HP_TOKENS.honeySoft, height: 32, label: 'Perunggu', stroke: HP_TOKENS.honey };
+      default: return { bg: HP_TOKENS.sunken, height: 28, label: '', stroke: HP_TOKENS.inkMute };
     }
   };
 
@@ -49,39 +58,28 @@ export default function LeaderboardWidget({ currentUserId }: { currentUserId?: s
   if (leaderboard.length === 0) return null;
 
   return (
-    <div style={{ marginTop: 24 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <HPGlyph name="trophy" size={20} color={HP_TOKENS.yellow} stroke={2.5} />
-          <h2 style={{ ...HP_TEXT.h, fontSize: 18 }}>Leaderboard Tim</h2>
-        </div>
+    // No outer margin — the screen that places this owns the spacing between
+    // blocks, so a self-applied marginTop just stacks on top of the layout gap.
+    <section>
+      {/* Matches SectionHeader's shape so this block sits in the same rhythm
+          as every other section on the screen. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '0 2px 12px' }}>
+        <HPGlyph name="trophy" size={17} color={HP_TOKENS.inkMute} stroke={2} />
+        <h2 style={{ ...HP_TEXT.h, fontSize: 16, margin: 0 }}>Leaderboard Tim</h2>
       </div>
 
       {/* Period Tabs */}
-      <div style={{ 
-        display: 'flex', background: HP_TOKENS.lineSoft, padding: 4, borderRadius: 12, marginBottom: 20
-      }}>
-        {[
-          { id: 'weekly', label: 'Minggu Ini' },
-          { id: 'monthly', label: 'Bulan Ini' },
-          { id: 'all_time', label: 'Semua Waktu' }
-        ].map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setPeriod(tab.id as Period)}
-            className="hp-tap"
-            style={{
-              flex: 1, padding: '8px 0', border: 'none', borderRadius: 8,
-              background: period === tab.id ? HP_TOKENS.card : 'transparent',
-              color: period === tab.id ? HP_TOKENS.ink : HP_TOKENS.inkMute,
-              fontFamily: HP_FONT, fontWeight: 800, fontSize: 12, cursor: 'pointer',
-              boxShadow: period === tab.id ? '0 2px 8px rgba(0,0,0,0.05)' : 'none',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div style={{ marginBottom: 16 }}>
+        <TabBar
+          label="Periode leaderboard"
+          value={period}
+          onChange={(v) => setPeriod(v as Period)}
+          options={[
+            { key: 'weekly', label: 'Minggu ini' },
+            { key: 'monthly', label: 'Bulan ini' },
+            { key: 'all_time', label: 'Semua waktu' },
+          ]}
+        />
       </div>
 
       <div style={{ 
@@ -93,9 +91,9 @@ export default function LeaderboardWidget({ currentUserId }: { currentUserId?: s
         
         {/* Podium Top 3 */}
         {top3.length > 0 && (
-          <HPCard padding={16} style={{ 
-            display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 8, 
-            paddingTop: 32, minHeight: 220, background: 'transparent' 
+          <HPCard padding={16} style={{
+            display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 10,
+            paddingTop: 20,
           }}>
             {podiumOrder.map((user) => {
               const rank = user.rank;
@@ -103,53 +101,82 @@ export default function LeaderboardWidget({ currentUserId }: { currentUserId?: s
               const isCurrentUser = user.id === currentUserId;
 
               return (
-                <div key={user.id} style={{ 
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', width: '30%' 
+                <div key={user.id} style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center',
+                  width: '30%', minWidth: 0,
                 }}>
-                  {/* Avatar & Crown */}
-                  <div style={{ position: 'relative', marginBottom: 8 }}>
+                  {/* Crown for first place. Back as an SVG glyph — the 👑
+                      emoji rendered differently on every platform and could
+                      not take the honey token. */}
+                  <div style={{ position: 'relative', marginBottom: 6 }}>
                     {rank === 1 && (
-                      <div style={{ position: 'absolute', top: -24, left: '50%', transform: 'translateX(-50%)', fontSize: 24 }}>
-                        👑
+                      <div
+                        aria-hidden
+                        style={{
+                          position: 'absolute', top: -19, left: '50%',
+                          transform: 'translateX(-50%)', lineHeight: 0,
+                        }}
+                      >
+                        <HPGlyph name="crown" size={22} color={HP_TOKENS.yellowDark} stroke={2} />
                       </div>
                     )}
-                    <div style={{ 
-                      borderRadius: '50%', padding: 3, 
-                      background: `${style.bg}`,
-                      boxShadow: `0 4px 12px ${style.stroke}40`
+                    <div style={{
+                      borderRadius: '50%', padding: 3,
+                      background: style.bg,
+                      border: `2px solid ${style.stroke}`,
                     }}>
-                      <HPAvatar name={user.name} size={rank === 1 ? 64 : 48} />
+                      <HPAvatar name={user.name} size={rank === 1 ? 52 : 42} />
                     </div>
                   </div>
 
-                  {/* Name & Points */}
-                  <div style={{ 
-                    ...HP_TEXT.h, fontSize: rank === 1 ? 14 : 12, textAlign: 'center', 
-                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%',
-                    color: HP_TOKENS.ink
+                  <div style={{
+                    ...HP_TEXT.sub, fontSize: 13, textAlign: 'center',
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                    width: '100%',
                   }}>
                     {user.name.split(' ')[0]}
                   </div>
-                  <div style={{ fontFamily: HP_FONT, fontWeight: 900, color: style.stroke, fontSize: rank === 1 ? 16 : 14, marginTop: 2 }}>
-                    {user.points.toLocaleString()}
+                  <div style={{
+                    ...HP_TEXT.bodyStrong, fontSize: rank === 1 ? 15 : 13,
+                    color: style.stroke, fontVariantNumeric: 'tabular-nums',
+                  }}>
+                    {user.points.toLocaleString('id-ID')}
                   </div>
                   {isCurrentUser && (
                     <div style={{
-                      padding: '2px 6px', borderRadius: 4, fontSize: 8, fontWeight: 800, marginTop: 4,
-                      background: HP_TOKENS.yellowSoft, color: '#8A6814', fontFamily: HP_FONT
+                      ...HP_TEXT.tiny, marginTop: 2,
+                      padding: '1px 6px', borderRadius: HP_TOKENS.radiusXs,
+                      background: HP_TOKENS.yellowSoft, color: HP_TOKENS.yellowDark,
                     }}>
                       KAMU
                     </div>
                   )}
 
-                  {/* Podium Block */}
-                  <div style={{ 
-                    width: '100%', height: style.height, background: style.bg, 
-                    borderTop: `4px solid ${style.color}`, borderRadius: '12px 12px 0 0',
-                    marginTop: 12, display: 'flex', justifyContent: 'center', paddingTop: 12,
-                    boxShadow: 'inset 0 4px 8px rgba(255,255,255,0.5)'
+                  {/* The step, carrying the rank medal. A ranked podium has to
+                      show its ranking — dropping the medal emoji without
+                      putting a legible marker back left the steps anonymous. */}
+                  <div style={{
+                    width: '100%', height: style.height, marginTop: 8,
+                    background: style.bg,
+                    borderTop: `3px solid ${style.stroke}`,
+                    borderRadius: '10px 10px 0 0',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
-                    <span style={{ fontSize: rank === 1 ? 28 : 20 }}>{rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉'}</span>
+                    <span
+                      title={style.label}
+                      style={{
+                        width: 24, height: 24, borderRadius: '50%',
+                        background: HP_TOKENS.card,
+                        border: `2px solid ${style.stroke}`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        ...HP_TEXT.bodyStrong,
+                        color: style.stroke,
+                        fontSize: 12, lineHeight: 1,
+                        fontVariantNumeric: 'tabular-nums',
+                      }}
+                    >
+                      {rank}
+                    </span>
                   </div>
                 </div>
               );
@@ -157,59 +184,64 @@ export default function LeaderboardWidget({ currentUserId }: { currentUserId?: s
           </HPCard>
         )}
 
-        {/* List Rank 4-10 */}
+        {/*
+          Rank 4 and below. One card of hairline rows rather than a bordered
+          card per person — a ranking is a list, and eight separate cards with
+          gaps between them cost roughly twice the height to say the same
+          thing. The stacked figure-over-"POINTS" pair is now one line.
+        */}
         {rest.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {rest.map((user) => {
+          <HPCard padding={0} style={{ overflow: 'hidden' }}>
+            {rest.map((user, i) => {
               const isCurrentUser = user.id === currentUserId;
               return (
-                <HPCard 
-                  key={user.id} 
-                  padding={12}
-                  style={{ 
-                    display: 'flex', alignItems: 'center', gap: 12,
-                    background: isCurrentUser ? HP_TOKENS.yellowSoft + '30' : HP_TOKENS.card,
-                    border: isCurrentUser ? `1.5px solid ${HP_TOKENS.yellow}40` : `1.5px solid transparent`
+                <div
+                  key={user.id}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '8px 14px',
+                    borderTop: i === 0 ? undefined : `1px solid ${HP_TOKENS.lineSoft}`,
+                    background: isCurrentUser ? HP_TOKENS.yellowWash : undefined,
                   }}
                 >
-                  <div style={{ 
-                    width: 28, height: 28, borderRadius: '50%', background: HP_TOKENS.lineSoft,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontFamily: HP_FONT, fontWeight: 900, color: HP_TOKENS.inkMute, fontSize: 13, flexShrink: 0
+                  <span style={{
+                    ...HP_TEXT.small, width: 20, flexShrink: 0, textAlign: 'right',
+                    fontVariantNumeric: 'tabular-nums',
                   }}>
                     {user.rank}
-                  </div>
-                  <HPAvatar name={user.name} size={40} />
+                  </span>
+                  <HPAvatar name={user.name} size={34} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <div style={{ ...HP_TEXT.h, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {user.name}
-                      </div>
+                    <div style={{
+                      ...HP_TEXT.sub, fontSize: 14,
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                    }}>
+                      {user.name}
                       {isCurrentUser && (
-                        <div style={{
-                          padding: '1px 6px', borderRadius: 4, fontSize: 8, fontWeight: 800,
-                          background: HP_TOKENS.yellowSoft, color: '#8A6814', fontFamily: HP_FONT
-                        }}>
-                          KAMU
-                        </div>
+                        <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.yellowDark }}> · Kamu</span>
                       )}
                     </div>
-                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkSoft }}>{user.team || 'Team Member'}</div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontFamily: HP_FONT, fontWeight: 900, color: HP_TOKENS.primary, fontSize: 15 }}>
-                      {user.points.toLocaleString()}
-                    </div>
-                    <div style={{ ...HP_TEXT.tiny, fontSize: 9, color: HP_TOKENS.inkMute, textTransform: 'uppercase' }}>
-                      Points
+                    <div style={{
+                      ...HP_TEXT.small, fontSize: 12,
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                    }}>
+                      {user.team || 'Team member'}
                     </div>
                   </div>
-                </HPCard>
+                  <div style={{ flexShrink: 0, display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                    <span style={{
+                      ...HP_TEXT.bodyStrong, fontVariantNumeric: 'tabular-nums',
+                    }}>
+                      {user.points.toLocaleString('id-ID')}
+                    </span>
+                    <span style={{ ...HP_TEXT.small, fontSize: 11 }}>pts</span>
+                  </div>
+                </div>
               );
             })}
-          </div>
+          </HPCard>
         )}
       </div>
-    </div>
+    </section>
   );
 }

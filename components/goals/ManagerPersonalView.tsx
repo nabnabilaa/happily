@@ -58,7 +58,7 @@ export default function ManagerPersonalView({
           {combinedMyGoals.length === 0 && !loadingKpis && (
             <div style={{
               textAlign: 'center', padding: '40px 20px', color: HP_TOKENS.inkMute,
-              background: HP_TOKENS.card, borderRadius: 24, border: `1.5px solid ${HP_TOKENS.lineSoft}`
+              background: HP_TOKENS.card, borderRadius: HP_TOKENS.radiusLg, border: `1.5px solid ${HP_TOKENS.lineSoft}`
             }}>
               <div style={{ fontSize: 32, marginBottom: 12 }}>🌱</div>
               <div style={{ ...HP_TEXT.h, fontSize: 14 }}>Belum ada KPI personal.</div>

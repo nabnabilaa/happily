@@ -150,7 +150,7 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
         height: "100dvh",
         width: "100%",
         overflowY: "auto",
-        background: "#F4F7F9",
+        background: HP_TOKENS.onPrimary,
         fontFamily: HP_FONT,
       }}>
         <div style={{
@@ -168,8 +168,7 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
             width: "100%",
             maxWidth: 960,
             background: `${HP_TOKENS.primaryWash}`,
-            borderRadius: 32,
-            boxShadow: "0 20px 60px rgba(59, 130, 246, 0.15)",
+            borderRadius: HP_TOKENS.radiusXl,
             overflow: "hidden",
             position: "relative"
           }}>
@@ -192,14 +191,14 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
               <div style={{
                 fontFamily: HP_FONT_DISPLAY, fontSize: 36, fontWeight: 700, color: HP_TOKENS.ink, letterSpacing: -1,
               }}>
-                Flow<span style={{ color: HP_TOKENS.primary }}>buddy</span><span style={{ fontSize: 16, fontWeight: 800, color: HP_TOKENS.inkMute, marginLeft: 6 }}>by Maxy</span> ✨
+                Flow<span style={{ color: HP_TOKENS.primary }}>buddy</span><span style={{ fontSize: 16, fontWeight: 700, color: HP_TOKENS.inkMute, marginLeft: 6 }}>by Maxy</span> ✨
               </div>
               <div style={{ fontSize: 13, color: HP_TOKENS.inkSoft, fontWeight: 600, marginTop: 4, letterSpacing: 0.5 }}>
                 Flowbuddy by Maxy — Kerja Lebih Cerdas
               </div>
 
               <div style={{ marginTop: 60 }}>
-                <h1 style={{ fontSize: 28, fontWeight: 800, color: HP_TOKENS.ink, margin: 0 }}>Selamat datang kembali!</h1>
+                <h1 style={{ fontSize: 28, fontWeight: 700, color: HP_TOKENS.ink, margin: 0 }}>Selamat datang kembali!</h1>
                 <div style={{ width: 40, height: 4, background: HP_TOKENS.primary, borderRadius: 2, marginTop: 12, marginBottom: 16 }} />
                 <p style={{ fontSize: 15, color: HP_TOKENS.inkMute, lineHeight: 1.6, fontWeight: 500 }}>
                   Masuk ke akunmu dan lanjutkan<br/>perjalanan produktifmu bersama Flowbuddy ✨
@@ -223,11 +222,11 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
               className="hp-tap"
               style={{
                 display: "flex", alignItems: "center", gap: 12, background: "rgba(255,255,255,0.6)",
-                padding: "12px 16px", borderRadius: 16, width: "max-content", marginTop: 20, position: 'relative', zIndex: 1,
+                padding: "12px 16px", borderRadius: HP_TOKENS.radiusMd, width: "max-content", marginTop: 20, position: 'relative', zIndex: 1,
                 cursor: 'pointer'
               }}
             >
-              <div style={{ width: 32, height: 32, background: "#111", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 800 }}>
+              <div style={{ width: 32, height: 32, background: HP_TOKENS.ink, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700 }}>
                 N
               </div>
               <div>
@@ -280,9 +279,8 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
               background: "#fff",
               width: "100%",
               maxWidth: 400,
-              borderRadius: 24,
+              borderRadius: HP_TOKENS.radiusLg,
               padding: "clamp(24px, 5vw, 40px) clamp(20px, 5vw, 32px)",
-              boxShadow: "0 20px 40px rgba(0,0,0,0.04)",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -291,13 +289,13 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
               <div style={{ marginBottom: 16 }}>
               </div>
               
-              <h2 style={{ fontSize: 20, fontWeight: 800, color: HP_TOKENS.ink, marginBottom: 32 }}>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: HP_TOKENS.ink, marginBottom: 32 }}>
                 Masuk ke akun kamu
               </h2>
 
               <form onSubmit={handleSubmit} style={{ width: "100%", display: "flex", flexDirection: "column", gap: 16 }}>
                 {error && (
-                  <div style={{ padding: "12px", borderRadius: 12, background: "#FFF0F0", color: "#F44", fontWeight: 700, textAlign: "center", fontSize: 13 }}>
+                  <div style={{ padding: "12px", borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.dangerWash, color: HP_TOKENS.danger, fontWeight: 700, textAlign: "center", fontSize: 13 }}>
                     {error}
                   </div>
                 )}
@@ -354,7 +352,7 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                   disabled={loading}
                   className={loading ? "" : "hp-btn-hover"}
                   style={{
-                    width: '100%', padding: '16px', borderRadius: 100, border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15,
+                    width: '100%', padding: '16px', borderRadius: 100, border: 'none', fontFamily: HP_FONT, fontWeight: 700, fontSize: 15,
                     background: loading ? HP_TOKENS.lineSoft : `${HP_TOKENS.primary}`,
                     color: loading ? HP_TOKENS.inkMute : '#fff', cursor: loading ? 'not-allowed' : 'pointer',
                     boxShadow: loading ? 'none' : `0 8px 24px rgba(59,130,246,0.3)`, transition: 'all 0.2s',

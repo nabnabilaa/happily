@@ -210,7 +210,7 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
   const isDone = todayStatus === 'checked_out';
 
   const selectStyle: React.CSSProperties = {
-    width: '100%', padding: '12px', borderRadius: 14,
+    width: '100%', padding: '12px', borderRadius: HP_TOKENS.radiusMd,
     border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 14,
     outline: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink, boxSizing: 'border-box',
   };
@@ -236,17 +236,17 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
             {checkoutResult && (
               <div style={{ marginTop: 16 }}>
                 <div style={{
-                  display: 'inline-block', padding: '12px 24px', borderRadius: 16,
+                  display: 'inline-block', padding: '12px 24px', borderRadius: HP_TOKENS.radiusMd,
                   background: HP_TOKENS.sageWash, border: `1.5px solid ${HP_TOKENS.sage}40`,
                 }}>
                   <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 4 }}>DURASI KERJA</div>
-                  <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 24, color: HP_TOKENS.sage }}>
+                  <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 24, color: HP_TOKENS.sage }}>
                     {checkoutResult.durationFormatted}
                   </div>
                 </div>
               </div>
             )}
-            <div style={{ ...HP_TEXT.small, color: HP_TOKENS.sage, fontWeight: 800, marginTop: 12 }}>
+            <div style={{ ...HP_TEXT.small, color: HP_TOKENS.sage, fontWeight: 700, marginTop: 12 }}>
               +{checkoutResult ? '10' : '20'} EXP 🎁
             </div>
           </div>
@@ -257,30 +257,30 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
             <div style={{ ...HP_TEXT.h, fontSize: 16 }}>Hari Ini Sudah Selesai!</div>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 20 }}>
               <div style={{
-                padding: '12px 20px', borderRadius: 14, background: HP_TOKENS.sageWash,
+                padding: '12px 20px', borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.sageWash,
                 border: `1px solid ${HP_TOKENS.sage}30`, textAlign: 'center'
               }}>
                 <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>CLOCK IN</div>
-                <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 16, color: HP_TOKENS.sage }}>
+                <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, color: HP_TOKENS.sage }}>
                   {todayData?.checkInAt ? new Date(todayData.checkInAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-'}
                 </div>
               </div>
               <div style={{
-                padding: '12px 20px', borderRadius: 14, background: HP_TOKENS.blueSoft,
+                padding: '12px 20px', borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.blueSoft,
                 border: `1px solid ${HP_TOKENS.blue}30`, textAlign: 'center'
               }}>
                 <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>CLOCK OUT</div>
-                <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 16, color: HP_TOKENS.blue }}>
+                <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, color: HP_TOKENS.blue }}>
                   {todayData?.checkOutAt ? new Date(todayData.checkOutAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-'}
                 </div>
               </div>
               {todayData?.duration && (
                 <div style={{
-                  padding: '12px 20px', borderRadius: 14, background: HP_TOKENS.yellowSoft,
+                  padding: '12px 20px', borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.yellowSoft,
                   border: `1px solid ${HP_TOKENS.yellow}30`, textAlign: 'center'
                 }}>
                   <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>DURASI</div>
-                  <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 16, color: '#8A6814' }}>
+                  <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, color: HP_TOKENS.yellowDark }}>
                     {Math.floor(todayData.duration / 60)}j {todayData.duration % 60}m
                   </div>
                 </div>
@@ -292,20 +292,20 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
             {/* Currently Checked In - Show checkout info */}
             {isCheckingOut && todayData?.checkInAt && (
               <div style={{
-                padding: '14px 16px', borderRadius: 16, marginBottom: 16,
+                padding: '14px 16px', borderRadius: HP_TOKENS.radiusMd, marginBottom: 16,
                 background: HP_TOKENS.sageWash, border: `1.5px solid ${HP_TOKENS.sage}40`,
                 display: 'flex', alignItems: 'center', gap: 12,
               }}>
                 <div style={{ fontSize: 24 }}>✅</div>
                 <div style={{ flex: 1 }}>
                   <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>CLOCK IN PUKUL</div>
-                  <div style={{ fontFamily: HP_FONT, fontWeight: 900, fontSize: 18, color: HP_TOKENS.sage }}>
+                  <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 18, color: HP_TOKENS.sage }}>
                     {new Date(todayData.checkInAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>TIPE</div>
-                  <div style={{ ...HP_TEXT.body, fontWeight: 800, color: HP_TOKENS.ink }}>{todayData.type || 'WFO'}</div>
+                  <div style={{ ...HP_TEXT.body, fontWeight: 700, color: HP_TOKENS.ink }}>{todayData.type || 'WFO'}</div>
                 </div>
               </div>
             )}
@@ -366,7 +366,7 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
                           onClick={() => setSelectedMood(m.key)}
                           className="hp-tap"
                           style={{
-                            flex: '1 1 auto', minWidth: 60, padding: '10px 8px', borderRadius: 14, border: 'none',
+                            flex: '1 1 auto', minWidth: 60, padding: '10px 8px', borderRadius: HP_TOKENS.radiusMd, border: 'none',
                             background: selectedMood === m.key ? `${HP_TOKENS.yellow}20` : HP_TOKENS.lineSoft,
                             cursor: 'pointer', textAlign: 'center',
                             outline: selectedMood === m.key ? `2px solid ${HP_TOKENS.yellow}` : 'none',
@@ -397,7 +397,7 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
             {isCheckingIn && checkInType === 'WFO' && (
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px',
-                borderRadius: 12, marginBottom: 4,
+                borderRadius: HP_TOKENS.radiusSm, marginBottom: 4,
                 background: locationStatus === 'ok' ? HP_TOKENS.sageWash
                   : locationStatus === 'error' ? HP_TOKENS.coralSoft
                   : HP_TOKENS.blueWash,
@@ -410,7 +410,7 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
                 </span>
                 <div style={{ flex: 1 }}>
                   <div style={{
-                    fontSize: 12, fontWeight: 800, fontFamily: HP_FONT,
+                    fontSize: 12, fontWeight: 700, fontFamily: HP_FONT,
                     color: locationStatus === 'ok' ? HP_TOKENS.sage
                       : locationStatus === 'error' ? HP_TOKENS.coral
                       : HP_TOKENS.blue,
@@ -427,7 +427,7 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
                     onClick={fetchLocation}
                     style={{
                       padding: '4px 10px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                      background: 'transparent', fontSize: 11, fontWeight: 800,
+                      background: 'transparent', fontSize: 11, fontWeight: 700,
                       color: locationStatus === 'error' ? HP_TOKENS.coral : HP_TOKENS.inkMute,
                     }}
                   >
@@ -440,7 +440,7 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
             {/* Realtime Out of Range Warning */}
             {isCheckingIn && checkInType === 'WFO' && isOutOfRange && (
               <div style={{
-                marginBottom: 16, padding: 12, borderRadius: 12, background: HP_TOKENS.coralSoft,
+                marginBottom: 16, padding: 12, borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.coralSoft,
                 color: HP_TOKENS.coral, fontSize: 13, fontWeight: 700, textAlign: 'center',
                 animation: 'hpFadeIn 0.3s ease'
               }}>
@@ -466,7 +466,7 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
             {/* Error */}
             {status === 'error' && (
               <div style={{ 
-                marginBottom: 16, padding: 12, borderRadius: 12, background: HP_TOKENS.coralSoft, 
+                marginBottom: 16, padding: 12, borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.coralSoft, 
                 color: HP_TOKENS.coral, fontSize: 13, fontWeight: 700, textAlign: 'center'
               }}>
                 ⚠️ {errorMsg}
@@ -487,8 +487,8 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
                       : isCheckingIn 
                         ? `${HP_TOKENS.blue}` 
                         : `${HP_TOKENS.sage}`,
-                    color: isOutOfRange ? HP_TOKENS.inkMute : '#F4F7F9',
-                    fontFamily: HP_FONT, fontWeight: 800, fontSize: 15, cursor: isOutOfRange ? 'not-allowed' : 'pointer',
+                    color: isOutOfRange ? HP_TOKENS.inkMute : HP_TOKENS.onPrimary,
+                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 15, cursor: isOutOfRange ? 'not-allowed' : 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                     boxShadow: isOutOfRange
                       ? 'none'
@@ -498,14 +498,14 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
                     opacity: isOutOfRange ? 0.6 : 1
                   }}
                 >
-                  <HPGlyph name={isCheckingIn ? "target" : "check"} size={18} color={isOutOfRange ? HP_TOKENS.inkMute : "#F4F7F9"} />
+                  <HPGlyph name={isCheckingIn ? "target" : "check"} size={18} color={isOutOfRange ? HP_TOKENS.inkMute : HP_TOKENS.onPrimary} />
                   {isCheckingIn ? 'Clock In Sekarang' : 'Clock Out Sekarang'}
                 </button>
                 
                 <button onClick={onClose} style={{
                   width: '100%', padding: '14px', borderRadius: 99,
                   background: HP_TOKENS.lineSoft, color: HP_TOKENS.ink, border: 'none',
-                  fontFamily: HP_FONT, fontWeight: 800, fontSize: 14, cursor: 'pointer'
+                  fontFamily: HP_FONT, fontWeight: 700, fontSize: 14, cursor: 'pointer'
                 }}>
                   Batal
                 </button>

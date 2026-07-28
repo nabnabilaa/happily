@@ -2,9 +2,20 @@
 
 import React, { useState, useCallback } from "react";
 import { useHP } from "@/lib/HPContext";
-import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
-import HPGlyph from "@/components/ui/HPGlyph";
-import HPCard from "@/components/ui/HPCard";
+import {
+  HP_TOKENS,
+  HP_TEXT,
+  HPGlyph,
+  HPCard,
+  HPBar,
+  HPButton,
+  EmptyState,
+  Stack,
+  Row,
+  IconBadge,
+  FadeIn,
+  CountUp,
+} from "@/components/ui";
 import SectionHeader from "@/components/home/SectionHeader";
 import PriorityCard from "@/components/home/PriorityCard";
 import TaskCompleteModal from "@/components/modals/TaskCompleteModal";
@@ -323,176 +334,160 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
     return sortedPriorities.slice(start, start + itemsPerPage);
   }, [sortedPriorities, currentPage]);
 
+  const focusTask = state.focusTaskId
+    ? priorities.find((p: any) => p.id === state.focusTaskId)
+    : null;
+
   return (
-    <div id="task-harian-section" style={{ marginTop: 24 }}>
-      <SectionHeader 
-        icon="target" 
-        label="Task Harian" 
-        count={`${done}/${total}`} 
-        action="+ Task"
+    <section id="task-harian-section">
+      <SectionHeader
+        icon="target"
+        label="Task Harian"
+        count={`${done}/${total}`}
+        action="Tambah"
         onAction={() => openModal('manage_priorities')}
       />
-      
-      {/* Realization Progress Card */}
-      <HPCard padding={20} style={{ 
-        marginBottom: 20, 
-        background: `${HP_TOKENS.primaryWash}`, 
-        border: `1.5px solid ${HP_TOKENS.primary}20`,
-        boxShadow: '0 10px 30px rgba(26,29,35,0.03)',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        <div style={{ 
-          position: 'absolute', right: -20, top: -20, width: 100, height: 100, 
-          borderRadius: 50, background: `${HP_TOKENS.primary}10`, zIndex: 0 
-        }} />
 
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 16 }}>
-            <div>
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.primary, fontWeight: 900, letterSpacing: 1, marginBottom: 4 }}>PROGRESS TASK HARI INI</div>
-              <div style={{ ...HP_TEXT.h, fontSize: 28, color: HP_TOKENS.ink }}>
-                {partialProgressPct}%
-                <span style={{ fontSize: 14, color: HP_TOKENS.inkFade, fontWeight: 600, marginLeft: 8 }}>Tercapai</span>
-              </div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ ...HP_TEXT.h, fontSize: 18, color: HP_TOKENS.primary }}>{done}/{total}</div>
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>Task Selesai</div>
-            </div>
-          </div>
-          
-          <div style={{ position: 'relative', height: 12, background: HP_TOKENS.lineSoft, borderRadius: 6, overflow: 'hidden' }}>
-            <div style={{ 
-               width: `${partialProgressPct}%`,
-               height: '100%', 
-               background: `${HP_TOKENS.primary}`, 
-               borderRadius: 6,
-               transition: '1s cubic-bezier(0.2, 0.8, 0.2, 1)',
-               boxShadow: `0 0 12px ${HP_TOKENS.primary}40`
-            }} />
+      {/* Progress summary */}
+      <HPCard padding={18} style={{ marginBottom: 14 }}>
+        <Row justify="space-between" align="flex-end" gap={4}>
+          <div style={{ minWidth: 0 }}>
+            <div style={HP_TEXT.tiny}>Progress hari ini</div>
+            <Row gap={2} align="baseline" style={{ marginTop: 4 }}>
+              <span style={{ ...HP_TEXT.metric, fontSize: 30 }}>
+                <CountUp value={partialProgressPct} suffix="%" />
+              </span>
+              <span style={{ ...HP_TEXT.small }}>tercapai</span>
+            </Row>
           </div>
 
-          {/* Focus Task Sync Display */}
-          <div style={{ 
-            marginTop: state.focusTaskId ? 16 : 0,
-            maxHeight: state.focusTaskId ? 80 : 0,
-            opacity: state.focusTaskId ? 1 : 0,
-            overflow: 'hidden',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          }}>
-            <div style={{ 
-              padding: '12px 16px', borderRadius: 12, 
-              background: 'rgba(255,255,255,0.6)', border: `1px dashed ${HP_TOKENS.yellow}`,
-              display: 'flex', alignItems: 'center', gap: 12
-            }}>
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: HP_TOKENS.yellowSoft, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <HPGlyph name="sparkle" size={16} color={HP_TOKENS.yellow} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 800 }}>SEDANG FOKUS:</div>
-                <div style={{ ...HP_TEXT.body, fontSize: 13, fontWeight: 700, color: HP_TOKENS.ink }}>
-                  {priorities.find((p: any) => p.id === state.focusTaskId)?.title || "Focus Task"}
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            <div style={{ ...HP_TEXT.bodyStrong, fontVariantNumeric: 'tabular-nums' }}>
+              {done}/{total}
+            </div>
+            <div style={{ ...HP_TEXT.small, fontSize: 12 }}>selesai</div>
+          </div>
+        </Row>
+
+        <div style={{ marginTop: 14 }}>
+          <HPBar value={partialProgressPct} label="Progress task hari ini" height={8} />
+        </div>
+
+        {/* Live focus session. Rendered only when active — animating a
+            collapsed element's max-height just to hide it wastes a paint. */}
+        {focusTask && (
+          <FadeIn style={{ marginTop: 14 }}>
+            <Row gap={3} p={3} style={{ background: HP_TOKENS.sunken, borderRadius: HP_TOKENS.radiusMd }}>
+              <IconBadge size={32} tone={HP_TOKENS.yellowSoft}>
+                <HPGlyph name="sparkle" size={15} color={HP_TOKENS.yellowDark} />
+              </IconBadge>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={HP_TEXT.tiny}>Sedang fokus</div>
+                <div style={{ ...HP_TEXT.sub, fontSize: 13.5, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {focusTask.title || 'Focus task'}
                 </div>
               </div>
-              <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.yellow }}>{state.focusProgress || 0}%</div>
-            </div>
-          </div>
-        </div>
+              <span style={{ ...HP_TEXT.bodyStrong, color: HP_TOKENS.yellowDark, fontVariantNumeric: 'tabular-nums' }}>
+                {state.focusProgress || 0}%
+              </span>
+            </Row>
+          </FadeIn>
+        )}
       </HPCard>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <Stack gap={3}>
         {paginatedPriorities.length > 0 ? (
-          paginatedPriorities.map((p: any) => (
-            <div
-              key={p.id}
-              id={`task-card-${p.id}`}
-              style={{
-                borderRadius: 22,
-                outline: String(p.id) === String(highlightedTaskId) ? `3px solid ${HP_TOKENS.blue}` : 'none',
-                outlineOffset: 2,
-                boxShadow: String(p.id) === String(highlightedTaskId) ? `0 0 0 6px ${HP_TOKENS.blue}18` : 'none',
-                transition: 'outline 0.3s, box-shadow 0.3s',
-                animation: String(p.id) === String(highlightedTaskId) ? 'hpPulse 0.8s ease 2' : 'none',
-              }}
-            >
-              <PriorityCard
-                p={p}
-                onToggle={() => togglePriority(p.id)}
-                onDelete={() => deletePriority(p.id)}
-                onEdit={() => openModal('manage_priorities', { editTask: p })}
-              />
-            </div>
-          ))
+          paginatedPriorities.map((p: any) => {
+            const highlighted = String(p.id) === String(highlightedTaskId);
+            return (
+              <div
+                key={p.id}
+                id={`task-card-${p.id}`}
+                style={{
+                  borderRadius: HP_TOKENS.radius,
+                  // Ring only — no shadow bloom, and no layout shift.
+                  outline: highlighted ? `2px solid ${HP_TOKENS.primary}` : 'none',
+                  outlineOffset: 2,
+                  transition: 'outline-color 220ms var(--hp-ease)',
+                }}
+              >
+                <PriorityCard
+                  p={p}
+                  onToggle={() => togglePriority(p.id)}
+                  onDelete={() => deletePriority(p.id)}
+                  onEdit={() => openModal('manage_priorities', { editTask: p })}
+                />
+              </div>
+            );
+          })
         ) : (
-          <div style={{ 
-            padding: '40px 20px', textAlign: 'center', 
-            background: HP_TOKENS.card, borderRadius: 24, border: `1.5px dashed ${HP_TOKENS.line}`
-          }}>
-            <div style={{ fontSize: 32, marginBottom: 12 }}>📝</div>
-            <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.inkMute }}>Belum ada target untuk hari ini.</div>
-          </div>
+          <HPCard variant="outline" padding={0} style={{ borderStyle: 'dashed' }}>
+            <EmptyState
+              icon="target"
+              title="Belum ada task hari ini"
+              description="Tambahkan target harian supaya progresmu bisa dilacak."
+              action={
+                <HPButton variant="primary" size="sm" icon="plus" onClick={() => openModal('manage_priorities')}>
+                  Tambah task
+                </HPButton>
+              }
+            />
+          </HPCard>
         )}
-        
-        {/* Pagination Controls */}
+
+        {/* Pagination */}
         {totalPages > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 8, marginBottom: 8 }}>
-            <button 
+          <Row justify="center" gap={3} style={{ marginTop: 4 }} aria-label="Navigasi halaman task">
+            <HPButton
+              size="sm"
+              icon="chevronLeft"
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              style={{
-                padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
-                background: currentPage === 1 ? HP_TOKENS.lineSoft : '#fff',
-                color: currentPage === 1 ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
-                fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
-                cursor: currentPage === 1 ? 'default' : 'pointer',
-                opacity: currentPage === 1 ? 0.6 : 1, transition: 'all 0.2s'
-              }}
+              aria-label="Halaman sebelumnya"
             >
               Sebelumnya
-            </button>
-            <span style={{ fontFamily: HP_FONT, fontSize: 13, fontWeight: 700, color: HP_TOKENS.inkSoft }}>
+            </HPButton>
+
+            <span
+              aria-live="polite"
+              style={{ ...HP_TEXT.small, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}
+            >
               {currentPage} / {totalPages}
             </span>
-            <button 
+
+            <HPButton
+              size="sm"
+              iconEnd="chevronRight"
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              style={{
-                padding: '6px 12px', borderRadius: 8, border: `1.5px solid ${HP_TOKENS.line}`,
-                background: currentPage === totalPages ? HP_TOKENS.lineSoft : '#fff',
-                color: currentPage === totalPages ? HP_TOKENS.inkMute : HP_TOKENS.inkSoft,
-                fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, 
-                cursor: currentPage === totalPages ? 'default' : 'pointer',
-                opacity: currentPage === totalPages ? 0.6 : 1, transition: 'all 0.2s'
-              }}
+              aria-label="Halaman berikutnya"
             >
               Berikutnya
-            </button>
-          </div>
+            </HPButton>
+          </Row>
         )}
 
         {priorities.length > 0 && (
-          <button onClick={() => openModal('focus')} className="hp-tap" style={{
-            padding: '18px', borderRadius: 20, border: 'none',
-            background: HP_TOKENS.sage,
-            color: '#F4F7F9', cursor: 'pointer', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
-            marginTop: 8,
-            boxShadow: `0 8px 24px ${HP_TOKENS.sage}40`
-          }}>
-            <HPGlyph name="sparkle" size={20} color={HP_TOKENS.yellow}/>
-            <span>Mulai Sesi Fokus Deep Work</span>
-          </button>
+          <HPButton
+            variant="primary"
+            size="lg"
+            icon="sparkle"
+            fullWidth
+            onClick={() => openModal('focus')}
+            style={{ marginTop: 4 }}
+          >
+            Mulai sesi fokus
+          </HPButton>
         )}
-      </div>
+      </Stack>
 
       {completingTask && (
-        <TaskCompleteModal 
+        <TaskCompleteModal
           task={completingTask}
           onClose={() => setCompletingTask(null)}
           onConfirm={confirmTaskComplete}
         />
       )}
-    </div>
+    </section>
   );
 }

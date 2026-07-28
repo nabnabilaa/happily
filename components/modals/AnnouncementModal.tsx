@@ -54,7 +54,7 @@ export default function AnnouncementModal({ onClose }: AnnouncementModalProps) {
             onChange={e => setTitle(e.target.value)}
             placeholder="Contoh: Townhall Meeting Besok"
             style={{
-              width: '100%', padding: '12px', borderRadius: 12,
+              width: '100%', padding: '12px', borderRadius: HP_TOKENS.radiusSm,
               border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 14,
               boxSizing: 'border-box'
             }}
@@ -69,7 +69,7 @@ export default function AnnouncementModal({ onClose }: AnnouncementModalProps) {
             placeholder="Tulis detail pengumuman..."
             rows={4}
             style={{
-              width: '100%', padding: '12px', borderRadius: 12,
+              width: '100%', padding: '12px', borderRadius: HP_TOKENS.radiusSm,
               border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 14,
               boxSizing: 'border-box', resize: 'vertical'
             }}
@@ -80,8 +80,8 @@ export default function AnnouncementModal({ onClose }: AnnouncementModalProps) {
           onClick={handleSend}
           disabled={loading}
           style={{
-            padding: '16px', borderRadius: 16, background: HP_TOKENS.sage,
-            color: '#F4F7F9', border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 14,
+            padding: '16px', borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.sage,
+            color: HP_TOKENS.onPrimary, border: 'none', fontFamily: HP_FONT, fontWeight: 700, fontSize: 14,
             cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             opacity: loading ? 0.7 : 1, marginTop: 10
           }}
@@ -89,7 +89,7 @@ export default function AnnouncementModal({ onClose }: AnnouncementModalProps) {
         >
           {loading ? "Mengirim..." : (
             <>
-              <HPGlyph name="sparkle" size={16} color="#F4F7F9" />
+              <HPGlyph name="sparkle" size={16} color={HP_TOKENS.onPrimary} />
               Kirim Pengumuman
             </>
           )}

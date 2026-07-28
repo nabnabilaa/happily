@@ -16,10 +16,9 @@ export default function ConfirmLogoutModal({ onClose, onConfirm }: ConfirmLogout
         
         {/* Warning Icon Container */}
         <div style={{ 
-          width: 72, height: 72, borderRadius: 36, 
+          width: 72, height: 72, borderRadius: '50%', 
           background: HP_TOKENS.coralSoft, 
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: `0 8px 24px ${HP_TOKENS.coral}20`,
         }}>
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={HP_TOKENS.coral} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -43,11 +42,10 @@ export default function ConfirmLogoutModal({ onClose, onConfirm }: ConfirmLogout
           <button 
             onClick={onConfirm}
             style={{
-              width: '100%', padding: '16px', borderRadius: 16,
-              background: HP_TOKENS.coral, color: '#F4F7F9',
-              border: 'none', fontFamily: HP_FONT, fontWeight: 800, fontSize: 15,
+              width: '100%', padding: '16px', borderRadius: HP_TOKENS.radiusMd,
+              background: HP_TOKENS.coral, color: HP_TOKENS.onPrimary,
+              border: 'none', fontFamily: HP_FONT, fontWeight: 700, fontSize: 15,
               cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-              boxShadow: `0 8px 20px ${HP_TOKENS.coral}30`
             }}
             className="hp-tap"
           >
@@ -57,7 +55,7 @@ export default function ConfirmLogoutModal({ onClose, onConfirm }: ConfirmLogout
           <button 
             onClick={onClose}
             style={{
-              width: '100%', padding: '14px', borderRadius: 16,
+              width: '100%', padding: '14px', borderRadius: HP_TOKENS.radiusMd,
               background: 'transparent', color: HP_TOKENS.inkMute,
               border: `1.5px solid ${HP_TOKENS.line}`, 
               fontFamily: HP_FONT, fontWeight: 700, fontSize: 14,

@@ -262,7 +262,7 @@ Respons kamu harus SINGKAT (max 3-4 paragraf pendek). Jangan bertele-tele. Langs
 
   return (
     <Modal onClose={onClose} noPadding={true}>
-      <div style={{ height: '80vh', display: 'flex', flexDirection: 'column', background: '#FAFCFC', overflow: 'hidden' }}>
+      <div style={{ height: '80vh', display: 'flex', flexDirection: 'column', background: HP_TOKENS.paper, overflow: 'hidden' }}>
         {/* Header */}
         <div style={{ 
           padding: '16px 24px', 
@@ -270,32 +270,30 @@ Respons kamu harus SINGKAT (max 3-4 paragraf pendek). Jangan bertele-tele. Langs
           alignItems: 'center', 
           justifyContent: 'space-between',
           background: '#FFFFFF',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
           zIndex: 10
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <div style={{ 
               width: 48, 
               height: 48, 
-              borderRadius: 24, 
+              borderRadius: HP_TOKENS.radiusLg, 
               background: `${HP_TOKENS.sage}`, 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center',
-              boxShadow: `0 4px 12px ${HP_TOKENS.sage}40`
             }}>
-              <HPGlyph name="sparkle" size={24} color="#F4F7F9"/>
+              <HPGlyph name="sparkle" size={24} color={HP_TOKENS.onPrimary}/>
             </div>
             <div>
               <div style={{ ...HP_TEXT.h, fontSize: 18, color: HP_TOKENS.ink }}>Buddy, Coach AI-mu</div>
               <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                <div style={{ width: 8, height: 8, borderRadius: 4, background: HP_TOKENS.sage, animation: 'hpPulse 2s infinite' }} />
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: HP_TOKENS.sage, animation: 'hpPulse 2s infinite' }} />
                 Online & Memahami Konteksmu
               </div>
             </div>
           </div>
           <button onClick={onClose} style={{
-            width: 36, height: 36, borderRadius: 18, border: 'none', background: 'rgba(0,0,0,0.04)',
+            width: 36, height: 36, borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.04)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'
           }}>
             <HPGlyph name="close" size={16} color={HP_TOKENS.inkMute}/>
@@ -319,7 +317,7 @@ Respons kamu harus SINGKAT (max 3-4 paragraf pendek). Jangan bertele-tele. Langs
               alignSelf: m.from === 'ai' ? 'flex-start' : 'flex-end',
               maxWidth: '85%',
               padding: '16px 20px', 
-              borderRadius: 20,
+              borderRadius: HP_TOKENS.radius,
               background: m.from === 'ai' ? '#FFFFFF' : `${HP_TOKENS.sage}`,
               color: m.from === 'ai' ? HP_TOKENS.ink : '#FFFFFF',
               fontFamily: HP_FONT, fontSize: 15, fontWeight: m.from === 'ai' ? 500 : 600, lineHeight: 1.6,
@@ -348,7 +346,6 @@ Respons kamu harus SINGKAT (max 3-4 paragraf pendek). Jangan bertele-tele. Langs
                     fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, 
                     cursor: typing ? 'default' : 'pointer',
                     opacity: typing ? 0.5 : 1,
-                    boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
                     transition: 'all 0.2s',
                   }}
                   className="hp-tap"
@@ -363,9 +360,8 @@ Respons kamu harus SINGKAT (max 3-4 paragraf pendek). Jangan bertele-tele. Langs
             <div style={{ 
               alignSelf: 'flex-start', 
               padding: '16px 20px', 
-              borderRadius: 20, 
+              borderRadius: HP_TOKENS.radius, 
               background: '#FFFFFF', 
-              boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
               borderTopLeftRadius: 4, 
               display: 'flex', 
               gap: 6,
@@ -393,7 +389,6 @@ Respons kamu harus SINGKAT (max 3-4 paragraf pendek). Jangan bertele-tele. Langs
         <div style={{ 
           padding: '16px 24px 24px', 
           background: '#FFFFFF',
-          boxShadow: '0 -4px 20px rgba(0,0,0,0.03)',
           display: 'flex', 
           gap: 12, 
           alignItems: 'center', 
@@ -408,7 +403,7 @@ Respons kamu harus SINGKAT (max 3-4 paragraf pendek). Jangan bertele-tele. Langs
             style={{
               flex: 1, padding: '16px 20px', borderRadius: 99,
               border: `1.5px solid ${HP_TOKENS.line}`, fontFamily: HP_FONT, fontSize: 15,
-              outline: 'none', background: '#F8FAFC', color: HP_TOKENS.ink,
+              outline: 'none', background: HP_TOKENS.sunken, color: HP_TOKENS.ink,
               transition: 'border-color 0.2s'
             }}
             onFocus={(e) => e.target.style.borderColor = HP_TOKENS.sage}
@@ -418,14 +413,13 @@ Respons kamu harus SINGKAT (max 3-4 paragraf pendek). Jangan bertele-tele. Langs
             onClick={() => send()} 
             disabled={typing}
             style={{
-              width: 52, height: 52, borderRadius: 26, border: 'none', background: HP_TOKENS.sage,
+              width: 52, height: 52, borderRadius: '50%', border: 'none', background: HP_TOKENS.sage,
               display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: typing ? 'default' : 'pointer', flexShrink: 0,
               opacity: typing ? 0.6 : 1,
-              boxShadow: `0 4px 16px ${HP_TOKENS.sage}50`,
             }}
             className="hp-tap"
           >
-            <HPGlyph name="send" size={20} color="#F4F7F9"/>
+            <HPGlyph name="send" size={20} color={HP_TOKENS.onPrimary}/>
           </button>
         </div>
       </div>

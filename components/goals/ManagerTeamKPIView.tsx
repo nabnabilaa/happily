@@ -66,9 +66,9 @@ export default function ManagerTeamKPIView({
         <button
           onClick={() => openModal('kpi_review')}
           style={{
-            padding: '8px 14px', borderRadius: 10, border: 'none', cursor: 'pointer',
-            background: '#FFF3CC', color: '#8A6814',
-            fontFamily: 'inherit', fontWeight: 800, fontSize: 11,
+            padding: '8px 14px', borderRadius: HP_TOKENS.radiusSm, border: 'none', cursor: 'pointer',
+            background: HP_TOKENS.yellowWash, color: HP_TOKENS.yellowDark,
+            fontFamily: 'inherit', fontWeight: 700, fontSize: 11,
             display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 8,
           }}
         >
@@ -108,16 +108,16 @@ export default function ManagerTeamKPIView({
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <HPAvatar name={ownerName} size={32} />
                   <div style={{ flex: 1 }}>
-                    <div style={{ ...HP_TEXT.tiny, fontWeight: 900, color: HP_TOKENS.ink, letterSpacing: '0.02em' }}>
+                    <div style={{ ...HP_TEXT.tiny, fontWeight: 700, color: HP_TOKENS.ink, letterSpacing: '0.02em' }}>
                       {ownerName.toUpperCase()}
                     </div>
                     <div style={{ fontSize: 9, fontWeight: 700, color: HP_TOKENS.inkFade, marginTop: 1 }}>{g.is_kpi ? 'KPI TARGET' : 'GOAL'}</div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div style={{ 
-                      fontSize: 9, fontWeight: 900, padding: '4px 10px', borderRadius: 99,
+                      fontSize: 9, fontWeight: 700, padding: '4px 10px', borderRadius: 99,
                       background: g.status === 'approved' ? HP_TOKENS.sage : g.status === 'rejected' ? HP_TOKENS.coral : g.status === 'revision' ? HP_TOKENS.yellow : HP_TOKENS.yellow,
-                      color: '#F4F7F9'
+                      color: HP_TOKENS.onPrimary
                     }}>
                       {g.status === 'approved' ? 'ACCEPT' : g.status === 'rejected' ? 'REJECT' : g.status === 'revision' ? 'REVISI' : 'ON PROGRESS'}
                     </div>
@@ -125,7 +125,7 @@ export default function ManagerTeamKPIView({
                       onClick={(e) => { e.stopPropagation(); setGoalToDelete(g.id); }}
                       className="hp-tap"
                       style={{
-                        width: 24, height: 24, borderRadius: 12, border: 'none', background: 'rgba(26,29,35,0.05)',
+                        width: 24, height: 24, borderRadius: '50%', border: 'none', background: 'rgba(26,29,35,0.05)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'
                       }}
                     >
@@ -156,7 +156,7 @@ export default function ManagerTeamKPIView({
 
                 {childGoals.length > 0 && (
                   <div style={{ padding: '12px 16px', background: `${HP_TOKENS.blue}08`, borderTop: `1px solid ${HP_TOKENS.lineSoft}` }}>
-                    <div style={{ ...HP_TEXT.tiny, fontWeight: 900, color: HP_TOKENS.blue, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ ...HP_TEXT.tiny, fontWeight: 700, color: HP_TOKENS.blue, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
                       <HPGlyph name="link" size={12} color={HP_TOKENS.blue} />
                       ALIGNED OKR ({childGoals.length})
                     </div>
@@ -165,9 +165,8 @@ export default function ManagerTeamKPIView({
                         const childToneColor = TONE[child.tone] || HP_TOKENS.sage;
                         return (
                           <div key={child.id} style={{
-                            padding: '14px 16px', background: HP_TOKENS.card, borderRadius: 16,
+                            padding: '14px 16px', background: HP_TOKENS.card, borderRadius: HP_TOKENS.radiusMd,
                             border: `1.5px solid ${child.status === 'pending' ? `${HP_TOKENS.yellow}40` : HP_TOKENS.lineSoft}`,
-                            boxShadow: '0 2px 8px rgba(26,29,35,0.02)'
                           }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                               <div style={{ flex: 1 }}>
@@ -180,12 +179,12 @@ export default function ManagerTeamKPIView({
                                   </div>
                                   <div style={{ ...HP_TEXT.h, fontSize: 13 }}>{child.title}</div>
                                   {(child.progress || 0) >= 100 && (
-                                    <div style={{ padding: '2px 7px', borderRadius: 5, background: HP_TOKENS.sageSoft, color: HP_TOKENS.sage, fontSize: 8, fontWeight: 900 }}>DONE</div>
+                                    <div style={{ padding: '2px 7px', borderRadius: 5, background: HP_TOKENS.sageSoft, color: HP_TOKENS.sage, fontSize: 8, fontWeight: 700 }}>DONE</div>
                                   )}
                                   <div style={{
-                                    padding: '2px 7px', borderRadius: 5, fontSize: 8, fontWeight: 900,
+                                    padding: '2px 7px', borderRadius: 5, fontSize: 8, fontWeight: 700,
                                     background: child.status === 'approved' ? HP_TOKENS.sageSoft : child.status === 'rejected' ? HP_TOKENS.coralSoft : child.status === 'revision' ? HP_TOKENS.yellowSoft : HP_TOKENS.yellowSoft,
-                                    color: child.status === 'approved' ? HP_TOKENS.sage : child.status === 'rejected' ? HP_TOKENS.coral : child.status === 'revision' ? '#8A6814' : '#8A6814',
+                                    color: child.status === 'approved' ? HP_TOKENS.sage : child.status === 'rejected' ? HP_TOKENS.coral : child.status === 'revision' ? HP_TOKENS.yellowDark : HP_TOKENS.yellowDark,
                                   }}>
                                     {child.status === 'approved' ? 'ACCEPT' : child.status === 'revision' ? 'REVISI' : child.status === 'rejected' ? 'REJECT' : 'PENDING'}
                                   </div>
@@ -201,9 +200,9 @@ export default function ManagerTeamKPIView({
                             </div>
                             {child.status === 'pending' && (
                               <div style={{ display: 'flex', gap: 8, marginTop: 12 }} onClick={(e) => e.stopPropagation()}>
-                                <button onClick={(e) => { e.stopPropagation(); handleApproveGoal(String(child.id)); }} className="hp-tap" style={{ flex: 1, padding: '8px', borderRadius: 10, border: 'none', background: HP_TOKENS.sage, color: '#F4F7F9', fontFamily: HP_FONT, fontWeight: 900, fontSize: 11, cursor: 'pointer', boxShadow: `0 2px 8px ${HP_TOKENS.sage}40` }}>Approve</button>
-                                <button onClick={(e) => { e.stopPropagation(); handleRevisionGoal(String(child.id)); }} className="hp-tap" style={{ flex: 1, padding: '8px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.yellow}`, background: HP_TOKENS.card, color: '#8A6814', fontFamily: HP_FONT, fontWeight: 900, fontSize: 11, cursor: 'pointer' }}>Revisi</button>
-                                <button onClick={(e) => { e.stopPropagation(); handleRejectGoal(String(child.id)); }} className="hp-tap" style={{ flex: 1, padding: '8px', borderRadius: 10, border: `1.5px solid ${HP_TOKENS.coral}`, background: HP_TOKENS.card, color: HP_TOKENS.coral, fontFamily: HP_FONT, fontWeight: 900, fontSize: 11, cursor: 'pointer' }}>Reject</button>
+                                <button onClick={(e) => { e.stopPropagation(); handleApproveGoal(String(child.id)); }} className="hp-tap" style={{ flex: 1, padding: '8px', borderRadius: HP_TOKENS.radiusSm, border: 'none', background: HP_TOKENS.sage, color: HP_TOKENS.onPrimary, fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, cursor: 'pointer' }}>Approve</button>
+                                <button onClick={(e) => { e.stopPropagation(); handleRevisionGoal(String(child.id)); }} className="hp-tap" style={{ flex: 1, padding: '8px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.yellow}`, background: HP_TOKENS.card, color: HP_TOKENS.yellowDark, fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, cursor: 'pointer' }}>Revisi</button>
+                                <button onClick={(e) => { e.stopPropagation(); handleRejectGoal(String(child.id)); }} className="hp-tap" style={{ flex: 1, padding: '8px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.coral}`, background: HP_TOKENS.card, color: HP_TOKENS.coral, fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, cursor: 'pointer' }}>Reject</button>
                               </div>
                             )}
                           </div>
@@ -216,9 +215,9 @@ export default function ManagerTeamKPIView({
                 {g.status === 'pending' && (
                   <div style={{ padding: '12px 16px', background: HP_TOKENS.paper, borderTop: `1px solid ${HP_TOKENS.lineSoft}` }}>
                     <div style={{ display: 'flex', gap: 10 }}>
-                      <button onClick={(e) => { e.stopPropagation(); handleApproveGoal(String(g.id)); }} className="hp-tap" style={{ flex: 1, padding: '12px', borderRadius: 12, border: 'none', background: HP_TOKENS.sage, color: '#F4F7F9', fontFamily: HP_FONT, fontWeight: 900, fontSize: 13, cursor: 'pointer' }}>Approve KPI</button>
-                      <button onClick={(e) => { e.stopPropagation(); handleRevisionGoal(String(g.id)); }} className="hp-tap" style={{ flex: 1, padding: '12px', borderRadius: 12, border: `1.5px solid ${HP_TOKENS.yellow}`, background: HP_TOKENS.card, color: '#8A6814', fontFamily: HP_FONT, fontWeight: 900, fontSize: 13, cursor: 'pointer' }}>Revisi</button>
-                      <button onClick={(e) => { e.stopPropagation(); handleRejectGoal(String(g.id)); }} className="hp-tap" style={{ flex: 1, padding: '12px', borderRadius: 12, border: `1.5px solid ${HP_TOKENS.coral}`, background: HP_TOKENS.card, color: HP_TOKENS.coral, fontFamily: HP_FONT, fontWeight: 900, fontSize: 13, cursor: 'pointer' }}>Reject</button>
+                      <button onClick={(e) => { e.stopPropagation(); handleApproveGoal(String(g.id)); }} className="hp-tap" style={{ flex: 1, padding: '12px', borderRadius: HP_TOKENS.radiusSm, border: 'none', background: HP_TOKENS.sage, color: HP_TOKENS.onPrimary, fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Approve KPI</button>
+                      <button onClick={(e) => { e.stopPropagation(); handleRevisionGoal(String(g.id)); }} className="hp-tap" style={{ flex: 1, padding: '12px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.yellow}`, background: HP_TOKENS.card, color: HP_TOKENS.yellowDark, fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Revisi</button>
+                      <button onClick={(e) => { e.stopPropagation(); handleRejectGoal(String(g.id)); }} className="hp-tap" style={{ flex: 1, padding: '12px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.coral}`, background: HP_TOKENS.card, color: HP_TOKENS.coral, fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Reject</button>
                     </div>
                   </div>
                 )}
