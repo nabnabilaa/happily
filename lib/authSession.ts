@@ -22,18 +22,54 @@ import crypto from "crypto";
 const COOKIE_NAME = "fb_session";
 const MAX_AGE_SECS = 60 * 60 * 24 * 30; // 30 hari
 
+let cachedSecret: string | null = null;
+
 function getSecret(): string {
+  if (cachedSecret) return cachedSecret;
+
   const secret = process.env.SESSION_SECRET;
-  if (secret && secret.length >= 16) return secret;
+  if (secret && secret.length >= 16) {
+    cachedSecret = secret;
+    return cachedSecret;
+  }
+
+  // Fallback produksi: turunkan kunci dari secret yang SUDAH pasti ada di
+  // server. Sebelumnya di sini `throw`, dan itu membuat setiap login yang
+  // kredensialnya BENAR balas 500 — gagalnya terjadi setelah verifikasi
+  // berhasil, jadi tidak pernah terlihat di dev maupun saat password salah.
+  //
+  // Kenapa diturunkan, bukan string hardcoded seperti project lain: string di
+  // source code bisa dibaca siapa pun yang punya akses repo, dan siapa pun yang
+  // membacanya bisa menandatangani cookie sesi atas nama user mana pun. Nilai di
+  // bawah tidak pernah masuk git dan tetap stabil antar restart maupun antar
+  // instance, jadi cookie yang sudah terbit tidak ikut hangus.
+  const material = [
+    process.env.MYSQL_URI,
+    process.env.MYSQL_PASSWORD,
+    process.env.MAXY_SERVICE_KEY,
+    process.env.GOOGLE_CLIENT_SECRET,
+  ].filter((v): v is string => typeof v === "string" && v.length > 0);
+
+  if (material.length > 0) {
+    cachedSecret = crypto
+      .createHmac("sha256", material.join("|"))
+      .update("flowbee-session-key-v1")
+      .digest("base64url");
+    return cachedSecret;
+  }
 
   if (process.env.NODE_ENV === "production") {
-    // Diam-diam memakai secret lemah di produksi jauh lebih berbahaya daripada
-    // gagal keras: seluruh otorisasi ruang fokus bergantung pada tanda tangan ini.
+    // Sampai di sini artinya kredensial DB DAN service key Maxy sama-sama kosong:
+    // aplikasinya memang belum terkonfigurasi, login akan gagal di query pertama
+    // jauh sebelum baris ini pun. Gagal keras di sini lebih jelas daripada
+    // menerbitkan sesi yang ditandatangani nilai yang bisa ditebak.
     throw new Error(
-      "SESSION_SECRET wajib diisi (minimal 16 karakter) di environment produksi."
+      "SESSION_SECRET kosong dan tidak ada secret lain untuk menurunkannya di environment produksi."
     );
   }
-  return "flowbee-dev-only-session-secret-do-not-use-in-production";
+
+  cachedSecret = "flowbee-dev-only-session-secret-do-not-use-in-production";
+  return cachedSecret;
 }
 
 function sign(value: string): string {
