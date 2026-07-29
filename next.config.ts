@@ -8,6 +8,20 @@ const nextConfig: NextConfig = {
   // Coach button, so it goes top-left — over the static brand block, which is
   // the only corner nothing interactive occupies. Dev-only either way.
   devIndicators: { position: 'top-left' },
+
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "Cross-Origin-Opener-Policy",
+            value: "same-origin-allow-popups",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
