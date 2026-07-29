@@ -110,13 +110,13 @@ export default function RegisterPage() {
 
           <form onSubmit={handleSubmit} style={{ width: "100%", display: "flex", flexDirection: "column", gap: 16 }}>
             {error && (
-              <div style={{ padding: "12px", borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.dangerWash, color: HP_TOKENS.danger, fontWeight: 700, textAlign: "center", fontSize: 13 }}>
+              <div style={{ padding: "12px", borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.dangerWash, color: HP_TOKENS.dangerInk, fontWeight: 700, textAlign: "center", fontSize: 13 }}>
                 {error}
               </div>
             )}
             
             {success && (
-              <div style={{ padding: "12px", borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.successWash, color: HP_TOKENS.success, fontWeight: 700, textAlign: "center", fontSize: 13 }}>
+              <div style={{ padding: "12px", borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.successWash, color: HP_TOKENS.successInk, fontWeight: 700, textAlign: "center", fontSize: 13 }}>
                 {success}
               </div>
             )}
@@ -205,14 +205,14 @@ export default function RegisterPage() {
             >
               {loading ? (
                 <>
-                  <div className="hp-spin" style={{ display: 'flex', alignItems: 'center' }}>🔄</div> Mendaftar...
+                  <div className="hp-spin" style={{ display: 'flex', alignItems: 'center' }}><HPGlyph name="refresh" size={14} color="currentColor" /></div> Mendaftar...
                 </>
               ) : "Daftar Akun Baru"}
             </button>
             
             <div style={{ marginTop: 24, fontSize: 14, color: HP_TOKENS.inkSoft, fontWeight: 500, textAlign: "center" }}>
               Sudah punya akun?{" "}
-              <Link href="/" className="hp-link" style={{ color: HP_TOKENS.primary, fontWeight: 700, textDecoration: "none" }}>
+              <Link href="/" className="hp-link" style={{ color: HP_TOKENS.primaryInk, fontWeight: 700, textDecoration: "none" }}>
                 Login di sini
               </Link>
             </div>

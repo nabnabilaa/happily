@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { wibDateString, sqlWibDate } from "@/lib/timeUtils";
 
 // GET: HR views attendance data for all employees
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const date = searchParams.get('date') || new Date().toISOString().slice(0, 10);
+    // Default "hari ini" mengikuti kalender WIB. Dengan tanggal UTC, HR yang
+    // membuka halaman ini sebelum jam 07:00 WIB melihat data kemarin.
+    const date = searchParams.get('date') || wibDateString();
 
     // Today's attendance with user info
     const attendanceRes = await db.execute({
@@ -13,7 +16,7 @@ export async function GET(request: Request) {
             FROM attendance a
             JOIN users u ON a.user_id = u.id
             LEFT JOIN teams t ON u.team_id = t.id
-            WHERE DATE(a.check_in_at) = ?
+            WHERE ${sqlWibDate('a.check_in_at')} = ?
             ORDER BY a.check_in_at ASC`,
       args: [date]
     });

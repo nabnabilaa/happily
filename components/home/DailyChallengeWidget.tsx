@@ -1,122 +1,119 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useHP } from "@/lib/HPContext";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
 import HPGlyph from "@/components/ui/HPGlyph";
 import HPCard from "@/components/ui/HPCard";
 import { HPButton } from "@/components/ui";
 import SectionHeader from "@/components/home/SectionHeader";
+import { scrollIntoViewSafely } from "@/lib/motion";
 
-// ── Daily Nudges (Wellbeing-focused) ──────────────────────────
-const getTodayStr = () => new Date().toISOString().slice(0, 10);
-
-const DAILY_MISSIONS = [
-  { id: 'dm_mood', title: 'Cek Ombak Pagi', desc: 'Isi Mood Check-in untuk memulai hari.', glyph: 'heart', points: 10, actionLabel: 'Cek Mood', action: (openModal: any) => openModal('checkin'), check: (s: any) => !!s.lastMoodCheckIn && s.lastMoodCheckIn.startsWith(getTodayStr()) },
-  { id: 'dm_focus', title: 'Fokus 15 Menit', desc: 'Lakukan sesi Pomodoro untuk pemanasan kerja.', glyph: 'hourglass', points: 20, actionLabel: 'Mulai Fokus', action: (openModal: any) => openModal('focus'), check: (s: any) => (s.logbook || []).some((l: any) => l.type === 'focus_session' && (l.created_at || '').startsWith(getTodayStr())) },
-  { id: 'dm_task', title: 'Pecah Telur', desc: 'Pilih 1 tugas prioritas dan selesaikan hari ini.', glyph: 'target', points: 20, actionLabel: 'Fokus Task', action: () => document.getElementById('daily-training-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), check: (s: any) => (s.priorities || []).filter((p: any) => p.done).length >= 1 },
-  { id: 'dm_plan', title: 'Rencana Jitu', desc: 'Tambahkan minimal 3 tugas ke daftar prioritasmu.', glyph: 'note', points: 10, actionLabel: 'Susun Task', action: (openModal: any) => openModal('manage_priorities'), check: (s: any) => (s.priorities || []).length >= 3 },
-  { id: 'dm_kudos', title: 'Tebar Kebaikan', desc: 'Kirim apresiasi atau kudos ke rekan kerjamu.', glyph: 'star', points: 15, actionLabel: 'Kirim Kudos', action: (openModal: any) => openModal('appreciate'), check: (s: any) => (s.logbook || []).some((l: any) => l.type === 'kudos_sent' && (l.created_at || '').startsWith(getTodayStr())) },
-  { id: 'dm_coach', title: 'Sapa Sang Pelatih', desc: 'Buka Coach AI dan minta 1 saran hari ini.', glyph: 'sparkle', points: 10, actionLabel: 'Tanya Coach', action: (openModal: any) => openModal('coach'), check: (s: any) => (s.logbook || []).some((l: any) => l.type === 'ai_coach' && (l.created_at || '').startsWith(getTodayStr())) },
-  { id: 'dm_pause', title: 'Jeda Sejenak', desc: 'Lakukan sesi pernapasan singkat (1 menit).', glyph: 'leaf', points: 15, actionLabel: 'Mulai Napas', action: (openModal: any) => openModal('pause'), check: (s: any) => (s.logbook || []).some((l: any) => l.type === 'pause_session' && (l.created_at || '').startsWith(getTodayStr())) },
-  {
-    id: 'dm_training',
-    title: 'Daily Training',
-    desc: 'Tandai selesai minimal 1 latihan/habit hari ini.',
-    glyph: 'activity', points: 20,
-    actionLabel: (s: any) => (s.habits && s.habits.length > 0) ? 'Buka Latihan' : 'Buat Latihan',
-    action: (openModal: any, s: any) => {
-      if (s.habits && s.habits.length > 0) {
-        document.getElementById('daily-training-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else {
-        openModal('manage_habits');
-      }
-    },
-    check: (s: any) => (s.habits || []).some((h: any) => h.done)
-  },
-  { id: 'dm_midday', title: 'Cek Progres Siang', desc: 'Isi Mid-day Check-in di jam 11.30 - 13.30 sebelum terlewat.', glyph: 'sun', points: 15, actionLabel: 'Cek Progres', action: (openModal: any) => openModal('work_checkin'), check: (s: any) => (s.logbook || []).some((l: any) => l.type === 'realization_check' && (l.created_at || '').startsWith(getTodayStr())) },
-  { id: 'dm_chat', title: 'Sapa Tim', desc: 'Buka fitur Chat dan lihat pembaruan dari tim.', glyph: 'chat', points: 10, actionLabel: 'Buka Chat', action: (_openModal: any, _s: any, onActioned?: () => void) => { window.dispatchEvent(new CustomEvent('set_tab', { detail: 'chat' })); onActioned?.(); }, check: (s: any) => false },
-];
-
-// Seeded random for daily rotation
-function seededShuffle<T>(arr: T[], seed: number): T[] {
-  const shuffled = [...arr];
-  let s = seed;
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    s = (s * 9301 + 49297) % 233280;
-    const j = Math.floor((s / 233280) * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
+/**
+ * Nudge harian.
+ *
+ * Daftar misi, pemeriksaan selesai, dan status klaim semuanya datang dari
+ * /api/nudges — lihat lib/nudges.ts. Komponen ini hanya menampilkan.
+ *
+ * Sebelumnya ketiganya ada di sini: definisi misi beserta `check(state)` yang
+ * membaca state klien, dan daftar klaim di localStorage. Dua akibatnya nyata —
+ * membersihkan storage (atau membuka dari browser lain) membuat seluruh misi
+ * hari itu bisa diklaim ulang, dan satu misi punya pemeriksa yang selalu
+ * mengembalikan false sehingga hanya bisa diklaim lewat "sudah menekan tombol".
+ * Poin dibayar untuk menekan tombol, bukan untuk mengerjakan sesuatu.
+ */
+interface NudgeMissionView {
+  id: string;
+  title: string;
+  desc: string;
+  glyph: string;
+  actionLabel: string;
+  target: { modal?: string; scrollTo?: string; tab?: string };
+  done: boolean;
+  claimed: boolean;
 }
 
-export default function DailyChallengeWidget({ openModal, onClaimReward }: { openModal: any, onClaimReward?: (points: number, title: string) => void }) {
-  const { state, user, awardXP, notify } = useHP();
-  const [claimedIds, setClaimedIds] = useState<Set<string>>(new Set());
-  const [actionedIds, setActionedIds] = useState<Set<string>>(new Set());
-  const [hoveredMission, setHoveredMission] = useState<string | null>(null);
+const NUDGE_POINTS = 10;
 
-  // Load claimed challenges from localStorage
-  useEffect(() => {
-    const today = new Date().toISOString().slice(0, 10);
-    const stored = localStorage.getItem(`hp_missions_${today}_${user?.id}`);
-    if (stored) {
-      try { setClaimedIds(new Set(JSON.parse(stored))); } catch (e) {}
-    } else {
-      setClaimedIds(new Set());
+export default function DailyChallengeWidget({ openModal, onClaimReward }: { openModal: any, onClaimReward?: (points: number, title: string) => void }) {
+  const { state, user, notify } = useHP();
+  const [missions, setMissions] = useState<NudgeMissionView[]>([]);
+  const [hoveredMission, setHoveredMission] = useState<string | null>(null);
+  const [claiming, setClaiming] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const res = await fetch('/api/nudges');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data.missions)) setMissions(data.missions);
+    } catch {
+      // Widget hiasan — kegagalannya tidak boleh mengganggu layar utama.
     }
   }, [user?.id]);
 
-  // Pick 4 daily missions deterministically per day PER USER
-  const activeMissions = useMemo(() => {
-    if (!user) return [];
-    const now = new Date();
-    // Combine Date and User ID to generate a unique seed per user per day
-    let userNum = 0;
-    for (let i=0; i<user.id.length; i++) userNum += user.id.charCodeAt(i);
-    
-    const daySeed = (now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate()) + userNum;
-    
-    // Always keep at least 1 very easy action like mood or focus, then 3 completely random
-    const shuffled = seededShuffle(DAILY_MISSIONS, daySeed);
-    return shuffled.slice(0, 4);
-  }, [user]);
+  // Muat ulang setiap kali ada poin berubah: menyelesaikan task atau mengisi
+  // mood bisa membuat sebuah misi jadi bisa diklaim, dan status itu hanya
+  // diketahui server.
+  useEffect(() => {
+    load();
+    const onChange = () => load();
+    window.addEventListener('hp_points_changed', onChange);
+    return () => window.removeEventListener('hp_points_changed', onChange);
+  }, [load]);
 
-  if (!state || !user || activeMissions.length === 0) return null;
+  const claimReward = useCallback(async (mission: NudgeMissionView) => {
+    if (mission.claimed || claiming) return;
+    setClaiming(mission.id);
+    try {
+      const res = await fetch('/api/nudges', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ missionId: mission.id }),
+      });
+      const data = await res.json();
 
-  // Calculate current Mission XP from claimed missions
-  const currentXP = activeMissions
-    .filter(m => claimedIds.has(m.id))
-    .reduce((sum, m) => sum + m.points, 0);
+      if (!res.ok) {
+        notify('Belum bisa diklaim', data.error || 'Coba lagi sebentar.', 'warning');
+        await load();
+        return;
+      }
 
-  const maxXP = activeMissions.reduce((sum, m) => sum + m.points, 0); 
+      setMissions(prev => prev.map(m => m.id === mission.id ? { ...m, claimed: true } : m));
 
-  // Define Chest Milestones
+      if (onClaimReward) onClaimReward(data.awarded ?? NUDGE_POINTS, mission.title);
+      else notify('Misi Selesai! 🎉', `+${data.awarded ?? NUDGE_POINTS} Poin`, 'success');
+
+      // Saldo di header ikut poin yang baru saja diberikan.
+      window.dispatchEvent(new CustomEvent('hp_points_changed'));
+    } catch {
+      notify('Gagal klaim', 'Periksa koneksimu lalu coba lagi.', 'error');
+    } finally {
+      setClaiming(null);
+    }
+  }, [claiming, notify, onClaimReward, load]);
+
+  const runAction = useCallback((mission: NudgeMissionView) => {
+    const t = mission.target || {};
+    if (t.modal) return openModal(t.modal);
+    if (t.tab) return window.dispatchEvent(new CustomEvent('set_tab', { detail: t.tab }));
+    if (t.scrollTo) {
+      scrollIntoViewSafely(document.getElementById(t.scrollTo), { behavior: 'smooth', block: 'start' });
+    }
+  }, [openModal]);
+
+  if (!state || !user || missions.length === 0) return null;
+
+  const activeMissions = missions;
+  const currentXP = missions.filter(m => m.claimed).length * NUDGE_POINTS;
+  const maxXP = missions.length * NUDGE_POINTS;
+
   const milestones = [
     { target: Math.floor(maxXP * 0.33), glyph: 'medal', label: 'Bronze' },
     { target: Math.floor(maxXP * 0.66), glyph: 'medal', label: 'Silver' },
     { target: maxXP, glyph: 'trophy', label: 'Gold' },
   ];
-
-  const claimReward = (mission: typeof DAILY_MISSIONS[0]) => {
-    if (claimedIds.has(mission.id)) return;
-    
-    const newClaimed = new Set(claimedIds);
-    newClaimed.add(mission.id);
-    setClaimedIds(newClaimed);
-    
-    // Persist
-    const today = new Date().toISOString().slice(0, 10);
-    localStorage.setItem(`hp_missions_${today}_${user.id}`, JSON.stringify([...newClaimed]));
-
-    // Award XP
-    awardXP('daily_challenge', `Misi: ${mission.title}`, mission.points);
-    if (onClaimReward) {
-      onClaimReward(mission.points, mission.title);
-    } else {
-      notify('Misi Selesai! 🎉', `+${mission.points} Point`, 'success');
-    }
-  };
 
   return (
     // Spacing between blocks belongs to the screen's layout gap, not to the
@@ -165,7 +162,7 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
       <SectionHeader 
         icon="sparkle" 
         label="Nudge Harian" 
-        count={`${claimedIds.size}/${activeMissions.length}`}
+        count={`${missions.filter(m => m.claimed).length}/${missions.length}`}
       />
 
       <div style={{
@@ -194,13 +191,13 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
         }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, marginBottom: 18 }}>
             <div style={{ minWidth: 0 }}>
-              <div style={{ ...HP_TEXT.tiny, marginBottom: 4, color: HP_TOKENS.yellowDark, fontWeight: 750, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Daily quests</div>
+              <div style={{ ...HP_TEXT.tiny, marginBottom: 4, color: HP_TOKENS.yellowInk, fontWeight: 750, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Daily quests</div>
               <div style={{ ...HP_TEXT.h, color: HP_TOKENS.ink }}>
                 Selesaikan misi, kumpulkan poin
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, flexShrink: 0, background: HP_TOKENS.yellowSoft, padding: '4px 12px', borderRadius: HP_TOKENS.radiusPill, border: `1px solid ${HP_TOKENS.yellow}` }}>
-              <span style={{ ...HP_TEXT.metric, color: HP_TOKENS.yellowDark }}>{currentXP}</span>
+              <span style={{ ...HP_TEXT.metric, color: HP_TOKENS.yellowInk }}>{currentXP}</span>
               <span style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute }}>/ {maxXP} XP</span>
             </div>
           </div>
@@ -282,16 +279,11 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
         {/* Misi List */}
         <div style={{ padding: '12px 16px 16px' }}>
           {activeMissions.map((c, i) => {
-            // Because some missions are manual triggers without strict logic, we might 
-            // fallback to 'claimed' or checking simple true/false if they just view it.
-            // But checking logic is provided for most.
-            const isCompleted = c.check(state);
-            const isClaimed = claimedIds.has(c.id);
-            // dm_chat and similar view-only missions become claimable after user clicks action button
-            const isActioned = actionedIds.has(c.id);
-            const effectivelyCompleted = isCompleted || isActioned;
-
-            const canClaim = effectivelyCompleted && !isClaimed;
+            // `done` dan `claimed` keduanya keputusan server. Klien tidak lagi
+            // punya suara soal apakah sebuah misi layak dibayar.
+            const isCompleted = c.done;
+            const isClaimed = c.claimed;
+            const canClaim = isCompleted && !isClaimed;
             const isHovered = hoveredMission === c.id;
 
             return (
@@ -330,17 +322,17 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
                     width: 44, height: 44, borderRadius: HP_TOKENS.radiusMd, flexShrink: 0,
                     background: isClaimed
                       ? HP_TOKENS.successSoft
-                      : effectivelyCompleted ? HP_TOKENS.yellowSoft : HP_TOKENS.yellowWash,
+                      : isCompleted ? HP_TOKENS.yellowSoft : HP_TOKENS.yellowWash,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     transition: 'background-color 220ms var(--hp-ease)',
                   }}>
                     {isClaimed ? (
-                      <HPGlyph name="check" size={22} color={HP_TOKENS.success} stroke={3} />
+                      <HPGlyph name="check" size={22} color={HP_TOKENS.successInk} stroke={3} />
                     ) : (
                       <HPGlyph
                         name={c.glyph}
                         size={20}
-                        color={effectivelyCompleted ? HP_TOKENS.yellowDark : HP_TOKENS.yellowDark}
+                        color={isCompleted ? HP_TOKENS.yellowDark : HP_TOKENS.yellowDark}
                       />
                     )}
                   </div>
@@ -366,7 +358,7 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
                       display: 'flex', alignItems: 'center', gap: 4,
                     }}>
                       <HPGlyph name="zap" size={12} color="currentColor" />
-                      +{c.points} XP
+                      +{NUDGE_POINTS} Poin
                     </div>
 
                     {canClaim ? (
@@ -374,6 +366,7 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
                         size="sm"
                         variant="primary"
                         onClick={() => claimReward(c)}
+                        disabled={claiming === c.id}
                         style={{ background: HP_TOKENS.yellow, color: HP_TOKENS.ink }}
                       >
                         Klaim
@@ -382,7 +375,7 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
                       <div style={{
                         ...HP_TEXT.tiny,
                         display: 'inline-flex', alignItems: 'center', gap: 4,
-                        color: HP_TOKENS.success,
+                        color: HP_TOKENS.successInk,
                         padding: '6px 12px', borderRadius: HP_TOKENS.radiusPill,
                         background: HP_TOKENS.successWash,
                       }}>
@@ -399,12 +392,9 @@ export default function DailyChallengeWidget({ openModal, onClaimReward }: { ope
                           color: isHovered ? HP_TOKENS.yellowDark : undefined, 
                           background: isHovered ? HP_TOKENS.yellowWash : undefined 
                         }}
-                        onClick={() => {
-                          const onActioned = () => setActionedIds(prev => new Set([...prev, c.id]));
-                          openModal && c.action(openModal, state, onActioned);
-                        }}
+                        onClick={() => runAction(c)}
                       >
-                        {typeof c.actionLabel === 'function' ? c.actionLabel(state) : c.actionLabel}
+                        {c.actionLabel}
                       </HPButton>
                     )}
                 </div>

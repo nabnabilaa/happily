@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { wibDayOfWeek } from "@/lib/timeUtils";
 
 // GET: Cron endpoint — Friday weekly review
 // 1. Remind managers to do weekly review
@@ -14,8 +15,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Only run on Friday (day 5)
-    if (new Date().getDay() !== 5) {
+    // Only run on Friday (day 5) — Jumat menurut WIB. Dengan jam server UTC,
+    // Jumat 00:00–07:00 WIB masih terbaca Kamis dan Sabtu dini hari WIB masih
+    // terbaca Jumat, jadi penjaga ini meleset di kedua ujungnya.
+    if (wibDayOfWeek() !== 5) {
       return NextResponse.json({ message: "Not Friday, skipping", sent: 0 });
     }
 

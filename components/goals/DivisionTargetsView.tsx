@@ -92,10 +92,10 @@ export default function DivisionTargetsView({ openModal }: Props) {
         border: `1px solid ${HP_TOKENS.lavender}20`,
       }}>
         {[
-          { label: 'Divisi', value: departments.length, color: HP_TOKENS.lavender },
+          { label: 'Divisi', value: departments.length, color: HP_TOKENS.lavenderInk },
           { label: 'Karyawan', value: totalHeadcount, color: HP_TOKENS.blue },
-          { label: 'KPI Aktif', value: totalKpis, color: HP_TOKENS.yellowDark },
-          { label: 'Approval', value: `${overallApprovalRate}%`, color: HP_TOKENS.sage },
+          { label: 'KPI Aktif', value: totalKpis, color: HP_TOKENS.yellowInk },
+          { label: 'Approval', value: `${overallApprovalRate}%`, color: HP_TOKENS.sageInk },
         ].map(s => (
           <div key={s.label} style={{ textAlign: 'center' }}>
             <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 18, color: s.color }}>{s.value}</div>
@@ -108,7 +108,7 @@ export default function DivisionTargetsView({ openModal }: Props) {
         <div style={{ textAlign: 'center', padding: 30, color: HP_TOKENS.inkMute }}>Memuat data divisi...</div>
       ) : filteredDepartments.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '40px 20px', color: HP_TOKENS.inkMute }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>🏢</div>
+          <div style={{ fontSize: 40, marginBottom: 12 }}><HPGlyph name="home" size={28} color="currentColor" /></div>
           <div style={{ ...HP_TEXT.h, fontSize: 15 }}>Belum ada data divisi</div>
         </div>
       ) : (
@@ -196,7 +196,7 @@ export default function DivisionTargetsView({ openModal }: Props) {
                             {u.kpiCount > 0 && (
                               <span style={{
                                 padding: '2px 6px', borderRadius: 4, fontSize: 9, fontWeight: 700,
-                                background: HP_TOKENS.yellowSoft, color: HP_TOKENS.yellowDark, fontFamily: HP_FONT,
+                                background: HP_TOKENS.yellowSoft, color: HP_TOKENS.yellowInk, fontFamily: HP_FONT,
                               }}>
                                 {u.kpiCount} KPI
                               </span>

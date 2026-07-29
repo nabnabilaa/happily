@@ -105,13 +105,13 @@ export default function AttendanceWidget({ openModal }: AttendanceWidgetProps) {
               flexShrink: 0,
             }}
           >
-            <HPGlyph name="history" size={19} color={HP_TOKENS.warning} />
+            <HPGlyph name="history" size={19} color={HP_TOKENS.warningInk} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ ...HP_TEXT.sub, fontSize: 14.5 }}>Belum clock-in</div>
             <div style={{ ...HP_TEXT.small, marginTop: 1 }}>Ketuk untuk mulai absen</div>
           </div>
-          <HPGlyph name="chevronRight" size={17} color={HP_TOKENS.warning} />
+          <HPGlyph name="chevronRight" size={17} color={HP_TOKENS.warningInk} />
         </div>
       </HPCard>
     );
@@ -138,7 +138,7 @@ export default function AttendanceWidget({ openModal }: AttendanceWidgetProps) {
                 flexShrink: 0,
               }}
             >
-              <HPGlyph name="check" size={17} color={HP_TOKENS.success} />
+              <HPGlyph name="check" size={17} color={HP_TOKENS.successInk} />
             </div>
 
             <div style={{ minWidth: 0 }}>
@@ -210,7 +210,7 @@ export default function AttendanceWidget({ openModal }: AttendanceWidgetProps) {
             flexShrink: 0,
           }}
         >
-          <HPGlyph name="check" size={16} color={HP_TOKENS.success} />
+          <HPGlyph name="check" size={16} color={HP_TOKENS.successInk} />
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>

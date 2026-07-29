@@ -1,1014 +1,928 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHP } from "@/lib/HPContext";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
 import HPGlyph from "@/components/ui/HPGlyph";
 import HPBar from "@/components/ui/HPBar";
 import BeeMascot from "@/components/ui/BeeMascot";
 import HPAvatar from "@/components/ui/HPAvatar";
-import { QRCodeSVG } from "qrcode.react";
-import PusherClient from 'pusher-js';
+import { useFocusSession, type FocusParticipant, type FocusRoomState } from "@/lib/useFocusSession";
+
+/**
+ * Sesi fokus — solo maupun bersama.
+ *
+ * Komponen ini sengaja tidak memutuskan apa pun yang bernilai. Ia tidak
+ * menghitung poin, tidak menentukan siapa host, dan tidak menyatakan sebuah
+ * sesi gagal. Semua itu milik server (lihat lib/focusRoom.ts); di sini kita
+ * hanya menggambar keadaan yang dikirim server dan mengirimkan niat user.
+ *
+ * Yang hilang dari versi sebelumnya, dan sengaja tidak dibawa kembali:
+ *   • `awardXP()` di akhir timer — poin sekarang diselesaikan server.
+ *   • Timer lokal sebagai sumber kebenaran — sekarang diturunkan dari `endsAt`.
+ *   • Layar merah "Sesi Gagal! 😡" — diganti ringkasan jujur; layar itu
+ *     mengajari user menghindari deteksi, bukan fokus.
+ *   • Mock "Siska disconnect" 12 detik yang berjalan di produksi.
+ */
 
 interface FocusModalProps {
   onClose: () => void;
-  initialMultiplayer?: boolean;
-  initialRoomCode?: string;
-  initialParticipants?: any[];
-  initialMode?: 'hardcore' | 'zen';
-  initialDuration?: number;
-  initialRemainingMins?: number;
-  isGuest?: boolean;
+  /** Masuk / kembali ke ruangan yang sudah ada. */
+  roomId?: string;
+  /** Kode yang sudah diverifikasi di lobby, diteruskan ke JOIN. */
+  joinCode?: string;
+  /** Buka langsung di penyiapan sesi bersama, bukan solo. */
+  startAsTeam?: boolean;
 }
 
-declare var chrome: any;
+type Phase = "setup" | "lobby" | "running" | "away" | "summary" | "loading";
+
+const DURATION_PRESETS = [15, 25, 50, 90];
 
 const iconBtnStyle: React.CSSProperties = {
-  position: 'relative', width: 40, height: 40, borderRadius: '50%', border: 'none',
-  background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+  position: "relative", width: 40, height: 40, borderRadius: "50%", border: "none",
+  background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center",
+  justifyContent: "center", cursor: "pointer",
 };
 
-function sendToExtension(type: string, data?: any): Promise<any> {
-  return new Promise((resolve) => {
-    try {
-      const event = new CustomEvent('flowbee_focus', { detail: { type, ...data } });
-      window.dispatchEvent(event);
-      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-        chrome.runtime.sendMessage({ type, ...data }, (response: any) => resolve(response || { ok: true }));
-        return;
-      }
-      resolve({ ok: true });
-    } catch (e) {
-      resolve({ ok: false });
-    }
-  });
+const overlayBtn = (tone: "primary" | "ghost" | "danger" | "warning"): React.CSSProperties => ({
+  padding: "13px 16px",
+  borderRadius: HP_TOKENS.radiusSm,
+  fontFamily: HP_FONT,
+  fontWeight: 700,
+  fontSize: 14,
+  cursor: "pointer",
+  width: "100%",
+  border: tone === "ghost" ? "1px solid rgba(255,255,255,0.25)" : "none",
+  background:
+    tone === "primary" ? HP_TOKENS.yellow
+    : tone === "danger" ? HP_TOKENS.dangerWash
+    : tone === "warning" ? HP_TOKENS.warningWash
+    : "rgba(255,255,255,0.08)",
+  color:
+    tone === "primary" ? HP_TOKENS.ink
+    : tone === "danger" ? HP_TOKENS.danger
+    : tone === "warning" ? HP_TOKENS.warning
+    : HP_TOKENS.onPrimary,
+});
+
+function fmt(secs: number) {
+  const m = Math.floor(Math.max(0, secs) / 60);
+  const s = Math.max(0, secs) % 60;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-export default function FocusModal({ 
-  onClose, 
-  initialMultiplayer = false,
-  initialRoomCode = "",
-  initialParticipants = [],
-  initialMode = 'hardcore',
-  initialDuration = 25,
-  initialRemainingMins,
-  isGuest = false
-}: FocusModalProps) {
-  const { state, awardXP, notify, user, updateState } = useHP();
-  
-  // Timer States
-  const [duration, setDuration] = useState(initialDuration);
-  const [started, setStarted] = useState(false);
-  const [showInviteMidSession, setShowInviteMidSession] = useState(false);
-  const [secs, setSecs] = useState((initialRemainingMins || initialDuration) * 60);
+function clockOf(iso: string | null) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+}
 
-  const handleDurationChange = (d: number) => {
-    setDuration(d);
-    setSecs(d * 60);
+/**
+ * Peringatan bertingkat saat menjauh — tidak boleh ada kejutan.
+ *
+ * Rancangannya menolak ambang biner "30 detik lalu sesi hangus" yang dulu
+ * dipakai. Yang sebenarnya menyakitkan bukan kehilangan poinnya, melainkan
+ * kehilangan poin TANPA TAHU bahwa hitungannya sedang berjalan. Empat tingkat
+ * di bawah membuat setiap detik yang mahal terlihat sebelum menjadi mahal.
+ */
+function awayStage(elapsedSecs: number, graceSecs: number, secsLeftTotal: number) {
+  if (secsLeftTotal <= 30) {
+    return {
+      key: "critical",
+      emoji: "⏳",
+      tone: HP_TOKENS.danger,
+      title: "Sesimu akan diselesaikan",
+      body: "Waktu menjauhmu hampir habis. Menit yang sudah kamu jalani tetap dibayar.",
+    };
+  }
+  if (elapsedSecs >= graceSecs) {
+    return {
+      key: "spending",
+      emoji: "🕰️",
+      tone: HP_TOKENS.warning,
+      title: "Jatah mulai terpakai",
+      body: "Zona bebas sudah lewat. Satu jatah interupsi terpakai saat kamu kembali — sesimu tetap lanjut.",
+    };
+  }
+  if (elapsedSecs >= Math.max(15, Math.round(graceSecs / 3))) {
+    return {
+      key: "warning",
+      emoji: "⏱️",
+      tone: HP_TOKENS.yellow,
+      title: "Masih dalam zona bebas",
+      body: "Kembali sebelum hitungan di bawah habis dan jatahmu tidak berkurang sama sekali.",
+    };
+  }
+  return {
+    key: "calm",
+    emoji: "☕",
+    tone: HP_TOKENS.onPrimary,
+    title: "Timermu dijeda",
+    body: "Waktu fokusmu berhenti dihitung, bukan hangus. Tenang, urus dulu urusanmu.",
   };
+}
 
-  // Device/Extension States
-  const [blocking, setBlocking] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const [syncStatus, setSyncStatus] = useState<'idle' | 'running' | 'failed' | 'completed'>('idle');
-  const [failedReason, setFailedReason] = useState("");
+/** Pola getar per tingkat. Diam saja kalau perangkatnya tidak mendukung. */
+const BUZZ: Record<string, number | number[]> = {
+  warning: 40,
+  spending: [60, 80, 60],
+  critical: [200, 100, 200],
+};
 
-  // Multiplayer States
-  const [isMultiplayer, setIsMultiplayer] = useState(initialMultiplayer);
-  const [focusMode, setFocusMode] = useState<'hardcore' | 'zen'>(initialMode);
-  const [sessionTitle, setSessionTitle] = useState("");
-  const [sessionDesc, setSessionDesc] = useState("");
-  const [roomCode, setRoomCode] = useState<string>(initialRoomCode);
-  const [participants, setParticipants] = useState<any[]>(initialParticipants);
-  const [multiplier, setMultiplier] = useState(initialParticipants.length > 1 ? 1.2 : 1.0);
-  const [disconnectEvent, setDisconnectEvent] = useState<any | null>(null);
+export default function FocusModal({ onClose, roomId: initialRoomId, joinCode, startAsTeam }: FocusModalProps) {
+  const { user, notify } = useHP();
 
-  // Phone Sync States
-  const [showQR, setShowQR] = useState(initialRemainingMins !== undefined && initialMode === 'hardcore'); 
-  const [phoneConnected, setPhoneConnected] = useState(isMobile || initialMode === 'zen'); 
-  const [exitWarning, setExitWarning] = useState(false);
-  const [lobbyExitWarning, setLobbyExitWarning] = useState(false);
-  // Solo session ID for QR sync (used when not in multiplayer room)
-  const [soloSessionId, setSoloSessionId] = useState<string>(() => 
-    Math.random().toString(36).substring(2, 8).toUpperCase()
-  );
+  const [roomId, setRoomId] = useState<string | null>(initialRoomId ?? null);
+  const [busy, setBusy] = useState(false);
+  const [hostOffer, setHostOffer] = useState<{ fromId: string; expiresAt: number } | null>(null);
+  const [confirmHide, setConfirmHide] = useState(false);
 
-  // Invite States
-  const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
-  const [people, setPeople] = useState<any[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
+  const handleEvent = useCallback((event: any) => {
+    if (event?.type === "HOST_OFFER" && String(event.targetId) === String(user?.id)) {
+      setHostOffer({ fromId: String(event.fromId), expiresAt: Date.now() + (event.ttlSecs ?? 60) * 1000 });
+    }
+    if (event?.type === "HOST_OFFER_DECLINED") setHostOffer(null);
+    if (event?.type === "REMOVED" && String(event.targetId) === String(user?.id)) {
+      notify("Dikeluarkan", "Kamu dikeluarkan dari sesi ini oleh host.", "warning");
+    }
+  }, [user?.id, notify]);
 
-  const focusTask = state?.priorities?.find((p: any) => !p.done)?.title || "General Focus";
+  const { room, loading, error, act, refresh, remainingSecs, interruptElapsedSecs } =
+    useFocusSession(roomId, handleEvent);
 
+  // ── Penyiapan (sebelum ruangan ada) ──────────────────────────────────────
+  const [isTeam, setIsTeam] = useState(Boolean(startAsTeam));
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [duration, setDuration] = useState(25);
+  const [mode, setMode] = useState<"zen" | "hardcore">("hardcore");
+  const [visibility, setVisibility] = useState<"public" | "code">("public");
+  const [setupError, setSetupError] = useState("");
+
+  // Bergabung ke ruangan yang dibuka dari lobby.
   useEffect(() => {
-    async function fetchUsers() {
-      try {
-        const res = await fetch('/api/users');
-        const data = await res.json();
-        if (data.users) {
-          const filtered = data.users.filter((u: any) => String(u.id) !== String(user?.id));
-          setPeople(filtered);
-        }
-      } catch (e) {
-        console.error('Failed to fetch users:', e);
-      }
-    }
-    if (state && initialRemainingMins === undefined) {
-      fetchUsers();
-    }
-  }, [user?.id, state, initialRemainingMins]);
-
-  useEffect(() => {
-    const mobileCheck = window.innerWidth < 768 || /Mobi|Android/i.test(navigator.userAgent);
-    setIsMobile(mobileCheck);
-    if (mobileCheck || initialMode === 'zen') {
-      setPhoneConnected(true);
-      if (initialRemainingMins !== undefined) {
-        setStarted(true);
-        setSyncStatus('running');
-      }
-    }
-  }, [initialRemainingMins]);
-
-  useEffect(() => {
-    if (isMultiplayer && isGuest && user?.id) {
-      fetch(`/api/focus/rooms/${roomCode}/action`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'JOIN', userId: user.id, userName: user.name, userAvatar: (user as any).avatar || (user as any).avatar_image })
-      }).catch(console.error);
-    }
-  }, [isMultiplayer, isGuest, roomCode, user]);
-
-  // Mock Siska Disconnect
-  useEffect(() => {
-    if (started && isMultiplayer && participants.length > 1 && !disconnectEvent && initialRemainingMins === undefined) {
-      const t = setTimeout(() => {
-        setDisconnectEvent(participants[1]); // Mock disconnect 12s after starting
-      }, 12000);
-      return () => clearTimeout(t);
-    }
-  }, [started, isMultiplayer, participants, disconnectEvent, initialRemainingMins]);
-
-  // QR Code Fake Connection
-  // Removed automatic setTimeout mock based on user feedback.
-  // Instead, wait for extension message or manual scan.
-  const handleQRScanned = useCallback(() => {
-    setPhoneConnected(true);
-    setShowQR(false);
-    setStarted(true);
-    
-    // Check if host already started and sync elapsed time
-    let startTimestamp = Date.now();
-    let currentDuration = duration;
-    if (isGuest) {
-      // Data is synced via Pusher
-    }
-    const elapsedSecs = Math.floor((Date.now() - startTimestamp) / 1000);
-    const remaining = Math.max(1, currentDuration * 60 - elapsedSecs);
-    setSecs(remaining);
-    
-    setSyncStatus('running');
-    notify("HP Tersambung", "Mulai fokus, jauhkan HP Anda!", "success");
-    if (!isMobile) {
-      setBlocking(true);
-      sendToExtension('FB_FOCUS_START', { durationMins: currentDuration });
-    }
-    
-    if (isMultiplayer && !isGuest) {
-      fetch(`/api/focus/rooms/${roomCode}/action`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'START', userId: user?.id, title: sessionTitle, durationMins: duration, mode: focusMode })
-      }).catch(console.error);
-    }
-    
-    // Auto-update status to deepwork
-    fetch('/api/status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user?.id, status: 'deepwork' }) }).catch(console.error);
-    
-  }, [notify, duration, isMobile, isMultiplayer, roomCode, focusMode, user, isGuest, sessionTitle, participants]);
-
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'FB_QR_SCANNED') {
-        handleQRScanned();
-      }
-    };
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [handleQRScanned]);
-
-  // Pusher listener for SOLO session QR scan
-  // (Multiplayer sessions use the isMultiplayer Pusher block above)
-  useEffect(() => {
-    if (isMultiplayer || !showQR) return;
-    const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
-    const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'ap1';
-    if (!pusherKey) return;
-
-    const client = new PusherClient(pusherKey, { cluster: pusherCluster });
-    const channelName = `focus-solo-${soloSessionId}`;
-    const channel = client.subscribe(channelName);
-    channel.bind('room-event', (ev: any) => {
-      if (ev.type === 'FB_QR_SCANNED') {
-        handleQRScanned();
-      }
-    });
-
-    return () => {
-      channel.unbind_all();
-      channel.unsubscribe();
-      client.disconnect();
-    };
-  }, [isMultiplayer, showQR, soloSessionId, handleQRScanned]);
-
-  // Host Judgment
-  const handleHostJudgment = (action: 'tunggu' | 'mendesak' | 'lalai') => {
-    if (action === 'lalai') {
-      setMultiplier(1.0);
-      notify("Penalti Diberikan", `${disconnectEvent?.name || 'Rekan'} ditandai lalai. Ia dikeluarkan dan dipotong -50 XP. Multiplier tim turun.`, "warning");
-      setParticipants(prev => prev.filter(p => p.id !== disconnectEvent.id));
-    } else if (action === 'mendesak') {
-      notify("Dispensasi Diberikan", "Multiplier tim aman. Sesi berlanjut.", "success");
-      setParticipants(prev => prev.map(p => p.id === disconnectEvent.id ? { ...p, excused: true } : p));
-    } else {
-      notify("Menunggu Rekan", "Timer tetap berjalan, menunggu rekan kembali.", "info");
-    }
-    setDisconnectEvent(null);
-  };
-
-  const [graceTimestamp, setGraceTimestamp] = useState<number | null>(null);
-
-  // Anti-Cheat Check
-  useEffect(() => {
-    if (!isMobile || syncStatus !== 'running' || !user?.id || focusMode === 'zen') return;
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        setGraceTimestamp(Date.now());
-      } else {
-        setGraceTimestamp((prev) => {
-          if (prev) {
-            const elapsed = Date.now() - prev;
-            if (elapsed > 30000) {
-              setSyncStatus('failed');
-              setStarted(false);
-              setFailedReason(`Sesi dibatalkan karena Anda meninggalkan layar lebih dari 30 detik (${Math.round(elapsed/1000)}s).`);
-              
-              if (isMultiplayer) {
-                fetch(`/api/focus/rooms/${roomCode}/action`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ action: 'FAIL', userId: user?.id, userName: user?.name })
-                }).catch(console.error);
-              }
-            } else {
-              notify("Kembali Fokus", "Hati-hati! Sesi Anda hampir digagalkan karena keluar layar.", "warning");
-            }
-          }
-          return null;
-        });
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, [isMobile, syncStatus, user?.id, focusMode, notify]);
-
-  // Pusher Syncer
-  useEffect(() => {
-    if (!isMultiplayer || !user?.id) return;
-    
-    let pusherChannel: any;
-    let pusherInstance: any;
-    const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
-    const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'mt1';
-    let fallbackTimer: NodeJS.Timeout | null = null;
-
-    const startFallback = () => {
-      if (!fallbackTimer) {
-        console.warn("[FocusModal] Pusher unavailable or limit reached. Falling back to HTTP polling.");
-        const fetchRoomState = async () => {
-          try {
-            const res = await fetch('/api/focus/rooms');
-            const data = await res.json();
-            if (data.rooms) {
-              const currentRoom = data.rooms.find((r: any) => String(r.id) === String(roomCode));
-              if (currentRoom) {
-                if (currentRoom.participants && currentRoom.participants.length > participants.length) {
-                  setParticipants(currentRoom.participants);
-                }
-                if (currentRoom.status === 'started' && isGuest && !started) {
-                  let currentDuration = currentRoom.durationMins || duration;
-                  setDuration(currentDuration);
-                  if (currentRoom.name) setSessionTitle(currentRoom.name);
-                  
-                  if (focusMode === 'hardcore' && !isMobile) {
-                    setShowQR(true);
-                  } else {
-                    setStarted(true);
-                    setSecs(currentRoom.remainingMins * 60);
-                    setSyncStatus('running');
-                  }
-                }
-              } else {
-                setSyncStatus('failed');
-                setStarted(false);
-                setFailedReason("Ruangan tidak ditemukan atau sesi dibatalkan.");
-              }
-            }
-          } catch (e) {
-            console.error("Polling error:", e);
-          }
-        };
-        fallbackTimer = setInterval(fetchRoomState, 5000);
-      }
-    };
-
-    if (pusherKey && !pusherKey.includes('MASUKKAN')) {
-      if (!(window as any).Pusher) (window as any).Pusher = PusherClient;
-      pusherInstance = new PusherClient(pusherKey, {
-        cluster: pusherCluster,
-        authEndpoint: '/api/pusher/auth',
-        auth: { params: { user_id: user.id } }
+    if (!initialRoomId || !user?.id) return;
+    let cancelled = false;
+    (async () => {
+      const res = await fetch(`/api/focus/rooms/${initialRoomId}/action`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ action: "JOIN", joinCode: joinCode ?? "" }),
       });
-      
-      pusherInstance.connection.bind('error', function(err: any) {
-        if (err?.error?.data?.code === 4004 || err?.type === 'WebSocketError') {
-          startFallback();
-        }
-      });
-
-      pusherInstance.connection.bind('state_change', function(states: any) {
-        if (states.current === 'unavailable' || states.current === 'failed' || states.current === 'disconnected') {
-          startFallback();
-        } else if (states.current === 'connected' && fallbackTimer) {
-          // Recovered
-          clearInterval(fallbackTimer);
-          fallbackTimer = null;
-        }
-      });
-
-      pusherChannel = pusherInstance.subscribe(`presence-focus-${roomCode}`);
-      pusherChannel.bind('room-event', (ev: any) => {
-        if (ev.type === 'JOIN' && !isGuest) {
-          setParticipants(prev => {
-            if (prev.find(p => String(p.id) === String(ev.user.id))) return prev;
-            notify("Rekan Bergabung", `${ev.user.name} masuk ke ruang tunggu.`, "info");
-            return [...prev, ev.user];
-          });
-        } 
-        else if (ev.type === 'FAIL' || ev.type === 'LEAVE') {
-          if (String(ev.userId) !== String(user?.id)) {
-            const failedParticipant = participants.find(p => String(p.id) === String(ev.userId));
-            if (failedParticipant && !disconnectEvent) {
-              setDisconnectEvent(failedParticipant);
-            }
-          }
-        }
-        else if (ev.type === 'ABORT_URGENT') {
-          setSyncStatus('failed');
-          setStarted(false);
-          setFailedReason("Sesi dibatalkan oleh Host karena alasan mendesak. Tidak ada penalti.");
-        } 
-        else if (ev.type === 'KICK') {
-          if (String(ev.kickedUserId) === String(user?.id)) {
-            setSyncStatus('failed');
-            setStarted(false);
-            setFailedReason("Anda telah dikeluarkan dari sesi oleh Host.");
-          } else {
-            setParticipants(prev => prev.filter(p => String(p.id) !== String(ev.kickedUserId)));
-          }
-        } 
-        else if (ev.type === 'TRANSFER_HOST') {
-          setParticipants(prev => prev.map(p => ({
-            ...p,
-            isHost: String(p.id) === String(ev.newHostId)
-          })));
-          if (String(ev.newHostId) === String(user?.id)) {
-            notify("Anda Menjadi Host", "Host sebelumnya melimpahkan hak kendali kepada Anda.", "success");
-          } else {
-            notify("Host Berganti", `Admin telah berganti.`, "info");
-          }
-        }
-        else if (ev.type === 'START' && isGuest && !started) {
-          let currentDuration = ev.duration || duration;
-          setDuration(currentDuration);
-          if (ev.title) setSessionTitle(ev.title);
-          
-          if (focusMode === 'hardcore' && !isMobile) {
-            setShowQR(true);
-          } else {
-            setStarted(true);
-            const elapsedSecs = Math.floor((Date.now() - ev.timestamp) / 1000);
-            const remaining = Math.max(1, currentDuration * 60 - elapsedSecs);
-            setSecs(remaining);
-            setSyncStatus('running');
-          }
-        }
-        else if (ev.type === 'FB_QR_SCANNED') {
-          handleQRScanned();
-        }
-      });
-    } else {
-      startFallback();
-    }
-
-    return () => {
-      if (pusherChannel) {
-        pusherChannel.unbind_all();
-        pusherChannel.unsubscribe();
+      const data = await res.json().catch(() => ({}));
+      if (cancelled) return;
+      if (!res.ok) {
+        notify("Tidak bisa bergabung", data.error || "Coba lagi sebentar lagi.", "warning");
+        onClose();
+        return;
       }
-      if (pusherInstance) pusherInstance.disconnect();
-      if (fallbackTimer) clearInterval(fallbackTimer);
-    };
-  }, [isMultiplayer, roomCode, user?.id, isGuest, started, focusMode, isMobile, notify, disconnectEvent, participants, duration, handleQRScanned]);
-
-  // Timer Tick
-  useEffect(() => {
-    if (!started || syncStatus !== 'running') return;
-    const id = setInterval(() => setSecs(s => {
-      if (s <= 1) { 
-        handleFocusEnd();
-        return 0; 
+      // Ruangan `invite` menjawab 202: kita belum di dalam, permintaannya baru
+      // mengantre. Membiarkan modal terbuka akan menampilkan ruangan yang
+      // seolah-olah sudah kita masuki padahal belum.
+      if (data.pending) {
+        notify("Permintaan terkirim", data.message || "Menunggu persetujuan host.", "info");
+        onClose();
+        return;
       }
-      return s - 1;
-    }), 1000);
-    return () => clearInterval(id);
-  }, [started, syncStatus]);
+      void refresh();
+    })();
+    return () => { cancelled = true; };
+    // Sengaja hanya bergantung pada identitas ruangan & user: efek ini adalah
+    // "sekali saat masuk". Versi lama menaruh objek `user` di sini, sehingga
+    // JOIN ditembakkan ulang setiap kali objek itu berganti identitas.
+  }, [initialRoomId, user?.id, joinCode, notify, onClose, refresh]);
 
-  const handleStart = useCallback(async () => {
-    if (!isMobile && focusMode === 'hardcore') {
-      // Regenerate soloSessionId each time so QR is fresh
-      setSoloSessionId(Math.random().toString(36).substring(2, 8).toUpperCase());
-      setShowQR(true); // Must scan QR to sync
-    } else {
-      setStarted(true);
-      setSecs(duration * 60);
-      setSyncStatus('running');
-      if (!isMobile) {
-        setBlocking(true);
-        await sendToExtension('FB_FOCUS_START', { durationMins: duration });
-      }
-      
-      if (isMultiplayer && !isGuest) {
-        fetch(`/api/focus/rooms/${roomCode}/action`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'START', userId: user?.id, title: sessionTitle, description: sessionDesc, durationMins: duration, mode: focusMode })
-        }).catch(console.error);
-      }
-    }
-  }, [duration, isMobile, focusMode, isMultiplayer, roomCode, user, isGuest, sessionTitle, notify, sendToExtension, participants]);
+  const phase: Phase = useMemo(() => {
+    if (!roomId) return "setup";
+    if (loading && !room) return "loading";
+    if (!room) return "loading";
+    if (room.status === "finished" || room.status === "aborted") return "summary";
+    if (room.status === "waiting") return "lobby";
+    return room.viewer?.status === "interrupted" ? "away" : "running";
+  }, [roomId, room, loading]);
 
-  const handleFocusEnd = useCallback(async () => {
-    setSyncStatus('completed');
-    setStarted(false);
-    setBlocking(false);
-    if (!isMobile) await sendToExtension('FB_FOCUS_END');
-    
-    // Auto-revert status to working
-    fetch('/api/status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user?.id, status: 'working' }) }).catch(console.error);
-    
-    
-    let base = duration >= 90 ? 150 : duration >= 45 ? 80 : 50;
-    let finalXP = Math.floor(base * multiplier);
+  const viewerRole = room?.viewer?.role ?? "member";
+  const isHost = viewerRole === "host";
+  const canModerate = viewerRole === "host" || viewerRole === "comod";
 
-    await awardXP('focus_session', `Focus Session ${duration}m ${isMultiplayer ? '(Team Combo)' : ''}`, finalXP);
-    updateState((s: any) => ({
-      ...s,
-      logbook: [...(s.logbook || []), { type: 'focus_session', created_at: new Date().toISOString(), title: `Focus Session ${duration}m` }],
-    }));
-    if (isMultiplayer && multiplier > 1) {
-      notify("Team Combo Selesai! 🎉", `Luar biasa! +${finalXP} Poin (Multiplier x${multiplier})`, "success");
-    } else {
-      notify("Focus Session Selesai 🎉", `Kamu berhasil fokus selama ${duration} menit!`, "success");
-    }
-    setTimeout(() => onClose(), 3000);
-  }, [duration, multiplier, isMultiplayer, awardXP, notify, onClose, isMobile]);
+  // ── Aksi ─────────────────────────────────────────────────────────────────
 
-  const handleEarlyEndAttempt = () => {
-    if (isMultiplayer) {
-      setExitWarning(true);
-    } else {
-      handleEarlyEndConfirm();
-    }
-  };
-
-  const handleEarlyEndConfirm = useCallback(async (reason: 'urgent' | 'quit' | 'abort_urgent' | 'transfer_host' = 'quit') => {
-    if (reason === 'transfer_host') {
-      const otherParticipants = participants.filter(p => String(p.id) !== String(user?.id));
-      if (otherParticipants.length > 0) {
-        const newHost = otherParticipants[0];
-        fetch(`/api/focus/rooms/${roomCode}/action`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'TRANSFER_HOST', userId: user?.id, targetId: newHost.id })
-        });
-        setExitWarning(false);
-      } else {
-        notify("Tidak Ada Anggota", "Tidak ada orang lain untuk menerima posisi Host.", "warning");
-      }
+  const createRoom = useCallback(async () => {
+    if (busy) return;
+    const trimmed = title.trim();
+    if (isTeam && trimmed.length < 3) {
+      setSetupError("Judul sesi wajib diisi minimal 3 karakter.");
       return;
     }
-
-    if (reason === 'abort_urgent') {
-      fetch(`/api/focus/rooms/${roomCode}/action`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'ABORT_URGENT', userId: user?.id })
-      });
-      return; // Will be handled by storage listener
-    }
-
-    setBlocking(false);
-    if (!isMobile) await sendToExtension('FB_FOCUS_END');
-    
-    if (reason === 'urgent') {
-      notify("Izin Terkirim", "Anda keluar dengan status Urgent. Menunggu konfirmasi Host agar tim tidak kena penalti.", "info");
-    } else if (reason === 'quit') {
-      notify("Anda Keluar", "Anda meninggalkan sesi secara sepihak.", "warning");
-    }
-    
-    // Auto-revert status to working
-    fetch('/api/status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user?.id, status: 'working' }) }).catch(console.error);
-    
-    onClose();
-  }, [onClose, isMobile, notify, participants, roomCode, user?.id]);
-
-  const handleKick = (kickedId: string) => {
-    fetch(`/api/focus/rooms/${roomCode}/action`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'KICK', userId: user?.id, targetId: kickedId })
-    });
-    notify("Anggota Dikeluarkan", "Berhasil menendang anggota dari sesi.", "info");
-  };
-
-  const handlePingInvite = async () => {
-    if (selectedFriends.length === 0) {
-      notify("Pilih Teman", "Silakan pilih minimal 1 teman untuk diundang.", "warning");
-      return;
-    }
-
+    setBusy(true);
+    setSetupError("");
     try {
-      await Promise.all(selectedFriends.map(friendId => 
-        fetch('/api/ext/notifications', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: friendId,
-            title: `Undangan Fokus Bersama`,
-            message: `${user?.name || 'Rekan tim'} mengajak Anda bergabung ke sesi ${focusMode === 'hardcore' ? 'Hardcore' : 'Zen'} selama ${duration} menit. Gunakan kode room: ${roomCode}`,
-            type: 'invite',
-            referenceId: roomCode,
-            referenceType: 'room'
-          })
-        })
-      ));
-      notify("Undangan Terkirim", `Kode room ${roomCode} telah dikirim ke ${selectedFriends.length} teman!`, "success");
-      setSelectedFriends([]);
-      if (showInviteMidSession) setShowInviteMidSession(false);
-    } catch (e) {
-      notify("Gagal", "Terjadi kesalahan saat mengirim undangan.", "error");
+      const res = await fetch("/api/focus/rooms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          name: trimmed || "Sesi Fokus Solo",
+          description,
+          mode,
+          durationMins: duration,
+          solo: !isTeam,
+          visibility: isTeam ? visibility : undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setSetupError(data.error || "Gagal membuat sesi.");
+        return;
+      }
+      setRoomId(data.roomId);
+
+      // Sesi solo tidak punya siapa pun untuk ditunggu, jadi langsung berjalan.
+      if (!isTeam) {
+        await fetch(`/api/focus/rooms/${data.roomId}/action`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ action: "START", durationMins: duration, mode, title: trimmed || "Sesi Fokus Solo" }),
+        });
+      }
+    } catch {
+      setSetupError("Koneksi bermasalah. Coba lagi.");
+    } finally {
+      setBusy(false);
     }
-  };
+  }, [busy, title, description, mode, duration, isTeam, visibility]);
 
-  if (!state) return null;
+  const start = useCallback(async () => {
+    setBusy(true);
+    const res = await act("START", { durationMins: duration, mode, title: title.trim() || room?.name, description });
+    setBusy(false);
+    if (!res.ok) notify("Gagal memulai", res.error ?? "", "warning");
+  }, [act, duration, mode, title, description, room?.name, notify]);
 
-  const mins = Math.floor(secs / 60);
-  const ss = secs % 60;
+  const leave = useCallback(async () => {
+    setBusy(true);
+    await act("LEAVE");
+    setBusy(false);
+    onClose();
+  }, [act, onClose]);
 
-  if (syncStatus === 'failed') {
+  const stepAway = useCallback(async () => {
+    const res = await act("INTERRUPT_START");
+    if (!res.ok) notify("Gagal", res.error ?? "", "warning");
+  }, [act, notify]);
+
+  const comeBack = useCallback(async () => {
+    const res = await act("INTERRUPT_END");
+    if (res.ok && res.data?.consumedAllowance) {
+      notify("Jatah terpakai", "Satu jatah interupsi terpakai. Sesimu lanjut.", "info");
+    }
+  }, [act, notify]);
+
+  /**
+   * Menutup layar saat sesi Hardcore berjalan sama saja dengan menjauh: detak
+   * jantung berhenti dan server memulai interupsi 45 detik kemudian. Dulu itu
+   * terjadi dalam diam. Sekarang dinyatakan, dan kalau user tetap memilihnya
+   * kita catat sebagai interupsi SUKARELA — yang zona bebasnya 1.5× lebih
+   * panjang. Melapor memang harus lebih menguntungkan daripada menghilang.
+   *
+   * Zen tidak perlu dialog ini: modenya memang menjanjikan boleh membuka
+   * aplikasi lain, dan FocusSessionKeeper meneruskan detaknya.
+   */
+  const requestClose = useCallback(() => {
+    if (phase === "running" && room?.mode === "hardcore") {
+      setConfirmHide(true);
+      return;
+    }
+    onClose();
+  }, [phase, room?.mode, onClose]);
+
+  const hideWithPause = useCallback(async () => {
+    setConfirmHide(false);
+    await act("INTERRUPT_START");
+    onClose();
+  }, [act, onClose]);
+
+  // Getar sekali setiap kali tingkat peringatan naik. Sengaja hanya pada
+  // PERUBAHAN tingkat: getar tiap detik akan diabaikan orang dalam sepuluh
+  // detik, dan peringatan yang diabaikan sama saja dengan tidak ada.
+  const lastStageRef = useRef<string | null>(null);
+  const awayStageKey =
+    room?.viewer?.status === "interrupted"
+      ? awayStage(
+          interruptElapsedSecs,
+          room.viewer.graceSecs ?? 60,
+          room.viewer.interruptSecsLeft ?? room.interruptBudget.totalSecs,
+        ).key
+      : null;
+
+  useEffect(() => {
+    if (!awayStageKey) { lastStageRef.current = null; return; }
+    if (lastStageRef.current === awayStageKey) return;
+    lastStageRef.current = awayStageKey;
+    const pattern = BUZZ[awayStageKey];
+    if (pattern && typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+      try { navigator.vibrate(pattern); } catch { /* perangkat menolak; bukan masalah */ }
+    }
+  }, [awayStageKey]);
+
+  // ── Render ───────────────────────────────────────────────────────────────
+
+  if (phase === "loading") {
     return (
-      <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: HP_TOKENS.danger, color: '#fff', fontFamily: HP_FONT, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center' }}>
-        <div style={{ width: 80, height: 80, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}><span style={{ fontSize: 40 }}>😡</span></div>
-        <div style={{ ...HP_TEXT.h, fontSize: 32 }}>Sesi Gagal!</div>
-        <div style={{ ...HP_TEXT.body, fontSize: 16, marginTop: 12, maxWidth: 300 }}>{failedReason}</div>
-        <button onClick={onClose} style={{ marginTop: 40, padding: '16px 32px', borderRadius: 99, background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none', fontFamily: HP_FONT, fontWeight: 700, cursor: 'pointer' }}>Tutup</button>
-      </div>
+      <Shell onClose={onClose} label="Sesi Fokus">
+        <div style={{ margin: "auto 0", textAlign: "center" }}>
+          <div className="hp-spinner" style={{ margin: "0 auto 16px" }} />
+          <div style={{ ...HP_TEXT.body, color: HP_TOKENS.onPrimary }}>Memuat sesi…</div>
+        </div>
+      </Shell>
     );
   }
 
-  if (syncStatus === 'completed') {
+  if (phase === "setup") {
     return (
-      <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: `${HP_TOKENS.sage}`, color: '#fff', fontFamily: HP_FONT, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center' }}>
-        <BeeMascot mood="happy" size={120} />
-        <div style={{ ...HP_TEXT.h, fontSize: 32, marginTop: 24 }}>{isMultiplayer ? "TEAM COMBO BERHASIL!" : "FOKUS BERHASIL!"}</div>
-        <div style={{ ...HP_TEXT.body, fontSize: 16, marginTop: 12, opacity: 0.9 }}>
-          {isMultiplayer ? `Multiplier x${multiplier} diaktifkan!` : "Kamu telah fokus sepenuhnya."}
+      <Shell onClose={onClose} label={isTeam ? "Buat Ruang Bersama" : "Sesi Fokus"}>
+        <div style={{ margin: "auto 0", width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
+          <BeeMascot mood="focus" size={92} showSpeech="Siap bekerja dalam diam?" />
+
+          <div style={{ display: "flex", gap: 6, background: "rgba(0,0,0,0.2)", padding: 6, borderRadius: HP_TOKENS.radiusMd, width: "100%" }}>
+            {[{ k: false, l: "Sendiri" }, { k: true, l: "Bareng tim" }].map((opt) => (
+              <button
+                key={String(opt.k)}
+                onClick={() => setIsTeam(opt.k)}
+                style={{
+                  flex: 1, padding: "10px 12px", borderRadius: HP_TOKENS.radiusSm, border: "none",
+                  fontFamily: HP_FONT, fontWeight: 700, fontSize: 14, cursor: "pointer",
+                  background: isTeam === opt.k ? HP_TOKENS.card : "transparent",
+                  color: isTeam === opt.k ? HP_TOKENS.ink : HP_TOKENS.onPrimary,
+                }}
+              >
+                {opt.l}
+              </button>
+            ))}
+          </div>
+
+          {isTeam && (
+            <>
+              <FieldInput
+                placeholder="Judul sesi (wajib)"
+                value={title}
+                onChange={setTitle}
+                invalid={Boolean(setupError) && title.trim().length < 3}
+              />
+              <FieldInput placeholder="Deskripsi singkat (opsional)" value={description} onChange={setDescription} />
+            </>
+          )}
+
+          <ModePicker mode={mode} onChange={setMode} />
+          <DurationPicker value={duration} onChange={setDuration} />
+
+          {isTeam && (
+            <div style={{ width: "100%" }}>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.onPrimary, opacity: 0.7, marginBottom: 8 }}>SIAPA YANG BOLEH MASUK</div>
+              <div style={{ display: "flex", gap: 8 }}>
+                {([
+                  { k: "public" as const, l: "Terbuka", d: "Siapa pun bisa langsung masuk" },
+                  { k: "code" as const, l: "Pakai kode", d: "Perlu kode dari kamu" },
+                ]).map((opt) => (
+                  <button
+                    key={opt.k}
+                    onClick={() => setVisibility(opt.k)}
+                    style={{
+                      flex: 1, padding: 12, borderRadius: HP_TOKENS.radiusSm, cursor: "pointer",
+                      textAlign: "left", fontFamily: HP_FONT,
+                      background: visibility === opt.k ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.05)",
+                      border: `1.5px solid ${visibility === opt.k ? HP_TOKENS.yellow : "rgba(255,255,255,0.12)"}`,
+                      color: HP_TOKENS.onPrimary,
+                    }}
+                  >
+                    <div style={{ fontWeight: 700, fontSize: 13 }}>{opt.l}</div>
+                    <div style={{ fontSize: 11, opacity: 0.7, marginTop: 2 }}>{opt.d}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {setupError && (
+            <div role="alert" style={{ ...HP_TEXT.small, color: HP_TOKENS.dangerSoft }}>{setupError}</div>
+          )}
+
+          <button onClick={createRoom} disabled={busy} style={{ ...overlayBtn("primary"), opacity: busy ? 0.6 : 1 }}>
+            {busy ? "Menyiapkan…" : isTeam ? "Buka Ruangan" : "Mulai Fokus"}
+          </button>
+
+          <p style={{ ...HP_TEXT.small, color: HP_TOKENS.onPrimary, opacity: 0.65, textAlign: "center", margin: 0 }}>
+            {mode === "hardcore"
+              ? "Hardcore: layar ini harus tetap di depan. Kamu punya jatah interupsi kalau ada hal mendadak."
+              : "Zen: boleh buka aplikasi lain. Fokus pada targetmu, bukan pada layar."}
+          </p>
         </div>
-      </div>
+      </Shell>
+    );
+  }
+
+  if (!room) return null;
+
+  if (phase === "summary") return <Summary room={room} onClose={onClose} />;
+
+  if (phase === "lobby") {
+    return (
+      <Shell onClose={onClose} label="Ruang Tunggu">
+        <div style={{ margin: "auto 0", width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
+          <div style={{ ...HP_TEXT.display, fontSize: 26, color: HP_TOKENS.onPrimary, textAlign: "center" }}>{room.name}</div>
+          {room.description && (
+            <div style={{ ...HP_TEXT.body, fontSize: 14, color: HP_TOKENS.onPrimary, opacity: 0.75, textAlign: "center" }}>{room.description}</div>
+          )}
+
+          {room.joinCode && (
+            <div style={{ background: "rgba(0,0,0,0.2)", padding: "14px 20px", borderRadius: HP_TOKENS.radiusMd, textAlign: "center" }}>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.onPrimary, opacity: 0.6 }}>KODE RUANGAN</div>
+              <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 28, letterSpacing: 6, color: HP_TOKENS.yellowInk }}>{room.joinCode}</div>
+            </div>
+          )}
+
+          <Roster room={room} viewerId={String(user?.id ?? "")} canModerate={canModerate} onAct={act} />
+          <JoinQueue room={room} canModerate={canModerate} onAct={act} />
+
+          {isHost ? (
+            <>
+              <ModePicker mode={mode} onChange={setMode} />
+              <DurationPicker value={duration} onChange={setDuration} />
+              <button onClick={start} disabled={busy} style={{ ...overlayBtn("primary"), opacity: busy ? 0.6 : 1 }}>
+                {busy ? "Memulai…" : "Mulai Sesi"}
+              </button>
+            </>
+          ) : (
+            <div style={{ padding: 28, borderRadius: HP_TOKENS.radiusLg, background: "rgba(0,0,0,0.2)", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+              <div className="hp-spinner" />
+              <div style={{ ...HP_TEXT.small, color: HP_TOKENS.onPrimary }}>Menunggu host memulai sesi…</div>
+            </div>
+          )}
+
+          <button onClick={leave} style={overlayBtn("ghost")}>Keluar dari ruangan</button>
+          <button onClick={onClose} style={{ ...overlayBtn("ghost"), border: "none", opacity: 0.7 }}>
+            Sembunyikan (tetap di ruangan)
+          </button>
+        </div>
+
+        {hostOffer && <HostOfferPrompt onRespond={(accept) => { setHostOffer(null); void act(accept ? "ACCEPT_HOST" : "DECLINE_HOST"); }} />}
+      </Shell>
+    );
+  }
+
+  // ── Berjalan / Menjauh ───────────────────────────────────────────────────
+  const budget = room.interruptBudget;
+  const usedTurns = room.viewer?.interruptsUsed ?? 0;
+  const progress = room.durationMins > 0 ? ((room.durationMins * 60 - remainingSecs) / (room.durationMins * 60)) * 100 : 0;
+
+  if (phase === "away") {
+    // Angka zona bebas datang dari server: sukarela dapat 1.5× lipat, dan Zen
+    // jauh lebih longgar daripada Hardcore. Menghitungnya ulang di klien pernah
+    // membuat hitungan mundur yang ditampilkan berbeda dari yang dipakai server.
+    const graceSecs = room.viewer?.graceSecs ?? (room.mode === "zen" ? 180 : 60);
+    const left = Math.max(0, graceSecs - interruptElapsedSecs);
+    const secsLeftTotal = room.viewer?.interruptSecsLeft ?? budget.totalSecs;
+    const stage = awayStage(interruptElapsedSecs, graceSecs, secsLeftTotal);
+
+    return (
+      <Shell onClose={onClose} label="Sedang Menjauh">
+        <div style={{ margin: "auto 0", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 18, maxWidth: 360 }}>
+          <div style={{ fontSize: 56 }}>{stage.emoji}</div>
+          <div style={{ ...HP_TEXT.display, fontSize: 26, color: HP_TOKENS.onPrimary }}>{stage.title}</div>
+          <div style={{ ...HP_TEXT.body, fontSize: 15, color: HP_TOKENS.onPrimary, opacity: 0.8 }}>
+            {stage.body}
+          </div>
+
+          <div style={{ background: "rgba(0,0,0,0.22)", borderRadius: HP_TOKENS.radiusLg, padding: 20, width: "100%" }}>
+            <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 40, color: stage.tone }}>
+              {fmt(interruptElapsedSecs)}
+            </div>
+            <div style={{ ...HP_TEXT.small, color: HP_TOKENS.onPrimary, opacity: 0.75, marginTop: 6 }}>
+              {left > 0
+                ? `Kembali dalam ${fmt(left)} agar tidak memakai jatah`
+                : `Sisa total waktu menjauh: ${fmt(secsLeftTotal)}`}
+            </div>
+          </div>
+
+          <div style={{ ...HP_TEXT.small, color: HP_TOKENS.onPrimary, opacity: 0.7 }}>
+            Jatah interupsi terpakai: {usedTurns} dari {budget.allowance}
+          </div>
+
+          <button onClick={comeBack} style={overlayBtn("primary")}>Saya kembali</button>
+          <button onClick={leave} style={overlayBtn("ghost")}>Akhiri sesi saya</button>
+        </div>
+      </Shell>
     );
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: `${HP_TOKENS.sage}`, color: HP_TOKENS.onPrimary, fontFamily: HP_FONT, display: 'flex', flexDirection: 'column', animation: 'hpFadeIn 300ms', overflowY: 'auto' }}>
-      <div style={{ padding: '40px 20px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-        <button onClick={started ? handleEarlyEndAttempt : (isMultiplayer ? () => setLobbyExitWarning(true) : onClose)} style={iconBtnStyle}><HPGlyph name="close" size={18} color={HP_TOKENS.onPrimary}/></button>
-        <div style={{ ...HP_TEXT.small, color: 'rgba(255,255,255,0.7)', fontWeight: 700 }}>{isMultiplayer ? "TEAM COMBO ROOM" : "FOCUS MODE"}</div>
-        <div style={{ width: 40 }}/>
+    <Shell onClose={requestClose} label={room.visibility === "solo" ? "Fokus Solo" : "Fokus Bersama"}>
+      <div style={{ margin: "auto 0", width: "100%", maxWidth: 460, display: "flex", flexDirection: "column", alignItems: "center", gap: 18 }}>
+        <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.onPrimary, opacity: 0.6 }}>{room.name}</div>
+
+        {room.visibility === "solo" && <BeeMascot mood="focus" size={72} />}
+
+        <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 76, letterSpacing: -2, color: HP_TOKENS.onPrimary, lineHeight: 1 }}>
+          {fmt(remainingSecs)}
+        </div>
+        <div style={{ ...HP_TEXT.small, color: HP_TOKENS.onPrimary, opacity: 0.7 }}>
+          Selesai sekitar {clockOf(room.endsAt)}
+        </div>
+
+        <div style={{ width: 220 }}>
+          <HPBar value={progress} tone="yellow" height={4} />
+        </div>
+
+        {room.visibility !== "solo" && (
+          <>
+            <Roster room={room} viewerId={String(user?.id ?? "")} canModerate={canModerate} onAct={act} />
+            <JoinQueue room={room} canModerate={canModerate} onAct={act} />
+          </>
+        )}
+
+        <div style={{ ...HP_TEXT.small, color: HP_TOKENS.onPrimary, opacity: 0.65, textAlign: "center" }}>
+          Jatah interupsi: {usedTurns}/{budget.allowance}
+          {room.mode === "hardcore" && " · layar ini harus tetap di depan"}
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%", maxWidth: 300 }}>
+          <button onClick={stepAway} style={overlayBtn("ghost")}>Saya harus menjauh sebentar</button>
+          {/* Memulai sendiri tidak seharusnya berarti terkunci sendirian sampai
+              selesai. Timer tidak disentuh — hanya pintunya yang dibuka. */}
+          {room.visibility === "solo" && isHost && (
+            <button
+              onClick={async () => {
+                const res = await act("OPEN_TO_PUBLIC");
+                if (res.ok) notify("Ruangan dibuka", "Sesimu sekarang tampil di lounge. Timermu tetap jalan.", "success");
+                else notify("Gagal membuka", res.error ?? "", "warning");
+              }}
+              style={overlayBtn("ghost")}
+            >
+              Buka untuk umum
+            </button>
+          )}
+          {isHost && room.visibility !== "solo" && (
+            <button
+              onClick={async () => { await act("END_FOR_ALL"); }}
+              style={overlayBtn("warning")}
+            >
+              Akhiri sesi untuk semua
+            </button>
+          )}
+          <button onClick={leave} style={overlayBtn("danger")}>
+            {room.visibility === "solo" ? "Akhiri sesi" : "Keluar dari sesi"}
+          </button>
+        </div>
+
+        <p style={{ ...HP_TEXT.small, color: HP_TOKENS.onPrimary, opacity: 0.55, textAlign: "center", maxWidth: 320, margin: 0 }}>
+          Keluar sekarang tetap dihitung: kamu dibayar untuk menit yang sudah kamu jalani.
+        </p>
       </div>
 
-      {lobbyExitWarning && (
-        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 99, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <div style={{ background: '#fff', borderRadius: HP_TOKENS.radiusLg, padding: 24, width: '100%', maxWidth: 360, color: HP_TOKENS.ink, textAlign: 'center' }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>🚪</div>
-            <div style={{ ...HP_TEXT.h, fontSize: 20 }}>Keluar dari Ruang Tunggu?</div>
-            <div style={{ ...HP_TEXT.body, fontSize: 14, color: HP_TOKENS.inkMute, marginTop: 8, marginBottom: 24 }}>
-              Kamu bisa menyembunyikan layar ini (Minimize) dan kembali lagi nanti lewat Dashboard, ATAU keluar sepenuhnya dari room ini.
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <button onClick={() => { setLobbyExitWarning(false); onClose(); }} style={{ padding: '12px', borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.sage, color: '#fff', border: 'none', fontWeight: 700, cursor: 'pointer' }}>Minimize (Tetap di Room)</button>
-              
-              {(() => {
-                const isHost = participants.find(p => String(p.id) === String(user?.id))?.isHost;
-                if (isHost) {
-                  return (
-                    <button onClick={() => {
-                      fetch(`/api/focus/rooms/${roomCode}/action`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'ABORT_URGENT', userId: user?.id })
-                      });
-                      setLobbyExitWarning(false);
-                      onClose();
-                    }} style={{ padding: '12px', borderRadius: HP_TOKENS.radiusSm, background: 'rgba(239, 68, 68, 0.1)', color: HP_TOKENS.danger, border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: 700, cursor: 'pointer' }}>Bubar & Hapus Room</button>
-                  );
-                } else {
-                  return (
-                    <button onClick={() => {
-                      fetch(`/api/focus/rooms/${roomCode}/action`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'LEAVE', userId: user?.id, userName: user?.name })
-                      });
-                      setLobbyExitWarning(false);
-                      onClose();
-                    }} style={{ padding: '12px', borderRadius: HP_TOKENS.radiusSm, background: 'transparent', color: HP_TOKENS.danger, border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: 700, cursor: 'pointer' }}>Keluar Sepenuhnya</button>
-                  );
-                }
-              })()}
-              
-              <button onClick={() => setLobbyExitWarning(false)} style={{ padding: '12px', borderRadius: HP_TOKENS.radiusSm, background: 'transparent', color: HP_TOKENS.inkMute, border: 'none', fontWeight: 700, cursor: 'pointer', marginTop: 4 }}>Batal</button>
-            </div>
-          </div>
+      {error && (
+        <div role="alert" style={{ position: "absolute", bottom: 20, left: 20, right: 20, textAlign: "center", ...HP_TEXT.small, color: HP_TOKENS.dangerSoft }}>
+          {error}
         </div>
       )}
 
-      {exitWarning && (
-        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 99, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <div style={{ background: '#fff', borderRadius: HP_TOKENS.radiusLg, padding: 24, width: '100%', maxWidth: 360, color: HP_TOKENS.ink, textAlign: 'center' }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>🚪</div>
-            <div style={{ ...HP_TEXT.h, fontSize: 20 }}>Yakin Ingin Keluar?</div>
-            <div style={{ ...HP_TEXT.body, fontSize: 14, color: HP_TOKENS.inkMute, marginTop: 8, marginBottom: 24 }}>
-              {isMultiplayer && participants.length > 1
-                ? "Keluar sepihak di tengah sesi akan menghanguskan Multiplier Tim. Jika keadaan Anda mendesak, laporkan status Urgent agar tim tidak rugi."
-                : "Mengakhiri sesi sekarang akan membatalkan progres fokusmu. Yakin ingin keluar?"}
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <button onClick={() => setExitWarning(false)} style={{ padding: '12px', borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.sage, color: '#fff', border: 'none', fontWeight: 700, cursor: 'pointer' }}>Kembali Fokus</button>
-              
-              {(() => {
-                const isHost = participants.find(p => String(p.id) === String(user?.id))?.isHost;
-                
-                if (!isMultiplayer || participants.length <= 1) {
-                  return (
-                    <button 
-                      onClick={() => handleEarlyEndConfirm(isHost ? 'abort_urgent' : 'quit')} 
-                      style={{ padding: '12px', borderRadius: HP_TOKENS.radiusSm, background: 'rgba(239, 68, 68, 0.1)', color: HP_TOKENS.danger, border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: 700, cursor: 'pointer' }}
-                    >
-                      Akhiri Sesi
-                    </button>
-                  );
-                }
+      {hostOffer && <HostOfferPrompt onRespond={(accept) => { setHostOffer(null); void act(accept ? "ACCEPT_HOST" : "DECLINE_HOST"); }} />}
 
-                if (isHost) {
-                  return (
-                    <>
-                      <button onClick={() => handleEarlyEndConfirm('abort_urgent')} style={{ padding: '12px', borderRadius: HP_TOKENS.radiusSm, background: 'rgba(239, 68, 68, 0.1)', color: HP_TOKENS.danger, border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: 700, cursor: 'pointer' }}>Akhiri Sesi Semua (Urgent)</button>
-                      <button onClick={() => handleEarlyEndConfirm('transfer_host')} style={{ padding: '12px', borderRadius: HP_TOKENS.radiusSm, background: 'rgba(245, 158, 11, 0.15)', color: HP_TOKENS.warning, border: 'none', fontWeight: 700, cursor: 'pointer' }}>Lempar Posisi Admin</button>
-                    </>
-                  );
-                } else {
-                  return (
-                    <>
-                      <button onClick={() => handleEarlyEndConfirm('urgent')} style={{ padding: '12px', borderRadius: HP_TOKENS.radiusSm, background: 'rgba(245, 158, 11, 0.15)', color: HP_TOKENS.warning, border: 'none', fontWeight: 700, cursor: 'pointer' }}>Laporkan Urgent & Keluar</button>
-                      <button onClick={() => handleEarlyEndConfirm('quit')} style={{ padding: '12px', borderRadius: HP_TOKENS.radiusSm, background: 'transparent', color: HP_TOKENS.danger, border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: 700, cursor: 'pointer' }}>Keluar Sepihak</button>
-                    </>
-                  );
-                }
-              })()}
+      {confirmHide && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 70, background: "rgba(0,0,0,0.55)",
+          display: "flex", alignItems: "flex-end", justifyContent: "center", padding: 20,
+        }}>
+          <div style={{
+            background: HP_TOKENS.card, borderRadius: HP_TOKENS.radiusLg, padding: 22,
+            width: "100%", maxWidth: 380, textAlign: "left",
+          }}>
+            <div style={{ ...HP_TEXT.h, fontSize: 17, color: HP_TOKENS.ink }}>Menutup layar akan menjeda timermu</div>
+            <div style={{ ...HP_TEXT.body, fontSize: 14, color: HP_TOKENS.inkSoft, marginTop: 8 }}>
+              Mode Hardcore menghitung waktumu selama layar ini di depan. Menitmu
+              yang sudah berjalan tetap aman — hitungannya hanya berhenti sampai
+              kamu kembali.
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Disconnect event modal removed and moved inline */}
-      
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 20, textAlign: 'center' }}>
-        {showQR ? (
-          <div style={{ margin: 'auto 0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ ...HP_TEXT.h, fontSize: 24, color: HP_TOKENS.onPrimary }}>Scan HP Anda</div>
-            <div style={{ ...HP_TEXT.body, fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 8, marginBottom: 32, maxWidth: 300 }}>
-              Mode Hardcore mewajibkan sinkronisasi perangkat. Scan QR ini dengan kamera HP agar tersambung ke Sesi Fokus.
-            </div>
-            <div style={{ padding: 16, background: '#fff', borderRadius: HP_TOKENS.radiusLg, display: 'inline-block' }}>
-              <QRCodeSVG value={typeof window !== 'undefined' ? `${window.location.origin}/focus/sync/${roomCode || soloSessionId}${!roomCode ? `?solo=true&dur=${duration}` : ''}` : `/focus/sync/${roomCode || soloSessionId}${!roomCode ? `?solo=true&dur=${duration}` : ''}`} size={180} />
-            </div>
-            
-            <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', gap: 12, width: '100%', maxWidth: 240 }}>
-              <button 
-                onClick={onClose}
-                style={{ padding: '14px', borderRadius: HP_TOKENS.radiusSm, background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', fontWeight: 700, cursor: 'pointer', fontFamily: HP_FONT }}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 20 }}>
+              <button onClick={hideWithPause} style={{ ...overlayBtn("warning"), background: HP_TOKENS.warningWash }}>
+                Jeda &amp; tutup
+              </button>
+              <button
+                onClick={() => setConfirmHide(false)}
+                style={{ ...overlayBtn("ghost"), background: HP_TOKENS.sunken, color: HP_TOKENS.ink, border: "none" }}
               >
-                Batal Bergabung
+                Batal, lanjut fokus
               </button>
             </div>
           </div>
-        ) : !started ? (
-          <div style={{ margin: 'auto 0', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-            {isMultiplayer && isGuest && (
-              <>
-                <div style={{ ...HP_TEXT.display, fontSize: 28, color: HP_TOKENS.onPrimary }}>Ruang Tunggu</div>
-                <div style={{ ...HP_TEXT.body, fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 8 }}>Kode Room: <span style={{ color: HP_TOKENS.yellow, fontWeight: 700, letterSpacing: 2 }}>{roomCode}</span></div>
-                <div style={{ marginTop: 32, padding: 32, borderRadius: HP_TOKENS.radiusLg, background: 'rgba(0,0,0,0.2)', width: '100%', maxWidth: 320, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <div className="hp-spinner" style={{ marginBottom: 20 }}></div>
-                  <div style={{ ...HP_TEXT.small, color: '#fff', fontWeight: 600 }}>Menunggu Host memulai sesi...</div>
-                </div>
-                <button onClick={onClose} style={{ marginTop: 40, padding: '14px 32px', borderRadius: 99, background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', fontWeight: 700, cursor: 'pointer', fontFamily: HP_FONT }}>Batal Bergabung</button>
-              </>
-            )}
+        </div>
+      )}
+    </Shell>
+  );
+}
 
-            {isMultiplayer && !isGuest && (
-              <div style={{ width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div style={{ ...HP_TEXT.display, fontSize: 28, color: HP_TOKENS.onPrimary }}>Setup Ruangan</div>
-                
-                <input 
-                  type="text" 
-                  placeholder="Judul Sesi (Wajib)" 
-                  value={sessionTitle}
-                  onChange={(e) => setSessionTitle(e.target.value)}
-                  style={{
-                    width: '100%', padding: '12px 16px', borderRadius: HP_TOKENS.radiusSm, marginTop: 16,
-                    border: `1.5px solid ${sessionTitle.trim() === '' ? 'rgba(239, 68, 68, 0.5)' : 'rgba(255,255,255,0.2)'}`, fontFamily: HP_FONT,
-                    fontSize: 14, outline: 'none', background: 'rgba(255,255,255,0.05)', color: '#fff'
-                  }}
-                />
-                
-                <textarea
-                  placeholder="Deskripsi Singkat (Opsional)" 
-                  value={sessionDesc}
-                  onChange={(e) => setSessionDesc(e.target.value)}
-                  style={{
-                    width: '100%', padding: '12px 16px', borderRadius: HP_TOKENS.radiusSm, marginTop: 12,
-                    border: `1.5px solid rgba(255,255,255,0.2)`, fontFamily: HP_FONT, resize: 'vertical', minHeight: 60,
-                    fontSize: 14, outline: 'none', background: 'rgba(255,255,255,0.05)', color: '#fff'
-                  }}
-                />
+// ── Bagian-bagian ───────────────────────────────────────────────────────────
 
-                <div style={{ display: 'flex', gap: 10, marginTop: 16, background: 'rgba(0,0,0,0.2)', padding: 6, borderRadius: HP_TOKENS.radiusMd }}>
-                  <button onClick={() => setFocusMode('hardcore')} style={{ padding: '12px 16px', borderRadius: HP_TOKENS.radiusSm, background: focusMode === 'hardcore' ? '#fff' : 'transparent', color: focusMode === 'hardcore' ? HP_TOKENS.ink : '#fff', border: 'none', fontWeight: 700, flex: 1 }}>🔥 Hardcore</button>
-                  <button onClick={() => setFocusMode('zen')} style={{ padding: '12px 16px', borderRadius: HP_TOKENS.radiusSm, background: focusMode === 'zen' ? '#fff' : 'transparent', color: focusMode === 'zen' ? HP_TOKENS.ink : '#fff', border: 'none', fontWeight: 700, flex: 1 }}>🧘 Zen Mode</button>
-                </div>
-                <div style={{ ...HP_TEXT.body, fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 8, height: 32 }}>
-                  {focusMode === 'hardcore' ? '🔥 Hardcore: Wajib scan HP. Jika keluar aplikasi HP, sesi gagal.' : '🧘 Zen Mode: Santai. Boleh buka aplikasi lain, fokus hanya pada target.'}
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20, marginTop: 16, background: 'rgba(255,255,255,0.05)', padding: '12px 24px', borderRadius: HP_TOKENS.radiusLg }}>
-                  <button onClick={() => handleDurationChange(Math.max(1, duration - 5))} style={{ width: 40, height: 40, borderRadius: '50%', border: 'none', background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 24, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>-</button>
-                  <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-                    <input 
-                      type="number" 
-                      value={duration} 
-                      onChange={(e) => {
-                        let val = parseInt(e.target.value) || 0;
-                        if (val > 300) val = 300;
-                        if (val < 1 && e.target.value !== '') val = 1;
-                        if (e.target.value === '') handleDurationChange(0 as any); // allow empty temporarily
-                        else handleDurationChange(val);
-                      }}
-                      onBlur={() => { if (!duration || duration < 1) handleDurationChange(5); }}
-                      style={{ fontSize: 36, fontWeight: 700, fontFamily: HP_FONT, color: '#fff', width: 80, textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', margin: 0, padding: 0 }}
-                    />
-                    <span style={{ fontSize: 16, opacity: 0.6, paddingBottom: 6 }}>min</span>
-                  </div>
-                  <button onClick={() => handleDurationChange(Math.min(300, (duration || 0) + 5))} style={{ width: 40, height: 40, borderRadius: '50%', border: 'none', background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 24, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>+</button>
-                </div>
-
-                <div style={{ marginTop: 24, padding: '20px', borderRadius: HP_TOKENS.radius, background: 'rgba(255,255,255,0.1)', width: '100%', maxWidth: 320 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.7, marginBottom: 8 }}>KODE ROOM (HOST)</div>
-                  <div style={{ fontSize: 36, fontWeight: 700, letterSpacing: 6, color: HP_TOKENS.yellow }}>{roomCode}</div>
-                  
-                  <div style={{ marginTop: 20, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 16 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.7, marginBottom: 12, textAlign: 'left' }}>AJAK TEMAN (OPSIONAL)</div>
-                    
-                    <input 
-                      type="text" 
-                      placeholder="Cari nama atau divisi..." 
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      style={{
-                        width: '100%', padding: '10px 14px', borderRadius: HP_TOKENS.radiusSm,
-                        border: `1.5px solid rgba(255,255,255,0.2)`, fontFamily: HP_FONT,
-                        fontSize: 13, marginBottom: 12, outline: 'none', background: 'rgba(255,255,255,0.05)', color: '#fff'
-                      }}
-                    />
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 240, overflowY: 'auto', paddingRight: 4 }}>
-                      {people.length === 0 ? (
-                        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', textAlign: 'center', padding: '12px' }}>Memuat daftar rekan...</div>
-                      ) : (() => {
-                        const filtered = people.filter(p => 
-                          p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          (p.job_title || p.role || '').toLowerCase().includes(searchQuery.toLowerCase())
-                        );
-
-                        if (filtered.length === 0) return <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', textAlign: 'center', padding: '12px' }}>Tidak ditemukan</div>;
-
-                        return filtered.map(f => {
-                          const isSelected = selectedFriends.includes(f.id);
-                          return (
-                            <div 
-                              key={f.id} 
-                              onClick={() => {
-                                if (isSelected) setSelectedFriends(prev => prev.filter(id => id !== f.id));
-                                else setSelectedFriends(prev => [...prev, f.id]);
-                              }}
-                              style={{ 
-                                display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', 
-                                padding: '12px', borderRadius: HP_TOKENS.radiusMd, 
-                                background: isSelected ? 'rgba(245,200,66,0.15)' : 'rgba(255,255,255,0.05)',
-                                border: `1.5px solid ${isSelected ? HP_TOKENS.yellow : 'rgba(255,255,255,0.1)'}`,
-                                transition: 'all 0.2s'
-                              }}
-                            >
-                              <HPAvatar name={f.name} size={40} />
-                              <div style={{ flex: 1, textAlign: 'left' }}>
-                                <div style={{ fontSize: 14, fontWeight: 700, color: isSelected ? HP_TOKENS.yellow : '#fff' }}>{f.name}</div>
-                                <div style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>{f.job_title || f.role || 'Team Member'}</div>
-                              </div>
-                              <div style={{
-                                width: 20, height: 20, borderRadius: '50%',
-                                border: `2px solid ${isSelected ? HP_TOKENS.yellow : 'rgba(255,255,255,0.3)'}`,
-                                background: isSelected ? HP_TOKENS.yellow : 'transparent',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center'
-                              }}>
-                                {isSelected && <span style={{ fontSize: 12, color: HP_TOKENS.ink, fontWeight: 700 }}>✓</span>}
-                              </div>
-                            </div>
-                          );
-                        });
-                      })()}
-                    </div>
-                  </div>
-                  <button onClick={handlePingInvite} style={{ padding: '12px', marginTop: 16, borderRadius: HP_TOKENS.radiusSm, background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none', fontWeight: 700, cursor: 'pointer', width: '100%' }}>Kirim Undangan</button>
-                </div>
-
-                <button disabled={sessionTitle.trim() === ''} onClick={handleStart} style={{ marginTop: 28, padding: '16px 40px', borderRadius: 99, background: sessionTitle.trim() === '' ? HP_TOKENS.inkSoft : HP_TOKENS.yellow, color: sessionTitle.trim() === '' ? HP_TOKENS.inkMute : HP_TOKENS.ink, border: 'none', fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, cursor: sessionTitle.trim() === '' ? 'not-allowed' : 'pointer', transition: 'all 0.2s' }}>
-                  Mulai & Buka Ruangan
-                </button>
-              </div>
-            )}
-
-            {!isMultiplayer && (
-              <>
-                <BeeMascot mood="focus" size={100} showSpeech="Siap bekerja dalam diam?" />
-                <div style={{ ...HP_TEXT.display, fontSize: 28, color: HP_TOKENS.onPrimary, marginTop: 16 }}>Sesi Fokus Solo</div>
-                
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20, marginTop: 36, background: 'rgba(255,255,255,0.05)', padding: '12px 24px', borderRadius: HP_TOKENS.radiusLg }}>
-                  <button onClick={() => handleDurationChange(Math.max(1, duration - 5))} style={{ width: 40, height: 40, borderRadius: '50%', border: 'none', background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 24, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>-</button>
-                  <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-                    <input 
-                      type="number" 
-                      value={duration} 
-                      onChange={(e) => {
-                        let val = parseInt(e.target.value) || 0;
-                        if (val > 300) val = 300;
-                        if (val < 1 && e.target.value !== '') val = 1;
-                        if (e.target.value === '') handleDurationChange(0 as any); // allow empty temporarily
-                        else handleDurationChange(val);
-                      }}
-                      onBlur={() => { if (!duration || duration < 1) handleDurationChange(5); }}
-                      style={{ fontSize: 36, fontWeight: 700, fontFamily: HP_FONT, color: '#fff', width: 80, textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', margin: 0, padding: 0 }}
-                    />
-                    <span style={{ fontSize: 16, opacity: 0.6, paddingBottom: 6 }}>min</span>
-                  </div>
-                  <button onClick={() => handleDurationChange(Math.min(300, (duration || 0) + 5))} style={{ width: 40, height: 40, borderRadius: '50%', border: 'none', background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 24, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>+</button>
-                </div>
-
-                <button onClick={handleStart} style={{ marginTop: 28, padding: '16px 40px', borderRadius: 99, background: HP_TOKENS.yellow, color: HP_TOKENS.ink, border: 'none', fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, cursor: 'pointer' }}>
-                  Mulai Sendiri
-                </button>
-              </>
-            )}
-          </div>
-        ) : (
-          <div style={{ margin: 'auto 0', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-            {(() => {
-              const isHost = participants.find(p => String(p.id) === String(user?.id))?.isHost;
-              return isMultiplayer && isHost && (
-                <div style={{ marginBottom: 24, width: '100%', maxWidth: 320 }}>
-                  <div style={{ fontSize: 24, fontWeight: 700, color: '#fff', marginBottom: 16, textAlign: 'center' }}>
-                    {sessionTitle}
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.2)', padding: '12px 16px', borderRadius: HP_TOKENS.radiusMd }}>
-                    <div>
-                      <div style={{ fontSize: 10, opacity: 0.7, fontWeight: 700, letterSpacing: 1 }}>ROOM CODE</div>
-                      <div style={{ fontSize: 20, fontWeight: 700, color: HP_TOKENS.yellow, letterSpacing: 2 }}>{roomCode}</div>
-                    </div>
-                    <button 
-                      onClick={() => setShowInviteMidSession(!showInviteMidSession)}
-                      style={{ padding: '8px 16px', borderRadius: HP_TOKENS.radiusSm, background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', fontWeight: 700, cursor: 'pointer' }}
-                    >
-                      {showInviteMidSession ? 'Tutup' : '+ Undang'}
-                    </button>
-                  </div>
-                  
-                  {showInviteMidSession && (
-                    <div style={{ marginTop: 12, background: 'rgba(0,0,0,0.2)', borderRadius: HP_TOKENS.radiusMd, padding: 16 }}>
-                      <input 
-                        type="text" 
-                        placeholder="Cari rekan..." 
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        style={{ width: '100%', padding: '10px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid rgba(255,255,255,0.2)`, fontSize: 13, marginBottom: 12, background: 'transparent', color: '#fff' }}
-                      />
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 160, overflowY: 'auto' }}>
-                        {people.filter(p => !participants.find(part => String(part.id) === String(p.id)) && p.name.toLowerCase().includes(searchQuery.toLowerCase())).map(f => {
-                          const isSelected = selectedFriends.includes(f.id);
-                          return (
-                            <div key={f.id} onClick={() => {
-                              if (isSelected) setSelectedFriends(prev => prev.filter(id => id !== f.id));
-                              else setSelectedFriends(prev => [...prev, f.id]);
-                            }} style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', padding: '8px', borderRadius: HP_TOKENS.radiusSm, background: isSelected ? 'rgba(245,200,66,0.15)' : 'rgba(255,255,255,0.05)', border: `1px solid ${isSelected ? HP_TOKENS.yellow : 'transparent'}` }}>
-                              <HPAvatar name={f.name} size={30} />
-                              <div style={{ flex: 1, textAlign: 'left', fontSize: 12, fontWeight: 700, color: isSelected ? HP_TOKENS.yellow : '#fff' }}>{f.name}</div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      <button onClick={handlePingInvite} style={{ padding: '10px', marginTop: 12, borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.yellow, color: HP_TOKENS.ink, border: 'none', fontWeight: 700, width: '100%', cursor: 'pointer' }}>Kirim Undangan</button>
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-
-            {isMultiplayer && (
-              <div style={{ display: 'flex', gap: 16, marginBottom: 24, justifyContent: 'center', flexWrap: 'wrap' }}>
-                {participants.map((p, i) => {
-                  const isHost = participants.find(part => String(part.id) === String(user?.id))?.isHost;
-                  return (
-                    <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }} title={p.name || 'Anggota Tim'}>
-                      <div style={{ width: 56, height: 56, borderRadius: '50%', background: p.excused ? 'rgba(255,255,255,0.2)' : '#fff', color: HP_TOKENS.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 700, border: `3px solid ${p.excused ? HP_TOKENS.inkMute : HP_TOKENS.yellow}`, opacity: p.excused ? 0.5 : 1 }}>
-                        {p.avatar ? <img src={p.avatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}/> : (p.name?.charAt(0) || '?')}
-                      </div>
-                      <div style={{ fontSize: 11, fontWeight: 700, marginTop: 8, color: 'rgba(255,255,255,0.9)', maxWidth: 64, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {p.name ? p.name.split(' ')[0] : 'Tim'}
-                      </div>
-                      {p.excused && <div style={{ fontSize: 10, marginTop: 2, color: HP_TOKENS.dangerSoft }}>Urgent</div>}
-                      
-                      {isHost && String(p.id) !== String(user?.id) && (
-                        <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4, width: '100%' }}>
-                          {disconnectEvent?.id === p.id ? (
-                            <div style={{ background: 'rgba(255,255,255,0.1)', padding: '6px', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                              <div style={{ fontSize: 10, color: HP_TOKENS.dangerSoft, fontWeight: 700 }}>⚠️ Terputus</div>
-                              <button onClick={() => handleHostJudgment('tunggu')} style={{ fontSize: 9, padding: '4px', background: HP_TOKENS.sage, color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>Tunggu</button>
-                              <button onClick={() => handleHostJudgment('mendesak')} style={{ fontSize: 9, padding: '4px', background: 'rgba(245,158,11,0.2)', color: HP_TOKENS.warning, border: 'none', borderRadius: 4, cursor: 'pointer' }}>Dispensasi</button>
-                              <button onClick={() => handleHostJudgment('lalai')} style={{ fontSize: 9, padding: '4px', background: 'rgba(239,68,68,0.2)', color: HP_TOKENS.danger, border: 'none', borderRadius: 4, cursor: 'pointer' }}>Lalai</button>
-                            </div>
-                          ) : (
-                            <button onClick={() => handleKick(p.id)} style={{ fontSize: 9, padding: '4px 8px', borderRadius: 8, background: 'rgba(239,68,68,0.2)', color: HP_TOKENS.dangerSoft, border: '1px solid rgba(239,68,68,0.3)', cursor: 'pointer' }}>
-                              ❌ Keluarkan
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {!isMultiplayer && <BeeMascot mood="focus" size={80} showSpeech="Fokus!" />}
-
-            {focusMode === 'hardcore' && isMobile && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 18px', borderRadius: 99, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', marginTop: 16 }}>
-                <span style={{ fontSize: 14 }}>⚠️</span><span style={{ fontSize: 12, fontWeight: 700, color: HP_TOKENS.dangerSoft }}>Jangan tutup layar ini! (Hardcore)</span>
-              </div>
-            )}
-
-            <div style={{ fontSize: 80, fontWeight: 700, fontFamily: HP_FONT, letterSpacing: -2, marginTop: 16 }}>
-              {String(mins).padStart(2,'0')}:{String(ss).padStart(2,'0')}
-            </div>
-            
-            <div style={{ ...HP_TEXT.body, color: 'rgba(255,255,255,0.8)', marginTop: 12 }}>{focusTask}</div>
-            
-            <div style={{ marginTop: 40, width: 200 }}>
-              <HPBar value={((duration * 60 - secs) / (duration * 60)) * 100} tone="yellow" height={4}/>
-            </div>
-            
-            <button onClick={handleEarlyEndAttempt} style={{ marginTop: 48, padding: '12px 28px', borderRadius: 99, background: 'rgba(255,255,255,0.1)', color: HP_TOKENS.onPrimary, border: '1px solid rgba(255,255,255,0.2)', fontFamily: HP_FONT, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
-              Batal & Keluar
-            </button>
-          </div>
-        )}
+function Shell({ children, onClose, label }: { children: React.ReactNode; onClose: () => void; label: string }) {
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 9999, background: HP_TOKENS.sage,
+      color: HP_TOKENS.onPrimary, fontFamily: HP_FONT, display: "flex", flexDirection: "column",
+      animation: "hpFadeIn 300ms", overflowY: "auto",
+    }}>
+      <div style={{ padding: "40px 20px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
+        <button onClick={onClose} aria-label="Sembunyikan" style={iconBtnStyle}>
+          <HPGlyph name="close" size={18} color={HP_TOKENS.onPrimary} />
+        </button>
+        <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.onPrimary, opacity: 0.7 }}>{label}</div>
+        <div style={{ width: 40 }} />
+      </div>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", padding: 20, textAlign: "center" }}>
+        {children}
       </div>
     </div>
   );
 }
 
+function FieldInput({ placeholder, value, onChange, invalid }: {
+  placeholder: string; value: string; onChange: (v: string) => void; invalid?: boolean;
+}) {
+  return (
+    <input
+      type="text"
+      placeholder={placeholder}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      style={{
+        width: "100%", padding: "12px 16px", borderRadius: HP_TOKENS.radiusSm,
+        border: `1.5px solid ${invalid ? HP_TOKENS.danger : "rgba(255,255,255,0.2)"}`,
+        fontFamily: HP_FONT, fontSize: 14, outline: "none",
+        background: "rgba(255,255,255,0.06)", color: HP_TOKENS.onPrimary,
+      }}
+    />
+  );
+}
+
+function ModePicker({ mode, onChange }: { mode: "zen" | "hardcore"; onChange: (m: "zen" | "hardcore") => void }) {
+  return (
+    <div style={{ display: "flex", gap: 8, background: "rgba(0,0,0,0.2)", padding: 6, borderRadius: HP_TOKENS.radiusMd, width: "100%" }}>
+      {([
+        { k: "hardcore" as const, l: "🔥 Hardcore" },
+        { k: "zen" as const, l: "🧘 Zen" },
+      ]).map((opt) => (
+        <button
+          key={opt.k}
+          onClick={() => onChange(opt.k)}
+          style={{
+            flex: 1, padding: "11px 12px", borderRadius: HP_TOKENS.radiusSm, border: "none",
+            fontFamily: HP_FONT, fontWeight: 700, fontSize: 14, cursor: "pointer",
+            background: mode === opt.k ? HP_TOKENS.card : "transparent",
+            color: mode === opt.k ? HP_TOKENS.ink : HP_TOKENS.onPrimary,
+          }}
+        >
+          {opt.l}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function DurationPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  return (
+    <div style={{ width: "100%" }}>
+      <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.onPrimary, opacity: 0.7, marginBottom: 8 }}>DURASI</div>
+      <div style={{ display: "flex", gap: 8 }}>
+        {DURATION_PRESETS.map((d) => (
+          <button
+            key={d}
+            onClick={() => onChange(d)}
+            style={{
+              flex: 1, padding: "12px 8px", borderRadius: HP_TOKENS.radiusSm, cursor: "pointer",
+              fontFamily: HP_FONT, fontWeight: 700, fontSize: 15,
+              background: value === d ? HP_TOKENS.yellow : "rgba(255,255,255,0.06)",
+              border: `1.5px solid ${value === d ? HP_TOKENS.yellow : "rgba(255,255,255,0.12)"}`,
+              color: value === d ? HP_TOKENS.ink : HP_TOKENS.onPrimary,
+            }}
+          >
+            {d}m
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const STATUS_DOT: Record<string, { label: string; color: string }> = {
+  focusing: { label: "fokus", color: HP_TOKENS.successInk },
+  interrupted: { label: "menjauh", color: HP_TOKENS.warningInk },
+  joined: { label: "siap", color: HP_TOKENS.infoInk },
+};
+
+/**
+ * Daftar peserta — terlihat oleh SEMUA orang di ruangan, bukan hanya host.
+ * Kehadiran sosial inilah yang membuat orang bertahan dalam sesi; versi lama
+ * sengaja mengabaikan event JOIN untuk tamu, jadi tamu melihat ruangan kosong.
+ */
+function Roster({ room, viewerId, canModerate, onAct }: {
+  room: FocusRoomState;
+  viewerId: string;
+  canModerate: boolean;
+  onAct: (action: string, body?: Record<string, any>) => Promise<any>;
+}) {
+  const [menuFor, setMenuFor] = useState<string | null>(null);
+
+  return (
+    <div style={{ width: "100%" }}>
+      <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.onPrimary, opacity: 0.6, marginBottom: 10 }}>
+        {room.participantCount} DARI {room.maxParticipants} ORANG
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center" }}>
+        {room.participants.map((p: FocusParticipant) => {
+          const dot = STATUS_DOT[p.status] ?? STATUS_DOT.joined;
+          const isSelf = String(p.id) === viewerId;
+          return (
+            <div key={p.id} style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", width: 72 }}>
+              <button
+                onClick={() => canModerate && !isSelf ? setMenuFor(menuFor === p.id ? null : p.id) : undefined}
+                style={{
+                  border: `2px solid ${dot.color}`, borderRadius: "50%", padding: 2,
+                  background: "transparent", cursor: canModerate && !isSelf ? "pointer" : "default",
+                  opacity: p.status === "interrupted" ? 0.55 : 1,
+                }}
+                aria-label={p.name}
+              >
+                <HPAvatar name={p.name} image={p.avatar ?? undefined} size={44} />
+              </button>
+              <div style={{ ...HP_TEXT.small, fontSize: 11, color: HP_TOKENS.onPrimary, marginTop: 6, maxWidth: 72, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {p.name.split(" ")[0]}{p.isHost ? " ⭐" : ""}
+              </div>
+              <div style={{ ...HP_TEXT.small, fontSize: 10, color: dot.color }}>{dot.label}</div>
+              {p.joinedAtMin !== null && (
+                <div style={{ ...HP_TEXT.small, fontSize: 9, color: HP_TOKENS.onPrimary, opacity: 0.5 }}>
+                  gabung menit ke-{p.joinedAtMin}
+                </div>
+              )}
+
+              {menuFor === p.id && (
+                <div style={{
+                  position: "absolute", top: 56, zIndex: 5, background: HP_TOKENS.card,
+                  borderRadius: HP_TOKENS.radiusSm, padding: 6, display: "flex", flexDirection: "column",
+                  gap: 4, minWidth: 148, boxShadow: HP_TOKENS.shadowLg,
+                }}>
+                  <MenuItem label="Beri dispensasi" onClick={() => { setMenuFor(null); void onAct("EXCUSE", { targetId: p.id }); }} />
+                  {room.viewer?.role === "host" && (
+                    <>
+                      <MenuItem
+                        label={p.role === "comod" ? "Cabut co-moderator" : "Jadikan co-moderator"}
+                        onClick={() => { setMenuFor(null); void onAct(p.role === "comod" ? "DEMOTE_COMOD" : "PROMOTE_COMOD", { targetId: p.id }); }}
+                      />
+                      <MenuItem label="Serahkan host" onClick={() => { setMenuFor(null); void onAct("OFFER_HOST", { targetId: p.id }); }} />
+                    </>
+                  )}
+                  <MenuItem label="Keluarkan" tone="danger" onClick={() => { setMenuFor(null); void onAct("KICK", { targetId: p.id }); }} />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Antrean permintaan masuk untuk ruangan `invite`.
+ *
+ * Sebelumnya tingkat visibilitas ini menolak semua orang tanpa pengecualian —
+ * tidak ada jalan dari luar ke dalam, jadi ia praktis mengunci ruangan
+ * selamanya. Sekarang permintaannya mengantre di sini, dan menjawabnya adalah
+ * dua ketukan yang tidak menghentikan timer siapa pun.
+ */
+function JoinQueue({ room, canModerate, onAct }: {
+  room: FocusRoomState;
+  canModerate: boolean;
+  onAct: (action: string, body?: Record<string, any>) => Promise<any>;
+}) {
+  const queue = room.pendingRequests ?? [];
+  if (!canModerate || queue.length === 0) return null;
+
+  return (
+    <div style={{ width: "100%", background: "rgba(0,0,0,0.2)", borderRadius: HP_TOKENS.radiusMd, padding: 12 }}>
+      <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.onPrimary, opacity: 0.6, marginBottom: 10 }}>
+        {queue.length} MENUNGGU PERSETUJUAN
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {queue.map((req) => (
+          <div key={req.userId} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <HPAvatar name={req.name} image={req.avatar ?? undefined} size={30} />
+            <div style={{ ...HP_TEXT.small, flex: 1, minWidth: 0, color: HP_TOKENS.onPrimary, textAlign: "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {req.name}
+            </div>
+            <button
+              onClick={() => void onAct("REJECT_JOIN", { targetId: req.userId })}
+              style={{
+                padding: "6px 10px", borderRadius: HP_TOKENS.radiusXs, cursor: "pointer",
+                border: "1px solid rgba(255,255,255,0.25)", background: "transparent",
+                color: HP_TOKENS.onPrimary, fontFamily: HP_FONT, fontWeight: 700, fontSize: 12,
+              }}
+            >
+              Tolak
+            </button>
+            <button
+              onClick={() => void onAct("APPROVE_JOIN", { targetId: req.userId })}
+              style={{
+                padding: "6px 12px", borderRadius: HP_TOKENS.radiusXs, cursor: "pointer",
+                border: "none", background: HP_TOKENS.yellow, color: HP_TOKENS.ink,
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 12,
+              }}
+            >
+              Terima
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MenuItem({ label, onClick, tone }: { label: string; onClick: () => void; tone?: "danger" }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        padding: "8px 10px", borderRadius: HP_TOKENS.radiusXs, border: "none", cursor: "pointer",
+        background: "transparent", textAlign: "left", fontFamily: HP_FONT, fontWeight: 600, fontSize: 12,
+        color: tone === "danger" ? HP_TOKENS.danger : HP_TOKENS.ink,
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
+/**
+ * Tawaran host muncul sebagai bar tipis, bukan layar penuh. Orang yang sedang
+ * deep-work tidak boleh dihentikan oleh urusan administratif.
+ */
+function HostOfferPrompt({ onRespond }: { onRespond: (accept: boolean) => void }) {
+  return (
+    <div style={{
+      position: "absolute", top: 88, left: 16, right: 16, zIndex: 60,
+      background: HP_TOKENS.card, borderRadius: HP_TOKENS.radiusMd, padding: 14,
+      display: "flex", alignItems: "center", gap: 12, boxShadow: HP_TOKENS.shadowLg,
+    }}>
+      <div style={{ flex: 1, textAlign: "left" }}>
+        <div style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.ink }}>Kamu ditawari jadi host</div>
+        <div style={{ ...HP_TEXT.small, fontSize: 12, color: HP_TOKENS.inkMute }}>Timer tetap jalan. Peran ini pasif kecuali ada yang butuh.</div>
+      </div>
+      <button onClick={() => onRespond(false)} style={{ padding: "8px 12px", borderRadius: HP_TOKENS.radiusXs, border: `1px solid ${HP_TOKENS.line}`, background: "transparent", color: HP_TOKENS.inkMute, fontWeight: 700, fontSize: 12, cursor: "pointer", fontFamily: HP_FONT }}>Tolak</button>
+      <button onClick={() => onRespond(true)} style={{ padding: "8px 12px", borderRadius: HP_TOKENS.radiusXs, border: "none", background: HP_TOKENS.primary, color: HP_TOKENS.onPrimary, fontWeight: 700, fontSize: 12, cursor: "pointer", fontFamily: HP_FONT }}>Terima</button>
+    </div>
+  );
+}
+
+const OUTCOME_COPY: Record<string, { emoji: string; title: string; body: string }> = {
+  completed: { emoji: "🎉", title: "Fokus penuh selesai", body: "Kamu bertahan sampai akhir." },
+  partial: { emoji: "👏", title: "Sesi selesai sebagian", body: "Tidak sampai akhir, tapi menitmu tetap dihitung." },
+  excused: { emoji: "🤝", title: "Sesi selesai dengan dispensasi", body: "Host menandai kepergianmu sebagai hal yang wajar." },
+  abandoned: { emoji: "🌱", title: "Sesi tidak terlanjutkan", body: "Sesi ini berhenti di tengah jalan. Tidak apa-apa — coba lagi nanti." },
+  removed: { emoji: "🚪", title: "Kamu dikeluarkan dari sesi", body: "Sesi ini tidak menghasilkan poin." },
+};
+
+/**
+ * Ringkasan yang menggantikan dua layar lama: "TEAM COMBO BERHASIL!" dan layar
+ * merah "Sesi Gagal! 😡". Keduanya berbohong dengan cara berbeda — yang satu
+ * menampilkan multiplier yang tidak pernah aktif, yang satu menghanguskan kerja
+ * yang sudah nyata dilakukan.
+ */
+function Summary({ room, onClose }: { room: FocusRoomState; onClose: () => void }) {
+  const outcome = room.viewer?.outcome ?? "abandoned";
+  const copy = OUTCOME_COPY[outcome] ?? OUTCOME_COPY.abandoned;
+  const mins = room.viewer?.focusedMins ?? 0;
+  const points = room.viewer?.awardedPoints;
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 9999, background: HP_TOKENS.sage, color: HP_TOKENS.onPrimary,
+      fontFamily: HP_FONT, display: "flex", flexDirection: "column", alignItems: "center",
+      justifyContent: "center", padding: 24, textAlign: "center", gap: 8,
+    }}>
+      <div style={{ fontSize: 60 }}>{copy.emoji}</div>
+      <div style={{ ...HP_TEXT.display, fontSize: 26, color: HP_TOKENS.onPrimary }}>{copy.title}</div>
+      <div style={{ ...HP_TEXT.body, fontSize: 15, color: HP_TOKENS.onPrimary, opacity: 0.8, maxWidth: 320 }}>{copy.body}</div>
+
+      <div style={{ background: "rgba(0,0,0,0.2)", borderRadius: HP_TOKENS.radiusLg, padding: "20px 28px", marginTop: 16, minWidth: 220 }}>
+        <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 40, color: HP_TOKENS.onPrimary }}>{mins}</div>
+        <div style={{ ...HP_TEXT.small, color: HP_TOKENS.onPrimary, opacity: 0.75 }}>menit fokus terbukti</div>
+        {typeof points === "number" && (
+          <div style={{ ...HP_TEXT.small, color: HP_TOKENS.yellowInk, marginTop: 10, fontWeight: 700 }}>
+            {points > 0 ? `+${points} Poin` : "Belum cukup untuk berpoin (minimal 10 menit)"}
+          </div>
+        )}
+      </div>
+
+      <button onClick={onClose} style={{ ...overlayBtn("primary"), marginTop: 28, maxWidth: 240 }}>Selesai</button>
+    </div>
+  );
+}

@@ -262,7 +262,7 @@ export default function NotesScreen() {
             width: 6px;
           }
           .hp-user-list::-webkit-scrollbar-thumb {
-            background: var(--hp-lineSoft);
+            background: var(--hp-line-soft);
             border-radius: 6px;
           }
           .hp-notes-actions {
@@ -633,7 +633,7 @@ export default function NotesScreen() {
           textAlign: 'center', padding: '60px 20px', color: HP_TOKENS.inkMute, 
           background: HP_TOKENS.card, borderRadius: HP_TOKENS.radiusLg, border: `1.5px dashed ${HP_TOKENS.line}`
         }}>
-          <div style={{ fontSize: 32, marginBottom: 12 }}>📝</div>
+          <div style={{ fontSize: 32, marginBottom: 12 }}><HPGlyph name="note" size={27} color="currentColor" /></div>
           <div style={{ ...HP_TEXT.h, fontSize: 14 }}>Belum ada catatan.</div>
           <div style={{ ...HP_TEXT.small, marginTop: 4 }}>Klik "Tambah Catatan" untuk mulai menulis!</div>
         </div>
@@ -705,15 +705,15 @@ export default function NotesScreen() {
                        )}
                        {String(note.userId) === String(user?.id) && (
                          <button onClick={() => setNoteToDelete(note.id)} className="hp-tap" style={{ background: '#fff', border: `1px solid ${theme.blob}`, borderRadius: 8, cursor: 'pointer', padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Hapus">
-                           <HPGlyph name="close" size={12} color={HP_TOKENS.coral} />
+                           <HPGlyph name="close" size={12} color={HP_TOKENS.coralInk} />
                          </button>
                        )}
                     </div>
                   </div>
 
                   {isNoteLocked(note) && (
-                    <div style={{ position: 'relative', zIndex: 2, marginBottom: 8, fontSize: 9, fontWeight: 700, background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, padding: '4px 8px', borderRadius: 8, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                      <HPGlyph name="edit" size={10} color={HP_TOKENS.coral} /> SEDANG DIEDIT OLEH {note.lockedByName?.split(' ')[0].toUpperCase()}
+                    <div style={{ position: 'relative', zIndex: 2, marginBottom: 8, fontSize: 9, fontWeight: 700, background: HP_TOKENS.coralWash, color: HP_TOKENS.coralInk, padding: '4px 8px', borderRadius: 8, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      <HPGlyph name="edit" size={10} color={HP_TOKENS.coralInk} /> SEDANG DIEDIT OLEH {note.lockedByName?.split(' ')[0].toUpperCase()}
                     </div>
                   )}
 
@@ -789,7 +789,7 @@ export default function NotesScreen() {
           
           {paginatedNotes.length === 0 && searchQuery && (
             <div style={{ textAlign: 'center', padding: 40, color: HP_TOKENS.inkMute }}>
-              <div style={{ fontSize: 32, marginBottom: 12 }}>🔍</div>
+              <div style={{ fontSize: 32, marginBottom: 12 }}><HPGlyph name="search" size={27} color="currentColor" /></div>
               <div style={{ ...HP_TEXT.h, fontSize: 14 }}>Pencarian tidak ditemukan.</div>
             </div>
           )}
@@ -810,7 +810,7 @@ export default function NotesScreen() {
             boxShadow: HP_TOKENS.shadowLg,
             animation: 'hpPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }}>
-            <div style={{ width: 64, height: 64, borderRadius: '50%', background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: HP_TOKENS.coralWash, color: HP_TOKENS.coralInk, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
               <HPGlyph name="trash" size={32} />
             </div>
             <div style={{ ...HP_TEXT.h, fontSize: 20, marginBottom: 8 }}>Hapus Catatan?</div>

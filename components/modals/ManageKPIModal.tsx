@@ -321,12 +321,12 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
           display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20,
           border: `1px solid ${HP_TOKENS.sage}20`
         }}>
-          <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.sage, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}>
-            <span>🎯</span> Buat KPI Baru
+          <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.sageInk, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}>
+            <span><HPGlyph name="target" size={12} color="currentColor" /></span> Buat KPI Baru
           </div>
 
           {error && (
-            <div style={{ padding: 10, borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.dangerWash, color: HP_TOKENS.danger, fontSize: 12, fontWeight: 700 }}>
+            <div style={{ padding: 10, borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.dangerWash, color: HP_TOKENS.dangerInk, fontSize: 12, fontWeight: 700 }}>
               {error}
             </div>
           )}
@@ -357,7 +357,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
               }}
             >
-              <span>👤</span> Individu
+              <span><HPGlyph name="user" size={14} color="currentColor" /></span> Individu
             </button>
             <button 
               type="button"
@@ -371,7 +371,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
               }}
             >
-              <span>👥</span> Seluruh Tim
+              <span><HPGlyph name="people" size={14} color="currentColor" /></span> Seluruh Tim
             </button>
           </div>
 
@@ -462,7 +462,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 15 }}>📊</span>
+                <span style={{ fontSize: 15 }}><HPGlyph name="chart" size={13} color="currentColor" /></span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: metricEnabled ? HP_TOKENS.blue : HP_TOKENS.inkSoft }}>
                   Lacak dengan Angka
                 </span>
@@ -587,7 +587,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
           <div style={{ textAlign: 'center', padding: 20, color: HP_TOKENS.inkMute }}>Memuat...</div>
         ) : kpis.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '30px 20px', color: HP_TOKENS.inkMute }}>
-            <div style={{ fontSize: 32, marginBottom: 8 }}>🎯</div>
+            <div style={{ fontSize: 32, marginBottom: 8 }}><HPGlyph name="target" size={27} color="currentColor" /></div>
             <div style={{ ...HP_TEXT.body, fontWeight: 700 }}>Belum ada KPI untuk {MONTHS[month - 1]} {year}</div>
             <div style={{ ...HP_TEXT.small, marginTop: 4 }}>Silakan buat KPI baru di atas</div>
           </div>
@@ -597,7 +597,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
               <div key={group.id} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 4px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: 14 }}>👤</span>
+                    <span style={{ fontSize: 14 }}><HPGlyph name="user" size={12} color="currentColor" /></span>
                     <span style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.inkSoft }}>
                       {group.name}
                     </span>
@@ -642,14 +642,14 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
                                 display: 'flex', alignItems: 'center', gap: 4
                               }}
                             >
-                              <span>📅</span> Target Mingguan
+                              <span><HPGlyph name="calendar" size={12} color="currentColor" /></span> Target Mingguan
                             </button>
                           </div>
                         </div>
                         <button onClick={() => handleDelete(k.id)} style={{ 
                           background: 'none', border: 'none', cursor: 'pointer', padding: 4 
                         }}>
-                          <HPGlyph name="close" size={16} color={HP_TOKENS.coral} />
+                          <HPGlyph name="close" size={16} color={HP_TOKENS.coralInk} />
                         </button>
                       </div>
 
@@ -697,7 +697,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
                                         onClick={() => handleDeleteWeeklyTarget(k.id, wt.id)}
                                         style={{ background: 'none', border: 'none', padding: 2, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                                       >
-                                        <span style={{ color: HP_TOKENS.coral, fontSize: 16, fontWeight: 700, lineHeight: 1 }}>×</span>
+                                        <span style={{ color: HP_TOKENS.coralInk, fontSize: 16, fontWeight: 700, lineHeight: 1 }}>×</span>
                                       </button>
                                     </div>
                                   </div>
@@ -710,7 +710,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 8, borderTop: `1px dashed ${HP_TOKENS.line}` }}>
                             <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkSoft, fontWeight: 700, fontSize: 9 }}>+ Tambah Target Mingguan</div>
                             {wtError && (
-                              <div style={{ fontSize: 10, color: HP_TOKENS.coral, fontWeight: 700 }}>{wtError}</div>
+                              <div style={{ fontSize: 10, color: HP_TOKENS.coralInk, fontWeight: 700 }}>{wtError}</div>
                             )}
                             <div style={{ display: 'flex', gap: 6 }}>
                               <select 

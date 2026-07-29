@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { hpEventEmitter } from "@/lib/events";
+import { awardPoints, refFor } from "@/lib/points";
+import { wibDateString } from "@/lib/timeUtils";
 
 export async function POST(request: Request) {
   try {
@@ -44,24 +46,26 @@ export async function POST(request: Request) {
     const durationMinutes = Number(updated.rows[0].duration_minutes);
     let status = updated.rows[0].status as string;
 
-    // Award XP for completing the workday — Spec v2: +5 XP
+    // Poin menutup hari kerja.
+    //
+    // "Tutup Hari" dulu dibayar DUA KALI: 5 poin di sini plus 20 poin dari
+    // ReflectModal lewat `daily_reflection`, padahal keduanya satu kejadian yang
+    // sama di mata user. Sekarang keduanya memakai aksi `tutup_hari` dengan
+    // kunci tanggal WIB yang sama, jadi yang duluan jalan itulah yang dibayar
+    // dan yang kedua jadi no-op.
+    //
+    // Blok lama juga menulis `UPDATE users SET points = points + 5` langsung —
+    // melewati kuota, dan hanya menaikkan `points` tanpa `coins`, sehingga
+    // saldo belanja diam-diam tertinggal dari poin.
     try {
-      await db.execute({
-        sql: "INSERT INTO xp_transactions (id, user_id, amount, action_type, description) VALUES (?, ?, ?, ?, ?)",
-        args: [
-          "tx_co_" + Date.now().toString(36), 
-          userId, 
-          5, 
-          "check_out", 
-          `Clock-out · ${Math.floor(durationMinutes / 60)}j${durationMinutes % 60}m kerja`
-        ]
-      });
-      await db.execute({
-        sql: "UPDATE users SET points = points + 5 WHERE id = ?",
-        args: [userId]
+      await awardPoints({
+        userId,
+        action: "tutup_hari",
+        refId: refFor.day(wibDateString()),
+        description: `Clock-out · ${Math.floor(durationMinutes / 60)}j${durationMinutes % 60}m kerja`,
       });
     } catch (e) {
-      console.warn("XP award error on checkout:", e);
+      console.warn("Gagal memberi poin tutup hari:", e);
     }
 
     const hours = Math.floor(durationMinutes / 60);

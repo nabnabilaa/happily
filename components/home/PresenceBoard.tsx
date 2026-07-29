@@ -51,6 +51,12 @@ interface UserStatus {
   reason: string | null;
   checkInType: string | null;
   todayCheckin: string | null;
+  /**
+   * Sesi fokus yang sedang berjalan, kalau ada. Sengaja hanya jam selesai dan
+   * apakah orangnya sedang menjauh — bukan berapa kali ia terganggu. Papan ini
+   * untuk kehadiran sosial, bukan untuk mengawasi.
+   */
+  focus: { roomName: string; mode: string; endsAt: string | null; away: boolean } | null;
 }
 
 interface StatusSummary {
@@ -268,10 +274,10 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
           style={{ display: 'flex', gap: 6, marginBottom: 12, overflowX: 'auto', paddingBottom: 2 }}
         >
           {[
-            { key: 'working', count: summary.working, color: HP_TOKENS.success },
-            { key: 'meeting', count: summary.meeting, color: HP_TOKENS.info },
-            { key: 'break',   count: summary.break,   color: HP_TOKENS.warning },
-            { key: 'absent',  count: summary.sick + summary.izin + summary.cuti, color: HP_TOKENS.danger },
+            { key: 'working', count: summary.working, color: HP_TOKENS.successInk },
+            { key: 'meeting', count: summary.meeting, color: HP_TOKENS.infoInk },
+            { key: 'break',   count: summary.break,   color: HP_TOKENS.warningInk },
+            { key: 'absent',  count: summary.sick + summary.izin + summary.cuti, color: HP_TOKENS.dangerInk },
             { key: 'offline', count: summary.offline, color: HP_TOKENS.inkMute },
           ].map(s => {
             const active = filter === s.key;
@@ -353,6 +359,13 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
         <HPButton size="sm" variant="primary" icon="activity" onClick={() => openModal('update_status')}>
           Update status
         </HPButton>
+        {/* The per-person eye button below only sends a plain 'greet'. This
+            opens the full picker — any colleague, not just whoever is on the
+            current presence page, plus the coffee/help nudge types. Dropping it
+            left SenggolModal registered in page.tsx but unreachable. */}
+        <HPButton size="sm" icon="eye" onClick={() => openModal('senggol')}>
+          Senggol
+        </HPButton>
         <HPButton size="sm" icon="leaf" onClick={() => openModal('appreciate')}>
           Apresiasi
         </HPButton>
@@ -433,7 +446,7 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
                     }}>
                       {u.name}
                       {isMe && (
-                        <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.yellowDark, marginLeft: 6, background: HP_TOKENS.yellowSoft, padding: '2px 6px', borderRadius: 4 }}>Kamu</span>
+                        <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.yellowInk, marginLeft: 6, background: HP_TOKENS.yellowSoft, padding: '2px 6px', borderRadius: 4 }}>Kamu</span>
                       )}
                     </div>
                     <div style={{
@@ -468,20 +481,42 @@ export default function PresenceBoard({ openModal }: PresenceBoardProps) {
                   borderRadius: HP_TOKENS.radiusPill,
                   boxShadow: isMe ? '0 1px 3px rgba(0,0,0,0.05)' : 'none',
                 }}>
-                  <HPGlyph name={glyphFor(u.status)} size={12} color={statusColor} />
-                  <span style={{
-                    ...HP_TEXT.small, fontSize: 11, fontWeight: 600, color: statusColor,
-                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                  }}>
-                    {u.statusLabel}
-                  </span>
+                  {u.focus ? (
+                    <>
+                      <span style={{ display: 'flex' }}><HPGlyph name={u.focus.away ? 'pause' : 'target'} size={12} color="currentColor" /></span>
+                      <span style={{
+                        ...HP_TEXT.small, fontSize: 11, fontWeight: 600,
+                        color: u.focus.away ? HP_TOKENS.warning : HP_TOKENS.sage,
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                      }}>
+                        {u.focus.away
+                          ? 'Menjauh'
+                          : u.focus.endsAt
+                            ? `Fokus s/d ${new Date(u.focus.endsAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`
+                            : 'Deep work'}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <HPGlyph name={glyphFor(u.status)} size={12} color={statusColor} />
+                      <span style={{
+                        ...HP_TEXT.small, fontSize: 11, fontWeight: 600, color: statusColor,
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                      }}>
+                        {u.statusLabel}
+                      </span>
+                    </>
+                  )}
                 </div>
 
                 {!isMe && (
                   <Row gap={2} style={{ flexShrink: 0, marginLeft: 8 }}>
+                    {/* Menyenggol orang yang sedang deep-work adalah persis
+                        gangguan yang fitur fokus ini berusaha cegah. */}
                     <HPButton
                       size="sm" iconOnly icon="eye" variant="secondary"
-                      aria-label={`Senggol ${u.name}`}
+                      disabled={Boolean(u.focus && !u.focus.away)}
+                      aria-label={u.focus && !u.focus.away ? `${u.name} sedang fokus` : `Senggol ${u.name}`}
                       onClick={() => sendNudge(u, 'greet', `Kamu menyapa ${firstName}.`)}
                     />
                     <HPButton

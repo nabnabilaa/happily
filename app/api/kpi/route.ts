@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getRequesterAccess, canHrAdmin } from "@/lib/hrAuth";
 
 // GET: Fetch KPIs (for manager or employee)
 export async function GET(request: Request) {
@@ -15,12 +16,31 @@ export async function GET(request: Request) {
     let sql: string;
     let args: any[];
 
-    if (['manager', 'hr', 'admin'].includes(role || '')) {
-      // Manager/HR/Admin sees KPIs they assigned or team KPIs for their team
-      sql = `SELECT k.*, u.name as assignee_name 
-             FROM monthly_kpis k 
+    /*
+     * Cakupan HR dibaca dari DB, bukan dari query string.
+     *
+     * `role` di URL adalah klaim milik klien. Selama cabang HR hanya melihat
+     * KPI yang ia tugaskan sendiri, klaim itu tidak berbahaya — tapi layar
+     * Review KPI memang perlu HR melihat KPI seluruh perusahaan, dan begitu
+     * cabang itu ada, `?role=hr` dari siapa pun akan membuka semuanya.
+     */
+    const { role: verifiedRole, hrAccess } = await getRequesterAccess(userId);
+    const isHrAdmin = canHrAdmin(verifiedRole, hrAccess);
+
+    if (isHrAdmin) {
+      // HR-Admin meninjau lintas divisi, jadi tidak disaring per penugas.
+      sql = `SELECT k.*, u.name as assignee_name
+             FROM monthly_kpis k
              LEFT JOIN users u ON k.assigned_to = u.id
-             WHERE (k.assigned_by = ? OR (k.scope = 'team' AND k.assigned_to = (SELECT team_id FROM users WHERE id = ?))) 
+             WHERE k.month = ? AND k.year = ?
+             ORDER BY k.created_at DESC`;
+      args = [Number(month), Number(year)];
+    } else if (['manager', 'hr', 'admin'].includes(role || '')) {
+      // Manager sees KPIs they assigned or team KPIs for their team
+      sql = `SELECT k.*, u.name as assignee_name
+             FROM monthly_kpis k
+             LEFT JOIN users u ON k.assigned_to = u.id
+             WHERE (k.assigned_by = ? OR (k.scope = 'team' AND k.assigned_to = (SELECT team_id FROM users WHERE id = ?)))
                AND k.month = ? AND k.year = ?
              ORDER BY k.created_at DESC`;
       args = [userId, userId, Number(month), Number(year)];

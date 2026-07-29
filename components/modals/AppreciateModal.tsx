@@ -112,8 +112,8 @@ export default function AppreciateModal({ onClose, toUser }: AppreciateModalProp
     return (
       <Modal onClose={onClose} title="Beri Apresiasi">
         <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>🌱</div>
-          <div style={{ ...HP_TEXT.h, fontSize: 18, color: HP_TOKENS.sage }}>Apresiasi Terkirim!</div>
+          <div style={{ fontSize: 48, marginBottom: 16 }}><HPGlyph name="leaf" size={28} color="currentColor" /></div>
+          <div style={{ ...HP_TEXT.h, fontSize: 18, color: HP_TOKENS.sageInk }}>Apresiasi Terkirim!</div>
           <div style={{ ...HP_TEXT.body, fontSize: 13, color: HP_TOKENS.inkMute, marginTop: 8 }}>
             {to?.name} mendapat +20 poin dari apresiasimu.
           </div>
@@ -132,7 +132,7 @@ export default function AppreciateModal({ onClose, toUser }: AppreciateModalProp
           <div style={{ 
             padding: 12, borderRadius: HP_TOKENS.radiusSm, marginBottom: 16,
             background: HP_TOKENS.dangerWash, border: `1px solid ${HP_TOKENS.dangerSoft}`,
-            color: HP_TOKENS.danger, fontSize: 13, fontWeight: 600, fontFamily: HP_FONT 
+            color: HP_TOKENS.dangerInk, fontSize: 13, fontWeight: 600, fontFamily: HP_FONT 
           }}>
             {error}
           </div>
@@ -141,7 +141,7 @@ export default function AppreciateModal({ onClose, toUser }: AppreciateModalProp
         <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 700, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           KE SIAPA <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.6 }}>(Pilih 1 orang)</span>
           {to && (
-            <div style={{ color: HP_TOKENS.sage, fontSize: 11, fontWeight: 700 }}>
+            <div style={{ color: HP_TOKENS.sageInk, fontSize: 11, fontWeight: 700 }}>
               Terpilih: {to.name.split(' ')[0]}
             </div>
           )}

@@ -158,20 +158,39 @@ export function useCoachNudge(
     }
   }, [rawState?.feed, rawState?.logbook, rawUser?.id, rawUser?.name]);
 
+  /**
+   * Buddy's mood, which is also Buddy's colour — each key in `MASCOT_MOODS`
+   * carries its own body gradient, so this function decides what the mascot
+   * looks like, not just what face it wears.
+   *
+   * It used to return `'idle'` for clocked-out, for not-yet-clocked-in, *and*
+   * as the final fallback, which is the overwhelming majority of the working
+   * day. `idle` is the blue skin — so Buddy was blue essentially always and the
+   * nine other palettes never appeared. Every branch now lands on the mood that
+   * actually matches the moment.
+   */
   const beeMood = useMemo(() => {
     if (!rawState) return 'happy';
     const now = new Date();
-    
-    if (isClockedOut) return 'idle';
-    if (!isClockedIn) return 'idle';
+
+    // Day closed out — sleepy (lavender), the wind-down skin.
+    if (isClockedOut) return 'sleepy';
 
     const parseTime = (t: string) => {
       const [hh, mm] = t.split(':').map(Number);
       return hh * 60 + mm;
     };
-    
+    const currentMins = now.getHours() * 60 + now.getMinutes();
+
+    // Not clocked in yet: waiting (teal) before the shift starts, and the
+    // clock-with-hands accessory reads as "I'm expecting you" rather than as an
+    // idle blue blob.
+    if (!isClockedIn) {
+      const workStart = rawState.workSchedule ? parseTime(rawState.workSchedule.start || "08:00") : 8 * 60;
+      return currentMins < workStart ? 'happy' : 'waiting';
+    }
+
     if (rawState.workSchedule) {
-      const currentMins = now.getHours() * 60 + now.getMinutes();
       const breakStart = parseTime(rawState.workSchedule.breakStart || "12:00");
       const breakEnd = parseTime(rawState.workSchedule.breakEnd || "13:00");
       if (currentMins >= breakStart && currentMins < breakEnd) return 'eating';
@@ -181,8 +200,20 @@ export function useCoachNudge(
     const hoursInactive = (now.getTime() - lastAct.getTime()) / (1000 * 60 * 60);
 
     if (hoursInactive >= 3) return 'sad';
-    if (rawState.mood === 'tired' || rawState.mood === 'burnout') return 'sleepy';
-    return 'idle';
+
+    // Mood keys are the ones in `HP_MOODS` — joy / calm / neutral / tired /
+    // stress. The old code tested for 'burnout', which no check-in ever writes,
+    // so the tired branch was half dead.
+    switch (rawState.mood) {
+      case 'tired':  return 'sleepy';
+      case 'stress': return 'annoyed';
+      case 'joy':    return 'excited';
+      case 'calm':   return 'happy';
+    }
+
+    // Mid-shift and nothing wrong: focus (honey/amber). This is the working
+    // skin, and it is the one the brand's warmth actually lives in.
+    return 'focus';
   }, [rawState, isClockedOut, isClockedIn]);
 
   return { coachNudge, centralNudge, setCentralNudge, beeMood };

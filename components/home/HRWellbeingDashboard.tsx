@@ -63,9 +63,7 @@ export default function HRWellbeingDashboard({ state, openModal, onGoToBurnout }
               width: 40, height: 40, borderRadius: HP_TOKENS.radiusSm, 
               background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 20
-            }}>
-              📡
-            </div>
+            }}><HPGlyph name="activity" size={17} color="currentColor" /></div>
             <div>
               <div style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.blue, letterSpacing: 0.5 }}>WELLBEING RADAR (ALL)</div>
               <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkSoft, marginTop: 2 }}>
@@ -90,7 +88,7 @@ export default function HRWellbeingDashboard({ state, openModal, onGoToBurnout }
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
               <div style={{ padding: '12px', background: 'rgba(255,255,255,0.7)', borderRadius: HP_TOKENS.radiusSm }}>
                 <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 4 }}>Company Avg</div>
-                <div style={{ ...HP_TEXT.h, fontSize: 20, color: HP_TOKENS.sage }}>{wellbeingAvg}</div>
+                <div style={{ ...HP_TEXT.h, fontSize: 20, color: HP_TOKENS.sageInk }}>{wellbeingAvg}</div>
                 <div style={{ ...HP_TEXT.small, color: isWbTrendPos ? HP_TOKENS.sage : HP_TOKENS.coral, marginTop: 2, fontSize: 11 }}>
                   {wellbeingTrend}% vs last week
                 </div>
@@ -106,7 +104,7 @@ export default function HRWellbeingDashboard({ state, openModal, onGoToBurnout }
                   <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 4 }}>Total At Risk</div>
                   <HPGlyph name="arrowUpRight" size={14} color={HP_TOKENS.inkSoft} />
                 </div>
-                <div style={{ ...HP_TEXT.h, fontSize: 20, color: HP_TOKENS.coral }}>{atRisk}</div>
+                <div style={{ ...HP_TEXT.h, fontSize: 20, color: HP_TOKENS.coralInk }}>{atRisk}</div>
                 <div style={{ ...HP_TEXT.small, color: atRisk > 0 ? HP_TOKENS.coral : HP_TOKENS.sage, marginTop: 2, fontSize: 11 }}>
                   {atRisk > 0 ? 'Lihat daftar di bawah' : 'All good'}
                 </div>
@@ -154,15 +152,15 @@ export default function HRWellbeingDashboard({ state, openModal, onGoToBurnout }
                             <div style={{ width: 24, height: 24, borderRadius: '50%', background: HP_TOKENS.sageSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}>W</div>
                             <span style={{ fontSize: 12, fontWeight: 700, color: HP_TOKENS.ink }}>Wawan (Manager)</span>
                           </div>
-                          <span style={{ fontSize: 11, fontWeight: 700, color: HP_TOKENS.sage }}>92 Score</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: HP_TOKENS.sageInk }}>92 Score</span>
                         </div>
                         {dept.atRisk > 0 && (
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', background: HP_TOKENS.coralSoft, borderRadius: 8 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                               <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}>A</div>
-                              <span style={{ fontSize: 12, fontWeight: 700, color: HP_TOKENS.coral }}>Andi (Staff)</span>
+                              <span style={{ fontSize: 12, fontWeight: 700, color: HP_TOKENS.coralInk }}>Andi (Staff)</span>
                             </div>
-                            <span style={{ fontSize: 11, fontWeight: 700, color: HP_TOKENS.coral }}>54 Score</span>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: HP_TOKENS.coralInk }}>54 Score</span>
                           </div>
                         )}
                       </div>
@@ -220,7 +218,7 @@ export default function HRWellbeingDashboard({ state, openModal, onGoToBurnout }
 
             {/* Indicator explanation */}
             <div style={{ marginTop: 12, padding: '10px 12px', background: 'rgba(255,255,255,0.5)', borderRadius: 8, display: 'flex', gap: 8 }}>
-              <div style={{ fontSize: 14 }}>💡</div>
+              <div style={{ fontSize: 14 }}><HPGlyph name="sparkle" size={12} color="currentColor" /></div>
               <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkSoft, lineHeight: 1.4 }}>
                 <strong>Indikator At Risk:</strong> Karyawan dengan rata-rata Wellbeing Score &lt; 60 atau memiliki indikasi Burnout (kelelahan emosional tinggi) dalam 7 hari terakhir.
               </div>

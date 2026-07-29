@@ -215,7 +215,7 @@ export default function ProfileEditorModal({ onClose }: ProfileEditorModalProps)
               }}
               className="hp-tap"
             >
-              <span>✨</span> Mode Animasi
+              <span><HPGlyph name="sparkle" size={14} color="currentColor" /></span> Mode Animasi
             </button>
             <button
               onClick={() => {
@@ -243,7 +243,7 @@ export default function ProfileEditorModal({ onClose }: ProfileEditorModalProps)
               }}
               className="hp-tap"
             >
-              <span>💤</span> Mode Diam
+              <span><HPGlyph name="moon" size={14} color="currentColor" /></span> Mode Diam
             </button>
           </div>
           <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 6, fontWeight: 600, lineHeight: 1.4 }}>
@@ -294,7 +294,7 @@ export default function ProfileEditorModal({ onClose }: ProfileEditorModalProps)
               onClick={handleRemove}
               style={{
                 width: '100%', padding: '14px', borderRadius: HP_TOKENS.radiusMd,
-                background: 'transparent', color: HP_TOKENS.coral,
+                background: 'transparent', color: HP_TOKENS.coralInk,
                 border: `1.5px solid ${HP_TOKENS.coral}40`, 
                 fontFamily: HP_FONT, fontWeight: 700, fontSize: 14,
                 cursor: 'pointer'

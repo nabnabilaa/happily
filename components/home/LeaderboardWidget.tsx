@@ -117,7 +117,7 @@ export default function LeaderboardWidget({ currentUserId }: { currentUserId?: s
                           transform: 'translateX(-50%)', lineHeight: 0,
                         }}
                       >
-                        <HPGlyph name="crown" size={22} color={HP_TOKENS.yellowDark} stroke={2} />
+                        <HPGlyph name="crown" size={22} color={HP_TOKENS.yellowInk} stroke={2} />
                       </div>
                     )}
                     <div style={{
@@ -146,7 +146,7 @@ export default function LeaderboardWidget({ currentUserId }: { currentUserId?: s
                     <div style={{
                       ...HP_TEXT.tiny, marginTop: 2,
                       padding: '1px 6px', borderRadius: HP_TOKENS.radiusXs,
-                      background: HP_TOKENS.yellowSoft, color: HP_TOKENS.yellowDark,
+                      background: HP_TOKENS.yellowSoft, color: HP_TOKENS.yellowInk,
                     }}>
                       KAMU
                     </div>
@@ -218,7 +218,7 @@ export default function LeaderboardWidget({ currentUserId }: { currentUserId?: s
                     }}>
                       {user.name}
                       {isCurrentUser && (
-                        <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.yellowDark }}> · Kamu</span>
+                        <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.yellowInk }}> · Kamu</span>
                       )}
                     </div>
                     <div style={{

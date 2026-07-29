@@ -6,6 +6,8 @@ import HPCard from "@/components/ui/HPCard";
 import HPGlyph from "@/components/ui/HPGlyph";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
 import { useHP } from "@/lib/HPContext";
+import AttendanceLocationTag from "@/components/attendance/AttendanceLocationTag";
+import { describeAttendanceLocation } from "@/lib/attendanceLocation";
 
 const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 const DAYS_SHORT = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
@@ -120,7 +122,7 @@ export default function AttendanceHistoryModal({ onClose, targetUserId, targetUs
                 padding: '12px 10px', borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.sageWash,
                 border: `1px solid ${HP_TOKENS.sage}20`, textAlign: 'center'
               }}>
-                <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 22, color: HP_TOKENS.sage }}>
+                <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 22, color: HP_TOKENS.sageInk }}>
                   {summary.totalDays}
                 </div>
                 <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>Hadir</div>
@@ -129,7 +131,7 @@ export default function AttendanceHistoryModal({ onClose, targetUserId, targetUs
                 padding: '12px 10px', borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.coralSoft,
                 border: `1px solid ${HP_TOKENS.coral}20`, textAlign: 'center'
               }}>
-                <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 22, color: HP_TOKENS.coral }}>
+                <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 22, color: HP_TOKENS.coralInk }}>
                   {summary.alphaDays}
                 </div>
                 <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>Alpha</div>
@@ -151,7 +153,7 @@ export default function AttendanceHistoryModal({ onClose, targetUserId, targetUs
             <div style={{ marginBottom: 16, padding: '12px 16px', borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.card, border: `1px solid ${HP_TOKENS.line}` }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                 <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>KEHADIRAN BULAN INI</div>
-                <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 14, color: HP_TOKENS.sage }}>{summary.completionRate}%</div>
+                <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 14, color: HP_TOKENS.sageInk }}>{summary.completionRate}%</div>
               </div>
               <div style={{ height: 6, borderRadius: 3, background: HP_TOKENS.lineSoft, overflow: 'hidden' }}>
                 <div style={{
@@ -234,9 +236,9 @@ export default function AttendanceHistoryModal({ onClose, targetUserId, targetUs
           {/* Legend */}
           <div style={{ display: 'flex', gap: 12, marginBottom: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
             {[
-              { color: HP_TOKENS.sage, label: 'Lengkap' },
-              { color: HP_TOKENS.yellow, label: 'Belum Clock-out' },
-              { color: HP_TOKENS.coral, label: 'Alpha' },
+              { color: HP_TOKENS.sageInk, label: 'Lengkap' },
+              { color: HP_TOKENS.yellowInk, label: 'Belum Clock-out' },
+              { color: HP_TOKENS.coralInk, label: 'Alpha' },
             ].map(l => (
               <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: l.color }} />
@@ -256,7 +258,7 @@ export default function AttendanceHistoryModal({ onClose, targetUserId, targetUs
                   <div style={{ display: 'flex', gap: 12 }}>
                     <div style={{ flex: 1, padding: '10px', borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.card, textAlign: 'center' }}>
                       <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>CLOCK IN</div>
-                      <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, color: HP_TOKENS.sage }}>
+                      <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, color: HP_TOKENS.sageInk }}>
                         {new Date(selectedLog.check_in_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                       </div>
                     </div>
@@ -270,20 +272,18 @@ export default function AttendanceHistoryModal({ onClose, targetUserId, targetUs
                     </div>
                     <div style={{ flex: 1, padding: '10px', borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.card, textAlign: 'center' }}>
                       <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>DURASI</div>
-                      <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, color: HP_TOKENS.yellowDark }}>
+                      <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, color: HP_TOKENS.yellowInk }}>
                         {selectedLog.duration_minutes 
                           ? `${Math.floor(selectedLog.duration_minutes / 60)}j${selectedLog.duration_minutes % 60}m`
                           : '—'}
                       </div>
                     </div>
                   </div>
+                  {/* Lokasi absen — tipe (WFO/WFA/Dinas), nama kantor atau alasan, plus titik koordinat. */}
+                  <div style={{ padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.card }}>
+                    <AttendanceLocationTag log={selectedLog} variant="block" />
+                  </div>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <div style={{
-                      padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700,
-                      background: HP_TOKENS.blueSoft, color: HP_TOKENS.blue, fontFamily: HP_FONT
-                    }}>
-                      {selectedLog.check_in_type || 'WFO'}
-                    </div>
                     {selectedLog.status && (
                       <div style={{
                         padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700,
@@ -297,13 +297,15 @@ export default function AttendanceHistoryModal({ onClose, targetUserId, targetUs
                     {selectedLog.mood && (
                       <div style={{
                         padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700,
-                        background: HP_TOKENS.yellowSoft, color: HP_TOKENS.yellowDark, fontFamily: HP_FONT
+                        background: HP_TOKENS.yellowSoft, color: HP_TOKENS.yellowInk, fontFamily: HP_FONT
                       }}>
                         Mood: {selectedLog.mood}
                       </div>
                     )}
                   </div>
-                  {selectedLog.notes && (
+                  {/* Catatan hanya ditampilkan kalau belum jadi keterangan lokasi
+                      di atas (WFA/Dinas memakai catatan sebagai lokasinya). */}
+                  {selectedLog.notes && describeAttendanceLocation(selectedLog).place !== String(selectedLog.notes).trim() && (
                     <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkSoft, fontStyle: 'italic', marginTop: 4 }}>
                       "{selectedLog.notes}"
                     </div>

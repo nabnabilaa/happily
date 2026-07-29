@@ -29,13 +29,20 @@ export async function GET(request: Request) {
       dateFilter = ` AND MONTH(CONVERT_TZ(a.check_in_at, '+00:00', '+07:00')) = ? AND YEAR(CONVERT_TZ(a.check_in_at, '+00:00', '+07:00')) = ?`;
     }
 
+    // Lokasi absensi: nama kantor dari office_locations (WFO), sedangkan WFA/Dinas
+    // hanya punya koordinat + catatan — keduanya ikut dikirim supaya HR bisa lihat
+    // dari mana orang absen, bukan cuma jam masuknya.
+    const locationSelect = `o.name as office_name, o.lat as office_lat, o.lng as office_lng, o.radius as office_radius`;
+    const locationJoin = `LEFT JOIN office_locations o ON a.office_id = o.id`;
+
     if (role === 'hr' || role === 'manager') {
       if (targetUserId) {
         // HR/Manager viewing specific employee
         query = `
-          SELECT a.*, u.name as user_name, u.email as user_email, u.department as user_department
-          FROM attendance a 
-          JOIN users u ON a.user_id = u.id 
+          SELECT a.*, u.name as user_name, u.email as user_email, u.department as user_department, ${locationSelect}
+          FROM attendance a
+          JOIN users u ON a.user_id = u.id
+          ${locationJoin}
           WHERE a.user_id = ?${dateFilter}
           ORDER BY a.check_in_at DESC
         `;
@@ -44,9 +51,10 @@ export async function GET(request: Request) {
       } else {
         // HR/Manager see all — only within 1 year retention
         query = `
-          SELECT a.*, u.name as user_name, u.email as user_email, u.department as user_department
-          FROM attendance a 
-          JOIN users u ON a.user_id = u.id 
+          SELECT a.*, u.name as user_name, u.email as user_email, u.department as user_department, ${locationSelect}
+          FROM attendance a
+          JOIN users u ON a.user_id = u.id
+          ${locationJoin}
           WHERE a.check_in_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)${dateFilter}
           ORDER BY a.check_in_at DESC
         `;
@@ -56,9 +64,10 @@ export async function GET(request: Request) {
     } else {
       // Regular employees see only own logs (1 year retention)
       query = `
-        SELECT a.*, u.name as user_name, u.email as user_email
-        FROM attendance a 
-        JOIN users u ON a.user_id = u.id 
+        SELECT a.*, u.name as user_name, u.email as user_email, ${locationSelect}
+        FROM attendance a
+        JOIN users u ON a.user_id = u.id
+        ${locationJoin}
         WHERE a.user_id = ? AND a.check_in_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)${dateFilter}
         ORDER BY a.check_in_at DESC
       `;

@@ -6,6 +6,7 @@
  */
 
 export interface WellbeingAction {
+  /** HPGlyph name. Not an emoji — glyphs keep weight and colour under our control. */
   icon: string;
   label: string;
   description: string;
@@ -32,7 +33,7 @@ export function calculateWellbeingScore(state: any, user: any): {
   const actions: WellbeingAction[] = [];
 
   // 1. Mood History (20%)
-  const moodHistory = state.moods || [];
+  const moodHistory = state.moodHistory || [];
   let moodPenalty = 0;
   if (state.mood === 'tired' || state.mood === 'stress' || state.mood === 'burnout') {
     moodPenalty += 10;
@@ -45,7 +46,7 @@ export function calculateWellbeingScore(state: any, user: any): {
 
   if (moodPenalty > 0) {
     actions.push({
-      icon: '🧘‍♂️',
+      icon: 'leaf',
       label: 'Lakukan Box Breathing',
       description: 'Latihan napas 1 menit untuk menurunkan stress dan menenangkan pikiran.',
       modalTarget: 'pause',
@@ -59,7 +60,7 @@ export function calculateWellbeingScore(state: any, user: any): {
 
     if (!state.mood || hoursSinceMood >= 4) {
       actions.push({
-        icon: '💬',
+        icon: 'chat',
         label: !state.mood ? 'Update Mood Hari Ini' : 'Update Kondisimu',
         description: !state.mood 
           ? 'Cek-in perasaanmu sekarang — ceritakan ke Buddy agar dia bisa bantu.' 
@@ -88,7 +89,7 @@ export function calculateWellbeingScore(state: any, user: any): {
     const unfinished = priorities.filter((p: any) => !p.done);
     if (unfinished.length > 0) {
       actions.push({
-        icon: '✅',
+        icon: 'check',
         label: 'Selesaikan 1 Task Kecil',
         description: `Kamu punya ${unfinished.length} task belum selesai. Mulai dari yang paling mudah!`,
         actionType: 'scroll_to_tasks',
@@ -108,7 +109,7 @@ export function calculateWellbeingScore(state: any, user: any): {
   // Only show streak action if user hasn't checked in today (no mood set)
   if (streakPenalty > 0 && !state.mood) {
     actions.push({
-      icon: '🔥',
+      icon: 'zap',
       label: 'Jaga Streak Harian',
       description: 'Check-in setiap hari walau sebentar agar streak-mu tidak terputus.',
       modalTarget: 'checkin',
@@ -129,7 +130,7 @@ export function calculateWellbeingScore(state: any, user: any): {
 
   if (focusPenalty > 0) {
     actions.push({
-      icon: '🎯',
+      icon: 'target',
       label: 'Mulai Focus Session',
       description: 'Blok 25 menit tanpa gangguan — situs distraksi akan diblokir otomatis!',
       modalTarget: 'focus',
@@ -168,7 +169,7 @@ export function calculateWellbeingScore(state: any, user: any): {
   if (workloadPenalty > 0) {
     if (priorities.length >= 6) {
       actions.push({
-        icon: '📋',
+        icon: 'note',
         label: 'Pecah & Prioritaskan Task',
         description: 'Kamu punya banyak task. Yuk atur ulang prioritasnya biar lebih ringan.',
         modalTarget: 'manage_priorities',
@@ -185,7 +186,7 @@ export function calculateWellbeingScore(state: any, user: any): {
   
   if (isMidDayWindow && !hasDoneMidDay) {
     actions.push({
-      icon: '📖',
+      icon: 'book',
       label: 'Isi Mid-Day Check-in',
       description: 'Update progres kerja dan evaluasi ulang targetmu siang ini.',
       modalTarget: 'work_checkin',
@@ -200,7 +201,7 @@ export function calculateWellbeingScore(state: any, user: any): {
     
     if (currentMins >= endTimeMins - 30) {
       actions.push({
-        icon: '🌙',
+        icon: 'moon',
         label: 'Tutup Hari & Istirahat',
         description: 'Sudah waktunya pulang. Refleksi sebentar lalu istirahat ya!',
         modalTarget: 'reflect',
@@ -212,7 +213,7 @@ export function calculateWellbeingScore(state: any, user: any): {
   // AI Coach — always available for non-healthy scores
   if (score < 70) {
     actions.push({
-      icon: '🤖',
+      icon: 'sparkle',
       label: 'Bicara dengan AI Coach',
       description: 'Curhat atau minta saran — Coach Buddy siap mendengarkan 24/7.',
       modalTarget: 'coach',

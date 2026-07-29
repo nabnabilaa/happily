@@ -203,8 +203,8 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
             background: HP_TOKENS.sageWash, border: `1px solid ${HP_TOKENS.sage}40`,
             display: 'flex', alignItems: 'center', gap: 8,
           }}>
-            <span style={{ fontSize: 14 }}>✅</span>
-            <span style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.sage }}>
+            <span style={{ fontSize: 14 }}><HPGlyph name="check" size={12} color="currentColor" /></span>
+            <span style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.sageInk }}>
               Laporan sudah direview
             </span>
           </div>
@@ -214,7 +214,7 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
           <div style={{ textAlign: 'center', padding: 40, color: HP_TOKENS.inkMute }}>Memuat laporan...</div>
         ) : !report ? (
           <div style={{ textAlign: 'center', padding: '40px 20px', color: HP_TOKENS.inkMute }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>📊</div>
+            <div style={{ fontSize: 40, marginBottom: 12 }}><HPGlyph name="chart" size={28} color="currentColor" /></div>
             <div style={{ ...HP_TEXT.body, fontWeight: 700 }}>Belum ada data untuk periode ini</div>
           </div>
         ) : (
@@ -258,12 +258,12 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
                             }}>Bobot: {kpi.weight}%</span>
                             <span style={{
                               padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 700,
-                              background: HP_TOKENS.successWash, color: HP_TOKENS.success, fontFamily: HP_FONT
+                              background: HP_TOKENS.successWash, color: HP_TOKENS.successInk, fontFamily: HP_FONT
                             }}>✓ {kpi.links.approved} approved</span>
                             {kpi.links.pending > 0 && (
                               <span style={{
                                 padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 700,
-                                background: HP_TOKENS.warningWash, color: HP_TOKENS.warning, fontFamily: HP_FONT
+                                background: HP_TOKENS.warningWash, color: HP_TOKENS.warningInk, fontFamily: HP_FONT
                               }}>⏳ {kpi.links.pending} pending</span>
                             )}
                             <span style={{
@@ -359,9 +359,9 @@ export default function MonthlyReportModal({ onClose, targetUserId, targetUserNa
                                     {t.isDone ? '✅' : t.partialProgress > 0 ? '🔄' : '⬜'} {t.title}
                                   </span>
                                   <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-                                    {t.isProject && <span style={{ ...HP_TEXT.tiny, fontSize: 9, color: HP_TOKENS.primary, background: HP_TOKENS.lavenderSoft, padding: '1px 5px', borderRadius: 4 }}>📁</span>}
+                                    {t.isProject && <span style={{ ...HP_TEXT.tiny, fontSize: 9, color: HP_TOKENS.primaryInk, background: HP_TOKENS.lavenderSoft, padding: '1px 5px', borderRadius: 4 }}><HPGlyph name="folder" size={12} color="currentColor" /></span>}
                                     {t.timeTrackedSeconds > 0 && (
-                                      <span style={{ ...HP_TEXT.tiny, fontSize: 9, color: HP_TOKENS.sage, background: HP_TOKENS.sageSoft, padding: '1px 5px', borderRadius: 4 }}>
+                                      <span style={{ ...HP_TEXT.tiny, fontSize: 9, color: HP_TOKENS.sageInk, background: HP_TOKENS.sageSoft, padding: '1px 5px', borderRadius: 4 }}>
                                         ⏱ {Math.round(t.timeTrackedSeconds / 60)}m
                                       </span>
                                     )}

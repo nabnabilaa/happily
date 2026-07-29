@@ -61,7 +61,7 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
       const data = await res.json();
       if (data.success) {
         setSubmitted(true);
-        awardXP('survey_complete', `Selesaikan survey: ${survey.title}`);
+        awardXP('survey_complete', `Selesaikan survey: ${survey.title}`, `survey:${survey.id}`);
       } else {
         setError(data.error || 'Gagal menyimpan jawaban');
       }
@@ -78,18 +78,23 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
         <div style={{ width: '100%', height: '60vh', marginTop: 10, borderRadius: HP_TOKENS.radiusMd, overflow: 'hidden', background: HP_TOKENS.lineSoft }}>
           <iframe src={survey.url} width="100%" height="100%" frameBorder="0" title={survey.title}>Loading…</iframe>
         </div>
-        <button onClick={() => { 
-          if (submitting) return;
-          setSubmitting(true);
-          awardXP('survey_complete', `Survey: ${survey.title}`); 
-          onClose(); 
-        }} className="hp-tap" disabled={submitting} style={{
+        {/*
+          Survei eksternal tidak berpoin.
+
+          Tombol lama berbunyi "Saya sudah mengisi survey & Ambil 20 Poin" dan
+          membayar tanpa verifikasi apa pun — tidak ada cara memastikan survei di
+          iframe benar-benar diisi, dan tidak ada dedupe, jadi menutup lalu
+          membuka modal ini membayar 20 poin lagi setiap kali.
+
+          Poin survei hanya untuk survei internal, yang jawabannya tersimpan di
+          `survey_responses` dan sudah dijaga unique key di sana.
+        */}
+        <button onClick={onClose} className="hp-tap" style={{
           width: '100%', padding: '16px', borderRadius: HP_TOKENS.radiusMd, marginTop: 16,
           background: HP_TOKENS.lavender, color: HP_TOKENS.onPrimary, border: 'none',
-          fontFamily: HP_FONT, fontWeight: 700, fontSize: 15, cursor: submitting ? 'default' : 'pointer',
-          opacity: submitting ? 0.7 : 1
+          fontFamily: HP_FONT, fontWeight: 700, fontSize: 15, cursor: 'pointer',
         }}>
-          {submitting ? "Memproses..." : "Saya sudah mengisi survey & Ambil 20 Poin 🎁"}
+          Selesai
         </button>
       </Modal>
     );
@@ -100,12 +105,12 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
     return (
       <Modal onClose={onClose} title="✅ Terima Kasih!">
         <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-          <div style={{ fontSize: 64, marginBottom: 16 }}>🎉</div>
+          <div style={{ fontSize: 64, marginBottom: 16 }}><HPGlyph name="sparkle" size={28} color="currentColor" /></div>
           <div style={{ ...HP_TEXT.h, fontSize: 18 }}>Jawaban Terkirim!</div>
           <div style={{ ...HP_TEXT.body, color: HP_TOKENS.inkSoft, marginTop: 8, lineHeight: 1.5 }}>
             Terima kasih sudah mengisi survey <strong>{survey.title}</strong>. Jawabanmu akan membantu perusahaan menjadi lebih baik.
           </div>
-          <div style={{ ...HP_TEXT.small, color: HP_TOKENS.sage, fontWeight: 700, marginTop: 16 }}>+20 Poin Earned 🎁</div>
+          <div style={{ ...HP_TEXT.small, color: HP_TOKENS.sageInk, fontWeight: 700, marginTop: 16 }}>+20 Poin Earned 🎁</div>
           <button onClick={onClose} className="hp-tap" style={{
             marginTop: 24, padding: '14px 40px', borderRadius: 99, border: 'none',
             background: HP_TOKENS.lavender, color: HP_TOKENS.onPrimary,
@@ -138,7 +143,7 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
         )}
 
         {survey.deadline && (
-          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.coral, fontWeight: 700, marginBottom: 16 }}>
+          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.coralInk, fontWeight: 700, marginBottom: 16 }}>
             ⏰ Deadline: {new Date(survey.deadline).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
           </div>
         )}
@@ -153,12 +158,12 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
                 <div style={{
                   width: 24, height: 24, borderRadius: 8, background: HP_TOKENS.lavenderSoft,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 11, fontWeight: 700, color: HP_TOKENS.lavender, fontFamily: HP_FONT, flexShrink: 0,
+                  fontSize: 11, fontWeight: 700, color: HP_TOKENS.lavenderInk, fontFamily: HP_FONT, flexShrink: 0,
                 }}>{idx + 1}</div>
                 <div>
                   <div style={{ ...HP_TEXT.h, fontSize: 14, lineHeight: 1.4 }}>
                     {q.question}
-                    {q.required && <span style={{ color: HP_TOKENS.coral, marginLeft: 4 }}>*</span>}
+                    {q.required && <span style={{ color: HP_TOKENS.coralInk, marginLeft: 4 }}>*</span>}
                   </div>
                 </div>
               </div>
@@ -184,7 +189,7 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
                     style={{ ...inputStyle, minHeight: 80, resize: 'none' }}
                   />
                   {answers[q.id] && answers[q.id].trim().split(/\s+/).filter(Boolean).length < 5 && (
-                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.coral, marginTop: 6, fontWeight: 700 }}>
+                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.coralInk, marginTop: 6, fontWeight: 700 }}>
                       ⚠️ Jawaban terlalu singkat. Minimal 5 kata (saat ini {answers[q.id].trim().split(/\s+/).filter(Boolean).length} kata).
                     </div>
                   )}
@@ -201,9 +206,7 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
                       fontSize: 18, transition: 'all 0.2s',
                       transform: answers[q.id] >= val ? 'scale(1.1)' : 'scale(1)',
                       boxShadow: answers[q.id] >= val ? `0 4px 12px ${HP_TOKENS.yellow}40` : 'none',
-                    }}>
-                      ⭐
-                    </button>
+                    }}><HPGlyph name="star" size={15} color="currentColor" /></button>
                   ))}
                 </div>
               )}
@@ -258,7 +261,7 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
         {error && (
           <div style={{
             marginTop: 16, padding: 12, borderRadius: HP_TOKENS.radiusSm,
-            background: HP_TOKENS.coralSoft, color: HP_TOKENS.coral,
+            background: HP_TOKENS.coralSoft, color: HP_TOKENS.coralInk,
             fontSize: 13, fontWeight: 700, textAlign: 'center'
           }}>
             ⚠️ {error}

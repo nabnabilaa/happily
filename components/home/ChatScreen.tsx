@@ -7,6 +7,7 @@ import HPGlyph from "@/components/ui/HPGlyph";
 import HPAvatar from "@/components/ui/HPAvatar";
 import HPCard from "@/components/ui/HPCard";
 import BlobBackground from "@/components/home/BlobBackground";
+import { scrollIntoViewSafely } from "@/lib/motion";
 
 interface ChatScreenProps {
   openModal: (name: string, props?: any) => void;
@@ -142,7 +143,7 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
 
   // Auto-scroll on new messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    scrollIntoViewSafely(messagesEndRef.current, { behavior: 'smooth' });
   }, [messages.length]);
 
   const sendMsg = async () => {
@@ -269,12 +270,12 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
         <div style={{ flex: 1, overflowY: 'auto', padding: '12px 8px' }}>
           {loading ? (
             <div style={{ textAlign: 'center', padding: 20, color: HP_TOKENS.inkMute }}>
-              <div className="hp-spin" style={{ display: 'inline-block', marginBottom: 8 }}>🌀</div>
+              <div className="hp-spin" style={{ display: 'inline-block', marginBottom: 8 }}><HPGlyph name="refresh" size={14} color="currentColor" /></div>
               <div style={{ ...HP_TEXT.small }}>Memuat...</div>
             </div>
           ) : channels.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 20, color: HP_TOKENS.inkMute }}>
-              <div style={{ fontSize: 32, marginBottom: 8 }}>🗨️</div>
+              <div style={{ fontSize: 32, marginBottom: 8 }}><HPGlyph name="chat" size={27} color="currentColor" /></div>
               <div style={{ ...HP_TEXT.small }}>Belum ada chat</div>
             </div>
           ) : (
@@ -418,12 +419,12 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
             }}>
               {msgLoading ? (
                 <div style={{ textAlign: 'center', padding: 40, color: HP_TOKENS.inkMute }}>
-                  <div className="hp-spin" style={{ display: 'inline-block', marginBottom: 12 }}>🌀</div>
+                  <div className="hp-spin" style={{ display: 'inline-block', marginBottom: 12 }}><HPGlyph name="refresh" size={14} color="currentColor" /></div>
                   <div style={{ ...HP_TEXT.small }}>Memuat pesan...</div>
                 </div>
               ) : messages.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: 60, color: HP_TOKENS.inkMute }}>
-                  <div style={{ fontSize: 48, marginBottom: 16 }}>👋</div>
+                  <div style={{ fontSize: 48, marginBottom: 16 }}><HPGlyph name="people" size={28} color="currentColor" /></div>
                   <div style={{ ...HP_TEXT.h, fontSize: 16, marginBottom: 4, color: HP_TOKENS.ink }}>Mulai percakapan!</div>
                   <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute }}>Kirim pesan pertama Anda di sini.</div>
                 </div>
@@ -553,7 +554,7 @@ export default function ChatScreen({ openModal }: ChatScreenProps) {
             height: '100%', 
             color: HP_TOKENS.inkMute 
           }}>
-            <div style={{ fontSize: 64, marginBottom: 16 }}>💬</div>
+            <div style={{ fontSize: 64, marginBottom: 16 }}><HPGlyph name="chat" size={28} color="currentColor" /></div>
             <div style={{ ...HP_TEXT.h, fontSize: 18, marginBottom: 4, color: HP_TOKENS.ink }}>Pilih Chat</div>
             <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute }}>Pilih percakapan untuk mulai mengobrol.</div>
           </div>

@@ -114,7 +114,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
   };
 
   const handleComplete = async () => {
-    await awardXP('focus_session', 'Mindful Breathing');
+    await awardXP('breathing', 'Mindful Breathing');
     notify("Latihan Selesai 🧘‍♂️", "Kamu mendapat +5 Poin! Tubuh dan pikiranmu sudah lebih tenang.", "success");
     updateState((s: any) => ({
       ...s,
@@ -145,7 +145,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
       label: 'Tarik Napas',
       desc: 'Perlahan melalui hidung (4 detik)',
       scale: 1.5,
-      color: HP_TOKENS.info, // Vibrant Blue
+      color: HP_TOKENS.infoInk, // Vibrant Blue
       bg: HP_TOKENS.infoWash,
       gradient: HP_TOKENS.infoSoft,
       halo: 'rgba(56, 189, 248, 0.2)',
@@ -155,7 +155,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
       label: 'Tahan',
       desc: 'Fokus dan rasakan ketenangan (7 detik)',
       scale: 1.5,
-      color: HP_TOKENS.primary, // Purple
+      color: HP_TOKENS.primaryInk, // Purple
       bg: HP_TOKENS.primaryWash,
       gradient: HP_TOKENS.primarySoft,
       halo: 'rgba(167, 139, 250, 0.2)',
@@ -165,7 +165,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
       label: 'Hembuskan',
       desc: 'Lepaskan secara perlahan lewat mulut (8 detik)',
       scale: 1,
-      color: HP_TOKENS.success, // Emerald Green
+      color: HP_TOKENS.successInk, // Emerald Green
       bg: HP_TOKENS.successWash,
       gradient: HP_TOKENS.successSoft,
       halo: 'rgba(52, 211, 153, 0.2)',
@@ -175,7 +175,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
       label: 'Selesai!',
       desc: 'Kamu telah menyelesaikan semua putaran',
       scale: 1,
-      color: HP_TOKENS.sage,
+      color: HP_TOKENS.sageInk,
       bg: HP_TOKENS.successWash,
     }
   };
@@ -262,7 +262,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
               >-</button>
               
               <div style={{ width: 100, textAlign: 'center' }}>
-                <div style={{ ...HP_TEXT.display, fontSize: 48, color: HP_TOKENS.sage }}>{targetCycles}</div>
+                <div style={{ ...HP_TEXT.display, fontSize: 48, color: HP_TOKENS.sageInk }}>{targetCycles}</div>
                 <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>PUTARAN</div>
               </div>
 
@@ -332,7 +332,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
                 Dengan pikiran yang jernih, keputusanmu bakal jauh lebih tepat!
               </div>
               
-              <div style={{ marginTop: 24, padding: '12px', borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.sageWash, color: HP_TOKENS.sage, fontWeight: 700, fontSize: 14 }}>
+              <div style={{ marginTop: 24, padding: '12px', borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.sageWash, color: HP_TOKENS.sageInk, fontWeight: 700, fontSize: 14 }}>
                 🎉 +5 Poin Well-being
               </div>
             </div>
@@ -458,7 +458,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
               }}
               style={{
                 padding: '16px', borderRadius: 99, border: `2px solid ${HP_TOKENS.sage}`,
-                background: 'transparent', color: HP_TOKENS.sage,
+                background: 'transparent', color: HP_TOKENS.sageInk,
                 fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, 
                 cursor: 'pointer', transition: 'all 0.2s'
               }}

@@ -31,9 +31,9 @@ export default function HabitEmptyState({ openModal }: Props) {
         justifyContent: 'center',
         marginBottom: 12,
       }}>
-        <HPGlyph name="leaf" size={24} color={HP_TOKENS.sage} />
+        <HPGlyph name="leaf" size={24} color={HP_TOKENS.sageInk} />
       </div>
-      <div style={{ ...HP_TEXT.h, fontSize: 16, color: HP_TOKENS.sage }}>Mulai Daily Training</div>
+      <div style={{ ...HP_TEXT.h, fontSize: 16, color: HP_TOKENS.sageInk }}>Mulai Daily Training</div>
       <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, marginTop: 4, maxWidth: 260 }}>
         Bangun rutinitas kecil setiap hari. Tingkatkan produktivitas dan jaga kesehatan mentalmu dengan menjaga konsistensi (*streak*).
       </div>

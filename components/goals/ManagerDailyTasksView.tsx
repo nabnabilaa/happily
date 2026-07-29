@@ -4,12 +4,38 @@ import HPGlyph from '@/components/ui/HPGlyph';
 import HPCard from '@/components/ui/HPCard';
 import HPAvatar from '@/components/ui/HPAvatar';
 import SectionHeader from '@/components/home/SectionHeader';
+import { TASK_STATUS, isAwaitingReview, normalizeTaskStatus } from '@/lib/taskStatus';
+
+/** Badge copy + colour for every state a team task can be in. */
+function statusBadge(t: any): { label: string; bg: string; fg: string } {
+  if (t.verified) return { label: '✓ VERIFIED', bg: HP_TOKENS.sageSoft, fg: HP_TOKENS.sage };
+  if (isAwaitingReview(t)) return { label: '⏳ MENUNGGU ACC', bg: HP_TOKENS.yellowSoft, fg: HP_TOKENS.yellowDark };
+
+  switch (normalizeTaskStatus(t.status)) {
+    case TASK_STATUS.REVISION:
+      return { label: '↻ REVISI', bg: HP_TOKENS.yellowSoft, fg: HP_TOKENS.yellowDark };
+    // Rejected tasks used to fall through to "AKTIF" — indistinguishable from
+    // work nobody had looked at yet.
+    case TASK_STATUS.REJECTED:
+      return { label: '✕ DITOLAK', bg: HP_TOKENS.coralSoft, fg: HP_TOKENS.coral };
+    case TASK_STATUS.IN_PROGRESS:
+      return { label: '◐ BERJALAN', bg: HP_TOKENS.lineSoft, fg: HP_TOKENS.inkMute };
+    default:
+      return { label: '○ AKTIF', bg: HP_TOKENS.lineSoft, fg: HP_TOKENS.inkMute };
+  }
+}
+
+function formatWhen(value: any): string | null {
+  if (!value) return null;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+    + ' ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+}
 
 interface ManagerDailyTasksViewProps {
   teamTasks: any[];
   membersList: any[];
-  handleVerifyTask: (taskId: string, goalId: string) => void;
-  handleRejectTask: (taskId: string, goalId: string, action: 'reject' | 'revision') => void;
 }
 
 type FilterMode = 'all' | 'active' | 'done' | 'verified';
@@ -17,8 +43,6 @@ type FilterMode = 'all' | 'active' | 'done' | 'verified';
 export default function ManagerDailyTasksView({
   teamTasks,
   membersList,
-  handleVerifyTask,
-  handleRejectTask,
 }: ManagerDailyTasksViewProps) {
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
   const [selectedMember, setSelectedMember] = useState<string>('all');
@@ -69,9 +93,9 @@ export default function ManagerDailyTasksView({
         if (!matchesSearch) return false;
 
         switch (filterMode) {
-          case 'active': return !t.done;
-          case 'done': return t.done && !t.verified;
-          case 'verified': return t.verified;
+          case 'active': return !t.done && !isAwaitingReview(t);
+          case 'done': return isAwaitingReview(t);
+          case 'verified': return Boolean(t.verified);
           default: return true;
         }
       });
@@ -89,13 +113,16 @@ export default function ManagerDailyTasksView({
   }, [filteredTasksByMember]);
 
   const totalPages = Math.ceil(filteredMemberEntries.length / ITEMS_PER_PAGE);
-  const paginatedEntries = filteredMemberEntries.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  // Clamp rather than trusting currentPage: filtering down to fewer pages used
+  // to leave the list on a page past the end, rendering nothing at all.
+  const activePage = Math.min(currentPage, Math.max(1, totalPages));
+  const paginatedEntries = filteredMemberEntries.slice((activePage - 1) * ITEMS_PER_PAGE, activePage * ITEMS_PER_PAGE);
 
   // Stats
   const stats = useMemo(() => {
     const total = teamTasks.length;
-    const active = teamTasks.filter(t => !t.done).length;
-    const done = teamTasks.filter(t => t.done && !t.verified).length;
+    const active = teamTasks.filter(t => !t.done && !isAwaitingReview(t)).length;
+    const done = teamTasks.filter(t => isAwaitingReview(t)).length;
     const verified = teamTasks.filter(t => t.verified).length;
     return { total, active, done, verified };
   }, [teamTasks]);
@@ -117,9 +144,9 @@ export default function ManagerDailyTasksView({
 
   const filters: { key: FilterMode; label: string; count: number; color: string }[] = [
     { key: 'all', label: 'Semua', count: stats.total, color: HP_TOKENS.blue },
-    { key: 'active', label: 'Aktif', count: stats.active, color: HP_TOKENS.yellow },
-    { key: 'done', label: 'Selesai', count: stats.done, color: HP_TOKENS.sage },
-    { key: 'verified', label: 'Verified', count: stats.verified, color: HP_TOKENS.lavender },
+    { key: 'active', label: 'Aktif', count: stats.active, color: HP_TOKENS.yellowInk },
+    { key: 'done', label: 'Selesai', count: stats.done, color: HP_TOKENS.sageInk },
+    { key: 'verified', label: 'Verified', count: stats.verified, color: HP_TOKENS.lavenderInk },
   ];
 
   const memberOptions = useMemo(() => {
@@ -245,7 +272,7 @@ export default function ManagerDailyTasksView({
         {Object.entries(filteredTasksByMember).length === 0 && (
           <HPCard padding={32}>
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>📋</div>
+              <div style={{ fontSize: 40, marginBottom: 12 }}><HPGlyph name="note" size={28} color="currentColor" /></div>
               <div style={{ ...HP_TEXT.h, fontSize: 16, marginBottom: 4 }}>Tidak ada tugas</div>
               <div style={{ ...HP_TEXT.body, color: HP_TOKENS.inkMute, fontSize: 13 }}>
                 {filterMode === 'all'
@@ -357,7 +384,13 @@ export default function ManagerDailyTasksView({
                 }}>
                   {data.tasks.map((t, idx) => {
                     const isLast = idx === data.tasks.length - 1;
-                    const isPendingAcc = t.done && !t.verified;
+                    const isPendingAcc = isAwaitingReview(t);
+                    const badge = statusBadge(t);
+                    const proofLinks: string[] = Array.isArray(t.proofLinks) ? t.proofLinks : [];
+                    const submittedAt = formatWhen(t.submittedAt || t.completedAt);
+                    // The dashboard has always returned this evidence; the board
+                    // just never rendered it, so ACC was a blind click.
+                    const hasProof = proofLinks.length > 0 || t.notes || t.metricValue !== null;
 
                     return (
                       <div
@@ -423,29 +456,30 @@ export default function ManagerDailyTasksView({
                               fontWeight: 700,
                               fontFamily: HP_FONT,
                               letterSpacing: '0.03em',
-                              background: t.verified
-                                ? HP_TOKENS.sageSoft
-                                : t.done
-                                ? HP_TOKENS.yellowSoft
-                                : t.status === 'revision'
-                                ? HP_TOKENS.coralSoft
-                                : HP_TOKENS.lineSoft,
-                              color: t.verified
-                                ? HP_TOKENS.sage
-                                : t.done
-                                ? HP_TOKENS.yellowDark
-                                : t.status === 'revision'
-                                ? HP_TOKENS.coral
-                                : HP_TOKENS.inkMute,
+                              background: badge.bg,
+                              color: badge.fg,
                             }}>
-                              {t.verified
-                                ? '✓ VERIFIED'
-                                : t.done
-                                ? '⏳ MENUNGGU ACC'
-                                : t.status === 'revision'
-                                ? '↻ REVISI'
-                                : '○ AKTIF'}
+                              {badge.label}
                             </div>
+
+                            {/* Partial progress on work that is under way */}
+                            {!t.done && t.partialProgress > 0 && (
+                              <div style={{
+                                padding: '2px 6px', borderRadius: 5, background: HP_TOKENS.blueWash,
+                                fontSize: 9, fontWeight: 700, color: HP_TOKENS.blue, fontFamily: HP_FONT,
+                              }}>
+                                {t.partialProgress}%
+                              </div>
+                            )}
+
+                            {submittedAt && (
+                              <div style={{
+                                padding: '2px 6px', borderRadius: 5, background: HP_TOKENS.lineSoft,
+                                fontSize: 9, fontWeight: 700, color: HP_TOKENS.inkFade, fontFamily: HP_FONT,
+                              }}>
+                                📅 {submittedAt}
+                              </div>
+                            )}
 
                             {/* Energy */}
                             {t.energy && (
@@ -477,62 +511,75 @@ export default function ManagerDailyTasksView({
                               </div>
                             )}
                           </div>
+
+                          {/* Submitted evidence — what the ACC decision rests on */}
+                          {hasProof && (
+                            <div style={{
+                              marginTop: 8,
+                              padding: '8px 10px',
+                              borderRadius: HP_TOKENS.radiusSm,
+                              background: HP_TOKENS.paper,
+                              border: `1px solid ${HP_TOKENS.lineSoft}`,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: 6,
+                            }}>
+                              {t.metricValue !== null && t.metricValue !== undefined && (
+                                <div style={{ ...HP_TEXT.tiny, fontSize: 10, color: HP_TOKENS.inkSoft }}>
+                                  <strong>Hasil:</strong> {t.metricValue}
+                                </div>
+                              )}
+                              {t.notes && (
+                                <div style={{ ...HP_TEXT.tiny, fontSize: 10, color: HP_TOKENS.inkMute, fontStyle: 'italic' }}>
+                                  “{t.notes}”
+                                </div>
+                              )}
+                              {proofLinks.length > 0 && (
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                                  {proofLinks.map((link: string, i: number) => (
+                                    <a
+                                      key={i}
+                                      href={link}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      style={{
+                                        ...HP_TEXT.tiny, fontSize: 10, fontWeight: 700,
+                                        color: HP_TOKENS.blue, textDecoration: 'none',
+                                        padding: '2px 6px', borderRadius: 5, background: HP_TOKENS.blueWash,
+                                      }}
+                                    >
+                                      📎 Bukti {proofLinks.length > 1 ? i + 1 : ''}
+                                    </a>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Manager's own note, echoed back so a revision loop has context */}
+                          {t.reviewNote && !isPendingAcc && (
+                            <div style={{
+                              ...HP_TEXT.tiny, fontSize: 10, marginTop: 6,
+                              color: badge.fg, fontStyle: 'italic',
+                            }}>
+                              Catatan kamu: “{t.reviewNote}”
+                            </div>
+                          )}
                         </div>
 
-                        {/* Actions for pending verification */}
+                        {/* Tanpa tombol keputusan.
+                            Layar ini memantau tugas harian tim; yang meng-ACC
+                            adalah Review KPI, satu keputusan untuk seluruh task
+                            di bawah KPI tersebut. */}
                         {isPendingAcc && (
-                          <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleVerifyTask(t.id, t.goalId); }}
-                              className="hp-tap"
-                              style={{
-                                padding: '7px 14px',
-                                borderRadius: HP_TOKENS.radiusSm,
-                                border: 'none',
-                                background: HP_TOKENS.sage,
-                                color: HP_TOKENS.onPrimary,
-                                fontSize: 11,
-                                fontWeight: 700,
-                                fontFamily: HP_FONT,
-                                cursor: 'pointer',
-                              }}
-                            >
-                              ACC
-                            </button>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleRejectTask(t.id, t.goalId, 'revision'); }}
-                              className="hp-tap"
-                              style={{
-                                padding: '7px 10px',
-                                borderRadius: HP_TOKENS.radiusSm,
-                                border: `1px solid ${HP_TOKENS.yellow}`,
-                                background: HP_TOKENS.card,
-                                color: HP_TOKENS.yellowDark,
-                                fontSize: 11,
-                                fontWeight: 700,
-                                fontFamily: HP_FONT,
-                                cursor: 'pointer',
-                              }}
-                            >
-                              Revisi
-                            </button>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleRejectTask(t.id, t.goalId, 'reject'); }}
-                              className="hp-tap"
-                              style={{
-                                padding: '7px 10px',
-                                borderRadius: HP_TOKENS.radiusSm,
-                                border: `1px solid ${HP_TOKENS.coral}`,
-                                background: HP_TOKENS.card,
-                                color: HP_TOKENS.coral,
-                                fontSize: 11,
-                                fontWeight: 700,
-                                fontFamily: HP_FONT,
-                                cursor: 'pointer',
-                              }}
-                            >
-                              Tolak
-                            </button>
+                          <div style={{
+                            flexShrink: 0, alignSelf: 'flex-start',
+                            padding: '4px 10px', borderRadius: 99,
+                            background: HP_TOKENS.yellowSoft, color: HP_TOKENS.yellowDark,
+                            fontSize: 10, fontWeight: 700, fontFamily: HP_FONT,
+                          }}>
+                            Menunggu ACC di Review KPI
                           </div>
                         )}
                       </div>
@@ -549,15 +596,15 @@ export default function ManagerDailyTasksView({
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginTop: 16 }}>
           <button
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
+            disabled={activePage === 1}
             className="hp-tap"
             style={{ 
               padding: '8px 16px', 
               borderRadius: HP_TOKENS.radiusSm, 
               background: HP_TOKENS.card, 
               border: `1.5px solid ${HP_TOKENS.line}`, 
-              cursor: currentPage === 1 ? 'not-allowed' : 'pointer', 
-              opacity: currentPage === 1 ? 0.5 : 1,
+              cursor: activePage === 1 ? 'not-allowed' : 'pointer', 
+              opacity: activePage === 1 ? 0.5 : 1,
               fontFamily: HP_FONT,
               fontWeight: 700,
               fontSize: 13,
@@ -567,19 +614,19 @@ export default function ManagerDailyTasksView({
             Prev
           </button>
           <span style={{ fontSize: 13, fontWeight: 700, color: HP_TOKENS.inkSoft, fontFamily: HP_FONT }}>
-            Halaman {currentPage} / {totalPages}
+            Halaman {activePage} / {totalPages}
           </span>
           <button
             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
+            disabled={activePage === totalPages}
             className="hp-tap"
             style={{ 
               padding: '8px 16px', 
               borderRadius: HP_TOKENS.radiusSm, 
               background: HP_TOKENS.card, 
               border: `1.5px solid ${HP_TOKENS.line}`, 
-              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', 
-              opacity: currentPage === totalPages ? 0.5 : 1,
+              cursor: activePage === totalPages ? 'not-allowed' : 'pointer', 
+              opacity: activePage === totalPages ? 0.5 : 1,
               fontFamily: HP_FONT,
               fontWeight: 700,
               fontSize: 13,

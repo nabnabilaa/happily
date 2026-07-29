@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { isWibWeekend, sqlWibDate, SQL_WIB_TODAY } from "@/lib/timeUtils";
 
 // GET: Cron endpoint — check for users who haven't completed any task in 3+ hours
 // Spec v2: Nudge notification if no task activity after 3 hours since check-in
@@ -13,49 +14,29 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Skip weekends
-    const dayOfWeek = new Date().getDay();
-    if (dayOfWeek === 0 || dayOfWeek === 6) {
+    // Skip weekends (akhir pekan menurut WIB, bukan menurut jam server)
+    if (isWibWeekend()) {
       return NextResponse.json({ message: "Weekend, skipping", sent: 0 });
     }
 
     const now = new Date();
-    const threeHoursAgo = new Date(now.getTime() - 3 * 60 * 60 * 1000);
 
-    // Find users who:
-    // 1. Have checked in today
-    // 2. Haven't checked out yet
-    // 3. Haven't completed any task in the last 3 hours
-    // 4. Haven't received this notification today already
-    const usersRes = await db.execute(`
-      SELECT u.id, u.name, a.check_in_at
-      FROM users u
-      JOIN attendance a ON u.id = a.user_id AND DATE(a.check_in_at) = CURDATE() AND a.check_out_at IS NULL
-      WHERE u.role = 'employee'
-        AND u.id NOT IN (
-          SELECT DISTINCT dp.user_id 
-          FROM daily_priorities dp 
-          WHERE dp.is_done = 1 AND dp.updated_at >= ?
-        )
-        AND u.id NOT IN (
-          SELECT n.user_id FROM notifications n 
-          WHERE n.type = 'nudge' AND DATE(n.created_at) = CURDATE()
-          AND n.title LIKE '%belum ada task%'
-        )
-    `);
-
-
-    // Note: The query above has a simplified approach. 
-    // For production, we'd need the timestamp comparison to work properly.
-    // For now, we'll check programmatically:
-
+    // Cari user yang: sudah check-in hari ini (WIB), belum check-out, belum ada
+    // task selesai, dan belum di-nudge hari ini.
+    //
+    // Catatan: sebelum ini ada satu query pembuka yang hasilnya tidak pernah
+    // dipakai, dan SQL-nya memuat placeholder `?` tanpa args — mysql2 melempar
+    // error untuk itu, jadi endpoint ini selalu berakhir 500 dan nudge-nya tidak
+    // pernah terkirim sama sekali. Query mati itu dihapus.
     let sent = 0;
     const results: string[] = [];
 
     const checkedInUsersRes = await db.execute(`
       SELECT u.id, u.name, a.check_in_at
       FROM users u
-      JOIN attendance a ON u.id = a.user_id AND DATE(a.check_in_at) = CURDATE() AND a.check_out_at IS NULL
+      JOIN attendance a ON u.id = a.user_id
+        AND ${sqlWibDate('a.check_in_at')} = ${SQL_WIB_TODAY}
+        AND a.check_out_at IS NULL
       WHERE u.role IN ('employee', 'manager')
     `);
 
@@ -69,9 +50,9 @@ export async function GET(request: Request) {
 
       // Check if they've had recent task activity
       const recentActivity = await db.execute({
-        sql: `SELECT COUNT(*) as cnt FROM daily_priorities 
-              WHERE user_id = ? AND is_done = 1 
-              AND DATE(created_at) = CURDATE()`,
+        sql: `SELECT COUNT(*) as cnt FROM daily_priorities
+              WHERE user_id = ? AND is_done = 1
+              AND ${sqlWibDate('created_at')} = ${SQL_WIB_TODAY}`,
         args: [userId]
       });
 
@@ -80,8 +61,9 @@ export async function GET(request: Request) {
 
       // Check if we already nudged today
       const alreadyNudged = await db.execute({
-        sql: `SELECT id FROM notifications 
-              WHERE user_id = ? AND type = 'nudge' AND DATE(created_at) = CURDATE()`,
+        sql: `SELECT id FROM notifications
+              WHERE user_id = ? AND type = 'nudge'
+              AND ${sqlWibDate('created_at')} = ${SQL_WIB_TODAY}`,
         args: [userId]
       });
       if (alreadyNudged.rows.length > 0) continue;

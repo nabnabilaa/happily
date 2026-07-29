@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { createPortal } from "react-dom";
 import { HP_TOKENS, HP_TEXT } from "@/lib/constants";
 import HPGlyph from "@/components/ui/HPGlyph";
 import { motion, AnimatePresence, useReducedMotion, SPRING_SOFT, EASE } from "@/components/ui/motion";
@@ -33,6 +34,14 @@ export default function Modal({
   const sheetRef = React.useRef<HTMLDivElement>(null);
   const titleId = React.useId();
   const descId = React.useId();
+
+  // The sheet is portalled to <body>. Rendering it in place inherits whatever
+  // the trigger's subtree is doing — a card with `opacity: .7` for a finished
+  // task makes the whole dialog translucent, and any opacity/transform on an
+  // ancestor traps our z-index in its stacking context so sibling cards paint
+  // over the sheet. Escaping to the body is the only reliable fix.
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
 
   // Lock background scroll while the sheet is open, compensating for the
   // scrollbar so the page behind doesn't shift.
@@ -84,13 +93,16 @@ export default function Modal({
   }, [onClose]);
 
   // Move focus into the sheet on open, and hand it back to the trigger on close.
+  // Waits for `mounted` because the sheet only exists after the portal renders.
   React.useEffect(() => {
+    if (!mounted) return;
+
     const trigger = document.activeElement as HTMLElement | null;
     const target = sheetRef.current?.querySelector<HTMLElement>(FOCUSABLE);
     (target ?? sheetRef.current)?.focus({ preventScroll: true });
 
     return () => trigger?.focus?.({ preventScroll: true });
-  }, []);
+  }, [mounted]);
 
   const closeBtn = (
     <button
@@ -114,7 +126,9 @@ export default function Modal({
     </button>
   );
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       <motion.div
         className="hp-modal-overlay"
@@ -199,6 +213,7 @@ export default function Modal({
           )}
         </motion.div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

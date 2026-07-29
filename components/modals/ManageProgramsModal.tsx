@@ -71,7 +71,7 @@ export default function ManageProgramsModal({ onClose }: ManageProgramsModalProp
                 onClick={() => deleteProgram(p.id)} 
                 style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
               >
-                <HPGlyph name="close" size={16} color={HP_TOKENS.coral}/>
+                <HPGlyph name="close" size={16} color={HP_TOKENS.coralInk}/>
               </button>
             </div>
           ))}

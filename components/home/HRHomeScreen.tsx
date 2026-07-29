@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useHP, calculateLevelProgress } from "@/lib/HPContext";
+import { usePointsQuota, quotaLabel } from "@/hooks/usePointsQuota";
 import { HP_TOKENS, HP_TEXT, HP_MOODS, HP_ENERGY } from "@/lib/constants";
 import { generateAIInsights } from "@/lib/aiInsights";
 import { isMidDayWindow } from "@/lib/timeUtils";
@@ -15,7 +16,8 @@ import { useHabitManager } from "@/hooks/useHabitManager";
 import HPGlyph from "@/components/ui/HPGlyph";
 import HPCard from "@/components/ui/HPCard";
 import HPAvatar from "@/components/ui/HPAvatar";
-import { Stack, Row, Grid, IconBadge, HPChip, HPBar, HPButton, PageGrid, ActionList } from "@/components/ui";
+import BreathingCard from "@/components/home/BreathingCard";
+import { Stack, Row, Grid, IconBadge, HPChip, HPBar, HPButton, PageGrid, ScreenHeader, ListRow } from "@/components/ui";
 import Confetti from "@/components/home/Confetti";
 import CelebrationOverlay from "@/components/ui/CelebrationOverlay";
 import CentralNudgeOverlay from "@/components/ui/CentralNudgeOverlay";
@@ -25,6 +27,7 @@ import NotificationBanner from "@/components/pwa/NotificationBanner";
 // HR-specific
 import BurnoutAlertCard from "@/components/home/BurnoutAlertCard";
 import HRAnalyticsTabs from "@/components/home/HRAnalyticsTabs";
+import HRManageList from "@/components/hr/HRManageList";
 
 // Shared personal features
 import WellbeingGauge from "@/components/home/WellbeingGauge";
@@ -40,11 +43,15 @@ import SurveySection from "@/components/home/SurveySection";
 import TaskHarianWidget from "@/components/home/TaskHarianWidget";
 import InsightCard from "@/components/home/InsightCard";
 import HabitEmptyState from "@/components/home/HabitEmptyState";
+import { scrollIntoViewSafely } from "@/lib/motion";
 
 interface Props { openModal: (name: string, props?: any) => void; }
 
 export default function HRHomeScreen({ openModal }: Props) {
   const { user, state, awardXP, updateState, notify } = useHP();
+  // Jatah poin latihan hari ini, ditampilkan di kepala seksinya. Kuota per aksi
+  // muncul di tempat aksinya dikerjakan — bukan sebagai tabel plafon di guide.
+  const habitQuota = quotaLabel(usePointsQuota(['habit_complete']).habit_complete);
 
   const aiInsights = useMemo(() => {
     if (!user || !state?.hrData) return [];
@@ -79,7 +86,7 @@ export default function HRHomeScreen({ openModal }: Props) {
       setTimeout(() => {
         const el = document.getElementById('attendance-clock-in-btn');
         if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          scrollIntoViewSafely(el, { behavior: 'smooth', block: 'center' });
           el.style.transition = 'transform 0.3s ease';
           el.style.transform = 'scale(1.05)';
           setTimeout(() => el.style.transform = 'scale(1)', 350);
@@ -91,8 +98,12 @@ export default function HRHomeScreen({ openModal }: Props) {
   }, []);
 
   // Personal hooks — same as employee
-  const { reminder, isClockedIn, isClockedOut } = useTimeReminders(
+  const { greeting, reminder, isClockedIn, isClockedOut } = useTimeReminders(
     state, user, todayAttendance, updateState, openModal
+  );
+  const todayLabel = useMemo(
+    () => new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' }),
+    []
   );
   const { coachNudge, centralNudge, setCentralNudge, beeMood } = useCoachNudge(
     state, user, todayAttendance, isClockedIn, isClockedOut, openModal
@@ -145,7 +156,7 @@ export default function HRHomeScreen({ openModal }: Props) {
     if (!action) return;
     if (action === 'scroll_task') {
       const el = document.getElementById('task-section');
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      scrollIntoViewSafely(el, { behavior: 'smooth', block: 'center' });
     } else if (action === 'open_wellbeing') {
       openModal('checkin');
     } else if (action === 'open_logbook') {
@@ -166,9 +177,19 @@ export default function HRHomeScreen({ openModal }: Props) {
         grid now makes that split spatial instead of just sequential.
       */}
       <div style={{ position: 'relative', zIndex: 1 }} className="hp-stagger">
+        {/* Same page title as employee Home — see the note there. */}
+        <ScreenHeader
+          title={`${greeting}${user?.name ? `, ${String(user.name).split(' ')[0]}` : ''}`}
+          subtitle={todayLabel}
+          style={{ padding: 0, marginBottom: 16 }}
+        />
+
         <PageGrid
           main={<>
         <NotificationBanner />
+
+        {/* Wellbeing leads the screen — same placement as employee Home. */}
+        {showPersonal && <WellbeingGauge state={state} user={user} openModal={openModal} />}
 
         {/* Mid-day check-in prompt */}
         {showPersonal && isMidDayWindow() && (
@@ -180,7 +201,7 @@ export default function HRHomeScreen({ openModal }: Props) {
           >
             <Row gap={3}>
               <IconBadge size={40} tone={HP_TOKENS.yellowSoft}>
-                <HPGlyph name="book" size={18} color={HP_TOKENS.yellowDark} />
+                <HPGlyph name="book" size={18} color={HP_TOKENS.yellowInk} />
               </IconBadge>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ ...HP_TEXT.sub, fontSize: 14.5 }}>Mid-day check-in siap</div>
@@ -254,37 +275,10 @@ export default function HRHomeScreen({ openModal }: Props) {
         {/*
           The four things HR actually administers. These were a 2×1 button grid
           plus a lone full-width button plus a separate "Kelola survey" card at
-          the very bottom of the page — one group now, in one place.
+          the very bottom of the page — one group now, in one place, and shared
+          with the console so hrAccess users get the same four.
         */}
-        <ActionList
-          title="Kelola"
-          items={[
-            {
-              icon: 'target',
-              label: 'KPI karyawan',
-              hint: 'Susun dan tinjau target per orang',
-              onClick: () => openModal('manage_kpi'),
-            },
-            {
-              icon: 'note',
-              label: 'Survey internal',
-              hint: 'Buat, edit, dan lihat hasilnya',
-              onClick: () => openModal('manage_surveys'),
-            },
-            {
-              icon: 'sparkle',
-              label: 'Alur onboarding',
-              hint: 'Langkah untuk karyawan baru',
-              onClick: () => openModal('manage_onboarding'),
-            },
-            {
-              icon: 'bell',
-              label: 'Buat pengumuman',
-              hint: 'Kirim ke seluruh perusahaan',
-              onClick: () => openModal('announcement'),
-            },
-          ]}
-        />
+        <HRManageList openModal={openModal} />
 
         {showPersonal && (
         <>
@@ -320,6 +314,7 @@ export default function HRHomeScreen({ openModal }: Props) {
           <SectionHeader
             icon="leaf"
             label="Daily Training"
+            count={habitQuota ? `poin ${habitQuota}` : undefined}
             action="Settings"
             onAction={() => openModal('manage_habits')}
           />
@@ -372,7 +367,7 @@ export default function HRHomeScreen({ openModal }: Props) {
                   aria-label={`Streak ${user.streak} hari`}
                   style={{
                     padding: '6px 10px', borderRadius: HP_TOKENS.radiusPill,
-                    background: HP_TOKENS.yellowSoft, color: HP_TOKENS.yellowDark,
+                    background: HP_TOKENS.yellowSoft, color: HP_TOKENS.yellowInk,
                     flexShrink: 0,
                   }}
                 >
@@ -397,6 +392,22 @@ export default function HRHomeScreen({ openModal }: Props) {
               <>
                 <AttendanceWidget openModal={openModal} />
 
+                {/* Logbook + attendance history sit with attendance, not in the
+                    generic shortcut list. Independent of clock state. */}
+                <HPCard padding={0} style={{ overflow: 'hidden' }}>
+                  <ListRow
+                    leading={<IconBadge size={32} tone={HP_TOKENS.sunken}><HPGlyph name="book" size={16} color={HP_TOKENS.inkSoft} /></IconBadge>}
+                    title="Riwayat & logbook"
+                    subtitle="Catatan harian, hadir atau tidak"
+                    onClick={() => openModal('logbook')}
+                  />
+                  <ListRow
+                    leading={<IconBadge size={32} tone={HP_TOKENS.sunken}><HPGlyph name="history" size={16} color={HP_TOKENS.inkSoft} /></IconBadge>}
+                    title="Riwayat kehadiran"
+                    onClick={() => openModal('attendance_history')}
+                  />
+                </HPCard>
+
                 <EmotionalHero
                   state={state}
                   moodObj={moodObj}
@@ -405,8 +416,6 @@ export default function HRHomeScreen({ openModal }: Props) {
                   showMidDay={isMidDayWindow()}
                   onOpenMidDay={() => openModal('work_checkin')}
                 />
-
-                <WellbeingGauge state={state} user={user} openModal={openModal} />
 
                 {aiInsights.length > 0 && (
                   <section>
@@ -419,27 +428,9 @@ export default function HRHomeScreen({ openModal }: Props) {
                   </section>
                 )}
 
-                <ActionList
-                  title="Lainnya"
-                  items={[
-                    {
-                      icon: 'gift',
-                      label: 'Kelola Reward',
-                      hint: 'Pemenuhan penukaran reward karyawan',
-                      tone: HP_TOKENS.info,
-                      onClick: () => openModal('reward_fulfillment'),
-                    },
-                    {
-                      icon: 'leaf',
-                      label: 'Jeda 1 menit',
-                      hint: 'Box breathing untuk menurunkan stres',
-                      tone: HP_TOKENS.success,
-                      onClick: () => openModal('pause'),
-                    },
-                    { icon: 'book', label: 'Riwayat & logbook', onClick: () => openModal('logbook') },
-                    { icon: 'history', label: 'Riwayat kehadiran', onClick: () => openModal('attendance_history') },
-                  ]}
-                />
+                {/* Box breathing gets a card, not a shortcut row — same as
+                    employee Home. */}
+                <BreathingCard openModal={openModal} compact />
               </>
             )}
           </>}

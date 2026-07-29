@@ -94,6 +94,38 @@ window.updateBuddySVG = function(s) {
   }
 };
 
+// Hidrasi konteks dari chrome.storage — bacaan lokal, tanpa jaringan.
+//
+// `js/sync.js` sekarang hanya disuntikkan di domain Flowbee, karena poll 30
+// detiknya dulu jalan di setiap tab di setiap situs yang dibuka user. Maskot
+// tetap hidup di semua situs, jadi ia butuh sumber data yang tidak membebani
+// server: cache yang sudah ditulis sync.js dari tab Flowbee. Tanpa ini
+// `fbCtx.tasks` selalu kosong di luar Flowbee dan maskot kehilangan seluruh
+// state yang bergantung pada task (EXCITED/HAPPY/SAD).
+function fbHydrateFromCache(source) {
+  if (!source) return;
+  window.fbCtx.tasks = source.tasks || [];
+  window.fbCtx.notes = source.notes || [];
+  window.fbCtx.alarms = source.alarms || [];
+  window.fbCtx.habits = source.habits || window.fbCtx.habits || [];
+}
+
+try {
+  chrome.storage.local.get(['fb3'], r => {
+    if (r && r.fb3) fbHydrateFromCache(r.fb3);
+  });
+
+  // Tab Flowbee memperbarui cache; tab lain ikut menyesuaikan tanpa polling.
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && changes.fb3 && changes.fb3.newValue) {
+      fbHydrateFromCache(changes.fb3.newValue);
+    }
+  });
+} catch (e) {
+  // Konteks extension bisa sudah tidak valid saat reload — maskot tetap jalan
+  // dengan default kosong.
+}
+
 // Check state every 5 seconds
 setInterval(() => {
   const newState = window.getFbState();

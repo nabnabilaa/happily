@@ -46,7 +46,17 @@ interface HPState {
   onboarded?: boolean;
   focusTaskId?: number | null;
   focusProgress?: number;
+  /**
+   * The mood *options* the picker renders, when the server overrides the
+   * built-in HP_MOODS. Entries are `{ key, label, glyph, emoji, tone, value }`.
+   * Never append check-in records here — that is `moodHistory`. The two were
+   * one field until they weren't: a mid-day check-in would push `{time, mood}`
+   * rows into it, and every picker downstream then rendered blank buttons.
+   */
   moods?: any[];
+  /** Recorded check-ins, `{ time, mood }`, oldest first. Read by the wellbeing
+   *  engine and the coach; never rendered as choices. */
+  moodHistory?: { time: string; mood: string }[];
   energyOpts?: any[];
   companyValues?: string[];
   coachSuggestions?: string[];
@@ -70,6 +80,12 @@ interface HPUser {
   userRole?: UserRole | null;
   avatarImage?: string;
   department?: string;
+  /**
+   * Status keanggotaan divisi. `approved` = sudah resmi masuk divisi (ini yang
+   * dipakai saat karyawan memilih divisi asli di onboarding), `pending` =
+   * menunggu HR, `rejected` = ditolak.
+   */
+  department_status?: 'pending' | 'approved' | 'rejected' | null;
   /** Akses HR-Admin tambahan: employee/manager yang boleh switch ke konsol HR. */
   hrAccess?: boolean;
 }
@@ -79,7 +95,6 @@ interface HPContextType {
   user: HPUser | null;
   updateState: (update: Partial<HPState> | ((prev: HPState) => HPState)) => void;
   updateUser: (update: Partial<HPUser> | ((prev: HPUser) => HPUser)) => void;
-  setUserRole: (role: UserRole) => void;
   login: (userData: any) => void;
   logout: () => void;
   loading: boolean;
@@ -87,7 +102,8 @@ interface HPContextType {
   refreshSurveys: () => Promise<void>;
   resetData: () => Promise<void>;
   syncSkillProgress: (source: string, amount: number) => void;
-  awardXP: (actionType: string, description?: string, amount?: number) => Promise<void>;
+  awardXP: (actionType: string, description?: string, refId?: string) => Promise<void>;
+  revokeXP: (actionType: string, refId: string, description?: string) => Promise<void>;
   toasts: any[];
   notify: (title: string, message?: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
   dismissToast: (id: string) => void;
@@ -99,6 +115,33 @@ import { calculateLevel, calculateRank, calculateLevelProgress } from "@/lib/xp"
 
 export { calculateLevelProgress }; // Re-export for existing imports that relied on HPContext
 import { isNetworkError } from "@/lib/errorUtils";
+import { PUSHER_CLUSTER } from "@/lib/realtimeConfig";
+
+/**
+ * Trims the blob before it goes to POST /api/storage.
+ *
+ * Two reasons a key gets dropped. Dashboard slices (`hrData`, `managerData`,
+ * `surveys`, `feed`) are fetched separately and the server does not read them
+ * back. `priorities` is different and more important: tasks have their own
+ * endpoints now, and letting the blob carry them made every tab an authority on
+ * the whole task list — a stale array deleted rows and reverted a manager's ACC.
+ * Task writes go through /api/priorities*; the blob must not have an opinion.
+ */
+function stripNonSyncedState(state: any, user: any) {
+  const out: any = { ...state };
+  delete out.hrData;
+  delete out.managerData;
+  delete out.surveys;
+  delete out.feed;
+  delete out.priorities;
+  // Sengaja hanya `role`, bukan `userRole`. Katalog `rewards` itu milik seluruh
+  // perusahaan dan server merekonsiliasinya terhadap payload ini — kalau
+  // syaratnya ikut state tampilan, sekadar berpindah tampilan bisa mengubah apa
+  // yang ditulis ke tabel bersama.
+  const isHRUser = user?.role === 'hr';
+  if (!isHRUser) delete out.rewards;
+  return out;
+}
 
 export function HPProvider({ children }: { children: React.ReactNode }) {
   // 1. ALL STATES FIRST
@@ -132,9 +175,17 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
       if (!prev) return null;
       let next = typeof update === "function" ? update(prev) : { ...prev, ...update };
       if (next.points !== prev.points) {
+        // Level dan rank ikut poin. `coins` TIDAK — dulu baris ini menimpanya
+        // dengan `next.points`, sehingga setiap kali poin bertambah saldo koin
+        // ikut disamakan lagi ke total poin seumur hidup dan seluruh koin yang
+        // sudah ditukar hadiah kembali muncul.
+        //
+        // Keduanya memang bertambah 1:1 saat dapat poin, tapi perannya beda:
+        // `points` akumulasi seumur hidup untuk level/rank, `coins` saldo yang
+        // dibelanjakan. Yang menukar hadiah hanya mengurangi `coins`.
         const newLevel = calculateLevel(next.points);
         const newRank = calculateRank(newLevel);
-        next = { ...next, level: newLevel, rank: newRank, coins: next.points };
+        next = { ...next, level: newLevel, rank: newRank };
       }
       return next;
     });
@@ -226,17 +277,12 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
             if (prev?.feed) preserved.feed = prev.feed;
             return { ...sanitizedState, ...preserved };
           });
-          // Pre-fill the payload ref so we don't sync this identical data back
-          const syncState: any = { ...sanitizedState };
-          delete syncState.hrData;
-          delete syncState.managerData;
-          delete syncState.surveys;
-          delete syncState.feed;
-          const isHRUser = (data.user || userRef.current)?.role === 'hr' || (data.user || userRef.current)?.userRole === 'hr';
-          if (!isHRUser) {
-            delete syncState.rewards;
-          }
-          lastSyncedPayloadRef.current = JSON.stringify({ state: syncState, user: data.user || userRef.current });
+          // Pre-fill the payload ref so we don't sync this identical data back.
+          // Must strip exactly what the sync strips, or the comparison never
+          // matches and every fetch is followed by a pointless POST.
+          const syncUser = data.user || userRef.current;
+          const syncState = stripNonSyncedState(sanitizedState, syncUser);
+          lastSyncedPayloadRef.current = JSON.stringify({ state: syncState, user: syncUser });
         }
         else {
           setState({
@@ -252,8 +298,15 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
             onboarded: false,
             focusTaskId: null,
             focusProgress: 0,
-            moods: data.state?.moods || [],
-            energyOpts: data.state?.energyOpts || [],
+            // Left undefined on purpose, NOT `[]`.
+            //
+            // Every read site is `state.moods || HP_MOODS` — and `[]` is
+            // truthy, so an empty array wins that fallback and the mood picker
+            // renders zero buttons. This branch only runs when `data.state` is
+            // absent, i.e. for a brand-new user, who therefore got a check-in
+            // screen with nothing to check in with. Same trap for energyOpts.
+            moods: data.state?.moods,
+            energyOpts: data.state?.energyOpts,
             companyValues: data.state?.companyValues || [],
             coachSuggestions: data.state?.coachSuggestions || [],
           });
@@ -322,12 +375,24 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("hp_logout_toast", "true");
     setUser(null);
     setState(null);
+    // Cookie sesi httpOnly hanya bisa dihapus server. Tanpa ini, logout
+    // membersihkan localStorage tapi meninggalkan identitas yang masih sah.
     if (typeof window !== "undefined") {
-      window.location.href = "/";
+      void fetch("/api/auth/logout", { method: "POST" })
+        .catch(() => { /* tetap lanjut logout di sisi klien */ })
+        .finally(() => { window.location.href = "/"; });
     }
   }, []);
 
-  const fetchDashboards = useCallback(async (userId: string, role: string) => {
+  /**
+   * Mengisi `hrData` dan/atau `managerData`.
+   *
+   * Dulu parameternya satu peran dan cabangnya `if/else if`, jadi seorang
+   * manager yang juga dititipi `hrAccess` hanya pernah mendapat salah satunya —
+   * konsol HR-nya berhenti di skeleton karena `state.hrData` tidak pernah
+   * terisi. Sekarang keduanya diminta bersamaan sesuai kemampuan akun.
+   */
+  const fetchDashboards = useCallback(async (userId: string, role: string, hrAccess = false) => {
     if (activeFetchDashboardsRef.current) return activeFetchDashboardsRef.current;
 
     const promise = (async () => {
@@ -336,25 +401,31 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       try {
-        if (role === 'hr') {
-          const res = await fetch('/api/hr/dashboard');
-          if (!res.ok) {
-            const text = await res.text();
-            throw new Error(`HR Dashboard fetch failed: ${res.status} ${text.slice(0, 100)}`);
-          }
-          const data = await res.json();
-          if (data && data.metrics) {
-            setState(prev => prev ? { ...prev, hrData: data } : null);
-          }
-        } else if (role === 'manager') {
-          const res = await fetch(`/api/manager/dashboard?userId=${userId}`);
-          if (!res.ok) {
-            const text = await res.text();
-            throw new Error(`Manager Dashboard fetch failed: ${res.status} ${text.slice(0, 100)}`);
-          }
-          const data = await res.json();
-          setState(prev => prev ? { ...prev, managerData: data } : null);
-        }
+        const wantsHr = role === 'hr' || hrAccess;
+        const wantsManager = role === 'manager';
+
+        await Promise.all([
+          wantsHr ? (async () => {
+            const res = await fetch('/api/hr/dashboard');
+            if (!res.ok) {
+              const text = await res.text();
+              throw new Error(`HR Dashboard fetch failed: ${res.status} ${text.slice(0, 100)}`);
+            }
+            const data = await res.json();
+            if (data && data.metrics) {
+              setState(prev => prev ? { ...prev, hrData: data } : null);
+            }
+          })() : null,
+          wantsManager ? (async () => {
+            const res = await fetch(`/api/manager/dashboard?userId=${userId}`);
+            if (!res.ok) {
+              const text = await res.text();
+              throw new Error(`Manager Dashboard fetch failed: ${res.status} ${text.slice(0, 100)}`);
+            }
+            const data = await res.json();
+            setState(prev => prev ? { ...prev, managerData: data } : null);
+          })() : null,
+        ]);
       } catch (e: any) {
         const errorMsg = e?.message || String(e);
         if (isNetworkError(e)) {
@@ -372,13 +443,6 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
 
-
-  const setUserRole = useCallback((role: UserRole) => {
-    setUser((prev) => {
-      if (!prev) return null;
-      return { ...prev, userRole: role };
-    });
-  }, []);
 
   const syncSkillProgress = useCallback((source: string, amount: number) => {
     setState((prev) => {
@@ -457,10 +521,13 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
     if (!user || !user.id) return;
 
     const userId = user.id;
-    const activeRole = user.userRole || user.role;
+    const activeRole = user.role;
+    const activeHrAccess = !!user.hrAccess;
     let cleanupFn = () => { };
     const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
-    const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'mt1';
+    // Satu konstanta bersama. Nilai default yang berbeda antar berkas membuat
+    // desktop dan HP terhubung ke region Pusher yang berbeda tanpa error apa pun.
+    const pusherCluster = PUSHER_CLUSTER;
 
     const handleRealtimeData = (data: any) => {
       if (data.type === 'refresh') {
@@ -468,8 +535,8 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
           fetchData(userId);
           refreshSurveys();
-          if (activeRole === 'hr' || activeRole === 'manager') {
-            fetchDashboards(userId, activeRole);
+          if (activeRole === 'hr' || activeRole === 'manager' || activeHrAccess) {
+            fetchDashboards(userId, activeRole, activeHrAccess);
           }
           // Kirim event ke komponen lain (HRPeopleScreen, dll)
           window.dispatchEvent(new Event('hp_db_update'));
@@ -627,7 +694,24 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
     };
   }, [user, fetchData, fetchDashboards, refreshSurveys, notify]);
 
-  const awardXP = useCallback(async (actionType: string, description?: string, amount?: number) => {
+  /**
+   * Meminta poin ke server.
+   *
+   * `refId` adalah identitas kejadian yang dibayar — server memakainya untuk
+   * memastikan satu kejadian hanya dibayar sekali. Kirimkan yang sungguhan
+   * (`task:123`, `habit:5:2026-07-28`) lewat helper `refFor` di lib/points.ts;
+   * kalau dikosongkan, server jatuh ke tanggal WIB hari ini, yang benar untuk
+   * aksi sekali-sehari tapi tidak untuk aksi yang punya identitas sendiri.
+   *
+   * Nilai poin TIDAK dikirim dari sini. Parameter `amount` yang lama menjadi
+   * `customAmount` di server dan dipakai apa adanya, sehingga siapa pun bisa
+   * mengarang angka lewat console browser.
+   */
+  const awardXP = useCallback(async (
+    actionType: string,
+    description?: string,
+    refId?: string,
+  ) => {
     const currentUser = userRef.current;
     if (!currentUser) return;
     if (typeof window !== "undefined" && !navigator.onLine) {
@@ -638,15 +722,39 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch("/api/xp/award", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: currentUser.id, actionType, description, customAmount: amount }),
+        body: JSON.stringify({ userId: currentUser.id, actionType, description, refId }),
       });
       const data = await res.json();
-      if (data.capped) {
-        notify("Batas Poin", data.message, "warning");
+      // Sesi login lama (sebelum cookie sesi ada) tidak punya identitas yang
+      // bisa diverifikasi server. Diberi tahu terang-terangan, bukan gagal diam.
+      if (res.status === 401 && data.needsReauth) {
+        notify("Sesi berakhir", "Silakan login ulang untuk melanjutkan.", "warning");
+        return;
       }
-      if (data.success) {
-        updateUser({ points: data.newTotal, coins: data.newTotal });
-        updateState((s: any) => ({ ...s, points: data.newTotal, coins: data.newTotal }));
+
+      // Kuota penuh dirayakan, bukan ditolak. Aksinya tetap tercatat dan tetap
+      // dilihat manajer — yang berhenti cuma poinnya.
+      if (data.status === "quota_full") {
+        notify("Kuota poin hari ini penuh", data.message, "info");
+      }
+
+      // Saldo diperbarui pada SETIAP jawaban sukses, termasuk saat tidak ada
+      // poin diberikan. Dulu jawaban ter-cap membawa `newTotal: 0` dan blok ini
+      // menuliskannya apa adanya — sehingga menyentuh batas harian membuat poin
+      // di layar berubah jadi 0 sampai halaman di-refresh.
+      if (data.success && typeof data.newTotal === "number") {
+        updateUser({ points: data.newTotal, coins: data.newCoins ?? data.newTotal });
+        updateState((s: any) => ({
+          ...s,
+          points: data.newTotal,
+          coins: data.newCoins ?? data.newTotal,
+        }));
+      }
+
+      // Penghitung kuota di widget menyimpan salinannya sendiri. Tanpa sinyal
+      // ini "Poin 3/5" baru berubah setelah reload, dan terbaca seperti rusak.
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("hp_points_changed"));
       }
     } catch (e: any) {
       const errorMsg = e?.message || String(e);
@@ -658,14 +766,58 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
     }
   }, [updateUser, updateState, notify]);
 
+  /**
+   * Membatalkan poin sebuah kejadian.
+   *
+   * Server menulis baris pembalikan bernilai negatif dan MEMBIARKAN baris
+   * aslinya. Itu disengaja: slot kuotanya kembali (salah klik tidak menghanguskan
+   * jatah), tapi kejadian yang sama tidak akan pernah dibayar lagi. Perilaku lama
+   * menghapus baris ledger, yang berarti membatalkan pekerjaan ikut memutar
+   * mundur penghitung kuota harian.
+   */
+  const revokeXP = useCallback(async (
+    actionType: string,
+    refId: string,
+    description?: string,
+  ) => {
+    const currentUser = userRef.current;
+    if (!currentUser || !refId) return;
+    if (typeof window !== "undefined" && !navigator.onLine) return;
+    try {
+      const res = await fetch("/api/xp/award", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: currentUser.id, actionType, refId, description, reverse: true,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && typeof data.newTotal === "number") {
+        updateUser({ points: data.newTotal, coins: data.newCoins ?? data.newTotal });
+        updateState((s: any) => ({
+          ...s,
+          points: data.newTotal,
+          coins: data.newCoins ?? data.newTotal,
+        }));
+      }
+      // Membatalkan mengembalikan slot kuotanya, jadi penghitungnya ikut turun.
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("hp_points_changed"));
+      }
+    } catch (e) {
+      console.warn("Gagal membatalkan poin:", e);
+    }
+  }, [updateUser, updateState]);
+
   const refresh = useCallback(async () => {
     if (userRef.current?.id) {
       const fetchDataPromise = fetchData(userRef.current.id);
-      const activeRole = userRef.current.userRole || userRef.current.role;
-      if (activeRole === 'hr' || activeRole === 'manager') {
+      const activeRole = userRef.current.role;
+      const activeHrAccess = !!userRef.current.hrAccess;
+      if (activeRole === 'hr' || activeRole === 'manager' || activeHrAccess) {
         await Promise.all([
           fetchDataPromise,
-          fetchDashboards(userRef.current.id, activeRole)
+          fetchDashboards(userRef.current.id, activeRole, activeHrAccess)
         ]);
       } else {
         await fetchDataPromise;
@@ -699,9 +851,10 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (user) {
-      const activeRole = user.userRole || user.role;
-      if (activeRole === 'hr' || activeRole === 'manager') {
-        fetchDashboards(user.id, activeRole);
+      const activeRole = user.role;
+      const activeHrAccess = !!user.hrAccess;
+      if (activeRole === 'hr' || activeRole === 'manager' || activeHrAccess) {
+        fetchDashboards(user.id, activeRole, activeHrAccess);
       }
     }
   }, [user, fetchDashboards]);
@@ -742,16 +895,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
       // Store latest data for sync
       latestSyncRef.current = { state, user };
 
-      // Optimize payload: remove huge/redundant data before sending to server
-      const syncState: any = { ...state };
-      delete syncState.hrData;
-      delete syncState.managerData;
-      delete syncState.surveys;
-      delete syncState.feed;
-      const isHRUser = user?.role === 'hr' || user?.userRole === 'hr';
-      if (!isHRUser) {
-        delete syncState.rewards;
-      }
+      const syncState = stripNonSyncedState(state, user);
 
       const currentPayloadStr = JSON.stringify({ state: syncState, user });
 
@@ -778,15 +922,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         try {
           isSyncingDbRef.current = true;
           setSyncing(true);
-          const finalSyncState: any = { ...data.state };
-          delete finalSyncState.hrData;
-          delete finalSyncState.managerData;
-          delete finalSyncState.surveys;
-          delete finalSyncState.feed;
-          const isHRUserFinal = data.user?.role === 'hr' || data.user?.userRole === 'hr';
-          if (!isHRUserFinal) {
-            delete finalSyncState.rewards;
-          }
+          const finalSyncState = stripNonSyncedState(data.state, data.user);
 
           const finalPayload = JSON.stringify({ state: finalSyncState, user: data.user, userId: data.user.id });
           lastSyncedPayloadRef.current = JSON.stringify({ state: finalSyncState, user: data.user }); // Update ref immediately with consistent structure (no userId)
@@ -823,31 +959,48 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
     };
   }, [state, user, loading]);
 
-  // Also sync immediately on page unload (backup) with stripped payload
+  /*
+   * Jaring pengaman saat halaman ditutup: mengirim perubahan yang debounce-nya
+   * belum sempat jalan.
+   *
+   * Dulu blok ini mengirim TANPA syarat. Efeknya halus tapi merusak: menekan
+   * refresh berubah menjadi satu operasi tulis berisi state tab yang mau mati.
+   * Kalau sementara itu ada endpoint lain yang sudah memperbarui data (HR
+   * menyetujui divisi, manager meng-ACC, tab kedua menyimpan sesuatu), beacon
+   * ini menimpanya balik dengan salinan lama — dan karena beacon berlomba
+   * dengan GET halaman baru, kadang terlihat langsung, kadang baru muncul di
+   * refresh berikutnya. Itulah "sudah selesai, di-refresh, balik lagi".
+   *
+   * Dua guard yang sama seperti jalur sync biasa sekarang berlaku di sini:
+   * jangan kirim kalau tidak ada perubahan nyata, dan jangan kirim di tengah
+   * transisi login (state-nya masih milik user sebelumnya).
+   */
   useEffect(() => {
     const handleBeforeUnload = () => {
-      const data = latestSyncRef.current;
-      if (data) {
-        try {
-          const syncState = { ...data.state };
-          delete syncState.hrData;
-          delete syncState.managerData;
-          delete syncState.surveys;
-          delete syncState.feed;
-          const isHRUserUnload = data.user?.role === 'hr' || data.user?.userRole === 'hr';
-          if (!isHRUserUnload) {
-            delete syncState.rewards;
-          }
+      if (loginInProgressRef.current) return;
 
-          const payload = JSON.stringify({ state: syncState, user: data.user, userId: data.user.id });
-          // Only send if within beacon limits (usually 64KB)
-          if (payload.length < 60000) {
-            const blob = new Blob([payload], { type: 'application/json' });
-            navigator.sendBeacon('/api/storage', blob);
+      const data = latestSyncRef.current;
+      if (!data) return;
+
+      try {
+        const syncState = stripNonSyncedState(data.state, data.user);
+
+        // Bentuknya harus persis sama dengan yang disimpan jalur sync biasa —
+        // tanpa `userId` — kalau tidak perbandingannya tidak pernah cocok dan
+        // guard ini tidak menahan apa pun.
+        const dedupeKey = JSON.stringify({ state: syncState, user: data.user });
+        if (lastSyncedPayloadRef.current === dedupeKey) return;
+
+        const payload = JSON.stringify({ state: syncState, user: data.user, userId: data.user.id });
+        // Only send if within beacon limits (usually 64KB)
+        if (payload.length < 60000) {
+          const blob = new Blob([payload], { type: 'application/json' });
+          if (navigator.sendBeacon('/api/storage', blob)) {
+            lastSyncedPayloadRef.current = dedupeKey;
           }
-        } catch (e) {
-          // silent fallback
         }
+      } catch (e) {
+        // silent fallback
       }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -869,7 +1022,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
             user: {
               id: user.id,
               name: user.name,
-              role: user.userRole || user.role,
+              role: user.role,
               points: user.points,
               coins: user.coins,
               level: user.level,
@@ -903,7 +1056,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
   const userPayloadString = user ? JSON.stringify({
     id: user.id,
     name: user.name,
-    role: user.userRole || user.role,
+    role: user.role,
     points: user.points,
     coins: user.coins,
     level: user.level,
@@ -932,13 +1085,13 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
   }, [userPayloadString]);
 
   const contextValue = useMemo(() => ({
-    state, user, updateState, updateUser, setUserRole, login, logout, awardXP,
+    state, user, updateState, updateUser, login, logout, awardXP, revokeXP,
     loading, refresh,
     refreshSurveys, resetData, syncSkillProgress,
     toasts, notify, dismissToast
   }), [
     state, user, loading, toasts,
-    updateState, updateUser, setUserRole, login, logout, awardXP,
+    updateState, updateUser, login, logout, awardXP, revokeXP,
     refresh, refreshSurveys, resetData, syncSkillProgress, notify, dismissToast
   ]);
 

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { dispatchNotification } from '@/lib/notificationService';
+import { internalHeaders } from '@/lib/authSession';
 
 function getCorsHeaders(request: Request) {
   const origin = request.headers.get("origin") || "*";
@@ -80,7 +81,7 @@ export async function POST(request: Request) {
             const actionType = currentProgress > 100 ? 'kpi_exceeded' : 'kpi_achieved';
             await fetch(`${origin}/api/xp/award`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 'Content-Type': 'application/json', ...internalHeaders() },
               body: JSON.stringify({
                 userId: managerId,
                 targetUserId: employeeId,

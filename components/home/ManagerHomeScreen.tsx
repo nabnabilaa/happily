@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useHP, calculateLevelProgress } from "@/lib/HPContext";
+import { usePointsQuota, quotaLabel } from "@/hooks/usePointsQuota";
 import { HP_TOKENS, HP_TEXT, HP_MOODS, HP_ENERGY } from "@/lib/constants";
 import { generateAIInsights } from "@/lib/aiInsights";
 import { isMidDayWindow } from "@/lib/timeUtils";
@@ -32,17 +33,22 @@ import DailyChallengeWidget from "@/components/home/DailyChallengeWidget";
 import HabitCell from "@/components/home/HabitCell";
 import HabitDetailsModal from "@/components/home/HabitDetailsModal";
 import SectionHeader from "@/components/home/SectionHeader";
-import { Row, Stack, Grid, IconBadge, CountUp, HPButton, PageGrid, ActionList } from "@/components/ui";
+import BreathingCard from "@/components/home/BreathingCard";
+import { Row, Stack, Grid, IconBadge, CountUp, HPButton, PageGrid, ScreenHeader, ActionList, ListRow } from "@/components/ui";
 import AttendanceWidget from "@/components/home/AttendanceWidget";
 import SurveySection from "@/components/home/SurveySection";
 import TaskHarianWidget from "@/components/home/TaskHarianWidget";
 import InsightCard from "@/components/home/InsightCard";
 import HabitEmptyState from "@/components/home/HabitEmptyState";
+import { scrollIntoViewSafely } from "@/lib/motion";
 
 interface Props { openModal: (name: string, props?: any) => void; }
 
 export default function ManagerHomeScreen({ openModal }: Props) {
   const { state, user, awardXP, refresh, updateState, notify } = useHP();
+  // Jatah poin latihan hari ini, ditampilkan di kepala seksinya. Kuota per aksi
+  // muncul di tempat aksinya dikerjakan — bukan sebagai tabel plafon di guide.
+  const habitQuota = quotaLabel(usePointsQuota(['habit_complete']).habit_complete);
   const managerData = state?.managerData || { members: [], goals: [], approvals: [], teamTasks: [] };
   const { members, goals, approvals = [], teamTasks = [] } = managerData;
   const avgProgress = goals.length > 0
@@ -104,7 +110,7 @@ export default function ManagerHomeScreen({ openModal }: Props) {
       setTimeout(() => {
         const el = document.getElementById('attendance-clock-in-btn');
         if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          scrollIntoViewSafely(el, { behavior: 'smooth', block: 'center' });
           el.style.transition = 'transform 0.3s ease';
           el.style.transform = 'scale(1.05)';
           setTimeout(() => el.style.transform = 'scale(1)', 350);
@@ -116,8 +122,12 @@ export default function ManagerHomeScreen({ openModal }: Props) {
   }, []);
 
   // Personal hooks — same as employee
-  const { reminder, isClockedIn, isClockedOut } = useTimeReminders(
+  const { greeting, reminder, isClockedIn, isClockedOut } = useTimeReminders(
     state, user, todayAttendance, updateState, openModal
+  );
+  const todayLabel = useMemo(
+    () => new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' }),
+    []
   );
   const { coachNudge, centralNudge, setCentralNudge, beeMood } = useCoachNudge(
     state, user, todayAttendance, isClockedIn, isClockedOut, openModal
@@ -176,9 +186,19 @@ export default function ManagerHomeScreen({ openModal }: Props) {
         the rail. Previously approvals sat at roughly position seventeen.
       */}
       <div style={{ position: 'relative', zIndex: 1 }} className="hp-stagger">
+        {/* Same page title as employee Home — see the note there. */}
+        <ScreenHeader
+          title={`${greeting}${user?.name ? `, ${String(user.name).split(' ')[0]}` : ''}`}
+          subtitle={todayLabel}
+          style={{ padding: 0, marginBottom: 16 }}
+        />
+
         <PageGrid
           main={<>
         <NotificationBanner />
+
+        {/* Wellbeing leads the screen — same placement as employee Home. */}
+        <WellbeingGauge state={state} user={user} openModal={openModal} />
 
         {/* Mid-day check-in prompt */}
         {isMidDayWindow() && (
@@ -190,7 +210,7 @@ export default function ManagerHomeScreen({ openModal }: Props) {
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
               <IconBadge size={40} tone={HP_TOKENS.yellowSoft}>
-                <HPGlyph name="book" size={18} color={HP_TOKENS.yellowDark} />
+                <HPGlyph name="book" size={18} color={HP_TOKENS.yellowInk} />
               </IconBadge>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ ...HP_TEXT.sub, fontSize: 14.5 }}>Mid-day check-in siap</div>
@@ -230,7 +250,7 @@ export default function ManagerHomeScreen({ openModal }: Props) {
                   style={{ transition: 'stroke-dashoffset 320ms var(--hp-ease-out)' }}
                 />
               </svg>
-              <div style={{ position: 'absolute', ...HP_TEXT.label, fontSize: 13, color: HP_TOKENS.primary }}>
+              <div style={{ position: 'absolute', ...HP_TEXT.label, fontSize: 13, color: HP_TOKENS.primaryInk }}>
                 {avgProgress}%
               </div>
             </div>
@@ -324,7 +344,7 @@ export default function ManagerHomeScreen({ openModal }: Props) {
             size="sm"
             icon="bell"
             onClick={() => openModal('announcement')}
-            style={{ background: HP_TOKENS.successWash, color: HP_TOKENS.success, borderColor: 'transparent' }}
+            style={{ background: HP_TOKENS.successWash, color: HP_TOKENS.successInk, borderColor: 'transparent' }}
           >
             Pengumuman
           </HPButton>
@@ -356,7 +376,7 @@ export default function ManagerHomeScreen({ openModal }: Props) {
               >
                 <Row gap={3}>
                   <IconBadge size={36} tone={HP_TOKENS.infoSoft}>
-                    <HPGlyph name="sparkle" size={17} color={HP_TOKENS.info} />
+                    <HPGlyph name="sparkle" size={17} color={HP_TOKENS.infoInk} />
                   </IconBadge>
                   <Stack gap={0} style={{ flex: 1 }}>
                     <span style={{ ...HP_TEXT.sub }}>Rangkuman mingguan AI</span>
@@ -375,7 +395,7 @@ export default function ManagerHomeScreen({ openModal }: Props) {
                 >
                   <Row gap={3}>
                     <IconBadge size={36} tone={HP_TOKENS.primarySoft}>
-                      <HPGlyph name="chart" size={17} color={HP_TOKENS.primary} />
+                      <HPGlyph name="chart" size={17} color={HP_TOKENS.primaryInk} />
                     </IconBadge>
                     <Stack gap={0} style={{ flex: 1 }}>
                       <span style={{ ...HP_TEXT.sub }}>Analisa bulanan AI</span>
@@ -505,7 +525,7 @@ export default function ManagerHomeScreen({ openModal }: Props) {
           >
             <Row gap={3}>
               <IconBadge size={36} tone={HP_TOKENS.yellowSoft}>
-                <HPGlyph name="hourglass" size={17} color={HP_TOKENS.yellowDark} />
+                <HPGlyph name="hourglass" size={17} color={HP_TOKENS.yellowInk} />
               </IconBadge>
               <Stack gap={0} style={{ flex: 1 }}>
                 <span style={{ ...HP_TEXT.sub }}>
@@ -526,6 +546,7 @@ export default function ManagerHomeScreen({ openModal }: Props) {
           <SectionHeader
             icon="leaf"
             label="Daily Training"
+            count={habitQuota ? `poin ${habitQuota}` : undefined}
             action="Settings"
             onAction={() => openModal('manage_habits')}
           />
@@ -611,6 +632,22 @@ export default function ManagerHomeScreen({ openModal }: Props) {
 
             <AttendanceWidget openModal={openModal} />
 
+            {/* Logbook + attendance history sit with attendance, not in the
+                generic shortcut list. Independent of clock state. */}
+            <HPCard padding={0} style={{ overflow: 'hidden' }}>
+              <ListRow
+                leading={<IconBadge size={32} tone={HP_TOKENS.sunken}><HPGlyph name="book" size={16} color={HP_TOKENS.inkSoft} /></IconBadge>}
+                title="Riwayat & logbook"
+                subtitle="Catatan harian, hadir atau tidak"
+                onClick={() => openModal('logbook')}
+              />
+              <ListRow
+                leading={<IconBadge size={32} tone={HP_TOKENS.sunken}><HPGlyph name="history" size={16} color={HP_TOKENS.inkSoft} /></IconBadge>}
+                title="Riwayat kehadiran"
+                onClick={() => openModal('attendance_history')}
+              />
+            </HPCard>
+
             <EmotionalHero
               state={state}
               moodObj={moodObj}
@@ -619,8 +656,6 @@ export default function ManagerHomeScreen({ openModal }: Props) {
               showMidDay={isMidDayWindow()}
               onOpenMidDay={() => openModal('work_checkin')}
             />
-
-            <WellbeingGauge state={state} user={user} openModal={openModal} />
 
             {/* AI Coach for Manager */}
             <HPCard
@@ -639,18 +674,13 @@ export default function ManagerHomeScreen({ openModal }: Props) {
               </Row>
             </HPCard>
 
+            {/* Box breathing gets a card, not a shortcut row — same as employee
+                Home. A manager's bad afternoon is no different. */}
+            <BreathingCard openModal={openModal} compact />
+
             <ActionList
               title="Lainnya"
               items={[
-                {
-                  icon: 'leaf',
-                  label: 'Jeda 1 menit',
-                  hint: 'Box breathing untuk menurunkan stres',
-                  tone: HP_TOKENS.success,
-                  onClick: () => openModal('pause'),
-                },
-                { icon: 'book', label: 'Riwayat & logbook', onClick: () => openModal('logbook') },
-                { icon: 'history', label: 'Riwayat kehadiran', onClick: () => openModal('attendance_history') },
                 { icon: 'sparkle', label: 'Panduan sistem', onClick: () => openModal('system_guide') },
               ]}
             />

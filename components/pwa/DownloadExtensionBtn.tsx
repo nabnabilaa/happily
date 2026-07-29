@@ -45,7 +45,7 @@ export default function DownloadExtensionBtn() {
         // White on honey is about 1.8:1 — unreadable. Honey carries dark ink,
         // the way every other yellow surface in the app does.
         background: isHovered ? HP_TOKENS.yellow : HP_TOKENS.yellowSoft,
-        color: HP_TOKENS.yellowDark,
+        color: HP_TOKENS.yellowInk,
         border: '1px solid transparent',
         cursor: 'pointer',
         textDecoration: 'none',

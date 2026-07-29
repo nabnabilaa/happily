@@ -40,9 +40,7 @@ export default function HabitDetailsModal({
               <button 
                 onClick={() => setSelectedHabitDay(null)}
                 style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 8, color: HP_TOKENS.inkFade }}
-              >
-                ✕
-              </button>
+              ><HPGlyph name="close" size={14} color="currentColor" /></button>
             </div>
 
             {!selectedHabitDay.isToday && !selectedHabitDay.done && (
@@ -50,8 +48,8 @@ export default function HabitDetailsModal({
                 background: HP_TOKENS.yellowSoft, padding: 12, borderRadius: HP_TOKENS.radiusSm, marginBottom: 16,
                 border: `1px solid ${HP_TOKENS.yellow}`, display: 'flex', gap: 10, alignItems: 'flex-start'
               }}>
-                <span style={{ fontSize: 16 }}>⚠️</span>
-                <div style={{ ...HP_TEXT.small, color: HP_TOKENS.yellowDark, lineHeight: 1.4 }}>
+                <span style={{ fontSize: 16 }}><HPGlyph name="alertCircle" size={14} color="currentColor" /></span>
+                <div style={{ ...HP_TEXT.small, color: HP_TOKENS.yellowInk, lineHeight: 1.4 }}>
                   <strong>Konfirmasi:</strong> Kamu sedang mengubah data untuk hari yang sudah lewat. Apakah kamu terlewat atau salah pencet?
                 </div>
               </div>
@@ -93,7 +91,7 @@ export default function HabitDetailsModal({
                         }
                       }}
                       className="hp-tap"
-                      style={{ background: 'transparent', color: HP_TOKENS.coral, border: 'none', fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+                      style={{ background: 'transparent', color: HP_TOKENS.coralInk, border: 'none', fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
                     >
                       Batalkan Status Selesai
                     </button>

@@ -35,12 +35,22 @@ export default function ManagerMembersView({ membersList }: ManagerMembersViewPr
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <HPGlyph name={m.mood === 'joy' ? 'sparkle' : m.mood === 'stress' ? 'zap' : 'activity'} size={14} color={HP_TOKENS.ink} />
                   </div>
-                  <div style={{ flex: 1, height: 4, background: HP_TOKENS.lineSoft, borderRadius: 2, overflow: 'hidden' }}>
-                    <div style={{ width: `${m.wellbeing}%`, height: '100%', background: m.wellbeing > 70 ? HP_TOKENS.sage : m.wellbeing > 40 ? HP_TOKENS.yellow : HP_TOKENS.coral, borderRadius: 2 }} />
-                  </div>
-                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>
-                    {m.wellbeing > 80 ? '😊' : m.wellbeing > 60 ? '🙂' : m.wellbeing > 40 ? '😐' : '😟'} WB {m.wellbeing}%
-                  </div>
+                  {/* wellbeing is null when the member has never checked in —
+                      the bar used to render a made-up 70% for those people. */}
+                  {m.wellbeing === null || m.wellbeing === undefined ? (
+                    <div style={{ flex: 1, ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>
+                      Belum ada check-in mood
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{ flex: 1, height: 4, background: HP_TOKENS.lineSoft, borderRadius: 2, overflow: 'hidden' }}>
+                        <div style={{ width: `${m.wellbeing}%`, height: '100%', background: m.wellbeing > 70 ? HP_TOKENS.sage : m.wellbeing > 40 ? HP_TOKENS.yellow : HP_TOKENS.coral, borderRadius: 2 }} />
+                      </div>
+                      <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>
+                        {m.wellbeing > 80 ? '😊' : m.wellbeing > 60 ? '🙂' : m.wellbeing > 40 ? '😐' : '😟'} WB {m.wellbeing}%
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>
@@ -55,6 +65,11 @@ export default function ManagerMembersView({ membersList }: ManagerMembersViewPr
                 <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>
                   Task {m.tasks?.done || 0}/{m.tasks?.total || 0}
                 </div>
+                {(m.tasks?.awaitingReview || 0) > 0 && (
+                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.yellowInk, fontWeight: 700, marginTop: 2 }}>
+                    {m.tasks.awaitingReview} perlu ACC
+                  </div>
+                )}
               </div>
             </div>
           </HPCard>

@@ -213,7 +213,7 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
             <div style={{ textAlign: 'center', padding: 30, color: HP_TOKENS.inkMute }}>Memuat...</div>
           ) : surveys.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 20px', background: HP_TOKENS.lineSoft, borderRadius: HP_TOKENS.radius, border: `1.5px dashed ${HP_TOKENS.line}` }}>
-              <div style={{ fontSize: 32, marginBottom: 8 }}>📝</div>
+              <div style={{ fontSize: 32, marginBottom: 8 }}><HPGlyph name="note" size={27} color="currentColor" /></div>
               <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.inkMute }}>Belum ada survey</div>
             </div>
           ) : (() => {
@@ -286,11 +286,9 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
                         </button>
                         <button onClick={() => deleteSurvey(sr.id)} className="hp-tap" style={{
                           padding: '8px 12px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.coral}40`,
-                          background: HP_TOKENS.coralSoft, color: HP_TOKENS.coral,
+                          background: HP_TOKENS.coralSoft, color: HP_TOKENS.coralInk,
                           fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, cursor: 'pointer',
-                        }}>
-                          🗑
-                        </button>
+                        }}><HPGlyph name="trash" size={12} color="currentColor" /></button>
                       </div>
                     </HPCard>
                   ))}
@@ -362,7 +360,7 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
               onClick={() => setShowDeptDropdown(!showDeptDropdown)}
               style={{ ...inputStyle, cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
             >
-              <span>{targetAudience === 'company' ? '🏢 Seluruh Perusahaan' : `👥 Divisi Tertentu (${targetDepts.length})`}</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><HPGlyph name={targetAudience === 'company' ? 'home' : 'people'} size={14} color="currentColor" />{targetAudience === 'company' ? 'Seluruh Perusahaan' : `Divisi Tertentu (${targetDepts.length})`}</span>
               <HPGlyph name="arrowDown" size={14} color={HP_TOKENS.inkMute} />
             </div>
 
@@ -453,7 +451,7 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
                 <div style={{
                   width: 24, height: 24, borderRadius: 8, background: HP_TOKENS.lavenderSoft,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 11, fontWeight: 700, color: HP_TOKENS.lavender, fontFamily: HP_FONT
+                  fontSize: 11, fontWeight: 700, color: HP_TOKENS.lavenderInk, fontFamily: HP_FONT
                 }}>{idx + 1}</div>
                 <div style={{ flex: 1, ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>
                   {QUESTION_TYPES.find(t => t.key === q.type)?.icon} {QUESTION_TYPES.find(t => t.key === q.type)?.label}
@@ -466,7 +464,7 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
                     <HPGlyph name="arrowDown" size={12} color={HP_TOKENS.inkMute} />
                   </button>
                   <button onClick={() => removeQuestion(q.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}>
-                    <HPGlyph name="trash" size={12} color={HP_TOKENS.coral} />
+                    <HPGlyph name="trash" size={12} color={HP_TOKENS.coralInk} />
                   </button>
                 </div>
               </div>
@@ -486,7 +484,7 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
                       <input value={opt} onChange={e => updateOption(q.id, oi, e.target.value)} style={{ ...inputStyle, flex: 1, padding: '8px 12px', fontSize: 13 }} />
                       {(q.options?.length || 0) > 2 && (
                         <button onClick={() => removeOption(q.id, oi)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}>
-                          <HPGlyph name="close" size={12} color={HP_TOKENS.coral} />
+                          <HPGlyph name="close" size={12} color={HP_TOKENS.coralInk} />
                         </button>
                       )}
                     </div>
@@ -520,7 +518,7 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
             padding: '12px', borderRadius: HP_TOKENS.radiusMd, border: `1.5px dashed ${HP_TOKENS.lavender}50`,
             background: HP_TOKENS.lavenderSoft,
           }}>
-            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.lavender, fontWeight: 700, marginBottom: 8 }}>+ TAMBAH PERTANYAAN</div>
+            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.lavenderInk, fontWeight: 700, marginBottom: 8 }}>+ TAMBAH PERTANYAAN</div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {QUESTION_TYPES.map(t => (
                 <button key={t.key} onClick={() => addQuestion(t.key)} className="hp-tap" style={{

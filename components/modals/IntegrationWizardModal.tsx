@@ -101,7 +101,7 @@ export default function IntegrationWizardModal({ onClose }: IntegrationWizardMod
               width: 40, height: 40, borderRadius: HP_TOKENS.radiusSm, 
               background: HP_TOKENS.coralSoft, display: 'flex', alignItems: 'center', justifyContent: 'center' 
             }}>
-              <HPGlyph name="calendar" size={20} color={HP_TOKENS.coral} />
+              <HPGlyph name="calendar" size={20} color={HP_TOKENS.coralInk} />
             </div>
             <div>
               <div style={{ ...HP_TEXT.h, fontSize: 16 }}>Google Calendar Sync</div>

@@ -13,6 +13,8 @@ interface TabNavProps {
   tab: string;
   setTab: (tab: string) => void;
   userRole?: UserRole | null;
+  /** Employee/manager yang dititipi akses HR-Admin: dapat tab konsol tambahan. */
+  hrAccess?: boolean;
 }
 
 interface TabItem {
@@ -37,6 +39,7 @@ const TABS: Record<string, TabItem> = {
   my_kpi:    { key: "my_kpi",    label: "KPI Saya",     short: "KPI",     icon: "target",   hint: "Target pribadi" },
   team_goals:{ key: "goals",     label: "Tim & Target", short: "Target",  icon: "target",   hint: "Sasaran tim" },
   people:    { key: "goals",     label: "People",       short: "People",  icon: "people",   hint: "Data karyawan" },
+  hr_console:{ key: "hr_console",label: "HR",           short: "HR",      icon: "medal",    hint: "Konsol HR-Admin" },
   team:      { key: "team",      label: "Tim",          short: "Tim",     icon: "people",   hint: "Rekan kerja" },
   recognize: { key: "recognize", label: "Rewards",      short: "Reward",  icon: "trophy",   hint: "Apresiasi & poin" },
   chat:      { key: "chat",      label: "Chat",         short: "Chat",    icon: "activity", hint: "Pesan & aktivitas" },
@@ -48,10 +51,21 @@ const TAB_CONFIG: Record<UserRole, TabItem[]> = {
   hr: [TABS.home, TABS.calendar, TABS.people, TABS.team, TABS.recognize, TABS.chat],
 };
 
-export default function TabNav({ tab, setTab, userRole }: TabNavProps) {
+export default function TabNav({ tab, setTab, userRole, hrAccess }: TabNavProps) {
   const reduce = useReducedMotion();
   const roleKey = userRole && TAB_CONFIG[userRole] ? userRole : "employee";
-  const tabs = TAB_CONFIG[roleKey];
+  /*
+   * Akses HR bersifat menambah, bukan mengganti.
+   *
+   * Sebelumnya employee/manager yang diberi `hrAccess` menekan tombol switcher
+   * dan seluruh nav-nya berganti jadi nav HR — manager kehilangan Target & KPI
+   * Tim, employee kehilangan Target-nya. Sekarang konsol HR datang sebagai satu
+   * tab tambahan, jadi tidak ada satu pun layar peran aslinya yang tercabut.
+   */
+  const tabs =
+    hrAccess && roleKey !== "hr"
+      ? [...TAB_CONFIG[roleKey], TABS.hr_console]
+      : TAB_CONFIG[roleKey];
 
   return (
     <nav className="hp-app-nav" aria-label="Navigasi utama">

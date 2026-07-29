@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { wibHour, sqlWibDate, SQL_WIB_TODAY } from "@/lib/timeUtils";
+import { isDuplicateNotification } from "@/lib/notificationService";
 
 // GET: Cron endpoint — check who hasn't checked in, send reminders
 // Call this at 08:15, 09:00, 10:00 via external cron/Vercel cron
@@ -14,13 +16,13 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const hour = new Date().getHours();
+    const hour = wibHour();
 
-    // Get all users who haven't checked in today
+    // Get all users who haven't checked in today (hari WIB, bukan hari UTC)
     const absentRes = await db.execute(
-      `SELECT u.id, u.name FROM users u 
+      `SELECT u.id, u.name FROM users u
        WHERE u.id NOT IN (
-         SELECT a.user_id FROM attendance a WHERE DATE(a.check_in_at) = CURDATE()
+         SELECT a.user_id FROM attendance a WHERE ${sqlWibDate('a.check_in_at')} = ${SQL_WIB_TODAY}
        )`
     );
 
@@ -45,23 +47,34 @@ export async function GET(request: Request) {
     }
 
     let sent = 0;
+    let skipped = 0;
     for (const u of absentRes.rows) {
+      const userId = String(u.id);
+      // Cron ini dipanggil beberapa kali sepagi (08:15/09:00/10:00) dan dulu
+      // mengandalkan INSERT gagal untuk menahan duplikat — padahal tidak ada
+      // unique constraint-nya, jadi tidak pernah gagal dan pesan yang sama
+      // dikirim ulang setiap pemanggilan. Sekarang dicek eksplisit.
+      if (await isDuplicateNotification(userId, title, message, 12 * 60)) {
+        skipped++;
+        continue;
+      }
+
       const notifId = "n_cron_" + Date.now().toString(36) + "_" + sent;
       try {
         await db.execute({
           sql: "INSERT INTO notifications (id, user_id, title, message, type) VALUES (?, ?, ?, ?, ?)",
-          args: [notifId, String(u.id), title, message, type]
+          args: [notifId, userId, title, message, type]
         });
         sent++;
       } catch (e) {
-        // Skip duplicate notifications (same user, same day might already have one)
         console.warn(`Notification insert failed for ${u.id}:`, e);
       }
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: `Reminder sent to ${sent} users`,
       sent,
+      skipped,
       absentUsers: absentRes.rows.map(u => u.name)
     });
   } catch (error: any) {

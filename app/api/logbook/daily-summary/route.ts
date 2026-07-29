@@ -81,6 +81,9 @@ export async function GET(request: Request) {
         totalXP: 0,
         actionCount: 0,
         logbookEntries: 0,
+        // Checked in but never clocked out. The day is still recorded; this
+        // only flags it so the UI can say so.
+        openCheckOut: false,
         // Status: 'present' | 'late' | 'absent' | 'sick' | 'izin' | 'cuti' | 'weekend' | 'future'
         status: dayOfWeek === 0 || dayOfWeek === 6 ? 'weekend' : 
                 new Date(dateStr) > new Date() ? 'future' : 'absent',
@@ -99,6 +102,7 @@ export async function GET(request: Request) {
           duration: row.duration_minutes,
           mood: row.mood,
         };
+        dayMap[d].openCheckOut = !row.check_out_at;
         // Determine status
         if (['SICK', 'SAKIT'].includes(type)) dayMap[d].status = 'sick';
         else if (['IZIN'].includes(type)) dayMap[d].status = 'izin';
@@ -162,9 +166,13 @@ export async function GET(request: Request) {
 
 // Get detailed data for a specific day
 async function getDayDetail(userId: string, date: string) {
-  // 1. Attendance
+  // 1. Attendance — ikut nama kantor supaya detail hari menampilkan lokasi, bukan
+  // cuma jam masuk/pulang.
   const attRes = await db.execute({
-    sql: `SELECT * FROM attendance WHERE user_id = ? AND DATE(CONVERT_TZ(check_in_at, '+00:00', '+07:00')) = ?`,
+    sql: `SELECT a.*, o.name as office_name, o.lat as office_lat, o.lng as office_lng
+          FROM attendance a
+          LEFT JOIN office_locations o ON a.office_id = o.id
+          WHERE a.user_id = ? AND DATE(CONVERT_TZ(a.check_in_at, '+00:00', '+07:00')) = ?`,
     args: [userId, date]
   });
 
@@ -227,14 +235,84 @@ async function getDayDetail(userId: string, date: string) {
   }));
 
 
+  const attendance = (attRes.rows[0] as any) || null;
+  const totalXP = xpRes.rows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+
+  // 6. Last moment of recorded activity that day. This is what makes the
+  //    logbook independent of clock-out: if someone forgets to close the day,
+  //    the record still ends at the last thing they actually did rather than
+  //    at nothing.
+  const lastActivityRes = await db.execute({
+    sql: `SELECT MAX(t) AS last_at FROM (
+            SELECT MAX(created_at) AS t FROM xp_transactions
+              WHERE user_id = ? AND DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) = ?
+            UNION ALL
+            SELECT MAX(created_at) AS t FROM logbook_entries
+              WHERE user_id = ? AND DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) = ?
+            UNION ALL
+            SELECT MAX(completed_at) AS t FROM daily_priorities
+              WHERE user_id = ? AND DATE(CONVERT_TZ(completed_at, '+00:00', '+07:00')) = ?
+            UNION ALL
+            SELECT MAX(created_at) AS t FROM mood_checkins
+              WHERE user_id = ? AND DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) = ?
+          ) x`,
+    args: [userId, date, userId, date, userId, date, userId, date]
+  });
+
+  const toDate = (v: any): Date | null => {
+    if (!v) return null;
+    if (v instanceof Date) return v;
+    const s = String(v);
+    return new Date(s.endsWith('Z') ? s : s.replace(' ', 'T') + 'Z');
+  };
+
+  const checkIn = toDate(attendance?.check_in_at);
+  const checkOut = toDate(attendance?.check_out_at);
+  const lastActivity = toDate(lastActivityRes.rows[0]?.last_at);
+
+  // Today in WIB — an open record on today is still running, an open record on
+  // an earlier day is a forgotten clock-out.
+  const todayWib = new Date(Date.now() + 7 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const isToday = date === todayWib;
+
+  let workedMinutes: number | null = null;
+  if (checkIn) {
+    const end = checkOut
+      ? checkOut
+      : isToday
+        ? new Date()
+        : (lastActivity && lastActivity > checkIn ? lastActivity : null);
+    if (end) workedMinutes = Math.max(0, Math.round((end.getTime() - checkIn.getTime()) / 60000));
+  }
+
+  const doneTasks = tasks.filter(t => t.isDone).length;
+
   return NextResponse.json({
     date,
-    attendance: attRes.rows[0] || null,
+    attendance,
     mood: moodRes.rows[0] || null,
     xpBreakdown: xpRes.rows,
-    totalXP: xpRes.rows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0),
+    totalXP,
     logbookEntries: logRes.rows,
     tasks,
+    // Always present, always derived from what actually happened. The
+    // `daily_summary` logbook row written at clock-out is a nicety on top of
+    // this, not the source of truth.
+    daySummary: {
+      hasActivity: !!(attendance || lastActivity || tasks.length || logRes.rows.length),
+      checkInAt: attendance?.check_in_at ?? null,
+      checkOutAt: attendance?.check_out_at ?? null,
+      // True when they checked in and never closed the day.
+      openCheckOut: !!checkIn && !checkOut,
+      // For an open record this is "so far" (today) or "up to last activity".
+      workedMinutes,
+      workedIsEstimate: !!checkIn && !checkOut,
+      lastActivityAt: lastActivityRes.rows[0]?.last_at ?? null,
+      totalXP,
+      tasksDone: doneTasks,
+      tasksTotal: tasks.length,
+      noteCount: logRes.rows.length,
+    },
   });
 }
 

@@ -21,16 +21,28 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const { userId, type, title, content, points, metadata } = await req.json();
-    
+    const { userId, type, title, content, points, metadata, date } = await req.json();
+
     if (!userId || !type || !title) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     const id = uuidv4();
+
+    // `date` (YYYY-MM-DD, WIB) lets the user backfill a note onto an earlier
+    // day. Stamped at noon WIB so the row lands inside that day whichever way
+    // the reader converts it. Without it the entry is simply "now".
+    const backfill = typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date);
+
     await db.execute({
-      sql: "INSERT INTO logbook_entries (id, user_id, type, title, content, points, metadata_json) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      args: [id, userId, type, title, content || '', points || 0, JSON.stringify(metadata || {})]
+      sql: backfill
+        ? `INSERT INTO logbook_entries (id, user_id, type, title, content, points, metadata_json, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, CONVERT_TZ(CONCAT(?, ' 12:00:00'), '+07:00', '+00:00'))`
+        : `INSERT INTO logbook_entries (id, user_id, type, title, content, points, metadata_json)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      args: backfill
+        ? [id, userId, type, title, content || '', points || 0, JSON.stringify(metadata || {}), date]
+        : [id, userId, type, title, content || '', points || 0, JSON.stringify(metadata || {})]
     });
 
     return NextResponse.json({ success: true, id });

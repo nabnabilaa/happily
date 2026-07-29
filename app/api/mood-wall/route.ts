@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { sqlWibDate, SQL_WIB_TODAY } from "@/lib/timeUtils";
 
 const apiKey = process.env.GEMINI_API_KEY || '';
 const genAI = new GoogleGenerativeAI(apiKey);
@@ -9,7 +10,13 @@ const genAI = new GoogleGenerativeAI(apiKey);
 
 export async function GET() {
   try {
-    const result = await db.execute(`SELECT * FROM mood_wall_posts WHERE DATE(created_at) = CURDATE() ORDER BY created_at DESC LIMIT 50`);
+    // Mood wall direset tengah malam WIB — dengan CURDATE() (UTC) papan hari
+    // kemarin masih terpajang sampai jam 07:00 pagi.
+    const result = await db.execute(
+      `SELECT * FROM mood_wall_posts
+       WHERE ${sqlWibDate('created_at')} = ${SQL_WIB_TODAY}
+       ORDER BY created_at DESC LIMIT 50`
+    );
     return NextResponse.json({ posts: result.rows });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -87,7 +87,9 @@ export default function CentralNudgeOverlay({ nudge, onClose }: CentralNudgeOver
         }} />
 
         <div style={{ position: 'relative', zIndex: 1, marginTop: -60, marginBottom: 16 }}>
-          <BeeMascot mood={nudge?.type === 'kudos' ? 'happy' : 'idle'} size={120} showSpeech="" />
+          {/* A "senggol" is a poke, so Buddy reacts — `idle` here was the blue
+              resting skin, which made a nudge look like nothing happened. */}
+          <BeeMascot mood={nudge?.type === 'kudos' ? 'happy' : 'surprised'} size={120} showSpeech="" />
         </div>
 
         <div style={{ position: 'relative', zIndex: 1 }}>

@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { sqlWibDate, SQL_WIB_TODAY } from "@/lib/timeUtils";
+import { applyPenalty } from "@/lib/points";
+import { wibDateString } from "@/lib/timeUtils";
 
 // GET: Cron endpoint — check for inactive users and apply XP penalty
 // Spec v2: −15 XP/day starting from day 4 of inactivity (3 consecutive work days without activity)
@@ -51,9 +54,9 @@ export async function GET(request: Request) {
       if (workDaysSince > thresholdDays) {
         // Check if we already penalized this user today
         const alreadyPenalized = await db.execute({
-          sql: `SELECT id FROM xp_transactions 
-                WHERE user_id = ? AND action_type = 'penalty_inactive' 
-                AND DATE(created_at) = CURDATE()`,
+          sql: `SELECT id FROM xp_transactions
+                WHERE user_id = ? AND action_type = 'penalty_inactive'
+                AND ${sqlWibDate('created_at')} = ${SQL_WIB_TODAY}`,
           args: [String(user.id)]
         });
         
@@ -65,16 +68,15 @@ export async function GET(request: Request) {
         
         if (actualPenalty <= 0) continue;
         
-        // Apply penalty
-        const txId = "tx_pen_" + Date.now().toString(36) + "_" + penalized;
-        await db.execute({
-          sql: "INSERT INTO xp_transactions (id, user_id, amount, action_type, description) VALUES (?, ?, ?, ?, ?)",
-          args: [txId, String(user.id), -actualPenalty, 'penalty_inactive', `Tidak aktif ${workDaysSince} hari kerja. -${actualPenalty} XP`]
-        });
-        
-        await db.execute({
-          sql: "UPDATE users SET points = points - ? WHERE id = ?",
-          args: [actualPenalty, String(user.id)]
+        // Lewat lib/points.ts, bukan UPDATE langsung: pemotongan manual
+        // meninggalkan level dan rank di angka lama, jadi poin hilang tapi
+        // pangkatnya tetap. Kunci per user per hari juga membuat penalti tidak
+        // dobel kalau cron kebetulan jalan dua kali.
+        await applyPenalty({
+          userId: String(user.id),
+          amount: actualPenalty,
+          refId: `penalty:${wibDateString()}`,
+          reason: `Tidak aktif ${workDaysSince} hari kerja`,
         });
         
         // Notify user

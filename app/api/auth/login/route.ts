@@ -1,7 +1,21 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { seedDemoData } from "@/lib/demo-data";
+import { createSessionToken, sessionCookieOptions } from "@/lib/authSession";
 import bcrypt from "bcryptjs";
+
+/**
+ * Login adalah satu-satunya tempat identitas diterbitkan. Semua endpoint yang
+ * memakai `getAuthUserId` bergantung pada cookie yang dipasang di sini.
+ */
+function withSession(user: { id: any }) {
+  const response = NextResponse.json({ user });
+  response.cookies.set({
+    ...sessionCookieOptions(),
+    value: createSessionToken(String(user.id)),
+  });
+  return response;
+}
 
 export async function POST(request: Request) {
   try {
@@ -37,7 +51,7 @@ export async function POST(request: Request) {
           onboarded: !!fbUserRow.is_onboarded,
           hrAccess: Number(fbUserRow.hr_access) === 1
         };
-        return NextResponse.json({ user });
+        return withSession(user);
       }
     }
 
@@ -128,7 +142,7 @@ export async function POST(request: Request) {
       hrAccess: Number(fbUserRow.hr_access) === 1
     };
 
-    return NextResponse.json({ user });
+    return withSession(user);
   } catch (error) {
     console.error("Login Error:", error);
     return NextResponse.json({ error: "Terjadi kesalahan server saat memproses login" }, { status: 500 });

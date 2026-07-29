@@ -16,9 +16,22 @@ export function useHabitManager(
   }, []);
 
   const processHabitToggle = useCallback((name: string, date: Date, isToday: boolean, wasDone: boolean, newDone: boolean, note: string) => {
-    if (newDone && !wasDone) { 
-      notify('Latihan Selesai! 💪', '+20 Point', 'success');
-      awardXP('habit_complete', `Latihan: ${name}`);
+    // Poin latihan hanya untuk HARI INI.
+    //
+    // Kalender latihan boleh diisi mundur untuk merapikan catatan, tapi hari
+    // lampau tidak berpoin: dulu setiap centang retroaktif membayar penuh, jadi
+    // seseorang bisa menyisir mundur berminggu-minggu dan memanen poin dalam
+    // hitungan detik.
+    //
+    // Kuncinya `habit:<nama>:<tanggal>`, sehingga satu latihan hanya dibayar
+    // sekali per hari — mematikan-lalu-menyalakan ulang centangnya tidak
+    // menambah poin lagi.
+    if (newDone && !wasDone && isToday) {
+      const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      notify('Latihan Selesai! 💪', '+15 Poin', 'success');
+      awardXP('habit_complete', `Latihan: ${name}`, `habit:${name}:${dateKey}`);
+    } else if (newDone && !wasDone) {
+      notify('Latihan Tercatat 💪', 'Catatan hari lampau tersimpan (tanpa poin).', 'info');
     }
 
     updateState((s: any) => {
@@ -70,7 +83,7 @@ export function useHabitManager(
         content: note || (newDone ? 'Selesai' : 'Belum Selesai'),
         habitName: name,
         glyph: habit.glyph,
-        points: newDone && !wasDone ? 20 : 0,
+        points: newDone && !wasDone && isToday ? 15 : 0,
         date: date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
         day: date.toLocaleDateString('id-ID', { weekday: 'long' }),
         time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
@@ -91,7 +104,8 @@ export function useHabitManager(
     setConfetti(true);
     setCelebrate({show: true, points: 500, message: `Tamat Training: ${name}`});
     setTimeout(() => setConfetti(false), 2000);
-    awardXP('training_graduated', `Tamat Training: ${name}`);
+    // Kunci per program latihan: kelulusan hanya dibayar sekali seumur hidup.
+    awardXP('training_graduated', `Tamat Training: ${name}`, `habit:${name}:grad`);
 
     updateState((s: any) => {
       const hIndex = s.habits.findIndex((h: any) => h.name === name);

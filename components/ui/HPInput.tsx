@@ -54,7 +54,7 @@ function Wrap({
       {children}
       {/* Errors take the slot when present — never show both, it doubles the noise. */}
       {error ? (
-        <span role="alert" style={{ ...HP_TEXT.small, color: HP_TOKENS.danger }}>
+        <span role="alert" style={{ ...HP_TEXT.small, color: HP_TOKENS.dangerInk }}>
           {error}
         </span>
       ) : (

@@ -26,6 +26,16 @@ interface CalEvent {
   attendees?: { id: string; name: string; email: string; }[];
 }
 
+interface GCalStatus {
+  connected: boolean;
+  /** false kalau server belum punya GOOGLE_CLIENT_SECRET — fitur disembunyikan, bukan ditawarkan lalu gagal. */
+  available: boolean;
+  needsReconsent?: boolean;
+  googleEmail?: string | null;
+  lastSyncedAt?: string | null;
+  reason?: string;
+}
+
 interface Props { openModal: (name: string, props?: any) => void; }
 
 const DAYS = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
@@ -99,19 +109,71 @@ function CalendarScreenInner({ openModal }: Props) {
   const [allDivisions, setAllDivisions] = useState<string[]>([]);
   const [eventToDelete, setEventToDelete] = useState<string | null>(null);
 
-  // Google Calendar Integration
-  const [gCalToken, setGCalToken] = useState<string | null>(null);
-  
-  const loginToGoogleCalendar = useGoogleLogin({
+  // ── Google Calendar ───────────────────────────────────────────────────────
+  // Tidak ada lagi access token yang hidup di state komponen. Izin permanen
+  // disimpan server-side saat login, jadi layar ini cuma perlu tahu status dan
+  // memicu sinkronisasi — bukan memegang kredensial yang mati satu jam lagi.
+  const [gcal, setGcal] = useState<GCalStatus | null>(null);
+  const [gcalSyncing, setGcalSyncing] = useState(false);
+
+  const gcalConnected = Boolean(gcal?.connected && !gcal?.needsReconsent);
+
+  const connectGoogleCalendar = useGoogleLogin({
+    flow: 'auth-code',
     scope: 'https://www.googleapis.com/auth/calendar.events',
-    onSuccess: (tokenResponse) => {
-      setGCalToken(tokenResponse.access_token);
-      notify("Berhasil", "G-Calendar berhasil dihubungkan!", "success");
+    onSuccess: async (response) => {
+      try {
+        const res = await fetch('/api/calendar/google', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: (response as any).code }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Gagal menghubungkan');
+
+        notify('Kalender tersambung', 'Google Calendar tersambung permanen. Kamu tidak perlu menghubungkan lagi.', 'success');
+        await refreshGcalStatus({ thenSync: true });
+      } catch (e: any) {
+        notify('Gagal', e?.message || 'Tidak dapat menghubungkan Google Calendar.', 'error');
+      }
     },
     onError: () => {
-      notify("Gagal", "Tidak dapat menghubungkan G-Calendar.", "error");
-    }
+      notify('Gagal', 'Tidak dapat menghubungkan Google Calendar.', 'error');
+    },
   });
+
+  const refreshGcalStatus = async (opts: { thenSync?: boolean } = {}) => {
+    try {
+      const res = await fetch('/api/calendar/google');
+      if (!res.ok) return null;
+      const data: GCalStatus = await res.json();
+      setGcal(data);
+      if (opts.thenSync && data.connected && !data.needsReconsent) runGcalSync();
+      return data;
+    } catch {
+      return null;
+    }
+  };
+
+  const runGcalSync = async () => {
+    setGcalSyncing(true);
+    try {
+      const res = await fetch('/api/calendar/google/sync', { method: 'POST' });
+      const data = await res.json();
+
+      if (data.status === 'needs_reconsent') {
+        setGcal(prev => (prev ? { ...prev, needsReconsent: true } : prev));
+      } else if (data.status === 'ok') {
+        setGcal(prev => (prev ? { ...prev, lastSyncedAt: new Date().toISOString() } : prev));
+        // Hanya muat ulang kalau memang ada yang berubah — sinkronisasi kosong
+        // terjadi tiap kali tab dibuka.
+        if (data.pulled || data.updated || data.deleted) fetchData();
+      }
+    } catch (e) {
+      console.error('GCal sync error', e);
+    }
+    setGcalSyncing(false);
+  };
 
   // Form state
   const [title, setTitle] = useState('');
@@ -138,6 +200,13 @@ function CalendarScreenInner({ openModal }: Props) {
     };
     window.addEventListener('hp_db_update', handleUpdate);
     return () => window.removeEventListener('hp_db_update', handleUpdate);
+  }, []);
+
+  // Sinkronisasi otomatis tiap kali layar Kalender dibuka. Cron sudah menarik
+  // perubahan tiap 15 menit di latar; ini yang menutup celah antara tarikan
+  // terakhir dan detik user melihat layarnya.
+  useEffect(() => {
+    refreshGcalStatus({ thenSync: true });
   }, []);
 
   const fetchData = async () => {
@@ -288,33 +357,13 @@ function CalendarScreenInner({ openModal }: Props) {
         }).filter(Boolean) as any[]
       };
 
-      if (gCalToken) {
-        // Auto-sync
-        try {
-          const gcalEvent = {
-            summary: title,
-            description: desc,
-            location: location || undefined,
-            start: { dateTime: startDT.toISOString() },
-            end: { dateTime: endDT.toISOString() },
-            attendees: tempEv.attendees?.map(a => ({ email: a.email }))
-          };
-          
-          await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${gCalToken}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(gcalEvent)
-          });
-          notify('Agenda Dibuat & Tersinkronisasi', `"${title}" berhasil ditambahkan ke Flowbee dan G-Calendar.`, 'success');
-        } catch (e) {
-          console.error("GCal Sync Error", e);
-          notify('Agenda Dibuat', `Gagal auto-sync ke G-Calendar.`, 'error');
-          setSyncEvent(tempEv);
-        }
+      // Dorongan ke Google dikerjakan server saat POST /api/calendar, memakai
+      // izin permanen milik user. Layar ini tidak lagi memegang access token
+      // dan tidak lagi memanggil googleapis.com langsung.
+      if (gcalConnected) {
+        notify('Agenda dibuat & tersinkron', `"${title}" sudah masuk ke Flowbee dan Google Calendar.`, 'success');
       } else {
+        // Jalan mundur untuk user yang belum memberi izin: tautan manual lama.
         setSyncEvent(tempEv);
         notify('Agenda Dibuat', `"${title}" berhasil ditambahkan ke Flowbee.`, 'success');
       }
@@ -406,21 +455,53 @@ function CalendarScreenInner({ openModal }: Props) {
     <div style={{ padding: '0 16px 120px', fontFamily: HP_FONT }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <ScreenHeader title="📅 Kalender Kerja" subtitle="Jadwal, rapat, deadline — semua di satu tempat" />
-        <button 
-          onClick={() => loginToGoogleCalendar()}
-          className="hp-tap"
-          style={{
-            padding: '8px 12px', borderRadius: HP_TOKENS.radiusSm, border: 'none',
-            background: gCalToken ? HP_TOKENS.sageWash : HP_TOKENS.blueWash, 
-            color: gCalToken ? HP_TOKENS.sage : HP_TOKENS.blue,
-            fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, cursor: 'pointer',
+
+        {/* Penanda status, bukan tombol. Menyambungkan kalender bukan lagi
+            pekerjaan user — kalau ada yang perlu ditindaklanjuti, kartu di
+            bawah yang mengatakannya dengan jelas. */}
+        {gcalConnected && (
+          <div style={{
+            padding: '8px 12px', borderRadius: HP_TOKENS.radiusSm, ...HP_TEXT.small,
+            background: HP_TOKENS.successWash, color: HP_TOKENS.successInk,
             display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap'
-          }}
-        >
-          <HPGlyph name="calendar" size={16} color={gCalToken ? HP_TOKENS.sage : HP_TOKENS.blue} />
-          {gCalToken ? 'Tersambung' : 'Hubungkan'}
-        </button>
+          }}>
+            <HPGlyph name={gcalSyncing ? 'refresh' : 'check'} size={16} color={HP_TOKENS.successInk} />
+            {gcalSyncing ? 'Menyinkronkan…' : 'Tersinkron'}
+          </div>
+        )}
       </div>
+
+      {/* Jalan mundur untuk akun yang dibuat sebelum izin kalender ikut di
+          layar login — dan untuk yang izinnya dicabut. Sekali klik, lalu
+          kartu ini tidak pernah muncul lagi. */}
+      {gcal?.available && !gcalConnected && (
+        <HPCard padding={16} style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
+            <HPGlyph name="calendar" size={22} color={HP_TOKENS.primaryInk} />
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.ink }}>
+                {gcal.needsReconsent ? 'Izin Google Calendar perlu diperbarui' : 'Sambungkan Google Calendar'}
+              </div>
+              <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkSoft, marginTop: 2 }}>
+                {gcal.needsReconsent
+                  ? 'Akses ke kalendermu ditolak Google. Beri izin sekali lagi untuk melanjutkan sinkronisasi otomatis.'
+                  : 'Cukup sekali. Setelah itu agenda Flowbee dan Google Calendar tersinkron otomatis dua arah.'}
+              </div>
+            </div>
+            <button
+              onClick={() => connectGoogleCalendar()}
+              className="hp-tap"
+              style={{
+                padding: '12px 18px', borderRadius: HP_TOKENS.radiusSm, border: 'none', ...HP_TEXT.label,
+                background: HP_TOKENS.primary, color: HP_TOKENS.onPrimary,
+                fontFamily: HP_FONT, cursor: 'pointer', minHeight: 44,
+              }}
+            >
+              {gcal.needsReconsent ? 'Beri izin ulang' : 'Sambungkan'}
+            </button>
+          </div>
+        </HPCard>
+      )}
 
       {/* Calendar Navigation */}
       <HPCard padding={0} style={{ marginBottom: 16, overflow: 'hidden' }}>
@@ -505,7 +586,7 @@ function CalendarScreenInner({ openModal }: Props) {
           <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>
             {eventsOnDate.length} agenda
             {isLastWorkingDayOfMonth(selectedDate) && (
-              <span style={{ color: HP_TOKENS.coral, fontWeight: 700 }}> • 📊 HARI KERJA AKHIR BULAN</span>
+              <span style={{ color: HP_TOKENS.coralInk, fontWeight: 700 }}> • 📊 HARI KERJA AKHIR BULAN</span>
             )}
           </div>
         </div>
@@ -804,9 +885,9 @@ function CalendarScreenInner({ openModal }: Props) {
       {syncEvent && (
         <HPCard padding={16} style={{ marginBottom: 16, background: HP_TOKENS.yellowWash, border: `1.5px solid ${HP_TOKENS.yellow}40` }}>
           <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-            <div style={{ fontSize: 28 }}>⚠️</div>
+            <div style={{ fontSize: 28 }}><HPGlyph name="alertCircle" size={24} color="currentColor" /></div>
             <div style={{ flex: 1 }}>
-              <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.yellowDark }}>Belum tersimpan di Google Calendar!</div>
+              <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.yellowInk }}>Belum tersimpan di Google Calendar!</div>
               <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkSoft, marginTop: 2 }}>
                 Agenda <strong>{syncEvent.title}</strong> sudah dibuat di Flowbee. 
                 {syncEvent.attendees && syncEvent.attendees.length > 0 ? (
@@ -822,7 +903,7 @@ function CalendarScreenInner({ openModal }: Props) {
                 className="hp-tap"
                 style={{
                   padding: '10px 16px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.yellow}60`,
-                  background: 'transparent', color: HP_TOKENS.yellowDark,
+                  background: 'transparent', color: HP_TOKENS.yellowInk,
                   fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, cursor: 'pointer',
                 }}
               >
@@ -853,7 +934,7 @@ function CalendarScreenInner({ openModal }: Props) {
         <div style={{ textAlign: 'center', padding: 40, color: HP_TOKENS.inkMute }}>Memuat kalender...</div>
       ) : eventsOnDate.length === 0 ? (
         <HPCard padding={30} style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 32, marginBottom: 8 }}>📭</div>
+          <div style={{ fontSize: 32, marginBottom: 8 }}><HPGlyph name="mail" size={27} color="currentColor" /></div>
           <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.inkMute }}>Tidak ada agenda hari ini</div>
           <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkFade, marginTop: 4 }}>Klik "Buat Agenda" untuk menambahkan</div>
         </HPCard>
@@ -888,13 +969,13 @@ function CalendarScreenInner({ openModal }: Props) {
                           {ev.recurrence && (
                             <div style={{
                               ...HP_TEXT.tiny, padding: '1px 6px', borderRadius: 4,
-                              background: HP_TOKENS.sageSoft, color: HP_TOKENS.sage, fontWeight: 700,
+                              background: HP_TOKENS.sageSoft, color: HP_TOKENS.sageInk, fontWeight: 700,
                             }}>🔁 {ev.recurrence}</div>
                           )}
                           {!isOwner && (
                             <div style={{
                               ...HP_TEXT.tiny, padding: '1px 6px', borderRadius: 4,
-                              background: HP_TOKENS.lavenderSoft, color: HP_TOKENS.primary, fontWeight: 700,
+                              background: HP_TOKENS.lavenderSoft, color: HP_TOKENS.primaryInk, fontWeight: 700,
                             }}>UNDANGAN</div>
                           )}
                         </div>
@@ -906,26 +987,32 @@ function CalendarScreenInner({ openModal }: Props) {
                         )}
                       </div>
                       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                        <a
-                          href={getGoogleCalendarUrl(ev)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title="Tambahkan ke Google Calendar"
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            background: "none",
-                            border: "none",
-                            cursor: "pointer",
-                            padding: 4,
-                            borderRadius: 6,
-                            textDecoration: "none",
-                          }}
-                          className="hp-tap"
-                        >
-                          <HPGlyph name="calendar" size={14} color={HP_TOKENS.blue} />
-                        </a>
+                        {/* Jalan manual, hanya untuk yang belum menyambungkan
+                            Google. Bagi yang sudah, event ini sudah ada di
+                            kalender mereka — menekan tombol ini justru
+                            membuat salinan kedua. */}
+                        {!gcalConnected && (
+                          <a
+                            href={getGoogleCalendarUrl(ev)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Tambahkan ke Google Calendar"
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              background: "none",
+                              border: "none",
+                              cursor: "pointer",
+                              padding: 4,
+                              borderRadius: 6,
+                              textDecoration: "none",
+                            }}
+                            className="hp-tap"
+                          >
+                            <HPGlyph name="calendar" size={14} color={HP_TOKENS.blue} />
+                          </a>
+                        )}
                         {isOwner && (
                           <button onClick={() => setEventToDelete(ev.id)} style={{
                             background: 'none', border: 'none', cursor: 'pointer', padding: 4,
@@ -948,9 +1035,9 @@ function CalendarScreenInner({ openModal }: Props) {
         <div style={{ marginTop: 20 }}>
           <HPCard padding={16} style={{ background: HP_TOKENS.coralSoft, border: `1.5px solid ${HP_TOKENS.coral}40` }}>
             <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-              <div style={{ fontSize: 28 }}>📊</div>
+              <div style={{ fontSize: 28 }}><HPGlyph name="chart" size={24} color="currentColor" /></div>
               <div style={{ flex: 1 }}>
-                <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.coral }}>Hari Kerja Akhir Bulan</div>
+                <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.coralInk }}>Hari Kerja Akhir Bulan</div>
                 <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkSoft, marginTop: 2 }}>
                   Waktunya review laporan bulanan dan analisa KPI bulan ini!
                 </div>
@@ -985,7 +1072,7 @@ function CalendarScreenInner({ openModal }: Props) {
             boxShadow: HP_TOKENS.shadowLg,
             animation: 'hpPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }}>
-            <div style={{ width: 64, height: 64, borderRadius: '50%', background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: HP_TOKENS.coralWash, color: HP_TOKENS.coralInk, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
               <HPGlyph name="calendar" size={32} />
             </div>
             <div style={{ ...HP_TEXT.h, fontSize: 20, marginBottom: 8 }}>Hapus Agenda?</div>

@@ -120,7 +120,7 @@ export default function ManageContactsModal({ onClose }: ManageContactsModalProp
                     onClick={() => handleDelete(c.id)}
                     style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: 8 }}
                   >
-                    <HPGlyph name="trash" size={18} color={HP_TOKENS.coral} />
+                    <HPGlyph name="trash" size={18} color={HP_TOKENS.coralInk} />
                   </button>
                 </HPCard>
               ))

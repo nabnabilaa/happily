@@ -64,7 +64,7 @@ export default function PointsHeroCard({
         <Spacer />
 
         <IconBadge size={44} tone={HP_TOKENS.yellowSoft}>
-          <HPGlyph name="trophy" size={22} color={HP_TOKENS.yellowDark} />
+          <HPGlyph name="trophy" size={22} color={HP_TOKENS.yellowInk} />
         </IconBadge>
       </Row>
 

@@ -21,6 +21,12 @@ function scoreColor(n: number) {
   return n >= 80 ? HP_TOKENS.sage : n >= 60 ? HP_TOKENS.yellow : HP_TOKENS.coral;
 }
 
+/** Legible twin of `scoreColor`. Use wherever the score is printed rather
+ *  than filled — the 60-79 band is yellow, which is 2.2:1 on white. */
+function scoreInk(n: number) {
+  return n >= 80 ? HP_TOKENS.sageInk : n >= 60 ? HP_TOKENS.yellowInk : HP_TOKENS.coralInk;
+}
+
 function ProgressBar({ value, max = 100, color, height = 8 }: { value: number; max?: number; color: string; height?: number }) {
   const pct = Math.min(100, Math.round((value / Math.max(1, max)) * 100));
   return (
@@ -71,10 +77,10 @@ function TaskRow({ t }: { t: any }) {
           </div>
         )}
         {t.status === 'revision' && (
-          <div style={{ background: HP_TOKENS.yellowWash, borderRadius: 6, padding: '2px 6px', fontSize: 9, fontWeight: 700, color: HP_TOKENS.yellowDark }}>REVISI</div>
+          <div style={{ background: HP_TOKENS.yellowWash, borderRadius: 6, padding: '2px 6px', fontSize: 9, fontWeight: 700, color: HP_TOKENS.yellowInk }}>REVISI</div>
         )}
         {t.status === 'reject' && (
-          <div style={{ background: HP_TOKENS.coralSoft, borderRadius: 6, padding: '2px 6px', fontSize: 9, fontWeight: 700, color: HP_TOKENS.coral }}>TOLAK</div>
+          <div style={{ background: HP_TOKENS.coralSoft, borderRadius: 6, padding: '2px 6px', fontSize: 9, fontWeight: 700, color: HP_TOKENS.coralInk }}>TOLAK</div>
         )}
         {hasDetail && <HPGlyph name={open ? 'chevron-up' : 'chevron-down'} size={12} color={HP_TOKENS.inkMute} />}
       </div>
@@ -264,6 +270,10 @@ function AISummarySection({ member, type, accentColor, onGenerate, generating }:
   onGenerate: () => void; generating: boolean;
 }) {
   const curWeek = currentWeekOfMonth();
+  // `accentColor` is the surface tint the caller passes in — it fills panels and
+  // dashes borders, which owe 3:1. Text in here needs 4.5:1, so it reads the
+  // matching ink step instead of inheriting the fill's shade.
+  const accentInk = type === 'weekly' ? HP_TOKENS.blue : HP_TOKENS.primaryInk;
 
   if (type === 'weekly') {
     const summary = member.aiWeeklySummaries?.[member.aiWeeklySummaries.length - 1];
@@ -289,17 +299,17 @@ function AISummarySection({ member, type, accentColor, onGenerate, generating }:
     return (
       <div style={{ background: `${accentColor}08`, border: `1px solid ${accentColor}30`, borderRadius: HP_TOKENS.radiusMd, padding: 14, marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: accentColor }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: accentInk }}>
             🤖 RANGKUMAN AI — {new Date(summary.weekStart).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} – {new Date(summary.weekEnd).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
           </div>
-          <div style={{ padding: '2px 8px', borderRadius: HP_TOKENS.radiusSm, background: `${scoreColor(summary.score)}20`, fontSize: 10, fontWeight: 700, color: scoreColor(summary.score) }}>
+          <div style={{ padding: '2px 8px', borderRadius: HP_TOKENS.radiusSm, background: `${scoreColor(summary.score)}20`, fontSize: 10, fontWeight: 700, color: scoreInk(summary.score) }}>
             Skor {summary.score}
           </div>
         </div>
         <div style={{ fontSize: 13, lineHeight: 1.6, color: HP_TOKENS.ink }}>{summary.text}</div>
         <button onClick={onGenerate} disabled={generating} style={{
           marginTop: 8, padding: '6px 12px', borderRadius: 8, border: `1px solid ${accentColor}40`,
-          background: 'transparent', color: accentColor,
+          background: 'transparent', color: accentInk,
           fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, cursor: generating ? 'default' : 'pointer'
         }}>
           {generating ? '⏳ Updating...' : '↻ Perbarui'}
@@ -365,14 +375,14 @@ function AISummarySection({ member, type, accentColor, onGenerate, generating }:
       {/* Monthly AI analysis */}
       {member.aiMonthlyAnalysis && (
         <div style={{ background: `${accentColor}08`, border: `1px solid ${accentColor}30`, borderRadius: HP_TOKENS.radiusMd, padding: 14 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: accentColor, marginBottom: 8 }}>🔮 ANALISA BULANAN AI</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: accentInk, marginBottom: 8 }}>🔮 ANALISA BULANAN AI</div>
           <div style={{ fontSize: 13, lineHeight: 1.6, color: HP_TOKENS.ink }}>{member.aiMonthlyAnalysis}</div>
         </div>
       )}
 
       <button onClick={onGenerate} disabled={generating} style={{
         marginTop: 8, padding: '6px 12px', borderRadius: 8, border: `1px solid ${accentColor}40`,
-        background: 'transparent', color: accentColor,
+        background: 'transparent', color: accentInk,
         fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, cursor: generating ? 'default' : 'pointer'
       }}>
         {generating ? '⏳ Updating...' : '↻ Perbarui Analisa'}
@@ -467,7 +477,11 @@ async function exportExcel(members: any[], type: 'weekly' | 'monthly', periodLab
 export default function AIAuditModal({ onClose, type }: AIAuditModalProps) {
   const { user } = useHP();
   const isWeekly = type === 'weekly';
+  // `blue` is the deep brand neutral and is legible as-is; `primary` needs
+  // its ink step to clear 4.5:1 on the tinted panel this sits in.
   const accentColor = isWeekly ? HP_TOKENS.blue : HP_TOKENS.primary;
+  /** Text/glyph twin — `accentColor` tints panels, this one is readable. */
+  const accentInk = isWeekly ? HP_TOKENS.blue : HP_TOKENS.primaryInk;
 
   const now = new Date();
   const month = now.getMonth() + 1;
@@ -548,7 +562,7 @@ export default function AIAuditModal({ onClose, type }: AIAuditModalProps) {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             margin: '0 auto 20px', animation: 'hpPulse 1.5s infinite'
           }}>
-            <HPGlyph name="sparkle" size={40} color={accentColor} />
+            <HPGlyph name="sparkle" size={40} color={accentInk} />
           </div>
           <div style={{ ...HP_TEXT.h, fontSize: 16 }}>Memuat data tim...</div>
           <div style={{ fontSize: 13, color: HP_TOKENS.inkMute, marginTop: 6 }}>
@@ -557,8 +571,8 @@ export default function AIAuditModal({ onClose, type }: AIAuditModalProps) {
         </div>
       ) : error ? (
         <div style={{ padding: 24, textAlign: 'center' }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: HP_TOKENS.coral }}>{error}</div>
+          <div style={{ fontSize: 40, marginBottom: 12 }}><HPGlyph name="alertCircle" size={28} color="currentColor" /></div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: HP_TOKENS.coralInk }}>{error}</div>
           <button onClick={fetchData} style={{
             marginTop: 16, padding: '10px 20px', borderRadius: HP_TOKENS.radiusSm, border: 'none',
             background: accentColor, color: '#fff', fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: 'pointer'
@@ -598,13 +612,13 @@ export default function AIAuditModal({ onClose, type }: AIAuditModalProps) {
               style={{
                 flexShrink: 0, padding: '10px 14px', borderRadius: HP_TOKENS.radiusSm,
                 border: `1.5px solid ${HP_TOKENS.sage}60`,
-                background: HP_TOKENS.sageWash, color: HP_TOKENS.sage,
+                background: HP_TOKENS.sageWash, color: HP_TOKENS.sageInk,
                 fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, cursor: exporting ? 'default' : 'pointer',
                 display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap'
               }}
               className="hp-tap"
             >
-              <HPGlyph name="download" size={14} color={HP_TOKENS.sage} />
+              <HPGlyph name="download" size={14} color={HP_TOKENS.sageInk} />
               {exporting ? 'Exporting...' : 'Export Excel'}
             </button>
           </div>
@@ -612,7 +626,7 @@ export default function AIAuditModal({ onClose, type }: AIAuditModalProps) {
           {/* Period chip */}
           <div style={{
             padding: '6px 12px', borderRadius: 8, background: `${accentColor}10`,
-            border: `1px solid ${accentColor}25`, fontSize: 11, fontWeight: 700, color: accentColor
+            border: `1px solid ${accentColor}25`, fontSize: 11, fontWeight: 700, color: accentInk
           }}>
             {isWeekly ? '📅' : '🗓️'} {periodLabel} · {members.length} anggota
           </div>

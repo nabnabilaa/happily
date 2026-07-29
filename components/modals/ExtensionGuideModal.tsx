@@ -94,7 +94,7 @@ export default function ExtensionGuideModal({ onClose }: ExtensionGuideModalProp
         <div style={{ padding: '32px 24px', background: HP_TOKENS.paper, flex: 1, overflowY: 'auto', minHeight: 0 }}>
           {isExtensionInstalled ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px', textAlign: 'center', gap: 16 }}>
-              <div style={{ width: 64, height: 64, borderRadius: '50%', background: HP_TOKENS.sageWash, color: HP_TOKENS.sage, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+              <div style={{ width: 64, height: 64, borderRadius: '50%', background: HP_TOKENS.sageWash, color: HP_TOKENS.sageInk, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
                 <HPGlyph name="check" size={32} stroke={3} />
               </div>
               <h3 style={{ ...HP_TEXT.h, fontSize: 20, color: HP_TOKENS.ink, margin: 0 }}>Ekstensi Terpasang!</h3>
@@ -132,7 +132,7 @@ export default function ExtensionGuideModal({ onClose }: ExtensionGuideModalProp
                 text={
                   <>
                     Buka tab baru, dan paste URL berikut:
-                    <div style={{ marginTop: 8, padding: '8px 12px', background: HP_TOKENS.card, border: `1px solid ${HP_TOKENS.lineSoft}`, borderRadius: 8, color: HP_TOKENS.yellowDark, fontFamily: 'monospace', fontWeight: 'bold' }}>
+                    <div style={{ marginTop: 8, padding: '8px 12px', background: HP_TOKENS.card, border: `1px solid ${HP_TOKENS.lineSoft}`, borderRadius: 8, color: HP_TOKENS.yellowInk, fontFamily: 'monospace', fontWeight: 'bold' }}>
                       chrome://extensions/
                     </div>
                   </>

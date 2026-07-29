@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { dispatchNotification } from '@/lib/notificationService';
+import { SQL_WIB_TODAY } from '@/lib/timeUtils';
 
 const CHALLENGE_TEMPLATES = [
   {
@@ -65,8 +66,12 @@ export async function GET(request: Request) {
       for (const challenge of selected) {
         const id = "chal_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
         await db.execute({
+          // Kedaluwarsa tengah malam WIB. `expires_at` disimpan sebagai UTC,
+          // jadi tengah malam WIB besok dikonversi balik ke UTC (= 17:00 hari
+          // ini). Sebelumnya DATE_ADD(CURDATE(), 1) berarti tengah malam UTC,
+          // alias jam 07:00 pagi WIB — tantangan mati di tengah jam kerja.
           sql: `INSERT INTO active_challenges (id, user_id, title, description, points, target, expires_at)
-                VALUES (?, ?, ?, ?, ?, ?, DATE_ADD(CURDATE(), INTERVAL 1 DAY))`,
+                VALUES (?, ?, ?, ?, ?, ?, CONVERT_TZ(DATE_ADD(${SQL_WIB_TODAY}, INTERVAL 1 DAY), '+07:00', '+00:00'))`,
           args: [id, user.id, challenge.title, challenge.description, challenge.points, challenge.target]
         });
         assignedCount++;

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useHP } from "@/lib/HPContext";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
 import Modal from "@/components/ui/Modal";
+import HPGlyph from "@/components/ui/HPGlyph";
 
 interface LearningDetailModalProps {
   onClose: () => void;
@@ -61,7 +62,18 @@ export default function LearningDetailModal({ onClose }: LearningDetailModalProp
     const isCorrect = selectedAnswer === moduleData.quiz.correctIndex;
     if (isCorrect) {
       setQuizResult('success');
-      await awardXP('learning_complete', `Lulus Kuis: ${moduleData.title}`);
+      // Modul ini dibuat AI on-the-fly dan tidak pernah disimpan, jadi ia tidak
+      // punya `id` — `module:${moduleData.id}` menghasilkan "module:undefined",
+      // satu kunci yang sama untuk SEMUA modul selamanya. Akibatnya hanya modul
+      // pertama seumur hidup yang dibayar; sisanya diam-diam bernilai nol.
+      //
+      // Judul + tanggal memberi identitas yang cukup: dua modul berbeda di hari
+      // yang sama tetap dibayar terpisah, sementara mengulang kuis modul yang
+      // sama tidak dibayar dua kali. Batas 2 modul/hari dijaga kuota.
+      const moduleKey = String(moduleData.title || 'modul')
+        .toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 48);
+      const today = new Date().toISOString().slice(0, 10);
+      await awardXP('learning_complete', `Lulus Kuis: ${moduleData.title}`, `module:${moduleKey}:${today}`);
       syncSkillProgress(moduleData.topic || "Soft Skill", 10);
     } else {
       setQuizResult('fail');
@@ -73,7 +85,7 @@ export default function LearningDetailModal({ onClose }: LearningDetailModalProp
     if (loading) {
       return (
         <div style={{ padding: 40, textAlign: 'center', color: HP_TOKENS.inkMute }}>
-          <div style={{ fontSize: 32, marginBottom: 16 }}>🧠</div>
+          <div style={{ fontSize: 32, marginBottom: 16 }}><HPGlyph name="sparkle" size={27} color="currentColor" /></div>
           <div>AI Coach sedang menyusun materi khusus untukmu...</div>
         </div>
       );
@@ -81,7 +93,7 @@ export default function LearningDetailModal({ onClose }: LearningDetailModalProp
 
     if (!moduleData) {
       return (
-        <div style={{ padding: 40, textAlign: 'center', color: HP_TOKENS.coral }}>
+        <div style={{ padding: 40, textAlign: 'center', color: HP_TOKENS.coralInk }}>
           Gagal mengambil materi. Coba lagi nanti.
         </div>
       );
@@ -93,7 +105,7 @@ export default function LearningDetailModal({ onClose }: LearningDetailModalProp
     if (isResultScreen) {
       return (
         <div style={{ textAlign: 'center', marginTop: 24 }}>
-          <div style={{ fontSize: 64 }}>{quizResult === 'success' ? '🎉' : '💪'}</div>
+          <div style={{ display: 'flex', justifyContent: 'center' }}><HPGlyph name={quizResult === 'success' ? 'sparkle' : 'zap'} size={44} color="currentColor" /></div>
           <div style={{ ...HP_TEXT.h, fontSize: 24, marginTop: 16 }}>
             {quizResult === 'success' ? 'Luar Biasa!' : 'Tetap Semangat!'}
           </div>

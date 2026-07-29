@@ -7,27 +7,40 @@ import HPCard from "@/components/ui/HPCard";
 import HPChip from "@/components/ui/HPChip";
 import HPBar from "@/components/ui/HPBar";
 import HPGlyph from "@/components/ui/HPGlyph";
+import { isAwaitingReview } from "@/lib/taskStatus";
 
 interface GoalCardProps {
   g: any;
   isReadOnly?: boolean;
   tasks?: any[];
   onEditProgress?: (progress: number) => void;
+  /**
+   * Menampilkan kartu dari sudut pandang manajer/HR: bukti kerja anggota ikut
+   * tampil. Bukan wewenang memutus — ACC diberikan per KPI di Review KPI.
+   */
   managerMode?: boolean;
-  onManagerVerify?: (taskId: string) => void;
-  onManagerReject?: (taskId: string, wtId: string, action: 'revision' | 'reject', taskPct: number, totalWtTasks: number) => void;
   onViewDetails?: () => void;
 }
 
-export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, managerMode, onManagerVerify, onManagerReject, onViewDetails }: GoalCardProps) {
-  const { state, updateState, awardXP, notify } = useHP();
-  const xpAwardedRef = React.useRef<Set<any>>(new Set());
-  const tones: Record<string, string> = { 
-    sage: HP_TOKENS.sage, 
-    blue: HP_TOKENS.blue, 
+export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, managerMode, onViewDetails }: GoalCardProps) {
+  const { state, updateState, notify } = useHP();
+  // Two maps, not one. A tone has to do two jobs with two different contrast
+  // duties: tint a fill or a track (3:1 is plenty) and carry a percentage
+  // figure (4.5:1). One map meant the figure inherited the fill's shade — and
+  // `yellow` as text is 2.2:1 on white, effectively invisible.
+  const tones: Record<string, string> = {
+    sage: HP_TOKENS.sage,
+    blue: HP_TOKENS.blue,
     lavender: HP_TOKENS.lavender,
     yellow: HP_TOKENS.yellow,
     coral: HP_TOKENS.coral,
+  };
+  const toneInks: Record<string, string> = {
+    sage: HP_TOKENS.sageInk,
+    blue: HP_TOKENS.blue,
+    lavender: HP_TOKENS.lavenderInk,
+    yellow: HP_TOKENS.yellowInk,
+    coral: HP_TOKENS.coralInk,
   };
 
   const [showHistory, setShowHistory] = useState(false);
@@ -98,6 +111,10 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
     (p.kpiId && String(p.kpiId) === String(g.id))
   );
   const hasTodayTasks = linkedTasks.length > 0;
+  // Submitted-but-unverified work, for the manager review block below.
+  const tasksAwaitingReview = managerMode
+    ? linkedTasks.filter((t: any) => isAwaitingReview(t))
+    : [];
   const hasTasks = hasTodayTasks || (g.metric && String(g.metric).includes('task selesai'));
   const doneTaskCount = linkedTasks.filter((p: any) => p.done).length;
   // Hitung progress dengan mempertimbangkan partial_progress (anti double-count)
@@ -142,62 +159,16 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
     setShowDeleteModal(false);
   };
 
-  const toggleTask = (taskId: number) => {
-    if (isReadOnly) return;
-    const task = state?.priorities?.find((p: any) => String(p.id) === String(taskId));
-    if (!task) return;
-    
-    const wasDone = task.done;
-    
-    // Award XP only on first completion in this session (guards undo→redo exploit)
-    if (!wasDone && !xpAwardedRef.current.has(taskId)) {
-      xpAwardedRef.current.add(taskId);
-      awardXP('priority_complete', `Selesaikan: ${task.title}`);
-      notify('Task Selesai! 🎉', `${task.title} berhasil diselesaikan.`, 'success');
-    }
-
-    updateState((s: any) => {
-      const taskIndex = s.priorities.findIndex((p: any) => String(p.id) === String(taskId));
-      if (taskIndex === -1) return s;
-
-      const newPriorities = [...s.priorities];
-      newPriorities[taskIndex] = { ...newPriorities[taskIndex], done: !wasDone };
-
-      // Recalculate goal progress
-      const updatedGoals = s.goals.map((goal: any) => {
-        if (String(goal.id) === String(g.id)) {
-          let total = 0;
-          let completed = 0;
-          const match = String(goal.metric || '').match(/^(\d+)\/(\d+)\s+task/);
-          if (match) {
-            completed = parseInt(match[1]);
-            total = parseInt(match[2]);
-          } else {
-            const tasksForGoal = newPriorities.filter((p: any) => p.goal_id && String(p.goal_id) === String(goal.id));
-            total = tasksForGoal.length;
-            completed = tasksForGoal.filter((p: any) => p.done).length;
-          }
-
-          // Apply completion state change
-          const diff = !wasDone ? 1 : -1;
-          const newCompleted = Math.max(0, Math.min(total, completed + diff));
-          const newProgress = total > 0 ? Math.round((newCompleted / total) * 100) : goal.progress;
-
-          return { ...goal, progress: newProgress, metric: total > 0 ? `${newCompleted}/${total} task selesai` : goal.metric };
-        }
-        return goal;
-      });
-
-      return {
-        ...s,
-        priorities: newPriorities,
-        goals: updatedGoals,
-        lastActivityDate: !wasDone ? new Date().toISOString() : s.lastActivityDate
-      };
-    });
-  };
+  // Catatan: kartu ini menampilkan task sebagai bacaan saja — satu-satunya aksi
+  // task di sini milik manager (verify/reject di bawah). Toggle "selesai" milik
+  // TaskHarianWidget dan TaskCompleteModal, yang menulis lewat
+  // /api/priorities/complete. Versi sebelumnya menyimpan salinan toggle di sini
+  // yang hanya mengubah React state; itu sudah dihapus, bukan disambungkan,
+  // karena tidak pernah ada yang memanggilnya.
 
   const toneColor = tones[g.tone] || HP_TOKENS.sage;
+  /** Same tone, legible. Use for any text or glyph; `toneColor` for surfaces. */
+  const toneInk = toneInks[g.tone] || HP_TOKENS.sageInk;
 
   // Manager mode: expandable task detail
   const [expandedTaskIds, setExpandedTaskIds] = useState<Set<string>>(new Set());
@@ -225,7 +196,7 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexShrink: 0
         }}>
-          <HPGlyph name="target" size={16} color={toneColor} />
+          <HPGlyph name="target" size={16} color={toneInk} />
         </div>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: 0 }}>
@@ -245,21 +216,21 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
               {g.reviewStatus === 'revision' && (
                 <div style={{
                   padding: '3px 8px', borderRadius: 6,
-                  background: HP_TOKENS.yellowWash, color: HP_TOKENS.yellowDark,
+                  background: HP_TOKENS.yellowWash, color: HP_TOKENS.yellowInk,
                   fontSize: 10, fontWeight: 700, letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 3
                 }}>⚠️ PERLU REVISI</div>
               )}
               {g.reviewStatus === 'rejected' && (
                 <div style={{
                   padding: '3px 8px', borderRadius: 6,
-                  background: HP_TOKENS.coralSoft, color: HP_TOKENS.coral,
+                  background: HP_TOKENS.coralSoft, color: HP_TOKENS.coralInk,
                   fontSize: 10, fontWeight: 700, letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 3
                 }}>❌ DITOLAK</div>
               )}
               {displayProgress >= 100 && !g.reviewStatus && (
                 <div style={{
                   padding: '3px 8px', borderRadius: 6,
-                  background: HP_TOKENS.sageSoft, color: HP_TOKENS.sage,
+                  background: HP_TOKENS.sageSoft, color: HP_TOKENS.sageInk,
                   fontSize: 10, fontWeight: 700, letterSpacing: 0.5
                 }}>DONE</div>
               )}
@@ -321,7 +292,7 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
                         flex: 1, accentColor: toneColor, cursor: 'pointer', height: 6
                       }}
                     />
-                    <span style={{ fontSize: 13, fontWeight: 700, color: toneColor, minWidth: 35, textAlign: 'right' }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: toneInk, minWidth: 35, textAlign: 'right' }}>
                       {tempProgress}%
                     </span>
                     <button
@@ -361,10 +332,10 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
                     }
                   }}
                 >
-                  <span style={{ ...HP_TEXT.h, fontSize: 13, color: toneColor }}>{displayProgress}%</span>
+                  <span style={{ ...HP_TEXT.h, fontSize: 13, color: toneInk }}>{displayProgress}%</span>
                   {onEditProgress && (
                     <span style={{
-                      fontSize: 10, color: toneColor, opacity: 0.6,
+                      fontSize: 10, color: toneInk, opacity: 0.6,
                       padding: '2px 6px', borderRadius: 6, background: `${toneColor}10`,
                       fontWeight: 700
                     }}>✏️ edit</span>
@@ -385,17 +356,80 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
           border: `1px solid ${g.reviewStatus === 'rejected' ? HP_TOKENS.coral + '40' : HP_TOKENS.yellow}`,
           display: 'flex', alignItems: 'flex-start', gap: 8,
         }}>
-          <span style={{ fontSize: 14, flexShrink: 0 }}>{g.reviewStatus === 'rejected' ? '❌' : '⚠️'}</span>
+          <span style={{ display: 'flex', flexShrink: 0 }}><HPGlyph name={g.reviewStatus === 'rejected' ? 'close' : 'alertCircle'} size={14} color="currentColor" /></span>
           <div>
             <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, color: g.reviewStatus === 'rejected' ? HP_TOKENS.coral : HP_TOKENS.yellowDark, marginBottom: 2 }}>
               {g.reviewStatus === 'rejected' ? 'KPI Ditolak oleh HR/Manager' : 'Catatan Revisi dari HR/Manager'}
             </div>
             <div style={{ fontFamily: HP_FONT, fontSize: 11, color: HP_TOKENS.inkSoft, lineHeight: 1.4 }}>{g.reviewNote}</div>
             {g.penaltyPct > 0 && (
-              <div style={{ marginTop: 4, fontFamily: HP_FONT, fontSize: 10, fontWeight: 700, color: HP_TOKENS.coral }}>
+              <div style={{ marginTop: 4, fontFamily: HP_FONT, fontSize: 10, fontWeight: 700, color: HP_TOKENS.coralInk }}>
                 Penalti progress: -{g.penaltyPct}%
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Bukti kerja yang menunggu keputusan — TANPA tombol.
+
+          ACC tidak lagi diberikan per task harian. Satu keputusan diambil di
+          tingkat KPI lewat Review KPI (`KpiReviewModal` + POST /api/kpi/review),
+          dan keputusan itulah yang mencairkan seluruh task di bawahnya
+          sekaligus. Daftar ini tetap ada karena manajer butuh melihat apa yang
+          sedang ia setujui; yang dicabut cuma wewenang memutus di sini, supaya
+          tidak ada dua sumber kebenaran untuk status task yang sama. */}
+      {managerMode && tasksAwaitingReview.length > 0 && (
+        <div style={{ marginTop: 14 }} onClick={(e) => e.stopPropagation()}>
+          <div style={{
+            ...HP_TEXT.tiny, fontWeight: 700, color: HP_TOKENS.yellowInk,
+            marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6,
+          }}>
+            <HPGlyph name="zap" size={12} color={HP_TOKENS.yellowInk} />
+            MENUNGGU ACC ({tasksAwaitingReview.length}) — DIPUTUS DI REVIEW KPI
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {tasksAwaitingReview.map((t: any) => {
+              const links: string[] = Array.isArray(t.proofLinks) ? t.proofLinks : [];
+
+              return (
+                <div key={t.id} style={{
+                  padding: '10px 12px', borderRadius: HP_TOKENS.radiusSm,
+                  background: HP_TOKENS.yellowWash, border: `1px solid ${HP_TOKENS.yellow}40`,
+                }}>
+                  <div style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.ink, fontSize: 12 }}>
+                    {t.title}
+                  </div>
+
+                  {(t.notes || links.length > 0 || t.metricValue !== null) && (
+                    <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      {t.metricValue !== null && t.metricValue !== undefined && (
+                        <div style={{ ...HP_TEXT.tiny, fontSize: 10, color: HP_TOKENS.inkSoft }}>
+                          Hasil: {t.metricValue}
+                        </div>
+                      )}
+                      {t.notes && (
+                        <div style={{ ...HP_TEXT.tiny, fontSize: 10, color: HP_TOKENS.inkMute, fontStyle: 'italic' }}>
+                          “{t.notes}”
+                        </div>
+                      )}
+                      {links.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                          {links.map((link: string, i: number) => (
+                            <a key={i} href={link} target="_blank" rel="noopener noreferrer"
+                              style={{ ...HP_TEXT.tiny, fontSize: 10, fontWeight: 700, color: HP_TOKENS.blue, textDecoration: 'none' }}>
+                              📎 Bukti {links.length > 1 ? i + 1 : ''}
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -413,7 +447,7 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}
           >
-            Lihat Detail Target & Task <span>➔</span>
+            Lihat Detail Target & Task <span><HPGlyph name="arrow" size={12} color="currentColor" /></span>
           </button>
         </div>
       )}
@@ -434,7 +468,7 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
             boxShadow: HP_TOKENS.shadowLg,
             animation: 'hpPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ width: 64, height: 64, borderRadius: '50%', background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: HP_TOKENS.coralWash, color: HP_TOKENS.coralInk, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
               <HPGlyph name="target" size={32} />
             </div>
             <div style={{ ...HP_TEXT.h, fontSize: 20, marginBottom: 8 }}>Hapus Target/KPI?</div>

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { sqlWibDate, SQL_WIB_TODAY } from '@/lib/timeUtils';
 
 const MOOD_VALUES: Record<string, number> = { joy: 100, calm: 85, neutral: 65, tired: 40, stress: 20 };
 
@@ -16,14 +17,18 @@ export async function GET() {
         COUNT(*) as total,
         SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as done
        FROM daily_priorities 
-       WHERE MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())`
+       WHERE MONTH(${sqlWibDate('created_at')}) = MONTH(${SQL_WIB_TODAY})
+         AND YEAR(${sqlWibDate('created_at')}) = YEAR(${SQL_WIB_TODAY})`
     );
     const totalTasks = Number(taskStatsRes.rows[0]?.total) || 1;
     const doneTasks = Number(taskStatsRes.rows[0]?.done) || 0;
     const engagementScore = Math.min(100, Math.round((doneTasks / totalTasks) * 100));
 
     // 3. Wellbeing = average mood from last 7 days (real data)
-    const moodsRes = await db.execute("SELECT mood_key FROM mood_checkins WHERE created_at > DATE_SUB(CURDATE(), INTERVAL 7 DAY)");
+    const moodsRes = await db.execute(
+      `SELECT mood_key FROM mood_checkins
+       WHERE ${sqlWibDate('created_at')} > DATE_SUB(${SQL_WIB_TODAY}, INTERVAL 7 DAY)`
+    );
     const wellbeingAvg = moodsRes.rows.length > 0 
       ? Math.round(moodsRes.rows.reduce((acc, m) => acc + (MOOD_VALUES[String(m.mood_key)] || 50), 0) / moodsRes.rows.length)
       : 0;
@@ -32,8 +37,8 @@ export async function GET() {
     const lastMonthTasksRes = await db.execute(
       `SELECT COUNT(*) as total, SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as done
        FROM daily_priorities 
-       WHERE MONTH(created_at) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) 
-       AND YEAR(created_at) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))`
+       WHERE MONTH(${sqlWibDate('created_at')}) = MONTH(DATE_SUB(${SQL_WIB_TODAY}, INTERVAL 1 MONTH))
+         AND YEAR(${sqlWibDate('created_at')}) = YEAR(DATE_SUB(${SQL_WIB_TODAY}, INTERVAL 1 MONTH))`
     );
     const lastTotal = Number(lastMonthTasksRes.rows[0]?.total) || 1;
     const lastDone = Number(lastMonthTasksRes.rows[0]?.done) || 0;
@@ -41,7 +46,10 @@ export async function GET() {
     const engagementTrend = engagementScore - lastEngagement;
 
     const lastMoodsRes = await db.execute(
-      "SELECT mood_key FROM mood_checkins WHERE created_at BETWEEN DATE_SUB(CURDATE(), INTERVAL 14 DAY) AND DATE_SUB(CURDATE(), INTERVAL 7 DAY)"
+      `SELECT mood_key FROM mood_checkins
+       WHERE ${sqlWibDate('created_at')}
+             BETWEEN DATE_SUB(${SQL_WIB_TODAY}, INTERVAL 14 DAY)
+                 AND DATE_SUB(${SQL_WIB_TODAY}, INTERVAL 7 DAY)`
     );
     const lastWellbeing = lastMoodsRes.rows.length > 0
       ? Math.round(lastMoodsRes.rows.reduce((acc, m) => acc + (MOOD_VALUES[String(m.mood_key)] || 50), 0) / lastMoodsRes.rows.length)
@@ -50,21 +58,41 @@ export async function GET() {
 
     // 5. At-Risk Employees (low mood + low task completion)
     const atRiskEmployees: any[] = [];
-    for (const u of users) {
-      const latestMoodRes = await db.execute({
-        sql: "SELECT mood_key FROM mood_checkins WHERE user_id = ? ORDER BY created_at DESC LIMIT 1",
-        args: [String(u.id)]
-      });
-      const mood = String(latestMoodRes.rows[0]?.mood_key || 'neutral');
 
-      const userTasksRes = await db.execute({
-        sql: `SELECT COUNT(*) as total, SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as done
-              FROM daily_priorities WHERE user_id = ? AND created_at > DATE_SUB(CURDATE(), INTERVAL 7 DAY)`,
-        args: [String(u.id)]
-      });
-      const uTotal = Number(userTasksRes.rows[0]?.total) || 0;
-      const uDone = Number(userTasksRes.rows[0]?.done) || 0;
-      const completionRate = uTotal > 0 ? Math.round((uDone / uTotal) * 100) : 0;
+    // Dua agregat, bukan dua query per karyawan. Loop ini sebelumnya menembak
+    // 2 × jumlah karyawan query setiap kali dashboard HR dibuka, dan dashboard
+    // ini juga dipanggil ulang oleh setiap event `refresh` dari Pusher.
+    const latestMoodRes = await db.execute(
+      `SELECT mc.user_id, mc.mood_key
+       FROM mood_checkins mc
+       JOIN (
+         SELECT user_id, MAX(created_at) AS latest
+         FROM mood_checkins GROUP BY user_id
+       ) newest ON newest.user_id = mc.user_id AND newest.latest = mc.created_at`
+    );
+    const moodByUser = new Map<string, string>();
+    for (const r of latestMoodRes.rows) {
+      if (!moodByUser.has(String(r.user_id))) {
+        moodByUser.set(String(r.user_id), String(r.mood_key || 'neutral'));
+      }
+    }
+
+    const weekStatsRes = await db.execute(
+      `SELECT user_id, COUNT(*) as total, SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as done
+       FROM daily_priorities
+       WHERE ${sqlWibDate('created_at')} > DATE_SUB(${SQL_WIB_TODAY}, INTERVAL 7 DAY)
+       GROUP BY user_id`
+    );
+    const weekStats = new Map<string, { total: number; done: number }>();
+    for (const r of weekStatsRes.rows) {
+      weekStats.set(String(r.user_id), { total: Number(r.total) || 0, done: Number(r.done) || 0 });
+    }
+
+    for (const u of users) {
+      const mood = moodByUser.get(String(u.id)) || 'neutral';
+      const week = weekStats.get(String(u.id)) || { total: 0, done: 0 };
+      const uTotal = week.total;
+      const completionRate = uTotal > 0 ? Math.round((week.done / uTotal) * 100) : 0;
 
       if (mood === 'stress' || mood === 'tired' || (uTotal > 0 && completionRate < 30)) {
         atRiskEmployees.push({
@@ -90,7 +118,7 @@ export async function GET() {
       // Dept engagement = avg task completion this month
       const deptTasksRes = await db.execute({
         sql: `SELECT COUNT(*) as total, SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as done
-              FROM daily_priorities WHERE user_id IN (${placeholders}) AND MONTH(created_at) = MONTH(CURDATE())`,
+              FROM daily_priorities WHERE user_id IN (${placeholders}) AND MONTH(${sqlWibDate('created_at')}) = MONTH(${SQL_WIB_TODAY})`,
         args: ids
       });
       const dTotal = Number(deptTasksRes.rows[0]?.total) || 1;
@@ -99,7 +127,7 @@ export async function GET() {
 
       // Dept wellbeing = avg mood last 7 days
       const deptMoodsRes = await db.execute({
-        sql: `SELECT mood_key FROM mood_checkins WHERE user_id IN (${placeholders}) AND created_at > DATE_SUB(CURDATE(), INTERVAL 7 DAY)`,
+        sql: `SELECT mood_key FROM mood_checkins WHERE user_id IN (${placeholders}) AND ${sqlWibDate('created_at')} > DATE_SUB(${SQL_WIB_TODAY}, INTERVAL 7 DAY)`,
         args: ids
       });
       const deptWellbeing = deptMoodsRes.rows.length > 0

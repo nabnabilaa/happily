@@ -107,7 +107,7 @@ export default function HPAvatar({
       {rank && (
         <div style={{
           position: 'absolute', bottom: 4, right: 4, width: 22, height: 22, borderRadius: '50%',
-          background: HP_TOKENS.yellow, color: HP_TOKENS.yellowDark, fontSize: 11, fontWeight: 700,
+          background: HP_TOKENS.yellow, color: HP_TOKENS.yellowInk, fontSize: 11, fontWeight: 700,
           display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #fff',
           zIndex: 2,
           animation: 'hpPop 0.3s ease-out'

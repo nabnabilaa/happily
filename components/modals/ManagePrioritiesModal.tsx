@@ -22,7 +22,6 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [completingTask, setCompletingTask] = useState<any>(null);
   const [taskToDelete, setTaskToDelete] = useState<number | null>(null);
-  const xpAwardedRef = React.useRef<Set<any>>(new Set());
 
   // Weekly Targets — load semua dari semua KPI sekaligus
   // Format: { kpiId, kpiTitle, targets: [...] }
@@ -156,7 +155,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
         body: JSON.stringify({
           id, done: nowFullyDone,
           partialProgress: nowFullyDone ? 100 : newProgress,
-          status: nowFullyDone ? 'accepted' : 'in_progress',
+          status: nowFullyDone ? 'pending_review' : 'in_progress',
           proofLinks: data.proofLinks, notes: data.notes,
           metricValue: data.metricValue, isProject: data.isProject || isPartial,
           completedAt: data.completedAt || null,
@@ -166,9 +165,11 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
       console.error('Task persist failed:', e);
     }
 
-    if (nowFullyDone && !completingTask.done && progressDelta > 0 && !xpAwardedRef.current.has(id)) {
-      xpAwardedRef.current.add(id);
-      awardXP('priority_complete', `Selesaikan: ${completingTask.title}`);
+    // Kunci `task:<id>` dipegang server, jadi task ini tidak bisa dibayar dua
+    // kali walau diselesaikan dari layar yang berbeda. Guard useRef yang lama
+    // hilang tiap komponen remount, dan modal ini memang di-unmount tiap ditutup.
+    if (nowFullyDone && !completingTask.done && progressDelta > 0) {
+      awardXP('task_complete', `Selesaikan: ${completingTask.title}`, `task:${id}`);
     }
 
     // Side effects OUTSIDE updateState (React may call the callback multiple times in StrictMode)
@@ -210,7 +211,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
       newPriorities[pIndex] = {
         ...newPriorities[pIndex],
         done: nowFullyDone,
-        status: nowFullyDone ? 'accepted' : 'in_progress',
+        status: nowFullyDone ? 'pending_review' : 'in_progress',
         proof_links: data.proofLinks,
         is_project: data.isProject || isPartial,
         metric_value: data.metricValue || null,
@@ -294,7 +295,37 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
       }
       
       if (editingTaskId) {
-      // Edit mode
+      // Edit mode — persist first. The blob sync no longer carries priorities,
+      // so an edit that only touches React state is discarded on the next
+      // refetch.
+      if (user?.id) {
+        const prevTask = state.priorities.find((p: any) => p.id === editingTaskId);
+        try {
+          const res = await fetch('/api/priorities', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: editingTaskId,
+              userId: user.id,
+              title: newTitle,
+              description: newDescription,
+              targetDate,
+              due_date: dueDate || null,
+              kpi_id: derivedKpiId,
+              goal: derivedKpiTitle,
+              weekly_target_id: selectedWeeklyTargetId || null,
+              weekly_target_title: selectedWeeklyTarget?.title || null,
+              status: 'todo',
+            }),
+          });
+          if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'update failed');
+        } catch (e) {
+          console.error('Failed to persist task edit:', e);
+          notify("Perubahan Gagal Disimpan", `"${prevTask?.title ?? newTitle}" tidak berubah. Coba lagi.`, "error");
+          return; // the enclosing finally clears isSubmitting
+        }
+      }
+
       updateState((s: any) => {
         const newPriorities = s.priorities.map((p: any) => {
           if (p.id === editingTaskId) {
@@ -349,22 +380,45 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
       is_project: false,
     };
 
-    // Create task_kpi_links if KPI is selected
-    // We wrap this in a timeout to prevent the immediate DB insert from triggering an SSE refresh
-    // which would overwrite our optimistic state before the auto-sync has a chance to POST to /api/storage.
-    if (derivedKpiId) {
-      setTimeout(() => {
-        fetch('/api/kpi/link', {
+    // Persist the task itself before anything else. Previously the only thing
+    // that ever wrote a new task to the database was the 1500ms-debounced state
+    // sync, so a refetch landing in the wrong window silently discarded it —
+    // the task looked added, then vanished. The KPI link below used to be
+    // delayed by exactly that debounce to dodge the race; with a real write
+    // there is no race left to dodge, so it fires immediately too.
+    const ownerId = user?.id;
+    (async () => {
+      try {
+        if (!ownerId) throw new Error('no user');
+        const res = await fetch('/api/priorities', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            taskId: String(newP.id),
-            kpiId: derivedKpiId,
-            weeklyTargetId: selectedWeeklyTargetId || null
-          })
-        }).catch(e => console.error('Failed to create KPI link:', e));
-      }, 1500);
-    }
+          body: JSON.stringify({ ...newP, userId: ownerId }),
+        });
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'save failed');
+
+        if (derivedKpiId) {
+          fetch('/api/kpi/link', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              taskId: String(newP.id),
+              kpiId: derivedKpiId,
+              weeklyTargetId: selectedWeeklyTargetId || null
+            })
+          }).catch(e => console.error('Failed to create KPI link:', e));
+        }
+      } catch (e) {
+        // Tell the user instead of letting the task quietly disappear on the
+        // next refetch, which is what used to happen.
+        console.error('Failed to persist task:', e);
+        notify("Task Gagal Disimpan", `"${newTitle}" tidak tersimpan. Coba tambahkan lagi.`, "error");
+        updateState((s: any) => ({
+          ...s,
+          priorities: s.priorities.filter((p: any) => String(p.id) !== String(newP.id)),
+        }));
+      }
+    })();
 
     updateState((s: any) => {
       const newPriorities = [...s.priorities, newP];
@@ -413,6 +467,14 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
   const executeDeletePriority = () => {
     if (taskToDelete === null) return;
     const id = taskToDelete;
+    // Same reasoning as create: delete the row now rather than hoping the
+    // debounced blob sync gets there. Without this, a refetch between the
+    // click and the sync brought the task back from the dead.
+    if (user?.id) {
+      fetch(`/api/priorities?id=${encodeURIComponent(String(id))}&userId=${encodeURIComponent(user.id)}`, {
+        method: 'DELETE',
+      }).catch(e => console.error('Failed to delete task:', e));
+    }
     updateState((s: any) => {
       const taskToDelete = s.priorities.find((p: any) => String(p.id) === String(id));
       const newPriorities = s.priorities.filter((p: any) => String(p.id) !== String(id));
@@ -509,11 +571,11 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
           {/* Character count & validation — Spec v2 Anti-Abuse */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: -4 }}>
             {titleTooShort ? (
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.coral, fontWeight: 700, fontSize: 10 }}>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.coralInk, fontWeight: 700, fontSize: 10 }}>
                 ⚠️ Minimal {MIN_TASK_CHARS} karakter ({MIN_TASK_CHARS - newTitle.length} lagi)
               </div>
             ) : newTitle.length > 0 ? (
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 700, fontSize: 10 }}>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sageInk, fontWeight: 700, fontSize: 10 }}>
                 ✓ Deskripsi cukup
               </div>
             ) : (
@@ -649,7 +711,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
           {/* Info */}
           <div style={{ 
             padding: 10, borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.sageWash, border: `1px solid ${HP_TOKENS.sage}20`,
-            ...HP_TEXT.small, fontSize: 11, color: HP_TOKENS.sage, fontWeight: 600,
+            ...HP_TEXT.small, fontSize: 11, color: HP_TOKENS.sageInk, fontWeight: 600,
           }}>
             💡 Link bukti pengerjaan diisi nanti saat mencentang task selesai. Poin masuk setelah Manager ACC.
           </div>
@@ -674,7 +736,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
           {state.priorities.length === 0 ? (
             <div style={{ padding: 20, textAlign: 'center', background: HP_TOKENS.paper, borderRadius: HP_TOKENS.radiusMd, border: `1.5px dashed ${HP_TOKENS.line}` }}>
-              <div style={{ fontSize: 24, marginBottom: 6 }}>📝</div>
+              <div style={{ fontSize: 24, marginBottom: 6 }}><HPGlyph name="note" size={20} color="currentColor" /></div>
               <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute }}>Belum ada task. Tambahkan di atas.</div>
             </div>
           ) : (
@@ -724,7 +786,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                           padding: '2px 8px', borderRadius: 6, 
                           background: HP_TOKENS.blueSoft, 
                         }}>
-                          <span style={{ fontSize: 10 }}>🎯</span>
+                          <span style={{ fontSize: 10 }}><HPGlyph name="target" size={12} color="currentColor" /></span>
                           <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 700, fontSize: 9 }}>
                             {fallbackTitle}
                           </span>
@@ -739,7 +801,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                         padding: '2px 8px', borderRadius: 6, 
                         background: HP_TOKENS.blueSoft, 
                       }}>
-                        <span style={{ fontSize: 10 }}>🎯</span>
+                        <span style={{ fontSize: 10 }}><HPGlyph name="target" size={12} color="currentColor" /></span>
                         <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 700, fontSize: 9 }}>
                           {displayTag}
                         </span>
@@ -768,8 +830,8 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                       display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, marginLeft: 4,
                       padding: '2px 8px', borderRadius: 6, background: HP_TOKENS.sageSoft,
                     }}>
-                      <span style={{ fontSize: 10 }}>📎</span>
-                      <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 700, fontSize: 9 }}>
+                      <span style={{ fontSize: 10 }}><HPGlyph name="paperclip" size={12} color="currentColor" /></span>
+                      <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sageInk, fontWeight: 700, fontSize: 9 }}>
                         {p.proof_links.length} link
                       </span>
                     </div>
@@ -780,8 +842,8 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                       display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, marginLeft: 4,
                       padding: '2px 8px', borderRadius: 6, background: HP_TOKENS.lavenderSoft,
                     }}>
-                      <span style={{ fontSize: 10 }}>📁</span>
-                      <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.primary, fontWeight: 700, fontSize: 9 }}>
+                      <span style={{ fontSize: 10 }}><HPGlyph name="folder" size={12} color="currentColor" /></span>
+                      <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.primaryInk, fontWeight: 700, fontSize: 9 }}>
                         Jangka Panjang
                       </span>
                     </div>
@@ -805,7 +867,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
                       onClick={() => setTaskToDelete(p.id)}
                       style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
                     >
-                      <HPGlyph name="close" size={14} color={HP_TOKENS.coral}/>
+                      <HPGlyph name="close" size={14} color={HP_TOKENS.coralInk}/>
                     </button>
                   </div>
                 )}
@@ -873,7 +935,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
             boxShadow: HP_TOKENS.shadowLg,
             animation: 'hpPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }}>
-            <div style={{ width: 64, height: 64, borderRadius: '50%', background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: HP_TOKENS.coralWash, color: HP_TOKENS.coralInk, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
               <HPGlyph name="trash" size={32} />
             </div>
             <div style={{ ...HP_TEXT.h, fontSize: 20, marginBottom: 8 }}>Hapus Task Harian?</div>

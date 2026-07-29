@@ -9,6 +9,7 @@ import {
 } from "@/lib/constants";
 import HPGlyph from "@/components/ui/HPGlyph";
 import Modal from "@/components/ui/Modal";
+import { scrollIntoViewSafely } from "@/lib/motion";
 
 interface ManageHabitsModalProps {
   onClose: () => void;
@@ -41,7 +42,7 @@ export default function ManageHabitsModal({ onClose }: ManageHabitsModalProps) {
     setNewName("");
     onClose();
     setTimeout(() => {
-      document.getElementById('daily-training-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      scrollIntoViewSafely(document.getElementById('daily-training-section'), { behavior: 'smooth', block: 'start' });
     }, 300);
   };
 
@@ -71,7 +72,7 @@ export default function ManageHabitsModal({ onClose }: ManageHabitsModalProps) {
                 <HPGlyph name={h.glyph || 'star'} size={20} color={HP_TOKENS.ink} />
               </div>
               <div style={{ ...HP_TEXT.h, fontSize: 13, marginBottom: 2 }}>{h.name}</div>
-              <div style={{ ...HP_TEXT.small, color: HP_TOKENS.sage, fontWeight: 700 }}>🔥 {h.streak} hari</div>
+              <div style={{ ...HP_TEXT.small, color: HP_TOKENS.sageInk, fontWeight: 700 }}>🔥 {h.streak} hari</div>
               <button 
                 onClick={() => deleteHabit(h.name)}
                 style={{ 
@@ -79,7 +80,7 @@ export default function ManageHabitsModal({ onClose }: ManageHabitsModalProps) {
                   border: 'none', cursor: 'pointer', padding: 4 
                 }}
               >
-                <HPGlyph name="close" size={14} color={HP_TOKENS.coral}/>
+                <HPGlyph name="close" size={14} color={HP_TOKENS.coralInk}/>
               </button>
             </div>
           ))}

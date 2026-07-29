@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sendEmail } from "@/lib/emailService";
+import { isDuplicateNotification, DEFAULT_DEDUPE_WINDOW_MINUTES } from "@/lib/notificationService";
 
 function getCorsHeaders(request: Request) {
   const origin = request.headers.get("origin") || "*";
@@ -151,11 +152,25 @@ export async function DELETE(request: Request) {
 // PUT: Create a new notification
 export async function PUT(request: Request) {
   try {
-    const { userId, title, message, type, referenceId, referenceType } = await request.json();
+    const { userId, title, message, type, referenceId, referenceType, dedupeWindowMinutes } = await request.json();
     if (!userId || !title) {
       return NextResponse.json(
         { error: "userId and title required" },
         { status: 400, headers: getCorsHeaders(request) }
+      );
+    }
+
+    // Anti-spam: notifikasi dengan title + message identik dalam jendela waktu
+    // yang sama dianggap kiriman ulang (remount/reload klien), bukan kejadian
+    // baru. Lewati insert-nya sekalian email-nya. Kirim 0 untuk menonaktifkan.
+    const dedupeWindow = dedupeWindowMinutes === undefined
+      ? DEFAULT_DEDUPE_WINDOW_MINUTES
+      : Number(dedupeWindowMinutes);
+
+    if (await isDuplicateNotification(userId, title, message ?? null, dedupeWindow)) {
+      return NextResponse.json(
+        { success: true, deduped: true },
+        { headers: getCorsHeaders(request) }
       );
     }
 

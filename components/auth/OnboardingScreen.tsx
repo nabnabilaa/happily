@@ -1,574 +1,737 @@
-// @ts-nocheck
 "use client";
 
-import React, { useEffect, useRef, useState } from 'react';
-import './OnboardingScreen.css';
-import BeeMascot from '@/components/ui/BeeMascot';
-import { useHP } from '@/lib/HPContext';
-import { normalizeOnboardingSteps, resolveStepOptions, DEFAULT_ONBOARDING_STEPS } from '@/lib/onboardingUtils';
-import { ONBOARDING_CONFETTI, ONBOARDING_SPLASH } from '@/lib/palettes';
+/**
+ * First-run onboarding.
+ *
+ * The flow used to be a survey with a mascot: a fake loading bar, four
+ * identically-shaped question screens, a tap-counter whose own copy admitted it
+ * did nothing, and a recap table. Four minutes in, the employee had produced
+ * nothing and been shown nothing — so nothing in it was worth their attention.
+ *
+ * This version is built around one idea: **every answer visibly assembles the
+ * card that will greet them tomorrow morning.** The name lands as it is typed,
+ * the department snaps in when they join a real team, the bee takes on their
+ * mood, the energy answer turns into an actual first-day plan. Onboarding stops
+ * being a form to fill and becomes a thing being built.
+ *
+ * The screen is split the way One UI splits a screen: a **viewing area** at the
+ * top holding that preview — content you look at, never touch — and an
+ * **interaction area** below it where every control lives, ending in a CTA
+ * pinned within thumb reach. Because the split is fixed, the continue button
+ * never moves and the preview never scrolls away from the answer changing it.
+ *
+ * The department step is wired to the real HR department list, and shows those
+ * teams as teams — headcount, who leads them, who is already there. Whatever is
+ * picked here is the department the employee lands in, with no second form: see
+ * `app/api/onboarding/complete/route.ts`, where a pick matching a real
+ * department joins it immediately and anything else falls to the HR queue.
+ */
 
-export default function OnboardingScreen({ userName, onFinish, skipSplash, previewConfig }: { userName?: string, onFinish?: (data: { job: string, answers: { question: string, answer: string | null }[] }) => void, skipSplash?: boolean, previewConfig?: any[] }) {
-    const { state } = useHP();
-    const containerRef = useRef<HTMLDivElement>(null);
-    // Daftar departemen HR — diambil di background agar step "divisi" selalu
-    // menampilkan pilihan yang nyambung dengan departemen asli, bukan teks bebas.
-    const deptListRef = useRef<{ name: string }[]>([]);
-    useEffect(() => {
-        fetch('/api/hr/departments')
-            .then(res => res.json())
-            .then(data => { deptListRef.current = data.departments || []; })
-            .catch(() => {});
-    }, []);
-    const [buddyMood, setBuddyMood] = useState<'neutral'|'happy'|'sad'|'angry'>('neutral');
-    const [clickCount, setClickCount] = useState(0);
-    const [buddyMsg, setBuddyMsg] = useState('Hai! Senang ketemu kamu 🤜\nAku Buddy, bantu harimu lebih produktif!');
-    const [isHovering, setIsHovering] = useState(false);
+import React, { useCallback, useMemo, useRef, useState } from "react";
+import "./OnboardingScreen.css";
+import {
+  HP_TOKENS,
+  HP_TEXT,
+  Stack,
+  Row,
+  Divider,
+  HPButton,
+  HPGlyph,
+  HPInput,
+  HPCard,
+  motion,
+  AnimatePresence,
+  SPRING,
+  useReducedMotion,
+} from "@/components/ui";
+import { useHP } from "@/lib/HPContext";
+import {
+  DEFAULT_ONBOARDING_STEPS,
+  normalizeOnboardingSteps,
+  resolveStepOptions,
+  inferStepKind,
+  energyPlan,
+  moodToMascot,
+  type OnboardingStep,
+  type OnboardingStepKind,
+} from "@/lib/onboardingUtils";
+import OnboardingAmbience from "./onboarding/OnboardingAmbience";
+import ProgressRail from "./onboarding/ProgressRail";
+import OptionGroup from "./onboarding/OptionGroup";
+import DepartmentPicker from "./onboarding/DepartmentPicker";
+import EnergyMeter from "./onboarding/EnergyMeter";
+import WorkspacePreview, { type PreviewState } from "./onboarding/WorkspacePreview";
+import Confetti from "./onboarding/Confetti";
+import { useDepartments, matchDepartment } from "./onboarding/useDepartments";
 
-    useEffect(() => {
-        if (!containerRef.current) return;
-        
-        // Scope DOM selections to container
-        const $ = (id) => containerRef.current?.querySelector('#'+id);
-        const $$ = (sel) => containerRef.current?.querySelectorAll(sel);
-        
-        
-/* ══ UTILS ══ */
+/* ── Types ─────────────────────────────────────────────────────────── */
 
-const A=(el,kf,o)=>{ if(!el) return { onfinish: ()=>{} }; return el.animate(kf,{fill:'forwards',...o}); };
-const fu=(el,d=0,dur=450)=>A(el,[{opacity:0,transform:'translateY(16px)'},{opacity:1,transform:'none'}],{duration:dur,delay:d,easing:'cubic-bezier(.34,1.2,.64,1)'});
-const sc=(el,d=0,dur=550)=>A(el,[{opacity:0,transform:'scale(.3) rotate(-20deg)'},{opacity:1,transform:'scale(1) rotate(0)'}],{duration:dur,delay:d,easing:'cubic-bezier(.34,1.56,.64,1)'});
-const sli=(el,d=0)=>A(el,[{opacity:0,transform:'translateX(-22px)'},{opacity:1,transform:'none'}],{duration:380,delay:d,easing:'cubic-bezier(.34,1.2,.64,1)'});
-
-function wipeTransition(fn){
-  const w=$('wipe');
-  A(w,[{transform:'scaleX(0)',transformOrigin:'left'},{transform:'scaleX(1)',transformOrigin:'left'}],{duration:320,easing:'cubic-bezier(.7,0,.3,1)'}).onfinish=()=>{
-    fn();
-    A(w,[{transform:'scaleX(1)',transformOrigin:'right'},{transform:'scaleX(0)',transformOrigin:'right'}],{duration:320,delay:80,easing:'cubic-bezier(.7,0,.3,1)'});
-  };
+export interface OnboardingResult {
+  /** Legacy alias for the department name — `app/page.tsx` posts it as `department`. */
+  job: string;
+  department: string | null;
+  /** Set when the pick matched a real HR department row. */
+  departmentId: string | number | null;
+  mood: string | null;
+  /** Index into `ENERGY_PLANS` (0–4), not a tap count. */
+  energy: number;
+  answers: { question: string; answer: string | null }[];
 }
 
-function showScreen(id,useFade=false){
-  const curr=containerRef.current?.querySelector('.screen.active');
-  const next=$(id);
-  if(useFade){
-    A(curr,[{opacity:1},{opacity:0,transform:'scale(.96)'}],{duration:280,fill:'forwards'}).onfinish=()=>{
-      curr.classList.remove('active');next.classList.add('active');
-      A(next,[{opacity:0,transform:'scale(.96)'},{opacity:1,transform:'none'}],{duration:360,fill:'forwards'});
-    };
-  } else {
-    wipeTransition(()=>{
-      curr.classList.remove('active');
-      next.classList.add('active');
+interface Props {
+  userName?: string;
+  onFinish?: (data: OnboardingResult) => void;
+  /**
+   * @deprecated There is no splash any more — the app's own loading screen was
+   * already showing, so this one added two seconds of fake progress on top of
+   * it. Accepted and ignored so existing callers keep compiling.
+   */
+  skipSplash?: boolean;
+  /** HR's unsaved draft, previewed from ManageOnboardingModal. */
+  previewConfig?: OnboardingStep[];
+}
+
+type Stage = "greet" | "step" | "energy" | "ready";
+
+/** Middle of `ENERGY_PLANS`: a real default, so the meter is never blank. */
+const DEFAULT_ENERGY = 2;
+
+/* ── Helpers ───────────────────────────────────────────────────────── */
+
+/**
+ * HR writes step tags like "⚡ LANGKAH 1 / 4". The counter lives in the header
+ * now and emoji aren't icons, so keep only whatever wording HR added on top and
+ * fall back to a plain derived counter.
+ */
+function eyebrowFor(step: OnboardingStep, index: number, total: number): string {
+  const custom = String(step.tag || "")
+    .replace(/langkah\s*\d+\s*\/\s*\d+/i, "")
+    .replace(/[^\p{L}\p{N} ]/gu, "")
+    .trim();
+  return custom || `Langkah ${index + 1} dari ${total}`;
+}
+
+/* ── Screen ────────────────────────────────────────────────────────── */
+
+export default function OnboardingScreen({ userName, onFinish, previewConfig }: Props) {
+  const { state } = useHP();
+  const reduce = useReducedMotion();
+  const { departments } = useDepartments();
+
+  const steps = useMemo(
+    () =>
+      normalizeOnboardingSteps(
+        previewConfig && previewConfig.length > 0
+          ? previewConfig
+          : state?.onboardingConfig && state.onboardingConfig.length > 0
+            ? (state.onboardingConfig as OnboardingStep[])
+            : DEFAULT_ONBOARDING_STEPS,
+      ),
+    [previewConfig, state?.onboardingConfig],
+  );
+
+  const kinds = useMemo<OnboardingStepKind[]>(() => steps.map(inferStepKind), [steps]);
+
+  const [stage, setStage] = useState<Stage>("greet");
+  const [stepIndex, setStepIndex] = useState(0);
+  const [name, setName] = useState(() => (userName || "").trim());
+  const [answers, setAnswers] = useState<(string | null)[]>([]);
+  const [energy, setEnergy] = useState(DEFAULT_ENERGY);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Direction of the last move, so a stage entering from a "back" press slides
+  // in from the side it left towards.
+  const dir = useRef(1);
+
+  /* ── Derived answers ───────────────────────────────────────────── */
+
+  const indexOfKind = useCallback((k: OnboardingStepKind) => kinds.indexOf(k), [kinds]);
+
+  const deptStepIndex = indexOfKind("department");
+  const chosenDeptName = deptStepIndex === -1 ? null : (answers[deptStepIndex] ?? null);
+  const matchedDept = useMemo(
+    () => matchDepartment(departments, chosenDeptName),
+    [departments, chosenDeptName],
+  );
+
+  const moodIndex = indexOfKind("mood");
+  const moodAnswer = moodIndex === -1 ? null : (answers[moodIndex] ?? null);
+
+  const focusIndex = indexOfKind("focus");
+  const focusAnswer = focusIndex === -1 ? null : (answers[focusIndex] ?? null);
+
+  const plan = energyPlan(energy);
+
+  /* ── Rail ──────────────────────────────────────────────────────── */
+
+  const railTotal = steps.length + 2; // greeting + questions + energy
+  const railCurrent =
+    stage === "greet"
+      ? 0
+      : stage === "step"
+        ? 1 + stepIndex
+        : stage === "energy"
+          ? 1 + steps.length
+          : railTotal;
+
+  /* ── Navigation ────────────────────────────────────────────────── */
+
+  const select = useCallback((index: number, label: string) => {
+    setAnswers((prev) => {
+      const next = [...prev];
+      next[index] = label;
+      return next;
     });
-  }
-}
+  }, []);
 
-/* ══ RIPPLE ══ */
-$$('.btn').forEach(b=>b.addEventListener('click',e=>{
-  const r=window.document.createElement('span');r.className='btn-ripple';
-  const rect=b.getBoundingClientRect();
-  r.style.cssText=`left:${e.clientX-rect.left-5}px;top:${e.clientY-rect.top-5}px`;
-  b.appendChild(r);setTimeout(()=>r.remove(),800);
-}));
-
-/* ══════════════════════════════
-   S1 — SPLASH
-══════════════════════════════ */
-function initS1(){
-  // Stars
-  const sf=$('s1stars'),sf2=$('s4stars');
-  [sf,sf2].forEach(s=>{
-    for(let i=0;i<55;i++){
-      const st=window.document.createElement('div');st.className='star';
-      const sz=Math.random()>.7?3:Math.random()>.4?2:1.5;
-      st.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;
-        --d:${2+Math.random()*4}s;--de:${Math.random()*6}s;--o:${.2+Math.random()*.6}`;
-      s.appendChild(st);
+  const goNext = useCallback(() => {
+    dir.current = 1;
+    if (stage === "greet") {
+      if (steps.length > 0) {
+        setStepIndex(0);
+        setStage("step");
+      } else {
+        setStage("energy");
+      }
+      return;
     }
-  });
+    if (stage === "step") {
+      if (stepIndex < steps.length - 1) setStepIndex((i) => i + 1);
+      else setStage("energy");
+      return;
+    }
+    if (stage === "energy") setStage("ready");
+  }, [stage, stepIndex, steps.length]);
 
-  // Orbs
-  const ob=$('s1orbs');
-  [{bg:ONBOARDING_SPLASH.blobWarm,w:280,h:280,t:-60,l:-40,bx:'30px',by:'-20px'},{bg:ONBOARDING_SPLASH.blobViolet,w:200,h:200,b:-60,r:-30,bx:'-20px',by:'30px'},{bg:ONBOARDING_SPLASH.blobHoney,w:160,h:160,b:'40%',l:-30,bx:'40px',by:'-40px'}].forEach(c=>{
-    const o=window.document.createElement('div');o.className='orb mesh-blob';
-    o.style.cssText=`background:${c.bg};width:${c.w}px;height:${c.h}px;${c.t!=null?`top:${c.t}px`:''};${c.b!=null?`bottom:${c.b}${typeof c.b==='number'?'px':''}`:''};${c.l!=null?`left:${c.l}px`:''};${c.r!=null?`right:${c.r}px`:''};--bd:${8+Math.random()*6}s;--bde:${Math.random()*3}s;--bx:${c.bx};--by:${c.by};--bs:${1.05+Math.random()*.1}`;
-    ob.appendChild(o);
-    A(o,[{opacity:0},{opacity:1}],{duration:800,delay:300,fill:'forwards'});
-  });
+  const goBack = useCallback(() => {
+    dir.current = -1;
+    if (stage === "step") {
+      if (stepIndex > 0) setStepIndex((i) => i - 1);
+      else setStage("greet");
+      return;
+    }
+    if (stage === "energy") {
+      if (steps.length > 0) {
+        setStepIndex(steps.length - 1);
+        setStage("step");
+      } else {
+        setStage("greet");
+      }
+      return;
+    }
+    if (stage === "ready") setStage("energy");
+  }, [stage, stepIndex, steps.length]);
 
-  // S4 blobs
-  const bl=$('s4blobs');
-  [{bg:'rgba(255,77,0,.15)',w:200,h:200,b:'15%',l:'10%'},{bg:'rgba(124,92,252,.12)',w:180,h:180,t:'20%',r:'5%'}].forEach(c=>{
-    const o=window.document.createElement('div');o.className='mesh-blob';
-    o.style.cssText=`background:${c.bg};width:${c.w}px;height:${c.h}px;border-radius:50%;filter:blur(60px);position:absolute;${c.b?`bottom:${c.b}`:''};${c.t?`top:${c.t}`:''};${c.l?`left:${c.l}`:''};${c.r?`right:${c.r}`:''};--bd:10s;--bde:${Math.random()*3}s;--bx:20px;--by:-30px;animation:blobDrift 10s ease-in-out infinite alternate`;
-    bl.appendChild(o);
-    A(o,[{opacity:0},{opacity:1}],{duration:600,fill:'forwards'});
-  });
-
-  // Logo entrance
-  const center=$('s1center');
-  A(center,[{opacity:0,transform:'translateY(28px) scale(.92)'},{opacity:1,transform:'none'}],{duration:700,delay:400,fill:'forwards',easing:'cubic-bezier(.34,1.4,.64,1)'});
-
-  // Loading
-  setTimeout(()=>{
-    A($('loadBar'),[{width:'0%'},{width:'100%'}],{duration:2200,fill:'forwards',easing:'cubic-bezier(.4,0,.2,1)'}).onfinish=()=>{
-      setTimeout(()=>{showScreen('s2');initS2();},300);
-    };
-  },500);
-}
-
-/* ══════════════════════════════
-   S2 — GREET
-══════════════════════════════ */
-function initS2(){
-  const bub=$('s2bubble'),bud=$('s2buddy'),lbl=$('s2lbl'),inp=$('nameIn'),btn=$('s2btn');
-  setTimeout(()=>A(bub,[{opacity:0,transform:'translateY(-18px) scale(.92)'},{opacity:1,transform:'none'}],{duration:500,fill:'forwards',easing:'cubic-bezier(.34,1.4,.64,1)'}),80);
-  setTimeout(()=>{
-    sc(bud,0);
-    setTimeout(()=>{bud.classList.add('shown');spawnPring();},600);
-  },320);
-  setTimeout(()=>{fu(lbl,0);fu(inp,80);A(btn,[{opacity:0,transform:'translateY(12px)'},{opacity:1,transform:'none'}],{duration:450,delay:160,fill:'forwards',easing:'cubic-bezier(.34,1.2,.64,1)'});},680);
-}
-
-function spawnPring(){
-  const ring=$('s2pring');ring.innerHTML='';
-  const colors=ONBOARDING_CONFETTI.slice(0,5);
-  for(let i=0;i<8;i++){
-    const d=window.document.createElement('div');d.className='pring-dot';
-    const angle=(i/8)*360;const r=68;
-    const x=Math.cos(angle*Math.PI/180)*r;const y=Math.sin(angle*Math.PI/180)*r;
-    d.style.cssText=`left:calc(50% + ${x}px);top:calc(50% + ${y}px);transform:translate(-50%,-50%);background:${colors[i%colors.length]};opacity:.5;--d:${1.5+Math.random()}s;--del:${i*.15}s`;
-    ring.appendChild(d);
-  }
-}
-
-function goStep2(){
-  const name=$('nameIn').value.trim()||'Kamu';
-  window._name=name;showScreen('s3');initS3();
-}
-$('nameIn').addEventListener('keypress',e=>{if(e.key==='Enter')goStep2();});
-$('nameIn').addEventListener('input',()=>{
-  const v=$('nameIn').value.trim();
-  $('s2btn').textContent=v?`Halo ${v.split(' ')[0]}, siap! 👋`:'Halo, aku siap! 👋';
-});
-
-/* ══════════════════════════════
-   S3 — ONBOARD
-══════════════════════════════ */
-const STEPS = normalizeOnboardingSteps((previewConfig && previewConfig.length > 0) ? previewConfig : (state?.onboardingConfig && state.onboardingConfig.length > 0 ? state.onboardingConfig : DEFAULT_ONBOARDING_STEPS));
-
-let obCur=0,obSel=null,obAns=[];
-
-function initS3(){
-  const sb=$('stepbar');sb.innerHTML='';
-  STEPS.forEach((_,i)=>{
-    const d=window.document.createElement('div');d.className='stepdot';d.id=`sd${i}`;
-    d.innerHTML='<div class="stepdot-fill"></div>';sb.appendChild(d);
-  });
-  obCur=0;renderOb(true);
-}
-
-function renderOb(first=false){
-  const s=STEPS[obCur];obSel=null;
-  STEPS.forEach((_,i)=>{const d=$(`sd${i}`);if(i<obCur)d.classList.add('done');else d.classList.remove('done');});
-
-  const tag=$('obTag'),q=$('obQ'),hint=$('obHint');
-  tag.textContent=s.tag;q.textContent=s.q;hint.textContent=s.hint;
-
-  if(first){fu(tag,50);fu(q,130);fu(hint,200);}
-  else{
-    [tag,q,hint].forEach((el,i)=>A(el,[{opacity:0,transform:'translateX(18px)'},{opacity:1,transform:'none'}],{duration:320,delay:i*55,fill:'forwards',easing:'cubic-bezier(.34,1.2,.64,1)'}));
-  }
-
-  const cont=$('obOpts');cont.innerHTML='';
-  resolveStepOptions(s, deptListRef.current).forEach((o,i)=>{
-    const card=window.document.createElement('div');card.className='opt';card.id=`o${i}`;
-    card.innerHTML=`<div class="opt-ico" style="background:${o.bg}">${o.e}</div><span class="opt-lbl">${o.l}</span><div class="opt-tick">✓</div>`;
-    card.onclick=()=>selectOpt(i,o.l);
-    card.addEventListener('mousemove',ev=>{
-      const r=card.getBoundingClientRect();
-      card.style.setProperty('--mx',((ev.clientX-r.left)/r.width*100)+'%');
-      card.style.setProperty('--my',((ev.clientY-r.top)/r.height*100)+'%');
+  const finish = useCallback(() => {
+    if (submitting) return;
+    setSubmitting(true);
+    onFinish?.({
+      job: chosenDeptName || "",
+      department: chosenDeptName,
+      departmentId: matchedDept?.id ?? null,
+      mood: moodAnswer,
+      energy,
+      answers: [
+        ...steps.map((s, i) => ({ question: s.q, answer: answers[i] ?? null })),
+        // Persisted alongside the rest, so the first-day plan survives without
+        // a schema change (`users.onboarding_answers` is free-form JSON).
+        {
+          question: "Tingkat energi hari pertama",
+          answer: `${plan.label} — ${plan.priorities} prioritas, fokus ${plan.focusMinutes} menit`,
+        },
+      ],
     });
-    cont.appendChild(card);
-    sli(card,(first?350:100)+i*65);
-  });
+  }, [submitting, onFinish, chosenDeptName, matchedDept, moodAnswer, energy, steps, answers, plan]);
 
-  const btn=$('obBtn');btn.disabled=true;btn.style.opacity='.35';btn.style.cursor='not-allowed';
-  btn.textContent=obCur<STEPS.length-1?'Lanjut →':'Selesai! ✨';
-  if(first)A(btn,[{opacity:0},{opacity:.35}],{duration:400,delay:500,fill:'forwards'});
-}
+  /* ── Preview ───────────────────────────────────────────────────── */
 
-function selectOpt(i,lbl){
-  $$('.opt').forEach((c,j)=>c.classList.toggle('sel',j===i));
-  obSel=lbl;
-  A($(`o${i}`),[{transform:'scale(1)'},{transform:'scale(1.04)'},{transform:'scale(1.02) translateX(6px)'}],{duration:280});
-  const btn=$('obBtn');btn.disabled=false;btn.style.cursor='pointer';
-  A(btn,[{opacity:0.35, transform:'scale(1)'},{opacity:1, transform:'scale(1.03)'},{opacity:1, transform:'scale(1)'}],{duration:260,fill:'forwards',easing:'cubic-bezier(.34,1.56,.64,1)'});
-}
+  const preview: PreviewState = useMemo(() => {
+    const mascot =
+      stage === "ready"
+        ? "excited"
+        : stage === "energy"
+          ? plan.mascot
+          : moodAnswer
+            ? moodToMascot(moodAnswer)
+            : name.trim()
+              ? "happy"
+              : "neutral";
 
-function obAdvance(){
-  if(!obSel)return;
-  obAns[obCur]=obSel;
-  if(obCur===0)window._job=obSel;
-  if(obCur===1)window._mood=obSel;
-  if(obCur<STEPS.length-1){obCur++;renderOb(false);}
-  else{showScreen('s4');initGame();}
-}
+    const extras = answers
+      .map((a, i) => ({ a, i }))
+      .filter(
+        ({ a, i }) =>
+          !!a && i !== deptStepIndex && i !== moodIndex && i !== focusIndex,
+      )
+      .map(({ a }) => a as string);
 
-/* ══════════════════════════════
-   S4 — GAME
-══════════════════════════════ */
-const TAP=15;let taps=0,gameOn=false;
-
-function initGame(){
-  taps=0;gameOn=true;$('tapNum').textContent='0';
-  const ef=$('eFill');if(ef)ef.style.width='0%';
-  const est=$('eSt');if(est)est.textContent='💤 Siap dimulai…';
-  const pd=$('pdots');pd.innerHTML='';
-  for(let i=0;i<TAP;i++){const d=window.document.createElement('div');d.className='pdot';d.id=`pd${i}`;pd.appendChild(d);}
-  A($('gameHd'),[{opacity:0,transform:'translateY(-22px)'},{opacity:1,transform:'none'}],{duration:550,delay:100,fill:'forwards',easing:'cubic-bezier(.34,1.4,.64,1)'});
-}
-
-function doTap(ev){
-  if(!gameOn)return;taps++;
-  const numEl=$('tapNum');
-  numEl.textContent=taps;
-  numEl.classList.remove('bump');requestAnimationFrame(()=>requestAnimationFrame(()=>numEl.classList.add('bump')));
-  setTimeout(()=>numEl.classList.remove('bump'),200);
-
-  // Shockwave
-  const sw=window.document.createElement('div');sw.className='shockwave';
-  const tb=$('tapBtn').getBoundingClientRect();const fr=containerRef.current?.querySelector('.frame').getBoundingClientRect();
-  sw.style.cssText=`width:220px;height:220px;left:${tb.left-fr.left}px;top:${tb.top-fr.top}px;`;
-  containerRef.current?.querySelector('.frame').appendChild(sw);setTimeout(()=>sw.remove(),600);
-
-  // Float label — varied messages, centered position
-  const msgs=['⚡ +1','+1 🔥','💪 +1','+1 💥','+1 🎯','🚀 +1','🔥 +1','+1 ✨'];
-  const fl=window.document.createElement('div');fl.className='tap-float-lbl';
-  fl.textContent=msgs[(taps-1)%msgs.length];
-  fl.style.left=(155+Math.random()*40-20)+'px';fl.style.top=(310+Math.random()*20-10)+'px';
-  containerRef.current?.querySelector('.frame').appendChild(fl);setTimeout(()=>fl.remove(),1000);
-
-  // Energy bar + power status
-  const ef=$('eFill'),est=$('eSt');
-  if(ef)ef.style.width=Math.round((taps/TAP)*100)+'%';
-  if(est){const lvl=taps<2?'💤 Siap dimulai…':taps<5?'🌱 Mulai bergerak!':taps<9?'⚡ Makin panas!':taps<13?'🔥 On fire!':'💥 FULL POWER!!!';est.textContent=lvl;}
-
-  // Dot
-  if(taps<=TAP){
-    const dot=$(`pd${taps-1}`);
-    if(dot){dot.classList.add('lit');A(dot,[{transform:'scale(1)'},{transform:'scale(2.4)'},{transform:'scale(1.6)'}],{duration:380,easing:'cubic-bezier(.34,1.56,.64,1)',fill:'forwards'});}
-  }
-
-  if(taps>=TAP){gameOn=false;setTimeout(()=>{showScreen('s5');initCeleb();},600);}
-}
-
-/* ══════════════════════════════
-   S5 — CELEBRATION
-══════════════════════════════ */
-function initCeleb(){
-  const name=window._name||'Kamu';
-  $('cName').textContent=name;
-  $('cs1').querySelector('.cstat-num').textContent=TAP;
-  $('cs2').querySelector('.cstat-num').textContent=STEPS.length+'/'+STEPS.length;
-
-  // Confetti
-  const wrap=$('confwrap');wrap.innerHTML='';
-  const cols=ONBOARDING_CONFETTI;
-  for(let i=0;i<80;i++){
-    const c=window.document.createElement('div');c.className='conf';
-    const w=5+Math.random()*10;const isRect=Math.random()>.35;
-    c.style.cssText=`width:${w}px;height:${isRect?w*.45:w}px;background:${cols[i%cols.length]};--r:${isRect?'2px':'50%'};left:${Math.random()*100}%;--d:${2.5+Math.random()*2.5}s;--de:${Math.random()*1.8}s;--spin:${(Math.random()-.5)*720}deg`;
-    wrap.appendChild(c);
-  }
-
-  sc($('cBuddy'),100,650);
-  setTimeout(()=>$('cBuddy').classList.add('shown'),800);
-  A($('cBadge'),[{opacity:0,transform:'scale(.7) translateY(10px)'},{opacity:1,transform:'none'}],{duration:500,delay:350,fill:'forwards',easing:'cubic-bezier(.34,1.56,.64,1)'});
-  A($('cTitle'),[{opacity:0,transform:'translateY(14px)'},{opacity:1,transform:'none'}],{duration:460,delay:550,fill:'forwards',easing:'cubic-bezier(.34,1.2,.64,1)'});
-  fu($('cSub'),700,400);
-  [$('cs1'),$('cs2'),$('cs3')].forEach((el,i)=>A(el,[{opacity:0,transform:'translateY(14px) scale(.9)'},{opacity:1,transform:'none'}],{duration:400,delay:900+i*80,fill:'forwards',easing:'cubic-bezier(.34,1.4,.64,1)'}));
-  A($('cBtn'),[{opacity:0,transform:'translateY(14px)'},{opacity:1,transform:'none'}],{duration:450,delay:1150,fill:'forwards',easing:'cubic-bezier(.34,1.3,.64,1)'});
-}
-
-/* ══════════════════════════════
-   S6 — PROFILE
-══════════════════════════════ */
-function goProfile(){showScreen('s6');initProfile();}
-
-function initProfile(){
-  const name=window._name||'Kamu';
-  const job=window._job||'Developer / IT';
-  const moodMap={'Super Semangat!':'🔥 Semangat','Oke-oke aja':'😊 Santai','Agak Lelah':'😴 Tired','Butuh Motivasi':'💪 Boost'};
-  const mood=moodMap[window._mood||'']||'🔥 Semangat';
-  $('s6name').textContent=`Semuanya siap, ${name}!`;
-  $('rNama').textContent=name;$('rTipe').textContent=job;$('rMood').textContent=mood;
-
-  A($('s6av'),[{opacity:0,transform:'scale(.5) translateY(20px)'},{opacity:1,transform:'none'}],{duration:600,delay:120,fill:'forwards',easing:'cubic-bezier(.34,1.56,.64,1)'});
-  fu($('s6name'),350,460);fu($('s6sub'),440,420);
-  A($('s6card'),[{opacity:0,transform:'translateY(28px)'},{opacity:1,transform:'none'}],{duration:520,delay:560,fill:'forwards',easing:'cubic-bezier(.34,1.2,.64,1)'});
-  ['r1','r2','r3','r4'].forEach((id,i)=>sli($(id),760+i*90));
-  A($('s6btn'),[{opacity:0,transform:'translateY(14px)'},{opacity:1,transform:'none'}],{duration:460,delay:1180,fill:'forwards',easing:'cubic-bezier(.34,1.2,.64,1)'});
-}
-
-function restart(){
-  A(containerRef.current?.querySelector('.frame'),[{transform:'scale(1)'},{transform:'scale(1.04)',filter:'brightness(1.15)'},{transform:'scale(.95)',filter:'brightness(.9)'},{transform:'scale(1)',filter:'none'}],{duration:600,easing:'cubic-bezier(.34,1.2,.64,1)'});
-  setTimeout(()=>{
-    window._name=null;window._job=null;window._mood=null;obAns=[];obCur=0;taps=0;
-    $$('.shockwave,.tap-float-lbl').forEach(e=>e.remove());
-    const curr=containerRef.current?.querySelector('.screen.active');curr.classList.remove('active');
-    const s1=$('s1');s1.classList.add('active');
-    A($('loadBar'),[{width:'100%'},{width:'0%'}],{duration:50,fill:'forwards'});
-    setTimeout(()=>{
-      A($('loadBar'),[{width:'0%'},{width:'100%'}],{duration:2200,fill:'forwards',easing:'cubic-bezier(.4,0,.2,1)'}).onfinish=()=>{
-        setTimeout(()=>{showScreen('s2',true);initS2();},300);
-      };
-    },200);
-  },2200);
-}
-
-
-        // Bind global functions to window so inline onClick works, or replace inline onClick
-        window.goStep2 = goStep2;
-        window.obAdvance = obAdvance;
-        window.doTap = doTap;
-        window.goProfile = goProfile;
-        
-        window.restart = async () => {
-            const btn = $('s6btn');
-            if (btn) btn.textContent = 'Memulai...';
-            const answers = STEPS.map((s, i) => ({ question: s.q, answer: obAns[i] ?? null }));
-            if (onFinish) onFinish({ job: window._job || '', answers });
-        };
-
-        // Setup background elemen untuk S4 (game screen) — dipakai baik saat splash maupun skip splash
-        function setupS4Background(){
-          const sf2=$('s4stars');
-          if(sf2){for(let i=0;i<55;i++){const st=window.document.createElement('div');st.className='star';const sz=Math.random()>.7?3:Math.random()>.4?2:1.5;st.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*4}s;--de:${Math.random()*6}s;--o:${.2+Math.random()*.6}`;sf2.appendChild(st);}}
-          const bl=$('s4blobs');
-          if(bl){[{bg:'rgba(255,77,0,.15)',w:200,h:200,b:'15%',l:'10%'},{bg:'rgba(124,92,252,.12)',w:180,h:180,t:'20%',r:'5%'}].forEach(c=>{const o=window.document.createElement('div');o.className='mesh-blob';o.style.cssText=`background:${c.bg};width:${c.w}px;height:${c.h}px;border-radius:50%;filter:blur(60px);position:absolute;${c.b?`bottom:${c.b}`:''};${c.t?`top:${c.t}`:''};${c.l?`left:${c.l}`:''};${c.r?`right:${c.r}`:''}; --bd:10s;--bde:${Math.random()*3}s;--bx:20px;--by:-30px;animation:blobDrift 10s ease-in-out infinite alternate`;bl.appendChild(o);});}
-        }
-
-        // Initialize — skip S1 splash jika app sudah menampilkan loading splash sebelumnya
-        if (skipSplash) {
-          setupS4Background();
-          const s1el = $('s1'); const s2el = $('s2');
-          if (s1el) s1el.classList.remove('active');
-          if (s2el) s2el.classList.add('active');
-          initS2();
-        } else {
-          initS1();
-        }
-
-        return () => {
-            window.goStep2 = undefined;
-            window.obAdvance = undefined;
-            window.doTap = undefined;
-            window.goProfile = undefined;
-            window.restart = undefined;
-        };
-    }, []);
-
-    const handleBuddyClick = () => {
-        const newCount = clickCount + 1;
-        setClickCount(newCount);
-        if (newCount > 5) {
-            setBuddyMood('angry');
-            setBuddyMsg('Aduh! Jangan diklik terus, sakit tau! 😠');
-        } else if (newCount > 2) {
-            setBuddyMood('sad');
-            setBuddyMsg('Hei, pelan-pelan dong kliknya... 🥺');
-        } else {
-            setBuddyMood('happy');
-            setBuddyMsg('Hehe, geli! Senang deh kamu main sama aku! ✨');
-        }
+    return {
+      name,
+      department: chosenDeptName,
+      departmentMatched: !!matchedDept,
+      mood: moodAnswer,
+      mascot,
+      focus: focusAnswer,
+      // No plan exists until the employee has reached the energy step.
+      energy:
+        stage === "energy" || stage === "ready"
+          ? { label: plan.label, priorities: plan.priorities, focusMinutes: plan.focusMinutes }
+          : null,
+      extras,
     };
+  }, [
+    stage, plan, moodAnswer, name, answers, deptStepIndex, moodIndex, focusIndex,
+    chosenDeptName, matchedDept, focusAnswer,
+  ]);
 
-    const handleBuddyHover = (isHover) => {
-        setIsHovering(isHover);
-        if (isHover) {
-            setBuddyMood('happy');
-            setBuddyMsg('Wah, dielus! Nyaman banget... 😌✨');
-        } else {
-            if (clickCount > 5) {
-                setBuddyMood('angry');
-                setBuddyMsg('Aduh! Jangan diklik terus, sakit tau! 😠');
-            } else if (clickCount > 2) {
-                setBuddyMood('sad');
-                setBuddyMsg('Hei, pelan-pelan dong kliknya... 🥺');
-            } else {
-                setBuddyMood('neutral');
-                setBuddyMsg('Hai! Senang ketemu kamu 🤜\nAku Buddy, bantu harimu lebih produktif!');
-            }
-        }
-    };
+  /* ── Stage body ────────────────────────────────────────────────── */
 
-    return (
-        <div className="ob-wrapper" style={{ position: 'fixed', inset: 0, zIndex: 9999 }}>
-            <div id="ob-app" ref={containerRef}>
-                
+  const currentStep = stage === "step" ? steps[stepIndex] : undefined;
+  const currentKind = stage === "step" ? kinds[stepIndex] : undefined;
+  const currentAnswer = stage === "step" ? (answers[stepIndex] ?? null) : null;
 
-<div className="frame">
+  const canContinue =
+    stage === "greet" ? !!name.trim() : stage === "step" ? !!currentAnswer : true;
 
+  const ctaLabel =
+    stage === "greet"
+      ? name.trim()
+        ? "Lanjut"
+        : "Isi nama dulu"
+      : stage === "step"
+        ? currentAnswer
+          ? "Lanjut"
+          : "Pilih salah satu"
+        : stage === "energy"
+          ? "Selesai"
+          : submitting
+            ? "Menyiapkan…"
+            : "Masuk ke aplikasi";
 
-<div className="transition-wipe" id="wipe"></div>
+  const canGoBack = stage === "step" || stage === "energy";
+  const stageKey = stage === "step" ? `step-${stepIndex}` : stage;
 
+  const slide = {
+    enter: (d: number) => ({ opacity: 0, x: reduce ? 0 : d * 26 }),
+    center: { opacity: 1, x: 0, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] as const } },
+    exit: (d: number) => ({
+      opacity: 0,
+      x: reduce ? 0 : d * -26,
+      transition: { duration: 0.16 },
+    }),
+  };
 
-<div className="screen active" id="s1">
-  <div className="s1-noise"></div>
-  <div className="s1-grid"></div>
-  <div className="s1-glow"></div>
-  <div className="s1-orbs" id="s1orbs"></div>
-  <div className="s1-starfield" id="s1stars"></div>
+  return (
+    <div className="ob-root">
+      <div className="ob-frame">
+        <OnboardingAmbience />
 
-  <div className="s1-center" id="s1center" style={{opacity: '0'}}>
-    <div className="logo-ring" id="logoRing">
-      <svg className="logo-ring-svg" viewBox="0 0 108 108" fill="none">
-        <circle cx="54" cy="54" r="50" stroke="url(#ringGrad)" strokeWidth="2" strokeDasharray="6 4" opacity=".6"/>
-        <defs><linearGradient id="ringGrad" x1="0" y1="0" x2="108" y2="108" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor={ONBOARDING_SPLASH.gradientFrom}/>
-          <stop offset="50%" stopColor={ONBOARDING_SPLASH.gradientMid}/>
-          <stop offset="100%" stopColor={ONBOARDING_SPLASH.gradientFrom}/>
-        </linearGradient></defs>
-      </svg>
-      <div className="logo-inner" id="logoInner"><BeeMascot mood="neutral" size={60} animated /></div>
-    </div>
-    <div className="logo-text">
-      <div className="logo-brand">Fl<span className="o">ow</span>buddy</div>
-      <div className="logo-tagline">Kerja Lebih Cerdas, Lebih Semangat</div>
-    </div>
-    <div className="s1-loader"><div className="s1-loader-fill" id="loadBar"></div></div>
-  </div>
-</div>
+        {stage === "ready" && <Confetti />}
 
+        {/* ── Header ─────────────────────────────────────────────── */}
+        <AnimatePresence initial={false}>
+          {stage !== "ready" && (
+            <motion.header
+              className="ob-head"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.24 }}
+            >
+              <Row justify="space-between" align="center" style={{ marginBottom: 14 }}>
+                <Row gap={2} align="center" style={{ minWidth: 0 }}>
+                  {canGoBack ? (
+                    <HPButton
+                      variant="ghost"
+                      size="sm"
+                      icon="chevronLeft"
+                      iconOnly
+                      aria-label="Kembali ke langkah sebelumnya"
+                      onClick={goBack}
+                    />
+                  ) : (
+                    <span
+                      aria-hidden
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: HP_TOKENS.radiusSm,
+                        background: HP_TOKENS.yellowSoft,
+                        display: "grid",
+                        placeItems: "center",
+                      }}
+                    >
+                      <HPGlyph name="bee" size={18} color={HP_TOKENS.yellowInk} />
+                    </span>
+                  )}
+                  <span style={{ ...HP_TEXT.sub }}>Flowbuddy</span>
+                </Row>
 
-<div className="screen" id="s2">
-  <div className="s2-top" id="s2top">
-    <div className="s2-top-shimmer"></div>
-    <div className="s2-bubble" id="s2bubble">{buddyMsg.split('\\n').map((line, i) => <React.Fragment key={i}>{line}<br/></React.Fragment>)}</div>
-    
-                <div 
-                    className="s2-buddy" 
-                    id="s2buddy"
-                    onMouseEnter={() => handleBuddyHover(true)}
-                    onMouseLeave={() => handleBuddyHover(false)}
-                    onTouchStart={() => handleBuddyHover(true)}
-                    onTouchEnd={() => handleBuddyHover(false)}
-                    onTouchCancel={() => handleBuddyHover(false)}
-                    style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
-                >
-                    <div className="s2-orbit-dot"></div>
-                    <div className="s2-orbit-dot reverse"></div>
-                    <div className="s2-orbit-dot fast"></div>
-                    <div className="buddy-aura"></div>
-                    <BeeMascot mood={buddyMood} size={135} animated onClick={handleBuddyClick} />
-                </div>
-                
-    <div className="particle-ring" id="s2pring"></div>
-  </div>
-  <div className="s2-bottom">
-    <div className="s2-label" id="s2lbl">SIAPA NAMA KAMU?</div>
-    <input className="s2-input" id="nameIn" type="text" placeholder="Ketik nama kamu..." defaultValue="Test User" autoComplete="off" />
-    <button className="btn" id="s2btn" onClick={() => window.goStep2()}>Halo, aku siap! 👋</button>
-  </div>
-</div>
+                <span style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, whiteSpace: "nowrap" }}>
+                  {railCurrent + 1} dari {railTotal}
+                </span>
+              </Row>
 
+              <ProgressRail total={railTotal} current={railCurrent} />
+            </motion.header>
+          )}
+        </AnimatePresence>
 
-<div className="screen" id="s3">
-  <div className="s3-header">
-    <div className="stepbar" id="stepbar"></div>
-    <div className="ob-step-tag" id="obTag">⚡ LANGKAH 1 / 4</div>
-    <div className="ob-q" id="obQ">Kamu di divisi apa?</div>
-    <div className="ob-hint" id="obHint">Bantu aku sesuaikan pengalaman yang pas buatmu</div>
-  </div>
-  <div className="ob-opts" id="obOpts"></div>
-  <div className="ob-foot"><button className="btn" id="obBtn" onClick={() => window.obAdvance()} style={{opacity: '.35', cursor: 'not-allowed'}}>Lanjut →</button></div>
-</div>
+        {/* ── Viewing area ───────────────────────────────────────── */}
+        <div className="ob-stage">
+          <WorkspacePreview state={preview} />
+        </div>
 
+        {/* ── Interaction area ───────────────────────────────────── */}
+        <div className="ob-body">
+          <AnimatePresence mode="wait" initial={false} custom={dir.current}>
+            <motion.div
+              key={stageKey}
+              custom={dir.current}
+              variants={slide}
+              initial="enter"
+              animate="center"
+              exit="exit"
+            >
+              {stage === "greet" && (
+                <GreetBody name={name} onName={setName} onSubmit={goNext} />
+              )}
 
-<div className="screen" id="s4">
-  <div className="s4-bg">
-    <div className="s1-starfield" id="s4stars"></div>
-    <div className="s4-aurora"></div>
-    <div className="bg-canvas" id="s4blobs"></div>
-  </div>
+              {stage === "step" && currentStep && (
+                <StepBody
+                  step={currentStep}
+                  kind={currentKind!}
+                  index={stepIndex}
+                  total={steps.length}
+                  options={resolveStepOptions(currentStep, departments)}
+                  departments={departments}
+                  selected={currentAnswer}
+                  onSelect={(label) => select(stepIndex, label)}
+                />
+              )}
 
-  <div className="game-hd" id="gameHd">
-    <div className="game-badge">⚡ MINI GAME</div>
-    <div className="game-title">Tap Buddy sebanyak mungkin!<br />Isi <span className="hl">energimu</span> sekarang</div>
-  </div>
+              {stage === "energy" && <EnergyBody level={energy} onChange={setEnergy} />}
 
-  <div className="pdots" id="pdots"></div>
+              {stage === "ready" && (
+                <ReadyBody
+                  name={name}
+                  department={chosenDeptName}
+                  departmentMatched={!!matchedDept}
+                  mood={moodAnswer}
+                  plan={plan}
+                  onEdit={goBack}
+                />
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
 
-  
-  <div className="energy-section">
-    <div className="energy-top">
-      <span className="energy-label-txt">⚡ ENERGY LEVEL</span>
-      <span className="energy-state" id="eSt">💤 Siap dimulai…</span>
-    </div>
-    <div className="energy-track"><div className="energy-fill" id="eFill"></div></div>
-  </div>
-
-  <div className="tap-arena">
-    <div className="tap-ring-outer">
-      <div className="tap-pulse-ring"></div>
-      <div className="tap-pulse-ring"></div>
-      <div className="tap-btn" id="tapBtn" onClick={(e) => window.doTap(e)}>
-        <div style={{textAlign: 'center'}}>
-          <div className="tap-count-num" id="tapNum">0</div>
-          <div className="tap-sub">TAP!</div>
+        {/* ── Pinned action ──────────────────────────────────────── */}
+        <div className="ob-foot">
+          <HPButton
+            variant="primary"
+            size="lg"
+            fullWidth
+            iconEnd={stage === "energy" ? "check" : "arrow"}
+            disabled={!canContinue}
+            loading={stage === "ready" && submitting}
+            onClick={stage === "ready" ? finish : goNext}
+          >
+            {ctaLabel}
+          </HPButton>
         </div>
       </div>
     </div>
-  </div>
+  );
+}
 
-  <div className="tap-target-txt">Target: <b id="tapTgt">15</b> tap 🎯</div>
-</div>
+/* ── Stage: greeting ───────────────────────────────────────────────── */
 
+/**
+ * One field, and it writes straight onto the preview card above as it is
+ * typed. That is the entire welcome — a second mascot and a poke-counter used
+ * to live here, which meant the first screen asked for a name while pointing
+ * at something else.
+ */
+function GreetBody({
+  name,
+  onName,
+  onSubmit,
+}: {
+  name: string;
+  onName: (v: string) => void;
+  onSubmit: () => void;
+}) {
+  return (
+    <Stack gap={5}>
+      <Stack gap={2}>
+        <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.primaryInk }}>Kenalan dulu</span>
+        <h1 style={{ ...HP_TEXT.title, margin: 0 }}>Kita mulai dari namamu</h1>
+        <p style={{ ...HP_TEXT.body, margin: 0, color: HP_TOKENS.inkMute }}>
+          Nama panggilan saja. Ini yang dipakai Buddy untuk menyapamu tiap pagi —
+          dan bisa diubah kapan saja.
+        </p>
+      </Stack>
 
-<div className="screen" id="s5">
-  <div className="confwrap" id="confwrap"></div>
-  <div className="celeb-inner">
-    <div className="celeb-buddy" id="cBuddy"><BeeMascot mood="neutral" size={80} animated /></div>
-    <div className="celeb-badge" id="cBadge">🎉 Level 1 Terbuka!</div>
-    <div className="celeb-title" id="cTitle">Luar biasa,<br /><span className="name" id="cName">Test User</span>!</div>
-    <div className="celeb-sub" id="cSub">Semangatmu nyata banget!<br />Yuk mulai atur harimu 🚀</div>
-    <div className="celeb-stats" id="cStats">
-      <div className="cstat" id="cs1"><div className="cstat-num">15</div><div className="cstat-lbl">TAPS</div></div>
-      <div className="cstat" id="cs2"><div className="cstat-num">4/4</div><div className="cstat-lbl">LANGKAH</div></div>
-      <div className="cstat" id="cs3"><div className="cstat-num">Lv.1</div><div className="cstat-lbl">LEVEL</div></div>
-    </div>
-    <button className="btn" id="cBtn" onClick={() => window.goProfile()} style={{opacity: '0', transform: 'translateY(12px)'}}>Lihat Profilku ✨</button>
-  </div>
-</div>
+      <HPInput
+        label="Nama panggilan"
+        value={name}
+        onChange={(e) => onName(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && name.trim()) onSubmit();
+        }}
+        placeholder="Ketik nama kamu"
+        autoComplete="given-name"
+        maxLength={40}
+      />
 
+      <Row gap={2} align="center">
+        <HPGlyph name="clock" size={13} color={HP_TOKENS.inkMute} />
+        <span style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute }}>
+          Sekitar satu menit, sekali saja.
+        </span>
+      </Row>
+    </Stack>
+  );
+}
 
-<div className="screen" id="s6">
-  <div className="s6-top">
-    <div className="s6-avatar" id="s6av">
-      <div className="s6-avatar-inner"><BeeMascot mood="neutral" size={60} animated /></div>
-      <div className="s6-avatar-badge">🎯</div>
-    </div>
-    <div className="s6-name" id="s6name">Semuanya siap, Test User!</div>
-    <div className="s6-sub" id="s6sub">Hari pertamamu dimulai hari ini.<br />Satu langkah kecil sudah cukup 🌱</div>
-  </div>
-  <div className="s6-card" id="s6card">
-    <div className="s6-card-hd">RANGKUMAN PROFILMU</div>
-    <div className="s6-row" id="r1"><span className="s6-row-key">Nama</span><span className="s6-row-val" id="rNama">Test User</span></div>
-    <div className="s6-row" id="r2"><span className="s6-row-key">Divisi</span><span className="s6-row-val orange" id="rTipe">Developer / IT</span></div>
-    <div className="s6-row" id="r3"><span className="s6-row-key">Mood</span><span className="s6-row-val"><span className="s6-chip" id="rMood">🔥 Semangat</span></span></div>
-    <div className="s6-row" id="r4"><span className="s6-row-key">Level Awal</span><span className="s6-row-val green">🌱 Lv.1 Pemula</span></div>
-  </div>
-  <div className="s6-foot"><button className="btn" id="s6btn" onClick={() => window.restart()} style={{opacity: '0', transform: 'translateY(14px)'}}>Masuk ke App 👉</button></div>
-</div>
+/* ── Stage: one question ───────────────────────────────────────────── */
 
-</div>
+function StepBody({
+  step,
+  kind,
+  index,
+  total,
+  options,
+  departments,
+  selected,
+  onSelect,
+}: {
+  step: OnboardingStep;
+  kind: OnboardingStepKind;
+  index: number;
+  total: number;
+  options: ReturnType<typeof resolveStepOptions>;
+  departments: { name: string }[];
+  selected: string | null;
+  onSelect: (label: string) => void;
+}) {
+  const headingId = `ob-step-${index}`;
+  // Only render the team cards when there is real HR data behind them —
+  // otherwise they would be empty shells and the saved options serve better.
+  const asTeams = kind === "department" && departments.length > 0;
 
+  return (
+    <Stack gap={5}>
+      <Stack gap={2}>
+        <Row gap={2} align="center" wrap>
+          <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.primaryInk }}>
+            {eyebrowFor(step, index, total)}
+          </span>
+          {kind === "department" && (
+            <Row
+              gap={1}
+              align="center"
+              style={{
+                padding: "3px 9px",
+                borderRadius: HP_TOKENS.radiusPill,
+                background: asTeams ? HP_TOKENS.infoWash : HP_TOKENS.warningWash,
+              }}
+            >
+              <HPGlyph
+                name={asTeams ? "link" : "hourglass"}
+                size={11}
+                color={asTeams ? HP_TOKENS.info : HP_TOKENS.warning}
+              />
+              <span
+                style={{
+                  ...HP_TEXT.tiny,
+                  color: asTeams ? HP_TOKENS.info : HP_TOKENS.warning,
+                }}
+              >
+                {asTeams ? "Tim asli dari HR" : "Perlu konfirmasi HR"}
+              </span>
+            </Row>
+          )}
+        </Row>
 
+        <h1 id={headingId} style={{ ...HP_TEXT.title, margin: 0 }}>
+          {step.q}
+        </h1>
+        <p style={{ ...HP_TEXT.body, margin: 0, color: HP_TOKENS.inkMute }}>{step.hint}</p>
 
-            </div>
-        </div>
-    );
+        {kind === "department" && (
+          <p style={{ ...HP_TEXT.small, margin: 0, color: HP_TOKENS.inkMute }}>
+            {asTeams
+              ? "Kamu langsung masuk ke tim yang dipilih — anggota, target dan agenda divisinya ikut terbuka."
+              : "Daftar divisi belum tersedia, jadi pilihanmu akan dikonfirmasi HR dulu."}
+          </p>
+        )}
+      </Stack>
+
+      {asTeams ? (
+        <DepartmentPicker
+          departments={departments}
+          selected={selected}
+          onSelect={onSelect}
+          labelledBy={headingId}
+        />
+      ) : (
+        <OptionGroup
+          options={options}
+          selected={selected}
+          onSelect={onSelect}
+          labelledBy={headingId}
+        />
+      )}
+    </Stack>
+  );
+}
+
+/* ── Stage: energy ─────────────────────────────────────────────────── */
+
+function EnergyBody({ level, onChange }: { level: number; onChange: (n: number) => void }) {
+  return (
+    <Stack gap={5}>
+      <Stack gap={2}>
+        <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.primaryInk }}>Terakhir</span>
+        <h1 style={{ ...HP_TEXT.title, margin: 0 }}>Seberapa penuh tenagamu?</h1>
+        <p style={{ ...HP_TEXT.body, margin: 0, color: HP_TOKENS.inkMute }}>
+          Geser untuk mengatur berat hari pertamamu. Ini menentukan berapa prioritas
+          yang Buddy sarankan dan berapa lama sesi fokus pertamamu.
+        </p>
+      </Stack>
+
+      <EnergyMeter level={level} onChange={onChange} />
+    </Stack>
+  );
+}
+
+/* ── Stage: ready ──────────────────────────────────────────────────── */
+
+/**
+ * The finale states what was actually set up, not what was answered. A recap of
+ * four questions tells the employee nothing they don't remember typing thirty
+ * seconds ago; "you are in Marketing with 12 people" is news.
+ */
+function ReadyBody({
+  name,
+  department,
+  departmentMatched,
+  mood,
+  plan,
+  onEdit,
+}: {
+  name: string;
+  department: string | null;
+  departmentMatched: boolean;
+  mood: string | null;
+  plan: ReturnType<typeof energyPlan>;
+  onEdit: () => void;
+}) {
+  const reduce = useReducedMotion();
+  const displayName = name.trim().split(" ")[0] || "Kamu";
+
+  return (
+    <Stack gap={5}>
+      <Stack gap={2}>
+        <motion.h1
+          initial={reduce ? { opacity: 0 } : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={SPRING}
+          style={{ ...HP_TEXT.display, margin: 0 }}
+        >
+          Siap, {displayName}!
+        </motion.h1>
+        <p style={{ ...HP_TEXT.body, margin: 0, color: HP_TOKENS.inkMute }}>
+          Tiga hal sudah disiapkan untukmu.
+        </p>
+      </Stack>
+
+      <HPCard padding={0} style={{ overflow: "hidden" }}>
+        <Stack gap={0}>
+          <Outcome
+            icon={departmentMatched ? "check" : "hourglass"}
+            tone={department ? (departmentMatched ? "success" : "warning") : "mute"}
+            title={department ? (departmentMatched ? `Bergabung ke ${department}` : `Divisi ${department}`) : "Divisi belum dipilih"}
+            detail={
+              department
+                ? departmentMatched
+                  ? "Anggota tim, target divisi dan agendanya sudah terbuka."
+                  : "Divisi ini belum terdaftar — HR akan mengonfirmasi dulu."
+                : "Kamu bisa memilih divisi nanti lewat profil."
+            }
+          />
+          <Divider />
+          <Outcome
+            icon="zap"
+            tone="primary"
+            title={`Rencana ${plan.label.toLowerCase()}`}
+            detail={`${plan.priorities} prioritas dan sesi fokus ${plan.focusMinutes} menit untuk hari pertama.`}
+          />
+          <Divider />
+          <Outcome
+            icon="bee"
+            tone="primary"
+            title="Buddy menyesuaikan nadanya"
+            detail={
+              mood
+                ? `Kamu bilang lagi "${mood}", jadi Buddy mulai dari situ.`
+                : "Buddy akan menyesuaikan setelah check-in pertamamu."
+            }
+          />
+        </Stack>
+      </HPCard>
+
+      <Row justify="center">
+        <HPButton variant="ghost" size="sm" icon="undo" onClick={onEdit}>
+          Ubah jawaban
+        </HPButton>
+      </Row>
+    </Stack>
+  );
+}
+
+function Outcome({
+  icon,
+  tone,
+  title,
+  detail,
+}: {
+  icon: string;
+  tone: "success" | "warning" | "primary" | "mute";
+  title: string;
+  detail: string;
+}) {
+  const colour =
+    tone === "success"
+      ? HP_TOKENS.success
+      : tone === "warning"
+        ? HP_TOKENS.warning
+        : tone === "primary"
+          ? HP_TOKENS.primary
+          : HP_TOKENS.inkMute;
+
+  return (
+    <Row gap={3} align="flex-start" style={{ padding: "14px 16px" }}>
+      <span
+        aria-hidden
+        style={{
+          flex: "0 0 auto",
+          width: 32,
+          height: 32,
+          borderRadius: HP_TOKENS.radiusSm,
+          display: "grid",
+          placeItems: "center",
+          background: `color-mix(in srgb, ${colour} 14%, transparent)`,
+        }}
+      >
+        <HPGlyph name={icon} size={16} color={colour} />
+      </span>
+      <Stack gap={1} style={{ minWidth: 0 }}>
+        <span style={{ ...HP_TEXT.sub }}>{title}</span>
+        <span style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute }}>{detail}</span>
+      </Stack>
+    </Row>
+  );
 }

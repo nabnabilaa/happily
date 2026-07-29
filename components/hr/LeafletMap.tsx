@@ -229,11 +229,11 @@ export default function LeafletMap({ offices, onAddOffice, onDeleteOffice, onUpd
                     onClick={() => onDeleteOffice(office.id)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 6, padding: '4px 8px',
-                      background: HP_TOKENS.coralSoft, color: HP_TOKENS.coral, borderRadius: 8,
+                      background: HP_TOKENS.coralSoft, color: HP_TOKENS.coralInk, borderRadius: 8,
                       border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: HP_FONT
                     }}
                   >
-                    <HPGlyph name="close" size={12} color={HP_TOKENS.coral} /> Hapus
+                    <HPGlyph name="close" size={12} color={HP_TOKENS.coralInk} /> Hapus
                   </button>
                 </div>
               </Popup>
@@ -254,7 +254,7 @@ export default function LeafletMap({ offices, onAddOffice, onDeleteOffice, onUpd
             <Circle 
               center={[draftLocation.lat, draftLocation.lng]} 
               radius={draftRadius} 
-              pathOptions={{ fillColor: HP_TOKENS.sage, fillOpacity: 0.2, color: HP_TOKENS.sage, weight: 2 }} 
+              pathOptions={{ fillColor: HP_TOKENS.sage, fillOpacity: 0.2, color: HP_TOKENS.sageInk, weight: 2 }} 
             />
           </div>
         )}

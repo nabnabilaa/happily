@@ -152,7 +152,7 @@ export default function OfficeSettingsMap() {
               <button 
                 onClick={() => handleDeleteOffice(office.id)}
                 style={{
-                  background: 'none', border: 'none', ...HP_TEXT.small, color: HP_TOKENS.coral, fontWeight: 700, cursor: 'pointer', fontFamily: HP_FONT
+                  background: 'none', border: 'none', ...HP_TEXT.small, color: HP_TOKENS.coralInk, fontWeight: 700, cursor: 'pointer', fontFamily: HP_FONT
                 }}
               >
                 Hapus

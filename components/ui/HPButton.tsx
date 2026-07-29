@@ -40,7 +40,7 @@ function skin(variant: Variant, disabled: boolean): React.CSSProperties {
     case "primary":
       return { background: HP_TOKENS.primary, color: HP_TOKENS.onPrimary, border: "1px solid transparent" };
     case "danger":
-      return { background: HP_TOKENS.dangerSoft, color: HP_TOKENS.danger, border: `1px solid transparent` };
+      return { background: HP_TOKENS.dangerSoft, color: HP_TOKENS.dangerInk, border: `1px solid transparent` };
     case "ghost":
       return { background: "transparent", color: HP_TOKENS.inkSoft, border: "1px solid transparent" };
     case "secondary":

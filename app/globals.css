@@ -47,6 +47,31 @@
   --hp-info-soft: rgba(91, 98, 214, 0.09);
   --hp-info-wash: rgba(91, 98, 214, 0.04);
 
+  /* ── Status INK: the text step ──────────────────────────────────────────
+     The tokens above are *surface* colours — fills, arcs, borders, glyphs.
+     None of them is legible as text on a light page. Measured on white card:
+
+       yellow / honey  2.17:1     warning  3.37:1     success  4.00:1
+       danger  4.43:1             primary  4.50:1     info     4.34:1 (on sunken)
+
+     — and every one is worse again on its own wash. Yellow at ~2:1 fails even
+     the 3:1 bar for icons. That is not a per-component slip; it was the whole
+     status palette being asked to do a job it was never toned for.
+
+     So each family gets one darker step, hue and saturation held, walked down
+     only until it clears 4.6:1 on both card and its own wash. For primary,
+     success, danger and info the shift is a couple of percent — invisible.
+     Warning and yellow move properly, because they had to.
+
+     Use `*Ink` for any text or glyph. Keep the base token for fills, arcs and
+     borders, which only owe 3:1 and carry the brand warmth. */
+  --hp-primary-ink: #2362FF;
+  --hp-success-ink: #148154;
+  --hp-warning-ink: #A16315;
+  --hp-danger-ink:  #D2362D;
+  --hp-info-ink:    #5B62D6;
+  --hp-yellow-ink:  #976A0F;
+
   /* ── Categorical ──
      For series that are merely *different* — departments, chart lines — not
      better or worse. Status colours must never be used for this: a red
@@ -201,6 +226,17 @@
   --hp-info: #8E93E8;
   --hp-info-soft: rgba(142, 147, 232, 0.14);
   --hp-info-wash: rgba(142, 147, 232, 0.06);
+
+  /* Dark mode never had this problem — the status colours here are the light
+     end of their families and already clear 8:1 on a dark card. The ink step
+     therefore just points back at the base token, so `*Ink` is safe to use
+     unconditionally and a component never has to branch on theme. */
+  --hp-primary-ink: var(--hp-primary);
+  --hp-success-ink: var(--hp-success);
+  --hp-warning-ink: var(--hp-warning);
+  --hp-danger-ink:  var(--hp-danger);
+  --hp-info-ink:    var(--hp-info);
+  --hp-yellow-ink:  var(--hp-yellow);
 
   /* Categorical, lifted for dark surfaces — same hue order, higher lightness
      so each series still clears contrast against #171B22. */
@@ -460,28 +496,38 @@ a { color: var(--hp-primary); text-decoration: none; }
     align-items: start;
   }
 
-  /* The rail is reference material — it parks while the main column scrolls.
+  /* The rail parks while the main column scrolls — the two columns move
+     independently, which is the point of having two columns.
 
-     It pins *below* the sticky app bar, not behind it. The old `top: 24px` was
-     measured from the top of the scroll container, which put the rail's first
-     30-odd pixels underneath the translucent bar — so scrolling the main column
-     visibly dragged the rail up under the bar and the rail's own bottom was cut
-     off past the viewport. Both offsets now derive from --hp-appbar-h. */
+     An earlier version of this rule did the same thing and swallowed content:
+     it hid the rail's scrollbar (`scrollbar-width: none`) and set
+     `overscroll-behavior: contain`, so a rail taller than the viewport had a
+     silent fold — no scrollbar to say so, page scroll couldn't reveal it, and a
+     wheel over the rail trapped instead of chaining. The Wellbeing gauge and the
+     whole "Lainnya" list were mounted and wired up but impossible to reach.
+
+     The fix is not to give up the parking; it is to leave the overflow visible.
+     Three things guarantee nothing can hide again:
+       · the rail keeps the app's normal thin scrollbar, so overflow is announced
+       · `scrollbar-gutter: stable` reserves its track, so nothing reflows when
+         the rail grows past the clamp
+       · `overscroll-behavior: auto` — a wheel that reaches the rail's end
+         chains to the page instead of dead-ending
+
+     `top` clears the sticky app bar so the rail pins below it, not behind it. */
   .hp-page-grid > aside {
+    min-width: 0;
     position: sticky;
-    top: calc(var(--hp-appbar-h) + 16px);
-    max-height: calc(100dvh - var(--hp-appbar-h) - 32px);
+    top: calc(var(--hp-appbar-h) + var(--hp-space-2));
+    max-height: calc(100dvh - var(--hp-appbar-h) - var(--hp-space-6));
     overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: none;
+    overscroll-behavior: auto;
+    scrollbar-gutter: stable;
+    /* Keeps card borders off the scrollbar track. */
+    padding-right: var(--hp-space-1);
   }
-  .hp-page-grid > aside::-webkit-scrollbar { display: none; }
 }
 
-/* Reduced motion users often also want less movement from sticky elements. */
-@media (prefers-reduced-motion: reduce) {
-  .hp-page-grid > aside { position: static; max-height: none; }
-}
 
 /* Thin, unobtrusive scrollbars — visible enough to signal overflow */
 * { scrollbar-width: thin; scrollbar-color: var(--hp-line-strong) transparent; }
@@ -818,6 +864,21 @@ a { color: var(--hp-primary); text-decoration: none; }
 @media (min-width: 768px) { .hp-install-btn { right: 24px; bottom: 24px; } }
 
 /* ═══ RESPONSIVE HELPERS ═══ */
+
+/* App-bar wordmark. The glyph always shows — it is what stops the bar reading
+   as an empty strip with controls shoved against the right edge. The word
+   itself drops below 480px: at 375 the bar already carries two icon buttons,
+   a role pill and a logout pill, and the extra ~110px tipped it over into
+   wrapping to a second row. */
+@media (max-width: 479px) { .hp-wordmark-label { display: none; } }
+
+/* From 768px up the sidebar carries the brand lockup ("Flowbuddy / by Maxy"),
+   so the app-bar wordmark next to it was a second Flowbuddy on the same
+   screen. Its contents collapse there while the element itself stays as a
+   zero-width spacer, which is what keeps the right-hand cluster pinned to the
+   right edge. Below 768px the bottom bar has no brand, so it renders. */
+@media (min-width: 768px) { .hp-appbar-brand > * { display: none; } }
+
 .hp-btn-mobile-full { white-space: nowrap; }
 @media (max-width: 500px) { .hp-btn-mobile-full { width: 100%; text-align: center; } }
 
@@ -861,49 +922,13 @@ a { color: var(--hp-primary); text-decoration: none; }
   background-color: var(--hp-card) !important;
 }
 
-/* ═══ ONBOARDING (standalone flow — keeps its own look) ═══ */
-#ob-app { background: #0E1116; }
-.ob-frame {
-  width: 390px; height: 844px; max-height: 100dvh; max-width: 100vw;
-  position: relative; overflow: hidden; border-radius: 44px;
-  box-shadow: 0 0 0 1px rgba(255,255,255,.06), 0 40px 90px rgba(0,0,0,.7);
-  background: #0E1116;
-}
-@media (max-width: 500px) { .ob-frame { border-radius: 0; } }
-
-.ob-wipe { position: absolute; inset: 0; background: var(--hp-primary); z-index: 100; pointer-events: none; transform: scaleX(0); transform-origin: left; }
-.ob-wipe.active { animation: wipeIn 0.3s var(--hp-ease) forwards, wipeOut 0.3s 0.3s var(--hp-ease) forwards; }
-@keyframes wipeIn  { from { transform: scaleX(0); transform-origin: left; }  to { transform: scaleX(1); transform-origin: left; } }
-@keyframes wipeOut { from { transform: scaleX(1); transform-origin: right; } to { transform: scaleX(0); transform-origin: right; } }
-
-.ob-screen { position: absolute; inset: 0; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity var(--hp-dur-slow); }
-.ob-screen.active { opacity: 1; pointer-events: all; }
-
-.ob-btn {
-  width: 100%; min-height: 52px; padding: 15px 24px;
-  border-radius: var(--hp-radius-md);
-  background: var(--hp-primary); color: var(--hp-on-primary);
-  font-weight: 650; font-size: 16px;
-  transition: transform var(--hp-dur-fast) var(--hp-ease), opacity var(--hp-dur-fast) var(--hp-ease);
-}
-.ob-btn:active { transform: scale(0.98); }
-.ob-btn:disabled { opacity: 0.4; }
-
-.pop-anim   { animation: hpRise var(--hp-dur-slow) var(--hp-ease-out) both; }
-.slide-anim { animation: hpFadeUp var(--hp-dur-slow) var(--hp-ease-out) both; }
-
-@keyframes blobDrift   { from { transform: translate(0,0) scale(1); } to { transform: translate(16px, -24px) scale(1.08); } }
-@keyframes glowPulse   { 0%, 100% { opacity: .5; } 50% { opacity: .9; } }
-@keyframes spinRing    { to { transform: rotate(360deg); } }
-@keyframes shimmer     { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
-@keyframes ringDotPulse{ 0%, 100% { opacity: .3; transform: scale(.85); } 50% { opacity: 1; transform: scale(1.2); } }
-@keyframes starTwink   { 0%, 100% { opacity: 0; } 50% { opacity: .5; } }
-@keyframes auroraWave  { from { transform: scaleX(1); } to { transform: scaleX(1.04); } }
-@keyframes pulsate     { from { opacity: .7; transform: scale(1); } to { opacity: 0; transform: scale(1.35); } }
-@keyframes conicSpin   { to { transform: rotate(360deg); } }
-@keyframes floatNum    { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(-70px) scale(.7); } }
-@keyframes confDrop    { from { opacity: 1; transform: translateY(0) rotate(0); } to { opacity: .1; transform: translateY(880px) rotate(460deg); } }
-@keyframes popIn       { from { opacity: 0; transform: scale(0.94) translateY(12px); } to { opacity: 1; transform: none; } }
-@keyframes slideLeft   { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: none; } }
-
-.syne { font-family: var(--hp-font-display); font-weight: 700; letter-spacing: -0.02em; }
+/*
+ * Keyframes shared by a couple of components.
+ *
+ * The onboarding block that used to sit here is gone: the flow was rebuilt on
+ * the design system (`components/auth/OnboardingScreen.tsx` + its own scoped
+ * stylesheet) and no longer needs a private dark frame, wipe transition or
+ * starfield. Only the two keyframes something else still references survive.
+ */
+@keyframes glowPulse { 0%, 100% { opacity: .5; } 50% { opacity: .9; } }
+@keyframes shimmer   { from { transform: translateX(-100%); } to { transform: translateX(100%); } }

@@ -112,7 +112,7 @@ function ResetPasswordContent() {
           position: "relative",
           zIndex: 1
         }}>
-          <div style={{ marginBottom: 24, width: 64, height: 64, borderRadius: "50%", background: `${HP_TOKENS.primary}20`, display: "flex", alignItems: "center", justifyContent: "center", color: HP_TOKENS.primary }}>
+          <div style={{ marginBottom: 24, width: 64, height: 64, borderRadius: "50%", background: `${HP_TOKENS.primary}20`, display: "flex", alignItems: "center", justifyContent: "center", color: HP_TOKENS.primaryInk }}>
             <HPGlyph name="lock" size={32} />
           </div>
 
@@ -125,14 +125,14 @@ function ResetPasswordContent() {
 
           <form onSubmit={handleSubmit} style={{ width: "100%", display: "flex", flexDirection: "column", gap: 16 }}>
             {error && (
-              <div style={{ padding: "12px", borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.dangerWash, color: HP_TOKENS.danger, fontWeight: 700, textAlign: "center", fontSize: 13 }}>
+              <div style={{ padding: "12px", borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.dangerWash, color: HP_TOKENS.dangerInk, fontWeight: 700, textAlign: "center", fontSize: 13 }}>
                 {error}
               </div>
             )}
             
             {success ? (
               <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
-                <div style={{ padding: "16px", width: "100%", borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.successWash, color: HP_TOKENS.success, fontWeight: 600, textAlign: "center", fontSize: 14, marginBottom: 24, border: `1px solid ${HP_TOKENS.successSoft}` }}>
+                <div style={{ padding: "16px", width: "100%", borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.successWash, color: HP_TOKENS.successInk, fontWeight: 600, textAlign: "center", fontSize: 14, marginBottom: 24, border: `1px solid ${HP_TOKENS.successSoft}` }}>
                   {success}
                 </div>
                 <Link href="/" className="hp-btn-hover" style={{
@@ -211,7 +211,7 @@ function ResetPasswordContent() {
                 >
                   {loading ? (
                     <>
-                      <div className="hp-spin" style={{ display: 'flex', alignItems: 'center' }}>🔄</div> Menyimpan...
+                      <div className="hp-spin" style={{ display: 'flex', alignItems: 'center' }}><HPGlyph name="refresh" size={14} color="currentColor" /></div> Menyimpan...
                     </>
                   ) : "Simpan Password Baru"}
                 </button>

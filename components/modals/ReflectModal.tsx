@@ -12,6 +12,7 @@ import Modal from "@/components/ui/Modal";
 import HPGlyph from "@/components/ui/HPGlyph";
 import HPCard from "@/components/ui/HPCard";
 import BeeMascot from "@/components/ui/BeeMascot";
+import { useMoodCheckIn } from "@/hooks/useMoodCheckIn";
 
 interface ReflectModalProps {
   onClose: () => void;
@@ -19,6 +20,7 @@ interface ReflectModalProps {
 
 export default function ReflectModal({ onClose }: ReflectModalProps) {
   const { state, updateState, awardXP, user, notify } = useHP();
+  const { saveMood } = useMoodCheckIn();
   const [mood, setMood] = useState('calm');
   const [productivity, setProductivity] = useState('mid');
   const [workLife, setWorkLife] = useState('ok');
@@ -57,7 +59,10 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
     };
 
     // Award XP via server (single channel, not direct updateUser)
-    awardXP('daily_reflection', 'Tutup Hari (Clock Out)');
+    // Aksi yang sama dengan yang dibayar route clock-out, dengan kunci tanggal
+    // yang sama — jadi "Tutup Hari" dibayar sekali, bukan dua kali seperti dulu
+    // (5 poin dari clock-out + 20 poin dari sini untuk satu kejadian).
+    awardXP('tutup_hari', 'Tutup Hari (Clock Out)');
     
     try {
       // Save logbook entry
@@ -85,10 +90,37 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
         body: JSON.stringify({ userId: user?.id })
       });
 
+      // Titipkan refleksi ini ke memori Buddy. Hambatan hari ini sering menyingkap
+      // pemicu yang berulang, dan rencana besok adalah komitmen yang pantas ditanyakan lagi.
+      // Fire-and-forget: kegagalan di sini tidak boleh menghalangi user menutup harinya.
+      if (user?.id) {
+        fetch("/api/buddy/memory", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: user.id,
+            source: 'reflection',
+            transcript: [
+              `Perasaan: ${moodLabel}`,
+              `Produktivitas: ${prodLabel}`,
+              `Work-life balance: ${wlLabel}`,
+              `Hambatan hari ini: ${blockers.trim() || '(tidak diisi)'}`,
+              `Rencana besok: ${tomorrowPlan.trim()}`,
+            ].join('\n'),
+          }),
+          keepalive: true,
+        }).catch(() => { /* diam-diam saja */ });
+      }
+
+      // End-of-day mood is a mood check-in too, and belongs in `mood_checkins`
+      // alongside the others. It reached the logbook metadata and Buddy's
+      // memory but never the table the wellbeing score and HR average read.
+      if (mood) {
+        await saveMood({ mood, quick: true, silent: true, awardPoints: false });
+      }
+
       updateState((s: any) => ({
         ...s,
-        mood: mood,
-        moods: [...(s.moods || []), { time: new Date().toISOString(), mood: mood }],
         logbook: [
           {
             id: Date.now(),
@@ -227,7 +259,7 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
                 className="hp-tap"
                 style={{ 
                   background: 'none', border: 'none', padding: '8px 0 0', textAlign: 'center',
-                  ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 700, cursor: 'pointer',
+                  ...HP_TEXT.tiny, color: HP_TOKENS.sageInk, fontWeight: 700, cursor: 'pointer',
                   width: '100%', marginTop: 4
                 }}
               >
@@ -270,8 +302,8 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
           </div>
 
           <div style={{ marginTop: 16, background: `${HP_TOKENS.yellowWash}40`, padding: 16, borderRadius: HP_TOKENS.radiusMd, border: `1.5px solid ${HP_TOKENS.yellow}` }}>
-            <div style={{ ...HP_TEXT.h, fontSize: 14, marginBottom: 8, color: HP_TOKENS.warning }}>Rencana Besok? <span style={{ color: HP_TOKENS.danger }}>*</span></div>
-            <div style={{ ...HP_TEXT.small, fontSize: 12, color: HP_TOKENS.warning, marginBottom: 12 }}>
+            <div style={{ ...HP_TEXT.h, fontSize: 14, marginBottom: 8, color: HP_TOKENS.warningInk }}>Rencana Besok? <span style={{ color: HP_TOKENS.dangerInk }}>*</span></div>
+            <div style={{ ...HP_TEXT.small, fontSize: 12, color: HP_TOKENS.warningInk, marginBottom: 12 }}>
               Tuliskan garis besar prioritasmu untuk esok hari. Ini akan muncul di sapaan pagimu besok!
             </div>
             <textarea

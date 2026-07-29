@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { awardPoints } from "@/lib/points";
 
 // GET: Fetch or auto-generate monthly report for a user
 export async function GET(request: Request) {
@@ -92,27 +93,22 @@ export async function POST(request: Request) {
 
           if (xpAmount > 0) {
             // Check if already awarded to prevent double awards
-            const checkAward = await db.execute({
-              sql: "SELECT id FROM xp_transactions WHERE user_id = ? AND action_type = ? AND description LIKE ?",
-              args: [userId, actionType, `%${ks.kpiId}%`]
+            // Kunci `kpi:<id>:<bulan>` menggantikan pencocokan
+            // `description LIKE '%<kpiId>%'`. Selain rapuh, cara lama juga tidak
+            // membedakan periode — KPI yang sama di bulan berikutnya dianggap
+            // sudah pernah dibayar dan bonusnya hilang diam-diam.
+            const kpiResult = await awardPoints({
+              userId,
+              action: actionType,
+              refId: `kpi:${ks.kpiId}:${year}-${String(month).padStart(2, '0')}`,
+              description: desc,
             });
 
-            if (checkAward.rows.length === 0) {
-              const txId = "tx_kpi_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
-              await db.execute({
-                sql: "INSERT INTO xp_transactions (id, user_id, amount, action_type, description) VALUES (?, ?, ?, ?, ?)",
-                args: [txId, userId, xpAmount, actionType, desc]
-              });
-              await db.execute({
-                sql: "UPDATE users SET points = points + ?, coins = points + ? WHERE id = ?",
-                args: [xpAmount, xpAmount, userId]
-              });
-              
-              // Notify employee
+            if (kpiResult.status === 'awarded') {
               const kpNotifId = "n_kpi_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
               await db.execute({
                 sql: "INSERT INTO notifications (id, user_id, title, message, type) VALUES (?, ?, ?, ?, ?)",
-                args: [kpNotifId, userId, `🏆 Bonus Point KPI: +${xpAmount}!`, desc, 'success']
+                args: [kpNotifId, userId, `🏆 Bonus Point KPI: +${kpiResult.awarded}!`, desc, 'success']
               });
             }
           }
@@ -127,22 +123,14 @@ export async function POST(request: Request) {
     // Award Monthly Streak Bonus (+200 XP) if user has completed all working days in that month
     if (report.activeDays >= report.totalWorkingDays) {
       try {
-        const checkStreak = await db.execute({
-          sql: "SELECT id FROM xp_transactions WHERE user_id = ? AND action_type = 'streak_monthly' AND description LIKE ?",
-          args: [userId, `%${month}/${year}%`]
+        const streakResult = await awardPoints({
+          userId,
+          action: 'streak_monthly',
+          refId: `${year}-${String(month).padStart(2, '0')}`,
+          description: `🔥 Streak sebulan penuh: ${month}/${year}`,
         });
 
-        if (checkStreak.rows.length === 0) {
-          const txId = "tx_sm_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
-          await db.execute({
-            sql: "INSERT INTO xp_transactions (id, user_id, amount, action_type, description) VALUES (?, ?, ?, ?, ?)",
-            args: [txId, userId, 200, 'streak_monthly', `🔥 Streak sebulan penuh: ${month}/${year}`]
-          });
-          await db.execute({
-            sql: "UPDATE users SET points = points + 200, coins = points + 200 WHERE id = ?",
-            args: [userId]
-          });
-          
+        if (streakResult.status === 'awarded') {
           const notifStreakId = "n_sm_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
           await db.execute({
             sql: "INSERT INTO notifications (id, user_id, title, message, type) VALUES (?, ?, ?, ?, ?)",

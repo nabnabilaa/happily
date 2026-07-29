@@ -82,7 +82,7 @@ export default function SectionHeader({
             // 44px target even though the text is small
             minHeight: 44,
             padding: "0 4px",
-            color: HP_TOKENS.primary,
+            color: HP_TOKENS.primaryInk,
             fontSize: 13.5,
             fontWeight: 600,
             letterSpacing: "-0.005em",

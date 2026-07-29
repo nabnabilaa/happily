@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { HP_TOKENS, HP_FONT, HP_FONT_DISPLAY, HP_TEXT } from "@/lib/constants";
 import HPGlyph from "@/components/ui/HPGlyph";
 import BeeMascot from "@/components/ui/BeeMascot";
-import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
+import { GoogleOAuthProvider, useGoogleLogin, useGoogleOneTapLogin } from "@react-oauth/google";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -56,7 +56,24 @@ interface AuthScreenProps {
   onLogin: (userData: any) => void;
 }
 
+const GOOGLE_CLIENT_ID =
+  process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "DUMMY_CLIENT_ID.apps.googleusercontent.com";
+
+/**
+ * Provider dipisah dari isinya karena `useGoogleLogin` hanya bisa dipanggil di
+ * dalam pohon `GoogleOAuthProvider`. Sebelumnya provider berada di dalam
+ * `return` komponen yang sama, sehingga hook apa pun di sini akan berjalan di
+ * luar konteksnya.
+ */
 export default function AuthScreen({ onLogin }: AuthScreenProps) {
+  return (
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <AuthScreenInner onLogin={onLogin} />
+    </GoogleOAuthProvider>
+  );
+}
+
+function AuthScreenInner({ onLogin }: AuthScreenProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -66,8 +83,6 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
     email: "",
     password: "",
   });
-
-  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "DUMMY_CLIENT_ID.apps.googleusercontent.com";
 
   // Cancel any pending Google FedCM / One Tap requests when this component unmounts
   useEffect(() => {
@@ -115,7 +130,8 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
     }
   };
 
-  const handleGoogleSuccess = async (credentialResponse: any) => {
+  /** Satu jalur masuk ke server, apa pun bentuk kredensial dari Google. */
+  const submitGoogleAuth = async (payload: { code?: string; credential?: string }) => {
     setLoading(true);
     setError("");
 
@@ -123,7 +139,7 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
       const res = await fetch("/api/auth/google", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ credential: credentialResponse.credential }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -140,12 +156,36 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
     }
   };
 
-  const handleGoogleError = () => {
-    setError("Gagal masuk dengan Google");
-  };
+  /**
+   * Tombol utama memakai authorization code flow, bukan ID token.
+   *
+   * Bedanya bukan kosmetik: satu layar persetujuan yang sama sekaligus memberi
+   * izin Google Calendar, dan servernya menerima refresh token yang berlaku
+   * sampai user mencabutnya. Itulah yang menghapus tombol "Hubungkan kalender"
+   * — kalender sudah tersambung sebelum user sempat mencarinya.
+   */
+  const loginWithGoogle = useGoogleLogin({
+    flow: "auth-code",
+    scope: "https://www.googleapis.com/auth/calendar.events",
+    onSuccess: (response) => submitGoogleAuth({ code: (response as any).code }),
+    onError: () => setError("Gagal masuk dengan Google"),
+  });
+
+  /**
+   * One Tap dipertahankan sebagai jalur cepat, tapi secara desain ia hanya bisa
+   * mengembalikan ID token — tidak ada scope kalender di dalamnya. User yang
+   * masuk lewat sini diminta izin kalender sekali saat membuka tab Kalender.
+   */
+  useGoogleOneTapLogin({
+    disabled: process.env.NODE_ENV === "development",
+    cancel_on_tap_outside: false,
+    onSuccess: (credentialResponse) =>
+      submitGoogleAuth({ credential: (credentialResponse as any).credential }),
+    onError: () => setError("Gagal masuk dengan Google"),
+  });
 
   return (
-    <GoogleOAuthProvider clientId={clientId}>
+    <>
       <div style={{
         height: "100dvh",
         width: "100%",
@@ -191,8 +231,7 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
               <div style={{
                 fontFamily: HP_FONT_DISPLAY, fontSize: 36, fontWeight: 700, color: HP_TOKENS.ink, letterSpacing: -1,
               }}>
-                Flow<span style={{ color: HP_TOKENS.primary }}>buddy</span><span style={{ fontSize: 16, fontWeight: 700, color: HP_TOKENS.inkMute, marginLeft: 6 }}>by Maxy</span> ✨
-              </div>
+                Flow<span style={{ color: HP_TOKENS.primaryInk }}>buddy</span><span style={{ fontSize: 16, fontWeight: 700, color: HP_TOKENS.inkMute, marginLeft: 6 }}>by Maxy</span><HPGlyph name="sparkle" size={14} color="currentColor" /></div>
               <div style={{ fontSize: 13, color: HP_TOKENS.inkSoft, fontWeight: 600, marginTop: 4, letterSpacing: 0.5 }}>
                 Flowbuddy by Maxy — Kerja Lebih Cerdas
               </div>
@@ -230,10 +269,10 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                 N
               </div>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: HP_TOKENS.primary }}>Install App</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: HP_TOKENS.primaryInk }}>Install App</div>
                 <div style={{ fontSize: 11, fontWeight: 600, color: HP_TOKENS.inkMute }}>Nikmati pengalaman<br/>Flowbuddy di desktop</div>
               </div>
-              <HPGlyph name="download" size={16} color={HP_TOKENS.primary} />
+              <HPGlyph name="download" size={16} color={HP_TOKENS.primaryInk} />
             </div>
           </div>
           <style dangerouslySetInnerHTML={{ __html: `
@@ -295,7 +334,7 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
 
               <form onSubmit={handleSubmit} style={{ width: "100%", display: "flex", flexDirection: "column", gap: 16 }}>
                 {error && (
-                  <div style={{ padding: "12px", borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.dangerWash, color: HP_TOKENS.danger, fontWeight: 700, textAlign: "center", fontSize: 13 }}>
+                  <div style={{ padding: "12px", borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.dangerWash, color: HP_TOKENS.dangerInk, fontWeight: 700, textAlign: "center", fontSize: 13 }}>
                     {error}
                   </div>
                 )}
@@ -344,7 +383,7 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                     />
                     Ingat saya
                   </label>
-                  <Link href="/forgot-password" className="hp-link" style={{ color: HP_TOKENS.primary, textDecoration: "none" }}>Lupa password?</Link>
+                  <Link href="/forgot-password" className="hp-link" style={{ color: HP_TOKENS.primaryInk, textDecoration: "none" }}>Lupa password?</Link>
                 </div>
 
                 <button
@@ -361,7 +400,7 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                 >
                   {loading ? (
                     <>
-                      <div className="hp-spin" style={{ display: 'flex', alignItems: 'center' }}>🚀</div> Memproses...
+                      <div className="hp-spin" style={{ display: 'flex', alignItems: 'center' }}><HPGlyph name="zap" size={14} color="currentColor" /></div> Memproses...
                     </>
                   ) : "Login 🚀"}
                 </button>
@@ -375,28 +414,64 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
               </div>
 
               <div className="hp-google-btn-wrapper" style={{ width: "100%", display: "flex", justifyContent: "center" }}>
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={handleGoogleError}
-                  useOneTap={process.env.NODE_ENV !== "development"}
-                  auto_select={false}
-                  cancel_on_tap_outside={false}
-                  theme="outline"
-                  size="large"
-                  text="signin_with"
-                  shape="pill"
-                />
+                <button
+                  type="button"
+                  onClick={() => loginWithGoogle()}
+                  disabled={loading}
+                  className="hp-tap"
+                  style={{
+                    width: "100%",
+                    minHeight: 48,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 12,
+                    padding: "12px 20px",
+                    borderRadius: HP_TOKENS.radiusPill,
+                    border: `1px solid ${HP_TOKENS.line}`,
+                    ...HP_TEXT.label,
+                    background: HP_TOKENS.card,
+                    color: HP_TOKENS.ink,
+                    fontFamily: HP_FONT,
+                    cursor: loading ? "default" : "pointer",
+                    opacity: loading ? 0.6 : 1,
+                  }}
+                >
+                  <GoogleMark />
+                  Masuk dengan Google
+                </button>
               </div>
 
               <div style={{ marginTop: 32, fontSize: 14, color: HP_TOKENS.inkSoft, fontWeight: 500, textAlign: "center" }}>
-                Belum punya akun? <Link href="/register" className="hp-link" style={{ color: HP_TOKENS.primary, fontWeight: 700, textDecoration: "none" }}>Daftar di sini</Link>
+                Belum punya akun? <Link href="/register" className="hp-link" style={{ color: HP_TOKENS.primaryInk, fontWeight: 700, textDecoration: "none" }}>Daftar di sini</Link>
               </div>
             </div>
           </div>
           </div>
         </div>
       </div>
-    </GoogleOAuthProvider>
+    </>
+  );
+}
+
+/**
+ * Logo "G" resmi Google. Empat warnanya adalah merek pihak ketiga: menariknya
+ * ke HP_TOKENS akan membuatnya ikut berubah saat tema gelap menyala, dan logo
+ * Google yang berubah warna melanggar pedoman merek mereka. Ini satu-satunya
+ * tempat di layar ini yang hex-nya sengaja literal.
+ */
+const GOOGLE_MARK_PATHS = [
+  { fill: "#EA4335", d: "M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" }, // design-ok: warna merek Google, tidak boleh mengikuti tema aplikasi
+  { fill: "#4285F4", d: "M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" }, // design-ok: warna merek Google
+  { fill: "#FBBC05", d: "M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24s.92 7.54 2.56 10.78l7.97-6.19z" }, // design-ok: warna merek Google
+  { fill: "#34A853", d: "M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" }, // design-ok: warna merek Google
+];
+
+function GoogleMark() {
+  return (
+    <svg width={18} height={18} viewBox="0 0 48 48" aria-hidden="true">
+      {GOOGLE_MARK_PATHS.map(p => <path key={p.fill} fill={p.fill} d={p.d} />)}
+    </svg>
   );
 }
 

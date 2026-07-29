@@ -13,7 +13,10 @@ interface StatBlockProps {
 
 export default function StatBlock({ label, value, icon, tone }: StatBlockProps) {
   const bg = { yellow: HP_TOKENS.yellowSoft, coral: HP_TOKENS.coralSoft, sage: HP_TOKENS.sageSoft, blue: HP_TOKENS.blueSoft, lavender: HP_TOKENS.lavenderSoft }[tone];
-  const fg = { yellow: HP_TOKENS.yellowDark, coral: HP_TOKENS.danger, sage: HP_TOKENS.sage, blue: HP_TOKENS.blue, lavender: HP_TOKENS.lavender }[tone];
+  // Ink steps, not the surface tokens: `yellowDark` is 3.1:1 on card and the
+  // plain `sage`/`lavender` are under 4.5:1, so a glyph in them sat on the
+  // edge of legible against its own soft tint.
+  const fg = { yellow: HP_TOKENS.yellowInk, coral: HP_TOKENS.dangerInk, sage: HP_TOKENS.sageInk, blue: HP_TOKENS.blue, lavender: HP_TOKENS.lavenderInk }[tone];
   
   return (
     <div style={{ flex: 1 }}>
@@ -37,7 +40,7 @@ export default function StatBlock({ label, value, icon, tone }: StatBlockProps) 
             border: `2px solid `,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <HPGlyph name="star" size={10} color={HP_TOKENS.yellowDark} />
+            <HPGlyph name="star" size={10} color={HP_TOKENS.yellowInk} />
           </div>
         )}
         <div style={{ ...HP_TEXT.title, fontSize: 22 }}>{value}</div>

@@ -116,7 +116,7 @@ function HabitCell({ h, onToggle, onQuickComplete, onFinish }: HabitCellProps) {
       {showPoints && (
         <div style={{
           position: 'absolute', top: 10, right: 14,
-          background: HP_TOKENS.ink, color: HP_TOKENS.yellow,
+          background: HP_TOKENS.ink, color: HP_TOKENS.yellowInk,
           padding: '2px 8px', borderRadius: 8,
           fontSize: 11, fontWeight: 700, fontFamily: HP_FONT,
           animation: 'hpRise 1.2s ease-out forwards',
@@ -161,7 +161,8 @@ function HabitCell({ h, onToggle, onQuickComplete, onFinish }: HabitCellProps) {
             display: 'flex', alignItems: 'center', gap: 4
           }}
         >
-          Tamat 🎓
+          <HPGlyph name="medal" size={12} color="currentColor" />
+          Tamat
         </button>
       </div>
 

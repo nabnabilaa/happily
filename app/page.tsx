@@ -7,7 +7,7 @@ import { HP_TOKENS, HP_FONT } from "@/lib/constants";
 
 // Auth
 import AuthScreen from "@/components/auth/AuthScreen";
-import OnboardingScreen from "@/components/auth/OnboardingScreen";
+import OnboardingScreen, { type OnboardingResult } from "@/components/auth/OnboardingScreen";
 
 // UI
 import HPGlyph from "@/components/ui/HPGlyph";
@@ -63,6 +63,7 @@ const safeDynamic = <P,>(
 // Modals dynamically imported to optimize page loading time
 const CheckInModal = safeDynamic(() => import("@/components/modals/CheckInModal"));
 const FocusModal = safeDynamic(() => import("@/components/modals/FocusModal"));
+const FocusSessionKeeper = safeDynamic(() => import("@/components/home/FocusSessionKeeper"));
 const OvertimePromptModal = safeDynamic(() => import("@/components/modals/OvertimePromptModal"));
 
 const PauseModal = safeDynamic(() => import("@/components/modals/PauseModal"));
@@ -119,9 +120,9 @@ const ManageOnboardingModal = safeDynamic(() => import("@/components/modals/Mana
 
 // ─── Role pill badge colors (Gercep Palette) ────────────────────────────────
 const ROLE_META: Record<UserRole, { label: string; color: string; bg: string; glyph: string }> = {
-  employee: { label: 'Employee', color: HP_TOKENS.primary, bg: HP_TOKENS.primarySoft, glyph: 'target' },
-  manager:  { label: 'Manager',  color: HP_TOKENS.info,    bg: HP_TOKENS.infoSoft,    glyph: 'people' },
-  hr:       { label: 'HR Admin', color: HP_TOKENS.success, bg: HP_TOKENS.successSoft, glyph: 'medal' },
+  employee: { label: 'Employee', color: HP_TOKENS.primaryInk, bg: HP_TOKENS.primarySoft, glyph: 'target' },
+  manager:  { label: 'Manager',  color: HP_TOKENS.infoInk,    bg: HP_TOKENS.infoSoft,    glyph: 'people' },
+  hr:       { label: 'HR Admin', color: HP_TOKENS.successInk, bg: HP_TOKENS.successSoft, glyph: 'medal' },
 };
 
 /** Compact pill used by the header controls. */
@@ -154,7 +155,7 @@ const headerIconBtn: React.CSSProperties = {
 };
 
 function AppContent() {
-  const { state, loading, user, login, logout, setUserRole, updateState } = useHP();
+  const { state, loading, user, login, logout, updateState, updateUser } = useHP();
   const [tab, setTab] = useState('home');
   const [modal, setModal] = useState<{ name: string; props?: any } | null>(null);
   const [coachPos, setCoachPos] = useState({ x: 0, y: 0 });
@@ -164,6 +165,12 @@ function AppContent() {
 
   const openModal  = useCallback((name: string, props?: any) => setModal({ name, props }), []);
   const closeModal = useCallback(() => setModal(null), []);
+
+  // Akses HR bisa dicabut saat sesi berjalan. Tanpa ini tab konsol hilang dari
+  // nav tapi `tab` masih 'hr_console', dan layarnya jadi kosong melompong.
+  useEffect(() => {
+    if (tab === 'hr_console' && !(user?.hrAccess && user?.role !== 'hr')) setTab('home');
+  }, [tab, user?.hrAccess, user?.role]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -280,8 +287,7 @@ function AppContent() {
             fontFamily: 'var(--hp-font-display)', fontSize: 42, fontWeight: 700, 
             color: 'var(--hp-ink)', letterSpacing: -1, animation: 'hpFadeUp 0.5s ease both' 
           }}>
-            Flow<span style={{ color: 'var(--hp-primary)' }}>buddy</span> ✨
-          </div>
+            Flow<span style={{ color: 'var(--hp-primary)' }}>buddy</span><HPGlyph name="sparkle" size={28} color="currentColor" /></div>
           <div style={{ 
             fontSize: 14, color: 'var(--hp-ink-mute)', letterSpacing: 0.5, 
             marginTop: 6, fontWeight: 600, animation: 'hpFadeUp 0.5s 0.15s ease both' 
@@ -329,15 +335,36 @@ function AppContent() {
     );
   }
 
-  const handleOnboardingFinish = async ({ job, answers }: { job: string, answers?: { question: string, answer: string | null }[] }) => {
+  const handleOnboardingFinish = async ({ job, department, departmentId, answers }: OnboardingResult) => {
     updateState({ onboarded: true });
-    // Simpan status onboarding, divisi, dan seluruh jawaban onboarding (knowledge tambahan per user) ke DB
+    const picked = department ?? job ?? null;
+    // Divisi + status yang benar-benar tersimpan, dipakai untuk sync storage di bawah.
+    // Tanpa ini, POST /api/storage mengirim `user` versi lama dan menimpa balik
+    // kolom department/department_status yang baru saja diisi.
+    let savedDepartment: string | null = picked;
+    let savedStatus: 'pending' | 'approved' | null = picked ? 'pending' : null;
+    // Simpan status onboarding, divisi, dan seluruh jawaban onboarding (knowledge tambahan per user) ke DB.
+    // `departmentId` terisi kalau pilihan karyawan cocok dengan departemen HR yang asli —
+    // dalam kasus itu API langsung menggabungkannya (approved), tanpa antre persetujuan.
     try {
-      await fetch("/api/onboarding/complete", {
+      const res = await fetch("/api/onboarding/complete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id, department: job || null, answers: answers || [] }),
+        body: JSON.stringify({
+          userId: user.id,
+          department: picked,
+          departmentId: departmentId ?? null,
+          answers: answers || [],
+        }),
       });
+      const data = await res.json().catch(() => null);
+      // Pakai divisi + status yang dikonfirmasi server, supaya layar berikutnya
+      // (Team, Goals, profil) langsung menampilkan divisi yang benar tanpa reload.
+      if (data?.success) {
+        savedDepartment = data.department ?? picked;
+        savedStatus = data.departmentStatus ?? savedStatus;
+        updateUser({ department: savedDepartment ?? undefined, department_status: savedStatus });
+      }
     } catch (e) {
       console.error("Failed to save onboarding department:", e);
     }
@@ -348,7 +375,7 @@ function AppContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           state: { ...state, onboarded: true },
-          user,
+          user: { ...user, department: savedDepartment ?? undefined, department_status: savedStatus },
           userId: user.id
         }),
       });
@@ -372,15 +399,21 @@ function AppContent() {
   }
 
   // ── Determine Role ────────────────────────────────────────────────────────
-  // Base role = role akun sebenarnya (dari DB). currentRole = tampilan aktif (bisa di-switch).
-  const baseRole = (user?.role || 'employee') as UserRole;
-  const currentRole = (user?.userRole || user?.role || 'employee') as UserRole;
+  /*
+   * Peran dibaca langsung dari akun, tidak lagi dari `userRole`.
+   *
+   * `userRole` dulu menyimpan state switcher HR, dan itu ikut tersimpan ke kolom
+   * `user_role_context` lewat sync — sekali seorang employee menekan tombolnya,
+   * dia tetap terkunci di konsol HR pada login-login berikutnya. Akses HR
+   * sekarang berupa tab tambahan, jadi tidak ada peran yang perlu ditukar dan
+   * kolom itu berhenti dipakai sebagai state UI.
+   */
+  const currentRole = (user?.role || 'employee') as UserRole;
   const isManager = currentRole === 'manager';
   const isHR = currentRole === 'hr';
-  // Employee/manager dengan akses HR-Admin tambahan boleh switch ke konsol HR.
-  // Akun ber-role 'hr' murni tidak perlu switcher (sudah selalu di konsol HR).
-  const canSwitchHr = !!user?.hrAccess && baseRole !== 'hr';
-
+  // Employee/manager yang dititipi akses HR-Admin. Akun ber-role hr sudah
+  // seluruhnya konsol, jadi tidak perlu tab tambahan.
+  const hasHrConsole = !!user?.hrAccess && currentRole !== 'hr';
   // ── Render screen by role + tab ─────────────────────────────────────────────
   const renderScreen = () => {
     // Calendar tab is shared across all roles
@@ -388,6 +421,8 @@ function AppContent() {
     // Chat tab is shared across all roles
     if (tab === 'chat') return <ChatScreen openModal={openModal} />;
     if (tab === 'team') return <TeamScreen openModal={openModal} />;
+    // Konsol HR sebagai tab tambahan, bukan pengganti nav peran aslinya.
+    if (tab === 'hr_console' && hasHrConsole) return <HRPeopleScreen openModal={openModal} />;
 
 
     // Employee
@@ -466,7 +501,7 @@ function AppContent() {
 
   return (
     <div className="hp-app-container">
-      <TabNav tab={tab} setTab={setTab} userRole={currentRole} />
+      <TabNav tab={tab} setTab={setTab} userRole={currentRole} hrAccess={hasHrConsole} />
 
       {/* Main content */}
       <div className="hp-app-content">
@@ -474,7 +509,11 @@ function AppContent() {
             scrolling, and so screens no longer need to reserve space under it. */}
         <div style={{
           position: 'sticky', top: 0, zIndex: 40,
-          display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8,
+          // `flex-end` left this bar as ~60px of blank paper with a cluster of
+          // pills pushed against the right edge — the first thing you saw on
+          // every screen was an unbalanced empty strip. The wordmark anchors the
+          // left, so the bar reads as chrome instead of as unfinished layout.
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
           padding: '10px 16px',
           // Kept in step with --hp-appbar-h, which the dashboard rail offsets
           // from so it pins below this bar instead of behind it.
@@ -487,7 +526,41 @@ function AppContent() {
           borderBottom: `1px solid ${HP_TOKENS.line}`,
           flexWrap: 'wrap',
         }}>
+          {/* Wordmark. Deliberately quiet — one weight step and one accent
+              word, no logo lockup, so it holds the left edge without competing
+              with the screen title underneath it. Mobile only: on desktop the
+              sidebar already shows the brand lockup, and two Flowbuddys in the
+              same corner read as a layout bug (see .hp-appbar-brand). */}
+          <div className="hp-appbar-brand" style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            minWidth: 0, marginRight: 'auto',
+          }}>
+            <HPGlyph name="bee" size={19} color={HP_TOKENS.primaryInk} />
+            <span className="hp-wordmark-label" style={{
+              fontFamily: 'var(--hp-font-display)',
+              fontSize: 16, fontWeight: 700, letterSpacing: '-0.02em',
+              color: HP_TOKENS.ink, whiteSpace: 'nowrap',
+            }}>
+              Flow<span style={{ color: HP_TOKENS.primaryInk }}>buddy</span>
+            </span>
+          </div>
+
           <InstallButton />
+
+          {/* Logbook lives in the app bar, not in a screen, because it is the
+              one thing that must be reachable no matter what: any role, any
+              tab, clocked in or not, and especially on a day someone forgot to
+              clock out. Buried at the bottom of the Home rail it was neither
+              findable nor reachable. */}
+          <button
+            onClick={() => openModal('logbook')}
+            className="hp-tap"
+            title="Riwayat & Logbook"
+            aria-label="Riwayat & Logbook"
+            style={headerIconBtn}
+          >
+            <HPGlyph name="book" size={18} stroke={2} color="currentColor" />
+          </button>
 
           <button
             onClick={() => openModal('notifications')}
@@ -528,23 +601,8 @@ function AppContent() {
             ) : null}
           </button>
 
-          {/* HR switcher — untuk employee/manager dengan akses HR-Admin tambahan */}
-          {canSwitchHr && (
-            <button
-              onClick={() => { setUserRole(currentRole === 'hr' ? baseRole : 'hr'); setTab('home'); }}
-              className="hp-tap"
-              title={currentRole === 'hr' ? 'Kembali ke tampilan karyawan' : 'Buka konsol HR-Admin'}
-              style={{
-                ...headerPill,
-                background: currentRole === 'hr' ? HP_TOKENS.successSoft : HP_TOKENS.card,
-                border: `1px solid ${currentRole === 'hr' ? 'transparent' : HP_TOKENS.border}`,
-                color: currentRole === 'hr' ? HP_TOKENS.success : HP_TOKENS.inkSoft,
-              }}
-            >
-              <HPGlyph name={currentRole === 'hr' ? 'home' : 'medal'} size={13} color="currentColor" />
-              <span>{currentRole === 'hr' ? 'Mode Karyawan' : 'Konsol HR'}</span>
-            </button>
-          )}
+          {/* Tidak ada lagi switcher peran di sini: konsol HR punya tabnya
+              sendiri di nav, sehingga tidak ada mode yang perlu ditukar. */}
 
           <div
             style={{
@@ -607,6 +665,14 @@ function AppContent() {
             <HPGlyph name="sparkle" size={24} color="currentColor" />
         </button>
       </div>
+
+      {/* Sesi fokus tidak boleh bergantung pada modalnya tetap terbuka: penjaga
+          ini yang meneruskan detak jantung (dan menawarkan jalan kembali) saat
+          layar fokus disembunyikan. */}
+      <FocusSessionKeeper
+        suspended={modal?.name === 'focus'}
+        onOpen={(roomId) => openModal('focus', { roomId })}
+      />
 
       {/* Modal Renderer */}
       {modal?.name === 'checkin'          && <CheckInModal onClose={closeModal} />}

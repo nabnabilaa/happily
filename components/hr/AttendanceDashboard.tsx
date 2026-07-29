@@ -117,14 +117,14 @@ export default function AttendanceDashboard({ logs, users }: AttendanceDashboard
         
         {stats.absent >= 0 && (
           <HPCard padding={16} style={{ background: HP_TOKENS.coralSoft, border: 'none' }}>
-            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.coral, fontWeight: 700, marginBottom: 4 }}>TIDAK MASUK</div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: HP_TOKENS.coral }}>{stats.absent}</div>
+            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.coralInk, fontWeight: 700, marginBottom: 4 }}>TIDAK MASUK</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: HP_TOKENS.coralInk }}>{stats.absent}</div>
           </HPCard>
         )}
         {stats.absent < 0 && (
           <HPCard padding={16} style={{ background: HP_TOKENS.sageSoft, border: 'none' }}>
-            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 700, marginBottom: 4 }}>TEPAT WAKTU</div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: HP_TOKENS.sage }}>{stats.onTime}</div>
+            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sageInk, fontWeight: 700, marginBottom: 4 }}>TEPAT WAKTU</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: HP_TOKENS.sageInk }}>{stats.onTime}</div>
           </HPCard>
         )}
       </div>
@@ -132,8 +132,8 @@ export default function AttendanceDashboard({ logs, users }: AttendanceDashboard
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 12 }}>
         {[
           { label: 'WFO', value: stats.wfo, color: HP_TOKENS.ink },
-          { label: 'WFA', value: stats.wfa, color: HP_TOKENS.lavender },
-          { label: 'Dinas', value: stats.dinas, color: HP_TOKENS.yellow },
+          { label: 'WFA', value: stats.wfa, color: HP_TOKENS.lavenderInk },
+          { label: 'Dinas', value: stats.dinas, color: HP_TOKENS.yellowInk },
         ].map(item => (
           <div key={item.label} style={{ background: HP_TOKENS.card, border: `1px solid ${HP_TOKENS.lineSoft}`, borderRadius: HP_TOKENS.radiusSm, padding: 12, textAlign: 'center' }}>
             <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>{item.label}</div>

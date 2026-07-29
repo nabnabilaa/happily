@@ -76,73 +76,6 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
     return () => clearTimeout(timer);
   }, [memberId, state?.managerData?.teamTasks]);
 
-  const handleVerify = async (taskId: string, action: 'approve' | 'reject' | 'revision' = 'approve') => {
-    try {
-      const url = action === 'approve' ? "/api/manager/verify-task" : "/api/manager/reject-task";
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          taskId, 
-          managerId: user?.id, 
-          ...(action === 'approve' ? { goalId } : { action }) 
-        })
-      });
-
-      if (!res.ok) throw new Error("Failed");
-
-      // Update local state to reflect verification
-      updateState((s: any) => {
-        const newTeamTasks = s.managerData?.teamTasks?.map((t: any) => 
-          t.id === taskId 
-            ? { 
-                ...t, 
-                verified: action === 'approve', 
-                done: action === 'approve', 
-                status: action 
-              } 
-            : t
-        ) || [];
-        
-        let newGoals = s.goals;
-        if (goalId && action === 'approve') {
-          const tasksForGoal = newTeamTasks.filter((t: any) => String(t.goalId) === String(goalId));
-          const verifiedCount = tasksForGoal.filter((t: any) => t.verified).length;
-          newGoals = s.goals.map((g: any) => 
-            String(g.id) === String(goalId) 
-              ? { ...g, metric: `${verifiedCount}/${tasksForGoal.length} verified` } 
-              : g
-          );
-        }
-
-        return {
-          ...s,
-          goals: newGoals,
-          managerData: {
-            ...s.managerData,
-            teamTasks: newTeamTasks
-          }
-        };
-      });
-
-      // Update current view logs
-      setLogs(prev => prev.map(day => ({
-        ...day,
-        tasks: day.tasks.map((t: any) => 
-          t.id === taskId 
-            ? { 
-                ...t, 
-                verified: action === 'approve', 
-                done: action === 'approve', 
-                status: action 
-              } 
-            : t
-        )
-      })));
-    } catch (e) {
-      console.error(e);
-    }
-  };
 
   return (
     <Modal onClose={onClose} title="Member Logbook 📋" noPadding>
@@ -158,7 +91,7 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
             <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>{goalTitle || 'KPI Progress'}</div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 24, fontWeight: 700, color: HP_TOKENS.sage }}>{state?.goals?.find((g: any) => String(g.id) === String(goalId))?.alignment || 100}%</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: HP_TOKENS.sageInk }}>{state?.goals?.find((g: any) => String(g.id) === String(goalId))?.alignment || 100}%</div>
             <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade }}>Alignment</div>
           </div>
         </div>
@@ -200,7 +133,7 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
                           <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.ink }}>{child.title}</div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
                             {child.progress >= 100 && (
-                              <div style={{ padding: '2px 7px', borderRadius: 5, background: HP_TOKENS.sageSoft, color: HP_TOKENS.sage, fontSize: 8, fontWeight: 700 }}>DONE</div>
+                              <div style={{ padding: '2px 7px', borderRadius: 5, background: HP_TOKENS.sageSoft, color: HP_TOKENS.sageInk, fontSize: 8, fontWeight: 700 }}>DONE</div>
                             )}
                             <div style={{
                               padding: '3px 9px', borderRadius: 6, fontSize: 9, fontWeight: 700,
@@ -258,7 +191,7 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
                     </div>
                   ) : (
                     day.tasks.map((t: any) => {
-                      const isRejected = !t.verified && !t.done && t.status === 'reject';
+                      const isRejected = !t.verified && !t.done && (t.status === 'rejected' || t.status === 'reject');
                       const isRevision = !t.verified && !t.done && t.status === 'revision';
                       
                       const cardBorder = t.verified 
@@ -337,71 +270,45 @@ export default function MemberLogbookModal({ onClose, memberId, memberName, goal
                                 {t.verified && (
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                                     <div style={{ width: 4, height: 4, borderRadius: '50%', background: HP_TOKENS.sage }} />
-                                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 700, fontSize: 9 }}>VERIFIED</div>
+                                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sageInk, fontWeight: 700, fontSize: 9 }}>VERIFIED</div>
                                   </div>
                                 )}
                                 {!t.verified && t.done && (
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                                     <div style={{ width: 4, height: 4, borderRadius: '50%', background: HP_TOKENS.yellow }} />
-                                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.yellow, fontWeight: 700, fontSize: 9 }}>WAITING FOR ACC</div>
+                                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.yellowInk, fontWeight: 700, fontSize: 9 }}>WAITING FOR ACC</div>
                                   </div>
                                 )}
                                 {isRejected && (
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                                     <div style={{ width: 4, height: 4, borderRadius: '50%', background: HP_TOKENS.coral }} />
-                                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.coral, fontWeight: 700, fontSize: 9 }}>DITOLAK</div>
+                                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.coralInk, fontWeight: 700, fontSize: 9 }}>DITOLAK</div>
                                   </div>
                                 )}
                                 {isRevision && (
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                                     <div style={{ width: 4, height: 4, borderRadius: '50%', background: HP_TOKENS.yellowDark }} />
-                                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.yellowDark, fontWeight: 700, fontSize: 9 }}>BUTUH REVISI</div>
+                                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.yellowInk, fontWeight: 700, fontSize: 9 }}>BUTUH REVISI</div>
                                   </div>
                                 )}
                               </div>
                             </div>
                             
+                            {/* Logbook ini bacaan, bukan tempat memutus. ACC
+                                diberikan sekali per KPI di Review KPI. */}
                             {t.done && !t.verified && (
-                              <div style={{ display: 'flex', gap: 6 }}>
-                                <button 
-                                  onClick={() => handleVerify(t.id, 'approve')}
-                                  className="hp-tap"
-                                  style={{
-                                    padding: '8px 16px', borderRadius: HP_TOKENS.radiusSm, border: 'none',
-                                    background: HP_TOKENS.sage, color: HP_TOKENS.onPrimary, fontSize: 11, fontWeight: 700, 
-                                    cursor: 'pointer'
-                                  }}
-                                >
-                                  ACC
-                                </button>
-                                <button 
-                                  onClick={() => handleVerify(t.id, 'revision')}
-                                  className="hp-tap"
-                                  style={{
-                                    padding: '8px 12px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.yellow}`,
-                                    background: HP_TOKENS.card, color: HP_TOKENS.yellowDark, fontSize: 11, fontWeight: 700, 
-                                    cursor: 'pointer'
-                                  }}
-                                >
-                                  Revisi
-                                </button>
-                                <button 
-                                  onClick={() => handleVerify(t.id, 'reject')}
-                                  className="hp-tap"
-                                  style={{
-                                    padding: '8px 12px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.coral}`,
-                                    background: HP_TOKENS.card, color: HP_TOKENS.coral, fontSize: 11, fontWeight: 700, 
-                                    cursor: 'pointer'
-                                  }}
-                                >
-                                  Tolak
-                                </button>
+                              <div style={{
+                                padding: '4px 10px', borderRadius: 99, flexShrink: 0,
+                                background: HP_TOKENS.yellowSoft, color: HP_TOKENS.yellowDark,
+                                fontSize: 10, fontWeight: 700,
+                              }}>
+                                Menunggu ACC
                               </div>
                             )}
                             {t.verified && (
                               <div style={{ 
                                 width: 32, height: 32, borderRadius: '50%', background: HP_TOKENS.sageWash,
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', color: HP_TOKENS.sage
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', color: HP_TOKENS.sageInk
                               }}>
                                 <HPGlyph name="check" size={20} stroke={3} />
                               </div>

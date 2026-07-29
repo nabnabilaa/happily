@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { hpEventEmitter } from "@/lib/events";
+import { awardPoints, refFor } from "@/lib/points";
+import { wibDateString, wibMinutesOfDay, sqlWibDate, SQL_WIB_TODAY } from "@/lib/timeUtils";
 
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371e3; // metres
@@ -74,6 +76,25 @@ export async function POST(request: Request) {
     }
 
     // 3. Record Attendance
+    //
+    // Satu check-in per hari. Tanpa penjaga ini route bisa dipanggil berkali-
+    // kali sehari dan tiap panggilan menambah baris kehadiran baru — yang dulu
+    // juga berarti tambahan poin tiap kali, karena poinnya ditulis langsung ke
+    // DB tanpa kunci idempoten.
+    const existingToday = await db.execute({
+      sql: `SELECT id FROM attendance
+             WHERE user_id = ? AND ${sqlWibDate('check_in_at')} = ${SQL_WIB_TODAY}
+             LIMIT 1`,
+      args: [userId],
+    });
+
+    if (existingToday.rows.length > 0) {
+      return NextResponse.json(
+        { error: "Kamu sudah check-in hari ini." },
+        { status: 409 },
+      );
+    }
+
     console.log(`[Attendance] Recording attendance for user ${userId} (${checkInType})`);
     const now = new Date().toISOString().slice(0, 19).replace('T', ' '); // MySQL DATETIME format
     await db.execute({
@@ -124,71 +145,78 @@ export async function POST(request: Request) {
       console.warn("Streak calc error:", e);
     }
 
-    // 6. Award check-in XP — Spec v2: time-based
-    // Before 08:00 = +10 XP, 08:01-08:15 = +5 XP, after 08:15 = 0 XP
+    // 6. Poin check-in — berbasis jam WIB.
+    // Sebelum 08:00 = +10, 08:01–08:15 = +5, lewat itu = 0 (tetap tercatat).
+    //
+    // Dulu blok ini menulis `UPDATE users SET points = points + ?` langsung ke
+    // DB, sehingga melewati kuota dan kunci idempoten sekaligus — check-in
+    // berkali-kali sehari membayar +10 tiap kali. Sekarang lewat lib/points.ts
+    // dengan kunci tanggal WIB, jadi hanya hari pertama yang dibayar.
+    //
+    // `getHours()` juga diganti helper WIB: di server Vercel (TZ=UTC) jam lokal
+    // meleset 7 jam, sehingga check-in jam 08:30 WIB terbaca 01:30 dan dinilai
+    // "tepat waktu".
     try {
-      const nowTime = new Date();
-      const hour = nowTime.getHours();
-      const minute = nowTime.getMinutes();
-      const totalMinutes = hour * 60 + minute;
-      const workStart = 8 * 60; // 08:00
+      const totalMinutes = wibMinutesOfDay();
+      const workStart = 8 * 60; // 08:00 WIB
 
-      let xpAmount = 0;
-      let actionType = 'check_in_late';
+      let action = 'check_in_late';
       let xpLabel = 'Terlambat > 15 menit';
 
       if (totalMinutes < workStart) {
-        xpAmount = 10;
-        actionType = 'check_in_ontime';
+        action = 'check_in_ontime';
         xpLabel = 'Tepat waktu! 🎯';
       } else if (totalMinutes <= workStart + 15) {
-        xpAmount = 5;
-        actionType = 'check_in_late_minor';
+        action = 'check_in_late_minor';
         xpLabel = `Terlambat ${totalMinutes - workStart} menit`;
       }
 
-      if (xpAmount > 0) {
-        const txId = "tx_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
-        await db.execute({
-          sql: "INSERT INTO xp_transactions (id, user_id, amount, action_type, description) VALUES (?, ?, ?, ?, ?)",
-          args: [txId, userId, xpAmount, actionType, `Check-in ${checkInType} — ${xpLabel}`]
-        });
-        await db.execute({
-          sql: "UPDATE users SET points = points + ?, coins = points + ? WHERE id = ?",
-          args: [xpAmount, xpAmount, userId]
-        });
-      }
+      await awardPoints({
+        userId,
+        action,
+        refId: refFor.day(wibDateString()),
+        description: `Check-in ${checkInType} — ${xpLabel}`,
+      });
     } catch (e) {
-      console.warn("XP award error on checkin:", e);
+      console.warn("Gagal memberi poin check-in:", e);
     }
 
-    // 7. Streak milestone notifications — Spec v2
-    // 5-day streak = +25 XP, 7-day = +25 XP bonus
-    // Monthly full streak (+200 XP) is handled by cron job checking work_calendar
-    const streakMilestones: Record<number, { bonus: number; emoji: string }> = {
-      5: { bonus: 25, emoji: '🔥' },
-      7: { bonus: 25, emoji: '🔥' },
-      14: { bonus: 50, emoji: '⚡' },
-      21: { bonus: 100, emoji: '🏆' },
+    // 7. Bonus milestone streak.
+    //
+    // Kuncinya `streak:<n>:<tanggal>`. Tanggal ikut supaya milestone bisa diraih
+    // lagi setelah streak putus dan dibangun ulang — tapi tetap mustahil dobel
+    // dalam satu hari. Versi lama menembak setiap kali route ini dipanggil
+    // selama `streak` masih bernilai 5, jadi tiga kali check-in di hari yang
+    // sama menghasilkan tiga kali bonus.
+    const STREAK_MILESTONES: Record<number, string> = {
+      5: 'streak_5',
+      14: 'streak_14',
+      30: 'streak_30',
     };
-    
-    if (streakMilestones[streak]) {
-      const { bonus, emoji } = streakMilestones[streak];
+
+    const milestoneAction = STREAK_MILESTONES[streak];
+    if (milestoneAction) {
       try {
-        const txId = "tx_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
-        await db.execute({
-          sql: "INSERT INTO xp_transactions (id, user_id, amount, action_type, description) VALUES (?, ?, ?, ?, ?)",
-          args: [txId, userId, bonus, `streak_${streak}`, `${emoji} Streak ${streak} hari`]
+        const result = await awardPoints({
+          userId,
+          action: milestoneAction,
+          refId: refFor.streak(streak, wibDateString()),
+          description: `🔥 Streak ${streak} hari kerja!`,
         });
-        await db.execute({
-          sql: "UPDATE users SET points = points + ? WHERE id = ?",
-          args: [bonus, userId]
-        });
-        await db.execute({
-          sql: "INSERT INTO notifications (id, user_id, title, message, type) VALUES (?, ?, ?, ?, ?)",
-          args: ["n_" + Date.now().toString(36), userId, `${emoji} Streak ${streak} Hari!`, `Bonus +${bonus} XP! Konsistensi yang luar biasa!`, 'success']
-        });
-      } catch (e) { console.warn("Streak bonus error:", e); }
+
+        if (result.status === 'awarded') {
+          await db.execute({
+            sql: "INSERT INTO notifications (id, user_id, title, message, type) VALUES (?, ?, ?, ?, ?)",
+            args: [
+              "n_streak_" + Date.now().toString(36),
+              userId,
+              `🔥 Streak ${streak} Hari!`,
+              `Bonus +${result.awarded} Poin! Konsistensi yang luar biasa!`,
+              'success',
+            ],
+          });
+        }
+      } catch (e) { console.warn("Gagal memberi bonus streak:", e); }
     }
 
     console.log(`[Attendance] Check-in successful for user ${userId}, streak: ${streak}`);

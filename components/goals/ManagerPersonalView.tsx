@@ -3,6 +3,7 @@ import { HP_TOKENS, HP_FONT, HP_TEXT } from '@/lib/constants';
 import SectionHeader from '@/components/home/SectionHeader';
 import GoalCard from '@/components/goals/GoalCard';
 import TaskHarianWidget from '@/components/home/TaskHarianWidget';
+import HPGlyph from "@/components/ui/HPGlyph";
 
 interface ManagerPersonalViewProps {
   combinedMyGoals: any[];
@@ -60,7 +61,7 @@ export default function ManagerPersonalView({
               textAlign: 'center', padding: '40px 20px', color: HP_TOKENS.inkMute,
               background: HP_TOKENS.card, borderRadius: HP_TOKENS.radiusLg, border: `1.5px solid ${HP_TOKENS.lineSoft}`
             }}>
-              <div style={{ fontSize: 32, marginBottom: 12 }}>🌱</div>
+              <div style={{ fontSize: 32, marginBottom: 12 }}><HPGlyph name="leaf" size={27} color="currentColor" /></div>
               <div style={{ ...HP_TEXT.h, fontSize: 14 }}>Belum ada KPI personal.</div>
               <div style={{ ...HP_TEXT.small, marginTop: 4 }}>Tambahkan KPI Mandiri baru untuk melacak target kerjamu.</div>
             </div>

@@ -12,6 +12,8 @@ import HPGlyph from "@/components/ui/HPGlyph";
 import HPBar from "@/components/ui/HPBar";
 import HPCard from "@/components/ui/HPCard";
 import TaskCompleteModal from "@/components/modals/TaskCompleteModal";
+import { completeTaskRemote } from "@/lib/taskClient";
+import { useMoodCheckIn } from "@/hooks/useMoodCheckIn";
 
 interface WorkCheckInModalProps {
   onClose: () => void;
@@ -19,7 +21,8 @@ interface WorkCheckInModalProps {
 }
 
 export default function WorkCheckInModal({ onClose, openModal }: WorkCheckInModalProps) {
-  const { state, updateState, user, awardXP, notify } = useHP();
+  const { state, updateState, user, awardXP, notify, syncSkillProgress } = useHP();
+  const { saveMood } = useMoodCheckIn();
   const [aiResponse, setAiResponse] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [notes, setNotes] = useState("");
@@ -62,63 +65,131 @@ Jawab dengan tone yang asik dan menyemangati.`,
     }
   };
 
-  const toggleTask = (id: number) => {
+  const toggleTask = async (id: number) => {
     const priority = state?.priorities?.find((p: any) => p.id === id);
     if (!priority) return;
 
     if (!priority.done) {
       setCompletingTask(priority);
-    } else {
-      updateState((s: any) => {
-        const newPriorities = s.priorities.map((p: any) => p.id === id ? { ...p, done: false } : p);
-        
-        // Recalculate goal progress for linked goals
-        const task = s.priorities.find((p: any) => p.id === id);
-        const targetId = task?.goal_id || task?.kpi_id;
-        const updatedGoals = s.goals.map((goal: any) => {
-          if (targetId && String(goal.id) === String(targetId)) {
-            const tasksForGoal = newPriorities.filter((p: any) => (p.goal_id && String(p.goal_id) === String(goal.id)) || (p.kpi_id && String(p.kpi_id) === String(goal.id)));
-            const doneCount = tasksForGoal.filter((p: any) => p.done).length;
-            const newProgress = tasksForGoal.length > 0 ? Math.round((doneCount / tasksForGoal.length) * 100) : goal.progress;
-            const newMetric = doneCount + "/" + tasksForGoal.length + " task selesai";
-            return { ...goal, progress: newProgress, metric: newMetric };
-          }
-          return goal;
-        });
-
-        return {
-          ...s,
-          priorities: newPriorities,
-          goals: updatedGoals
-        };
-      });
+      return;
     }
+
+    // Membatalkan centang. Kalau manager sudah meng-ACC, jangan — menurunkan
+    // is_done sementara is_verified tetap 1 menghasilkan baris yang tidak bisa
+    // dihasilkan alur review mana pun, dan itulah kombinasi ganjil yang bikin
+    // status karyawan dan manager berbeda.
+    if (priority.verified) {
+      notify("Sudah Di-ACC", `"${priority.title}" sudah disetujui manager, jadi tidak bisa dibatalkan.`, "info");
+      return;
+    }
+
+    // Tulis dulu, baru ubah state: task tidak lagi ikut di blob sync, jadi
+    // pembatalan yang hanya hidup di React state hilang di refetch berikutnya.
+    const persisted = await completeTaskRemote(id, {
+      done: false,
+      partialProgress: 0,
+      status: "in_progress",
+    });
+    if (!persisted) {
+      notify("Gagal Membatalkan", `"${priority.title}" tetap tercentang. Coba lagi.`, "error");
+      return;
+    }
+
+    updateState((s: any) => {
+      const newPriorities = s.priorities.map((p: any) =>
+        p.id === id ? { ...p, done: false, status: "in_progress", partial_progress: 0, completed_at: null } : p
+      );
+
+      // Recalculate goal progress for linked goals
+      const task = s.priorities.find((p: any) => p.id === id);
+      const targetId = task?.goal_id || task?.kpi_id;
+      const updatedGoals = s.goals.map((goal: any) => {
+        if (targetId && String(goal.id) === String(targetId)) {
+          const tasksForGoal = newPriorities.filter((p: any) => (p.goal_id && String(p.goal_id) === String(goal.id)) || (p.kpi_id && String(p.kpi_id) === String(goal.id)));
+          const doneCount = tasksForGoal.filter((p: any) => p.done).length;
+          const newProgress = tasksForGoal.length > 0 ? Math.round((doneCount / tasksForGoal.length) * 100) : goal.progress;
+          const newMetric = doneCount + "/" + tasksForGoal.length + " task selesai";
+          return { ...goal, progress: newProgress, metric: newMetric };
+        }
+        return goal;
+      });
+
+      return {
+        ...s,
+        priorities: newPriorities,
+        goals: updatedGoals
+      };
+    });
   };
 
-  const confirmTaskComplete = React.useCallback((data: {
+  const confirmTaskComplete = React.useCallback(async (data: {
     proofLinks: string[]; isProject: boolean; metricValue?: number; notes?: string;
   }) => {
     if (!completingTask) return;
     const id = completingTask.id;
+    const completedAt = new Date().toISOString();
 
-    awardXP('priority_complete', `Selesaikan: ${completingTask.title}`);
+    // Tulis ke DB sebelum menyentuh state, dengan alasan yang sama seperti di
+    // TaskHarianWidget: refetch yang datang lebih dulu akan membaca is_done
+    // lama dan mengembalikan kartu ini ke "belum selesai".
+    const persisted = await completeTaskRemote(id, {
+      done: true,
+      partialProgress: 100,
+      status: "pending_review",
+      proofLinks: data.proofLinks,
+      notes: data.notes ?? null,
+      metricValue: data.metricValue ?? null,
+      isProject: data.isProject,
+      completedAt,
+    });
+    if (!persisted) {
+      notify("Gagal Menyimpan", `"${completingTask.title}" belum tersimpan. Coba lagi.`, "error");
+      return;
+    }
+
+    awardXP('task_complete', `Selesaikan: ${completingTask.title}`, `task:${completingTask.id}`);
+
+    // Efek samping di luar updateState. React boleh menjalankan callback reducer
+    // lebih dari sekali (StrictMode di dev), dan kedua panggilan ini dulu ada di
+    // dalamnya — input KPI bisa terhitung dobel.
+    if (data.metricValue && completingTask.kpi_id) {
+      fetch('/api/kpi/daily-input', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user?.id,
+          kpiId: completingTask.kpi_id,
+          date: new Date().toISOString().slice(0, 10),
+          value: data.metricValue,
+          notes: data.notes || completingTask.title,
+          proofLink: data.proofLinks[0] || null,
+        })
+      }).catch(e => console.error('KPI input failed:', e));
+    }
+
+    syncSkillProgress(`${completingTask.title} ${completingTask.kpi_title || ""}`, 2);
 
     updateState((s: any) => {
       const pIndex = s.priorities.findIndex((p: any) => p.id === id);
       if (pIndex === -1) return s;
 
       const newPriorities = [...s.priorities];
-      newPriorities[pIndex] = { 
-        ...newPriorities[pIndex], 
+      newPriorities[pIndex] = {
+        ...newPriorities[pIndex],
         done: true,
+        status: 'pending_review',
+        partial_progress: 100,
         proof_links: data.proofLinks,
         is_project: data.isProject,
         metric_value: data.metricValue || null,
         completion_notes: data.notes || null,
-        completed_at: new Date().toISOString(),
+        completed_at: completedAt,
       };
 
       const now = new Date();
+      // Entri optimistis supaya logbook langsung terlihat. Baris yang bertahan
+      // ditulis server-side oleh PATCH /api/priorities/complete; refetch
+      // berikutnya menggantikan entri ini dengan baris DB tersebut.
       const newLog = {
         id: Date.now(),
         type: 'quest_completion',
@@ -128,23 +199,6 @@ Jawab dengan tone yang asik dan menyemangati.`,
         day: now.toLocaleDateString('id-ID', { weekday: 'long' }),
         time: now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
       };
-
-      if (data.metricValue && newPriorities[pIndex].kpi_id) {
-        fetch('/api/kpi/daily-input', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: user?.id,
-            kpiId: newPriorities[pIndex].kpi_id,
-            date: new Date().toISOString().slice(0, 10),
-            value: data.metricValue,
-            notes: data.notes || newPriorities[pIndex].title,
-            proofLink: data.proofLinks[0] || null,
-          })
-        }).catch(e => console.error('KPI input failed:', e));
-      }
-
-      if (s.syncSkillProgress) s.syncSkillProgress(newPriorities[pIndex].title + " " + (newPriorities[pIndex].kpi_title || ""), 2);
 
       const task = newPriorities[pIndex];
       const targetId = task.goal_id || task.kpi_id;
@@ -180,22 +234,46 @@ Jawab dengan tone yang asik dan menyemangati.`,
     });
 
     setCompletingTask(null);
-  }, [completingTask, updateState, awardXP, user]);
+  }, [completingTask, updateState, awardXP, notify, syncSkillProgress, user]);
 
 
-  const updateTaskProgress = (taskId: number, val: number) => {
+  const updateTaskProgress = async (taskId: number, val: number) => {
+    const task = state?.priorities?.find((p: any) => p.id === taskId);
+    if (!task) return;
+
+    // Slider ini hanya muncul untuk task yang belum selesai, dan mencapai 100%
+    // di sini tidak menyelesaikannya — penyelesaian tetap lewat
+    // TaskCompleteModal karena di sanalah bukti dikumpulkan.
+    const persisted = await completeTaskRemote(taskId, {
+      done: false,
+      partialProgress: val,
+      status: "in_progress",
+    });
+    if (!persisted) {
+      notify("Progres Gagal Disimpan", `"${task.title}" masih di ${task.partial_progress || 0}%. Coba lagi.`, "error");
+      setLocalProgress(prev => {
+        const next = { ...prev };
+        delete next[taskId];
+        return next;
+      });
+      return;
+    }
+
     updateState((s: any) => {
-      const newPriorities = s.priorities.map((p: any) => p.id === taskId ? { ...p, progress: val } : p);
+      // `partial_progress`, bukan `progress`: itu nama kolom yang dikirim
+      // GET /api/storage dan dibaca sisa UI ini. Versi sebelumnya menulis
+      // `progress`, field yang tidak pernah dibaca siapa pun.
+      const newPriorities = s.priorities.map((p: any) => p.id === taskId ? { ...p, partial_progress: val, status: 'in_progress' } : p);
       const updatedTask = newPriorities.find((p: any) => p.id === taskId);
-      
+
       let newGoals = s.goals;
-      
+
       if (updatedTask?.goal_id && s.goals) {
         newGoals = s.goals.map((g: any) => {
           if (String(g.id) === String(updatedTask.goal_id)) {
             const tasksForGoal = newPriorities.filter((p: any) => p.goal_id && String(p.goal_id) === String(g.id));
-            const totalProgress = tasksForGoal.reduce((sum: number, task: any) => 
-              sum + (task.done ? 100 : (task.progress || 0)), 0
+            const totalProgress = tasksForGoal.reduce((sum: number, task: any) =>
+              sum + (task.done ? 100 : (task.partial_progress || 0)), 0
             );
             const doneCount = tasksForGoal.filter((p: any) => p.done).length;
             const newProgress = Math.round(totalProgress / tasksForGoal.length);
@@ -220,8 +298,8 @@ Jawab dengan tone yang asik dan menyemangati.`,
 
   const saveRealisasi = async () => {
     const undoneTasks = priorities.filter((p: any) => !p.done);
-    const avgProgress = undoneTasks.length > 0 
-      ? Math.round(undoneTasks.reduce((sum: number, p: any) => sum + (p.progress || 0), 0) / undoneTasks.length) 
+    const avgProgress = undoneTasks.length > 0
+      ? Math.round(undoneTasks.reduce((sum: number, p: any) => sum + (p.partial_progress || 0), 0) / undoneTasks.length)
       : 100;
 
     try {
@@ -243,7 +321,15 @@ Jawab dengan tone yang asik dan menyemangati.`,
       console.error("Failed to save logbook entry", e);
     }
 
-    awardXP('realization_check', 'Mid-Day Check-in');
+    awardXP('midday_checkin', 'Mid-Day Check-in');
+
+    // Mood belongs in `mood_checkins` like every other check-in. Until now the
+    // mid-day mood only ever reached React state: it vanished on reload, never
+    // counted toward the HR wellbeing average, and left the wellbeing engine
+    // blind to exactly the mid-day slump it exists to catch.
+    if (selectedMood) {
+      await saveMood({ mood: selectedMood, quick: true, silent: true, awardPoints: false });
+    }
 
     const log = {
       id: Date.now(),
@@ -256,10 +342,10 @@ Jawab dengan tone yang asik dan menyemangati.`,
       metadata_json: JSON.stringify({ progress: avgProgress })
     };
 
+    // Mood, moodHistory and lastMoodCheckIn are set by saveMood above — this
+    // only carries what's specific to the mid-day flow.
     updateState((s: any) => ({
       ...s,
-      mood: selectedMood,
-      moods: [...(s.moods || []), { time: new Date().toISOString(), mood: selectedMood }],
       logbook: [log, ...(s.logbook || [])],
       lastMidDayCheckIn: new Date().toISOString().split('T')[0]
     }));
@@ -299,11 +385,11 @@ Jawab dengan tone yang asik dan menyemangati.`,
       <div style={{ marginBottom: 24, padding: '24px 20px', background: `${HP_TOKENS.sageWash}`, borderRadius: HP_TOKENS.radiusLg, border: `1px solid ${HP_TOKENS.sage}30`, boxShadow: HP_TOKENS.shadowLg }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div>
-            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 700, letterSpacing: 1, marginBottom: 4 }}>OVERALL PROGRESS</div>
+            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sageInk, fontWeight: 700, letterSpacing: 1, marginBottom: 4 }}>OVERALL PROGRESS</div>
             <div style={{ ...HP_TEXT.h, fontSize: 24 }}>{Math.round(progress)}% <span style={{ fontSize: 14, color: HP_TOKENS.inkFade, fontWeight: 600 }}>Tercapai</span></div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ ...HP_TEXT.h, fontSize: 18, color: HP_TOKENS.sage }}>{doneCount}/{totalCount}</div>
+            <div style={{ ...HP_TEXT.h, fontSize: 18, color: HP_TOKENS.sageInk }}>{doneCount}/{totalCount}</div>
             <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>Target Selesai</div>
           </div>
         </div>
@@ -410,7 +496,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
                 )}
                 {/* Metric value */}
                 {p.metric_value && (
-                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 700 }}>Nilai: {p.metric_value}</div>
+                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sageInk, fontWeight: 700 }}>Nilai: {p.metric_value}</div>
                 )}
                 {/* Due date */}
                 {p.due_date && (
@@ -420,7 +506,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
                 )}
                 {/* Completed at */}
                 {p.completed_at && (
-                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage }}>
+                  <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sageInk }}>
                     Diselesaikan: {new Date(p.completed_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                   </div>
                 )}
@@ -454,13 +540,13 @@ Jawab dengan tone yang asik dan menyemangati.`,
                   <div style={{ marginTop: 4 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, alignItems: 'center' }}>
                       <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>Update Progres:</div>
-                      <div style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.yellow }}>
-                        {localProgress[p.id] !== undefined ? localProgress[p.id] : (p.progress || 0)}%
+                      <div style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.yellowInk }}>
+                        {localProgress[p.id] !== undefined ? localProgress[p.id] : (p.partial_progress || 0)}%
                       </div>
                     </div>
                     <input
                       type="range" min="0" max="100"
-                      value={localProgress[p.id] !== undefined ? localProgress[p.id] : (p.progress || 0)}
+                      value={localProgress[p.id] !== undefined ? localProgress[p.id] : (p.partial_progress || 0)}
                       onChange={(e) => setLocalProgress(prev => ({ ...prev, [p.id]: parseInt(e.target.value) }))}
                       onMouseUp={(e) => updateTaskProgress(p.id, parseInt((e.target as HTMLInputElement).value))}
                       onTouchEnd={(e) => updateTaskProgress(p.id, parseInt((e.target as HTMLInputElement).value))}

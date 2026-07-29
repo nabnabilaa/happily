@@ -232,7 +232,7 @@ export default function NewChatModal({ onClose, onChannelCreated, defaultRecipie
                 <div style={{ ...HP_TEXT.h, fontSize: 15 }}>Pesan Siaran</div>
                 <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, marginTop: 2 }}>Kirim pesan penting ke divisi tertentu atau semua</div>
               </div>
-              <HPGlyph name="chevronRight" size={16} color={HP_TOKENS.warning} />
+              <HPGlyph name="chevronRight" size={16} color={HP_TOKENS.warningInk} />
             </button>
           )}
         </div>
@@ -270,7 +270,7 @@ export default function NewChatModal({ onClose, onChannelCreated, defaultRecipie
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
           <div style={{ ...HP_TEXT.h, fontSize: 13 }}>🎯 Target Divisi</div>
           <div style={{
-            ...HP_TEXT.tiny, fontSize: 11, color: HP_TOKENS.warning, fontWeight: 700,
+            ...HP_TEXT.tiny, fontSize: 11, color: HP_TOKENS.warningInk, fontWeight: 700,
             padding: '2px 8px', borderRadius: 6, background: HP_TOKENS.warningWash,
           }}>
             {targetLabel}

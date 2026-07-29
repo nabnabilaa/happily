@@ -121,7 +121,7 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
   if (kpis.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: '60px 20px', background: HP_TOKENS.card, borderRadius: HP_TOKENS.radiusLg, border: `1.5px solid ${HP_TOKENS.lineSoft}` }}>
-        <div style={{ fontSize: 32, marginBottom: 12 }}>🎯</div>
+        <div style={{ fontSize: 32, marginBottom: 12 }}><HPGlyph name="target" size={27} color="currentColor" /></div>
         <div style={{ ...HP_TEXT.h, fontSize: 14 }}>Belum ada KPI dari manager.</div>
         <div style={{ ...HP_TEXT.small, marginTop: 4, color: HP_TOKENS.inkMute }}>Target bisa dibuat setelah KPI diberikan.</div>
       </div>
@@ -330,7 +330,7 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
                   borderBottom: `1px solid ${HP_TOKENS.lineSoft}`
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                    <span style={{ fontSize: 18 }}>🎯</span>
+                    <span style={{ fontSize: 18 }}><HPGlyph name="target" size={15} color="currentColor" /></span>
                     <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, color: HP_TOKENS.ink }}>
                       {activeKpi.title}
                     </div>
@@ -344,7 +344,7 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
                   <div style={{ textAlign: 'center', padding: '40px 0', color: HP_TOKENS.inkMute, fontFamily: HP_FONT, fontSize: 13 }}>Memuat target...</div>
                 ) : activeTargets.length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-                    <div style={{ fontSize: 32, marginBottom: 12 }}>📋</div>
+                    <div style={{ fontSize: 32, marginBottom: 12 }}><HPGlyph name="note" size={27} color="currentColor" /></div>
                     <div style={{ ...HP_TEXT.h, fontSize: 14 }}>Belum ada target untuk KPI ini.</div>
                     <div style={{ ...HP_TEXT.small, marginTop: 4, color: HP_TOKENS.inkMute }}>Buat target untuk memecah KPI menjadi langkah yang bisa dicapai.</div>
                   </div>
@@ -369,7 +369,7 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
                               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                                 <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>MINGGU {t.weekNumber}</span>
                                 {pct >= 100 && (
-                                  <span style={{ fontSize: 10, background: HP_TOKENS.sageSoft, color: HP_TOKENS.sage, borderRadius: HP_TOKENS.radius, padding: '2px 6px', fontFamily: HP_FONT, fontWeight: 700 }}>✓ SELESAI</span>
+                                  <span style={{ fontSize: 10, background: HP_TOKENS.sageSoft, color: HP_TOKENS.sageInk, borderRadius: HP_TOKENS.radius, padding: '2px 6px', fontFamily: HP_FONT, fontWeight: 700 }}>✓ SELESAI</span>
                                 )}
                               </div>
                               <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 14, color: HP_TOKENS.ink }}>{t.title}</div>
@@ -386,7 +386,7 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
                               }}
                             >
-                              <HPGlyph name="trash" size={14} color={HP_TOKENS.coral} />
+                              <HPGlyph name="trash" size={14} color={HP_TOKENS.coralInk} />
                             </button>
                           </div>
 
@@ -457,7 +457,7 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
                                         </span>
                                       )}
                                       {p.metric_value != null && p.done && (
-                                        <span style={{ fontFamily: HP_FONT, fontSize: 10, fontWeight: 700, color: HP_TOKENS.sage, flexShrink: 0 }}>
+                                        <span style={{ fontFamily: HP_FONT, fontSize: 10, fontWeight: 700, color: HP_TOKENS.sageInk, flexShrink: 0 }}>
                                           +{p.metric_value}{t.metricUnit}
                                         </span>
                                       )}
@@ -517,7 +517,7 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
                 width: 40, height: 40, borderRadius: '50%', background: HP_TOKENS.coralSoft,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
               }}>
-                <HPGlyph name="trash" size={20} color={HP_TOKENS.coral} />
+                <HPGlyph name="trash" size={20} color={HP_TOKENS.coralInk} />
               </div>
               <div>
                 <div style={{ ...HP_TEXT.h, fontSize: 16 }}>Hapus Target?</div>
@@ -686,7 +686,7 @@ export default function GoalsScreen({ openModal }: GoalsScreenProps) {
             )}
             {!loadingKpis && kpis.length === 0 && (
               <div style={{ textAlign: 'center', padding: '60px 20px', background: HP_TOKENS.card, borderRadius: HP_TOKENS.radiusLg, border: `1.5px solid ${HP_TOKENS.lineSoft}` }}>
-                <div style={{ fontSize: 32, marginBottom: 12 }}>🌱</div>
+                <div style={{ fontSize: 32, marginBottom: 12 }}><HPGlyph name="leaf" size={27} color="currentColor" /></div>
                 <div style={{ ...HP_TEXT.h, fontSize: 14 }}>Belum ada KPI bulan ini.</div>
                 <div style={{ ...HP_TEXT.small, marginTop: 4 }}>Hubungi manager untuk mendapatkan KPI.</div>
               </div>

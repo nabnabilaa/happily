@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { hpEventEmitter } from '@/lib/events';
+import { sqlWibDate, SQL_WIB_TODAY } from '@/lib/timeUtils';
+import { normalizeTaskStatus, TASK_STATUS } from '@/lib/taskStatus';
+import { getRequesterAccess, canHrAdmin } from '@/lib/hrAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,12 +42,20 @@ export async function GET(request: Request) {
     };
 
     // 2. Fetch State components
+    // Dates are compared in WIB, not in the server's clock. `target_date` is
+    // written by the client as a WIB calendar date, but CURDATE() here is UTC
+    // (this MySQL runs with NOW() == UTC_TIMESTAMP()). Between 00:00 and 07:00
+    // WIB the two disagree by a day, so today's tasks failed every branch of
+    // this filter and dropped out of the payload — the client then synced that
+    // shorter list straight back and the tasks were deleted for real.
     const prioritiesRes = await db.execute({
       sql: `SELECT * FROM daily_priorities
             WHERE user_id = ?
               AND (is_done = 0
-                   OR COALESCE(DATE(target_date), DATE(created_at)) = CURDATE()
-                   OR DATE(completed_at) = CURDATE())
+                   OR COALESCE(DATE(target_date), DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')))
+                      = DATE(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '+07:00'))
+                   OR DATE(CONVERT_TZ(completed_at, '+00:00', '+07:00'))
+                      = DATE(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '+07:00')))
             ORDER BY is_done ASC,
                      CASE energy_level WHEN 'high' THEN 1 WHEN 'mid' THEN 2 WHEN 'low' THEN 3 ELSE 2 END ASC,
                      COALESCE(target_date, created_at) ASC,
@@ -80,7 +91,14 @@ export async function GET(request: Request) {
         est: r.est_time,
         done: !!r.is_done,
         verified: !!r.is_verified,
-        status: r.status || 'todo',
+        // Dinormalkan, bukan mentah. Kolom ini menyimpan lima ejaan untuk tiga
+        // keadaan nyata (done/accepted/verified/pending/reject) karena beberapa
+        // jalur tulis lama menulis kosakatanya sendiri. /api/manager/tasks/pending
+        // sudah menormalkan; endpoint ini tidak, jadi kartu karyawan mencocokkan
+        // `status === 'pending_review'` terhadap nilai seperti 'done' dan tidak
+        // pernah cocok: manager melihat task di antreannya, karyawan tidak
+        // melihat banner "menunggu ACC" untuk task yang sama.
+        status: normalizeTaskStatus(r.status) || TASK_STATUS.TODO,
         tone: r.tone,
         time_tracked: Number(r.time_tracked) || 0,
         timer_started_at: r.timer_started_at || null,
@@ -133,12 +151,38 @@ export async function GET(request: Request) {
       id: r.id, title: r.title, url: r.url, publishedAt: r.published_at, status: r.status
     }));
 
-    // Fetch Latest Mood Checkin
+    // Fetch Latest Mood Checkin.
+    // `created_at` comes along because the UI needs to know *when* the feeling
+    // was recorded, not just what it was: a mood with no timestamp reads as
+    // today's even when it was logged last week.
     const moodRes = await db.execute({
-      sql: "SELECT mood_key, energy_key, tag FROM mood_checkins WHERE user_id = ? ORDER BY created_at DESC LIMIT 1",
+      sql: "SELECT mood_key, energy_key, tag, created_at FROM mood_checkins WHERE user_id = ? ORDER BY created_at DESC LIMIT 1",
       args: [userId]
     });
     const latestMood = moodRes.rows[0];
+
+    /*
+     * Mood history, 7 days.
+     *
+     * The wellbeing engine's "two or more negative moods" rule reads this. It
+     * used to be an in-memory array that only the mid-day and reflect modals
+     * ever appended to, so it started empty on every page load and the rule
+     * could effectively never fire. `mood_checkins` has been the real record
+     * all along — this just hands it to the client.
+     */
+    let moodHistory: { time: string; mood: string }[] = [];
+    try {
+      const historyRes = await db.execute({
+        sql: `SELECT mood_key, created_at FROM mood_checkins
+              WHERE user_id = ? AND ${sqlWibDate('created_at')} > DATE_SUB(${SQL_WIB_TODAY}, INTERVAL 7 DAY)
+              ORDER BY created_at ASC`,
+        args: [userId]
+      });
+      moodHistory = historyRes.rows.map((r: any) => ({
+        time: new Date(r.created_at).toISOString(),
+        mood: String(r.mood_key),
+      }));
+    } catch (e) { console.error("Failed to load mood history", e); }
 
     // Fetch Kudos for Feed (Correlated)
     const kudosRes = await db.execute({
@@ -180,15 +224,22 @@ export async function GET(request: Request) {
       } catch (e) { console.error(`Error parsing setting ${r.key}:`, e); }
     });
 
-    // Fetch Today's Attendance
+    // Fetch Today's Attendance — "hari ini" mengikuti kalender WIB. Dua query
+    // ini yang menentukan isClockedIn/isClockedOut di klien, jadi kalau harinya
+    // meleset, pengingat istirahat/pulang ikut salah sasaran.
     const todayAttRes = await db.execute({
-      sql: "SELECT check_in_at as created_at FROM attendance WHERE user_id = ? AND DATE(check_in_at) = CURDATE() ORDER BY check_in_at ASC LIMIT 1",
+      sql: `SELECT check_in_at as created_at FROM attendance
+            WHERE user_id = ? AND ${sqlWibDate('check_in_at')} = ${SQL_WIB_TODAY}
+            ORDER BY check_in_at ASC LIMIT 1`,
       args: [userId]
     });
     const checkIn = todayAttRes.rows[0]?.created_at as string;
 
     const todayReflectRes = await db.execute({
-      sql: "SELECT created_at FROM logbook_entries WHERE user_id = ? AND type = 'daily_reflection' AND DATE(created_at) = CURDATE() ORDER BY created_at DESC LIMIT 1",
+      sql: `SELECT created_at FROM logbook_entries
+            WHERE user_id = ? AND type = 'daily_reflection'
+              AND ${sqlWibDate('created_at')} = ${SQL_WIB_TODAY}
+            ORDER BY created_at DESC LIMIT 1`,
       args: [userId]
     });
     const checkOut = todayReflectRes.rows[0]?.created_at as string;
@@ -276,9 +327,15 @@ export async function GET(request: Request) {
     } catch (e) { /* table may not exist yet */ }
 
     const state = {
-      mood: latestMood?.mood_key || 'calm',
-      energy: latestMood?.energy_key || 'mid',
+      // No invented defaults. `|| 'calm'` meant a user who had never checked in
+      // was reported as calm and energetic — the app asserting a feeling on
+      // their behalf, and the reason `!state.mood` never once evaluated true
+      // anywhere downstream. Absent is absent.
+      mood: latestMood?.mood_key || null,
+      energy: latestMood?.energy_key || null,
       tag: latestMood?.tag || null,
+      lastMoodCheckIn: latestMood?.created_at ? new Date(latestMood.created_at as any).toISOString() : null,
+      moodHistory,
       intention: userRow.focus_intention || "",
       focusTaskId: userRow.focus_task_id ? (isNaN(Number(userRow.focus_task_id)) ? userRow.focus_task_id : Number(userRow.focus_task_id)) : null,
       focusProgress: userRow.focus_progress || 0,
@@ -329,50 +386,69 @@ export async function POST(request: Request) {
     const { state, user, userId } = await request.json();
     if (!user || !userId || !state) return NextResponse.json({ error: 'User data, state or ID missing' });
 
-    // Update User
+    /*
+     * Izin dibaca dari DB, sekali, di awal.
+     *
+     * Body request datang dari klien, jadi `user.role`/`user.userRole` di
+     * dalamnya adalah klaim, bukan fakta. Beberapa blok di bawah menulis ke
+     * tabel milik seluruh perusahaan (`rewards`, `global_settings`) dan
+     * sebelumnya hanya dijaga oleh klaim itu.
+     */
+    const { role: verifiedRole, hrAccess: verifiedHrAccess } = await getRequesterAccess(userId);
+    const verifiedCanHrAdmin = canHrAdmin(verifiedRole, verifiedHrAccess);
+
+    /*
+     * Update User — HANYA kolom yang benar-benar dimiliki blob ini.
+     *
+     * Blob dikirim dari state React sebuah tab, dan tab bisa memegang salinan
+     * basi berjam-jam. Selama kolom yang punya endpoint pemilik ikut ditulis di
+     * sini, endpoint itu selalu kalah: HR menyetujui divisi, lalu tab karyawan
+     * yang masih memegang 'pending' mengembalikannya — tanpa error, tanpa jejak.
+     * Jalur `beforeunload` di HPContext membuat sekadar me-refresh halaman jadi
+     * satu operasi tulis, jadi "selesai, refresh, balik lagi" adalah gejala yang
+     * persis diharapkan dari daftar kolom yang terlalu panjang.
+     *
+     * Yang TIDAK boleh ada di sini, beserta pemiliknya:
+     *   streak             -> /api/attendance/check-in (dihitung server)
+     *   user_role_context  -> /api/hr/update-role
+     *   is_onboarded       -> /api/onboarding/complete
+     *   department,
+     *   department_status  -> /api/hr/department-requests, /api/onboarding/complete
+     *
+     * `name` dan `avatar_image` tetap di sini karena memang diedit pemakainya
+     * sendiri lewat ProfileEditorModal dan tidak punya jalur tulis lain.
+     *
+     * `last_activity_at` memakai jam server. Nilai sebelumnya berasal dari
+     * `state.lastActivityDate` milik klien, sehingga jam browser yang meleset
+     * bisa memundurkan cap waktu dan memicu alert "tidak aktif" di manager.
+     */
     try {
       await db.execute({
-        sql: `UPDATE users SET name = ?, streak = ?, avatar_image = ?, user_role_context = ?, last_activity_at = ?, personal_wellbeing_goal = ?, wellbeing_routine = ?, is_onboarded = ?, focus_task_id = ?, focus_progress = ?, focus_intention = ?, department = ?, department_status = ? WHERE id = ?`,
+        sql: `UPDATE users SET name = ?, avatar_image = ?, last_activity_at = UTC_TIMESTAMP(), personal_wellbeing_goal = ?, wellbeing_routine = ?, focus_task_id = ?, focus_progress = ?, focus_intention = ? WHERE id = ?`,
         args: [
-          user.name, user.streak,
+          user.name,
           user.avatarImage || null,
-          user.userRole || user.role || 'employee', 
-          state.lastActivityDate ? new Date(state.lastActivityDate).toISOString().slice(0, 19).replace('T', ' ') : new Date().toISOString().slice(0, 19).replace('T', ' '),
           state.personalWellbeingGoal || "",
           JSON.stringify(state.wellbeingRoutine || []),
-          state.onboarded ? 1 : 0,
           state.focusTaskId || null,
           state.focusProgress || 0,
           state.intention || "",
-          user.department || null,
-          user.department_status || null,
           userId
         ]
       });
     } catch (e: any) {
       console.error("Failed to update user state:", e);
-      // Fallback if column truly doesn't exist despite migration attempt
-      if (e.message?.includes('is_onboarded')) {
-        await db.execute({
-          sql: `UPDATE users SET name = ?, streak = ?, avatar_image = ?, user_role_context = ?, last_activity_at = ?, personal_wellbeing_goal = ?, wellbeing_routine = ? WHERE id = ?`,
-          args: [
-            user.name, user.streak,
-            user.avatarImage || null,
-            user.userRole || user.role, 
-            state.lastActivityDate ? new Date(state.lastActivityDate).toISOString().slice(0, 19).replace('T', ' ') : new Date().toISOString().slice(0, 19).replace('T', ' '),
-            state.personalWellbeingGoal || "",
-            JSON.stringify(state.wellbeingRoutine || []),
-            user.department || null,
-            userId
-          ]
-        });
-      } else throw e;
+      throw e;
     }
 
     // Sync Rewards (Only HR can manage global rewards)
-    // Check role or userRole context
-    const activeRole = user.userRole || user.role;
-    if ((activeRole === 'hr') && state.rewards) {
+    //
+    // Perannya WAJIB dibaca dari DB. Sebelumnya diambil dari `user.userRole`
+    // di body request, padahal body dikirim klien: siapa pun cukup mengirim
+    // `userRole: 'hr'` untuk masuk ke cabang di bawah, dan cabang ini
+    // merekonsiliasi tabel `rewards` milik seluruh perusahaan terhadap payload
+    // — termasuk MENGHAPUS baris yang tidak ada di sana.
+    if (verifiedRole === 'hr' && state.rewards) {
       try {
         // Programmatic Diffing for Rewards instead of deleting all
         const dbRewardsRes = await db.execute("SELECT id, title, points_cost, category, tone, glyph, description, stock FROM rewards");
@@ -430,16 +506,20 @@ export async function POST(request: Request) {
           args: [userId]
         });
         const dbHistoryMap = new Map(dbHistoryRes.rows.map(r => [String(r.id), r]));
-        const payloadHistoryIds = new Set(state.rewardHistory.map((rh: any) => String(rh.id)));
 
-        // Delete history entries that are not in the payload
-        const deleteHistoryIds = Array.from(dbHistoryMap.keys()).filter(id => !payloadHistoryIds.has(id));
-        if (deleteHistoryIds.length > 0) {
-          await db.execute({
-            sql: `DELETE FROM user_rewards WHERE user_id = ? AND id IN (${deleteHistoryIds.map(() => '?').join(',')})`,
-            args: [userId, ...deleteHistoryIds]
-          });
-        }
+        /*
+         * TIDAK ada penghapusan di sini, dan ini bukan kelalaian.
+         *
+         * GET di atas membaca riwayat dengan `ORDER BY date DESC LIMIT 10`, jadi
+         * klien tidak pernah memegang lebih dari sepuluh baris terbaru. Blok
+         * lama membaca SEMUA baris milik user lalu menghapus yang id-nya tidak
+         * ada di payload — artinya setiap sync menghapus permanen riwayat
+         * penukaran ke-11 dan seterusnya, diam-diam, untuk setiap pemakai yang
+         * cukup sering menukar hadiah.
+         *
+         * Riwayat penukaran itu catatan transaksi: hanya bertambah, dan yang
+         * berhak menambahnya adalah /api/rewards/redeem.
+         */
 
         // Insert or update entries in payload
         for (const rh of state.rewardHistory) {
@@ -471,61 +551,20 @@ export async function POST(request: Request) {
       }
     }
 
-    // Sync Daily Priorities — Use UPSERT to avoid duplicates
-    if (state.priorities) {
-      try {
-        // Filter out junk/invalid entries before syncing
-        const BLOCKED_TITLES = ['hai ndbdlijd n debuj', 'jecn wejencj qndjkdn'];
-        const cleanPriorities = state.priorities.filter((p: any) => {
-          if (!p.title || p.title.trim().length < 2) return false;
-          if (BLOCKED_TITLES.includes(p.title.toLowerCase().trim())) return false;
-          return true;
-        });
-
-        // 1. Get IDs of tasks in current state for today
-        const stateTaskIds = cleanPriorities.map((p: any) => String(p.id));
-        
-        // 2. Delete tasks from DB that are for today or active but NOT in current state
-        if (stateTaskIds.length > 0) {
-          await db.execute({
-            sql: `DELETE FROM daily_priorities
-                  WHERE user_id = ?
-                  AND (is_done = 0
-                       OR COALESCE(DATE(target_date), DATE(created_at)) = CURDATE()
-                       OR DATE(completed_at) = CURDATE())
-                  AND id NOT IN (${stateTaskIds.map(() => '?').join(',')})`,
-            args: [userId, ...stateTaskIds]
-          });
-        }
-
-        // Also always purge blocked titles regardless
-        await db.execute({
-          sql: `DELETE FROM daily_priorities WHERE user_id = ? AND LOWER(TRIM(title)) IN (${BLOCKED_TITLES.map(() => '?').join(',')})`,
-          args: [userId, ...BLOCKED_TITLES]
-        });
-
-        // 3. Upsert current tasks
-        for (const p of cleanPriorities) {
-          await db.execute({
-            sql: `INSERT INTO daily_priorities (id, user_id, title, description, target_date, goal_title, goal_id, kpi_id, energy_level, est_time, is_done, is_verified, status, tone, proof_link, proof_notes, metric_value, time_tracked, timer_started_at, weekly_target_id, weekly_target_title, partial_progress, is_project, completed_at, due_date, created_at)
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                  ON DUPLICATE KEY UPDATE
-                  title=VALUES(title), description=VALUES(description), target_date=VALUES(target_date), goal_title=VALUES(goal_title), goal_id=VALUES(goal_id),
-                  kpi_id=VALUES(kpi_id),
-                  energy_level=VALUES(energy_level), est_time=VALUES(est_time),
-                  is_done=VALUES(is_done), is_verified=VALUES(is_verified), status=VALUES(status), tone=VALUES(tone),
-                  proof_link=VALUES(proof_link), proof_notes=VALUES(proof_notes), metric_value=VALUES(metric_value),
-                  time_tracked=VALUES(time_tracked), timer_started_at=VALUES(timer_started_at),
-                  weekly_target_id=VALUES(weekly_target_id), weekly_target_title=VALUES(weekly_target_title),
-                  partial_progress=VALUES(partial_progress), is_project=VALUES(is_project),
-                  completed_at=VALUES(completed_at), due_date=VALUES(due_date)`,
-            args: [p.id, userId, p.title, p.description || null, p.targetDate || null, p.goal || null, p.goal_id || null, p.kpi_id || null, p.energy, p.est, p.done ? 1 : 0, p.verified ? 1 : 0, p.status || 'todo', p.tone, p.proof_links?.length ? JSON.stringify(p.proof_links) : (p.proof_link || null), p.completion_notes || p.proof_notes || null, p.metric_value || null, p.time_tracked || 0, p.timer_started_at || null, p.weekly_target_id || null, p.weekly_target_title || null, p.partial_progress || 0, p.is_project ? 1 : 0, p.completed_at ? String(p.completed_at).slice(0, 19).replace('T', ' ') : null, p.due_date || null]
-          });
-        }
-      } catch (e) {
-        console.error("Task sync error:", e);
-      }
-    }
+    // Daily priorities are deliberately NOT synced here.
+    //
+    // This used to replay the client's whole task array: DELETE every row in
+    // today's window whose id was absent from the payload, then re-upsert the
+    // rest. That made every open tab an authority on the complete task list, so
+    // any client holding a slightly stale array deleted rows it had simply
+    // never heard of, and its `is_verified`/`status` values overwrote a
+    // manager's ACC that had landed a moment earlier.
+    //
+    // Tasks now have owning endpoints that write immediately and touch only the
+    // row in question: POST/DELETE /api/priorities, PATCH
+    // /api/priorities/complete, and lib/taskReview.ts for the manager verdict.
+    // Anything that mutates a task must go through those — a task that only
+    // changes React state will not be persisted, and that is intentional.
 
 
     // Sync Habits (Programmatic Diffing)
@@ -541,14 +580,12 @@ export async function POST(request: Request) {
           if (key) dbHabitsMap.set(key, r);
         }
 
-        const payloadHabitsSet = new Set<string>();
         const seenHabits = new Set<string>();
 
         for (const h of state.habits) {
           const habitNameLower = (h.name || '').toLowerCase().trim();
           if (!habitNameLower || seenHabits.has(habitNameLower)) continue;
           seenHabits.add(habitNameLower);
-          payloadHabitsSet.add(habitNameLower);
 
           const existing = dbHabitsMap.get(habitNameLower);
           const isDoneTodayVal = h.done ? 1 : 0;
@@ -589,17 +626,17 @@ export async function POST(request: Request) {
           }
         }
 
-        // Delete habits in DB that are not in the payload
-        const deleteHabitIds = Array.from(dbHabitsMap.entries())
-          .filter(([key]) => !payloadHabitsSet.has(key))
-          .map(([, r]) => r.id);
-
-        if (deleteHabitIds.length > 0) {
-          await db.execute({
-            sql: `DELETE FROM habits WHERE user_id = ? AND id IN (${deleteHabitIds.map(() => '?').join(',')})`,
-            args: [userId, ...deleteHabitIds]
-          });
-        }
+        /*
+         * Habit yang tidak ada di payload DIBIARKAN.
+         *
+         * GET membuang habit bernama kosong dan habit yang namanya bentrok
+         * setelah di-lowercase (lihat blok dedupe di atas), jadi payload klien
+         * memang bukan daftar lengkap. Menghapus selisihnya berarti menghapus
+         * baris yang klien tidak pernah punya kesempatan untuk melihatnya.
+         *
+         * Penghapusan habit harus lewat jalurnya sendiri yang menyebut baris
+         * yang dimaksud, bukan lewat selisih sebuah blob.
+         */
       } catch (e) {
         console.error("Habit sync error:", e);
       }
@@ -623,12 +660,9 @@ export async function POST(request: Request) {
           if (key) dbSkillsMap.set(key, r);
         }
 
-        const payloadSkillsSet = new Set<string>();
-
         for (const sk of state.skills) {
           const skillKey = (sk.name || '').toLowerCase().trim();
           if (!skillKey) continue;
-          payloadSkillsSet.add(skillKey);
 
           const existing = dbSkillsMap.get(skillKey);
           const currentLevel = sk.current || 0;
@@ -655,25 +689,25 @@ export async function POST(request: Request) {
           }
         }
 
-        // Delete skills in DB that are not in the payload
-        const deleteSkillIds = Array.from(dbSkillsMap.entries())
-          .filter(([key]) => !payloadSkillsSet.has(key))
-          .map(([, r]) => r.id);
-
-        if (deleteSkillIds.length > 0) {
-          await db.execute({
-            sql: `DELETE FROM user_skills WHERE user_id = ? AND id IN (${deleteSkillIds.map(() => '?').join(',')})`,
-            args: [userId, ...deleteSkillIds]
-          });
-        }
+        /*
+         * Skill hanya bertambah dan naik level lewat `syncSkillProgress`; tidak
+         * ada satu pun layar yang menghapusnya. Jadi selisih antara DB dan
+         * payload tidak pernah berarti "user menghapus skill" — artinya cuma
+         * tab ini belum sempat memuat baris tersebut. Menghapusnya membuat
+         * progres skill hilang setiap kali dua tab tidak sinkron.
+         */
       } catch (e) {
         console.error("Skill sync error:", e);
       }
     }
 
-    // Sync Global Settings (Contacts, Work Schedule) - HR/Manager only
-    if (user.role === 'hr' || user.userRole === 'hr') {
-      if (state.onboardingConfig && user.role === 'hr') {
+    // Sync Global Settings (Contacts, Work Schedule) — HR-Admin saja.
+    // Sama seperti rewards: `global_settings` berlaku untuk seluruh perusahaan,
+    // jadi syaratnya harus peran terverifikasi, bukan klaim dari body. Pemakai
+    // ber-hrAccess ikut boleh, karena tab Contacts dan Work Hours memang ada di
+    // konsol mereka.
+    if (verifiedCanHrAdmin) {
+      if (state.onboardingConfig) {
         try {
           await db.execute({
             sql: "INSERT INTO global_settings (`key`, value, updated_by) VALUES ('onboardingConfig', ?, ?) ON DUPLICATE KEY UPDATE value = VALUES(value), updated_by = VALUES(updated_by)",

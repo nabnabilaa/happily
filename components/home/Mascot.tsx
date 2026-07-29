@@ -21,7 +21,7 @@ export default function Mascot({
       justifyContent: 'center',
       animation: float ? 'hpFloat 3s ease-in-out infinite' : 'none',
     }}>
-      <HPGlyph name="bee" size={size} color={HP_TOKENS.yellow} stroke={1.5} />
+      <HPGlyph name="bee" size={size} color={HP_TOKENS.yellowInk} stroke={1.5} />
     </div>
   );
 }

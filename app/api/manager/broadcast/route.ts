@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { dispatchNotification } from '@/lib/notificationService';
+import { resolveManagerTeam } from '@/lib/managerTeam';
 
 export async function POST(request: Request) {
   try {
@@ -10,47 +11,43 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Identify team of sender
     const userRes = await db.execute({
-      sql: "SELECT role, team_id FROM users WHERE id = ?",
+      sql: "SELECT role FROM users WHERE id = ?",
       args: [senderId]
     });
-    
+
     if (userRes.rows.length === 0) {
       return NextResponse.json({ error: 'Sender not found' }, { status: 404 });
     }
 
     const senderRole = userRes.rows[0].role;
-    const teamId = userRes.rows[0].team_id;
-    let targetUsers = [];
+    let targetIds: string[];
 
     if (senderRole === 'hr' || senderRole === 'admin') {
-      // Broadcast to ALL users
-      const allRes = await db.execute({ sql: "SELECT id FROM users" });
-      targetUsers = allRes.rows;
+      const allRes = await db.execute({ sql: "SELECT id FROM users WHERE id != ?", args: [senderId] });
+      targetIds = allRes.rows.map(u => String(u.id));
     } else {
-      // Broadcast to team members only
-      const teamRes = await db.execute({
-        sql: "SELECT id FROM users WHERE team_id = ?",
-        args: [teamId]
-      });
-      targetUsers = teamRes.rows;
+      // Was `SELECT id FROM users WHERE team_id = ?`, but team_id is the legacy
+      // column the schema migrated away from — so managers broadcast to nobody.
+      const { memberIds } = await resolveManagerTeam(senderId);
+      targetIds = memberIds;
     }
 
-    // Dispatch notifications
-    for (const u of targetUsers) {
-      // Don't notify self
-      if (u.id === senderId) continue;
-      
-      await dispatchNotification(u.id as string, type, {
-        title: title,
-        message: message
-      });
+    if (targetIds.length === 0) {
+      return NextResponse.json({ success: true, broadcastCount: 0 });
     }
 
-    return NextResponse.json({ success: true, broadcastCount: targetUsers.length - 1 });
+    const results = await Promise.allSettled(
+      targetIds.map(id => dispatchNotification(id, type, { title, message }))
+    );
+
+    const delivered = results.filter(r => r.status === 'fulfilled').length;
+    const failed = results.length - delivered;
+    if (failed > 0) console.warn(`Broadcast: ${failed}/${results.length} notifications failed`);
+
+    return NextResponse.json({ success: true, broadcastCount: delivered, failed });
   } catch (error: any) {
     console.error('Broadcast Error:', error);
-    return NextResponse.json({ error: 'Failed' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed', details: error.message }, { status: 500 });
   }
 }

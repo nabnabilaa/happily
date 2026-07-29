@@ -229,7 +229,7 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
         {/* Success State */}
         {status === 'success' ? (
           <div style={{ textAlign: 'center', padding: 40 }}>
-            <div style={{ fontSize: 64, marginBottom: 16 }}>{checkoutResult ? '🌙' : '✅'}</div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><HPGlyph name={checkoutResult ? 'moon' : 'check'} size={44} color="currentColor" /></div>
             <div style={{ ...HP_TEXT.h, fontSize: 18 }}>
               {checkoutResult ? 'Clock-out Berhasil!' : 'Clock-in Berhasil!'}
             </div>
@@ -240,20 +240,20 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
                   background: HP_TOKENS.sageWash, border: `1.5px solid ${HP_TOKENS.sage}40`,
                 }}>
                   <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginBottom: 4 }}>DURASI KERJA</div>
-                  <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 24, color: HP_TOKENS.sage }}>
+                  <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 24, color: HP_TOKENS.sageInk }}>
                     {checkoutResult.durationFormatted}
                   </div>
                 </div>
               </div>
             )}
-            <div style={{ ...HP_TEXT.small, color: HP_TOKENS.sage, fontWeight: 700, marginTop: 12 }}>
+            <div style={{ ...HP_TEXT.small, color: HP_TOKENS.sageInk, fontWeight: 700, marginTop: 12 }}>
               +{checkoutResult ? '10' : '20'} EXP 🎁
             </div>
           </div>
         ) : isDone ? (
           /* Already Done for today */
           <div style={{ textAlign: 'center', padding: 30 }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
+            <div style={{ fontSize: 48, marginBottom: 12 }}><HPGlyph name="check" size={28} color="currentColor" /></div>
             <div style={{ ...HP_TEXT.h, fontSize: 16 }}>Hari Ini Sudah Selesai!</div>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 20 }}>
               <div style={{
@@ -261,7 +261,7 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
                 border: `1px solid ${HP_TOKENS.sage}30`, textAlign: 'center'
               }}>
                 <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>CLOCK IN</div>
-                <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, color: HP_TOKENS.sage }}>
+                <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, color: HP_TOKENS.sageInk }}>
                   {todayData?.checkInAt ? new Date(todayData.checkInAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-'}
                 </div>
               </div>
@@ -280,7 +280,7 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
                   border: `1px solid ${HP_TOKENS.yellow}30`, textAlign: 'center'
                 }}>
                   <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>DURASI</div>
-                  <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, color: HP_TOKENS.yellowDark }}>
+                  <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, color: HP_TOKENS.yellowInk }}>
                     {Math.floor(todayData.duration / 60)}j {todayData.duration % 60}m
                   </div>
                 </div>
@@ -296,10 +296,10 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
                 background: HP_TOKENS.sageWash, border: `1.5px solid ${HP_TOKENS.sage}40`,
                 display: 'flex', alignItems: 'center', gap: 12,
               }}>
-                <div style={{ fontSize: 24 }}>✅</div>
+                <div style={{ fontSize: 24 }}><HPGlyph name="check" size={20} color="currentColor" /></div>
                 <div style={{ flex: 1 }}>
                   <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>CLOCK IN PUKUL</div>
-                  <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 18, color: HP_TOKENS.sage }}>
+                  <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 18, color: HP_TOKENS.sageInk }}>
                     {new Date(todayData.checkInAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 </div>
@@ -441,7 +441,7 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
             {isCheckingIn && checkInType === 'WFO' && isOutOfRange && (
               <div style={{
                 marginBottom: 16, padding: 12, borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.coralSoft,
-                color: HP_TOKENS.coral, fontSize: 13, fontWeight: 700, textAlign: 'center',
+                color: HP_TOKENS.coralInk, fontSize: 13, fontWeight: 700, textAlign: 'center',
                 animation: 'hpFadeIn 0.3s ease'
               }}>
                 ⚠️ Anda berada di luar area kantor. Jarak Anda: {Math.round(currentDistance!)}m, Maksimal: {maxRadius}m. Silakan pilih WFA jika bekerja dari luar.
@@ -467,7 +467,7 @@ export default function AttendanceScannerModal({ onClose }: AttendanceScannerMod
             {status === 'error' && (
               <div style={{ 
                 marginBottom: 16, padding: 12, borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.coralSoft, 
-                color: HP_TOKENS.coral, fontSize: 13, fontWeight: 700, textAlign: 'center'
+                color: HP_TOKENS.coralInk, fontSize: 13, fontWeight: 700, textAlign: 'center'
               }}>
                 ⚠️ {errorMsg}
               </div>

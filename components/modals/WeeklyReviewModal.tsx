@@ -28,10 +28,10 @@ interface ReviewItem {
 const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
 const STATUS_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-  pending:  { bg: HP_TOKENS.warningWash, color: HP_TOKENS.warning, label: 'Pending' },
-  approved: { bg: HP_TOKENS.successWash, color: HP_TOKENS.success, label: 'Approved' },
-  rejected: { bg: HP_TOKENS.dangerWash, color: HP_TOKENS.danger, label: 'Rejected' },
-  moved:    { bg: HP_TOKENS.infoWash, color: HP_TOKENS.info, label: 'Dipindah' },
+  pending:  { bg: HP_TOKENS.warningWash, color: HP_TOKENS.warningInk, label: 'Pending' },
+  approved: { bg: HP_TOKENS.successWash, color: HP_TOKENS.successInk, label: 'Approved' },
+  rejected: { bg: HP_TOKENS.dangerWash, color: HP_TOKENS.dangerInk, label: 'Rejected' },
+  moved:    { bg: HP_TOKENS.infoWash, color: HP_TOKENS.infoInk, label: 'Dipindah' },
 };
 
 export default function WeeklyReviewModal({ onClose }: { onClose: () => void }) {
@@ -145,7 +145,7 @@ export default function WeeklyReviewModal({ onClose }: { onClose: () => void }) 
           <div style={{ textAlign: 'center', padding: 30, color: HP_TOKENS.inkMute }}>Memuat data review...</div>
         ) : reviewData.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 20px', color: HP_TOKENS.inkMute }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>📋</div>
+            <div style={{ fontSize: 40, marginBottom: 12 }}><HPGlyph name="note" size={28} color="currentColor" /></div>
             <div style={{ ...HP_TEXT.body, fontWeight: 700 }}>Belum ada KPI yang di-assign</div>
             <div style={{ ...HP_TEXT.small, marginTop: 4 }}>Buat KPI terlebih dahulu di menu Kelola KPI</div>
           </div>
@@ -162,7 +162,7 @@ export default function WeeklyReviewModal({ onClose }: { onClose: () => void }) 
                   display: 'flex', alignItems: 'center', gap: 12,
                   background: HP_TOKENS.paper,
                 }}>
-                  <div style={{ fontSize: 18 }}>🎯</div>
+                  <div style={{ fontSize: 18 }}><HPGlyph name="target" size={15} color="currentColor" /></div>
                   <div style={{ flex: 1 }}>
                     <div style={{ ...HP_TEXT.h, fontSize: 14 }}>{kpi.kpiTitle}</div>
                     <div style={{ display: 'flex', gap: 8, marginTop: 4, alignItems: 'center' }}>
@@ -236,7 +236,7 @@ export default function WeeklyReviewModal({ onClose }: { onClose: () => void }) 
                                   fontFamily: HP_FONT, fontWeight: 700, fontSize: 10, cursor: 'pointer',
                                   opacity: actionLoading === link.id ? 0.5 : 1,
                                 }}
-                              >✓</button>
+                              ><HPGlyph name="check" size={12} color="currentColor" /></button>
                               <button
                                 onClick={() => handleAction(link.id, 'reject')}
                                 disabled={actionLoading === link.id}
@@ -246,7 +246,7 @@ export default function WeeklyReviewModal({ onClose }: { onClose: () => void }) 
                                   fontFamily: HP_FONT, fontWeight: 700, fontSize: 10, cursor: 'pointer',
                                   opacity: actionLoading === link.id ? 0.5 : 1,
                                 }}
-                              >✗</button>
+                              ><HPGlyph name="close" size={12} color="currentColor" /></button>
                               <button
                                 onClick={() => setMoveTarget({ linkId: link.id, show: true })}
                                 disabled={actionLoading === link.id}
@@ -256,7 +256,7 @@ export default function WeeklyReviewModal({ onClose }: { onClose: () => void }) 
                                   background: HP_TOKENS.card, color: HP_TOKENS.blue,
                                   fontFamily: HP_FONT, fontWeight: 700, fontSize: 10, cursor: 'pointer',
                                 }}
-                              >↗</button>
+                              ><HPGlyph name="arrowUpRight" size={12} color="currentColor" /></button>
                             </div>
                           ) : (
                             <span style={{

@@ -240,7 +240,7 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}
                   >
-                    <HPGlyph name="close" size={12} color={HP_TOKENS.coral} />
+                    <HPGlyph name="close" size={12} color={HP_TOKENS.coralInk} />
                   </button>
                 )}
               </div>
@@ -356,7 +356,7 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
         </div>
 
         {/* Actions */}
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
           <button 
             onClick={onClose}
             style={{
@@ -384,6 +384,9 @@ export default function TaskCompleteModal({ task, onClose, onConfirm }: Props) {
             }
           </button>
         </div>
+
+        {/* Spacer untuk memastikan button paling bawah tidak terpotong padding quirk */}
+        <div style={{ height: 24, flexShrink: 0 }} />
       </div>
     </Modal>
   );

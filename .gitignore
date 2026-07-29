@@ -48,3 +48,7 @@ next-env.d.ts
 # Dummy scripts
 delete_dummy_tasks.js
 read_priorities.js
+
+# Markdown notes & audit files (local only)
+*.md
+!README.md

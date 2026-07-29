@@ -32,34 +32,15 @@ export default function ReviewTaskWidget() {
     fetchTasks();
   }, [user?.id]);
 
-  const handleAction = async (taskId: string, status: string) => {
-    const notes = prompt(status === 'revision' ? 'Masukkan catatan revisi:' : 'Masukkan catatan (opsional):');
-    if (status === 'revision' && !notes) return;
-
-    try {
-      const res = await fetch(`/api/manager/tasks/pending`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ taskId, status, notes })
-      });
-      if (res.ok) {
-        setTasks(prev => prev.filter(t => t.id !== taskId));
-      }
-    } catch (e) {
-      console.error(e);
-      alert('Gagal memproses aksi');
-    }
-  };
-
   if (!user || user.role !== 'manager') return null;
   if (!loading && tasks.length === 0) return null;
 
   return (
     <div style={{ marginBottom: 24 }}>
-      <SectionHeader 
-        icon="activity" 
-        label="Review Task Tim" 
-        count={tasks.length.toString()} 
+      <SectionHeader
+        icon="activity"
+        label="Menunggu ACC di Review KPI"
+        count={tasks.length.toString()}
       />
       
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -77,15 +58,22 @@ export default function ReviewTaskWidget() {
                       display: 'inline-flex', alignItems: 'center', gap: 4, 
                       background: HP_TOKENS.blueWash, padding: '2px 8px', borderRadius: 6, marginTop: 6 
                     }}>
-                      <span style={{ fontSize: 10 }}>🎯</span>
+                      <span style={{ fontSize: 10 }}><HPGlyph name="target" size={12} color="currentColor" /></span>
                       <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 700, fontSize: 10 }}>{t.goalTitle}</span>
                     </div>
                   )}
-                  {t.proofLink && (
-                    <div style={{ marginTop: 8 }}>
-                      <a href={t.proofLink} target="_blank" rel="noopener noreferrer" style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 700, textDecoration: 'none' }}>
-                        📎 Lihat Bukti Kerja
-                      </a>
+                  {(t.proofLinks || []).length > 0 && (
+                    <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {t.proofLinks.map((link: string, i: number) => (
+                        <a key={i} href={link} target="_blank" rel="noopener noreferrer" style={{ ...HP_TEXT.tiny, color: HP_TOKENS.blue, fontWeight: 700, textDecoration: 'none' }}>
+                          📎 Bukti Kerja {t.proofLinks.length > 1 ? i + 1 : ''}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                  {t.metricValue !== null && t.metricValue !== undefined && (
+                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkSoft, marginTop: 4 }}>
+                      <strong>Hasil:</strong> {t.metricValue}
                     </div>
                   )}
                   {t.proofNotes && (
@@ -94,26 +82,16 @@ export default function ReviewTaskWidget() {
                     </div>
                   )}
                 </div>
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
-                  <button onClick={() => handleAction(t.id, 'approved')} className="hp-tap" style={{
-                    padding: '8px 16px', borderRadius: HP_TOKENS.radiusSm, border: 'none', background: HP_TOKENS.sage, color: '#fff',
-                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, cursor: 'pointer', width: '100px'
-                  }}>
-                    Terima
-                  </button>
-                  <button onClick={() => handleAction(t.id, 'revision')} className="hp-tap" style={{
-                    padding: '8px 16px', borderRadius: HP_TOKENS.radiusSm, border: 'none', background: HP_TOKENS.coralWash, color: HP_TOKENS.coral,
-                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, cursor: 'pointer', width: '100px'
-                  }}>
-                    Revisi
-                  </button>
-                  <button onClick={() => handleAction(t.id, 'rejected')} className="hp-tap" style={{
-                    padding: '8px 16px', borderRadius: HP_TOKENS.radiusSm, border: 'none', background: HP_TOKENS.lineSoft, color: HP_TOKENS.inkMute,
-                    fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, cursor: 'pointer', width: '100px'
-                  }}>
-                    Tolak
-                  </button>
+
+                {/* Ringkasan, bukan antrean keputusan. Task-task ini di-ACC
+                    sekaligus saat KPI induknya disetujui di Review KPI. */}
+                <div style={{
+                  flexShrink: 0, alignSelf: 'flex-start',
+                  padding: '4px 10px', borderRadius: 99,
+                  background: HP_TOKENS.yellowSoft, color: HP_TOKENS.yellowDark,
+                  fontFamily: HP_FONT, fontSize: 10, fontWeight: 700,
+                }}>
+                  Menunggu ACC
                 </div>
               </div>
             </HPCard>

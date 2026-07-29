@@ -1,409 +1,169 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { calculateLevel, calculateRank } from "@/lib/xp";
+import { getAuthUserId, isInternalRequest } from "@/lib/authSession";
+import { awardPoints, reversePoints, resolveAction, quotaStatus } from "@/lib/points";
 
-// ══════════════════════════════════════════════════════════════
-// XP Values — Spec v2 (Flowbee Feature Spec Revisi 2)
-// ══════════════════════════════════════════════════════════════
-const XP_VALUES: Record<string, number> = {
-  // Attendance
-  check_in_ontime: 10,        // Clock-in sebelum 08:00
-  check_in_late_minor: 5,     // Terlambat 1–15 menit
-  check_in_late: 0,           // Terlambat > 15 menit
-  check_out: 10,              // Clock-out (Tutup Hari) -> Match Guide
+/**
+ * Pintu HTTP untuk pemberian poin dari klien.
+ *
+ * Seluruh aturan ekonominya ada di `lib/points.ts` — file ini hanya
+ * menerjemahkan permintaan HTTP ke sana, lalu memastikan pemanggilnya berhak.
+ *
+ * Kode yang jalan di server (route lain, cron) harus memanggil `awardPoints()`
+ * LANGSUNG, bukan lewat fetch ke endpoint ini. Pemanggilan lewat HTTP internal
+ * pernah membuat apresiasi tidak pernah berjalan sama sekali karena salah nama
+ * field, dan kegagalannya diam-diam tertelan `catch`.
+ */
 
-  // Tasks
-  task_approved: 30,           // Task disetujui Manager -> Match Guide
-  task_revised_approved: 15,   // Task direvisi lalu disetujui
-  priority_complete: 30,       // Legacy alias -> Match Guide
-
-  // Wellbeing
-  mood_checkin: 5,             // Isi Mood & Energy (1x per hari)
-
-  // Recognition
-  apresiasi_received: 20,      // Dapat Kudos dari Manager
-
-  // KPI
-  kpi_achieved: 150,           // KPI Bulanan tercapai (verified)
-  kpi_exceeded: 250,           // KPI Bulanan melampaui target
-
-  // Streaks
-  streak_5: 25,                // 5 hari kerja berturut-turut
-  streak_monthly: 200,         // 1 bulan penuh (semua hari kerja)
-  streak_7: 25,                // Legacy alias (keeping for compat)
-  streak_30: 200,              // Legacy alias (keeping for compat)
-
-  // Survey
-  survey_complete: 20,         // Per survey diisi
-
-  // Other (legacy)
-  habit_complete: 15,          // Match Guide
-  daily_reflection: 20,        // Match Guide
-  focus_session: 5,
-  check_in: 10,                // Legacy fallback
-  goal_complete: 150,          // Legacy fallback → maps to kpi_achieved
-  learning_complete: 50,       // Match Guide
-  training_graduated: 500,     // For fully completing a long term daily training habit
-};
-
-// Daily cap for task-related XP (anti-abuse: max 3 tasks completed per day)
-const DAILY_TASK_XP_CAP = 150;
-const DAILY_GLOBAL_XP_CAP = 300; // Global limit: max 300 points per day
-const TASK_ACTION_TYPES = ['task_approved', 'task_revised_approved', 'priority_complete'];
+/**
+ * Aksi yang TIDAK BOLEH diberikan dari klien.
+ *
+ * Poin sesi fokus dan coworking dihitung server dari menit yang benar-benar
+ * terbukti (lihat lib/focusRoom.ts) lalu dibayar sekali lewat lib/points.ts
+ * dengan kunci idempoten `focus:<roomId>`. Membiarkan endpoint ini menerimanya
+ * berarti membuka kembali jalur "panggil /api/xp/award langsung dan dapat poin
+ * gratis" yang persis ingin ditutup.
+ */
+const SERVER_SETTLED_ACTIONS = new Set(["focus_session", "coworking_session"]);
 
 export async function POST(request: Request) {
   try {
-    const { userId, actionType, description, targetUserId, customAmount } = await request.json();
+    const body = await request.json();
+    const {
+      userId,
+      actionType,
+      action: actionAlias,
+      refId,
+      description,
+      targetUserId,
+      reverse,
+    } = body;
 
-    if (!userId || !actionType) {
-      return NextResponse.json({ error: "UserId and ActionType required" }, { status: 400 });
+    const action = actionType || actionAlias;
+
+    if (!userId || !action) {
+      return NextResponse.json(
+        { error: "userId dan actionType wajib diisi" },
+        { status: 400 },
+      );
     }
 
-    // Determine who gets the XP (default: userId, but targetUserId for apresiasi_received)
-    const recipientId = targetUserId || userId;
-
-    let amount = XP_VALUES[actionType] || 5;
-    if (actionType === 'daily_challenge' && typeof customAmount === 'number') {
-      amount = customAmount;
+    // ── Siapa yang sebenarnya memanggil ──────────────────────────────
+    // Panggilan dari browser WAJIB membawa cookie sesi, dan `userId` di body
+    // harus cocok dengannya. Tanpa pemeriksaan ini, `userId` hanyalah usulan:
+    // siapa pun bisa memberi poin ke akun siapa pun dari console browser.
+    //
+    // Panggilan internal antar-route (kudos, review task, update goal) tidak
+    // membawa cookie, jadi dikenali lewat token internal.
+    const internal = isInternalRequest(request);
+    if (!internal) {
+      const sessionUserId = getAuthUserId(request);
+      if (!sessionUserId) {
+        return NextResponse.json(
+          { error: "Sesi kamu sudah tidak berlaku. Silakan login ulang.", needsReauth: true },
+          { status: 401 }
+        );
+      }
+      if (String(sessionUserId) !== String(userId)) {
+        return NextResponse.json({ error: "Identitas tidak cocok dengan sesi." }, { status: 403 });
+      }
     }
 
-    // ── Handle Undo Actions (Reverse exactly what was added) ──────────
-    if (actionType === 'priority_undo') {
-      // Find the last priority_complete transaction for this task
-      const tx = await db.execute({
-        sql: `SELECT id, amount FROM xp_transactions 
-              WHERE user_id = ? AND action_type = 'priority_complete' AND description = ? 
-              ORDER BY created_at DESC LIMIT 1`,
-        args: [recipientId, description] // Description should match "Selesaikan: [title]"
+    // Poin sesi fokus dihitung server dari menit yang terbukti, lalu dibayar
+    // lewat lib/points.ts saat sesi diselesaikan. Klien tidak punya urusan di
+    // sini sama sekali.
+    if (SERVER_SETTLED_ACTIONS.has(action)) {
+      return NextResponse.json(
+        {
+          error:
+            "Poin sesi fokus dihitung otomatis oleh server saat sesi selesai, bukan dari aplikasi.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Hanya panggilan internal yang boleh memberi poin ke orang lain. Dari
+    // browser, penerima selalu diri sendiri — apresiasi dibayarkan oleh
+    // app/api/kudos, bukan oleh klien penerimanya.
+    const recipientId = internal ? (targetUserId || userId) : userId;
+
+    // ── Pembatalan ──
+    // Nilai pembalikan diambil dari baris ledger aslinya, bukan dari klien, dan
+    // ditulis sebagai baris negatif baru. Baris `earn` tetap ada, jadi aksi yang
+    // sama tidak akan pernah dibayar lagi setelah diulang.
+    if (reverse) {
+      if (!refId) {
+        return NextResponse.json(
+          { error: "refId wajib diisi untuk pembatalan" },
+          { status: 400 },
+        );
+      }
+      const result = await reversePoints({
+        userId: recipientId,
+        action,
+        refId,
+        reason: description,
       });
-
-      if (tx.rows.length > 0) {
-        const revertAmount = Number(tx.rows[0].amount);
-        const txId = tx.rows[0].id;
-        
-        await db.transaction(async (conn) => {
-          await conn.execute("DELETE FROM xp_transactions WHERE id = ?", [txId]);
-          await conn.execute(
-            "UPDATE users SET points = GREATEST(0, points - ?), coins = GREATEST(0, coins - ?) WHERE id = ?", 
-            [revertAmount, revertAmount, recipientId]
-          );
-        });
-
-        // fetch new totals
-        const res = await db.execute({ sql: "SELECT points, coins, streak FROM users WHERE id = ?", args: [recipientId] });
-        return NextResponse.json({
-          success: true,
-          awarded: -revertAmount,
-          awardedCoins: -revertAmount,
-          newTotal: Number(res.rows[0]?.points) || 0,
-          newCoins: Number(res.rows[0]?.coins) || 0,
-          recipientId
-        });
-      } else {
-        return NextResponse.json({
-          success: true,
-          awarded: 0,
-          awardedCoins: 0,
-          message: "No transaction found to revert",
-          recipientId
-        });
-      }
-    }
-
-    // ── Anti-Abuse: Global Daily XP/Point Cap ───────────────────────
-    try {
-      const EXEMPT_ACTION_TYPES = [
-        'daily_challenge', 
-        'kpi_achieved', 
-        'kpi_exceeded', 
-        'streak_5', 
-        'streak_7', 
-        'streak_monthly', 
-        'streak_30', 
-        'training_graduated'
-      ];
-
-      const todayGlobalXP = await db.execute({
-        sql: `SELECT COALESCE(SUM(amount), 0) as total 
-              FROM xp_transactions 
-              WHERE user_id = ? 
-                AND DATE(created_at) = CURDATE()
-                AND action_type NOT IN (${EXEMPT_ACTION_TYPES.map(() => '?').join(',')})`,
-        args: [recipientId, ...EXEMPT_ACTION_TYPES]
+      return NextResponse.json({
+        success: result.success,
+        status: "reversed",
+        awarded: -result.reversed,
+        reversed: result.reversed,
+        newTotal: result.newTotal,
+        newCoins: result.newCoins,
+        recipientId,
       });
-      const currentGlobalTotal = Number(todayGlobalXP.rows[0]?.total) || 0;
-
-      if (currentGlobalTotal >= DAILY_GLOBAL_XP_CAP) {
-        return NextResponse.json({ 
-          success: true, 
-          awarded: 0, 
-          awardedCoins: 0,
-          capped: true,
-          message: `Batas poin harian tercapai (${DAILY_GLOBAL_XP_CAP} Poin). Aktivitas tetap tercatat tapi Poin tidak bertambah.`,
-          newTotal: 0,
-          newCoins: 0,
-          recipientId
-        });
-      }
-
-      // Check remaining global cap
-      let finalAmount = amount;
-      const remainingGlobalCap = DAILY_GLOBAL_XP_CAP - currentGlobalTotal;
-      if (finalAmount > remainingGlobalCap) {
-        finalAmount = remainingGlobalCap;
-      }
-
-      // ── Anti-Abuse: Diminishing Returns for Focus Session ──────────────────────────────
-      if (actionType === 'focus_session') {
-        const todayFocus = await db.execute({
-          sql: `SELECT COUNT(*) as count 
-                FROM xp_transactions 
-                WHERE user_id = ? 
-                  AND action_type = 'focus_session'
-                  AND DATE(created_at) = CURDATE()`,
-          args: [recipientId]
-        });
-        const focusCount = Number(todayFocus.rows[0]?.count) || 0;
-        
-        if (focusCount >= 3) {
-          finalAmount = 0; // 4th+ session gives 0 XP
-          return NextResponse.json({ 
-            success: true, awarded: 0, awardedCoins: 0, capped: true,
-            message: `Batas poin harian fokus tercapai. Sesi ini tidak menambah Poin.`,
-            newTotal: 0, newCoins: 0, recipientId
-          });
-        } else if (focusCount === 2) {
-          finalAmount = Math.floor(finalAmount * 0.5); // 3rd session gives 50% XP
-        }
-      }
-
-      // ── Anti-Abuse: Daily Task XP Cap & Diminishing Returns ──────────────────────────────
-      if (TASK_ACTION_TYPES.includes(actionType)) {
-        // Count how many tasks were already completed today
-        const todayTaskXPCount = await db.execute({
-          sql: `SELECT COUNT(*) as count
-                FROM xp_transactions 
-                WHERE user_id = ? 
-                  AND action_type IN ('task_approved', 'task_revised_approved', 'priority_complete')
-                  AND DATE(created_at) = CURDATE()`,
-          args: [recipientId]
-        });
-        const taskCount = Number(todayTaskXPCount.rows[0]?.count) || 0;
-
-        if (taskCount >= 6) {
-           finalAmount = 0;
-           return NextResponse.json({ 
-            success: true, awarded: 0, awardedCoins: 0, capped: true,
-            message: `Batas poin harian task tercapai. Task ini tidak menambah Poin.`,
-            newTotal: 0, newCoins: 0, recipientId
-          });
-        } else if (taskCount >= 3) {
-           finalAmount = 10;
-        } else {
-           finalAmount = 20; // First 3 tasks give 20
-        }
-
-        const todayTaskXP = await db.execute({
-          sql: `SELECT COALESCE(SUM(amount), 0) as total 
-                FROM xp_transactions 
-                WHERE user_id = ? 
-                  AND action_type IN ('task_approved', 'task_revised_approved', 'priority_complete')
-                  AND DATE(created_at) = CURDATE()`,
-          args: [recipientId]
-        });
-        const currentDailyTotal = Number(todayTaskXP.rows[0]?.total) || 0;
-        
-        if (currentDailyTotal >= DAILY_TASK_XP_CAP) {
-          return NextResponse.json({ 
-            success: true, 
-            awarded: 0, 
-            awardedCoins: 0,
-            capped: true,
-            message: `Batas Poin harian dari task tercapai (${DAILY_TASK_XP_CAP} Poin). Task tetap tercatat tapi Poin tidak bertambah.`,
-            newTotal: 0,
-            newCoins: 0,
-            recipientId
-          });
-        }
-        
-        // Reduce amount if it would exceed task cap
-        const remainingTaskCap = DAILY_TASK_XP_CAP - currentDailyTotal;
-        if (finalAmount > remainingTaskCap) {
-          finalAmount = remainingTaskCap;
-        }
-      }
-
-      if (finalAmount <= 0) {
-        return NextResponse.json({ 
-          success: true, 
-          awarded: 0, 
-          awardedCoins: 0,
-          recipientId 
-        });
-      }
-
-      return await awardXPInternal(recipientId, finalAmount, actionType, description, request);
-    } catch (e) {
-      console.warn("Daily cap check failed, awarding normally:", e);
-      return await awardXPInternal(recipientId, amount, actionType, description, request);
     }
+
+    // Nilai poin TIDAK PERNAH diambil dari klien. Sebelumnya `customAmount`
+    // dipakai apa adanya untuk daily_challenge — dan daily_challenge kebetulan
+    // dikecualikan dari cap, sehingga siapa pun bisa mengirim angka berapa pun
+    // lewat console browser dan menambah poin tanpa batas.
+    if (!resolveAction(action)) {
+      return NextResponse.json(
+        { error: `Aksi tidak dikenal: ${action}` },
+        { status: 400 },
+      );
+    }
+
+    const result = await awardPoints({
+      userId: recipientId,
+      action,
+      refId,
+      description,
+    });
+
+    return NextResponse.json({ ...result, recipientId });
   } catch (error) {
-    console.error("XP Award Error:", error);
-    return NextResponse.json({ error: "Failed to award XP & Coins" }, { status: 500 });
+    console.error("[xp/award] Gagal memberi poin:", error);
+    return NextResponse.json({ error: "Gagal memproses poin" }, { status: 500 });
   }
 }
 
-async function awardXPInternal(
-  recipientId: string, 
-  amount: number, 
-  actionType: string, 
-  description: string | undefined,
-  request: Request
-) {
-  if (amount <= 0) {
-    return NextResponse.json({ success: true, awarded: 0, awardedCoins: 0, recipientId });
-  }
-
-  const coinsAmount = amount; // 1:1 Ratio (Koin and Poin are the same)
-  const txId = "tx_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
-
-  // 1 & 2. Atomic Transaction: Log Ledger & Update User
+/**
+ * Status kuota hari ini — untuk penghitung hidup di widget ("Task hari ini 3/5").
+ *
+ * Sengaja per-aksi dan tanpa total. Plafon harian tidak pernah dikirim ke klien:
+ * kuota ditampilkan di tempat aksinya dikerjakan sebagai dorongan, bukan sebagai
+ * tabel spesifikasi yang mengundang orang menghitung cara memerahnya.
+ */
+export async function GET(request: Request) {
   try {
-    await db.transaction(async (conn) => {
-      await conn.execute(
-        "INSERT INTO xp_transactions (id, user_id, amount, action_type, description) VALUES (?, ?, ?, ?, ?)",
-        [txId, recipientId, amount, actionType, description || actionType]
-      );
-      await conn.execute(
-        "UPDATE users SET points = points + ?, coins = coins + ? WHERE id = ?",
-        [amount, amount, recipientId]
-      );
-    });
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get("userId");
+    const actions = (searchParams.get("actions") || "").split(",").filter(Boolean);
+
+    if (!userId || actions.length === 0) {
+      return NextResponse.json({ error: "userId dan actions wajib diisi" }, { status: 400 });
+    }
+
+    const sessionUserId = getAuthUserId(request);
+    if (!sessionUserId || String(sessionUserId) !== String(userId)) {
+      return NextResponse.json({ error: "Identitas tidak cocok dengan sesi." }, { status: 403 });
+    }
+
+    return NextResponse.json({ quota: await quotaStatus(userId, actions) });
   } catch (error) {
-    console.error("XP Transaction Failed:", error);
-    return NextResponse.json({ error: "Transaction failed" }, { status: 500 });
+    console.error("[xp/award] Gagal membaca kuota:", error);
+    return NextResponse.json({ error: "Gagal membaca kuota" }, { status: 500 });
   }
-
-  // 3. Fetch new totals
-  const res = await db.execute({
-    sql: "SELECT points, coins, streak FROM users WHERE id = ?",
-    args: [recipientId]
-  });
-
-  const newPoints = Number(res.rows[0]?.points) || 0;
-  const newCoins = Number(res.rows[0]?.coins) || 0;
-  const streak = Number(res.rows[0]?.streak) || 0;
-
-  // 4. Check for streak milestones and auto-award bonus
-  if (actionType === 'check_in' || actionType === 'check_in_ontime' || actionType === 'check_in_late_minor') {
-    // 5-day streak bonus
-    if (streak === 5) {
-      try {
-        const bonusTxId = "tx_s5_" + Date.now().toString(36);
-        await db.execute({
-          sql: "INSERT INTO xp_transactions (id, user_id, amount, action_type, description) VALUES (?, ?, ?, ?, ?)",
-          args: [bonusTxId, recipientId, 25, 'streak_5', '🔥 Streak 5 hari kerja!']
-        });
-        await db.execute({
-          sql: "UPDATE users SET points = points + 25, coins = points + 25 WHERE id = ?",
-          args: [recipientId]
-        });
-        await db.execute({
-          sql: "INSERT INTO notifications (id, user_id, title, message, type) VALUES (?, ?, ?, ?, ?)",
-          args: ["n_s5_" + Date.now().toString(36), recipientId, '🔥 Streak 5 Hari!', 'Bonus +25 Point! Konsistensi hebat!', 'success']
-        });
-      } catch (e) { console.warn("Streak 5 bonus error:", e); }
-    }
-    // 7-day streak bonus (legacy compat)
-    else if (streak === 7) {
-      try {
-        const bonusTxId = "tx_s7_" + Date.now().toString(36);
-        await db.execute({
-          sql: "INSERT INTO xp_transactions (id, user_id, amount, action_type, description) VALUES (?, ?, ?, ?, ?)",
-          args: [bonusTxId, recipientId, 25, 'streak_7', '🔥 Streak 7 hari!']
-        });
-        await db.execute({
-          sql: "UPDATE users SET points = points + 25, coins = points + 25 WHERE id = ?",
-          args: [recipientId]
-        });
-        await db.execute({
-          sql: "INSERT INTO notifications (id, user_id, title, message, type) VALUES (?, ?, ?, ?, ?)",
-          args: ["n_s7_" + Date.now().toString(36), recipientId, '🔥 Streak 7 Hari!', 'Bonus +25 Point! Kamu luar biasa!', 'success']
-        });
-      } catch (e) { console.warn("Streak 7 bonus error:", e); }
-    }
-  }
-
-  // ── Level-up notification ──
-  const oldLevel = calculateLevel(newPoints - amount);
-  const newLevel = calculateLevel(newPoints);
-  const newRank = calculateRank(newLevel);
-  if (newLevel > oldLevel) {
-    try {
-      // FIX GHOST BUG: Save new level and rank to the database
-      await db.execute({
-        sql: "UPDATE users SET level = ?, `rank` = ? WHERE id = ?",
-        args: [newLevel, newRank, recipientId]
-      });
-
-      await db.execute({
-        sql: "INSERT INTO notifications (id, user_id, title, message, type) VALUES (?, ?, ?, ?, ?)",
-        args: [
-          "n_lvl_" + Date.now().toString(36), 
-          recipientId, 
-          `🚀 Naik ke Level ${newLevel}!`, 
-          `Kamu sekarang ${newRank}! Terus pertahankan konsistensimu!`, 
-          'success'
-        ]
-      });
-    } catch (e) { console.warn("Level-up notification error:", e); }
-  }
-
-  // ── Auto-log to Logbook ──────────────────────────────────────
-  try {
-    const logId = "log_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
-    const logMeta = LOGBOOK_META[actionType] || { title: actionType, type: 'activity', emoji: '⚡' };
-    const logTitle = `${logMeta.emoji} ${description || logMeta.title}`;
-
-    await db.execute({
-      sql: `INSERT INTO logbook_entries (id, user_id, type, title, description, xp_earned, created_at) 
-            VALUES (?, ?, ?, ?, ?, ?, NOW())`,
-      args: [logId, recipientId, logMeta.type, logTitle, description || logMeta.title, amount]
-    });
-  } catch (e) { console.warn("Logbook auto-log error:", e); }
-
-  return NextResponse.json({ 
-    success: true, 
-    awarded: amount, 
-    awardedCoins: coinsAmount,
-    newTotal: newPoints,
-    newCoins: newCoins,
-    recipientId
-  });
 }
-
-// ── Logbook action type mapping ───────────────────────────────
-const LOGBOOK_META: Record<string, { title: string; type: string; emoji: string }> = {
-  check_in_ontime: { title: 'Check-in tepat waktu', type: 'checkin', emoji: '✅' },
-  check_in_late_minor: { title: 'Check-in (sedikit terlambat)', type: 'checkin', emoji: '⏰' },
-  check_in_late: { title: 'Check-in terlambat', type: 'checkin', emoji: '⚠️' },
-  check_in: { title: 'Check-in', type: 'checkin', emoji: '📍' },
-  check_out: { title: 'Check-out', type: 'checkin', emoji: '🏠' },
-  task_approved: { title: 'Task disetujui manager', type: 'task_done', emoji: '✅' },
-  task_revised_approved: { title: 'Task revisi disetujui', type: 'task_done', emoji: '🔄' },
-  priority_complete: { title: 'Prioritas selesai', type: 'task_done', emoji: '🎯' },
-  mood_checkin: { title: 'Mood check-in', type: 'mood', emoji: '💭' },
-  apresiasi_received: { title: 'Menerima apresiasi', type: 'kudos', emoji: '🌟' },
-  kpi_achieved: { title: 'KPI tercapai!', type: 'kpi', emoji: '🏆' },
-  kpi_exceeded: { title: 'KPI melampaui target!', type: 'kpi', emoji: '🚀' },
-  streak_5: { title: 'Streak 5 hari!', type: 'streak', emoji: '🔥' },
-  streak_7: { title: 'Streak 7 hari!', type: 'streak', emoji: '🔥' },
-  streak_monthly: { title: 'Streak sebulan penuh!', type: 'streak', emoji: '💎' },
-  survey_complete: { title: 'Mengisi survey', type: 'activity', emoji: '📋' },
-  habit_complete: { title: 'Kebiasaan selesai', type: 'activity', emoji: '🌱' },
-  daily_reflection: { title: 'Refleksi harian', type: 'mood', emoji: '📝' },
-  focus_session: { title: 'Sesi fokus selesai', type: 'activity', emoji: '⏱️' },
-  training_graduated: { title: 'Lulus Training', type: 'activity', emoji: '🎓' },
-};
-
-

@@ -55,12 +55,15 @@ function ToastItem({ toast, onDismiss }: { toast: any, onDismiss: () => void }) 
     return () => clearTimeout(timer);
   }, [handleClose]);
 
+  // `info` and `alert` are not names HPGlyph knows. It answers an unknown name
+  // with a faded info-circle instead of throwing, so the info and warning
+  // toasts have been drawing a placeholder this whole time and nothing said so.
   const config = {
-    success: { color: HP_TOKENS.sage, bg: HP_TOKENS.sageWash, icon: 'check' },
-    error: { color: HP_TOKENS.coral, bg: HP_TOKENS.coralWash, icon: 'zap' },
-    info: { color: HP_TOKENS.blue, bg: `${HP_TOKENS.blue}10`, icon: 'info' },
-    warning: { color: HP_TOKENS.yellow, bg: HP_TOKENS.yellowWash, icon: 'alert' }
-  }[toast.type as 'success' | 'error' | 'info' | 'warning'] || { color: HP_TOKENS.ink, bg: HP_TOKENS.paper, icon: 'info' };
+    success: { color: HP_TOKENS.sageInk, bg: HP_TOKENS.sageWash, icon: 'check' },
+    error: { color: HP_TOKENS.coralInk, bg: HP_TOKENS.coralWash, icon: 'zap' },
+    info: { color: HP_TOKENS.blue, bg: `${HP_TOKENS.blue}10`, icon: 'alertCircle' },
+    warning: { color: HP_TOKENS.yellowInk, bg: HP_TOKENS.yellowWash, icon: 'alertCircle' }
+  }[toast.type as 'success' | 'error' | 'info' | 'warning'] || { color: HP_TOKENS.ink, bg: HP_TOKENS.paper, icon: 'alertCircle' };
 
   return (
     <div style={{

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { hpEventEmitter } from "@/lib/events";
+import { sqlWibDate, SQL_WIB_TODAY } from "@/lib/timeUtils";
 
 // ══════════════════════════════════════════════════════════════
 // User Status / Presence API — Spec v2
@@ -38,7 +39,7 @@ export async function GET(request: Request) {
       FROM users u
       LEFT JOIN teams t ON u.team_id = t.id
       LEFT JOIN user_status us ON u.id = us.user_id
-      LEFT JOIN attendance a ON u.id = a.user_id AND DATE(a.check_in_at) = CURDATE()
+      LEFT JOIN attendance a ON u.id = a.user_id AND ${sqlWibDate('a.check_in_at')} = ${SQL_WIB_TODAY}
       WHERE u.role IN ('employee', 'manager')
     `;
     const args: any[] = [];
@@ -67,6 +68,36 @@ export async function GET(request: Request) {
     `;
 
     const result = await db.execute({ sql: query, args });
+
+    // Sesi fokus yang sedang berjalan, supaya "sedang deep-work" terlihat di
+    // papan kehadiran alih-alih tampil sebagai orang yang diam saja.
+    //
+    // Sengaja hanya AGREGAT SEDERHANA: nama ruangan, mode, dan jam selesai.
+    // Tidak ada jumlah interupsi, tidak ada riwayat menjauh, tidak ada cap
+    // waktu per kejadian. Data seperti itu adalah surveilans, dan akan
+    // membunuh adopsi fitur ini lebih cepat daripada bug mana pun.
+    const focusMap = new Map<string, { roomName: string; mode: string; endsAt: string | null; away: boolean }>();
+    try {
+      const focusRes = await db.execute(`
+        SELECT fp.user_id, fp.status AS p_status, fr.name, fr.mode, fr.ends_at, fr.visibility
+          FROM focus_room_participants fp
+          JOIN focus_rooms fr ON fr.id = fp.room_id
+         WHERE fr.status = 'running'
+           AND fp.status IN ('focusing','interrupted')
+      `);
+      for (const f of focusRes.rows) {
+        focusMap.set(String(f.user_id), {
+          // Ruangan pribadi tidak membocorkan judulnya ke papan umum.
+          roomName: f.visibility === 'solo' ? 'Sesi pribadi' : String(f.name),
+          mode: String(f.mode),
+          endsAt: f.ends_at ? new Date(f.ends_at as any).toISOString() : null,
+          away: f.p_status === 'interrupted',
+        });
+      }
+    } catch (e: any) {
+      // Papan kehadiran harus tetap tampil walau tabel fokus belum dimigrasi.
+      console.warn('[status] Gagal memuat sesi fokus:', e?.message);
+    }
 
     const users = result.rows.map(r => {
       // Derive effective status: if no explicit status set, derive from attendance
@@ -103,6 +134,7 @@ export async function GET(request: Request) {
         checkInType: r.check_in_type || null,
         todayCheckin: r.today_checkin || null,
         todayCheckout: r.today_checkout || null,
+        focus: focusMap.get(String(r.id)) || null,
       };
     });
 
@@ -151,7 +183,7 @@ export async function POST(request: Request) {
     if (['sick', 'izin', 'cuti'].includes(status)) {
       // Check if already has attendance today
       const existing = await db.execute({
-        sql: "SELECT id FROM attendance WHERE user_id = ? AND DATE(check_in_at) = CURDATE()",
+        sql: `SELECT id FROM attendance WHERE user_id = ? AND ${sqlWibDate('check_in_at')} = ${SQL_WIB_TODAY}`,
         args: [userId]
       });
 

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { hpEventEmitter } from "@/lib/events";
 import { triggerRollupForGoal } from "@/lib/rollup";
+import { sqlWibDate, SQL_WIB_TODAY, SQL_WIB_NOW } from "@/lib/timeUtils";
+import { resolveManagerTeam, placeholdersFor } from "@/lib/managerTeam";
 
 function getCorsHeaders(request: Request) {
   const origin = request.headers.get("origin") || "*";
@@ -132,13 +134,11 @@ export async function POST(request: Request) {
       }
     }
 
-    // Log sync
-    try {
-      await db.execute({
-        sql: "INSERT INTO ext_sync_log (user_id, tasks_synced, direction) VALUES (?, ?, 'ext_to_web')",
-        args: [userId, tasksSynced + notesSynced]
-      });
-    } catch (e) { /* non-critical */ }
+    // Dulu di sini ada INSERT ke `ext_sync_log` pada setiap poll. Tidak ada satu
+    // pun kode aplikasi yang membacanya — hanya scripts/check_sync_log.ts — dan
+    // extension mem-poll tiap 30 detik per tab, jadi tabel itu tumbuh sampai
+    // 232 ribu baris tulisan murni sampah. Dihapus, bukan diperkecil: satu tulis
+    // per poll yang tidak pernah dibaca adalah beban tanpa imbalan apa pun.
 
     // Sync Focus Task to users table if provided in the payload
     if (focusTaskId !== undefined || focusProgress !== undefined || focusIntention !== undefined) {
@@ -174,14 +174,12 @@ export async function POST(request: Request) {
           if (key) dbHabitsMap.set(key, r);
         }
 
-        const payloadHabitsSet = new Set<string>();
         const seenHabits = new Set<string>();
 
         for (const h of habits) {
           const habitNameLower = (h.name || '').toLowerCase().trim();
           if (!habitNameLower || seenHabits.has(habitNameLower)) continue;
           seenHabits.add(habitNameLower);
-          payloadHabitsSet.add(habitNameLower);
 
           const existing = dbHabitsMap.get(habitNameLower);
           const isDoneTodayVal = h.done ? 1 : 0;
@@ -220,17 +218,19 @@ export async function POST(request: Request) {
           }
         }
 
-        // Delete habits in DB that are not in the payload
-        const deleteHabitIds = Array.from(dbHabitsMap.entries())
-          .filter(([key]) => !payloadHabitsSet.has(key))
-          .map(([, r]) => r.id);
-
-        if (deleteHabitIds.length > 0) {
-          await db.execute({
-            sql: `DELETE FROM habits WHERE user_id = ? AND id IN (${deleteHabitIds.map(() => '?').join(',')})`,
-            args: [userId, ...deleteHabitIds]
-          });
-        }
+        /*
+         * Habit yang tidak ada di payload DIBIARKAN — sama seperti di
+         * /api/storage.
+         *
+         * Di sini alasannya malah lebih kuat: payload datang dari extension,
+         * yang menyimpan salinannya sendiri dan bisa tertinggal jauh lebih lama
+         * daripada tab web. Menghapus selisihnya berarti membiarkan cache lama
+         * sebuah extension menghapus habit yang baru dibuat di web.
+         *
+         * Penghapusan yang memang disengaja pemakai tetap ada jalurnya sendiri
+         * dan menyebut id yang dimaksud — lihat `deletedTaskIds`/`deletedNoteIds`
+         * di awal handler ini.
+         */
       } catch (e) {
         console.error("Habit sync error in ext:", e);
       }
@@ -251,7 +251,7 @@ export async function POST(request: Request) {
       sql: `SELECT id, title, goal_title, is_done, energy_level, est_time, tone, 
             proof_link, proof_notes, metric_value, progress, is_project, project_duration_days, project_description, goal_id, kpi_id, description, target_date, time_tracked, timer_started_at, created_at
             FROM daily_priorities 
-            WHERE user_id = ? AND (is_done = 0 OR COALESCE(DATE(target_date), DATE(created_at)) = CURDATE())
+            WHERE user_id = ? AND (is_done = 0 OR COALESCE(DATE(target_date), ${sqlWibDate('created_at')}) = ${SQL_WIB_TODAY})
             ORDER BY is_done ASC, 
                      CASE energy_level WHEN 'high' THEN 1 WHEN 'mid' THEN 2 WHEN 'low' THEN 3 ELSE 2 END ASC, 
                      COALESCE(target_date, created_at) ASC, 
@@ -351,7 +351,9 @@ export async function POST(request: Request) {
         sql: `SELECT e.id, e.title, e.description, e.start_time, e.end_time, e.notification_offset_minutes, e.recurrence, e.location
               FROM calendar_events e 
               LEFT JOIN calendar_attendees a ON e.id = a.event_id AND a.user_id = ?
-              WHERE (e.creator_id = ? OR a.user_id = ?) AND e.start_time >= NOW() AND e.start_time <= DATE_ADD(NOW(), INTERVAL 7 DAY)
+              WHERE (e.creator_id = ? OR a.user_id = ?)
+                AND e.start_time >= ${SQL_WIB_NOW}
+                AND e.start_time <= DATE_ADD(${SQL_WIB_NOW}, INTERVAL 7 DAY)
               ORDER BY e.start_time ASC`,
         args: [userId, userId, userId]
       });
@@ -381,17 +383,24 @@ export async function POST(request: Request) {
     let deptPulse: any[] = [];
 
     if (userRole === 'manager') {
-      const deptRes = await db.execute({ sql: "SELECT department FROM users WHERE id = ?", args: [userId] });
-      const managerDept = (deptRes.rows[0] as any)?.department || "";
+      // Satu resolver untuk "siapa tim saya". Query di sini dulu hanya memakai
+      // `department`, sementara web memakai lib/managerTeam — `manager_id` dulu,
+      // baru department. Manager yang punya laporan langsung karenanya melihat
+      // tim penuh di web tapi hampir kosong di extension, dan antrean ACC yang
+      // pemiliknya berdepartemen kosong tidak pernah muncul di sana sama sekali:
+      // manager mengira antreannya bersih.
+      const { memberIds } = await resolveManagerTeam(userId);
 
-      const membersRes = await db.execute({
-        sql: `SELECT u.*, 
-              (SELECT mood_key FROM mood_checkins WHERE user_id = u.id ORDER BY created_at DESC LIMIT 1) as mood,
-              (SELECT COUNT(*) FROM daily_priorities WHERE user_id = u.id AND is_done = 1 AND DATE(created_at) = CURDATE()) as tasks_done,
-              (SELECT COUNT(*) FROM daily_priorities WHERE user_id = u.id AND DATE(created_at) = CURDATE()) as tasks_total
-              FROM users u WHERE u.department = ? AND u.id != ?`,
-        args: [managerDept, userId]
-      });
+      const membersRes = memberIds.length > 0
+        ? await db.execute({
+            sql: `SELECT u.*,
+                  (SELECT mood_key FROM mood_checkins WHERE user_id = u.id ORDER BY created_at DESC LIMIT 1) as mood,
+                  (SELECT COUNT(*) FROM daily_priorities WHERE user_id = u.id AND is_done = 1 AND ${sqlWibDate('created_at')} = ${SQL_WIB_TODAY}) as tasks_done,
+                  (SELECT COUNT(*) FROM daily_priorities WHERE user_id = u.id AND ${sqlWibDate('created_at')} = ${SQL_WIB_TODAY}) as tasks_total
+                  FROM users u WHERE u.id IN (${placeholdersFor(memberIds)})`,
+            args: memberIds,
+          })
+        : { rows: [] as any[] };
 
       members = membersRes.rows.map(m => ({
         id: m.id,
@@ -408,7 +417,7 @@ export async function POST(request: Request) {
         const tasksRes = await db.execute({
           sql: `SELECT dp.*, u.name as user_name FROM daily_priorities dp 
                 JOIN users u ON dp.user_id = u.id
-                WHERE dp.user_id IN (${placeholders}) AND (dp.is_done = 0 OR DATE(dp.created_at) = CURDATE() OR (dp.is_done = 1 AND dp.is_verified = 0))`,
+                WHERE dp.user_id IN (${placeholders}) AND (dp.is_done = 0 OR ${sqlWibDate('dp.created_at')} = ${SQL_WIB_TODAY} OR (dp.is_done = 1 AND dp.is_verified = 0))`,
           args: memberIdsOnly
         });
         teamTasks = tasksRes.rows.map(r => ({
@@ -428,14 +437,16 @@ export async function POST(request: Request) {
       }
 
       // Fetch team goals and pending approvals
-      const memberIds = members.map(m => String(m.id)).concat([userId]);
-      const placeholders = memberIds.map(() => '?').join(',');
+      // Pemilik goal = anggota tim ditambah manager itu sendiri. Dinamai
+      // terpisah dari `memberIds` di atas, yang murni daftar anggota.
+      const goalOwnerIds = members.map(m => String(m.id)).concat([userId]);
+      const placeholders = goalOwnerIds.map(() => '?').join(',');
       const goalsRes = await db.execute({
         sql: `SELECT g.*, u.name as joined_owner_name FROM goals g
               LEFT JOIN users u ON g.owner_id = u.id
               WHERE (g.scope = 'team' AND g.owner_id IN (${placeholders}))
               OR (g.scope = 'assigned' AND g.assigned_by_id = ?)`,
-        args: [...memberIds, userId]
+        args: [...goalOwnerIds, userId]
       });
 
       teamGoals = await Promise.all(goalsRes.rows.map(async g => {
@@ -504,13 +515,17 @@ export async function POST(request: Request) {
           COUNT(*) as total,
           SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as done
          FROM daily_priorities 
-         WHERE MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())`
+         WHERE MONTH(${sqlWibDate('created_at')}) = MONTH(${SQL_WIB_TODAY})
+           AND YEAR(${sqlWibDate('created_at')}) = YEAR(${SQL_WIB_TODAY})`
       );
       const totalTasks = Number(taskStatsRes.rows[0]?.total) || 1;
       const doneTasks = Number(taskStatsRes.rows[0]?.done) || 0;
       const engagementScore = Math.min(100, Math.round((doneTasks / totalTasks) * 100));
 
-      const moodsRes = await db.execute("SELECT mood_key FROM mood_checkins WHERE created_at > DATE_SUB(CURDATE(), INTERVAL 7 DAY)");
+      const moodsRes = await db.execute(
+        `SELECT mood_key FROM mood_checkins
+         WHERE ${sqlWibDate('created_at')} > DATE_SUB(${SQL_WIB_TODAY}, INTERVAL 7 DAY)`
+      );
       const wellbeingAvg = moodsRes.rows.length > 0 
         ? Math.round(moodsRes.rows.reduce((acc, m) => acc + (MOOD_VALUES[String(m.mood_key)] || 50), 0) / moodsRes.rows.length)
         : 0;
@@ -518,8 +533,8 @@ export async function POST(request: Request) {
       const lastMonthTasksRes = await db.execute(
         `SELECT COUNT(*) as total, SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as done
          FROM daily_priorities 
-         WHERE MONTH(created_at) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) 
-         AND YEAR(created_at) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))`
+         WHERE MONTH(${sqlWibDate('created_at')}) = MONTH(DATE_SUB(${SQL_WIB_TODAY}, INTERVAL 1 MONTH))
+           AND YEAR(${sqlWibDate('created_at')}) = YEAR(DATE_SUB(${SQL_WIB_TODAY}, INTERVAL 1 MONTH))`
       );
       const lastTotal = Number(lastMonthTasksRes.rows[0]?.total) || 1;
       const lastDone = Number(lastMonthTasksRes.rows[0]?.done) || 0;
@@ -527,30 +542,68 @@ export async function POST(request: Request) {
       const engagementTrend = engagementScore - lastEngagement;
 
       const lastMoodsRes = await db.execute(
-        "SELECT mood_key FROM mood_checkins WHERE created_at BETWEEN DATE_SUB(CURDATE(), INTERVAL 14 DAY) AND DATE_SUB(CURDATE(), INTERVAL 7 DAY)"
+        `SELECT mood_key FROM mood_checkins
+         WHERE ${sqlWibDate('created_at')}
+               BETWEEN DATE_SUB(${SQL_WIB_TODAY}, INTERVAL 14 DAY)
+                   AND DATE_SUB(${SQL_WIB_TODAY}, INTERVAL 7 DAY)`
       );
       const lastWellbeing = lastMoodsRes.rows.length > 0
         ? Math.round(lastMoodsRes.rows.reduce((acc, m) => acc + (MOOD_VALUES[String(m.mood_key)] || 50), 0) / lastMoodsRes.rows.length)
         : 0;
       const wellbeingTrend = wellbeingAvg - lastWellbeing;
 
+      // Tiga agregat, bukan tiga query per orang. Sebelumnya loop ini menembak
+      // 3 × jumlah karyawan query (≈195 untuk 65 orang) pada setiap sync — dan
+      // sync itu dipanggil tiap 30 detik oleh setiap tab. Dengan pool koneksi
+      // kecil, itulah yang membuat permintaan lain menunggu sampai kehabisan
+      // waktu. Hasilnya identik, dihitung di memori.
+      const latestMoodRes = await db.execute(
+        `SELECT mc.user_id, mc.mood_key
+         FROM mood_checkins mc
+         JOIN (
+           SELECT user_id, MAX(created_at) AS latest
+           FROM mood_checkins GROUP BY user_id
+         ) newest ON newest.user_id = mc.user_id AND newest.latest = mc.created_at`
+      );
+      const moodByUser = new Map<string, string>();
+      for (const r of latestMoodRes.rows) {
+        // Kalau ada dua check-in dengan created_at identik, yang pertama menang —
+        // sama seperti LIMIT 1 sebelumnya.
+        if (!moodByUser.has(String(r.user_id))) {
+          moodByUser.set(String(r.user_id), String(r.mood_key || 'neutral'));
+        }
+      }
+
+      const weekStatsRes = await db.execute(
+        `SELECT user_id, COUNT(*) as total, SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as done
+         FROM daily_priorities
+         WHERE ${sqlWibDate('created_at')} > DATE_SUB(${SQL_WIB_TODAY}, INTERVAL 7 DAY)
+         GROUP BY user_id`
+      );
+      const weekStats = new Map<string, { total: number; done: number }>();
+      for (const r of weekStatsRes.rows) {
+        weekStats.set(String(r.user_id), { total: Number(r.total) || 0, done: Number(r.done) || 0 });
+      }
+
+      const todayStatsRes = await db.execute(
+        `SELECT user_id, COUNT(*) as total, SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as done
+         FROM daily_priorities
+         WHERE ${sqlWibDate('created_at')} = ${SQL_WIB_TODAY}
+         GROUP BY user_id`
+      );
+      const todayStats = new Map<string, { total: number; done: number }>();
+      for (const r of todayStatsRes.rows) {
+        todayStats.set(String(r.user_id), { total: Number(r.total) || 0, done: Number(r.done) || 0 });
+      }
+
       for (const u of users) {
-        const latestMoodRes = await db.execute({
-          sql: "SELECT mood_key FROM mood_checkins WHERE user_id = ? ORDER BY created_at DESC LIMIT 1",
-          args: [String(u.id)]
-        });
-        const mood = String(latestMoodRes.rows[0]?.mood_key || 'neutral');
+        const uid = String(u.id);
+        const mood = moodByUser.get(uid) || 'neutral';
 
-        const userTasksRes = await db.execute({
-          sql: `SELECT COUNT(*) as total, SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as done
-                FROM daily_priorities WHERE user_id = ? AND created_at > DATE_SUB(CURDATE(), INTERVAL 7 DAY)`,
-          args: [String(u.id)]
-        });
-        const uTotal = Number(userTasksRes.rows[0]?.total) || 0;
-        const uDone = Number(userTasksRes.rows[0]?.done) || 0;
-        const completionRate = uTotal > 0 ? Math.round((uDone / uTotal) * 100) : 0;
+        const week = weekStats.get(uid) || { total: 0, done: 0 };
+        const completionRate = week.total > 0 ? Math.round((week.done / week.total) * 100) : 0;
 
-        if (mood === 'stress' || mood === 'tired' || (uTotal > 0 && completionRate < 30)) {
+        if (mood === 'stress' || mood === 'tired' || (week.total > 0 && completionRate < 30)) {
           atRiskEmployees.push({
             id: u.id, name: u.name, role: u.job_title,
             dept: u.team_name || 'Unassigned',
@@ -560,13 +613,7 @@ export async function POST(request: Request) {
           });
         }
 
-        const todayTasksRes = await db.execute({
-          sql: `SELECT COUNT(*) as total, SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as done
-                FROM daily_priorities WHERE user_id = ? AND DATE(created_at) = CURDATE()`,
-          args: [String(u.id)]
-        });
-        const tTotal = Number(todayTasksRes.rows[0]?.total) || 0;
-        const tDone = Number(todayTasksRes.rows[0]?.done) || 0;
+        const today = todayStats.get(uid) || { total: 0, done: 0 };
 
         members.push({
           id: u.id,
@@ -575,7 +622,7 @@ export async function POST(request: Request) {
           dept: u.team_name || 'Unassigned',
           mood,
           wellbeing: MOOD_VALUES[mood] || 50,
-          tasks: { done: tDone, total: tTotal }
+          tasks: { done: today.done, total: today.total }
         });
       }
 
@@ -590,7 +637,7 @@ export async function POST(request: Request) {
 
         const deptTasksRes = await db.execute({
           sql: `SELECT COUNT(*) as total, SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as done
-                FROM daily_priorities WHERE user_id IN (${placeholders}) AND MONTH(created_at) = MONTH(CURDATE())`,
+                FROM daily_priorities WHERE user_id IN (${placeholders}) AND MONTH(${sqlWibDate('created_at')}) = MONTH(${SQL_WIB_TODAY})`,
           args: ids
         });
         const dTotal = Number(deptTasksRes.rows[0]?.total) || 1;
@@ -598,7 +645,7 @@ export async function POST(request: Request) {
         const deptEngagement = Math.round((dDone / dTotal) * 100);
 
         const deptMoodsRes = await db.execute({
-          sql: `SELECT mood_key FROM mood_checkins WHERE user_id IN (${placeholders}) AND created_at > DATE_SUB(CURDATE(), INTERVAL 7 DAY)`,
+          sql: `SELECT mood_key FROM mood_checkins WHERE user_id IN (${placeholders}) AND ${sqlWibDate('created_at')} > DATE_SUB(${SQL_WIB_TODAY}, INTERVAL 7 DAY)`,
           args: ids
         });
         const deptWellbeing = deptMoodsRes.rows.length > 0
@@ -641,7 +688,7 @@ export async function POST(request: Request) {
 
     // KPIs and weekly targets — needed by extension task form
     const kpisRes = await db.execute({
-      sql: `SELECT id, title FROM monthly_kpis WHERE assigned_to = ? AND status = 'active' AND month = MONTH(CURDATE()) AND year = YEAR(CURDATE()) ORDER BY weight DESC`,
+      sql: `SELECT id, title FROM monthly_kpis WHERE assigned_to = ? AND status = 'active' AND month = MONTH(${SQL_WIB_TODAY}) AND year = YEAR(${SQL_WIB_TODAY}) ORDER BY weight DESC`,
       args: [userId]
     });
     const kpiIds = kpisRes.rows.map((r: any) => String(r.id));
@@ -669,7 +716,7 @@ export async function POST(request: Request) {
     const todayRes = await db.execute({
       sql: `SELECT check_in_at, check_out_at, check_in_type, mood
             FROM attendance 
-            WHERE user_id = ? AND DATE(check_in_at) = CURDATE()
+            WHERE user_id = ? AND ${sqlWibDate('check_in_at')} = ${SQL_WIB_TODAY}
             ORDER BY check_in_at DESC LIMIT 1`,
       args: [userId]
     });

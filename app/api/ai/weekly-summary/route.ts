@@ -49,13 +49,10 @@ export async function POST(request: Request) {
         args: [memberId, weekStart.toISOString().slice(0, 10), weekEnd.toISOString().slice(0, 10) + ' 23:59:59']
       });
 
-      // Mood this week
-      const moodRes = await db.execute({
-        sql: `SELECT mood_key, COUNT(*) as cnt FROM mood_checkins 
-              WHERE user_id = ? AND created_at >= ? AND created_at <= ?
-              GROUP BY mood_key ORDER BY cnt DESC LIMIT 1`,
-        args: [memberId, weekStart.toISOString().slice(0, 10), weekEnd.toISOString().slice(0, 10) + ' 23:59:59']
-      });
+      // CATATAN PRIVASI: mood/wellbeing per orang SENGAJA tidak diambil di sini.
+      // Rangkuman ini dibaca manager, dan kondisi emosional seseorang bukan
+      // konsumsi atasan. Sinyal wellbeing hanya disajikan sebagai agregat tim
+      // di bawah (lihat buildTeamWellbeing), tanpa bisa ditarik ke individu.
 
       // KPI daily inputs this week
       const kpiRes = await db.execute({
@@ -71,7 +68,6 @@ export async function POST(request: Request) {
       const doneTasks = Number(tasksRes.rows[0]?.done) || 0;
       const withLinks = Number(tasksRes.rows[0]?.with_links) || 0;
       const attendDays = Number(attendRes.rows[0]?.days) || 0;
-      const dominantMood = moodRes.rows[0]?.mood_key || 'unknown';
       const completionRate = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
 
       // Generate AI summary text
@@ -79,7 +75,7 @@ export async function POST(request: Request) {
         name: String(member.name),
         department: String(member.department || ''),
         jobTitle: String(member.job_title || ''),
-        totalTasks, doneTasks, withLinks, attendDays, dominantMood, completionRate,
+        totalTasks, doneTasks, withLinks, attendDays, completionRate,
         kpiInputs: kpiRes.rows.map(r => ({
           title: String(r.kpi_title),
           value: Number(r.total_value),
@@ -97,7 +93,7 @@ export async function POST(request: Request) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               systemInstruction: {
-                parts: [{ text: 'Kamu adalah AI HR analyst. Buat rangkuman kinerja mingguan karyawan dalam bahasa Indonesia, singkat, 3-4 kalimat. Berikan penilaian objektif dan saran actionable.' }]
+                parts: [{ text: WEEKLY_SYSTEM_PROMPT }]
               },
               contents: [{
                 role: 'user',
@@ -117,7 +113,7 @@ export async function POST(request: Request) {
             body: JSON.stringify({
               model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
               messages: [
-                { role: 'system', content: 'Kamu adalah AI HR analyst. Buat rangkuman kinerja mingguan karyawan dalam bahasa Indonesia, singkat, 3-4 kalimat. Berikan penilaian objektif dan saran actionable.' },
+                { role: 'system', content: WEEKLY_SYSTEM_PROMPT },
                 { role: 'user', content: prompt }
               ],
               temperature: 0.7,
@@ -133,13 +129,19 @@ export async function POST(request: Request) {
         aiSummary = `${member.name}: ${doneTasks}/${totalTasks} task selesai (${completionRate}%), hadir ${attendDays}/5 hari. ${completionRate >= 80 ? 'Performa sangat baik!' : completionRate >= 50 ? 'Perlu sedikit dorongan.' : 'Perlu perhatian khusus.'}`;
       }
 
-      // Save summary
+      // Save summary. `ai_weekly_summaries` tidak punya unique key (user_id, week_start),
+      // jadi ON DUPLICATE KEY tidak pernah aktif dan tiap generate ulang menumpuk baris
+      // baru. Hapus-lalu-tulis membuat operasi ini idempoten tanpa perlu ubah indeks
+      // pada tabel yang mungkin sudah berisi duplikat.
       const summaryId = "ws_" + uuidv4().substring(0, 8);
       try {
         await db.execute({
+          sql: `DELETE FROM ai_weekly_summaries WHERE user_id = ? AND week_start = ?`,
+          args: [memberId, weekStart.toISOString().slice(0, 10)]
+        });
+        await db.execute({
           sql: `INSERT INTO ai_weekly_summaries (id, user_id, week_start, week_end, summary_text, score)
-                VALUES (?, ?, ?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE summary_text = VALUES(summary_text), score = VALUES(score)`,
+                VALUES (?, ?, ?, ?, ?, ?)`,
           args: [summaryId, memberId, weekStart.toISOString().slice(0, 10), weekEnd.toISOString().slice(0, 10), aiSummary, completionRate]
         });
       } catch (e) { console.warn("Save summary error:", e); }
@@ -149,7 +151,7 @@ export async function POST(request: Request) {
         name: member.name,
         department: member.department,
         jobTitle: member.job_title,
-        totalTasks, doneTasks, withLinks, attendDays, dominantMood, completionRate,
+        totalTasks, doneTasks, withLinks, attendDays, completionRate,
         aiSummary,
         kpiInputs: kpiRes.rows.map(r => ({
           title: r.kpi_title, value: Number(r.total_value), unit: r.metric_unit
@@ -157,16 +159,85 @@ export async function POST(request: Request) {
       });
     }
 
+    const teamWellbeing = await buildTeamWellbeing(
+      membersRes.rows.map(r => String(r.id)),
+      weekStart.toISOString().slice(0, 10),
+      weekEnd.toISOString().slice(0, 10) + ' 23:59:59',
+    );
+
     return NextResponse.json({
       success: true,
       weekStart: weekStart.toISOString().slice(0, 10),
       weekEnd: weekEnd.toISOString().slice(0, 10),
       memberCount: membersRes.rows.length,
-      summaries
+      summaries,
+      teamWellbeing,
     });
   } catch (error: any) {
     console.error("Weekly Summary Error:", error);
     return NextResponse.json({ error: "Failed to generate summary", details: error.message }, { status: 500 });
+  }
+}
+
+const WEEKLY_SYSTEM_PROMPT = `Kamu adalah AI HR analyst. Buat rangkuman kinerja mingguan karyawan dalam bahasa Indonesia, singkat, 3-4 kalimat. Berikan penilaian objektif dan saran actionable.
+
+BATAS TEGAS: kamu hanya menilai HASIL KERJA. Kamu tidak menerima dan tidak boleh menyimpulkan apapun tentang kondisi emosional, mood, kesehatan mental, atau motivasi pribadi orang ini. Jangan menebak penyebab personal di balik angka. Kalau angkanya rendah, bahas hambatan kerja dan dukungan yang bisa diberikan — bukan karakter atau perasaannya.`;
+
+// Sinyal wellbeing hanya boleh keluar sebagai agregat. Di bawah ambang ini satu
+// jawaban masih bisa ditelusuri balik ke orangnya, jadi tidak ditampilkan sama sekali.
+const MIN_RESPONDENTS_FOR_AGGREGATE = 5;
+const STRAIN_MOODS = ['tired', 'stress', 'burnout', 'sad'];
+const POSITIVE_MOODS = ['joy', 'calm'];
+
+/**
+ * Kesimpulan wellbeing SATU TIM, bukan per orang.
+ * Manager berhak tahu apakah timnya sedang tertekan; manager tidak berhak tahu siapa.
+ */
+async function buildTeamWellbeing(memberIds: string[], from: string, to: string) {
+  if (!memberIds.length) return { available: false, reason: "Belum ada anggota tim." };
+  try {
+    const placeholders = memberIds.map(() => '?').join(',');
+    const res = await db.execute({
+      sql: `SELECT mood_key, COUNT(*) as cnt, COUNT(DISTINCT user_id) as people
+            FROM mood_checkins
+            WHERE user_id IN (${placeholders}) AND created_at >= ? AND created_at <= ?
+            GROUP BY mood_key`,
+      args: [...memberIds, from, to],
+    });
+
+    const totalCheckins = res.rows.reduce((s, r: any) => s + Number(r.cnt), 0);
+    const respondentsRes = await db.execute({
+      sql: `SELECT COUNT(DISTINCT user_id) as people FROM mood_checkins
+            WHERE user_id IN (${placeholders}) AND created_at >= ? AND created_at <= ?`,
+      args: [...memberIds, from, to],
+    });
+    const respondents = Number((respondentsRes.rows[0] as any)?.people) || 0;
+
+    if (respondents < MIN_RESPONDENTS_FOR_AGGREGATE || totalCheckins === 0) {
+      return {
+        available: false,
+        reason: `Butuh minimal ${MIN_RESPONDENTS_FOR_AGGREGATE} anggota yang check-in agar tetap anonim. Minggu ini baru ${respondents}.`,
+      };
+    }
+
+    const sumOf = (keys: string[]) => res.rows
+      .filter((r: any) => keys.includes(String(r.mood_key)))
+      .reduce((s, r: any) => s + Number(r.cnt), 0);
+
+    const strainShare = Math.round((sumOf(STRAIN_MOODS) / totalCheckins) * 100);
+    const positiveShare = Math.round((sumOf(POSITIVE_MOODS) / totalCheckins) * 100);
+
+    return {
+      available: true,
+      respondents,
+      positiveShare,
+      strainShare,
+      status: strainShare >= 50 ? 'perlu perhatian' : strainShare >= 30 ? 'waspada' : 'sehat',
+      note: 'Angka tim, tanpa rincian per orang. Kondisi masing-masing anggota bersifat pribadi.',
+    };
+  } catch (e) {
+    console.warn("buildTeamWellbeing error:", e);
+    return { available: false, reason: "Data wellbeing tim belum bisa dihitung." };
   }
 }
 
@@ -177,7 +248,6 @@ function buildWeeklyPrompt(data: any): string {
   prompt += `Task: ${data.doneTasks}/${data.totalTasks} selesai (${data.completionRate}%)\n`;
   prompt += `Task dengan link bukti: ${data.withLinks}\n`;
   prompt += `Kehadiran: ${data.attendDays}/5 hari\n`;
-  prompt += `Mood dominan: ${data.dominantMood}\n`;
   if (data.kpiInputs?.length > 0) {
     prompt += `KPI Inputs minggu ini:\n`;
     data.kpiInputs.forEach((k: any) => {

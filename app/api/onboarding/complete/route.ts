@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 
 export async function POST(request: Request) {
   try {
-    const { userId, department, answers } = await request.json();
+    const { userId, department, departmentId, answers } = await request.json();
 
     if (!userId) {
       return NextResponse.json({ error: "userId wajib diisi" }, { status: 400 });
@@ -21,8 +21,40 @@ export async function POST(request: Request) {
       // Kolom sudah ada — abaikan error
     }
 
-    // Simpan divisi self-reported (harus cocok dengan salah satu departemen HR) + tandai pending persetujuan HR,
-    // serta simpan seluruh jawaban onboarding sebagai knowledge tambahan per user.
+    // Divisi yang dipilih karyawan dicocokkan ke tabel `departments`.
+    //
+    // Kalau cocok, karyawan LANGSUNG masuk divisi itu (`approved`) — pilihannya
+    // memang berasal dari daftar departemen HR sendiri, jadi tidak ada yang perlu
+    // disetujui ulang. Antrean "Permintaan Departemen" tinggal menangani sisa
+    // kasusnya: divisi dari konfigurasi onboarding lama yang belum terdaftar di HR.
+    let resolvedName: string | null = department ? String(department).trim() : null;
+    let matched = false;
+
+    if (resolvedName) {
+      try {
+        // Cocokkan lewat id kalau dikirim, kalau tidak lewat nama (case-insensitive).
+        const res = departmentId
+          ? await db.execute({ sql: "SELECT id, name FROM departments WHERE id = ?", args: [departmentId] })
+          : await db.execute({
+              sql: "SELECT id, name FROM departments WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))",
+              args: [resolvedName],
+            });
+        const row = res.rows[0] as { name?: string } | undefined;
+        if (row?.name) {
+          matched = true;
+          // Pakai ejaan resmi dari tabel departemen, bukan label pilihan, supaya
+          // filter per-divisi di layar Team/HR selalu cocok persis.
+          resolvedName = String(row.name);
+        }
+      } catch (e) {
+        console.error("Department lookup failed:", e);
+      }
+    }
+
+    const departmentStatus = resolvedName ? (matched ? "approved" : "pending") : null;
+
+    // Simpan divisi + status keanggotaan, serta seluruh jawaban onboarding
+    // sebagai knowledge tambahan per user.
     await db.execute({
       sql: `UPDATE users
             SET is_onboarded = 1,
@@ -31,14 +63,20 @@ export async function POST(request: Request) {
                 onboarding_answers = ?
             WHERE id = ?`,
       args: [
-        department || null,
-        department ? "pending" : null,
+        resolvedName,
+        departmentStatus,
         Array.isArray(answers) ? JSON.stringify(answers) : null,
         userId,
       ],
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      department: resolvedName,
+      departmentStatus,
+      /** true = langsung bergabung, false = masuk antrean persetujuan HR. */
+      joined: matched,
+    });
   } catch (error: any) {
     console.error("Onboarding complete error:", error);
     return NextResponse.json({ error: "Gagal menyimpan data onboarding" }, { status: 500 });

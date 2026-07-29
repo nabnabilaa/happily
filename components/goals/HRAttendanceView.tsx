@@ -6,6 +6,8 @@ import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
 import HPGlyph from "@/components/ui/HPGlyph";
 import HPAvatar from "@/components/ui/HPAvatar";
 import AttendanceDashboard from "@/components/hr/AttendanceDashboard";
+import AttendanceLocationTag from "@/components/attendance/AttendanceLocationTag";
+import { describeAttendanceLocation } from "@/lib/attendanceLocation";
 
 const MONTHS = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 
@@ -67,15 +69,20 @@ export default function HRAttendanceView({ currentUser, openModal }: HRAttendanc
           for (const log of data.logs || []) {
             const uid = log.user_id;
             if (!byUser[uid]) {
-              byUser[uid] = { 
-                name: log.user_name, 
-                days: 0, 
-                totalMinutes: 0, 
+              byUser[uid] = {
+                name: log.user_name,
+                days: 0,
+                totalMinutes: 0,
                 withCheckout: 0,
-                department: log.user_department || '' 
+                department: log.user_department || '',
+                byType: { WFO: 0, WFA: 0, DINAS: 0 } as Record<string, number>,
+                offices: new Set<string>(),
               };
             }
             byUser[uid].days++;
+            const loc = describeAttendanceLocation(log);
+            byUser[uid].byType[loc.kind]++;
+            if (loc.kind === 'WFO' && loc.place) byUser[uid].offices.add(loc.place);
             if (log.duration_minutes) {
               byUser[uid].totalMinutes += Number(log.duration_minutes);
               byUser[uid].withCheckout++;
@@ -95,17 +102,23 @@ export default function HRAttendanceView({ currentUser, openModal }: HRAttendanc
     if (!logs || logs.length === 0) return;
     
     let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Nama,Waktu Masuk,Waktu Keluar,Tipe Absen,Durasi (Menit),Lokasi\n";
-    
+    csvContent += "Nama,Divisi,Waktu Masuk,Waktu Keluar,Tipe Absen,Durasi (Menit),Lokasi,Koordinat,Catatan\n";
+
     logs.forEach(row => {
-      const name = `"${row.user_name}"`;
-      const inTime = `"${new Date(row.check_in_at).toLocaleString('id-ID')}"`;
-      const outTime = row.check_out_at ? `"${new Date(row.check_out_at).toLocaleString('id-ID')}"` : '""';
-      const type = `"${row.check_in_type || ''}"`;
-      const duration = row.duration_minutes || '';
-      const location = `"${row.check_in_location_name || ''}"`;
-      
-      csvContent += `${name},${inTime},${outTime},${type},${duration},${location}\n`;
+      const loc = describeAttendanceLocation(row);
+      const q = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+
+      csvContent += [
+        q(row.user_name),
+        q(row.user_department),
+        q(new Date(row.check_in_at).toLocaleString('id-ID')),
+        q(row.check_out_at ? new Date(row.check_out_at).toLocaleString('id-ID') : ''),
+        q(loc.longLabel),
+        row.duration_minutes || '',
+        q(loc.place || ''),
+        q(loc.coords || ''),
+        q(row.notes || ''),
+      ].join(',') + "\n";
     });
 
     const encodedUri = encodeURI(csvContent);
@@ -177,9 +190,9 @@ export default function HRAttendanceView({ currentUser, openModal }: HRAttendanc
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8 }}>
         {[
           { label: 'Total Log', value: totalLogs, color: HP_TOKENS.blue, bg: HP_TOKENS.blueSoft },
-          { label: 'Unik Users', value: uniqueUsers, color: HP_TOKENS.primary, bg: HP_TOKENS.primaryWash },
-          { label: 'Clock-out', value: `${withCheckout}/${totalLogs}`, color: HP_TOKENS.sage, bg: HP_TOKENS.sageWash },
-          { label: 'Avg Jam', value: avgDuration > 0 ? `${Math.floor(avgDuration/60)}j${avgDuration%60}m` : '-', color: HP_TOKENS.yellowDark, bg: HP_TOKENS.yellowSoft },
+          { label: 'Unik Users', value: uniqueUsers, color: HP_TOKENS.primaryInk, bg: HP_TOKENS.primaryWash },
+          { label: 'Clock-out', value: `${withCheckout}/${totalLogs}`, color: HP_TOKENS.sageInk, bg: HP_TOKENS.sageWash },
+          { label: 'Avg Jam', value: avgDuration > 0 ? `${Math.floor(avgDuration/60)}j${avgDuration%60}m` : '-', color: HP_TOKENS.yellowInk, bg: HP_TOKENS.yellowSoft },
         ].map(s => (
           <div key={s.label} style={{
             padding: '12px 8px', borderRadius: HP_TOKENS.radiusMd, background: s.bg,
@@ -220,15 +233,23 @@ export default function HRAttendanceView({ currentUser, openModal }: HRAttendanc
                   }}
                 >
                   <HPAvatar name={data.name} size={34} />
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ ...HP_TEXT.h, fontSize: 13 }}>{data.name}</div>
                     {data.department && (
                       <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>{data.department}</div>
                     )}
+                    {/* Rincian lokasi: berapa hari WFO / WFA / Dinas, dan kantor mana saja. */}
+                    <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {(['WFO', 'WFA', 'DINAS'] as const)
+                        .filter(k => data.byType?.[k] > 0)
+                        .map(k => `${k} ${data.byType[k]}`)
+                        .join(' · ') || 'Tipe absen tidak tercatat'}
+                      {data.offices?.size > 0 && ` — ${Array.from(data.offices).join(', ')}`}
+                    </div>
                   </div>
                   <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                     <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 14, color: HP_TOKENS.sage }}>{data.days}</div>
+                      <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 14, color: HP_TOKENS.sageInk }}>{data.days}</div>
                       <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade }}>hadir</div>
                     </div>
                     <div style={{ textAlign: 'center' }}>
@@ -305,23 +326,27 @@ export default function HRAttendanceView({ currentUser, openModal }: HRAttendanc
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {paginatedLogs.map((log: any) => (
                   <HPCard key={log.id} padding={12}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                       <HPAvatar name={log.user_name} size={36} />
-                      <div style={{ flex: 1 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ ...HP_TEXT.h, fontSize: 13 }}>{log.user_name}</div>
                         <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>
                           {new Date(log.check_in_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                           {log.check_out_at && (
                             <> → {new Date(log.check_out_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</>
                           )}
-                          {log.check_in_type && ` · ${log.check_in_type}`}
+                          {log.user_department && ` · ${log.user_department}`}
+                        </div>
+                        {/* Keterangan lokasi: WFO + nama kantor, atau WFA/Dinas + alasan & titik koordinat. */}
+                        <div style={{ marginTop: 6 }}>
+                          <AttendanceLocationTag log={log} variant="block" />
                         </div>
                       </div>
-                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
                         {log.duration_minutes && (
                           <div style={{
                             padding: '3px 8px', borderRadius: 8, fontSize: 10, fontWeight: 700, fontFamily: HP_FONT,
-                            background: HP_TOKENS.yellowSoft, color: HP_TOKENS.yellowDark
+                            background: HP_TOKENS.yellowSoft, color: HP_TOKENS.yellowInk
                           }}>
                             {Math.floor(log.duration_minutes / 60)}j{log.duration_minutes % 60}m
                           </div>

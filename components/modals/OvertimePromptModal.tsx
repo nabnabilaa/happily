@@ -5,6 +5,7 @@ import { useHP } from "@/lib/HPContext";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
 import Modal from "@/components/ui/Modal";
 import BeeMascot from "@/components/ui/BeeMascot";
+import HPGlyph from "@/components/ui/HPGlyph";
 
 interface OvertimePromptModalProps {
   onClose: () => void;
@@ -52,7 +53,7 @@ export default function OvertimePromptModal({ onClose }: OvertimePromptModalProp
             opacity: isSubmitting ? 0.7 : 1
           }}
         >
-          <span style={{ fontSize: 24 }}>💪</span>
+          <span style={{ fontSize: 24 }}><HPGlyph name="zap" size={20} color="currentColor" /></span>
           <div style={{ textAlign: 'left' }}>
             <div>Masih Lanjut Lembur</div>
             <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 600 }}>Aku masih ada kerjaan yang harus diselesaikan.</div>
@@ -66,15 +67,15 @@ export default function OvertimePromptModal({ onClose }: OvertimePromptModalProp
           style={{
             width: '100%', padding: '16px', borderRadius: HP_TOKENS.radiusMd,
             background: HP_TOKENS.sageWash, border: `1.5px solid ${HP_TOKENS.sage}`,
-            color: HP_TOKENS.sage, fontFamily: HP_FONT, fontWeight: 700, fontSize: 14,
+            color: HP_TOKENS.sageInk, fontFamily: HP_FONT, fontWeight: 700, fontSize: 14,
             cursor: isSubmitting ? 'default' : 'pointer', display: 'flex', alignItems: 'center', gap: 12,
             opacity: isSubmitting ? 0.7 : 1
           }}
         >
-          <span style={{ fontSize: 24 }}>😅</span>
+          <span style={{ fontSize: 24 }}><HPGlyph name="clock" size={20} color="currentColor" /></span>
           <div style={{ textAlign: 'left' }}>
             <div>Lupa Absen Pulang</div>
-            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 600, opacity: 0.8 }}>Aku udah selesai kok, mau tutup hari sekarang.</div>
+            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sageInk, fontWeight: 600, opacity: 0.8 }}>Aku udah selesai kok, mau tutup hari sekarang.</div>
           </div>
         </button>
       </div>

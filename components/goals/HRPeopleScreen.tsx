@@ -11,9 +11,9 @@ import { useHP } from "@/lib/HPContext";
 import HRAttendanceView from "@/components/goals/HRAttendanceView";
 import DivisionTargetsView from "@/components/goals/DivisionTargetsView";
 import OfficeSettingsMap from "@/components/hr/OfficeSettingsMap";
-import GoalCard from "@/components/goals/GoalCard";
-import ManagerPersonalView from "@/components/goals/ManagerPersonalView";
 import ReportDashboard from "@/components/reports/ReportDashboard";
+import HRAnalyticsTabs from "@/components/home/HRAnalyticsTabs";
+import HRManageList from "@/components/hr/HRManageList";
 import { downloadPersonExcel } from "@/lib/reportExcel";
 
 interface Props { openModal: (name: string, props?: any) => void; }
@@ -26,6 +26,8 @@ const DEPT_EMOJIS: Record<string, string> = {
 const DEPT_COLORS = HP_CATEGORICAL;
 
 const scoreTone = (v: number) => (v >= 80 ? HP_TOKENS.sage : v >= 50 ? HP_TOKENS.yellow : HP_TOKENS.coral);
+/** Text twin of `scoreTone` — the 50-79 band is yellow, 2.2:1 on white. */
+const scoreInk = (v: number) => (v >= 80 ? HP_TOKENS.sageInk : v >= 50 ? HP_TOKENS.yellowInk : HP_TOKENS.coralInk);
 
 function MiniDonut({ value, size = 40 }: { value: number; size?: number }) {
   const v = Math.max(0, Math.min(100, value));
@@ -43,11 +45,16 @@ function MiniDonut({ value, size = 40 }: { value: number; size?: number }) {
 
 export default function HRPeopleScreen({ openModal }: Props) {
   const { state, user: currentUser, updateState, refreshSurveys } = useHP();
-  // HR penuh jika: akun ber-role hr, sedang di tampilan HR (userRole), atau punya akses HR-Admin tambahan.
-  const isHR = (currentUser?.userRole || currentUser?.role) === 'hr' || !!currentUser?.hrAccess;
-  const [activeTab, setActiveTab] = useState<'users' | 'attendance' | 'targets' | 'office' | 'schedule' | 'contacts' | 'surveys' | 'personal' | 'hr_reports'>(isHR ? 'users' : 'attendance');
-  const [apiKpis, setApiKpis] = useState<any[]>([]);
-  const [loadingKpis, setLoadingKpis] = useState(true);
+  // Izin admin HR. Sengaja disamakan dengan `canHrAdmin()` di `lib/hrAuth.ts`
+  // supaya klien dan server memakai aturan yang persis sama. Tidak lagi membaca
+  // `userRole`: itu dulu state switcher peran, dan peran tidak lagi ditukar.
+  const isHR = currentUser?.role === 'hr' || !!currentUser?.hrAccess;
+  // Akun HR murni memakai layar ini sebagai konsol admin saja — ringkasan
+  // organisasi sudah jadi halaman Home-nya. Employee/manager ber-hrAccess tidak
+  // punya Home HR (Home mereka tetap milik peran aslinya), jadi ringkasan itu
+  // harus ikut masuk ke sini atau mereka tidak akan pernah melihatnya.
+  const isPureHR = currentUser?.role === 'hr';
+  const [activeTab, setActiveTab] = useState<'summary' | 'users' | 'attendance' | 'targets' | 'office' | 'schedule' | 'contacts' | 'surveys'>(isPureHR ? 'users' : 'summary');
 
   // Skor per divisi untuk scorecard di kartu People + toggle dashboard semua divisi.
   const [divScores, setDivScores] = useState<Record<string, { avgKpi: number; avgCompletion: number; headcount: number }>>({});
@@ -79,84 +86,6 @@ export default function HRPeopleScreen({ openModal }: Props) {
     } catch (e) { console.error('deptPeopleScores', e); }
   };
 
-
-  useEffect(() => {
-    async function fetchKPIs() {
-      if (!currentUser?.id) return;
-      try {
-        setLoadingKpis(true);
-        const m = new Date().getMonth() + 1;
-        const y = new Date().getFullYear();
-
-        const managerRes = await fetch(`/api/kpi?userId=${currentUser.id}&role=employee&month=${m}&year=${y}`);
-        const managerData = await managerRes.json();
-        const managerKpis = (managerData.kpis || []).map((k: any) => ({
-          id: String(k.id),
-          title: k.title,
-          progress: k.finalScore !== null && k.finalScore !== undefined ? Number(k.finalScore) : 0,
-          alignment: k.weight || 0,
-          due: `${m}/${y}`,
-          tone: 'lavender',
-          metric: k.targetDescription || 'KPI Bulanan (Manager)',
-          scope: 'assigned',
-          owner: k.assigneeName || currentUser.name || 'You',
-          ownerId: String(k.assignedTo),
-          status: k.status === 'active' ? 'approved' : k.status,
-          is_kpi: true,
-          isApiKpi: true,
-          subGoals: []
-        }));
-
-        const personalRes = await fetch(`/api/kpi/personal?userId=${currentUser.id}&month=${m}&year=${y}`);
-        const personalData = await personalRes.json();
-        const personalKpis = (personalData.kpis || []).map((k: any) => ({
-          id: String(k.id),
-          title: k.title,
-          progress: k.progress || 0,
-          alignment: 0,
-          due: `${m}/${y}`,
-          tone: 'sage',
-          metric: k.targetDescription || `${k.currentValue || 0}/${k.targetValue || 0} ${k.metricUnit || ''}`,
-          scope: 'personal',
-          owner: currentUser.name || 'You',
-          ownerId: String(currentUser.id),
-          status: k.status || 'active',
-          is_kpi: true,
-          isApiKpi: true,
-          subGoals: []
-        }));
-
-        setApiKpis([...managerKpis, ...personalKpis]);
-      } catch (e) {
-        console.error("Failed to load KPIs in HRPeopleScreen:", e);
-      } finally {
-        setLoadingKpis(false);
-      }
-    }
-    fetchKPIs();
-  }, [currentUser?.id]);
-
-  const personalTasks = state?.priorities || [];
-  const myAssignedGoals = state?.goals?.filter((g: any) => g.scope === 'assigned' && String(g.ownerId) === String(currentUser?.id)) || [];
-  const myPersonalGoals = state?.goals?.filter((g: any) => g.scope === 'personal' && String(g.ownerId) === String(currentUser?.id)) || [];
-
-  const combinedMyGoals = useMemo(() => {
-    const combined = [...myAssignedGoals, ...myPersonalGoals];
-    apiKpis.forEach((k: any) => {
-      if (!combined.some((g: any) => String(g.id) === String(k.id) || g.title.toLowerCase() === k.title.toLowerCase())) {
-        combined.push(k);
-      }
-    });
-    return combined;
-  }, [apiKpis, myAssignedGoals, myPersonalGoals]);
-
-  const [currentPageKPI, setCurrentPageKPI] = useState(1);
-  const kpisPerPage = 5;
-  const totalPagesKPI = Math.ceil(combinedMyGoals.length / kpisPerPage);
-  const paginatedKPIs = useMemo(() => {
-    const start = (currentPageKPI - 1) * kpisPerPage;
-    return combinedMyGoals.slice(start, start + kpisPerPage);
-  }, [combinedMyGoals, currentPageKPI]);
 
   const [search, setSearch] = useState('');
   const [dbUsers, setDbUsers] = useState<any[]>([]);
@@ -322,63 +251,23 @@ export default function HRPeopleScreen({ openModal }: Props) {
     outline: 'none', background: HP_TOKENS.card, color: HP_TOKENS.ink, boxSizing: 'border-box',
   };
 
-  const handleDeleteTask = (taskId: string | number) => {
-    if (confirm("Apakah Anda yakin ingin menghapus task ini?")) {
-      updateState((s: any) => {
-        const newPriorities = s.priorities.filter((p: any) => p.id !== taskId);
-        
-        const taskToDelete = s.priorities.find((p: any) => p.id === taskId);
-        const targetId = taskToDelete?.goal_id || taskToDelete?.kpi_id;
-        
-        const updatedGoals = s.goals.map((goal: any) => {
-          if (targetId && String(goal.id) === String(targetId)) {
-            const todayTasks = newPriorities.filter((p: any) => 
-              (p.goal_id && String(p.goal_id) === String(goal.id)) || 
-              (p.kpi_id && String(p.kpi_id) === String(goal.id))
-            );
-            const total = todayTasks.length;
-            const completed = todayTasks.filter((p: any) => p.done).length;
-            const newProgress = total > 0 ? Math.round((completed / total) * 100) : 0;
-            return { 
-              ...goal, 
-              progress: newProgress, 
-              metric: total > 0 ? `${completed}/${total} task selesai` : `0/0 task selesai`
-            };
-          }
-          return goal;
-        });
-
-        const extraState: any = {};
-        if (s.focusTaskId === taskId) {
-          extraState.focusTaskId = null;
-          extraState.focusProgress = 0;
-          extraState.intention = "";
-        }
-
-        return {
-          ...s,
-          priorities: newPriorities,
-          goals: updatedGoals,
-          ...extraState
-        };
-      });
-    }
-  };
-
   return (
     <div style={{ padding: '0 16px 120px', fontFamily: HP_FONT }}>
       <ScreenHeader
-        title={isHR ? "Management Console" : "People"}
-        subtitle={isHR ? "Kelola karyawan, role & pelaporan" : "Kelola karyawan & organisasi"}
+        title="Management Console"
+        subtitle="Kelola karyawan, role & pelaporan"
       />
 
       {/* Tab switcher */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 12, overflowX: 'auto', paddingBottom: 4 }}>
         {[
+          !isPureHR && { key: 'summary', label: 'Ringkasan' },
           isHR && { key: 'users', label: 'People' },
           { key: 'attendance', label: 'Attendance' },
-          // Targets dilebur ke People untuk HR (info sama); manager tetap punya akses.
-          !isHR && { key: 'targets', label: 'Targets' },
+          // Tab ini pernah digantung di `!isHR`, padahal layar ini hanya dirender
+          // untuk orang yang `isHR`-nya true — jadi syaratnya tidak pernah
+          // terpenuhi dan DivisionTargetsView tidak bisa dibuka siapa pun.
+          { key: 'targets', label: 'Targets' },
           { key: 'office', label: 'Office' },
           { key: 'schedule', label: 'Work Hours' },
           { key: 'contacts', label: 'Contacts' },
@@ -395,6 +284,26 @@ export default function HRPeopleScreen({ openModal }: Props) {
         ))}
       </div>
 
+      {/* ── Ringkasan organisasi + aksi Kelola ──
+          Isi yang sama dengan Home milik akun HR murni, disusun dari komponen
+          bersama supaya satu perubahan berlaku untuk kedua permukaan. */}
+      {activeTab === 'summary' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Menunggu `hrData` sungguhan. HRWellbeingDashboard punya data contoh
+              sebagai fallback, jadi tanpa penjaga ini layar sempat menampilkan
+              divisi dan angka karangan seolah-olah itu data perusahaan. */}
+          {state?.hrData ? (
+            <HRAnalyticsTabs state={state} openModal={openModal} />
+          ) : (
+            <div aria-busy="true" aria-label="Memuat ringkasan organisasi" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div className="hp-skeleton" style={{ height: 132 }} />
+              <div className="hp-skeleton" style={{ height: 88 }} />
+            </div>
+          )}
+          <HRManageList openModal={openModal} />
+        </div>
+      )}
+
       {/* ── Users / People (Department Cards → People List) ── */}
       {activeTab === 'users' && isHR && (
         <>
@@ -404,7 +313,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
               onClick={() => openModal('kpi_review')}
               style={{
                 width: '100%', padding: '12px 16px', borderRadius: HP_TOKENS.radiusMd, border: 'none', cursor: 'pointer',
-                background: HP_TOKENS.yellowWash, color: HP_TOKENS.yellowDark,
+                background: HP_TOKENS.yellowWash, color: HP_TOKENS.yellowInk,
                 fontFamily: HP_FONT, fontWeight: 700, fontSize: 13,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}
@@ -458,7 +367,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
               {(loadingDeptRequests || deptRequests.length > 0) && (
                 <div style={{ marginBottom: 20 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                    <span style={{ fontSize: 16 }}>📋</span>
+                    <span style={{ fontSize: 16 }}><HPGlyph name="note" size={14} color="currentColor" /></span>
                     <span style={{ ...HP_TEXT.h, fontSize: 14 }}>Pengajuan Divisi</span>
                     {deptRequests.length > 0 && (
                       <span style={{
@@ -480,12 +389,12 @@ export default function HRPeopleScreen({ openModal }: Props) {
                               <div style={{ ...HP_TEXT.h, fontSize: 14 }}>{req.name}</div>
                               <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>{req.email}</div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
-                                <span style={{ fontSize: 12 }}>📁</span>
+                                <span style={{ fontSize: 12 }}><HPGlyph name="folder" size={12} color="currentColor" /></span>
                                 <span style={{
                                   fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, color: HP_TOKENS.blue,
                                 }}>{req.department || '—'}</span>
                                 <span style={{
-                                  background: HP_TOKENS.warningWash, color: HP_TOKENS.warning,
+                                  background: HP_TOKENS.warningWash, color: HP_TOKENS.warningInk,
                                   borderRadius: HP_TOKENS.radius, padding: '2px 8px',
                                   fontFamily: HP_FONT, fontWeight: 700, fontSize: 10,
                                 }}>pending</span>
@@ -538,7 +447,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
                                   className="hp-tap"
                                   style={{
                                     padding: '6px 12px', borderRadius: HP_TOKENS.radiusSm, border: 'none',
-                                    background: HP_TOKENS.successWash, color: HP_TOKENS.success,
+                                    background: HP_TOKENS.successWash, color: HP_TOKENS.successInk,
                                     fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, cursor: 'pointer',
                                   }}
                                 >✓ Setuju</button>
@@ -556,7 +465,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
                                   className="hp-tap"
                                   style={{
                                     padding: '6px 12px', borderRadius: HP_TOKENS.radiusSm, border: 'none',
-                                    background: HP_TOKENS.dangerWash, color: HP_TOKENS.danger,
+                                    background: HP_TOKENS.dangerWash, color: HP_TOKENS.dangerInk,
                                     fontFamily: HP_FONT, fontWeight: 700, fontSize: 11, cursor: 'pointer',
                                   }}
                                 >✕ Tolak</button>
@@ -573,9 +482,9 @@ export default function HRPeopleScreen({ openModal }: Props) {
               {/* Stats row */}
               <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
                 {[
-                  { label: 'Total', value: dbUsers.length, color: HP_TOKENS.lavender, bg: HP_TOKENS.lavenderSoft },
+                  { label: 'Total', value: dbUsers.length, color: HP_TOKENS.lavenderInk, bg: HP_TOKENS.lavenderSoft },
                   { label: 'Departemen', value: Object.keys(usersByDept).length, color: HP_TOKENS.blue, bg: HP_TOKENS.blueSoft },
-                  { label: 'Manager', value: managers.length, color: HP_TOKENS.sage, bg: HP_TOKENS.sageSoft },
+                  { label: 'Manager', value: managers.length, color: HP_TOKENS.sageInk, bg: HP_TOKENS.sageSoft },
                 ].map(s => (
                   <div key={s.label} style={{
                     flex: 1, padding: '14px 10px', borderRadius: HP_TOKENS.radiusMd, textAlign: 'center',
@@ -625,7 +534,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 2, padding: '8px 10px', borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.lineSoft }}>
                           <MiniDonut value={divScores[dept].avgKpi} size={38} />
                           <div style={{ minWidth: 0 }}>
-                            <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, color: scoreTone(divScores[dept].avgKpi) }}>{divScores[dept].avgKpi}% <span style={{ fontSize: 9, fontWeight: 700, color: HP_TOKENS.inkMute }}>KPI</span></div>
+                            <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, color: scoreInk(divScores[dept].avgKpi) }}>{divScores[dept].avgKpi}% <span style={{ fontSize: 9, fontWeight: 700, color: HP_TOKENS.inkMute }}>KPI</span></div>
                             <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontSize: 9 }}>{divScores[dept].avgCompletion}% task</div>
                           </div>
                         </div>
@@ -724,7 +633,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                           <MiniDonut value={deptPeopleScores[String(u.id)].kpiScore} size={34} />
                           <div>
-                            <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, color: scoreTone(deptPeopleScores[String(u.id)].kpiScore) }}>{deptPeopleScores[String(u.id)].kpiScore}%</div>
+                            <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, color: scoreInk(deptPeopleScores[String(u.id)].kpiScore) }}>{deptPeopleScores[String(u.id)].kpiScore}%</div>
                             <div style={{ ...HP_TEXT.tiny, fontSize: 8, color: HP_TOKENS.inkMute }}>{deptPeopleScores[String(u.id)].completionRate}% task</div>
                           </div>
                         </div>
@@ -744,9 +653,9 @@ export default function HRPeopleScreen({ openModal }: Props) {
                             } catch (e) { console.error(e); }
                           }} className="hp-tap" style={{
                             padding: '6px 9px', borderRadius: 8, border: `1px solid ${HP_TOKENS.sage}30`,
-                            background: HP_TOKENS.sageWash, fontSize: 10, fontWeight: 700, color: HP_TOKENS.sage,
+                            background: HP_TOKENS.sageWash, fontSize: 10, fontWeight: 700, color: HP_TOKENS.sageInk,
                             fontFamily: HP_FONT, cursor: 'pointer',
-                          }}>⬇</button>
+                          }}><HPGlyph name="arrowDown" size={12} color="currentColor" /></button>
                         )}
                         <button onClick={() => openModal('edit_user', {
                           user: u, managers,
@@ -809,17 +718,9 @@ export default function HRPeopleScreen({ openModal }: Props) {
         </>
       )}
 
-      {/* ── Personal Tasks & KPIs ── */}
-      {activeTab === 'personal' && (
-        <ManagerPersonalView 
-          personalTasks={personalTasks}
-          combinedMyGoals={combinedMyGoals}
-          loadingKpis={loadingKpis}
-          updateState={updateState}
-          openModal={openModal}
-          setTaskToDelete={handleDeleteTask}
-        />
-      )}
+      {/* Tugas & KPI pribadi sengaja tidak ada di sini. Akun HR murni memang
+          konsol saja, dan pemakai hrAccess membukanya dari tab peran aslinya
+          yang tidak lagi tergantikan saat masuk konsol. */}
 
       {activeTab === 'attendance' && <HRAttendanceView currentUser={currentUser} openModal={openModal} />}
       {activeTab === 'targets' && <DivisionTargetsView openModal={openModal} />}
@@ -844,7 +745,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
             width: '100%', padding: '16px', borderRadius: HP_TOKENS.radiusMd, border: 'none',
             background: `${HP_TOKENS.lavender}`,
             color: HP_TOKENS.onPrimary, fontFamily: HP_FONT, fontWeight: 700, fontSize: 15, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
           }}>
             <HPGlyph name="book" size={18} color={HP_TOKENS.onPrimary} />
             Kelola Survey
@@ -959,7 +860,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
                         updateState({ contacts: (state?.contacts || []).filter((c: any) => c.id !== contact.id) });
                       }
                     }} style={{ background: HP_TOKENS.coralSoft, border: 'none', padding: 8, borderRadius: 8, cursor: 'pointer' }}>
-                      <HPGlyph name="trash" size={14} color={HP_TOKENS.coral} />
+                      <HPGlyph name="trash" size={14} color={HP_TOKENS.coralInk} />
                     </button>
                   </div>
                 </div>

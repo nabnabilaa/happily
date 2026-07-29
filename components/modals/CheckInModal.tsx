@@ -14,7 +14,7 @@ import HPGlyph from "@/components/ui/HPGlyph";
 import Modal from "@/components/ui/Modal";
 import BeeMascot from "@/components/ui/BeeMascot";
 
-import { queueOfflineCheckIn, queueOfflineXP } from "@/lib/offlineSync";
+import { useMoodCheckIn } from "@/hooks/useMoodCheckIn";
 
 interface CheckInModalProps {
   onClose: () => void;
@@ -31,66 +31,20 @@ const ghostBtn: React.CSSProperties = {
 };
 
 export default function CheckInModal({ onClose }: CheckInModalProps) {
-  const { state, updateState, awardXP, user, notify } = useHP();
+  const { state } = useHP();
+  const { saveMood, isSubmitting } = useMoodCheckIn();
   const [mood, setMood] = useState(state?.mood || null);
   const [energy, setEnergy] = useState(state?.energy || null);
   const [tag, setTag] = useState(state?.tag || null);
   const [step, setStep] = useState(1);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const save = async () => {
-    if (isSubmitting) return;
-    setIsSubmitting(true);
-
-    // 1. Update client context state immediately so UI changes without delay
-    updateState({ mood, energy, tag, lastMoodCheckIn: new Date().toISOString() });
-
-    if (typeof window !== "undefined" && !navigator.onLine) {
-      // Offline mode: Queue check-in and XP locally
-      if (user?.id) {
-        await queueOfflineCheckIn(user.id, mood!, energy, tag);
-        await queueOfflineXP(user.id, 'mood_checkin', 'Daily mood check-in');
-        notify("Offline Check-In", "Tersimpan lokal. Akan disinkronkan otomatis saat online.", "warning");
-      }
-      setIsSubmitting(false);
-      onClose();
-      return;
-    }
-
-    // Online mode: Persist mood to database
-    try {
-      const response = await fetch('/api/mood/checkin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user?.id, mood, energy, tag })
-      });
-      
-      if (!response.ok) {
-        // API returned error — fallback to offline queue instead of crashing
-        console.warn("API checkin returned non-OK status:", response.status);
-        if (user?.id) {
-          await queueOfflineCheckIn(user.id, mood!, energy, tag);
-          await queueOfflineXP(user.id, 'mood_checkin', 'Daily mood check-in');
-        }
-        notify("Check-In Tersimpan", "Tersimpan lokal karena kendala server. Akan disinkronkan otomatis.", "warning");
-      } else {
-        await awardXP('mood_checkin', 'Daily mood check-in');
-        notify("Check-In Selesai ✨", "Terima kasih! Jangan lupa untuk Clock In ya agar kehadiranmu tercatat.", "success");
-        setTimeout(() => {
-          window.dispatchEvent(new CustomEvent('hp_show_morning_plan'));
-        }, 300); // give it a moment to close the modal before continuing
-      }
-    } catch (e) {
-      console.error('Failed to save mood, queuing offline:', e);
-      if (user?.id) {
-        await queueOfflineCheckIn(user.id, mood!, energy, tag);
-        await queueOfflineXP(user.id, 'mood_checkin', 'Daily mood check-in');
-        notify("Check-In Tersimpan", "Tersimpan lokal karena kendala koneksi server.", "warning");
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-
+    // Step 1 can't be left without picking a mood, so this is defensive only —
+    // but saveMood needs a definite mood, not `string | null`.
+    if (!mood) return;
+    // Persistence lives in useMoodCheckIn so the inline chips on the Wellbeing
+    // card and this modal cannot drift apart.
+    await saveMood({ mood, energy, tag });
     onClose();
   };
 
@@ -102,7 +56,7 @@ export default function CheckInModal({ onClose }: CheckInModalProps) {
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
           <BeeMascot mood="happy" size={80} />
         </div>
-        <div style={{ ...HP_TEXT.small, color: HP_TOKENS.sage, fontWeight: 700 }}>
+        <div style={{ ...HP_TEXT.small, color: HP_TOKENS.sageInk, fontWeight: 700 }}>
           LANGKAH {step} DARI 3
         </div>
         <div style={{ ...HP_TEXT.display, fontSize: 26, marginTop: 8 }}>

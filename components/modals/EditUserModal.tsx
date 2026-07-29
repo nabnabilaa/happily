@@ -87,7 +87,7 @@ export default function EditUserModal({ onClose, user, managers, onSave, onDelet
             <option value="hr">HR Admin</option>
           </select>
           {form.role !== (user.role || 'employee') && (
-            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.yellow, fontWeight: 700, marginTop: 6 }}>
+            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.yellowInk, fontWeight: 700, marginTop: 6 }}>
               ⚠️ Akses berubah: {ROLE_LABELS[user.role] || user.role} → {ROLE_LABELS[form.role] || form.role}. Berlaku saat user login/refresh berikutnya.
             </div>
           )}
@@ -147,10 +147,10 @@ export default function EditUserModal({ onClose, user, managers, onSave, onDelet
             className="hp-tap"
             style={{
               padding: '16px', borderRadius: HP_TOKENS.radiusMd, background: HP_TOKENS.coralSoft,
-              color: HP_TOKENS.coral, border: 'none', fontFamily: HP_FONT, fontWeight: 700, cursor: 'pointer'
+              color: HP_TOKENS.coralInk, border: 'none', fontFamily: HP_FONT, fontWeight: 700, cursor: 'pointer'
             }}
           >
-            <HPGlyph name="trash" size={20} color={HP_TOKENS.coral} />
+            <HPGlyph name="trash" size={20} color={HP_TOKENS.coralInk} />
           </button>
           
           <button 

@@ -7,6 +7,7 @@ import HPCard from "@/components/ui/HPCard";
 import HPAvatar from "@/components/ui/HPAvatar";
 import { downloadDivisionExcel, downloadDivisionZip, downloadPersonExcel } from "@/lib/reportExcel";
 import { Donut, DonutTile, TargetBars, KpiBreakdownBars, Meter, HealthBar, toneFor } from "@/components/reports/charts";
+import HPGlyph from "@/components/ui/HPGlyph";
 
 interface Props {
   openModal: (name: string, props?: any) => void;
@@ -205,7 +206,7 @@ export default function ReportDashboard({ openModal, lockedDept, compact, teamOn
         <div style={{ textAlign: 'center', padding: 40, color: HP_TOKENS.inkMute, fontFamily: HP_FONT }}>Memuat dashboard...</div>
       ) : !team || !people.length ? (
         <HPCard padding={40} style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 32 }}>📭</div>
+          <div style={{ fontSize: 32 }}><HPGlyph name="mail" size={27} color="currentColor" /></div>
           <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, marginTop: 8 }}>Tidak ada data untuk pilihan ini.</div>
         </HPCard>
       ) : (
@@ -215,8 +216,8 @@ export default function ReportDashboard({ openModal, lockedDept, compact, teamOn
             <div style={{ ...HP_TEXT.h, fontSize: 16, marginBottom: 16 }}>Ringkasan Tim</div>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <DonutTile value={team.avgCompletion} label="Penyelesaian Task" color={HP_TOKENS.blue} />
-              <DonutTile value={team.avgKpiScore} label="Skor KPI" color={HP_TOKENS.sage} />
-              <DonutTile value={team.avgQuality} label="Kualitas" color={HP_TOKENS.primary} />
+              <DonutTile value={team.avgKpiScore} label="Skor KPI" color={HP_TOKENS.sageInk} />
+              <DonutTile value={team.avgQuality} label="Kualitas" color={HP_TOKENS.primaryInk} />
             </div>
             <div style={{ display: 'flex', gap: 12, marginTop: 12, flexWrap: 'wrap' }}>
               <Stat big={`${team.headcount}`} label="Karyawan" />
@@ -270,7 +271,7 @@ export default function ReportDashboard({ openModal, lockedDept, compact, teamOn
                       <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>CAPAIAN KPI · rata-rata {kpiDetail.avgAchievement}%</div>
                       <div style={{ ...HP_TEXT.h, fontSize: 16 }}>{kpiDetail.title}</div>
                     </div>
-                    <button onClick={() => setKpiDetail(null)} className="hp-tap" style={{ border: 'none', background: HP_TOKENS.lineSoft, borderRadius: 8, width: 28, height: 28, cursor: 'pointer', fontFamily: HP_FONT, fontWeight: 700, color: HP_TOKENS.inkMute }}>✕</button>
+                    <button onClick={() => setKpiDetail(null)} className="hp-tap" style={{ border: 'none', background: HP_TOKENS.lineSoft, borderRadius: 8, width: 28, height: 28, cursor: 'pointer', fontFamily: HP_FONT, fontWeight: 700, color: HP_TOKENS.inkMute }}><HPGlyph name="close" size={14} color="currentColor" /></button>
                   </div>
                   <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, margin: '10px 0 8px' }}>KONTRIBUTOR ({contributors.length})</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -333,7 +334,7 @@ export default function ReportDashboard({ openModal, lockedDept, compact, teamOn
                 border: `1.5px solid ${HP_TOKENS.line}`,
                 minWidth: 240,
               }}>
-                <span style={{ fontSize: 14 }}>🔍</span>
+                <span style={{ fontSize: 14 }}><HPGlyph name="search" size={12} color="currentColor" /></span>
                 <input
                   type="text"
                   value={peopleSearch}
@@ -362,9 +363,7 @@ export default function ReportDashboard({ openModal, lockedDept, compact, teamOn
                       padding: 2
                     }}
                     title="Hapus pencarian"
-                  >
-                    ✕
-                  </button>
+                  ><HPGlyph name="close" size={12} color="currentColor" /></button>
                 )}
               </div>
             </div>
@@ -410,7 +409,7 @@ export default function ReportDashboard({ openModal, lockedDept, compact, teamOn
                         <span role="button" tabIndex={0}
                           onClick={(e) => { e.stopPropagation(); downloadOnePerson(p); }}
                           onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); downloadOnePerson(p); } }}
-                          style={{ ...HP_TEXT.tiny, fontSize: 10, color: HP_TOKENS.sage, fontWeight: 700, padding: '3px 8px', borderRadius: 8, background: HP_TOKENS.sageWash, cursor: 'pointer' }}>
+                          style={{ ...HP_TEXT.tiny, fontSize: 10, color: HP_TOKENS.sageInk, fontWeight: 700, padding: '3px 8px', borderRadius: 8, background: HP_TOKENS.sageWash, cursor: 'pointer' }}>
                           ⬇ Excel
                         </span>
                       </div>
@@ -531,7 +530,7 @@ function NarrativeView({ md }: { md: string }) {
   };
   lines.forEach((ln, i) => {
     const t = ln.trim();
-    if (t.startsWith('## ')) { flush(i); out.push(<div key={i} style={{ ...HP_TEXT.h, fontSize: 13, color: HP_TOKENS.sage, marginTop: 12, marginBottom: 4 }}>{t.slice(3)}</div>); }
+    if (t.startsWith('## ')) { flush(i); out.push(<div key={i} style={{ ...HP_TEXT.h, fontSize: 13, color: HP_TOKENS.sageInk, marginTop: 12, marginBottom: 4 }}>{t.slice(3)}</div>); }
     else if (t.startsWith('- ')) bullets.push(t.slice(2));
     else if (t) { flush(i); out.push(<div key={i} style={{ ...HP_TEXT.small, color: HP_TOKENS.ink, fontWeight: 600, lineHeight: 1.6, margin: '4px 0' }} dangerouslySetInnerHTML={{ __html: inlineMd(t) }} />); }
   });

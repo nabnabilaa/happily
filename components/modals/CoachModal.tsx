@@ -10,10 +10,20 @@ import {
 } from "@/lib/constants";
 import HPGlyph from "@/components/ui/HPGlyph";
 import Modal from "@/components/ui/Modal";
+import { Stack, Row } from "@/components/ui";
 import { calculateWellbeingScore } from "@/lib/wellbeingEngine";
 
 interface CoachModalProps {
   onClose: () => void;
+}
+
+/** Bentuk memori seperti yang dikirim /api/buddy/memory. */
+interface MemoryItem {
+  id: string;
+  kind: string;
+  content: string;
+  label: string;
+  timesSeen: number;
 }
 
 // ── Off-topic keyword detection (client-side guardrail) ──
@@ -44,7 +54,69 @@ export default function CoachModal({ onClose }: CoachModalProps) {
   const [loggedToday, setLoggedToday] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // ── Memori: apa yang Buddy sudah tahu tentang orang ini dari sesi sebelumnya ──
+  const [memories, setMemories] = useState<MemoryItem[]>([]);
+  const [memoryBlock, setMemoryBlock] = useState('');
+  const [memoryReady, setMemoryReady] = useState(false);
+  const [showMemory, setShowMemory] = useState(false);
+  const greetedRef = useRef(false);
+  const messagesRef = useRef(messages);
+
+  useEffect(() => { messagesRef.current = messages; }, [messages]);
+
   useEffect(() => {
+    if (!user?.id) { setMemoryReady(true); return; }
+    let cancelled = false;
+    fetch(`/api/buddy/memory?userId=${encodeURIComponent(user.id)}`)
+      .then(r => r.json())
+      .then(d => {
+        if (cancelled) return;
+        setMemories(d.memories || []);
+        setMemoryBlock(d.promptBlock || '');
+      })
+      .catch(() => { /* memori opsional — Buddy tetap jalan tanpa itu */ })
+      .finally(() => { if (!cancelled) setMemoryReady(true); });
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  // Saat modal ditutup (lewat jalur manapun), panen apa yang layak diingat dari sesi ini.
+  // Sengaja di cleanup unmount + keepalive supaya tetap terkirim walau komponen sudah hilang.
+  useEffect(() => {
+    return () => {
+      const msgs = messagesRef.current;
+      if (!user?.id || !msgs.some(m => m.from === 'user')) return;
+      const transcript = msgs
+        .map(m => `${m.from === 'user' ? 'User' : 'Buddy'}: ${m.text}`)
+        .join('\n');
+      fetch('/api/buddy/memory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, source: 'coach', transcript }),
+        keepalive: true,
+      }).catch(() => { /* diam-diam saja — ini tidak boleh mengganggu user */ });
+    };
+  }, [user?.id]);
+
+  const forget = useCallback(async (id: string) => {
+    if (!user?.id) return;
+    setMemories(prev => prev.filter(m => m.id !== id));
+    try {
+      await fetch(`/api/buddy/memory?userId=${encodeURIComponent(user.id)}&id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+      // Ambil ulang blok prompt-nya. Kalau tidak, memori yang baru dicabut masih
+      // ikut terkirim ke Buddy di pesan berikutnya — penghapusan terasa tidak berefek.
+      const d = await fetch(`/api/buddy/memory?userId=${encodeURIComponent(user.id)}`).then(r => r.json());
+      setMemoryBlock(d.promptBlock || '');
+    } catch { /* optimistic — daftar di layar sudah diperbarui */ }
+  }, [user?.id]);
+
+  useEffect(() => {
+    // Tunggu memori selesai dimuat supaya sapaan bisa menyambung komitmen terakhir.
+    // Hanya menyapa sekali per sesi — kalau tidak, percakapan yang sudah berjalan ikut ter-reset.
+    if (!memoryReady || greetedRef.current) return;
+    greetedRef.current = true;
+
     const userName = user?.name || "Rekan Kerja";
     const moodKey = state?.mood;
     const energyKey = state?.energy;
@@ -83,8 +155,15 @@ export default function CoachModal({ onClose }: CoachModalProps) {
       greeting += `\n\n⚠️ Wellbeing Score kamu ${score}/100. Aku khawatir sama kesehatanmu. Yuk kita bicarain apa yang bisa diringankan.`;
     }
 
+    // Tindak lanjut komitmen terakhir — nol token, dan justru ini bagian yang
+    // paling terasa "dia ingat". Cukup satu, jangan sampai jadi interogasi.
+    const openCommitment = memories.find(m => m.kind === 'commitment');
+    if (openCommitment) {
+      greeting += `\n\nOh iya, aku masih ingat — ${openCommitment.content.charAt(0).toLowerCase()}${openCommitment.content.slice(1)}. Gimana perkembangannya? 🌱`;
+    }
+
     setMessages([{ from: 'ai', text: greeting }]);
-  }, [user, state?.mood, state?.energy]);
+  }, [memoryReady, memories, user, state?.mood, state?.energy]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -133,7 +212,7 @@ export default function CoachModal({ onClose }: CoachModalProps) {
       const totalCount = priorities.length;
 
       // Mood history summary (last 5 entries)
-      const moodHistory = (state?.moods || []).slice(-5)
+      const moodHistory = (state?.moodHistory || []).slice(-5)
         .map((m: any) => `${m.date || '?'}: ${m.mood}`)
         .join(', ');
 
@@ -217,6 +296,17 @@ ${recentLogs || 'Belum ada aktivitas tercatat.'}
 ### CATATAN COACHING SEBELUMNYA:
 ${coachingLogs || 'Belum ada sesi coaching.'}
 
+### YANG KAMU INGAT TENTANG DIA (dari sesi-sesi sebelumnya):
+${memoryBlock || 'Belum ada apa-apa. Ini masih awal kalian saling mengenal — dengarkan dulu, jangan berasumsi.'}
+
+CARA MEMAKAI MEMORI DI ATAS:
+- Pakai untuk menyambung, bukan untuk pamer. JANGAN pernah membacakan daftarnya.
+- Kalau ada "Niat yang dia ucapkan" yang belum jelas hasilnya, tanyakan SEKALI dengan wajar. Kalau dia tidak mau membahas, lepaskan.
+- Kalau ada "Yang terbukti berhasil", tawarkan itu lebih dulu sebelum menyarankan hal baru.
+- Hormati "Cara dia suka bekerja". Kalau dia tidak suka disemangati berlebihan, jangan lakukan.
+- Kalau memori bertentangan dengan yang dia katakan SEKARANG, percayai yang sekarang. Orang berubah.
+- Jangan mengarang memori. Kalau tidak tertulis di atas, kamu tidak tahu.
+
 Respons kamu harus SINGKAT (max 3-4 paragraf pendek). Jangan bertele-tele. Langsung ke inti.`;
 
       // Map history for API format
@@ -243,7 +333,7 @@ Respons kamu harus SINGKAT (max 3-4 paragraf pendek). Jangan bertele-tele. Langs
       setTyping(false);
       setMessages(m => [...m, { from: 'ai', text: "Koneksiku terputus sejenak. Kabari aku lagi ya! 🌿" }]);
     }
-  }, [input, typing, messages, state, user]);
+  }, [input, typing, messages, state, user, memoryBlock]);
 
   // Dynamic suggestions based on state
   const dynamicSuggestions = React.useMemo(() => {
@@ -262,7 +352,7 @@ Respons kamu harus SINGKAT (max 3-4 paragraf pendek). Jangan bertele-tele. Langs
 
   return (
     <Modal onClose={onClose} noPadding={true}>
-      <div style={{ height: '80vh', display: 'flex', flexDirection: 'column', background: HP_TOKENS.paper, overflow: 'hidden' }}>
+      <div style={{ height: '80vh', display: 'flex', flexDirection: 'column', background: HP_TOKENS.paper, overflow: 'hidden', position: 'relative' }}>
         {/* Header */}
         <div style={{ 
           padding: '16px 24px', 
@@ -286,19 +376,100 @@ Respons kamu harus SINGKAT (max 3-4 paragraf pendek). Jangan bertele-tele. Langs
             </div>
             <div>
               <div style={{ ...HP_TEXT.h, fontSize: 18, color: HP_TOKENS.ink }}>Buddy, Coach AI-mu</div>
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sage, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.sageInk, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: HP_TOKENS.sage, animation: 'hpPulse 2s infinite' }} />
-                Online & Memahami Konteksmu
+                {memories.length > 0 ? `Ingat ${memories.length} hal tentangmu` : 'Online & Memahami Konteksmu'}
               </div>
             </div>
           </div>
-          <button onClick={onClose} style={{
-            width: 36, height: 36, borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.04)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'
-          }}>
-            <HPGlyph name="close" size={16} color={HP_TOKENS.inkMute}/>
-          </button>
+          <Row gap={2}>
+            {memories.length > 0 && (
+              <button
+                onClick={() => setShowMemory(v => !v)}
+                title="Lihat yang Buddy ingat tentangmu"
+                className="hp-tap"
+                style={{
+                  height: 36, padding: '0 14px', borderRadius: 99, cursor: 'pointer',
+                  border: `1.5px solid ${HP_TOKENS.primary}30`,
+                  background: showMemory ? HP_TOKENS.primaryWash : 'transparent',
+                  ...HP_TEXT.tiny, color: HP_TOKENS.primaryInk,
+                  display: 'flex', alignItems: 'center', gap: 6,
+                }}
+              >
+                <HPGlyph name="sparkle" size={13} color={HP_TOKENS.primaryInk} />
+                Memori
+              </button>
+            )}
+            <button onClick={onClose} style={{
+              width: 36, height: 36, borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.04)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'
+            }}>
+              <HPGlyph name="close" size={16} color={HP_TOKENS.inkMute}/>
+            </button>
+          </Row>
         </div>
+
+        {/* Panel memori — user berhak tahu persis apa yang disimpan tentang dirinya,
+            dan berhak mencabutnya. Ini yang membuat orang mau jujur ke Buddy. */}
+        {showMemory && (
+          <div style={{
+            position: 'absolute', inset: '80px 0 0', zIndex: 20,
+            background: HP_TOKENS.paper, overflowY: 'auto', padding: 24,
+          }}>
+            <Stack gap={4}>
+              <Stack gap={2}>
+                <div style={{ ...HP_TEXT.sub, color: HP_TOKENS.ink }}>Yang aku ingat tentangmu</div>
+                <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, lineHeight: 1.5 }}>
+                  Ini catatanku supaya kita nggak mulai dari nol tiap hari.
+                  Hanya kamu yang bisa melihatnya — tidak pernah dibagikan ke manager atau HR.
+                  Kalau ada yang keliru atau nggak nyaman, hapus saja.
+                </div>
+              </Stack>
+
+              <Stack gap={2}>
+                {memories.map(m => (
+                  <div key={m.id} style={{
+                    padding: 14, borderRadius: HP_TOKENS.radiusMd,
+                    background: HP_TOKENS.card, border: `1px solid ${HP_TOKENS.lineSoft}`,
+                  }}>
+                    <Row justify="space-between" align="flex-start" gap={3}>
+                      <Stack gap={1} style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, textTransform: 'uppercase' }}>
+                          {m.label}
+                        </div>
+                        <div style={{ ...HP_TEXT.body, color: HP_TOKENS.ink, lineHeight: 1.5 }}>
+                          {m.content}
+                        </div>
+                      </Stack>
+                      <button
+                        onClick={() => forget(m.id)}
+                        className="hp-tap"
+                        style={{
+                          border: 'none', background: 'transparent', cursor: 'pointer',
+                          ...HP_TEXT.tiny, color: HP_TOKENS.dangerInk, padding: '4px 6px', flexShrink: 0,
+                        }}
+                      >
+                        Lupakan
+                      </button>
+                    </Row>
+                  </div>
+                ))}
+              </Stack>
+
+              <button
+                onClick={() => setShowMemory(false)}
+                className="hp-tap"
+                style={{
+                  width: '100%', padding: 16, borderRadius: HP_TOKENS.radiusMd, cursor: 'pointer',
+                  border: `1.5px solid ${HP_TOKENS.line}`, background: 'transparent',
+                  ...HP_TEXT.label, color: HP_TOKENS.inkSoft,
+                }}
+              >
+                Kembali ke obrolan
+              </button>
+            </Stack>
+          </div>
+        )}
 
         {/* Chat Area */}
         <div 
@@ -342,7 +513,7 @@ Respons kamu harus SINGKAT (max 3-4 paragraf pendek). Jangan bertele-tele. Langs
                     padding: '10px 16px', borderRadius: 99,
                     background: '#FFFFFF', 
                     border: `1.5px solid ${HP_TOKENS.sage}30`, 
-                    color: HP_TOKENS.sage,
+                    color: HP_TOKENS.sageInk,
                     fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, 
                     cursor: typing ? 'default' : 'pointer',
                     opacity: typing ? 0.5 : 1,

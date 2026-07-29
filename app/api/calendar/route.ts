@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { v4 as uuidv4 } from "uuid";
 import { hpEventEmitter } from "@/lib/events";
+import { pushEventToGoogle, deleteGoogleEvent, queueGoogleEventDeletion } from "@/lib/googleCalendar";
 
 // GET: Fetch calendar events for a user
 export async function GET(request: Request) {
@@ -95,6 +96,10 @@ export async function POST(request: Request) {
       }
     }
 
+    // Kalau kalender Google user sudah tersambung, event langsung menyeberang —
+    // tidak menunggu cron dan tidak menunggu mereka menekan apa pun.
+    await pushEventToGoogle(String(userId), eventId);
+
     hpEventEmitter.emit("db_update", { type: "refresh", targetUserId: userId, timestamp: Date.now() });
     return NextResponse.json({ success: true, eventId });
   } catch (error: any) {
@@ -116,11 +121,32 @@ export async function DELETE(request: Request) {
 
     // Only creator can delete
     const check = await db.execute({
-      sql: "SELECT id FROM calendar_events WHERE id = ? AND creator_id = ?",
+      sql: "SELECT id, google_event_id FROM calendar_events WHERE id = ? AND creator_id = ?",
       args: [eventId, userId]
     });
     if (check.rows.length === 0) {
       return NextResponse.json({ error: "Not authorized" }, { status: 403 });
+    }
+
+    // Semua ini harus terjadi sebelum baris lokalnya hilang — setelah itu kita
+    // tidak lagi tahu id Google-nya, dan salinannya tertinggal selamanya di
+    // kalender orang.
+    const googleEventId = check.rows[0].google_event_id;
+    if (googleEventId) {
+      await deleteGoogleEvent(String(userId), String(googleEventId));
+    }
+
+    // Salinan di kalender tiap peserta dititipkan ke antrean, bukan dihapus di
+    // sini: menghapusnya satu per satu berarti membatalkan undangan ke seluruh
+    // perusahaan menahan request ini selama menit-menitan, dan tiap peserta
+    // hanya boleh disentuh dengan tokennya sendiri.
+    const attendeeRefs = await db.execute({
+      sql: `SELECT user_id, google_event_id FROM calendar_attendees
+            WHERE event_id = ? AND google_event_id IS NOT NULL`,
+      args: [eventId]
+    });
+    for (const ref of attendeeRefs.rows) {
+      await queueGoogleEventDeletion(String(ref.user_id), String(ref.google_event_id));
     }
 
     await db.execute({ sql: "DELETE FROM calendar_attendees WHERE event_id = ?", args: [eventId] });

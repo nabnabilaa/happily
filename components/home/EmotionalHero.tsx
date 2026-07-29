@@ -108,7 +108,7 @@ export default function EmotionalHero({
                 alignItems: "center",
                 gap: 5,
                 marginTop: 7,
-                color: HP_TOKENS.primary,
+                color: HP_TOKENS.primaryInk,
                 fontSize: 13,
                 fontWeight: 600,
               }}

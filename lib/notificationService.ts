@@ -192,14 +192,52 @@ export function compileTemplate(template: string, vars: Record<string, string>):
 }
 
 /**
+ * Jendela default (menit) untuk menahan notifikasi yang isinya persis sama.
+ * Klien bisa remount / reload berkali-kali dalam rentang ini; tanpa guard di
+ * server setiap percobaan jadi satu baris baru + satu email baru.
+ */
+export const DEFAULT_DEDUPE_WINDOW_MINUTES = 60;
+
+/**
+ * True kalau notifikasi dengan title + message yang identik sudah ada untuk
+ * user ini di dalam jendela waktu tersebut.
+ *
+ * `created_at` di tabel ini ditulis dua gaya (ada yang UTC eksplisit dari route
+ * PUT, ada yang CURRENT_TIMESTAMP zona server), jadi jendelanya dihitung dari
+ * jam yang paling awal supaya kedua gaya tetap tertangkap.
+ */
+export async function isDuplicateNotification(
+  userId: string,
+  title: string,
+  message: string | null,
+  windowMinutes: number = DEFAULT_DEDUPE_WINDOW_MINUTES
+): Promise<boolean> {
+  if (!windowMinutes || windowMinutes <= 0) return false;
+  try {
+    const res = await db.execute({
+      sql: `SELECT id FROM notifications
+            WHERE user_id = ? AND title = ? AND (message <=> ?)
+              AND created_at >= LEAST(NOW(), UTC_TIMESTAMP()) - INTERVAL ? MINUTE
+            LIMIT 1`,
+      args: [userId, title, message ?? null, windowMinutes]
+    });
+    return res.rows.length > 0;
+  } catch (e) {
+    console.warn("[NotificationService] Dedupe check failed, allowing insert:", e);
+    return false;
+  }
+}
+
+/**
  * 2. Notification Dispatch Service
  * Fetches template from database (or fallbacks) and inserts a rendered notification
  */
 export async function dispatchNotification(
   userId: string,
   triggerKey: string,
-  variables: Record<string, string> = {}
-): Promise<{ success: boolean; id?: string; error?: string }> {
+  variables: Record<string, string> = {},
+  options: { dedupeWindowMinutes?: number } = {}
+): Promise<{ success: boolean; id?: string; deduped?: boolean; error?: string }> {
   try {
     // A. Attempt to retrieve user details to autofill {name} if not provided
     if (!variables.name) {
@@ -252,14 +290,20 @@ export async function dispatchNotification(
     const title = compileTemplate(template.titleTemplate, variables);
     const message = compileTemplate(template.messageTemplate, variables);
 
-    // E. Save Compiled Notification to database
+    // E. Bail out kalau notifikasi identik baru saja dikirim (anti-spam)
+    if (await isDuplicateNotification(userId, title, message, options.dedupeWindowMinutes)) {
+      console.log(`[NotificationService] Skipped duplicate '${triggerKey}' for user ${userId}.`);
+      return { success: true, deduped: true };
+    }
+
+    // F. Save Compiled Notification to database
     const notifId = "n_" + template.category + "_" + Date.now().toString(36) + "_" + Math.random().toString(36).substring(2, 5);
     await db.execute({
       sql: "INSERT INTO notifications (id, user_id, title, message, type, is_read) VALUES (?, ?, ?, ?, ?, 0)",
       args: [notifId, userId, title, message, template.type]
     });
 
-    // F. Attempt Push Notification if subscription exists
+    // G. Attempt Push Notification if subscription exists
     try {
       const { sendPushNotification } = await import("@/lib/pushService");
       await sendPushNotification(userId, title, message);

@@ -58,7 +58,7 @@ export default function InstallButton() {
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
           padding: '6px 12px', borderRadius: 100,
           background: 'rgba(245, 107, 42, 0.1)',
-          color: HP_TOKENS.warning, border: '1.5px solid rgba(245, 107, 42, 0.3)', cursor: 'pointer',
+          color: HP_TOKENS.warningInk, border: '1.5px solid rgba(245, 107, 42, 0.3)', cursor: 'pointer',
           fontFamily: HP_FONT, fontWeight: 700, fontSize: 12,
         }}
       >

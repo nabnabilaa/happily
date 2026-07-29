@@ -15,8 +15,9 @@ interface NotificationsModalProps {
   openModal?: (name: string, props?: any) => void;
 }
 
+/** HPGlyph names, not emoji — see DESIGN_SYSTEM.md. */
 const TYPE_ICONS: Record<string, string> = {
-  info: '📢', success: '🎉', action: '🎯', warning: '⚠️', reminder: '🌤️'
+  info: 'bullhorn', success: 'sparkle', action: 'target', warning: 'alertCircle', reminder: 'clock'
 };
 const TYPE_COLOR: Record<string, { bg: string; border: string }> = {
   info: { bg: HP_TOKENS.blueSoft, border: `${HP_TOKENS.blue}30` },
@@ -161,11 +162,9 @@ export default function NotificationsModal({ onClose, openModal }: Notifications
       onClose();
       setTimeout(() => {
         if (n.referenceType === 'room') {
-          openModal('focus', { 
-            initialMultiplayer: true, 
-            initialRoomCode: n.referenceId,
-            isGuest: true
-          });
+          // Undangan membawa id ruangan. Kode gabung tidak lagi ikut dikirim
+          // lewat notifikasi — server yang memutuskan boleh-tidaknya masuk.
+          openModal('focus', { roomId: n.referenceId });
         } else {
           openModal(link.modal, { referenceId: n.referenceId });
         }
@@ -214,7 +213,7 @@ export default function NotificationsModal({ onClose, openModal }: Notifications
           {notifs.some(n => !n.isRead) && (
             <button onClick={markAllRead} className="hp-tap" style={{
               background: 'none', border: 'none', cursor: 'pointer',
-              color: HP_TOKENS.sage, fontFamily: HP_FONT, fontWeight: 700, fontSize: 12,
+              color: HP_TOKENS.sageInk, fontFamily: HP_FONT, fontWeight: 700, fontSize: 12,
               padding: 0,
             }}>
               Tandai semua dibaca ✓
@@ -223,7 +222,7 @@ export default function NotificationsModal({ onClose, openModal }: Notifications
           {notifs.length > 0 && (
             <button onClick={deleteAllNotifications} className="hp-tap" style={{
               background: 'none', border: 'none', cursor: 'pointer',
-              color: HP_TOKENS.coral, fontFamily: HP_FONT, fontWeight: 700, fontSize: 12,
+              color: HP_TOKENS.coralInk, fontFamily: HP_FONT, fontWeight: 700, fontSize: 12,
               padding: 0,
             }}>
               Hapus Semua
@@ -241,7 +240,7 @@ export default function NotificationsModal({ onClose, openModal }: Notifications
           </div>
         ) : notifs.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '50px 20px', color: HP_TOKENS.inkMute }}>
-            <div style={{ fontSize: 44, marginBottom: 12 }}>🔔</div>
+            <div style={{ fontSize: 44, marginBottom: 12 }}><HPGlyph name="bell" size={28} color="currentColor" /></div>
             <div style={{ ...HP_TEXT.h, fontSize: 15 }}>
               {activeTab === 'unread' ? 'Tidak ada notifikasi baru' : 'Histori notifikasi kosong'}
             </div>
@@ -268,7 +267,7 @@ export default function NotificationsModal({ onClose, openModal }: Notifications
                 }}
               >
                 <div style={{ display: 'flex', gap: 12 }}>
-                  <div style={{ fontSize: 22, flexShrink: 0 }}>{TYPE_ICONS[n.type] || '📢'}</div>
+                  <div style={{ display: 'flex', flexShrink: 0 }}><HPGlyph name={TYPE_ICONS[n.type] || 'bullhorn'} size={20} color="currentColor" /></div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <div style={{ ...HP_TEXT.h, fontSize: 14, lineHeight: 1.3, fontWeight: n.isRead ? 700 : 800 }}>{n.title}</div>
@@ -296,7 +295,7 @@ export default function NotificationsModal({ onClose, openModal }: Notifications
                           background: 'none', border: 'none', cursor: 'pointer', padding: 4,
                         }}
                       >
-                        <HPGlyph name="check" size={14} color={HP_TOKENS.sage} stroke={3} />
+                        <HPGlyph name="check" size={14} color={HP_TOKENS.sageInk} stroke={3} />
                       </button>
                     )}
                     <button 
@@ -306,7 +305,7 @@ export default function NotificationsModal({ onClose, openModal }: Notifications
                         background: 'none', border: 'none', cursor: 'pointer', padding: 4,
                       }}
                     >
-                      <HPGlyph name="trash" size={14} color={HP_TOKENS.coral} />
+                      <HPGlyph name="trash" size={14} color={HP_TOKENS.coralInk} />
                     </button>
                   </div>
                 </div>

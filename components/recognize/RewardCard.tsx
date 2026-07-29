@@ -233,7 +233,7 @@ export default function RewardCard({
 
       <Row gap={3} style={{ padding: "12px 16px" }}>
         <Row gap={1} align="baseline">
-          <HPGlyph name="star" size={14} color={HP_TOKENS.yellowDark} />
+          <HPGlyph name="star" size={14} color={HP_TOKENS.yellowInk} />
           <span style={{ ...HP_TEXT.bodyStrong, fontVariantNumeric: "tabular-nums" }}>
             {points.toLocaleString("id-ID")}
           </span>

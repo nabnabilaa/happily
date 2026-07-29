@@ -93,6 +93,13 @@ export default function UserProfileCard({ user, levelProgress, openModal }: User
             size="sm"
             iconOnly
             icon="book"
+            aria-label="Riwayat & Logbook"
+            onClick={() => openModal("logbook")}
+          />
+          <HPButton
+            size="sm"
+            iconOnly
+            icon="sparkle"
             aria-label="Panduan sistem"
             onClick={() => openModal("system_guide")}
           />

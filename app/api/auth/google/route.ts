@@ -1,22 +1,45 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { seedDemoData } from "@/lib/demo-data";
+import { createSessionToken, sessionCookieOptions } from "@/lib/authSession";
+import {
+  exchangeCodeForTokens,
+  decodeIdToken,
+  saveIntegration,
+  googleOAuthConfigured,
+} from "@/lib/googleCalendar";
 
 export async function POST(request: Request) {
   try {
-    const { credential } = await request.json();
+    const { credential, code } = await request.json();
 
-    if (!credential) {
+    if (!credential && !code) {
       return NextResponse.json({ error: "No Google credential provided" }, { status: 400 });
     }
 
-    // Decode JWT payload (base64url)
-    const base64Url = credential.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-    const payload = JSON.parse(jsonPayload);
+    // Dua jalur masuk, satu tujuan.
+    //
+    // `code` datang dari tombol login utama (authorization code flow): satu
+    // layar persetujuan memberi identitas SEKALIGUS izin Google Calendar, jadi
+    // kalender tersambung tanpa user pernah menekan tombol "Hubungkan".
+    //
+    // `credential` adalah jalur One Tap, yang secara desain hanya bisa
+    // memberikan ID token. Ia tetap didukung supaya login cepat tidak hilang —
+    // izin kalender untuk user ini diminta belakangan saat mereka membuka tab
+    // Kalender.
+    let payload: any;
+    let googleTokens: any = null;
+
+    if (code) {
+      googleTokens = await exchangeCodeForTokens(code);
+      payload = googleTokens.id_token ? decodeIdToken(googleTokens.id_token) : null;
+    } else {
+      payload = decodeIdToken(credential);
+    }
+
+    if (!payload) {
+      return NextResponse.json({ error: "Invalid Google token" }, { status: 400 });
+    }
 
     const email = payload.email;
     const name = payload.name;
@@ -110,7 +133,19 @@ export async function POST(request: Request) {
       }
     }
 
-    // 3. Return user untuk login session Flowbee
+    // 3. Simpan izin Google Calendar kalau login lewat authorization code.
+    // Kegagalan di sini tidak boleh membatalkan login: user yang kalendernya
+    // gagal tersambung masih berhak masuk ke aplikasinya.
+    let calendarConnected = false;
+    if (googleTokens && googleOAuthConfigured()) {
+      try {
+        calendarConnected = await saveIntegration(String(fbUserRow.id), googleTokens, email);
+      } catch (e) {
+        console.error("Google Calendar link warning:", e);
+      }
+    }
+
+    // 4. Return user untuk login session Flowbee
     const user = {
       id: fbUserRow.id,
       email: fbUserRow.email,
@@ -127,7 +162,12 @@ export async function POST(request: Request) {
       hrAccess: Number(fbUserRow.hr_access) === 1
     };
 
-    return NextResponse.json({ user });
+    const response = NextResponse.json({ user, calendarConnected });
+    response.cookies.set({
+      ...sessionCookieOptions(),
+      value: createSessionToken(String(user.id)),
+    });
+    return response;
   } catch (error: any) {
     console.error("Google Auth Error:", error?.message || error);
     console.error("Google Auth Stack:", error?.stack);

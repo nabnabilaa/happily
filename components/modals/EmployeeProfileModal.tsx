@@ -9,6 +9,7 @@ import HPBar from "@/components/ui/HPBar";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
 import { useHP } from "@/lib/HPContext";
 import { Donut, TargetBars, toneFor } from "@/components/reports/charts";
+import LogbookPanel from "@/components/logbook/LogbookPanel";
 
 interface Props {
   onClose: () => void;
@@ -18,7 +19,6 @@ interface Props {
 }
 
 const MOOD_EMOJI: Record<string, string> = { joy: '😊', calm: '😌', neutral: '😐', tired: '😴', stress: '😫' };
-const MOOD_COLOR: Record<string, string> = { joy: HP_TOKENS.success, calm: HP_TOKENS.info, neutral: HP_TOKENS.inkMute, tired: HP_TOKENS.warning, stress: HP_TOKENS.danger };
 
 export default function EmployeeProfileModal({ onClose, employeeId, employeeName, openModal }: Props) {
   const { user } = useHP();
@@ -28,7 +28,6 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
 
   // Extra data
   const [kpis, setKpis] = useState<any[]>([]);
-  const [logbook, setLogbook] = useState<any[]>([]);
   const [agg, setAgg] = useState<any>(null); // per-person aggregate (kpiScore, completionRate, weekly, kpis[].weekly)
 
   // Filter periode di dalam profil (default bulan berjalan; 0 = semua minggu).
@@ -69,7 +68,6 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
 
   useEffect(() => {
     if (activeTab === 'kpi') fetchKPIs();
-    if (activeTab === 'logbook') fetchLogbook();
   }, [activeTab, pMonth, pYear, pWeek]);
 
   const fetchProfile = async () => {
@@ -146,47 +144,6 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
     }
   };
 
-  // Satu timeline kronologis: gabungan absensi + mood + task harian + logbook_entries.
-  const fetchLogbook = async () => {
-    try {
-      const m = pMonth, y = pYear;
-      const [lbRes, taskRes, attRes, moodRes] = await Promise.all([
-        fetch(`/api/logbook?userId=${employeeId}&limit=50`),
-        fetch(`/api/hr/reports/export?requesterId=${user?.id}&type=logbook&userIds=${employeeId}&month=${m}&year=${y}`),
-        fetch(`/api/attendance/logs?userId=${user?.id}&targetUserId=${employeeId}&month=${m}&year=${y}`),
-        fetch(`/api/mood?userId=${employeeId}`),
-      ]);
-      const lb = ((await lbRes.json()).entries || []).map((e: any) => ({
-        kind: 'logbook', icon: '📖', title: e.title || e.description || 'Catatan',
-        description: e.title ? (e.description || '') : '', created_at: e.created_at, xp: e.xp_earned || 0,
-      }));
-      const tasks = ((await taskRes.json()).data || []).map((r: any) => ({
-        kind: 'task', done: !!r.is_done, icon: r.is_done ? '✅' : '⏳', title: r.title || 'Task',
-        description: r.goal_title ? `KPI: ${r.goal_title}` : (r.weekly_target_title || r.description || ''),
-        created_at: r.target_date || r.created_at, xp: r.is_done ? 50 : 0,
-      }));
-      const fmtTime = (v: any) => v ? new Date(v).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
-      const att = ((await attRes.json()).logs || []).map((l: any) => {
-        const dur = l.duration_minutes ? ` · ${Math.floor(l.duration_minutes / 60)}j${l.duration_minutes % 60}m` : '';
-        const out = l.check_out_at ? ` → ${fmtTime(l.check_out_at)}` : ' (belum check-out)';
-        return {
-          kind: 'checkin', icon: l.check_in_type === 'WFH' ? '🏠' : '🏢',
-          title: `Check-in${l.check_in_type ? ` ${l.check_in_type}` : ''}`,
-          description: `${fmtTime(l.check_in_at)}${out}${dur}${l.notes ? ` · ${l.notes}` : ''}`,
-          created_at: l.check_in_at, mood: l.mood || null, xp: 0,
-        };
-      });
-      const moodApi = ((await moodRes.json()).moods || []).map((md: any) => {
-        const key = md.mood_key || md.mood || 'neutral';
-        return { kind: 'mood', moodKey: key, icon: MOOD_EMOJI[key] || '😐', title: `Mood: ${key}`, description: '', created_at: md.created_at, xp: 0 };
-      });
-      const merged = [...lb, ...tasks, ...att, ...moodApi]
-        .filter(e => e.created_at)
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      setLogbook(merged);
-    } catch (e) { console.error(e); }
-  };
-
   if (loading) {
     return (
       <Modal onClose={onClose} title="Profil Karyawan">
@@ -211,7 +168,7 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
                   <div style={{ ...HP_TEXT.h, fontSize: 16 }}>{detail.title || 'Target'}</div>
                   {detail.timeframe && <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>{detail.timeframe}</div>}
                 </div>
-                <button onClick={() => setDetail(null)} className="hp-tap" style={{ border: 'none', background: HP_TOKENS.lineSoft, borderRadius: 8, width: 28, height: 28, cursor: 'pointer', fontFamily: HP_FONT, fontWeight: 700, color: HP_TOKENS.inkMute }}>✕</button>
+                <button onClick={() => setDetail(null)} className="hp-tap" style={{ border: 'none', background: HP_TOKENS.lineSoft, borderRadius: 8, width: 28, height: 28, cursor: 'pointer', fontFamily: HP_FONT, fontWeight: 700, color: HP_TOKENS.inkMute }}><HPGlyph name="close" size={14} color="currentColor" /></button>
               </div>
               <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
                 <div style={{ flex: 1, background: HP_TOKENS.lineSoft, borderRadius: HP_TOKENS.radiusSm, padding: 10, textAlign: 'center' }}>
@@ -234,7 +191,7 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {detailTasks.map((r: any, i: number) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '8px 10px', borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.paper, border: `1px solid ${HP_TOKENS.lineSoft}` }}>
-                      <div style={{ fontSize: 14 }}>{r.is_done ? '✅' : '⏳'}</div>
+                      <div style={{ display: 'flex' }}><HPGlyph name={r.is_done ? 'check' : 'hourglass'} size={14} color="currentColor" /></div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ ...HP_TEXT.small, fontWeight: 700, fontSize: 12.5, color: HP_TOKENS.ink }}>{r.title}</div>
                         <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, marginTop: 2 }}>
@@ -274,7 +231,7 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
                 </div>
                 <div style={{
                   padding: '3px 10px', borderRadius: 8, fontSize: 10, fontWeight: 700,
-                  background: HP_TOKENS.sageWash, color: HP_TOKENS.sage, fontFamily: HP_FONT,
+                  background: HP_TOKENS.sageWash, color: HP_TOKENS.sageInk, fontFamily: HP_FONT,
                 }}>
                   Lvl {u.level || 1} · {u.points || 0} Point
                 </div>
@@ -285,9 +242,9 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
           {/* Quick stats */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8, marginTop: 16 }}>
             {[
-              { label: 'Hadir', value: p.attendanceSummary?.totalDays || 0, color: HP_TOKENS.sage },
+              { label: 'Hadir', value: p.attendanceSummary?.totalDays || 0, color: HP_TOKENS.sageInk },
               { label: 'Avg Jam', value: p.attendanceSummary?.avgHours ? `${Math.floor(p.attendanceSummary.avgHours)}j` : '-', color: HP_TOKENS.blue },
-              { label: 'Task', value: p.taskSummary?.completed || 0, color: HP_TOKENS.yellowDark },
+              { label: 'Task', value: p.taskSummary?.completed || 0, color: HP_TOKENS.yellowInk },
               { label: 'Mood', value: MOOD_EMOJI[p.latestMood] || '😐', color: HP_TOKENS.ink },
             ].map(s => (
               <div key={s.label} style={{
@@ -301,8 +258,10 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
           </div>
         </div>
 
-        {/* Filter periode — dipakai semua tab (ringkasan/kpi/logbook) */}
-        <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+        {/* Filter periode — dipakai tab ringkasan & KPI. Tab logbook punya
+            navigasi bulan sendiri di dalam LogbookPanel, jadi filter ini
+            disembunyikan di sana supaya tidak ada dua pemilih bulan. */}
+        <div style={{ display: activeTab === 'logbook' ? 'none' : 'flex', gap: 6, marginBottom: 12 }}>
           {(() => {
             const selStyle: React.CSSProperties = {
               flex: 1, padding: '7px 8px', borderRadius: HP_TOKENS.radiusSm, border: `1.5px solid ${HP_TOKENS.line}`,
@@ -385,7 +344,7 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
                 return (
                   <div style={{ display: 'flex', gap: 12 }}>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 22, color: HP_TOKENS.sage }}>{hadir}</div>
+                      <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 22, color: HP_TOKENS.sageInk }}>{hadir}</div>
                       <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>hari hadir</div>
                     </div>
                     <div style={{ flex: 1 }}>
@@ -498,43 +457,11 @@ export default function EmployeeProfileModal({ onClose, employeeId, employeeName
           </div>
         )}
 
-        {/* ── LOGBOOK TAB — timeline kronologis gabungan (absensi + mood + task + catatan) ── */}
+        {/* ── LOGBOOK TAB — logbook yang sama persis dengan laman employee ──
+            Kalender bulanan + detail harian (kehadiran & lokasi, mood, EXP,
+            task harian, catatan). Read-only karena ini logbook orang lain. */}
         {activeTab === 'logbook' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {logbook.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: 30, color: HP_TOKENS.inkMute }}>Belum ada aktivitas tercatat</div>
-            ) : (
-              logbook.slice(0, 60).map((entry: any, i: number) => {
-                const dot = entry.kind === 'task' ? (entry.done ? HP_TOKENS.sage : HP_TOKENS.yellow)
-                  : entry.kind === 'checkin' ? HP_TOKENS.blue
-                  : entry.kind === 'mood' ? (MOOD_COLOR[entry.moodKey] || HP_TOKENS.yellow)
-                  : HP_TOKENS.lavender;
-                return (
-                  <HPCard key={i} padding={12}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                      <div style={{ width: 8, height: 8, borderRadius: '50%', marginTop: 6, flexShrink: 0, background: dot }} />
-                      <div style={{ fontSize: 16, lineHeight: '20px', flexShrink: 0 }}>{entry.icon}</div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ ...HP_TEXT.small, fontWeight: 700, fontSize: 13, color: HP_TOKENS.ink }}>{entry.title}</div>
-                        {entry.description && (
-                          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 2 }}>{entry.description}</div>
-                        )}
-                        <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, marginTop: 4 }}>
-                          {entry.created_at ? new Date(entry.created_at).toLocaleString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
-                          {entry.mood ? ` · mood ${MOOD_EMOJI[entry.mood] || entry.mood}` : ''}
-                        </div>
-                      </div>
-                      {entry.xp > 0 && (
-                        <div style={{ padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 700, background: HP_TOKENS.yellowSoft, color: HP_TOKENS.yellowDark, fontFamily: HP_FONT, flexShrink: 0 }}>
-                          +{entry.xp} Point
-                        </div>
-                      )}
-                    </div>
-                  </HPCard>
-                );
-              })
-            )}
-          </div>
+          <LogbookPanel targetUserId={employeeId} />
         )}
 
         {/* ── ONBOARDING TAB — knowledge tambahan dari jawaban onboarding karyawan ── */}

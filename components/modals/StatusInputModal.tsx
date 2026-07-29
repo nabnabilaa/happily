@@ -13,7 +13,9 @@ interface StatusInputModalProps {
 type StatusOption = {
   key: string;
   label: string;
-  emoji: string;
+  /** HPGlyph name. Was an emoji, which rendered in the platform font at a
+   *  weight and hue outside the design system's control. */
+  glyph: string;
   color: string;
   needsReason: boolean;
   needsAttachment: boolean;
@@ -21,15 +23,15 @@ type StatusOption = {
 };
 
 const STATUS_OPTIONS: StatusOption[] = [
-  { key: 'working',  label: 'Sedang Bekerja',  emoji: '💻', color: HP_TOKENS.success, needsReason: false, needsAttachment: false, placeholder: '' },
-  { key: 'deepwork',label: 'Deep Work',       emoji: '🎯', color: HP_TOKENS.primary, needsReason: false, needsAttachment: false, placeholder: '' },
-  { key: 'meeting',  label: 'Dalam Meeting',   emoji: '📞', color: HP_TOKENS.info, needsReason: false, needsAttachment: false, placeholder: '' },
-  { key: 'break',    label: 'Istirahat',        emoji: '☕', color: HP_TOKENS.warning, needsReason: false, needsAttachment: false, placeholder: '' },
-  { key: 'away',     label: 'Away / AFK',       emoji: '🚶', color: HP_TOKENS.inkMute, needsReason: false, needsAttachment: false, placeholder: '' },
-  { key: 'stuck',    label: 'Butuh Bantuan',    emoji: '🆘', color: HP_TOKENS.danger, needsReason: true,  needsAttachment: false, placeholder: 'Jelaskan apa yang sedang memblokirmu...' },
-  { key: 'sick',     label: 'Sakit',            emoji: '🤒', color: HP_TOKENS.danger, needsReason: true,  needsAttachment: true, placeholder: 'Jelaskan kondisi kesehatan...' },
-  { key: 'izin',     label: 'Izin',             emoji: '📋', color: HP_TOKENS.primary, needsReason: true,  needsAttachment: false, placeholder: 'Alasan izin...' },
-  { key: 'cuti',     label: 'Cuti',             emoji: '🏖️', color: HP_TOKENS.info, needsReason: true,  needsAttachment: false, placeholder: 'Keterangan cuti...' },
+  { key: 'working',  label: 'Sedang Bekerja',  glyph: 'activity', color: HP_TOKENS.successInk, needsReason: false, needsAttachment: false, placeholder: '' },
+  { key: 'deepwork',label: 'Deep Work',       glyph: 'target', color: HP_TOKENS.primaryInk, needsReason: false, needsAttachment: false, placeholder: '' },
+  { key: 'meeting',  label: 'Dalam Meeting',   glyph: 'phone', color: HP_TOKENS.infoInk, needsReason: false, needsAttachment: false, placeholder: '' },
+  { key: 'break',    label: 'Istirahat',        glyph: 'pause', color: HP_TOKENS.warningInk, needsReason: false, needsAttachment: false, placeholder: '' },
+  { key: 'away',     label: 'Away / AFK',       glyph: 'arrow', color: HP_TOKENS.inkMute, needsReason: false, needsAttachment: false, placeholder: '' },
+  { key: 'stuck',    label: 'Butuh Bantuan',    glyph: 'alertCircle', color: HP_TOKENS.dangerInk, needsReason: true,  needsAttachment: false, placeholder: 'Jelaskan apa yang sedang memblokirmu...' },
+  { key: 'sick',     label: 'Sakit',            glyph: 'alertCircle', color: HP_TOKENS.dangerInk, needsReason: true,  needsAttachment: true, placeholder: 'Jelaskan kondisi kesehatan...' },
+  { key: 'izin',     label: 'Izin',             glyph: 'note', color: HP_TOKENS.primaryInk, needsReason: true,  needsAttachment: false, placeholder: 'Alasan izin...' },
+  { key: 'cuti',     label: 'Cuti',             glyph: 'sun', color: HP_TOKENS.infoInk, needsReason: true,  needsAttachment: false, placeholder: 'Keterangan cuti...' },
 ];
 
 export default function StatusInputModal({ onClose }: StatusInputModalProps) {
@@ -75,7 +77,7 @@ export default function StatusInputModal({ onClose }: StatusInputModalProps) {
       if (res.ok) {
         notify(
           'Status Updated',
-          `Status kamu sekarang: ${selectedOption?.emoji} ${selectedOption?.label}`,
+          `Status kamu sekarang: ${selectedOption?.label}`,
           'success'
         );
         onClose();
@@ -104,7 +106,7 @@ export default function StatusInputModal({ onClose }: StatusInputModalProps) {
               fontFamily: HP_FONT, fontWeight: 700, fontSize: 11,
               color: STATUS_OPTIONS.find(s => s.key === currentStatus)?.color || HP_TOKENS.inkFade,
             }}>
-              {STATUS_OPTIONS.find(s => s.key === currentStatus)?.emoji}{' '}
+              <HPGlyph name={STATUS_OPTIONS.find(s => s.key === currentStatus)?.glyph || 'activity'} size={15} color="currentColor" />{' '}
               {STATUS_OPTIONS.find(s => s.key === currentStatus)?.label || currentStatus}
             </div>
           </div>
@@ -134,7 +136,12 @@ export default function StatusInputModal({ onClose }: StatusInputModalProps) {
                 outline: selectedStatus === s.key ? 'none' : `1.5px solid ${HP_TOKENS.line}`,
               }}
             >
-              <div style={{ fontSize: 22 }}>{s.emoji}</div>
+              {/* Follows the label, not `currentColor`. The button paints itself
+                  a saturated fill when selected, and an inherited ink glyph
+                  would then be dark-on-dark. */}
+              <div style={{ display: 'flex' }}>
+                <HPGlyph name={s.glyph} size={20} color={selectedStatus === s.key ? '#fff' : HP_TOKENS.inkSoft} />
+              </div>
               <div style={{
                 fontFamily: HP_FONT, fontWeight: 700, fontSize: 13,
                 color: selectedStatus === s.key ? '#fff' : HP_TOKENS.ink,
@@ -203,7 +210,7 @@ export default function StatusInputModal({ onClose }: StatusInputModalProps) {
             background: HP_TOKENS.sageWash, border: `1px solid ${HP_TOKENS.sage}20`,
             marginBottom: 16,
           }}>
-            <div style={{ ...HP_TEXT.small, fontSize: 12, color: HP_TOKENS.sage, fontWeight: 700 }}>
+            <div style={{ ...HP_TEXT.small, fontSize: 12, color: HP_TOKENS.sageInk, fontWeight: 700 }}>
               ℹ️ Status ini akan otomatis tercatat di absensi dan <strong>tidak memutus streak</strong> kehadiran kamu.
             </div>
           </div>
@@ -224,7 +231,7 @@ export default function StatusInputModal({ onClose }: StatusInputModalProps) {
             boxShadow: selectedStatus ? `0 4px 16px ${selectedOption?.color || HP_TOKENS.sage}30` : 'none',
           }}
         >
-          {saving ? 'Menyimpan...' : selectedStatus ? `Set: ${selectedOption?.emoji} ${selectedOption?.label}` : 'Pilih status di atas'}
+          {saving ? 'Menyimpan...' : selectedStatus ? `Set: ${selectedOption?.label}` : 'Pilih status di atas'}
         </button>
       </div>
     </Modal>

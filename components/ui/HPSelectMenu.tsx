@@ -311,7 +311,7 @@ export default function HPSelectMenu({
                   )}
 
                   {isSelected && (
-                    <HPGlyph name="check" size={15} color={HP_TOKENS.primary} stroke={2.6} />
+                    <HPGlyph name="check" size={15} color={HP_TOKENS.primaryInk} stroke={2.6} />
                   )}
                 </button>
               );

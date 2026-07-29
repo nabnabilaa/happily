@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { reviewTask } from "@/lib/taskReview";
+import { AWAITING_REVIEW_SQL, TASK_STATUS } from "@/lib/taskStatus";
+import { authorizeReview } from "@/lib/reviewAuth";
 
-// POST: HR/Manager flag a monthly KPI progress report
-// Body: { kpiId, action: 'revision'|'rejected'|'clear', note, penaltyPct, reviewedBy }
+// POST: HR/Manager memutuskan sebuah KPI bulanan
+// Body: { kpiId, action: 'approved'|'revision'|'rejected'|'clear', note, penaltyPct, reviewedBy }
 export async function POST(request: Request) {
   try {
     const { kpiId, action, note, penaltyPct, reviewedBy } = await request.json();
@@ -10,13 +13,114 @@ export async function POST(request: Request) {
     if (!kpiId || !action) {
       return NextResponse.json({ error: "kpiId dan action wajib diisi" }, { status: 400 });
     }
-    if (!['revision', 'rejected', 'clear'].includes(action)) {
-      return NextResponse.json({ error: "action harus revision, rejected, atau clear" }, { status: 400 });
+    if (!['approved', 'revision', 'rejected', 'clear'].includes(action)) {
+      return NextResponse.json({ error: "action harus approved, revision, rejected, atau clear" }, { status: 400 });
     }
 
     const kpiRes = await db.execute({ sql: `SELECT * FROM monthly_kpis WHERE id = ?`, args: [kpiId] });
     if (!kpiRes.rows.length) return NextResponse.json({ error: "KPI tidak ditemukan" }, { status: 404 });
     const kpi = kpiRes.rows[0];
+
+    /*
+     * Izin diperiksa di sini, bukan diasumsikan dari layar pemanggil.
+     *
+     * `reviewedBy` datang dari body request; sebelumnya nilainya hanya ditulis
+     * ke kolom dan tidak pernah diverifikasi. Selama endpoint ini cuma bisa
+     * memberi revisi/tolak, itu sekadar gangguan. Sejak ACC di sini juga
+     * MENCAIRKAN POIN seluruh task di bawah KPI, endpoint tanpa penjaga berarti
+     * siapa pun bisa menyetujui KPI-nya sendiri dan membayar dirinya sendiri.
+     *
+     * Aturannya: HR-Admin boleh lintas divisi; manajer hanya untuk KPI yang ia
+     * tugaskan atau milik anggota timnya; dan tidak seorang pun — termasuk
+     * manajer dan HR — boleh memutuskan KPI miliknya sendiri.
+     */
+    const auth = await authorizeReview(reviewedBy, kpi.assigned_to, {
+      assignedBy: kpi.assigned_by ? String(kpi.assigned_by) : null,
+    });
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status || 403 });
+    }
+
+    /*
+     * ACC di tingkat KPI — inilah satu-satunya tempat pekerjaan disetujui.
+     *
+     * Sebelumnya manajer meng-ACC satu per satu task harian, dan poin task
+     * dibayar dua tahap: +20 saat karyawan menyelesaikan, +10 saat di-ACC
+     * (lihat lib/taskReview.ts). Memindahkan keputusan ke tingkat KPI tanpa
+     * menyentuh tahap kedua itu akan membuat +10 tidak pernah cair dan
+     * menghapus rem kualitasnya. Jadi ACC KPI mencairkan seluruh task yang
+     * masih menunggu sekaligus, lewat `reviewTask` yang sama persis —
+     * poin, notifikasi, dan rollup-nya tidak digandakan di sini.
+     *
+     * Urutannya penting. Baris KPI ditulis LEBIH DULU supaya penalti sisa
+     * review sebelumnya sudah bersih, baru task-nya disetujui; `reviewTask`
+     * memanggil `recalcKpiProgress` di setiap task, jadi hitungan terakhir
+     * yang mendarat adalah yang benar.
+     */
+    if (action === 'approved') {
+      const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+      const restored = kpi.original_metric_current !== null
+        ? Number(kpi.original_metric_current)
+        : Number(kpi.metric_current) || 0;
+
+      await db.execute({
+        sql: `UPDATE monthly_kpis
+              SET review_status = 'approved', review_note = ?, penalty_pct = 0,
+                  metric_current = ?, original_metric_current = NULL,
+                  reviewed_by = ?, reviewed_at = ?
+              WHERE id = ?`,
+        args: [note || null, restored, reviewedBy || null, now, kpiId]
+      });
+
+      // Task yang menunggu review, baik yang menempel lewat kpi_id maupun lewat
+      // kolom goal_id lama — alur pembuatan task menulis keduanya.
+      const pendingRes = await db.execute({
+        sql: `SELECT dp.id FROM daily_priorities dp
+              WHERE (dp.kpi_id = ? OR dp.goal_id = ?) AND ${AWAITING_REVIEW_SQL}`,
+        args: [kpiId, kpiId]
+      });
+
+      let approvedTasks = 0;
+      const failedTasks: string[] = [];
+      for (const row of pendingRes.rows) {
+        const taskId = String(row.id);
+        try {
+          const result = await reviewTask({
+            taskId,
+            action: TASK_STATUS.APPROVED,
+            managerId: reviewedBy || null,
+            reviewNote: note || null,
+          });
+          if (result.ok) approvedTasks++;
+          else failedTasks.push(taskId);
+        } catch (e) {
+          console.warn(`ACC KPI ${kpiId}: task ${taskId} gagal disetujui:`, e);
+          failedTasks.push(taskId);
+        }
+      }
+
+      try {
+        const notifId = "n_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
+        await db.execute({
+          sql: `INSERT INTO notifications (id, user_id, title, message, type) VALUES (?, ?, ?, ?, ?)`,
+          args: [
+            notifId, kpi.assigned_to,
+            `✅ KPI Disetujui: ${kpi.title}`,
+            note || `KPI kamu disetujui${approvedTasks > 0 ? ` beserta ${approvedTasks} task harian di dalamnya` : ''}.`,
+            'success'
+          ]
+        });
+      } catch (e) { console.warn('Notif failed:', e); }
+
+      return NextResponse.json({
+        success: true,
+        action: 'approved',
+        approvedTasks,
+        // Dilaporkan, bukan ditelan. Kalau sebagian task gagal, KPI-nya sudah
+        // terlanjur ber-status approved dan itu harus terlihat di layar.
+        failedTasks,
+      });
+    }
 
     if (action === 'clear') {
       const restored = kpi.original_metric_current !== null ? Number(kpi.original_metric_current) : Number(kpi.metric_current);

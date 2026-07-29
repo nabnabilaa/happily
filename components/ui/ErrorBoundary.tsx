@@ -2,6 +2,7 @@
 
 import React from "react";
 import { HP_TOKENS, HP_FONT } from "@/lib/constants";
+import HPGlyph from "@/components/ui/HPGlyph";
 
 interface Props {
   children: React.ReactNode;
@@ -34,7 +35,7 @@ export default class ErrorBoundary extends React.Component<Props, State> {
           alignItems: 'center', justifyContent: 'center',
           background: HP_TOKENS.paper, fontFamily: HP_FONT, padding: 24, textAlign: 'center'
         }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>🔧</div>
+          <div style={{ fontSize: 48, marginBottom: 16 }}><HPGlyph name="alertCircle" size={28} color="currentColor" /></div>
           <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Oops, ada yang salah</h2>
           <p style={{ fontSize: 13, color: HP_TOKENS.inkMute, marginBottom: 24, maxWidth: 300 }}>
             {this.state.error?.message || "Terjadi kesalahan yang tidak terduga."}

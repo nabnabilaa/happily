@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { awardPoints } from "@/lib/points";
 
 // ══════════════════════════════════════════════════════════════
 // Personal KPI API — Spec v2: KPI Mandiri
@@ -108,22 +109,17 @@ export async function PUT(request: Request) {
       const row = kpi.rows[0];
       if (row && row.target_value && Number(currentValue) >= Number(row.target_value)) {
         try {
-          // Check if already awarded for this KPI
-          const existing = await db.execute({
-            sql: `SELECT id FROM xp_transactions WHERE action_type = 'personal_kpi_achieved' AND description LIKE ?`,
-            args: [`%${kpiId}%`]
+          // Kunci `kpi:<id>:personal` menggantikan pencarian
+          // `description LIKE '%<kpiId>%'` yang lama. Pencocokan string itu rapuh
+          // di dua arah: judul KPI yang kebetulan memuat angka id lain bisa
+          // dianggap sudah dibayar, dan query-nya tidak menyaring user sama
+          // sekali — jadi KPI seseorang bisa memblokir bonus orang lain.
+          await awardPoints({
+            userId: String(row.user_id),
+            action: 'personal_kpi_achieved',
+            refId: `kpi:${kpiId}:personal`,
+            description: `KPI Mandiri tercapai: ${row.title}`,
           });
-          if (existing.rows.length === 0) {
-            const xpAmount = 20; // Personal KPI completion bonus
-            await db.execute({
-              sql: "INSERT INTO xp_transactions (id, user_id, amount, action_type, description) VALUES (?, ?, ?, ?, ?)",
-              args: ["tx_pkpi_" + Date.now().toString(36), String(row.user_id), xpAmount, 'personal_kpi_achieved', `KPI Mandiri tercapai: ${row.title} [${kpiId}]`]
-            });
-            await db.execute({
-              sql: "UPDATE users SET points = points + ? WHERE id = ?",
-              args: [xpAmount, String(row.user_id)]
-            });
-          }
         } catch (e) { console.warn("Personal KPI XP error:", e); }
       }
     }

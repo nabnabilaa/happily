@@ -82,8 +82,8 @@ export default function SenggolModal({ onClose, toUser }: SenggolModalProps) {
     return (
       <Modal onClose={onClose} title="Senggol Tim">
         <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>{type === 'greet' ? '👋' : type === 'coffee' ? '☕' : '🤝'}</div>
-          <div style={{ ...HP_TEXT.h, fontSize: 18, color: HP_TOKENS.sage }}>Terkirim!</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><HPGlyph name={type === 'greet' ? 'people' : type === 'coffee' ? 'pause' : 'heart'} size={36} color="currentColor" /></div>
+          <div style={{ ...HP_TEXT.h, fontSize: 18, color: HP_TOKENS.sageInk }}>Terkirim!</div>
           <div style={{ ...HP_TEXT.body, fontSize: 13, color: HP_TOKENS.inkMute, marginTop: 8 }}>
             Notifikasi telah dikirimkan ke {to?.name.split(' ')[0]}.
           </div>
@@ -93,9 +93,9 @@ export default function SenggolModal({ onClose, toUser }: SenggolModalProps) {
   }
 
   const NUDGE_OPTIONS = [
-    { key: 'greet', label: 'Sapa & Senggol', emoji: '👀', color: HP_TOKENS.ink },
-    { key: 'coffee', label: 'Ajak Ngopi/Rehat', emoji: '☕', color: HP_TOKENS.yellowDark, bg: HP_TOKENS.yellowSoft },
-    { key: 'help', label: 'Tawarkan Bantuan', emoji: '🤝', color: HP_TOKENS.coral },
+    { key: 'greet', label: 'Sapa & Senggol', glyph: 'eye', color: HP_TOKENS.ink },
+    { key: 'coffee', label: 'Ajak Ngopi/Rehat', glyph: 'pause', color: HP_TOKENS.yellowInk, bg: HP_TOKENS.yellowSoft },
+    { key: 'help', label: 'Tawarkan Bantuan', glyph: 'heart', color: HP_TOKENS.coralInk },
   ];
 
   return (
@@ -105,7 +105,7 @@ export default function SenggolModal({ onClose, toUser }: SenggolModalProps) {
           <div style={{ 
             padding: 12, borderRadius: HP_TOKENS.radiusSm, marginBottom: 16,
             background: HP_TOKENS.dangerWash, border: `1px solid ${HP_TOKENS.dangerSoft}`,
-            color: HP_TOKENS.danger, fontSize: 13, fontWeight: 600, fontFamily: HP_FONT 
+            color: HP_TOKENS.dangerInk, fontSize: 13, fontWeight: 600, fontFamily: HP_FONT 
           }}>
             {error}
           </div>
@@ -114,7 +114,7 @@ export default function SenggolModal({ onClose, toUser }: SenggolModalProps) {
         <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 700, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           KE SIAPA <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.6 }}>(Pilih 1 orang)</span>
           {to && (
-            <div style={{ color: HP_TOKENS.sage, fontSize: 11, fontWeight: 700 }}>
+            <div style={{ color: HP_TOKENS.sageInk, fontSize: 11, fontWeight: 700 }}>
               Terpilih: {to.name.split(' ')[0]}
             </div>
           )}
@@ -245,7 +245,7 @@ export default function SenggolModal({ onClose, toUser }: SenggolModalProps) {
               }}
               className="hp-tap"
             >
-              <div style={{ fontSize: 20 }}>{opt.emoji}</div>
+              <div style={{ display: 'flex' }}><HPGlyph name={opt.glyph} size={18} color="currentColor" /></div>
               <div style={{ 
                 fontSize: 14, fontWeight: 700, 
                 color: type === opt.key ? (opt.bg ? opt.color : HP_TOKENS.sage) : HP_TOKENS.ink 

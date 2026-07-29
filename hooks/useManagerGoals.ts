@@ -1,4 +1,16 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+
+/**
+ * Monthly KPIs live in `monthly_kpis` and carry a `kpi_`-prefixed id; legacy
+ * OKRs live in `goals`. The manager screens merge both into one list, so every
+ * mutation has to pick the matching endpoint — writing a KPI id to
+ * /api/goals/* silently affects zero rows.
+ */
+function isKpiRecord(goal: any): boolean {
+  if (!goal) return false;
+  if (goal.isApiKpi) return true;
+  return String(goal.id ?? '').startsWith('kpi_');
+}
 
 export function useManagerGoals(state: any, user: any, updateState: any, notify: any) {
   const [apiKpis, setApiKpis] = useState<any[]>([]);
@@ -125,229 +137,172 @@ export function useManagerGoals(state: any, user: any, updateState: any, notify:
     });
   }, [assignedGoals]);
 
-  const handleVerifyTask = async (taskId: string, goalId: string) => {
-    try {
-      const res = await fetch("/api/manager/verify-task", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ taskId, goalId, managerId: user.id })
-      });
-      if (!res.ok) throw new Error("Failed to verify");
+  /*
+   * Tidak ada lagi handler ACC/tolak per task di sini.
+   *
+   * Keputusan diambil sekali di tingkat KPI (POST /api/kpi/review dengan
+   * action 'approved'), dan endpoint itu yang meneruskannya ke setiap task
+   * lewat `reviewTask`. Menyisakan jalur per-task di klien berarti dua sumber
+   * kebenaran untuk kolom `is_verified` yang sama, yang persis pernah membuat
+   * ACC manajer tertimpa — lihat catatan di app/api/storage/route.ts.
+   */
 
-      updateState((s: any) => {
-        const newTeamTasks = s.managerData?.teamTasks?.map((t: any) => 
-          t.id === taskId ? { ...t, verified: true, done: true } : t
-        ) || [];
-        
-        const tasksForGoal = newTeamTasks.filter((t: any) => String(t.goalId) === String(goalId));
-        const verifiedCount = tasksForGoal.filter((t: any) => t.verified).length;
-        
-        const newGoals = s.goals.map((g: any) => 
-          String(g.id) === String(goalId) 
-            ? { ...g, metric: `${verifiedCount}/${tasksForGoal.length} verified` } 
-            : g
-        );
+  /** Finds a merged goal by id across both backing stores. */
+  const findGoal = useCallback((goalId: string) => {
+    const fromState = (state?.goals || []).find((g: any) => String(g.id) === String(goalId));
+    if (fromState) return fromState;
+    return apiKpis.find((k: any) => String(k.id) === String(goalId));
+  }, [state?.goals, apiKpis]);
 
-        return {
-          ...s,
-          goals: newGoals,
-          managerData: {
-            ...s.managerData,
-            teamTasks: newTeamTasks
-          }
-        };
-      });
-    } catch (e) {
-      console.error(e);
-      alert("Gagal memverifikasi tugas.");
-    }
-  };
-
-  const handleRejectTask = async (taskId: string, goalId: string, action: 'reject' | 'revision') => {
-    try {
-      const res = await fetch("/api/manager/reject-task", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ taskId, managerId: user.id, action })
-      });
-      if (!res.ok) throw new Error("Failed to process");
-
-      updateState((s: any) => {
-        const newTeamTasks = s.managerData?.teamTasks?.map((t: any) => 
-          t.id === taskId ? { ...t, verified: false, done: false, status: action } : t
-        ) || [];
-        
-        return {
-          ...s,
-          managerData: {
-            ...s.managerData,
-            teamTasks: newTeamTasks
-          }
-        };
-      });
-      notify('Berhasil', action === 'reject' ? 'Task ditolak' : 'Task dikembalikan untuk direvisi', 'info');
-    } catch (e) {
-      console.error(e);
-      alert("Gagal memproses tugas.");
-    }
-  };
-
-  const executeDeleteGoal = async (goalId: string) => {
+  /** Applies a patch to whichever store actually holds the record. */
+  const patchGoalLocally = useCallback((goalId: string, patch: Record<string, any>) => {
+    setApiKpis(prev => prev.map((k: any) =>
+      String(k.id) === String(goalId) ? { ...k, ...patch } : k
+    ));
     updateState((s: any) => ({
       ...s,
-      goals: s.goals.filter((g: any) => String(g.id) !== String(goalId))
+      goals: (s.goals || []).map((g: any) =>
+        String(g.id) === String(goalId) ? { ...g, ...patch } : g
+      ),
     }));
+  }, [updateState]);
+
+  const removeGoalLocally = useCallback((goalId: string) => {
+    setApiKpis(prev => prev.filter((k: any) => String(k.id) !== String(goalId)));
+    updateState((s: any) => ({
+      ...s,
+      goals: (s.goals || []).filter((g: any) => String(g.id) !== String(goalId)),
+    }));
+  }, [updateState]);
+
+  const executeDeleteGoal = async (goalId: string) => {
+    const goal = findGoal(goalId);
+    const snapshot = goal ? { ...goal } : null;
+    const isKpi = isKpiRecord(goal) || String(goalId).startsWith('kpi_');
+
+    removeGoalLocally(goalId);
+
     try {
-      await fetch('/api/goals/delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ goalId })
-      });
-    } catch (e) { console.error('Failed to delete goal:', e); }
+      const res = isKpi
+        ? await fetch(`/api/kpi?id=${encodeURIComponent(goalId)}`, { method: 'DELETE' })
+        : await fetch('/api/goals/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ goalId }),
+          });
+
+      if (!res.ok) throw new Error(await res.text());
+      notify('Terhapus', isKpi ? 'KPI telah dihapus.' : 'Goal telah dihapus.', 'info');
+    } catch (e) {
+      console.error('Failed to delete goal:', e);
+      // Put it back — the card used to vanish from the screen while the row
+      // was still in the database.
+      if (snapshot) {
+        if (isKpi) setApiKpis(prev => [...prev, snapshot]);
+        else updateState((s: any) => ({ ...s, goals: [...(s.goals || []), snapshot] }));
+      }
+      notify('Gagal', 'Gagal menghapus. Coba lagi.', 'error');
+    }
   };
 
   const handleEditProgress = async (goalId: string, newProgress: number) => {
-    updateState((s: any) => ({
-      ...s,
-      goals: s.goals.map((goal: any) =>
-        String(goal.id) === String(goalId)
-          ? { ...goal, progress: newProgress }
-          : goal
-      )
-    }));
-    try {
-      await fetch('/api/goals/update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ goalId, updates: { progress: newProgress } })
-      });
-      notify('Progress Tersimpan', `Progress KPI diupdate menjadi ${newProgress}%.`, 'info');
-    } catch (e) { console.error('Failed to save progress:', e); }
-  };
+    const goal = findGoal(goalId);
+    const previous = goal?.progress ?? 0;
+    const isKpi = isKpiRecord(goal);
 
-  const handleApproveGoal = async (goalId: string) => {
-    updateState((s: any) => ({
-      ...s,
-      goals: s.goals.map((goal: any) =>
-        String(goal.id) === String(goalId) ? { ...goal, status: 'approved' } : goal
-      )
-    }));
-    try {
-      await fetch('/api/goals/update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ goalId, updates: { status: 'approved' } })
-      });
-      notify('KPI Approved', `Goal telah disetujui.`, 'success');
-    } catch (e) { console.error('Failed to approve:', e); }
-  };
+    // /api/goals/update rejects a `progress` field outright ("Progress is
+    // computed automatically"), so the old call here always 403'd while still
+    // showing a "Progress Tersimpan" toast. Legacy goals derive progress from
+    // their tasks; only KPIs accept a manual score.
+    if (!isKpi) {
+      notify(
+        'Tidak Bisa Diubah',
+        'Progress goal dihitung otomatis dari task yang terverifikasi.',
+        'warning'
+      );
+      return;
+    }
 
-  const handleRejectGoal = async (goalId: string) => {
-    updateState((s: any) => ({
-      ...s,
-      goals: s.goals.map((goal: any) =>
-        String(goal.id) === String(goalId) ? { ...goal, status: 'rejected' } : goal
-      )
-    }));
-    try {
-      await fetch('/api/goals/update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ goalId, updates: { status: 'rejected' } })
-      });
-      notify('KPI Rejected', `Goal telah ditolak.`, 'error');
-    } catch (e) { console.error('Failed to reject:', e); }
-  };
+    patchGoalLocally(goalId, { progress: newProgress });
 
-  const handleManagerVerifyKpiTask = async (taskId: string, goalId: string) => {
     try {
-      const res = await fetch("/api/manager/verify-task", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ taskId, goalId, managerId: user.id, action: 'approve' })
+      const res = await fetch('/api/kpi', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kpiId: goalId, finalScore: newProgress }),
       });
-      if (!res.ok) throw new Error();
-      updateState((s: any) => ({
-        ...s,
-        managerData: {
-          ...s.managerData,
-          teamTasks: s.managerData?.teamTasks?.map((t: any) =>
-            String(t.id) === String(taskId) ? { ...t, verified: true, done: true } : t
-          ) || []
-        }
-      }));
-      notify('Task Diverifikasi', 'Task berhasil di-ACC.', 'success');
+      if (!res.ok) throw new Error(await res.text());
+      notify('Progress Tersimpan', `Progress KPI diupdate menjadi ${newProgress}%.`, 'success');
     } catch (e) {
-      console.error(e);
-      notify('Gagal', 'Gagal memverifikasi task.', 'error');
+      console.error('Failed to save progress:', e);
+      patchGoalLocally(goalId, { progress: previous });
+      notify('Gagal', 'Progress tidak tersimpan. Coba lagi.', 'error');
     }
   };
 
-  const handleManagerRejectKpiTask = async (taskId: string, wtId: string, action: 'revision' | 'reject', taskPct: number, totalWtTasks: number, goalId: string) => {
-    try {
-      const res = await fetch("/api/manager/verify-task", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ taskId, goalId, managerId: user.id, action })
-      });
-      if (!res.ok) throw new Error();
+  /**
+   * Approve / revise / reject a target. KPIs and legacy goals live in different
+   * tables with different endpoints and different status vocabularies; this
+   * routes to whichever one owns the record.
+   */
+  const setGoalStatus = async (
+    goalId: string,
+    status: 'approved' | 'revision' | 'rejected',
+    copy: { title: string; message: string; tone: string }
+  ) => {
+    const goal = findGoal(goalId);
+    const previous = goal?.status;
+    const isKpi = isKpiRecord(goal);
 
-      // Reduce weekly target progress if task had contributed
-      if (wtId && taskPct > 0) {
-        const delta = -(taskPct / Math.max(1, totalWtTasks));
-        await fetch('/api/kpi/weekly-targets', {
-          method: 'PATCH',
+    patchGoalLocally(goalId, { status });
+
+    try {
+      let res: Response;
+      if (isKpi && status === 'approved') {
+        res = await fetch('/api/kpi', {
+          method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: wtId, delta })
+          body: JSON.stringify({ kpiId: goalId, status: 'active' }),
+        });
+      } else if (isKpi) {
+        // revision / rejected go through the KPI review flow, which records the
+        // verdict and notifies the assignee.
+        res = await fetch('/api/kpi/review', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ kpiId: goalId, action: status, reviewedBy: user?.id, penaltyPct: 0 }),
+        });
+      } else {
+        res = await fetch('/api/goals/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ goalId, updates: { status } }),
         });
       }
 
-      updateState((s: any) => ({
-        ...s,
-        managerData: {
-          ...s.managerData,
-          teamTasks: s.managerData?.teamTasks?.map((t: any) =>
-            String(t.id) === String(taskId) ? { ...t, verified: false, done: false, status: action } : t
-          ) || []
-        }
-      }));
-      notify(
-        action === 'reject' ? 'Task Ditolak' : 'Task Dikembalikan',
-        action === 'reject' ? 'Task ditolak dan progress target dikurangi.' : 'Task dikembalikan untuk direvisi.',
-        'info'
-      );
+      if (!res.ok) throw new Error(await res.text());
+      notify(copy.title, copy.message, copy.tone);
     } catch (e) {
-      console.error(e);
-      notify('Gagal', 'Gagal memproses task.', 'error');
+      console.error(`Failed to set goal status to ${status}:`, e);
+      patchGoalLocally(goalId, { status: previous });
+      notify('Gagal', 'Status tidak tersimpan. Coba lagi.', 'error');
     }
   };
 
-  const handleRevisionGoal = async (goalId: string) => {
-    updateState((s: any) => ({
-      ...s,
-      goals: s.goals.map((goal: any) =>
-        String(goal.id) === String(goalId) ? { ...goal, status: 'revision' } : goal
-      )
-    }));
-    try {
-      await fetch('/api/goals/update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ goalId, updates: { status: 'revision' } })
-      });
-      notify('KPI Revision', `Goal membutuhkan perbaikan (revisi).`, 'warning');
-    } catch (e) { console.error('Failed to request revision:', e); }
-  };
+  const handleApproveGoal = (goalId: string) =>
+    setGoalStatus(goalId, 'approved', { title: 'KPI Approved', message: 'Target telah disetujui.', tone: 'success' });
+
+  const handleRejectGoal = (goalId: string) =>
+    setGoalStatus(goalId, 'rejected', { title: 'KPI Rejected', message: 'Target telah ditolak.', tone: 'error' });
+
+  const handleRevisionGoal = (goalId: string) =>
+    setGoalStatus(goalId, 'revision', { title: 'KPI Revision', message: 'Target dikembalikan untuk direvisi.', tone: 'warning' });
 
   return {
     loadingKpis,
     combinedMyGoals,
     assignedGoals,
     topLevelGoals,
-    handleVerifyTask,
-    handleRejectTask,
-    handleManagerVerifyKpiTask,
-    handleManagerRejectKpiTask,
     executeDeleteGoal,
     handleEditProgress,
     handleApproveGoal,

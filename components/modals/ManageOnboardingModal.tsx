@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { HP_TOKENS, HP_FONT, HP_TEXT } from '@/lib/constants';
+import { HP_TOKENS, HP_FONT, HP_TEXT, HP_CATEGORICAL } from '@/lib/constants';
 import HPGlyph from '@/components/ui/HPGlyph';
 import HPCard from '@/components/ui/HPCard';
 import { useHP } from '@/lib/HPContext';
@@ -69,7 +69,7 @@ export default function ManageOnboardingModal({ onClose }: Props) {
       tag: `✨ LANGKAH ${steps.length + 1} / ${steps.length + 1}`,
       q: 'Pertanyaan baru?',
       hint: 'Penjelasan tambahan...',
-      opts: [{ e: '🌟', bg: HP_TOKENS.infoWash, l: 'Opsi 1' }]
+      opts: [{ e: '🌟', l: 'Opsi 1' }]
     }];
     newSteps.forEach((s, i) => {
       s.tag = s.tag.replace(/LANGKAH \d+ \/ \d+/, `LANGKAH ${i+1} / ${newSteps.length}`);
@@ -87,7 +87,7 @@ export default function ManageOnboardingModal({ onClose }: Props) {
 
   if (previewMode) {
     return (
-      <div style={{ position: 'fixed', inset: 0, zIndex: 100000, background: '#fff' }}>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 100000, background: HP_TOKENS.paper }}>
         <button onClick={() => setPreviewMode(false)} style={{
           position: 'absolute', top: 20, right: 20, zIndex: 100001,
           padding: '12px 24px', background: HP_TOKENS.ink, color: '#fff',
@@ -158,7 +158,7 @@ export default function ManageOnboardingModal({ onClose }: Props) {
                       </div>
                       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                         {resolveStepOptions(step, departments).map((o: any, oi: number) => (
-                          <div key={oi} style={{ padding: '4px 10px', borderRadius: HP_TOKENS.radius, background: o.bg, fontSize: 12, fontWeight: 600 }}>{o.e} {o.l}</div>
+                          <div key={oi} style={{ padding: '4px 10px', borderRadius: HP_TOKENS.radius, color: HP_CATEGORICAL[oi % HP_CATEGORICAL.length], background: `color-mix(in srgb, ${HP_CATEGORICAL[oi % HP_CATEGORICAL.length]} 14%, transparent)`, fontSize: 12, fontWeight: 600 }}>{o.e} {o.l}</div>
                         ))}
                         {departments.length === 0 && (
                           <div style={{ fontSize: 12, color: HP_TOKENS.inkMute }}>Belum ada departemen terdaftar di HR.</div>
@@ -170,12 +170,16 @@ export default function ManageOnboardingModal({ onClose }: Props) {
                       {step.opts.map((opt: any, oidx: number) => (
                         <div key={oidx} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
                           <input value={opt.e} onChange={e => { const n = [...steps]; n[idx].opts[oidx].e = e.target.value; setSteps(n); }} style={{ width: 50, padding: 8, borderRadius: 8, border: `1px solid ${HP_TOKENS.line}`, textAlign: 'center' }} />
-                          <input value={opt.bg} onChange={e => { const n = [...steps]; n[idx].opts[oidx].bg = e.target.value; setSteps(n); }} style={{ width: 80, padding: 8, borderRadius: 8, border: `1px solid ${HP_TOKENS.line}` }} />
                           <input value={opt.l} onChange={e => { const n = [...steps]; n[idx].opts[oidx].l = e.target.value; setSteps(n); }} style={{ flex: 1, padding: 8, borderRadius: 8, border: `1px solid ${HP_TOKENS.line}` }} />
-                          <button onClick={() => { const n = [...steps]; n[idx].opts.splice(oidx,1); setSteps(n); }} style={{ background: 'transparent', border: 'none', color: HP_TOKENS.coral, cursor: 'pointer' }}>Hapus</button>
+                          <button onClick={() => { const n = [...steps]; n[idx].opts.splice(oidx,1); setSteps(n); }} style={{ background: 'transparent', border: 'none', color: HP_TOKENS.coralInk, cursor: 'pointer' }}>Hapus</button>
                         </div>
                       ))}
-                      <button onClick={() => { const n = [...steps]; n[idx].opts.push({e:'✨', bg:HP_TOKENS.lineSoft, l:'Opsi baru'}); setSteps(n); }} style={{ background: HP_TOKENS.lineSoft, padding: '6px 12px', borderRadius: 8, border: 'none', fontSize: 12, cursor: 'pointer', marginBottom: 16 }}>+ Tambah Opsi</button>
+                      {/* Warna opsi tidak lagi diatur per-opsi: onboarding mewarnainya
+                          otomatis dari palet kategori agar konsisten & aman di dark mode. */}
+                      <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, marginBottom: 8 }}>
+                        Warna tiap opsi diatur otomatis oleh sistem desain.
+                      </div>
+                      <button onClick={() => { const n = [...steps]; n[idx].opts.push({e:'✨', l:'Opsi baru'}); setSteps(n); }} style={{ background: HP_TOKENS.lineSoft, padding: '6px 12px', borderRadius: 8, border: 'none', fontSize: 12, cursor: 'pointer', marginBottom: 16 }}>+ Tambah Opsi</button>
                     </>
                   )}
                   <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -185,25 +189,29 @@ export default function ManageOnboardingModal({ onClose }: Props) {
               ) : (
                 <div style={{ display: 'flex', gap: 16 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <button onClick={() => moveStep(idx, -1)} disabled={idx===0} style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: idx===0?0.2:1 }}>⬆️</button>
-                    <button onClick={() => moveStep(idx, 1)} disabled={idx===steps.length-1} style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: idx===steps.length-1?0.2:1 }}>⬇️</button>
+                    <button onClick={() => moveStep(idx, -1)} disabled={idx===0} style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: idx===0?0.2:1 }}><HPGlyph name="arrowUp" size={14} color="currentColor" /></button>
+                    <button onClick={() => moveStep(idx, 1)} disabled={idx===steps.length-1} style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: idx===steps.length-1?0.2:1 }}><HPGlyph name="arrowDown" size={14} color="currentColor" /></button>
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: HP_TOKENS.lavender, marginBottom: 4 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: HP_TOKENS.lavenderInk, marginBottom: 4 }}>
                       LANGKAH {idx + 1}{step.dynamicSource === 'departments' ? ' · 🔗 Terhubung ke Departemen HR' : ''}
                     </div>
                     <div style={{ fontSize: 16, fontWeight: 700, color: HP_TOKENS.ink }}>{step.q}</div>
                     <div style={{ fontSize: 13, color: HP_TOKENS.inkSoft, marginTop: 2, marginBottom: 12 }}>{step.hint}</div>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      {/* Per-option `bg` is deprecated and undefined on every config
+                          saved since, which left these pills with no fill at all.
+                          Colour them the way onboarding itself does: from the
+                          categorical palette, by position. */}
                       {resolveStepOptions(step, departments).map((o: any, oi: number) => (
-                        <div key={oi} style={{ padding: '4px 10px', borderRadius: HP_TOKENS.radius, background: o.bg, fontSize: 12, fontWeight: 600 }}>{o.e} {o.l}</div>
+                        <div key={oi} style={{ padding: '4px 10px', borderRadius: HP_TOKENS.radius, color: HP_CATEGORICAL[oi % HP_CATEGORICAL.length], background: `color-mix(in srgb, ${HP_CATEGORICAL[oi % HP_CATEGORICAL.length]} 14%, transparent)`, fontSize: 12, fontWeight: 600 }}>{o.e} {o.l}</div>
                       ))}
                     </div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <button onClick={() => setEditingIndex(idx)} style={{ background: HP_TOKENS.lineSoft, border: 'none', padding: '8px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>Edit</button>
                     {step.dynamicSource !== 'departments' && (
-                      <button onClick={() => removeStep(idx)} style={{ background: 'transparent', border: `1px solid ${HP_TOKENS.coral}40`, color: HP_TOKENS.coral, padding: '8px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>Hapus</button>
+                      <button onClick={() => removeStep(idx)} style={{ background: 'transparent', border: `1px solid ${HP_TOKENS.coral}40`, color: HP_TOKENS.coralInk, padding: '8px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>Hapus</button>
                     )}
                   </div>
                 </div>

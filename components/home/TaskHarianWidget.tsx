@@ -18,7 +18,10 @@ import {
 } from "@/components/ui";
 import SectionHeader from "@/components/home/SectionHeader";
 import PriorityCard from "@/components/home/PriorityCard";
+import { deleteTaskRemote } from "@/lib/taskClient";
 import TaskCompleteModal from "@/components/modals/TaskCompleteModal";
+import { usePointsQuota, quotaLabel } from "@/hooks/usePointsQuota";
+import { scrollIntoViewSafely } from "@/lib/motion";
 
 interface Props {
   openModal: (name: string, props?: any) => void;
@@ -26,12 +29,14 @@ interface Props {
 }
 
 export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
-  const { state, updateState, user, awardXP, syncSkillProgress } = useHP();
+  const { state, updateState, user, awardXP, revokeXP, syncSkillProgress, notify } = useHP();
+  const quota = usePointsQuota(['task_complete']);
+  const taskQuota = quotaLabel(quota.task_complete);
+  const quotaFull =
+    !!quota.task_complete?.limit && quota.task_complete.used >= quota.task_complete.limit;
   const [completingTask, setCompletingTask] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [highlightedTaskId, setHighlightedTaskId] = useState<any>(null);
-  // Tracks task IDs that already got XP this session — prevents undo→redo and link-update exploits
-  const xpAwardedRef = React.useRef<Set<any>>(new Set());
 
   // Listen for navigation requests from GoalsScreen linked task rows
   React.useEffect(() => {
@@ -60,7 +65,7 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
       setHighlightedTaskId(taskId);
       setTimeout(() => {
         const el = document.getElementById('task-harian-section');
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        scrollIntoViewSafely(el, { behavior: 'smooth', block: 'start' });
       }, 50);
       setTimeout(() => setHighlightedTaskId(null), 3000);
     };
@@ -84,9 +89,10 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
         body: JSON.stringify({ id, done: false, partialProgress: 0, status: 'todo' }),
       }).catch(e => console.error('Task undo persist failed:', e));
 
-      // Revoke the points awarded for this task
-      awardXP('priority_undo', `Selesaikan: ${priority.title}`);
-      xpAwardedRef.current.delete(id);
+      // Tarik kembali poin task ini. Kuncinya `task:<id>` — server menulis baris
+      // pembalikan dan membiarkan baris aslinya, jadi menyelesaikan task ini lagi
+      // nanti tidak akan membayar untuk kedua kalinya.
+      revokeXP('task_complete', `task:${id}`, `Dibatalkan: ${priority.title}`);
 
       const prevPct = priority.done ? 100 : (priority.partial_progress || 0);
       if (priority.weekly_target_id && prevPct > 0) {
@@ -118,9 +124,18 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
         return { ...s, priorities: newPriorities, goals: updatedGoals };
       });
     }
-  }, [state, updateState]);
+  }, [state, updateState, revokeXP]);
 
   const deletePriority = useCallback((id: number) => {
+    // Delete the row for real. This used to change React state only and rely on
+    // the blob sync to notice the absence, which no longer carries tasks — the
+    // task would reappear on the next refetch.
+    if (user?.id) {
+      deleteTaskRemote(id, user.id).then(ok => {
+        if (!ok) notify("Gagal Menghapus", "Task tidak terhapus di server. Muat ulang halaman.", "error");
+      });
+    }
+
     updateState((s: any) => {
       const taskToDelete = s.priorities.find((p: any) => p.id === id);
       if (!taskToDelete) return s;
@@ -159,7 +174,7 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
         ...extraState 
       };
     });
-  }, [updateState]);
+  }, [updateState, user, notify]);
 
   const confirmTaskComplete = useCallback(async (data: {
     proofLinks: string[]; isProject: boolean; metricValue?: number; notes?: string; completionPercent: number; completedAt?: string;
@@ -187,7 +202,7 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
           id,
           done: nowFullyDone,
           partialProgress: nowFullyDone ? 100 : newProgress,
-          status: nowFullyDone ? 'accepted' : 'in_progress',
+          status: nowFullyDone ? 'pending_review' : 'in_progress',
           proofLinks: data.proofLinks,
           notes: data.notes,
           metricValue: data.metricValue,
@@ -231,9 +246,12 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
 
     // Award XP only on genuine first-time completion: task wasn't already done,
     // actual new progress was made, and this task hasn't been awarded XP this session.
-    if (nowFullyDone && !completingTask.done && progressDelta > 0 && !xpAwardedRef.current.has(id)) {
-      xpAwardedRef.current.add(id);
-      awardXP('priority_complete', `Selesaikan: ${completingTask.title}`);
+    // Poin hanya untuk penyelesaian penuh yang benar-benar menambah progres.
+    // Penjaga anti-bayar-ganda ada di server lewat kunci `task:<id>`, bukan lagi
+    // lewat useRef di sini: ref hilang setiap komponen remount (pindah tab,
+    // refresh), sehingga task yang sama bisa dibayar lagi setelah remount.
+    if (nowFullyDone && !completingTask.done && progressDelta > 0) {
+      awardXP('task_complete', `Selesaikan: ${completingTask.title}`, `task:${id}`);
     }
 
     updateState((s: any) => {
@@ -248,7 +266,7 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
       newPriorities[pIndex] = {
         ...newPriorities[pIndex],
         done: nowFullyDone,
-        status: nowFullyDone ? 'accepted' : 'in_progress',
+        status: nowFullyDone ? 'pending_review' : 'in_progress',
         proof_links: data.proofLinks,
         is_project: data.isProject || isPartial,
         metric_value: data.metricValue || null,
@@ -366,6 +384,20 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
               {done}/{total}
             </div>
             <div style={{ ...HP_TEXT.small, fontSize: 12 }}>selesai</div>
+            {/*
+              Jatah poin hari ini. Ditampilkan di sini — bukan di guide — supaya
+              angkanya muncul saat sedang relevan, sebagai dorongan ("tinggal 2
+              lagi") dan bukan sebagai spesifikasi yang mengundang orang
+              menjumlahkan seluruh plafon harian.
+
+              Setelah jatahnya penuh, teksnya berhenti menakut-nakuti: task tetap
+              boleh diselesaikan dan tetap terlihat manajer.
+            */}
+            {taskQuota && (
+              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, marginTop: 6 }}>
+                {quotaFull ? 'jatah poin penuh' : `poin ${taskQuota}`}
+              </div>
+            )}
           </div>
         </Row>
 
@@ -379,7 +411,7 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
           <FadeIn style={{ marginTop: 14 }}>
             <Row gap={3} p={3} style={{ background: HP_TOKENS.sunken, borderRadius: HP_TOKENS.radiusMd }}>
               <IconBadge size={32} tone={HP_TOKENS.yellowSoft}>
-                <HPGlyph name="sparkle" size={15} color={HP_TOKENS.yellowDark} />
+                <HPGlyph name="sparkle" size={15} color={HP_TOKENS.yellowInk} />
               </IconBadge>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={HP_TEXT.tiny}>Sedang fokus</div>
@@ -387,7 +419,7 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
                   {focusTask.title || 'Focus task'}
                 </div>
               </div>
-              <span style={{ ...HP_TEXT.bodyStrong, color: HP_TOKENS.yellowDark, fontVariantNumeric: 'tabular-nums' }}>
+              <span style={{ ...HP_TEXT.bodyStrong, color: HP_TOKENS.yellowInk, fontVariantNumeric: 'tabular-nums' }}>
                 {state.focusProgress || 0}%
               </span>
             </Row>

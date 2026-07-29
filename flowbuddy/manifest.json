@@ -15,13 +15,13 @@
     {
       "matches": ["<all_urls>"],
       "css": ["css/mascot.css"],
-      "js": ["js/mascot-state.js", "js/sync.js", "mascot-content.js"],
+      "js": ["js/mascot-state.js", "mascot-content.js"],
       "run_at": "document_idle",
       "all_frames": false
     },
     {
       "matches": ["*://flowbuddy.maxy.academy/*", "*://happily-flowbuddy.vercel.app/*", "*://localhost/*"],
-      "js": ["content.js"],
+      "js": ["js/sync.js", "content.js"],
       "run_at": "document_idle"
     }
   ],

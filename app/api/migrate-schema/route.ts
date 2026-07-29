@@ -51,6 +51,22 @@ export async function POST() {
       )`
     },
     {
+      // Senggol tidak berpoin, jadi tabel ini bukan bagian dari ekonomi — ia
+      // hanya menyimpan jejak untuk rate limit (10/hari per pengirim, 1/hari
+      // per penerima) supaya fitur sapaan ringan tidak jadi jalur spam
+      // notifikasi. Sebelumnya route-nya sama sekali tanpa rem.
+      desc: "Create senggol_log table",
+      sql: `CREATE TABLE IF NOT EXISTS senggol_log (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        sender_id VARCHAR(100) NOT NULL,
+        receiver_id VARCHAR(100) NOT NULL,
+        type VARCHAR(20) DEFAULT 'greet',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_senggol_sender (sender_id, created_at),
+        INDEX idx_senggol_pair (sender_id, receiver_id, created_at)
+      )`
+    },
+    {
       desc: "Create global_settings table",
       sql: `CREATE TABLE IF NOT EXISTS global_settings (
         \`key\` VARCHAR(255) PRIMARY KEY,
@@ -344,6 +360,44 @@ export async function POST() {
       )`
     },
     {
+      // Memori Buddy — fakta tahan-lama tentang seorang user, dipakai untuk
+      // menyambung percakapan lintas hari. Data pribadi: hanya dibaca oleh
+      // pemiliknya sendiri, tidak pernah masuk ke permukaan manager/HR.
+      desc: "Create ai_memory table",
+      sql: `CREATE TABLE IF NOT EXISTS ai_memory (
+        id VARCHAR(100) PRIMARY KEY,
+        user_id VARCHAR(100) NOT NULL,
+        kind VARCHAR(30) NOT NULL DEFAULT 'context',
+        content VARCHAR(500) NOT NULL,
+        fingerprint VARCHAR(64) NOT NULL,
+        confidence INT DEFAULT 70,
+        source VARCHAR(30) DEFAULT 'coach',
+        status VARCHAR(20) DEFAULT 'active',
+        times_seen INT DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        last_used_at DATETIME DEFAULT NULL,
+        expires_at DATETIME DEFAULT NULL,
+        UNIQUE KEY uniq_user_fingerprint (user_id, fingerprint),
+        KEY idx_user_status (user_id, status)
+      )`
+    },
+    {
+      // Analisa bulanan sebelumnya menulis ke tabel yang tidak pernah dibuat —
+      // INSERT-nya ditelan try/catch, jadi hasilnya hilang tanpa error.
+      desc: "Create ai_monthly_analyses table",
+      sql: `CREATE TABLE IF NOT EXISTS ai_monthly_analyses (
+        id VARCHAR(100) PRIMARY KEY,
+        user_id VARCHAR(100) NOT NULL,
+        month INT NOT NULL,
+        year INT NOT NULL,
+        analysis_text MEDIUMTEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uniq_user_period (user_id, month, year)
+      )`
+    },
+    {
       desc: "Create push_subscriptions table",
       sql: `CREATE TABLE IF NOT EXISTS push_subscriptions (
         id INT PRIMARY KEY AUTO_INCREMENT,
@@ -406,6 +460,47 @@ export async function POST() {
       )`
     },
     {
+      // Satu baris per user, bukan per sesi. Refresh token Google berlaku sampai
+      // dicabut, jadi menyimpannya di sini adalah yang membuat "sambungkan
+      // kalender" cukup dilakukan sekali seumur hidup akun — sinkronisasi
+      // berikutnya berjalan dari server tanpa browser user terbuka.
+      desc: "Create google_integrations table",
+      sql: `CREATE TABLE IF NOT EXISTS google_integrations (
+        user_id VARCHAR(100) PRIMARY KEY,
+        google_email VARCHAR(255),
+        refresh_token TEXT NOT NULL,
+        access_token TEXT,
+        access_token_expires_at DATETIME,
+        scope TEXT,
+        sync_token TEXT,
+        calendar_id VARCHAR(255) DEFAULT 'primary',
+        last_synced_at DATETIME,
+        status VARCHAR(30) DEFAULT 'active',
+        error_message TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )`
+    },
+    {
+      // Antrean penghapusan lintas-akun.
+      //
+      // Saat sebuah agenda dihapus, salinannya harus ikut hilang dari Google
+      // Calendar setiap peserta — tapi kita hanya boleh menyentuh akun Google
+      // seseorang memakai token miliknya sendiri, dan menghapus satu per satu
+      // di dalam request itu berarti undangan ke 200 orang menahan responsnya
+      // selama menit-menitan. Barisnya dititipkan di sini dan dikuras cron.
+      desc: "Create google_event_deletions table",
+      sql: `CREATE TABLE IF NOT EXISTS google_event_deletions (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        user_id VARCHAR(100) NOT NULL,
+        google_event_id VARCHAR(255) NOT NULL,
+        attempts INT DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_gcal_del_user (user_id)
+      )`
+    },
+    {
       desc: "Create focus_rooms table",
       sql: `CREATE TABLE IF NOT EXISTS focus_rooms (
         id VARCHAR(100) PRIMARY KEY,
@@ -430,6 +525,33 @@ export async function POST() {
         PRIMARY KEY (room_id, user_id),
         FOREIGN KEY (room_id) REFERENCES focus_rooms(id) ON DELETE CASCADE,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )`
+    },
+    {
+      // Jejak audit setiap keputusan otoritas di ruang fokus. Host boleh
+      // menendang dan membubarkan; tabel ini yang membuat kekuasaan itu bisa
+      // ditinjau, dan yang membuat rekonstruksi `focused_secs` bisa diaudit.
+      desc: "Create focus_room_events table",
+      sql: `CREATE TABLE IF NOT EXISTS focus_room_events (
+        id VARCHAR(64) PRIMARY KEY,
+        room_id VARCHAR(100) NOT NULL,
+        actor_id VARCHAR(100) DEFAULT NULL,
+        target_id VARCHAR(100) DEFAULT NULL,
+        event_type VARCHAR(32) NOT NULL,
+        payload TEXT DEFAULT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_focus_events_room (room_id, created_at)
+      )`
+    },
+    {
+      desc: "Create focus_room_bans table",
+      sql: `CREATE TABLE IF NOT EXISTS focus_room_bans (
+        room_id VARCHAR(100) NOT NULL,
+        user_id VARCHAR(100) NOT NULL,
+        banned_by VARCHAR(100) NOT NULL,
+        reason VARCHAR(255) DEFAULT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (room_id, user_id)
       )`
     },
     {
@@ -494,6 +616,26 @@ export async function POST() {
     { desc: "users.hr_access", sql: "ALTER TABLE users ADD COLUMN hr_access INTEGER DEFAULT 0" },
     { desc: "users.onboarding_answers", sql: "ALTER TABLE users ADD COLUMN onboarding_answers TEXT DEFAULT NULL" },
 
+    // ── Calendar events table (integrasi Google Calendar) ──
+    // `source` memisahkan event yang lahir di Flowbee dari yang ditarik dari
+    // Google. Tanpa pemisahan itu, event hasil tarikan akan didorong balik ke
+    // Google pada putaran berikutnya dan berkembang biak tiap sinkronisasi.
+    { desc: "calendar_events.source", sql: "ALTER TABLE calendar_events ADD COLUMN source VARCHAR(20) DEFAULT 'flowbee'" },
+    { desc: "calendar_events.google_event_id", sql: "ALTER TABLE calendar_events ADD COLUMN google_event_id VARCHAR(255) DEFAULT NULL" },
+    { desc: "calendar_events.google_synced_at", sql: "ALTER TABLE calendar_events ADD COLUMN google_synced_at DATETIME DEFAULT NULL" },
+    // Pembanding untuk memutuskan sisi mana yang lebih baru saat event yang sama
+    // disunting di dua tempat.
+    { desc: "calendar_events.updated_at", sql: "ALTER TABLE calendar_events ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" },
+    { desc: "calendar_events.idx_google_event", sql: "ALTER TABLE calendar_events ADD INDEX idx_cal_google_event (google_event_id)" },
+
+    // ── Calendar attendees table ──
+    // Satu agenda Flowbee menjadi beberapa event Google yang berbeda: satu di
+    // kalender pembuatnya, satu lagi di kalender tiap peserta. Karena id-nya
+    // berbeda per akun, pemetaannya tidak muat di satu kolom pada
+    // `calendar_events` dan harus tinggal di baris peserta masing-masing.
+    { desc: "calendar_attendees.google_event_id", sql: "ALTER TABLE calendar_attendees ADD COLUMN google_event_id VARCHAR(255) DEFAULT NULL" },
+    { desc: "calendar_attendees.google_synced_at", sql: "ALTER TABLE calendar_attendees ADD COLUMN google_synced_at DATETIME DEFAULT NULL" },
+
     // ── Divisions table ──
     { desc: "divisions.manager_id", sql: "ALTER TABLE divisions ADD COLUMN manager_id VARCHAR(100) DEFAULT NULL" },
 
@@ -526,6 +668,11 @@ export async function POST() {
     { desc: "daily_priorities.status", sql: "ALTER TABLE daily_priorities ADD COLUMN status VARCHAR(50) DEFAULT NULL" },
     { desc: "daily_priorities.weekly_target_id", sql: "ALTER TABLE daily_priorities ADD COLUMN weekly_target_id VARCHAR(100) DEFAULT NULL" },
     { desc: "daily_priorities.weekly_target_title", sql: "ALTER TABLE daily_priorities ADD COLUMN weekly_target_title VARCHAR(500) DEFAULT NULL" },
+    // Manager review metadata. Kept apart from proof_notes, which belongs to the
+    // employee — the pending-review PUT used to overwrite the proof with it.
+    { desc: "daily_priorities.review_note", sql: "ALTER TABLE daily_priorities ADD COLUMN review_note TEXT DEFAULT NULL" },
+    { desc: "daily_priorities.reviewed_by", sql: "ALTER TABLE daily_priorities ADD COLUMN reviewed_by VARCHAR(100) DEFAULT NULL" },
+    { desc: "daily_priorities.reviewed_at", sql: "ALTER TABLE daily_priorities ADD COLUMN reviewed_at DATETIME DEFAULT NULL" },
 
     // ── Notes table ──
     { desc: "notes.id_to_varchar", sql: "ALTER TABLE notes MODIFY COLUMN id VARCHAR(255)" },
@@ -537,6 +684,13 @@ export async function POST() {
     { desc: "xp_transactions.id_to_varchar", sql: "ALTER TABLE xp_transactions MODIFY COLUMN id VARCHAR(255)" },
     { desc: "xp_transactions.action_type", sql: "ALTER TABLE xp_transactions ADD COLUMN action_type VARCHAR(100)" },
     { desc: "xp_transactions.description", sql: "ALTER TABLE xp_transactions ADD COLUMN description TEXT" },
+    // Kunci idempoten: identitas kejadian yang dibayar. Bersama kunci unik di
+    // PHASE 2.5, inilah yang membuat satu kejadian mustahil dibayar dua kali —
+    // termasuk lewat batalkan-lalu-ulangi.
+    { desc: "xp_transactions.ref_id", sql: "ALTER TABLE xp_transactions ADD COLUMN ref_id VARCHAR(120) DEFAULT NULL" },
+    // Ledger append-only: pembalikan ditulis sebagai baris 'reversal' bernilai
+    // negatif, bukan dengan menghapus baris aslinya.
+    { desc: "xp_transactions.kind", sql: "ALTER TABLE xp_transactions ADD COLUMN kind VARCHAR(16) NOT NULL DEFAULT 'earn'" },
 
     // ── Rewards table ──
     { desc: "rewards.stock", sql: "ALTER TABLE rewards ADD COLUMN stock INTEGER DEFAULT 999" },
@@ -605,7 +759,37 @@ export async function POST() {
       // Model target: 1 KPI diselesaikan beberapa target dgn durasi bebas — bukan wajib mingguan.
       desc: "weekly_targets.timeframe",
       sql: `ALTER TABLE weekly_targets ADD COLUMN timeframe VARCHAR(120) DEFAULT NULL`
-    }
+    },
+
+    // ── Live Coworking: ruang fokus otoritatif di server ──
+    // `join_code` sengaja dipisah dari `id`. Sebelumnya kode "rahasia" ruangan
+    // adalah primary key-nya, dan primary key itu dikirim ke setiap klien yang
+    // memuat lobby — jadi gerbang kode sepenuhnya kosmetik.
+    { desc: "focus_rooms.join_code", sql: `ALTER TABLE focus_rooms ADD COLUMN join_code VARCHAR(12) DEFAULT NULL` },
+    { desc: "focus_rooms.visibility", sql: `ALTER TABLE focus_rooms ADD COLUMN visibility VARCHAR(16) DEFAULT 'public'` },
+    { desc: "focus_rooms.max_participants", sql: `ALTER TABLE focus_rooms ADD COLUMN max_participants INT DEFAULT 8` },
+    { desc: "focus_rooms.join_policy", sql: `ALTER TABLE focus_rooms ADD COLUMN join_policy VARCHAR(16) DEFAULT 'open_early'` },
+    // Sumber kebenaran waktu. Semua klien menurunkan sisa waktu dari kolom ini,
+    // bukan dari setInterval lokal yang di-throttle browser saat tab di latar.
+    { desc: "focus_rooms.ends_at", sql: `ALTER TABLE focus_rooms ADD COLUMN ends_at DATETIME DEFAULT NULL` },
+    { desc: "focus_rooms.host_last_seen", sql: `ALTER TABLE focus_rooms ADD COLUMN host_last_seen DATETIME DEFAULT NULL` },
+    { desc: "focus_rooms.closed_reason", sql: `ALTER TABLE focus_rooms ADD COLUMN closed_reason VARCHAR(32) DEFAULT NULL` },
+    { desc: "focus_rooms.settled_at", sql: `ALTER TABLE focus_rooms ADD COLUMN settled_at DATETIME DEFAULT NULL` },
+
+    { desc: "focus_room_participants.role", sql: `ALTER TABLE focus_room_participants ADD COLUMN role VARCHAR(16) DEFAULT 'member'` },
+    { desc: "focus_room_participants.joined_session_at", sql: `ALTER TABLE focus_room_participants ADD COLUMN joined_session_at DATETIME DEFAULT NULL` },
+    // Akumulasi detik fokus yang terbukti. HANYA ditulis server dari transisi
+    // status; klien tidak pernah mengirim angka ini.
+    { desc: "focus_room_participants.focused_secs", sql: `ALTER TABLE focus_room_participants ADD COLUMN focused_secs INT DEFAULT 0` },
+    { desc: "focus_room_participants.interrupt_secs", sql: `ALTER TABLE focus_room_participants ADD COLUMN interrupt_secs INT DEFAULT 0` },
+    { desc: "focus_room_participants.interrupts_used", sql: `ALTER TABLE focus_room_participants ADD COLUMN interrupts_used INT DEFAULT 0` },
+    { desc: "focus_room_participants.interrupted_at", sql: `ALTER TABLE focus_room_participants ADD COLUMN interrupted_at DATETIME DEFAULT NULL` },
+    { desc: "focus_room_participants.interrupt_kind", sql: `ALTER TABLE focus_room_participants ADD COLUMN interrupt_kind VARCHAR(16) DEFAULT NULL` },
+    { desc: "focus_room_participants.last_heartbeat", sql: `ALTER TABLE focus_room_participants ADD COLUMN last_heartbeat DATETIME DEFAULT NULL` },
+    { desc: "focus_room_participants.state_changed_at", sql: `ALTER TABLE focus_room_participants ADD COLUMN state_changed_at DATETIME DEFAULT NULL` },
+    { desc: "focus_room_participants.outcome", sql: `ALTER TABLE focus_room_participants ADD COLUMN outcome VARCHAR(24) DEFAULT NULL` },
+    { desc: "focus_room_participants.outcome_note", sql: `ALTER TABLE focus_room_participants ADD COLUMN outcome_note VARCHAR(255) DEFAULT NULL` },
+    { desc: "focus_room_participants.awarded_points", sql: `ALTER TABLE focus_room_participants ADD COLUMN awarded_points INT DEFAULT NULL` }
   ];
 
   for (const c of columns) {
@@ -618,6 +802,128 @@ export async function POST() {
       } else {
         results.push(`❌ ${c.desc}: ${e.message}`);
       }
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // PHASE 2.4: Backfill ruang fokus
+  // ═══════════════════════════════════════════════════════
+  // Kolom `role` menggantikan `is_host`. Baris lama disalin supaya pemeriksaan
+  // wewenang yang baru langsung benar untuk ruangan yang sudah ada.
+  try {
+    await db.execute(
+      `UPDATE focus_room_participants SET role = 'host' WHERE is_host = 1 AND (role IS NULL OR role = 'member')`
+    );
+    await db.execute(
+      `UPDATE focus_room_participants SET role = 'member' WHERE role IS NULL`
+    );
+    results.push("✅ Backfilled focus_room_participants.role from is_host");
+  } catch (e: any) {
+    results.push(`❌ Backfill focus_room_participants.role: ${e.message}`);
+  }
+
+  // Ruangan lama memakai id sebagai kode. Disalin apa adanya supaya tidak ada
+  // ruangan tanpa kode; ruangan baru mendapat kode acak yang terpisah dari id.
+  try {
+    await db.execute(`UPDATE focus_rooms SET join_code = id WHERE join_code IS NULL`);
+    results.push("✅ Backfilled focus_rooms.join_code");
+  } catch (e: any) {
+    results.push(`❌ Backfill focus_rooms.join_code: ${e.message}`);
+  }
+
+  // Ruangan lama tak punya ends_at. Diturunkan dari started_at + durasi supaya
+  // reaper dan penghitung sisa waktu tidak menemui NULL.
+  try {
+    await db.execute(
+      `UPDATE focus_rooms SET ends_at = DATE_ADD(started_at, INTERVAL duration_mins MINUTE)
+       WHERE ends_at IS NULL AND started_at IS NOT NULL`
+    );
+    results.push("✅ Backfilled focus_rooms.ends_at");
+  } catch (e: any) {
+    results.push(`❌ Backfill focus_rooms.ends_at: ${e.message}`);
+  }
+
+  // Ruangan lama berstatus 'started'; skema baru memakai 'running'.
+  try {
+    await db.execute(`UPDATE focus_rooms SET status = 'running' WHERE status = 'started'`);
+    results.push("✅ Normalised focus_rooms.status started → running");
+  } catch (e: any) {
+    results.push(`❌ Normalise focus_rooms.status: ${e.message}`);
+  }
+
+  try {
+    await db.execute(`ALTER TABLE focus_rooms ADD UNIQUE KEY uniq_focus_join_code (join_code)`);
+    results.push("✅ Added unique key focus_rooms.uniq_focus_join_code");
+  } catch (e: any) {
+    if (e.code === "ER_DUP_KEYNAME" || e.message?.includes("Duplicate key name")) {
+      results.push("⏭️ uniq_focus_join_code (already exists)");
+    } else if (e.code === "ER_DUP_ENTRY" || e.message?.includes("Duplicate entry")) {
+      results.push(`❌ uniq_focus_join_code: ada kode kembar di focus_rooms — bersihkan dulu. ${e.message}`);
+    } else {
+      results.push(`❌ uniq_focus_join_code: ${e.message}`);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // PHASE 2.5: Kunci idempoten ledger poin
+  // ═══════════════════════════════════════════════════════
+  // Baris lama tidak punya ref_id. Diberi penanda `legacy:<id>` supaya masing-
+  // masing unik dan tidak bentrok dengan kunci unik di bawah, sekaligus menjaga
+  // riwayat tetap utuh untuk penjumlahan leaderboard.
+  //
+  // Konsekuensi yang disengaja: task yang sudah selesai SEBELUM migrasi ini
+  // tidak punya kunci ber-format `task:<id>`, jadi kalau dibatalkan lalu
+  // diselesaikan lagi ia bisa dibayar satu kali lagi. Paparannya terbatas —
+  // maksimal sekali per task, dan tetap tunduk pada kuota 5 task/hari.
+  try {
+    await db.execute(
+      "UPDATE xp_transactions SET ref_id = CONCAT('legacy:', id) WHERE ref_id IS NULL"
+    );
+    results.push("✅ Backfilled xp_transactions.ref_id for legacy rows");
+  } catch (e: any) {
+    results.push(`❌ Backfill xp_transactions.ref_id: ${e.message}`);
+  }
+
+  try {
+    await db.execute("UPDATE xp_transactions SET kind = 'earn' WHERE kind IS NULL OR kind = ''");
+    results.push("✅ Backfilled xp_transactions.kind");
+  } catch (e: any) {
+    results.push(`❌ Backfill xp_transactions.kind: ${e.message}`);
+  }
+
+  // Kunci unik ini adalah penegak anti-bayar-ganda yang sebenarnya. Guard di
+  // sisi klien (useRef) hilang setiap komponen remount; batasan di sini tidak.
+  // Sekaligus menangkap balapan dua permintaan bersamaan dengan ref_id sama.
+  try {
+    await db.execute(
+      `ALTER TABLE xp_transactions
+         ADD UNIQUE KEY uniq_points_award (user_id, action_type, ref_id, kind)`
+    );
+    results.push("✅ Added unique key xp_transactions.uniq_points_award");
+  } catch (e: any) {
+    if (e.code === "ER_DUP_KEYNAME" || e.message?.includes("Duplicate key name")) {
+      results.push("⏭️ uniq_points_award (already exists)");
+    } else if (e.code === "ER_DUP_ENTRY" || e.message?.includes("Duplicate entry")) {
+      // Ada baris kembar dari sistem lama yang harus dibereskan manual dulu.
+      results.push(`❌ uniq_points_award: ada baris duplikat di xp_transactions — bersihkan dulu. ${e.message}`);
+    } else {
+      results.push(`❌ uniq_points_award: ${e.message}`);
+    }
+  }
+
+  // Kuota harian dihitung per (user, aksi, hari) — indeks ini menjaga query itu
+  // tetap murah saat ledger membesar.
+  try {
+    await db.execute(
+      `ALTER TABLE xp_transactions
+         ADD INDEX idx_points_quota (user_id, action_type, created_at)`
+    );
+    results.push("✅ Added index xp_transactions.idx_points_quota");
+  } catch (e: any) {
+    if (e.code === "ER_DUP_KEYNAME" || e.message?.includes("Duplicate key name")) {
+      results.push("⏭️ idx_points_quota (already exists)");
+    } else {
+      results.push(`❌ idx_points_quota: ${e.message}`);
     }
   }
 

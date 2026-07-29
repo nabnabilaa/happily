@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import { useHP, calculateLevelProgress } from "@/lib/HPContext";
+import { usePointsQuota, quotaLabel } from "@/hooks/usePointsQuota";
 import { HP_TOKENS, HP_TEXT, HP_MOODS, HP_ENERGY } from "@/lib/constants";
 import { generateAIInsights } from "@/lib/aiInsights";
 import { isMidDayWindow } from "@/lib/timeUtils";
@@ -30,12 +31,14 @@ import NotificationBanner from "@/components/pwa/NotificationBanner";
 import CentralNudgeOverlay from "@/components/ui/CentralNudgeOverlay";
 import MorningPlanPopup from "@/components/ui/MorningPlanPopup";
 import HPCard from "@/components/ui/HPCard";
-import { PageGrid, ActionList, Stack, Row, IconBadge } from "@/components/ui";
+import BreathingCard from "@/components/home/BreathingCard";
+import { PageGrid, ScreenHeader, Stack, Row, IconBadge, ListRow } from "@/components/ui";
 
 // Extracted
 import UserProfileCard from "@/components/home/UserProfileCard";
 import CoachNudgeBanner from "@/components/home/CoachNudgeBanner";
 import HabitDetailsModal from "@/components/home/HabitDetailsModal";
+import { scrollIntoViewSafely } from "@/lib/motion";
 
 interface HomeScreenProps {
   tab: string;
@@ -44,6 +47,9 @@ interface HomeScreenProps {
 
 export default function HomeScreen({ openModal }: any) {
   const { state: rawState, updateState, user: rawUser, awardXP, notify } = useHP();
+  // Jatah poin latihan hari ini, ditampilkan di kepala seksinya. Kuota per aksi
+  // muncul di tempat aksinya dikerjakan — bukan sebagai tabel plafon di guide.
+  const habitQuota = quotaLabel(usePointsQuota(['habit_complete']).habit_complete);
   
   const [confetti, setConfetti] = useState(false);
   const [celebrate, setCelebrate] = useState<{show: boolean, points?: number, message?: string}>({show: false});
@@ -108,6 +114,11 @@ export default function HomeScreen({ openModal }: any) {
     return null;
   }, [rawState?.logbook]);
 
+  const todayLabel = useMemo(
+    () => new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' }),
+    []
+  );
+
   const aiInsights = useMemo(() => generateAIInsights(rawState, rawUser), [rawState, rawUser]);
   const levelProgress = calculateLevelProgress(rawUser?.points || 0);
 
@@ -126,7 +137,7 @@ export default function HomeScreen({ openModal }: any) {
     if (!action) return;
     if (action === 'scroll_task') {
       const el = document.getElementById('task-section');
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      scrollIntoViewSafely(el, { behavior: 'smooth', block: 'center' });
     } else if (action === 'open_wellbeing') {
       openModal('checkin');
     } else if (action === 'open_logbook') {
@@ -151,9 +162,31 @@ export default function HomeScreen({ openModal }: any) {
         "Riwayat & Logbook" button. Nothing said what mattered.
       */}
       <div style={{ position: 'relative', zIndex: 1 }} className="hp-stagger">
+        {/*
+          Every other screen in the app opens with a `ScreenHeader` — Target &
+          KPI, Kalender, Notes, HR People. Home was the exception: it began
+          directly with a card, under a 59px app bar whose left half was blank.
+          The result was ~90px of empty paper at the top of the app's landing
+          screen, which is what read as "not ready".
+
+          The greeting was already being computed by `useTimeReminders` and
+          thrown away — nothing rendered it. It is now the page title, which is
+          both the right thing to say first and the thing that fills the gap.
+        */}
+        <ScreenHeader
+          title={`${greeting}${user?.name ? `, ${String(user.name).split(' ')[0]}` : ''}`}
+          subtitle={todayLabel}
+          style={{ padding: 0, marginBottom: 16 }}
+        />
+
         <PageGrid
           main={<>
             <NotificationBanner />
+
+            {/* Wellbeing leads the screen. It is the one number that should
+                change what you do with the rest of the day, so it sits above
+                the work rather than in the rail beside it. */}
+            <WellbeingGauge state={state} user={user} openModal={openModal} />
 
             {/* Mid-day check-in — time-sensitive, so it outranks everything
                 while its window is open, and disappears entirely after. */}
@@ -166,7 +199,7 @@ export default function HomeScreen({ openModal }: any) {
               >
                 <Row gap={3}>
                   <IconBadge size={40} tone={HP_TOKENS.yellowSoft}>
-                    <HPGlyph name="book" size={18} color={HP_TOKENS.yellowDark} />
+                    <HPGlyph name="book" size={18} color={HP_TOKENS.yellowInk} />
                   </IconBadge>
                   <Stack gap={0} style={{ flex: 1, minWidth: 0 }}>
                     <span style={{ ...HP_TEXT.sub, fontSize: 14.5 }}>Mid-day check-in siap</span>
@@ -274,6 +307,7 @@ export default function HomeScreen({ openModal }: any) {
               <SectionHeader
                 icon="leaf"
                 label="Daily Training"
+                count={habitQuota ? `poin ${habitQuota}` : undefined}
                 action="Atur"
                 onAction={() => openModal('manage_habits')}
               />
@@ -308,6 +342,13 @@ export default function HomeScreen({ openModal }: any) {
             {/* Live coworking rooms — real content, not a shortcut, so it keeps
                 its own block rather than collapsing into the action list. */}
             <CoworkingWidget openModal={openModal} />
+
+            {/* Box breathing. This was one row in the rail's "Lainnya" list —
+                i.e. the last item on the page on a phone, filed next to
+                "Panduan sistem". It is the fastest intervention the app has for
+                a bad afternoon, so it gets a block in the main column, after the
+                work rather than hidden behind it. */}
+            <BreathingCard openModal={openModal} />
 
             <SurveySection openModal={openModal} />
           </>}
@@ -350,6 +391,25 @@ export default function HomeScreen({ openModal }: any) {
               </Row>
 
               <AttendanceWidget openModal={openModal} />
+
+              {/* Logbook and attendance history belong to this card, not to a
+                  generic shortcut list at the bottom of the screen: both are
+                  "what happened on my working days". Neither depends on clock
+                  state — they are readable and writable before clock-in and
+                  after a forgotten clock-out. */}
+              <div style={{ marginTop: 4, borderTop: `1px solid ${HP_TOKENS.line}` }}>
+                <ListRow
+                  leading={<IconBadge size={32} tone={HP_TOKENS.sunken}><HPGlyph name="book" size={16} color={HP_TOKENS.inkSoft} /></IconBadge>}
+                  title="Riwayat & logbook"
+                  subtitle="Catatan harian, hadir atau tidak"
+                  onClick={() => openModal('logbook')}
+                />
+                <ListRow
+                  leading={<IconBadge size={32} tone={HP_TOKENS.sunken}><HPGlyph name="history" size={16} color={HP_TOKENS.inkSoft} /></IconBadge>}
+                  title="Riwayat kehadiran"
+                  onClick={() => openModal('attendance_history')}
+                />
+              </div>
             </HPCard>
 
             {/* Emotional check-in */}
@@ -361,8 +421,6 @@ export default function HomeScreen({ openModal }: any) {
               showMidDay={isMidDayWindow()}
               onOpenMidDay={() => openModal('work_checkin')}
             />
-
-            <WellbeingGauge state={state} user={user} openModal={openModal} />
 
             {/* AI coach insights */}
             {aiInsights.length > 0 && (
@@ -376,33 +434,10 @@ export default function HomeScreen({ openModal }: any) {
               </section>
             )}
 
-            {/*
-              Five shortcuts that each used to own a full-width card. As rows
-              they cost about one card between them, and stop a 40px action
-              from outranking the day's work.
-            */}
-            <ActionList
-              title="Lainnya"
-              items={[
-                {
-                  icon: 'leaf',
-                  label: 'Jeda 1 menit',
-                  hint: 'Box breathing untuk menurunkan stres',
-                  tone: HP_TOKENS.success,
-                  onClick: () => openModal('pause'),
-                },
-                {
-                  icon: 'book',
-                  label: 'Riwayat & logbook',
-                  onClick: () => openModal('logbook'),
-                },
-                {
-                  icon: 'history',
-                  label: 'Riwayat kehadiran',
-                  onClick: () => openModal('attendance_history'),
-                },
-              ]}
-            />
+            {/* The "Lainnya" list is gone. Logbook and attendance history moved
+                into the attendance card where they belong, and box breathing
+                moved into the main column as a card of its own — which left a
+                titled list holding nothing. */}
           </>}
         />
       </div>

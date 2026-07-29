@@ -47,22 +47,45 @@ export const HP_TOKENS = {
   infoSoft: 'var(--hp-info-soft)',
   infoWash: 'var(--hp-info-wash)',
 
+  // ── Status INK — the only status shades that may carry text ──
+  // The base tokens above are surface colours and none of them is legible on a
+  // light page: yellow lands at 2.2:1 on white, warning 3.4:1, success 4.0:1.
+  // These steps hold the hue and clear 4.6:1 on both card and their own wash.
+  // Use them for `color:` and for HPGlyph; keep the base tokens for fills,
+  // arcs and borders, which only owe 3:1. In dark mode they alias straight
+  // back to the base token, so they are always safe to reach for.
+  primaryInk: 'var(--hp-primary-ink)',
+  successInk: 'var(--hp-success-ink)',
+  warningInk: 'var(--hp-warning-ink)',
+  dangerInk: 'var(--hp-danger-ink)',
+  infoInk: 'var(--hp-info-ink)',
+  yellowInk: 'var(--hp-yellow-ink)',
+
   // ── Legacy colour aliases — prefer the semantic names above ──
   teal: 'var(--hp-success)',
   tealLight: 'var(--hp-teal-light)',
   tealSoft: 'var(--hp-success-soft)',
+  tealInk: 'var(--hp-success-ink)',
   sage: 'var(--hp-success)',
   sageLight: 'var(--hp-success)',
   sageSoft: 'var(--hp-success-soft)',
   sageWash: 'var(--hp-success-wash)',
+  sageInk: 'var(--hp-success-ink)',
   coral: 'var(--hp-danger)',
   coralSoft: 'var(--hp-danger-soft)',
   coralWash: 'var(--hp-danger-wash)',
+  coralInk: 'var(--hp-danger-ink)',
   lavender: 'var(--hp-info)',
   lavenderSoft: 'var(--hp-info-soft)',
   lavenderWash: 'var(--hp-info-wash)',
+  lavenderInk: 'var(--hp-info-ink)',
   amber: 'var(--hp-warning)',
   amberSoft: 'var(--hp-warning-soft)',
+  amberInk: 'var(--hp-warning-ink)',
+  // `yellowDark` predates the ink step and was the closest thing to it, but at
+  // 3.13:1 on card it never actually cleared the bar. It now resolves to the
+  // ink step so the ~37 call sites that reached for it get a legible shade.
+  honeyInk: 'var(--hp-yellow-ink)',
 
   // ── Text ── (ink → inkFade = most → least emphasis)
   ink: 'var(--hp-ink)',

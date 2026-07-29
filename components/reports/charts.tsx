@@ -5,6 +5,10 @@ import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
 
 // Shared inline-SVG chart primitives for the report dashboard & employee profile.
 export const toneFor = (v: number) => (v >= 80 ? HP_TOKENS.sage : v >= 50 ? HP_TOKENS.yellow : HP_TOKENS.coral);
+/** Same banding, legible as text. `toneFor` fills bars and arcs (3:1 is
+ *  enough); a percentage printed in it needs 4.5:1, and the mid band is
+ *  yellow — 2.2:1 on white, i.e. barely visible. */
+export const toneInkFor = (v: number) => (v >= 80 ? HP_TOKENS.sageInk : v >= 50 ? HP_TOKENS.yellowInk : HP_TOKENS.coralInk);
 
 export function Donut({ value, color, size = 84, thickness = 3.5, children, title, onClick }: { value: number; color: string; size?: number; thickness?: number; children?: React.ReactNode; title?: string; onClick?: () => void }) {
   const v = Math.max(0, Math.min(100, value));
@@ -69,7 +73,7 @@ export function TargetBars({ targets, max, onTargetClick, showKpi }: { targets: 
             style={{ cursor: onTargetClick ? 'pointer' : 'default' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, marginBottom: 3 }}>
               <span style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 11.5, color: HP_TOKENS.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>{t.title || 'Target'}</span>
-              <span style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 11.5, color: toneFor(v), flexShrink: 0 }}>{t.achievement}%</span>
+              <span style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 11.5, color: toneInkFor(v), flexShrink: 0 }}>{t.achievement}%</span>
             </div>
             <div style={{ height: 8, background: HP_TOKENS.line, borderRadius: 5, overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${Math.max(3, v)}%`, background: toneFor(v), borderRadius: 5, transition: 'width 0.6s ease-out' }} />

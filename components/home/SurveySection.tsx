@@ -91,7 +91,7 @@ export default function SurveySection({ openModal }: SurveySectionProps) {
                     )}
                     <div style={{
                       padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 700,
-                      background: HP_TOKENS.sageWash, color: HP_TOKENS.sage, fontFamily: HP_FONT,
+                      background: HP_TOKENS.sageWash, color: HP_TOKENS.sageInk, fontFamily: HP_FONT,
                     }}>
                       +20 Poin
                     </div>

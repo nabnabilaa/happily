@@ -38,7 +38,7 @@ export default function ScreenHeader({
     >
       <div style={{ minWidth: 0, flex: 1 }}>
         {eyebrow && (
-          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.primary, marginBottom: 8 }}>
+          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.primaryInk, marginBottom: 8 }}>
             {eyebrow}
           </div>
         )}

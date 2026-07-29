@@ -93,7 +93,7 @@ export default function ActionList({
                   padding: "3px 8px",
                   borderRadius: HP_TOKENS.radiusPill,
                   background: HP_TOKENS.primaryWash,
-                  color: HP_TOKENS.primary,
+                  color: HP_TOKENS.primaryInk,
                 }}
               >
                 {item.badge}

@@ -202,7 +202,7 @@ export default function CalendarModal({ onClose }: Props) {
               <div style={{ textAlign: 'center', padding: 20, color: HP_TOKENS.inkMute }}>Memuat agenda...</div>
             ) : events.length === 0 ? (
               <div style={{ textAlign: 'center', padding: 40, border: `1px solid ${HP_TOKENS.lineSoft}`, borderRadius: HP_TOKENS.radius }}>
-                <div style={{ fontSize: 32, marginBottom: 8 }}>⛱️</div>
+                <div style={{ fontSize: 32, marginBottom: 8 }}><HPGlyph name="sun" size={27} color="currentColor" /></div>
                 <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.inkMute }}>Belum ada agenda terdaftar.</div>
               </div>
             ) : (
@@ -229,7 +229,7 @@ export default function CalendarModal({ onClose }: Props) {
                         </div>
                         {ev.description && <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkSoft, marginTop: 6, fontStyle: 'italic' }}>"{ev.description}"</div>}
                         {!isOwner && (
-                          <div style={{ display: 'inline-block', marginTop: 8, padding: '2px 8px', borderRadius: 4, background: HP_TOKENS.lavenderSoft, color: HP_TOKENS.primary, fontSize: 10, fontWeight: 700 }}>
+                          <div style={{ display: 'inline-block', marginTop: 8, padding: '2px 8px', borderRadius: 4, background: HP_TOKENS.lavenderSoft, color: HP_TOKENS.primaryInk, fontSize: 10, fontWeight: 700 }}>
                             UNDANGAN
                           </div>
                         )}

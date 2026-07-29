@@ -1,14 +1,18 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { sqlWibDate, SQL_WIB_TODAY } from "@/lib/timeUtils";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const period = searchParams.get('period') || 'monthly'; // weekly, monthly, all_time
 
-    let timeFilter = "AND MONTH(x.created_at) = MONTH(CURRENT_DATE()) AND YEAR(x.created_at) = YEAR(CURRENT_DATE())";
+    // Batas minggu/bulan mengikuti kalender WIB — kalau pakai CURRENT_DATE()
+    // (UTC), papan peringkat baru berganti periode jam 07:00 WIB.
+    const xpDay = sqlWibDate('x.created_at');
+    let timeFilter = `AND MONTH(${xpDay}) = MONTH(${SQL_WIB_TODAY}) AND YEAR(${xpDay}) = YEAR(${SQL_WIB_TODAY})`;
     if (period === 'weekly') {
-      timeFilter = "AND YEARWEEK(x.created_at, 1) = YEARWEEK(CURRENT_DATE(), 1)";
+      timeFilter = `AND YEARWEEK(${xpDay}, 1) = YEARWEEK(${SQL_WIB_TODAY}, 1)`;
     } else if (period === 'all_time') {
       timeFilter = "";
     }

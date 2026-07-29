@@ -12,6 +12,7 @@ import ManagerMembersView from "@/components/goals/ManagerMembersView";
 import ManagerDailyTasksView from "@/components/goals/ManagerDailyTasksView";
 import ReportDashboard from "@/components/reports/ReportDashboard";
 import { useManagerGoals } from "@/hooks/useManagerGoals";
+import { deleteTaskRemote } from "@/lib/taskClient";
 
 interface Props { openModal: (name: string, props?: any) => void; }
 
@@ -26,10 +27,6 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
     combinedMyGoals,
     assignedGoals,
     topLevelGoals,
-    handleVerifyTask,
-    handleRejectTask,
-    handleManagerVerifyKpiTask,
-    handleManagerRejectKpiTask,
     executeDeleteGoal,
     handleEditProgress,
     handleApproveGoal,
@@ -54,6 +51,13 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
   const executeDeleteTask = () => {
     if (!taskToDelete) return;
     const tId = taskToDelete;
+    // Persist the delete — tasks no longer ride along in the blob sync, so a
+    // state-only removal comes back on the next refetch.
+    if (user?.id) {
+      deleteTaskRemote(tId, user.id).then(ok => {
+        if (!ok) notify("Gagal Menghapus", "Task tidak terhapus di server. Muat ulang halaman.", "error");
+      });
+    }
     updateState((s: any) => {
       const newPriorities = s.priorities.filter((p: any) => p.id !== tId);
       const taskObj = s.priorities.find((p: any) => p.id === tId);
@@ -133,10 +137,6 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
           openModal={openModal}
           setGoalToDelete={setGoalToDelete}
           handleEditProgress={handleEditProgress}
-          handleVerifyTask={handleVerifyTask}
-          handleRejectTask={handleRejectTask}
-          handleManagerVerifyKpiTask={handleManagerVerifyKpiTask}
-          handleManagerRejectKpiTask={handleManagerRejectKpiTask}
           handleApproveGoal={handleApproveGoal}
           handleRevisionGoal={handleRevisionGoal}
           handleRejectGoal={handleRejectGoal}
@@ -147,8 +147,6 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
         <ManagerDailyTasksView
           teamTasks={teamTasks}
           membersList={membersList}
-          handleVerifyTask={handleVerifyTask}
-          handleRejectTask={handleRejectTask}
         />
       )}
 
@@ -185,7 +183,7 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
             boxShadow: HP_TOKENS.shadowLg,
             animation: 'hpPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }}>
-            <div style={{ width: 64, height: 64, borderRadius: '50%', background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: HP_TOKENS.coralWash, color: HP_TOKENS.coralInk, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
               <HPGlyph name="target" size={32} />
             </div>
             <div style={{ ...HP_TEXT.h, fontSize: 20, marginBottom: 8 }}>Hapus Goal?</div>
@@ -228,7 +226,7 @@ export default function ManagerGoalsScreen({ openModal }: Props) {
             boxShadow: HP_TOKENS.shadowLg,
             animation: 'hpPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }}>
-            <div style={{ width: 64, height: 64, borderRadius: '50%', background: HP_TOKENS.coralWash, color: HP_TOKENS.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: HP_TOKENS.coralWash, color: HP_TOKENS.coralInk, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
               <HPGlyph name="trash" size={32} />
             </div>
             <div style={{ ...HP_TEXT.h, fontSize: 20, marginBottom: 8 }}>Hapus Task Harian?</div>

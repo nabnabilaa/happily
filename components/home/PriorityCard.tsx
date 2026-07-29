@@ -127,7 +127,7 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit 
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id: p.id, done: true, partialProgress: 100, status: 'accepted',
+          id: p.id, done: true, partialProgress: 100, status: 'pending_review',
           proofLinks: cleanLinks, notes: editNotes || undefined,
           completedAt: p.completed_at || new Date().toISOString(),
         }),
@@ -369,7 +369,7 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit 
           ...HP_TEXT.sub,
           fontSize: 14.5,
           lineHeight: 1.4,
-          textDecoration: p.done ? 'line-through' : undefined,
+          textDecorationLine: p.done ? 'line-through' : 'none',
           textDecorationColor: HP_TOKENS.inkFade,
         }}>
           {p.title}
@@ -515,7 +515,7 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit 
               aria-pressed={state?.focusTaskId === p.id}
               style={{
                 background: HP_TOKENS.yellowWash,
-                color: HP_TOKENS.yellowDark,
+                color: HP_TOKENS.yellowInk,
               }}
             />
           </>
@@ -532,7 +532,7 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit 
               onEdit();
             }}
             aria-label={`Edit task: ${p.title}`}
-            style={{ background: HP_TOKENS.infoWash, color: HP_TOKENS.info }}
+            style={{ background: HP_TOKENS.infoWash, color: HP_TOKENS.infoInk }}
           />
         )}
 
@@ -543,7 +543,7 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit 
           icon="trash"
           onClick={handleDelete}
           aria-label={`Hapus task: ${p.title}`}
-          style={{ background: HP_TOKENS.dangerWash, color: HP_TOKENS.danger }}
+          style={{ background: HP_TOKENS.dangerWash, color: HP_TOKENS.dangerInk }}
         />
       </Row>
 
@@ -620,7 +620,7 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit 
                         onClick={() =>
                           setEditProofLinks(editProofLinks.filter((_, j) => j !== i))
                         }
-                        style={{ color: HP_TOKENS.danger }}
+                        style={{ color: HP_TOKENS.dangerInk }}
                       />
                     )}
                   </Row>
@@ -629,7 +629,7 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit 
                   variant="ghost"
                   icon="plus"
                   onClick={() => setEditProofLinks([...editProofLinks, ""])}
-                  style={{ alignSelf: "flex-start", color: HP_TOKENS.primary }}
+                  style={{ alignSelf: "flex-start", color: HP_TOKENS.primaryInk }}
                 >
                   Tambah link
                 </HPButton>
@@ -700,7 +700,7 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit 
                             display: "flex",
                             alignItems: "center",
                             gap: 6,
-                            color: HP_TOKENS.primary,
+                            color: HP_TOKENS.primaryInk,
                             minHeight: 32,
                             minWidth: 0,
                           }}

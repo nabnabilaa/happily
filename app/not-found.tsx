@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { HP_TOKENS } from '@/lib/constants';
+import HPGlyph from "@/components/ui/HPGlyph";
 
 export default function NotFound() {
   return (
@@ -14,8 +15,8 @@ export default function NotFound() {
       padding: '20px',
       textAlign: 'center'
     }}>
-      <div style={{ fontSize: '64px', marginBottom: '20px' }}>🧘‍♂️</div>
-      <h1 style={{ color: HP_TOKENS.success, fontSize: '24px', fontWeight: 700 }}>Halaman tidak ditemukan</h1>
+      <div style={{ fontSize: '64px', marginBottom: '20px' }}><HPGlyph name="leaf" size={14} color="currentColor" /></div>
+      <h1 style={{ color: HP_TOKENS.successInk, fontSize: '24px', fontWeight: 700 }}>Halaman tidak ditemukan</h1>
       <p style={{ color: HP_TOKENS.ink, opacity: 0.7, margin: '10px 0 30px' }}>
         Tarik napas sejenak... mari kita kembali ke tempat yang lebih tenang.
       </p>

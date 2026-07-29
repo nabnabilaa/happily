@@ -30,9 +30,11 @@ export default function BurnoutAlertCard({ openModal }: Props) {
           alignItems: 'center',
           gap: 12
         }}>
-          <div style={{ fontSize: 24 }}>😊</div>
+          <div style={{ display: 'flex', flexShrink: 0 }}>
+            <HPGlyph name="check" size={20} color={HP_TOKENS.successInk} />
+          </div>
           <div style={{ flex: 1 }}>
-            <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.sage }}>Kondisi Karyawan Aman</div>
+            <div style={{ ...HP_TEXT.h, fontSize: 14, color: HP_TOKENS.sageInk }}>Kondisi Karyawan Aman</div>
             <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, marginTop: 2 }}>
               Tidak ada karyawan yang terdeteksi berisiko burnout saat ini.
             </div>
@@ -48,12 +50,12 @@ export default function BurnoutAlertCard({ openModal }: Props) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 40, height: 40, borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.coralSoft, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <HPGlyph name="alertCircle" size={20} color={HP_TOKENS.coral} />
+              <HPGlyph name="alertCircle" size={20} color={HP_TOKENS.coralInk} />
             </div>
             <div>
               <div style={{ ...HP_TEXT.h, fontSize: 16 }}>Daftar At Risk</div>
               <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, marginTop: 2 }}>
-                <span style={{ color: HP_TOKENS.coral, fontWeight: 700 }}>{alerts.length} karyawan</span> terdeteksi berisiko.
+                <span style={{ color: HP_TOKENS.coralInk, fontWeight: 700 }}>{alerts.length} karyawan</span> terdeteksi berisiko.
               </div>
             </div>
           </div>

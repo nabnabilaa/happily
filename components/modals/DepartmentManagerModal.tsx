@@ -137,7 +137,7 @@ export default function DepartmentManagerModal({ onClose }: DepartmentManagerMod
                     width: 32, height: 32, borderRadius: HP_TOKENS.radiusSm,
                     background: HP_TOKENS.blueSoft, display: 'flex',
                     alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0,
-                  }}>🏢</div>
+                  }}><HPGlyph name="home" size={12} color="currentColor" /></div>
                   <span style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.ink, flex: 1 }}>{d.name}</span>
                   <button
                     onClick={() => { setEditingId(d.id); setEditName(d.name); }}
@@ -154,7 +154,7 @@ export default function DepartmentManagerModal({ onClose }: DepartmentManagerMod
                     className="hp-tap"
                     style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
                   >
-                    <HPGlyph name="trash" size={14} color={HP_TOKENS.coral} />
+                    <HPGlyph name="trash" size={14} color={HP_TOKENS.coralInk} />
                   </button>
                 </>
               )}
