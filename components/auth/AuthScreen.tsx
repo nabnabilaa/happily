@@ -166,7 +166,7 @@ function AuthScreenInner({ onLogin }: AuthScreenProps) {
    */
   const loginWithGoogle = useGoogleLogin({
     flow: "auth-code",
-    scope: "https://www.googleapis.com/auth/calendar.events",
+    // scope: "https://www.googleapis.com/auth/calendar.events", // DIMATIKAN SEMENTARA agar mudah login
     onSuccess: (response) => submitGoogleAuth({ code: (response as any).code }),
     onError: () => setError("Gagal masuk dengan Google"),
   });
