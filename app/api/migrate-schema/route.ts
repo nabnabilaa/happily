@@ -87,6 +87,55 @@ export async function POST() {
       )`
     },
     {
+      /*
+       * Tanpa tabel ini seluruh fitur absensi mati, dan matinya senyap.
+       *
+       * `/api/attendance/token` menulis ke sini; kalau tabelnya tidak ada ia
+       * membalas 500 "Failed to generate token". Klien lalu memanggil check-in
+       * tanpa token dan ditolak 400 "Data tidak lengkap" — pesan yang menunjuk
+       * ke arah yang salah sepenuhnya. Tidak ada seorang pun bisa clock-in, dan
+       * semua yang bergantung padanya (streak, ringkasan kehadiran, laporan
+       * absensi HR) ikut kosong tanpa satu pun error yang menyebut absensi.
+       *
+       * Token sengaja tidak memakai FOREIGN KEY ke users: ia diterbitkan
+       * sebelum kita tahu siapa yang akan memakainya, dan dihapus begitu
+       * dipakai (lihat check-in/route.ts).
+       */
+      desc: "Create attendance_tokens table",
+      sql: `CREATE TABLE IF NOT EXISTS attendance_tokens (
+        token VARCHAR(64) PRIMARY KEY,
+        expires_at DATETIME NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_attendance_tokens_expires (expires_at)
+      )`
+    },
+    {
+      /*
+       * Tabel ini tidak pernah ada — bukan "belum dimigrasi", tapi memang tidak
+       * pernah didefinisikan di mana pun, sementara `app/api/announcements`
+       * sudah memakainya sejak awal. Akibatnya `GET /api/announcements` selalu
+       * membalas 500 dan `components/home/AnnouncementFeed.tsx` — yang tampil di
+       * layar utama semua orang — tidak pernah sekali pun berhasil memuat.
+       *
+       * Kolomnya diturunkan dari dua pemakainya: INSERT di route (`id`,
+       * `author_id`, `title`, `content`, `tone`, `glyph`) dan field yang dibaca
+       * komponen (ditambah `created_at` untuk urutannya).
+       *
+       * `id` VARCHAR karena route menerbitkannya sebagai uuidv4, bukan angka.
+       */
+      desc: "Create announcements table",
+      sql: `CREATE TABLE IF NOT EXISTS announcements (
+        id VARCHAR(100) PRIMARY KEY,
+        author_id VARCHAR(100) NOT NULL,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        tone VARCHAR(50) DEFAULT 'blue',
+        glyph VARCHAR(50) DEFAULT 'bullhorn',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_announcements_created (created_at)
+      )`
+    },
+    {
       desc: "Create reward_redemptions table",
       sql: `CREATE TABLE IF NOT EXISTS reward_redemptions (
         id VARCHAR(100) PRIMARY KEY,
@@ -556,6 +605,13 @@ export async function POST() {
     },
     {
       desc: "Create weekly_targets table",
+      // `kpi_id` sengaja TIDAK punya foreign key. Sebuah target mingguan bisa
+      // menggantung pada KPI dari manager (`monthly_kpis`) ATAU pada KPI yang
+      // dibuat karyawan sendiri (`personal_kpis`) — dua tabel, satu kolom, jadi
+      // tidak ada satu tabel induk yang bisa direferensikan. Versi lama menunjuk
+      // ke `monthly_kpis` saja, sehingga target di atas KPI mandiri selalu
+      // ditolak database. PHASE 2.45 di bawah melepas constraint itu untuk
+      // database yang sudah terlanjur dibuat.
       sql: `CREATE TABLE IF NOT EXISTS weekly_targets (
         id VARCHAR(100) PRIMARY KEY,
         kpi_id VARCHAR(100) NOT NULL,
@@ -567,7 +623,7 @@ export async function POST() {
         metric_unit VARCHAR(50) DEFAULT '%',
         status VARCHAR(50) DEFAULT 'active',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (kpi_id) REFERENCES monthly_kpis(id) ON DELETE CASCADE
+        INDEX idx_weekly_targets_kpi (kpi_id)
       )`
     }
 
@@ -599,6 +655,45 @@ export async function POST() {
   const columns = [
     // ── Users table ──
     { desc: "users.coins", sql: "ALTER TABLE users ADD COLUMN coins INTEGER DEFAULT 0" },
+    /*
+     * Dua kolom di bawah ini menutup kelas bug "hilang pas di-refresh".
+     *
+     * Keduanya ditulis UI ke dalam state, tapi `/api/storage` tidak punya
+     * tempat menyimpannya dan tidak mengembalikannya saat GET — jadi simpan
+     * membalas `success` dan nilainya lenyap begitu halaman dimuat ulang.
+     *
+     *   wishlist_id     -> bintang di layar Rewards (target tabungan poin)
+     *   overtime_status -> jawaban prompt lembur, dipakai useTimeReminders
+     *                      untuk menahan prompt agar tidak muncul lagi
+     */
+    /*
+     * `habits.updated_at` menopang pengaman anti-mundur di POST /api/storage.
+     *
+     * Tanpa kolom ini server tidak punya cara tahu apakah sebuah baris sudah
+     * berubah SETELAH klien memuat state-nya, jadi blob dari tab yang basi
+     * menimpa data yang lebih baru tanpa suara. Terbukti runtime: streak 99
+     * dimundurkan ke 1 oleh tab yang tidak pernah menyentuh kebiasaan itu.
+     *
+     * DATETIME(3), bukan DATETIME: presisi detik meninggalkan lubang selebar
+     * satu detik. Perubahan yang terjadi 0,3 detik setelah klien memuat state
+     * dibulatkan ke bawah, terbaca lebih TUA dari cap waktu klien, dan lolos
+     * dari pengaman. Kasus nyata memang berjarak menit sampai jam, tapi lubang
+     * yang bisa ditutup dengan satu angka tidak perlu dibiarkan.
+     */
+    { desc: "habits.updated_at", sql: "ALTER TABLE habits ADD COLUMN updated_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)" },
+    { desc: "user_skills.updated_at", sql: "ALTER TABLE user_skills ADD COLUMN updated_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)" },
+    /*
+     * `users.state_updated_at` menandai kapan blok kolom milik blob terakhir
+     * ditulis (nama, avatar, niat fokus, wishlist, dst).
+     *
+     * Kolom terpisah, bukan menumpang `last_activity_at`: kolom itu diperbarui
+     * oleh blob yang sama pada setiap simpan, jadi memakainya sebagai penanda
+     * berarti penanda dan yang ditandai bergerak bersamaan — tidak pernah bisa
+     * mendeteksi apa pun.
+     */
+    { desc: "users.state_updated_at", sql: "ALTER TABLE users ADD COLUMN state_updated_at DATETIME(3)" },
+    { desc: "users.wishlist_id", sql: "ALTER TABLE users ADD COLUMN wishlist_id VARCHAR(100)" },
+    { desc: "users.overtime_status", sql: "ALTER TABLE users ADD COLUMN overtime_status VARCHAR(50)" },
     { desc: "users.manager_id", sql: "ALTER TABLE users ADD COLUMN manager_id TEXT" },
     { desc: "users.department", sql: "ALTER TABLE users ADD COLUMN department TEXT" },
     { desc: "users.user_role_context", sql: "ALTER TABLE users ADD COLUMN user_role_context TEXT" },
@@ -803,6 +898,47 @@ export async function POST() {
         results.push(`❌ ${c.desc}: ${e.message}`);
       }
     }
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // PHASE 2.35: Lepas foreign key weekly_targets → monthly_kpis
+  // ═══════════════════════════════════════════════════════
+  // Sebuah target mingguan boleh menggantung pada KPI mandiri (`personal_kpis`),
+  // bukan hanya pada KPI dari manager. Selama constraint ini masih ada, INSERT
+  // target di atas KPI mandiri ditolak MySQL — karyawan bisa membuat KPI-nya
+  // sendiri tapi tidak pernah bisa memecahnya jadi target.
+  //
+  // Nama constraint tidak di-hardcode: MySQL memberinya nama otomatis
+  // (`weekly_targets_ibfk_1` di sebagian besar database, tapi tidak dijamin).
+  try {
+    const fkRes = await db.execute({
+      sql: `SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'weekly_targets'
+              AND COLUMN_NAME = 'kpi_id'
+              AND REFERENCED_TABLE_NAME IS NOT NULL`,
+      args: [],
+    });
+    if (fkRes.rows.length === 0) {
+      results.push("⏭️ weekly_targets.kpi_id FK (already dropped)");
+    } else {
+      for (const row of fkRes.rows) {
+        const name = String(row.CONSTRAINT_NAME);
+        await db.execute(`ALTER TABLE weekly_targets DROP FOREIGN KEY \`${name}\``);
+        results.push(`✅ Dropped weekly_targets FK ${name}`);
+      }
+      // Index-nya dipertahankan/dibuat ulang: FK yang dilepas membawa serta
+      // satu-satunya index pada kolom yang di-query setiap kali layar Target
+      // dibuka.
+      try {
+        await db.execute(`ALTER TABLE weekly_targets ADD INDEX idx_weekly_targets_kpi (kpi_id)`);
+        results.push("✅ Added idx_weekly_targets_kpi");
+      } catch {
+        results.push("⏭️ idx_weekly_targets_kpi (already exists)");
+      }
+    }
+  } catch (e: any) {
+    results.push(`❌ Drop weekly_targets FK: ${e.message}`);
   }
 
   // ═══════════════════════════════════════════════════════

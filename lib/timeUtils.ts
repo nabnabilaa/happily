@@ -64,6 +64,31 @@ export function sqlWibDate(column: string): string {
 }
 
 /**
+ * Ekspresi SQL: hari kerja yang dimaksud sebuah task.
+ *
+ * Sebuah task punya DUA tanggal, dan memilih yang salah adalah bug yang sudah
+ * terbukti: `target_date` (kapan task itu DIKERJAKAN, diisi user di modal) dan
+ * `created_at` (kapan barisnya dibuat). Keduanya sering berbeda — task yang
+ * disusun malam sebelumnya untuk besok pagi adalah pola yang normal.
+ *
+ * `GET /api/storage` selalu memakai COALESCE ini, jadi KARYAWAN melihat task
+ * hari ini dengan benar. Dashboard manager dan HR dulu menghitung dari
+ * `created_at` saja, sehingga task yang dibuat kemarin untuk hari ini tidak
+ * masuk hitungan sama sekali: manager melihat "0/0" dan status "Belum mulai"
+ * untuk orang yang jelas sedang bekerja. Terukur di basis data ini: 54 baris
+ * punya `target_date` berbeda dari tanggal `created_at`-nya.
+ *
+ * Dijadikan satu helper supaya ketiga pemakainya (manager dashboard, HR
+ * dashboard, sync extension) tidak bisa lagi menyimpang sendiri-sendiri.
+ *
+ * @param alias alias tabel bila query-nya memakai JOIN, mis. `"dp"`.
+ */
+export function sqlTaskWibDay(alias = ""): string {
+  const p = alias ? `${alias}.` : "";
+  return `COALESCE(DATE(${p}target_date), ${sqlWibDate(`${p}created_at`)})`;
+}
+
+/**
  * Ekspresi SQL: tanggal kalender WIB hari ini.
  * Pakai ini menggantikan `CURDATE()`, yang di MySQL ini menghasilkan tanggal
  * UTC dan karenanya salah hari sepanjang 00:00–07:00 WIB.

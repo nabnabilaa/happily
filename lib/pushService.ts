@@ -11,15 +11,48 @@ if (publicKey && privateKey) {
   console.warn("VAPID keys not configured. Web Push Notifications will not be functional.");
 }
 
+export interface PushOptions {
+  /**
+   * Kirim walaupun user sedang dalam sesi fokus. Dipakai untuk push yang
+   * DIMINTA user saat itu juga (tes notifikasi) dan untuk ringkasan yang
+   * dikirim justru karena sesinya baru saja selesai — keduanya bukan interupsi.
+   */
+  bypassFocus?: boolean;
+}
+
+export interface PushResult {
+  /** Ditahan karena user sedang fokus. Baris inbox-nya tetap ditulis. */
+  suppressed: boolean;
+}
+
+/**
+ * Satu-satunya jalan keluar push di aplikasi ini, jadi juga satu-satunya
+ * tempat yang masuk akal untuk menahannya.
+ *
+ * Yang ditahan adalah PUSH-nya, bukan notifikasinya. Barisnya tetap masuk ke
+ * tabel `notifications` dan tetap muncul di lonceng — yang hilang cuma getaran
+ * dan bunyinya. Sesi fokus seharusnya menahan interupsi, bukan menyembunyikan
+ * kabar; menghapus barisnya akan membuat user kehilangan informasi, bukan
+ * mendapatkan ketenangan.
+ */
 export async function sendPushNotification(
   userId: string,
   title: string,
   body: string,
-  url: string = '/'
-) {
+  url: string = '/',
+  options: PushOptions = {}
+): Promise<PushResult> {
   if (!publicKey || !privateKey) {
     console.error("VAPID keys are missing. Cannot dispatch push notification.");
-    return;
+    return { suppressed: false };
+  }
+
+  if (!options.bypassFocus) {
+    const { isFocusProtected } = await import('./focusRoom');
+    if (await isFocusProtected(userId)) {
+      console.log(`[Push] Held during focus session for user ${userId}: ${title}`);
+      return { suppressed: true };
+    }
   }
 
   try {
@@ -31,7 +64,7 @@ export async function sendPushNotification(
     const subscriptions = res.rows;
     if (subscriptions.length === 0) {
       console.log(`No push subscriptions found for user: ${userId}`);
-      return;
+      return { suppressed: false };
     }
 
     const payload = JSON.stringify({ title, body, url });
@@ -65,4 +98,6 @@ export async function sendPushNotification(
   } catch (error) {
     console.error("Error in sendPushNotification service:", error);
   }
+
+  return { suppressed: false };
 }

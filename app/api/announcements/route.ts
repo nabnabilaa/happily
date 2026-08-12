@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { v4 as uuidv4 } from "uuid";
+import { getRequesterAccess, canHrAdmin } from "@/lib/hrAuth";
 
 export async function GET() {
   try {
@@ -17,6 +18,19 @@ export async function POST(req: Request) {
     
     if (!authorId || !title || !content) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    // Pengumuman tampil di layar utama SETIAP orang. Layarnya memang hanya
+    // memberi tombol posting kepada HR, tapi itu penjagaan di sisi klien —
+    // endpoint-nya sendiri menerima siapa saja yang mengirim `authorId`, jadi
+    // satu permintaan dari luar aplikasi cukup untuk menyiarkan apa pun ke
+    // seluruh perusahaan atas nama orang lain.
+    const requester = await getRequesterAccess(String(authorId));
+    if (!canHrAdmin(requester.role, requester.hrAccess)) {
+      return NextResponse.json(
+        { error: "Hanya HR yang bisa membuat pengumuman" },
+        { status: 403 }
+      );
     }
 
     const id = uuidv4();

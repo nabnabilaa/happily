@@ -44,6 +44,20 @@ export const FALLBACK_TEMPLATES: Record<string, Omit<NotificationTemplate, "trig
   },
 
   // --- Task Events ---
+  /*
+   * Satu-satunya pemberitahuan yang arahnya karyawan → manajer.
+   *
+   * Sebelumnya arus notifikasi task hanya satu arah: karyawan tahu saat
+   * pekerjaannya di-ACC, tapi manajer tidak pernah diberi tahu bahwa ada yang
+   * perlu di-ACC. Antrean review hanya terisi kalau manajer kebetulan membuka
+   * halamannya dan me-refresh.
+   */
+  "task_submitted": {
+    titleTemplate: "Ada task menunggu ACC 📥",
+    messageTemplate: "{employee_name} mengumpulkan '{task_title}'. Cek antrean review kamu ya.",
+    type: "info",
+    category: "task",
+  },
   "task_approved": {
     titleTemplate: "Tugas Disetujui! 🎉",
     messageTemplate: "Tugas '{task_title}' kamu telah disetujui oleh {manager_name}. EXP bertambah!",
@@ -80,6 +94,49 @@ export const FALLBACK_TEMPLATES: Record<string, Omit<NotificationTemplate, "trig
     titleTemplate: "Jam Pulang! Evaluasi Harimu 🌅",
     messageTemplate: "Hari kerja hampir selesai. Jangan lupa lakukan checkout dan isi refleksi harian di logbook!",
     type: "reminder",
+    category: "reminder",
+  },
+
+  // --- Kalimat jadi dari pemanggil (passthrough) ---
+  //
+  // Sebagian peristiwa tidak punya bentuk kalimat yang tetap: satu klaim reward
+  // menyebut nama reward dan jumlah poinnya, penolakan menyebut alasannya.
+  // Pemanggilnya sudah menyusun kalimat itu dan mengirimnya sebagai
+  // {title}/{message}, jadi template di sini hanya meneruskan.
+  //
+  // Keempat kunci ini SUDAH dipakai di kode sejak lama tapi tidak pernah ada —
+  // baik di sini maupun di tabel `notification_templates`. Karena dispatch
+  // membatalkan pengiriman saat template tidak ketemu (lihat di bawah), seluruh
+  // notifikasi reward hilang tanpa jejak: HR tidak pernah tahu ada klaim masuk,
+  // dan karyawan tidak pernah tahu klaimnya diproses, ditolak, atau selesai.
+  "hr_alert": {
+    titleTemplate: "{title}",
+    messageTemplate: "{message}",
+    type: "warning",
+    category: "system",
+  },
+  "success": {
+    titleTemplate: "{title}",
+    messageTemplate: "{message}",
+    type: "success",
+    category: "system",
+  },
+  "info": {
+    titleTemplate: "{title}",
+    messageTemplate: "{message}",
+    type: "info",
+    category: "system",
+  },
+  "warning": {
+    titleTemplate: "{title}",
+    messageTemplate: "{message}",
+    type: "warning",
+    category: "system",
+  },
+  "daily_challenges_ready": {
+    titleTemplate: "{title}",
+    messageTemplate: "{message}",
+    type: "info",
     category: "reminder",
   },
 };
@@ -192,6 +249,23 @@ export function compileTemplate(template: string, vars: Record<string, string>):
 }
 
 /**
+ * Isi template, lalu buang placeholder yang variabelnya tidak dikirim.
+ *
+ * `compileTemplate` sengaja meninggalkan `{foo}` yang tidak dikenal apa adanya —
+ * berguna saat menulis template, fatal saat dibaca orang: notifikasi yang
+ * kurang satu variabel tampil sebagai "Halo {name}" di layar karyawan. Sisa
+ * placeholder dibuang di sini, dan kalau yang tersisa cuma ruang kosong,
+ * pemanggil mendapat null sehingga bisa memilih kalimat cadangan.
+ */
+function renderTemplate(template: string, vars: Record<string, string>): string | null {
+  const filled = compileTemplate(template, vars)
+    .replace(/\{\w+\}/g, "")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+  return filled || null;
+}
+
+/**
  * Jendela default (menit) untuk menahan notifikasi yang isinya persis sama.
  * Klien bisa remount / reload berkali-kali dalam rentang ini; tanpa guard di
  * server setiap percobaan jadi satu baris baru + satu email baru.
@@ -287,8 +361,8 @@ export async function dispatchNotification(
     }
 
     // D. Render final Title and Message
-    const title = compileTemplate(template.titleTemplate, variables);
-    const message = compileTemplate(template.messageTemplate, variables);
+    const title = renderTemplate(template.titleTemplate, variables) || "Pemberitahuan";
+    const message = renderTemplate(template.messageTemplate, variables);
 
     // E. Bail out kalau notifikasi identik baru saja dikirim (anti-spam)
     if (await isDuplicateNotification(userId, title, message, options.dedupeWindowMinutes)) {
@@ -306,7 +380,7 @@ export async function dispatchNotification(
     // G. Attempt Push Notification if subscription exists
     try {
       const { sendPushNotification } = await import("@/lib/pushService");
-      await sendPushNotification(userId, title, message);
+      await sendPushNotification(userId, title, message ?? "");
       console.log("[NotificationService] Push delivery completed successfully.");
     } catch (pushErr) {
       console.warn("[NotificationService] Web push dispatch failed:", pushErr);
