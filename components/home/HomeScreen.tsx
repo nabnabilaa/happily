@@ -95,7 +95,8 @@ export default function HomeScreen({ openModal }: any) {
     handleHabitDayClick,
     handleFinishTraining,
     saveHabitDay,
-    handleQuickComplete
+    handleQuickComplete,
+    lastHabitAward
   } = useHabitManager(updateState, awardXP, notify, setConfetti, setCelebrate);
 
   const yesterdayPlan = useMemo(() => {
@@ -285,9 +286,14 @@ export default function HomeScreen({ openModal }: any) {
             <div id="task-section">
               <TaskHarianWidget
                 openModal={openModal}
-                onTaskComplete={(taskName?: string) => {
+                // `awarded` datang dari jawaban server, bukan dari angka yang
+                // ditulis di sini. Nilainya dulu dipatok 50 — task apa pun
+                // "menghasilkan +50 Poin" padahal task_complete bernilai 20,
+                // dan tetap berkata begitu saat server tidak membayar sepeser
+                // pun. Overlay menyembunyikan pil poinnya sendiri kalau 0.
+                onTaskComplete={(taskName?: string, awarded?: number) => {
                   setConfetti(true);
-                  setCelebrate({show: true, points: 50, message: taskName ? `Selesai: ${taskName}` : "Hebat! Satu langkah lebih dekat."});
+                  setCelebrate({show: true, points: awarded ?? 0, message: taskName ? `Selesai: ${taskName}` : "Hebat! Satu langkah lebih dekat."});
                   setTimeout(() => setConfetti(false), 1200);
                 }}
               />
@@ -329,6 +335,7 @@ export default function HomeScreen({ openModal }: any) {
                     >
                       <HabitCell
                         h={h}
+                        awardedPoints={lastHabitAward && lastHabitAward.name === h.name ? lastHabitAward.awarded : undefined}
                         onToggle={(date, isToday, done) => handleHabitDayClick(h.name, date, isToday, done)}
                         onQuickComplete={(date, isToday, wasDone, newDone) => handleQuickComplete(h.name, date, isToday, wasDone, newDone)}
                         onFinish={() => handleFinishTraining(h.name)}

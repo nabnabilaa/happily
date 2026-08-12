@@ -24,7 +24,22 @@ export default function RecognizeScreen({ openModal }: RecognizeScreenProps) {
   const rewards = state.rewards || [];
   const history = state.rewardHistory || [];
   const wishlistId = state.wishlistId || null;
-  const points = state.points ?? state.coins ?? 0;
+
+  /*
+   * Yang ditampilkan di sini adalah KOIN, bukan poin.
+   *
+   * Keduanya naik bersamaan saat menyelesaikan pekerjaan, tapi hanya `coins`
+   * yang dipotong saat menukar reward (`UPDATE users SET coins = coins - ?` di
+   * app/api/rewards/redemptions/route.ts). Jadi `points` adalah XP seumur hidup
+   * dan selalu >= saldo belanja yang sebenarnya.
+   *
+   * Versi sebelumnya membaca `state.points`, dan akibatnya persis keluhan yang
+   * dilaporkan: setelah menukar reward, angka di layar tidak berubah — poinnya
+   * memang tidak pernah berkurang. Lebih buruk lagi, garis "bisa ditukar" di
+   * PointsHeroCard ikut dihitung dari angka yang terlalu besar, jadi reward
+   * ditawarkan padahal server akan menolaknya dengan "Koin tidak cukup".
+   */
+  const points = state.coins ?? state.points ?? 0;
 
   const toggleWishlist = (r: any) =>
     updateState((s: any) => ({ ...s, wishlistId: s.wishlistId === r.id ? null : r.id }));

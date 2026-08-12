@@ -73,9 +73,16 @@ export default function AllRewardsModal({ onClose, selected }: AllRewardsModalPr
         return;
       }
 
+      /*
+       * `pointsRemaining` adalah sisa KOIN, bukan sisa poin.
+       *
+       * Menukar reward hanya memotong `coins` di server; `points` (XP seumur
+       * hidup) tidak disentuh. Versi sebelumnya menulis nilai itu ke keduanya,
+       * jadi angka di layar turun sesaat lalu melompat balik ke nilai lama
+       * begitu halaman di-refresh dan `points` yang asli terbaca lagi dari DB.
+       */
       updateState((s: any) => ({
         ...s,
-        points: data.pointsRemaining,
         coins: data.pointsRemaining,
         rewards: s.rewards.map((r: any) => r.id === reward.id ? { ...r, stock: r.stock - 1 } : r),
         rewardHistory: [
@@ -83,7 +90,7 @@ export default function AllRewardsModal({ onClose, selected }: AllRewardsModalPr
           { id: data.id, title: reward.title, points: reward.points, date: new Date().toISOString(), glyph: reward.glyph || 'trophy', status: data.status }
         ]
       }));
-      updateUser({ points: data.pointsRemaining, coins: data.pointsRemaining });
+      updateUser({ coins: data.pointsRemaining });
       
       notify('Reward Ditukar! 🎁', `Kamu berhasil menukarkan "${reward.title}".`, 'success');
       onClose();

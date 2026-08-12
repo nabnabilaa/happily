@@ -13,6 +13,7 @@ import HPGlyph from "@/components/ui/HPGlyph";
 import HPCard from "@/components/ui/HPCard";
 import BeeMascot from "@/components/ui/BeeMascot";
 import { useMoodCheckIn } from "@/hooks/useMoodCheckIn";
+import { POINTS_ACTIONS } from "@/lib/pointsConfig";
 
 interface ReflectModalProps {
   onClose: () => void;
@@ -62,8 +63,14 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
     // Aksi yang sama dengan yang dibayar route clock-out, dengan kunci tanggal
     // yang sama — jadi "Tutup Hari" dibayar sekali, bukan dua kali seperti dulu
     // (5 poin dari clock-out + 20 poin dari sini untuk satu kejadian).
-    awardXP('tutup_hari', 'Tutup Hari (Clock Out)');
-    
+    //
+    // Justru karena berbagi kunci itu, hasilnya WAJIB ditunggu: kalau harinya
+    // sudah ditutup lewat clock-out, panggilan ini membayar nol. Angka yang
+    // dulu ditulis di sini (30) tidak pernah benar — bukan cuma saat nol, tapi
+    // selalu, karena tutup_hari bernilai 20.
+    const outcome = await awardXP('tutup_hari', 'Tutup Hari (Clock Out)');
+    const awarded = outcome?.awarded ?? 0;
+
     try {
       // Save logbook entry
       await fetch("/api/logbook", {
@@ -74,8 +81,8 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
           type: 'daily_reflection',
           title: 'Tutup Hari (Clock Out)',
           content: summary,
-          points: 30,
-          metadata: { 
+          points: awarded,
+          metadata: {
             mood, productivity, workLife, blockers, tomorrowPlan,
             ...timestamp,
             taskCount: state?.priorities.filter((p: any) => p.done).length || 0 
@@ -127,7 +134,7 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
             type: 'daily_reflection',
             title: 'Tutup Hari (Clock Out)',
             content: summary,
-            points: 30,
+            points: awarded,
             metadata_json: JSON.stringify({ mood, productivity, workLife, blockers, tomorrowPlan, ...timestamp }),
             created_at: now.toISOString()
           },
@@ -142,7 +149,16 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
       setIsSubmitting(false);
     }
     
-    notify("Refleksi Disimpan ✅", "Kerja bagus hari ini! Waktunya istirahat.", "success");
+    // Poinnya disebut hanya kalau memang ada. Menutup hari yang sudah ditutup
+    // lewat clock-out tetap menyimpan refleksinya — yang tidak ada cuma poinnya,
+    // dan itu dikatakan apa adanya.
+    notify(
+      "Refleksi Disimpan ✅",
+      awarded > 0
+        ? `Kerja bagus hari ini! +${awarded} Poin. Waktunya istirahat.`
+        : "Kerja bagus hari ini! Waktunya istirahat.",
+      "success",
+    );
     onClose();
   };
 
@@ -333,7 +349,14 @@ export default function ReflectModal({ onClose }: ReflectModalProps) {
           {isSubmitting ? "Menyimpan..." : (
             <>
               Simpan & Tutup Hari
-              <div style={{ background: 'rgba(255,255,255,0.2)', padding: '4px 10px', borderRadius: 100, fontSize: 12 }}>+30 XP</div>
+              {/* Tarifnya dibaca dari registry, bukan ditulis ulang: label lama
+                  "+30 XP" salah angka (tutup_hari = 20) sekaligus salah satuan
+                  (aplikasi ini menyebutnya Poin, bukan XP). Ini janji tarif
+                  sebelum menekan; yang benar-benar dibayar dilaporkan toast
+                  setelah server menjawab. */}
+              <div style={{ background: 'rgba(255,255,255,0.2)', padding: '4px 10px', borderRadius: 100, fontSize: 12 }}>
+                +{POINTS_ACTIONS.tutup_hari.value} Poin
+              </div>
             </>
           )}
         </button>

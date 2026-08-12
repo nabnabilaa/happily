@@ -23,6 +23,9 @@ export default function PauseModal({ onClose }: PauseModalProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [soundMode, setSoundMode] = useState<'off' | 'Nada ZEN' | 'musik air' | 'suara alam' | 'white noise'>('Nada ZEN');
   const [hasCompleted, setHasCompleted] = useState(false);
+  /** Poin yang benar-benar dibayar server untuk sesi ini; 0 kalau kuota harian
+   *  napas sudah terpakai. Layar selesai membacanya, bukan angka tetap. */
+  const [awarded, setAwarded] = useState(0);
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
 
   // Cleanup audio
@@ -114,8 +117,18 @@ export default function PauseModal({ onClose }: PauseModalProps) {
   };
 
   const handleComplete = async () => {
-    await awardXP('breathing', 'Mindful Breathing');
-    notify("Latihan Selesai 🧘‍♂️", "Kamu mendapat +5 Poin! Tubuh dan pikiranmu sudah lebih tenang.", "success");
+    // Kuota napas 1 per hari. Sesi kedua di hari yang sama tetap menenangkan dan
+    // tetap masuk logbook, cuma tidak berpoin — dan itu yang dikatakan. Dulu
+    // pesannya selalu "+5 Poin" berapa kali pun latihan ini dijalankan.
+    const outcome = await awardXP('breathing', 'Mindful Breathing');
+    setAwarded(outcome?.awarded ?? 0);
+    notify(
+      "Latihan Selesai 🧘‍♂️",
+      (outcome?.awarded ?? 0) > 0
+        ? `Kamu mendapat +${outcome!.awarded} Poin! Tubuh dan pikiranmu sudah lebih tenang.`
+        : "Tubuh dan pikiranmu sudah lebih tenang.",
+      "success",
+    );
     updateState((s: any) => ({
       ...s,
       logbook: [...(s.logbook || []), { type: 'pause_session', created_at: new Date().toISOString(), title: 'Mindful Breathing' }],
@@ -332,9 +345,11 @@ export default function PauseModal({ onClose }: PauseModalProps) {
                 Dengan pikiran yang jernih, keputusanmu bakal jauh lebih tepat!
               </div>
               
-              <div style={{ marginTop: 24, padding: '12px', borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.sageWash, color: HP_TOKENS.sageInk, fontWeight: 700, fontSize: 14 }}>
-                🎉 +5 Poin Well-being
-              </div>
+              {awarded > 0 && (
+                <div style={{ marginTop: 24, padding: '12px', borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.sageWash, color: HP_TOKENS.sageInk, fontWeight: 700, fontSize: 14 }}>
+                  🎉 +{awarded} Poin Well-being
+                </div>
+              )}
             </div>
           </div>
         ) : (

@@ -29,7 +29,7 @@ export default function SenggolModal({ onClose, toUser }: SenggolModalProps) {
   useEffect(() => {
     async function fetchUsers() {
       try {
-        const res = await fetch('/api/users');
+        const res = await fetch(`/api/users?requesterId=${user?.id}`);
         const data = await res.json();
         if (data.users) {
           const filtered = data.users.filter((u: any) => String(u.id) !== String(user?.id));

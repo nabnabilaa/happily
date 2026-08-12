@@ -6,6 +6,7 @@ import HPGlyph from "@/components/ui/HPGlyph";
 import SectionHeader from "@/components/home/SectionHeader";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
 import { useHP } from "@/lib/HPContext";
+import { POINTS_ACTIONS } from "@/lib/pointsConfig";
 
 interface SurveySectionProps {
   openModal: (name: string, props?: any) => void;
@@ -93,7 +94,10 @@ export default function SurveySection({ openModal }: SurveySectionProps) {
                       padding: '2px 8px', borderRadius: 6, fontSize: 9, fontWeight: 700,
                       background: HP_TOKENS.sageWash, color: HP_TOKENS.sageInk, fontFamily: HP_FONT,
                     }}>
-                      +20 Poin
+                      {/* Tarif dibaca dari registry, bukan ditulis ulang. Ini
+                          janji sebelum mengisi; yang benar-benar dibayar
+                          dilaporkan layar sukses setelah server menjawab. */}
+                      +{POINTS_ACTIONS.survey_complete.value} Poin
                     </div>
                   </div>
                 </div>

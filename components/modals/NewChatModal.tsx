@@ -50,7 +50,7 @@ export default function NewChatModal({ onClose, onChannelCreated, defaultRecipie
   const fetchUsers = async () => {
     try {
       const [uRes, dRes] = await Promise.all([
-        fetch('/api/users'),
+        fetch(`/api/users?requesterId=${user?.id}`),
         fetch('/api/hr/departments'),
       ]);
       const uData = await uRes.json();

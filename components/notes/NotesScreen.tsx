@@ -16,7 +16,7 @@ export default function NotesScreen() {
   
   // Fetch with SWR for offline caching and automatic revalidation
   const { data: notesRes, mutate: mutateNotes } = useSWR(user?.id ? `/api/notes?userId=${user.id}` : null);
-  const { data: usersRes } = useSWR('/api/users');
+  const { data: usersRes } = useSWR(user?.id ? `/api/users?requesterId=${user.id}` : null);
 
   const notes: any[] = notesRes?.notes || [];
   const allUsers: any[] = (usersRes?.users || []).filter((u: any) => String(u.id) !== String(user?.id));

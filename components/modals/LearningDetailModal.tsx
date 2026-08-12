@@ -18,6 +18,9 @@ export default function LearningDetailModal({ onClose }: LearningDetailModalProp
   const [step, setStep] = useState(-1); // -1 = intro/loading, 0..N = slides, N+1 = quiz, N+2 = result
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [quizResult, setQuizResult] = useState<'success' | 'fail' | null>(null);
+  /** Poin yang benar-benar dibayar untuk kelulusan kuis ini. Kuota 2 modul per
+   *  hari, jadi 0 adalah hasil yang wajar dan harus terbaca berbeda. */
+  const [awarded, setAwarded] = useState(0);
 
   useEffect(() => {
     // Fetch generated learning module from AI
@@ -73,7 +76,8 @@ export default function LearningDetailModal({ onClose }: LearningDetailModalProp
       const moduleKey = String(moduleData.title || 'modul')
         .toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 48);
       const today = new Date().toISOString().slice(0, 10);
-      await awardXP('learning_complete', `Lulus Kuis: ${moduleData.title}`, `module:${moduleKey}:${today}`);
+      const outcome = await awardXP('learning_complete', `Lulus Kuis: ${moduleData.title}`, `module:${moduleKey}:${today}`);
+      setAwarded(outcome?.awarded ?? 0);
       syncSkillProgress(moduleData.topic || "Soft Skill", 10);
     } else {
       setQuizResult('fail');
@@ -110,8 +114,11 @@ export default function LearningDetailModal({ onClose }: LearningDetailModalProp
             {quizResult === 'success' ? 'Luar Biasa!' : 'Tetap Semangat!'}
           </div>
           <div style={{ ...HP_TEXT.body, color: HP_TOKENS.inkMute, marginTop: 12 }}>
-            {quizResult === 'success' 
-              ? `Kamu berhasil memahami materi "${moduleData.title}" dan mendapatkan EXP.` 
+            {/* "mendapatkan EXP" itu janji tanpa angka dalam satuan yang tidak
+                dipakai aplikasi ini. Sekarang menyebut jumlah sebenarnya, dan
+                diam soal poin kalau kuota belajar hari ini sudah habis. */}
+            {quizResult === 'success'
+              ? `Kamu berhasil memahami materi "${moduleData.title}".${awarded > 0 ? ` +${awarded} Poin.` : ''}`
               : `Sayang sekali jawabanmu kurang tepat. Coba pahami lagi materinya besok ya!`}
           </div>
           

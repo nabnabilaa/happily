@@ -69,7 +69,15 @@ export default function BreathingCard({ openModal, compact = false }: BreathingC
   return (
     <HPCard
       padding={compact ? 16 : 18}
-      style={{ background: HP_TOKENS.successWash, border: `1px solid ${HP_TOKENS.successSoft}` }}
+      // The wash is a 4.5%-alpha tint, so setting it as `background` alone
+      // replaces the card's opaque surface and the page shows straight through.
+      // Layer it over `card` instead: the tint stays a tint, and both tokens
+      // are theme-aware so this holds in dark mode too.
+      style={{
+        backgroundColor: HP_TOKENS.card,
+        backgroundImage: `linear-gradient(${HP_TOKENS.successWash}, ${HP_TOKENS.successWash})`,
+        border: `1px solid ${HP_TOKENS.successSoft}`,
+      }}
     >
       <Stack gap={compact ? 3 : 4}>
         <Row gap={3}>
@@ -140,7 +148,9 @@ export default function BreathingCard({ openModal, compact = false }: BreathingC
                   minWidth: 0,
                   height: 8,
                   borderRadius: HP_TOKENS.radiusPill,
-                  background: HP_TOKENS.card,
+                  // The unfilled well needs to read against the card, which is
+                  // now `card` + a 4.5% tint — white would vanish into it.
+                  background: HP_TOKENS.successSoft,
                   overflow: "hidden",
                 }}
               >

@@ -82,13 +82,22 @@ export function useMoodCheckIn() {
           await queueOffline();
           if (!silent) notify("Check-In Tersimpan", "Tersimpan lokal karena kendala server. Akan disinkronkan otomatis.", "warning");
         } else {
-          if (awardPoints) await awardXP("mood_checkin", "Daily mood check-in");
+          // Mood check-in berkunci per tanggal, jadi yang kedua di hari yang
+          // sama bernilai nol. Poinnya disebut hanya kalau memang dibayar —
+          // sebelumnya tidak pernah disebut sama sekali, jadi 5 poin masuk
+          // tanpa ada yang tahu.
+          const outcome = awardPoints
+            ? await awardXP("mood_checkin", "Daily mood check-in")
+            : null;
+          const awarded = outcome?.awarded ?? 0;
+          const bonus = awarded > 0 ? ` +${awarded} Poin` : "";
+
           if (silent) {
             // caller owns the messaging
           } else if (quick) {
-            notify("Mood tercatat ✨", "Terima kasih! Lengkapi energi dan catatan kapan saja.", "success");
+            notify("Mood tercatat ✨", `Terima kasih!${bonus} Lengkapi energi dan catatan kapan saja.`, "success");
           } else {
-            notify("Check-In Selesai ✨", "Terima kasih! Jangan lupa untuk Clock In ya agar kehadiranmu tercatat.", "success");
+            notify("Check-In Selesai ✨", `Terima kasih!${bonus} Jangan lupa untuk Clock In ya agar kehadiranmu tercatat.`, "success");
             setTimeout(() => {
               window.dispatchEvent(new CustomEvent("hp_show_morning_plan"));
             }, 300); // give it a moment to close the modal before continuing

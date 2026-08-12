@@ -147,7 +147,10 @@ Jawab dengan tone yang asik dan menyemangati.`,
       return;
     }
 
-    awardXP('task_complete', `Selesaikan: ${completingTask.title}`, `task:${completingTask.id}`);
+    // Ditunggu supaya entri logbook optimistis di bawah memakai poin yang
+    // benar-benar dibayar server, bukan angka 50 yang dulu ditulis tangan.
+    const outcome = await awardXP('task_complete', `Selesaikan: ${completingTask.title}`, `task:${completingTask.id}`);
+    const awarded = outcome?.awarded ?? 0;
 
     // Efek samping di luar updateState. React boleh menjalankan callback reducer
     // lebih dari sekali (StrictMode di dev), dan kedua panggilan ini dulu ada di
@@ -194,7 +197,7 @@ Jawab dengan tone yang asik dan menyemangati.`,
         id: Date.now(),
         type: 'quest_completion',
         title: newPriorities[pIndex].title,
-        points: 50,
+        points: awarded,
         date: now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
         day: now.toLocaleDateString('id-ID', { weekday: 'long' }),
         time: now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
@@ -302,6 +305,12 @@ Jawab dengan tone yang asik dan menyemangati.`,
       ? Math.round(undoneTasks.reduce((sum: number, p: any) => sum + (p.partial_progress || 0), 0) / undoneTasks.length)
       : 100;
 
+    // Poinnya diselesaikan lebih dulu supaya baris logbook membawa angka yang
+    // benar. Sebelumnya `points: 0` ditulis mati padahal midday_checkin memang
+    // berpoin — logbook mencatat nol untuk kejadian yang dibayar.
+    const middayOutcome = await awardXP('midday_checkin', 'Mid-Day Check-in');
+    const middayAwarded = middayOutcome?.awarded ?? 0;
+
     try {
       await fetch('/api/logbook', {
         method: 'POST',
@@ -311,8 +320,8 @@ Jawab dengan tone yang asik dan menyemangati.`,
           type: 'realization_check',
           title: "Mid-Day Check-In",
           content: notes,
-          points: 0,
-          metadata: { 
+          points: middayAwarded,
+          metadata: {
             progress: avgProgress
           }
         })
@@ -320,8 +329,6 @@ Jawab dengan tone yang asik dan menyemangati.`,
     } catch (e) {
       console.error("Failed to save logbook entry", e);
     }
-
-    awardXP('midday_checkin', 'Mid-Day Check-in');
 
     // Mood belongs in `mood_checkins` like every other check-in. Until now the
     // mid-day mood only ever reached React state: it vanished on reload, never
@@ -352,7 +359,13 @@ Jawab dengan tone yang asik dan menyemangati.`,
     
     setShowNotes(false);
     setNotes("");
-    notify("Mid-Day Check-in", "Update siang ini & Mood berhasil disimpan! ✨", "success");
+    notify(
+      "Mid-Day Check-in",
+      middayAwarded > 0
+        ? `Update siang ini & Mood berhasil disimpan! +${middayAwarded} Poin ✨`
+        : "Update siang ini & Mood berhasil disimpan! ✨",
+      "success",
+    );
     onClose();
   };
 

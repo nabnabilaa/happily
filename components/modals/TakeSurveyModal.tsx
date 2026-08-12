@@ -18,6 +18,10 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  /** Poin yang benar-benar dibayar. Kuncinya `survey:<id>` seumur hidup, jadi
+   *  mengisi ulang survei yang sama bernilai nol — layar sukses dulu tetap
+   *  berkata "+20 Poin Earned" setiap kali. */
+  const [awarded, setAwarded] = useState(0);
 
   const questions: any[] = survey?.questions || [];
   const isInternal = questions.length > 0;
@@ -61,7 +65,8 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
       const data = await res.json();
       if (data.success) {
         setSubmitted(true);
-        awardXP('survey_complete', `Selesaikan survey: ${survey.title}`, `survey:${survey.id}`);
+        const outcome = await awardXP('survey_complete', `Selesaikan survey: ${survey.title}`, `survey:${survey.id}`);
+        setAwarded(outcome?.awarded ?? 0);
       } else {
         setError(data.error || 'Gagal menyimpan jawaban');
       }
@@ -110,7 +115,9 @@ export default function TakeSurveyModal({ onClose, survey }: TakeSurveyModalProp
           <div style={{ ...HP_TEXT.body, color: HP_TOKENS.inkSoft, marginTop: 8, lineHeight: 1.5 }}>
             Terima kasih sudah mengisi survey <strong>{survey.title}</strong>. Jawabanmu akan membantu perusahaan menjadi lebih baik.
           </div>
-          <div style={{ ...HP_TEXT.small, color: HP_TOKENS.sageInk, fontWeight: 700, marginTop: 16 }}>+20 Poin Earned 🎁</div>
+          {awarded > 0 && (
+            <div style={{ ...HP_TEXT.small, color: HP_TOKENS.sageInk, fontWeight: 700, marginTop: 16 }}>+{awarded} Poin 🎁</div>
+          )}
           <button onClick={onClose} className="hp-tap" style={{
             marginTop: 24, padding: '14px 40px', borderRadius: 99, border: 'none',
             background: HP_TOKENS.lavender, color: HP_TOKENS.onPrimary,

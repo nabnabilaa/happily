@@ -33,7 +33,7 @@ export default function AppreciateModal({ onClose, toUser }: AppreciateModalProp
   useEffect(() => {
     async function fetchUsers() {
       try {
-        const res = await fetch('/api/users');
+        const res = await fetch(`/api/users?requesterId=${user?.id}`);
         const data = await res.json();
         if (data.users) {
           // Filter out current user (can't appreciate yourself)
