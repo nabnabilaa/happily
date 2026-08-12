@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getRequesterAccess, canHrAdmin } from "@/lib/hrAuth";
+import { requireHrAdmin } from "@/lib/apiAuth";
 
 export async function GET(request: Request) {
   try {
@@ -16,7 +17,11 @@ export async function POST(request: Request) {
     const { name, requesterId } = await request.json();
     if (!name || !requesterId) return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
 
-    const requester = await getRequesterAccess(requesterId);
+    // Peran diperiksa pada pemilik cookie, bukan `requesterId` dari body:
+    // membuat/mengubah/menghapus divisi menyentuh seluruh perusahaan.
+    const actor = await requireHrAdmin(request, requesterId);
+    if ("response" in actor) return actor.response;
+    const requester = await getRequesterAccess(actor.userId);
     if (!canHrAdmin(requester.role, requester.hrAccess)) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
     await db.execute({ sql: "INSERT INTO departments (name) VALUES (?)", args: [name] });
@@ -31,7 +36,11 @@ export async function PUT(request: Request) {
     const { id, name, requesterId } = await request.json();
     if (!id || !name || !requesterId) return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
 
-    const requester = await getRequesterAccess(requesterId);
+    // Peran diperiksa pada pemilik cookie, bukan `requesterId` dari body:
+    // membuat/mengubah/menghapus divisi menyentuh seluruh perusahaan.
+    const actor = await requireHrAdmin(request, requesterId);
+    if ("response" in actor) return actor.response;
+    const requester = await getRequesterAccess(actor.userId);
     if (!canHrAdmin(requester.role, requester.hrAccess)) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
     // Get old name to update users
@@ -56,7 +65,11 @@ export async function DELETE(request: Request) {
     const { id, requesterId } = await request.json();
     if (!id || !requesterId) return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
 
-    const requester = await getRequesterAccess(requesterId);
+    // Peran diperiksa pada pemilik cookie, bukan `requesterId` dari body:
+    // membuat/mengubah/menghapus divisi menyentuh seluruh perusahaan.
+    const actor = await requireHrAdmin(request, requesterId);
+    if ("response" in actor) return actor.response;
+    const requester = await getRequesterAccess(actor.userId);
     if (!canHrAdmin(requester.role, requester.hrAccess)) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
     await db.execute({ sql: "DELETE FROM departments WHERE id = ?", args: [id] });

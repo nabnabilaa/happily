@@ -4,6 +4,7 @@ import { hpEventEmitter } from '@/lib/events';
 import { sqlWibDate, SQL_WIB_TODAY } from '@/lib/timeUtils';
 import { normalizeTaskStatus, TASK_STATUS } from '@/lib/taskStatus';
 import { getRequesterAccess, canHrAdmin } from '@/lib/hrAuth';
+import { requireSelfOrHrAdmin } from "@/lib/apiAuth";
 
 export const dynamic = 'force-dynamic';
 
@@ -13,6 +14,20 @@ export async function GET(request: Request) {
     const userId = searchParams.get('userId');
 
     if (!userId) return NextResponse.json({ error: 'UserId missing' }, { status: 400 });
+
+    /*
+     * Blob ini berisi seluruh isi kepala seorang karyawan: mood, energi,
+     * riwayat perasaan, goal, kebiasaan, catatan, jawaban survei — 34 kunci.
+     * Sebelum pemeriksaan ini, `?userId=` dipercaya apa adanya, jadi karyawan
+     * mana pun bisa membaca milik rekannya hanya dengan mengganti satu
+     * parameter di URL. Data wellbeing adalah yang paling sensitif di produk
+     * ini dan justru yang paling terbuka.
+     *
+     * HR-Admin tetap boleh membaca lintas orang — konsol HR memang berdiri di
+     * atas endpoint yang sama.
+     */
+    const access = await requireSelfOrHrAdmin(request, userId);
+    if ("response" in access) return access.response;
 
     // Note: Tables are managed by scripts/migrate-mysql.ts. No runtime migration.
 
@@ -340,6 +355,20 @@ export async function GET(request: Request) {
       focusTaskId: userRow.focus_task_id ? (isNaN(Number(userRow.focus_task_id)) ? userRow.focus_task_id : Number(userRow.focus_task_id)) : null,
       focusProgress: userRow.focus_progress || 0,
       priorities,
+      /*
+       * Cap waktu server saat state ini dibaca.
+       *
+       * Klien mengirimkannya kembali di POST supaya server bisa membedakan
+       * "pemakai mengubah nilai ini" dari "tab ini memegang salinan lama".
+       * Tanpa penanda itu, satu-satunya aturan adalah siapa-menulis-terakhir,
+       * dan tab yang sudah lama terbuka memutar mundur data yang lebih baru.
+       */
+      stateLoadedAt: new Date().toISOString(),
+      // Dikembalikan supaya bintang di layar Rewards dan jawaban prompt lembur
+      // selamat dari refresh. Tanpa dua baris ini, keduanya ditulis UI lalu
+      // hilang tanpa jejak — simpan tetap membalas `success`.
+      wishlistId: userRow.wishlist_id || null,
+      overtimeStatus: userRow.overtime_status || null,
       weeklyPriorities: [],
       habits: habitsUnique,
       goals,
@@ -370,6 +399,22 @@ export async function GET(request: Request) {
       _skillMapping: skillMapping,
     };
 
+    /*
+     * `?includeStatic=0` membuang data milik seluruh perusahaan dari balasan.
+     *
+     * Klien yang mengirimnya mengambil bagian itu dari `/api/company-data`,
+     * yang punya ETag dan karenanya biasanya dijawab 304 tanpa badan pesan.
+     * Tanpa parameter ini balasannya utuh seperti sebelumnya — jalur lain yang
+     * memanggil endpoint ini (cache offline, alat internal) tidak ikut berubah.
+     */
+    if (searchParams.get("includeStatic") === "0") {
+      const trimmed: Record<string, unknown> = { ...state };
+      for (const k of ["rewards", "learning", "contacts", "workSchedule", "onboardingConfig", "wellbeing"]) {
+        delete trimmed[k];
+      }
+      return NextResponse.json({ state: trimmed, user });
+    }
+
     return NextResponse.json({ state, user });
   } catch (error: any) {
     console.error("Database Fetch Error:", error);
@@ -383,8 +428,52 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { state, user, userId } = await request.json();
-    if (!user || !userId || !state) return NextResponse.json({ error: 'User data, state or ID missing' });
+    const body = await request.json();
+    const { state, user, userId } = body;
+
+    /*
+     * Kapan klien terakhir MELIHAT keadaan server.
+     *
+     * Dipakai untuk menolak opini yang sudah kedaluwarsa: baris yang berubah
+     * setelah cap waktu ini belum pernah dilihat si klien, jadi nilai yang ia
+     * bawa bukan hasil keputusan pemakai melainkan sisa salinan lama.
+     *
+     * Klien lama yang belum mengirimnya tetap dilayani seperti sebelumnya —
+     * pengaman ini hanya menyala kalau penandanya ada, supaya tab yang belum
+     * memuat ulang kode tidak tiba-tiba berhenti bisa menyimpan.
+     */
+    const stateLoadedAt: string | null = state?.stateLoadedAt ?? null;
+
+    /**
+     * Apakah baris ini sudah berubah SETELAH klien terakhir melihat server?
+     *
+     * Kalau ya, nilai yang dibawa blob bukan keputusan pemakai melainkan sisa
+     * salinan lama, dan menulisnya berarti memutar mundur pekerjaan orang lain.
+     *
+     * Mengembalikan `false` saat penanda tidak ada, supaya klien lama yang
+     * belum mengirim `stateLoadedAt` tetap bisa menyimpan seperti sebelumnya —
+     * pengaman ini tidak boleh mematikan tab yang belum memuat ulang kodenya.
+     */
+    const isStale = (rowUpdatedAt: unknown): boolean => {
+      if (!stateLoadedAt || !rowUpdatedAt) return false;
+      return new Date(rowUpdatedAt as any).getTime() > new Date(stateLoadedAt).getTime();
+    };
+    // Status 400 wajib ada. Tanpanya balasan ini terkirim sebagai HTTP 200,
+    // `res.ok` di klien bernilai true, dan simpan yang GAGAL terlihat berhasil.
+    // Jalur `sendBeacon` saat menutup halaman (lib/HPContext.tsx) membuat ini
+    // jadi cara paling senyap untuk kehilangan data.
+    if (!user || !userId || !state) {
+      return NextResponse.json({ error: 'User data, state or ID missing' }, { status: 400 });
+    }
+
+    /*
+     * Sisi tulis lebih berbahaya daripada sisi baca: terbukti runtime, emp007
+     * mengganti nama emp008 menjadi "PWNED BY emp007" dan menimpa seluruh
+     * state-nya hanya dengan mengirim `userId` orang lain — HTTP 200,
+     * `{"success":true}`.
+     */
+    const access = await requireSelfOrHrAdmin(request, userId);
+    if ("response" in access) return access.response;
 
     /*
      * Izin dibaca dari DB, sekali, di awal.
@@ -422,9 +511,33 @@ export async function POST(request: Request) {
      * `state.lastActivityDate` milik klien, sehingga jam browser yang meleset
      * bisa memundurkan cap waktu dan memicu alert "tidak aktif" di manager.
      */
+    /*
+     * Blok kolom ini juga bisa dimundurkan tab basi.
+     *
+     * `name`, avatar, niat fokus, wishlist, dan sisanya ditulis dari blob, jadi
+     * mengganti nama profil di satu tab bisa dibatalkan oleh tab lain yang
+     * sudah lama terbuka lalu menyimpan hal yang sama sekali berbeda.
+     *
+     * `state_updated_at` adalah kolom tersendiri yang HANYA ditulis di sini,
+     * supaya penandanya tidak bergerak karena hal lain. Kalau nilainya lebih
+     * baru dari salinan klien, seluruh blok dilewati — bukan sebagian, karena
+     * kesembilan kolom itu berasal dari satu snapshot yang sama basinya.
+     */
+    const userRowNow = await db.execute({
+      sql: "SELECT state_updated_at FROM users WHERE id = ?",
+      args: [userId],
+    });
+    const userBlockStale = isStale(userRowNow.rows[0]?.state_updated_at);
+    if (userBlockStale) {
+      console.warn(
+        `[storage] Melewati update kolom profil untuk ${userId}: ` +
+        `baris lebih baru dari salinan klien (klien memuat ${stateLoadedAt})`
+      );
+    }
+
     try {
-      await db.execute({
-        sql: `UPDATE users SET name = ?, avatar_image = ?, last_activity_at = UTC_TIMESTAMP(), personal_wellbeing_goal = ?, wellbeing_routine = ?, focus_task_id = ?, focus_progress = ?, focus_intention = ? WHERE id = ?`,
+      if (!userBlockStale) await db.execute({
+        sql: `UPDATE users SET name = ?, avatar_image = ?, last_activity_at = UTC_TIMESTAMP(), personal_wellbeing_goal = ?, wellbeing_routine = ?, focus_task_id = ?, focus_progress = ?, focus_intention = ?, wishlist_id = ?, overtime_status = ?, state_updated_at = UTC_TIMESTAMP(3) WHERE id = ?`,
         args: [
           user.name,
           user.avatarImage || null,
@@ -433,6 +546,11 @@ export async function POST(request: Request) {
           state.focusTaskId || null,
           state.focusProgress || 0,
           state.intention || "",
+          // `?? null` dan bukan `|| null`: mencabut bintang mengirim null yang
+          // memang harus tersimpan sebagai null, dan keduanya tidak punya
+          // endpoint pemilik lain yang bisa kalah oleh tab basi.
+          state.wishlistId ?? null,
+          state.overtimeStatus ?? null,
           userId
         ]
       });
@@ -518,7 +636,7 @@ export async function POST(request: Request) {
          * cukup sering menukar hadiah.
          *
          * Riwayat penukaran itu catatan transaksi: hanya bertambah, dan yang
-         * berhak menambahnya adalah /api/rewards/redeem.
+         * berhak menambahnya adalah /api/rewards/redemptions.
          */
 
         // Insert or update entries in payload
@@ -571,7 +689,7 @@ export async function POST(request: Request) {
     if (state.habits) {
       try {
         const dbHabitsRes = await db.execute({
-          sql: "SELECT id, name, streak, target_days, is_done_today, glyph, completed_dates FROM habits WHERE user_id = ?",
+          sql: "SELECT id, name, streak, target_days, is_done_today, glyph, completed_dates, updated_at FROM habits WHERE user_id = ?",
           args: [userId]
         });
         const dbHabitsMap = new Map<string, any>();
@@ -609,15 +727,48 @@ export async function POST(request: Request) {
             const existingStreak = Number(existing.streak);
             const existingTarget = Number(existing.target_days);
 
+            /*
+             * Baris yang LEBIH BARU dari salinan si klien tidak boleh ditimpa.
+             *
+             * Blob ini berisi seluruh state satu tab, dan tab bisa memegang
+             * salinan berjam-jam. Tanpa perbandingan waktu, urutan berikut
+             * memutar mundur data tanpa satu pun error:
+             *
+             *   1. Tab A memuat state
+             *   2. Pihak lain menaikkan streak di server (tab kedua, cron,
+             *      aksi manajer)
+             *   3. Pemakai mengetik sesuatu yang LAIN di tab A — niat harian,
+             *      misalnya — dan blob ikut membawa salinan basi kebiasaan
+             *   4. Streak kembali ke nilai lama
+             *
+             * Terbukti runtime sebelum pengaman ini: streak 99 dimundurkan ke 1
+             * oleh tab yang tidak pernah menyentuh kebiasaan itu (lihat
+             * audit/probe-writeback.js).
+             *
+             * `stateLoadedAt` dikirim klien, berisi cap waktu server saat GET
+             * mengembalikan state. Kalau baris berubah setelah itu, si klien
+             * belum pernah melihat perubahannya — jadi opininya tentang baris
+             * ini sudah kedaluwarsa dan diabaikan. Perubahan lain di blob yang
+             * sama tetap diproses.
+             */
+            const clientIsStale = isStale(existing.updated_at);
+            if (clientIsStale) {
+              console.warn(
+                `[storage] Melewati update habit "${existing.name}" untuk ${userId}: ` +
+                `baris lebih baru dari salinan klien (klien memuat ${stateLoadedAt})`
+              );
+            }
+
             // Update only if anything changed
             if (
+              !clientIsStale && (
               existingStreak !== h.streak ||
               existingTarget !== h.target ||
               existingIsDone !== isDoneTodayVal ||
               existing.glyph !== h.glyph ||
               existingCompletedDatesStr !== completedDatesStr ||
               existing.name !== h.name
-            ) {
+            )) {
               await db.execute({
                 sql: `UPDATE habits SET streak = ?, target_days = ?, is_done_today = ?, glyph = ?, completed_dates = ?, name = ? WHERE id = ? AND user_id = ?`,
                 args: [h.streak, h.target, isDoneTodayVal, h.glyph, completedDatesStr, h.name, existing.id, userId]
@@ -651,7 +802,7 @@ export async function POST(request: Request) {
     if (state.skills) {
       try {
         const dbSkillsRes = await db.execute({
-          sql: "SELECT id, name, current_level, target_level FROM user_skills WHERE user_id = ?",
+          sql: "SELECT id, name, current_level, target_level, updated_at FROM user_skills WHERE user_id = ?",
           args: [userId]
         });
         const dbSkillsMap = new Map<string, any>();
@@ -676,7 +827,13 @@ export async function POST(request: Request) {
           } else {
             const existingCurrent = Number(existing.current_level);
             const existingTarget = Number(existing.target_level);
-            if (
+
+            // Penjaga yang sama seperti pada habits: baris yang berubah setelah
+            // klien memuat state belum pernah dilihatnya, jadi nilainya bukan
+            // keputusan pemakai melainkan sisa salinan lama.
+            if (isStale(existing.updated_at)) {
+              console.warn(`[storage] Melewati update skill "${existing.name}" untuk ${userId}: baris lebih baru dari salinan klien`);
+            } else if (
               existingCurrent !== currentLevel ||
               existingTarget !== targetLevel ||
               existing.name !== sk.name
@@ -729,11 +886,42 @@ export async function POST(request: Request) {
       }
     }
 
-    // Trigger serverless-compatible real-time update using Pusher with local fallback
+    /*
+     * `originId` diteruskan apa adanya supaya tab PENGIRIM bisa mengenali
+     * gemanya sendiri.
+     *
+     * Alurnya dulu: tab menyimpan → server memancarkan `refresh` ke
+     * `user-{userId}` → tab yang SAMA menerimanya → ia menjalankan `fetchData`
+     * lengkap atas data yang baru saja ia kirim sendiri. Satu GET penuh berisi
+     * rewards, learning, dan feed kudos untuk setiap penyimpanan, hanya untuk
+     * mengambil kembali keadaan yang sudah ada di memorinya.
+     *
+     * Tab LAIN milik user yang sama tetap menerima dan tetap menyegarkan —
+     * yang dibuang hanya gema ke diri sendiri.
+     */
     const { triggerRealtimeUpdate } = await import('@/lib/realtime');
-    await triggerRealtimeUpdate(userId, { type: "refresh" });
+    await triggerRealtimeUpdate(userId, {
+      type: "refresh",
+      originId: typeof body.originId === "string" ? body.originId : undefined,
+    });
 
-    return NextResponse.json({ success: true, message: 'Updated database successfully' });
+    /*
+     * Cap waktu baru dikembalikan supaya klien bisa memajukan penandanya.
+     *
+     * Tanpa ini pengaman anti-mundur berbalik menyerang pemiliknya: tulisan
+     * PERTAMA sebuah tab menaikkan `updated_at` melewati `stateLoadedAt` yang
+     * ia pegang, sehingga tulisan KEDUA dari tab yang sama terbaca sebagai
+     * "basi" dan diabaikan. Terbukti sebelum perbaikan ini: streak 1 → 5
+     * berhasil, lalu 5 → 7 diam-diam tidak tersimpan.
+     *
+     * Diambil SETELAH semua penulisan selesai, jadi tulisan tab ini sendiri
+     * selalu berada di bawah penanda barunya.
+     */
+    return NextResponse.json({
+      success: true,
+      message: 'Updated database successfully',
+      stateLoadedAt: new Date().toISOString(),
+    });
   } catch (error: any) {
     console.error("Database Sync Error:", error);
     return NextResponse.json({

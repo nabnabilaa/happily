@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getRequesterAccess, canHrAdmin } from "@/lib/hrAuth";
+import { requireHrAdmin } from "@/lib/apiAuth";
 
 // GET — daftar user dengan department_status = 'pending'
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const requesterId = searchParams.get("requesterId");
+  // Identitas dari cookie sesi; daftar permintaan divisi menyangkut
+  // seluruh karyawan, jadi hanya HR-Admin yang boleh melihatnya.
+  const actor = await requireHrAdmin(request);
+  if ("response" in actor) return actor.response;
+  const requesterId = actor.userId;
 
   if (!requesterId) {
     return NextResponse.json({ error: "requesterId wajib diisi" }, { status: 400 });
@@ -32,6 +37,10 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const { requesterId, targetUserId, action, department } = await request.json();
+
+    // Menyetujui/menolak permintaan divisi adalah wewenang HR.
+    const actor = await requireHrAdmin(request, requesterId);
+    if ("response" in actor) return actor.response;
 
     if (!requesterId || !targetUserId || !action) {
       return NextResponse.json({ error: "requesterId, targetUserId, dan action wajib diisi" }, { status: 400 });

@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { triggerRealtimeUpdate } from "@/lib/realtime";
+import { requireActor } from "@/lib/apiAuth";
 
 export async function POST(request: Request) {
   try {
-    const { senderId, senderName, receiverId, type } = await request.json();
+    const { senderName, receiverId, type } = await request.json();
+
+    // Pengirim dari cookie: `senderId` di body berarti siapa pun bisa menyenggol
+    // rekan kerja atas nama orang lain.
+    const actor = await requireActor(request);
+    if ("response" in actor) return actor.response;
+    const senderId = actor.userId;
 
     if (!senderId || !receiverId) {
       return NextResponse.json({ error: "senderId and receiverId are required" }, { status: 400 });

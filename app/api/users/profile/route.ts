@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireSelfOrHrAdmin } from "@/lib/apiAuth";
 
 export const dynamic = 'force-dynamic';
 
@@ -8,6 +9,11 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId");
+
+    // Identitas dipastikan dari cookie sesi. Profil berisi data pribadi; sebelumnya `?userId=` dipercaya apa adanya.
+    // HR-Admin tetap boleh melihat lintas orang.
+    const access = await requireSelfOrHrAdmin(request, userId);
+    if ("response" in access) return access.response;
     const month = searchParams.get("month") || String(new Date().getMonth() + 1);
     const year = searchParams.get("year") || String(new Date().getFullYear());
 

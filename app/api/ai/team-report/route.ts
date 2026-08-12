@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireActor } from "@/lib/apiAuth";
 
 // GET /api/ai/team-report?managerId=X&type=weekly|monthly&month=M&year=Y
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const managerId = searchParams.get('managerId');
+    // Identitas dari cookie sesi. Laporan tim merangkum kinerja seluruh anggota; `?managerId=` dulu menentukan
+    // tim siapa yang dirangkum.
+    const actor = await requireActor(request);
+    if ("response" in actor) return actor.response;
+    const managerId = actor.userId;
     const type = searchParams.get('type') || 'weekly';
     const month = Number(searchParams.get('month') || new Date().getMonth() + 1);
     const year = Number(searchParams.get('year') || new Date().getFullYear());

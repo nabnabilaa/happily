@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getRequesterAccess, canManageTeam } from "@/lib/hrAuth";
+import { requireHrAdmin } from "@/lib/apiAuth";
 
 export async function POST(req: Request) {
   try {
@@ -11,7 +12,12 @@ export async function POST(req: Request) {
     }
 
     // Check if requester can manage team (manager, hr, atau hr_access)
-    const requester = await getRequesterAccess(requesterId);
+    // Persetujuan goal diperiksa pada pemilik cookie, bukan `requesterId`
+    // dari body — kalau tidak, karyawan bisa menyetujui goal-nya sendiri.
+    const actor = await requireHrAdmin(req, requesterId);
+    if ("response" in actor) return actor.response;
+
+    const requester = await getRequesterAccess(actor.userId);
     if (!canManageTeam(requester.role, requester.hrAccess)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }

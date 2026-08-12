@@ -2,12 +2,25 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { dispatchNotification } from '@/lib/notificationService';
 import { resolveManagerTeam } from '@/lib/managerTeam';
+import { requireActor } from '@/lib/apiAuth';
 
 export async function POST(request: Request) {
   try {
-    const { senderId, title, message, type = 'announcement' } = await request.json();
+    const { title, message, type = 'announcement' } = await request.json();
 
-    if (!senderId || !title || !message) {
+    /*
+     * Pengirim dari cookie, bukan dari body.
+     *
+     * Peran memang sudah dibaca ulang dari DB di bawah — tapi yang dibaca
+     * adalah peran orang yang DISEBUT `senderId`. Menyebut id HR sudah cukup
+     * untuk masuk ke cabang "kirim ke semua orang" dan menyiarkan apa pun ke
+     * seluruh perusahaan atas nama HR.
+     */
+    const actor = await requireActor(request);
+    if ("response" in actor) return actor.response;
+    const senderId = actor.userId;
+
+    if (!title || !message) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 

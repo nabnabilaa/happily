@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { hpEventEmitter } from "@/lib/events";
 import { awardPoints, refFor } from "@/lib/points";
 import { wibDateString, wibMinutesOfDay, sqlWibDate, SQL_WIB_TODAY } from "@/lib/timeUtils";
+import { requireSelfOrHrAdmin } from "@/lib/apiAuth";
 
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371e3; // metres
@@ -22,6 +23,10 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 export async function POST(request: Request) {
   try {
     const { userId, token, lat, lng, mood, checkInType = 'WFO', officeId, notes } = await request.json();
+
+    // Identitas dari cookie sesi. Clock-in atas nama orang lain memalsukan catatan kehadiran.
+    const access = await requireSelfOrHrAdmin(request, userId);
+    if ("response" in access) return access.response;
 
     if (!userId || !token) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });

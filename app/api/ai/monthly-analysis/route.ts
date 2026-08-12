@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireActor } from "@/lib/apiAuth";
 import { v4 as uuidv4 } from "uuid";
 
 // POST: Generate AI monthly analysis comparing results vs KPIs
 export async function POST(request: Request) {
   try {
-    const { managerId, month, year } = await request.json();
-    if (!managerId) return NextResponse.json({ error: "managerId required" }, { status: 400 });
+    const { month, year } = await request.json();
+
+    // Identitas dari cookie — sama alasannya seperti /api/ai/weekly-summary:
+    // ini membaca data seluruh tim dan memanggil model berbayar.
+    const actor = await requireActor(request);
+    if ("response" in actor) return actor.response;
+    const managerId = actor.userId;
 
     const targetMonth = month || new Date().getMonth() + 1;
     const targetYear = year || new Date().getFullYear();

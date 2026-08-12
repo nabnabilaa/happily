@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { calculateTriggerKey, dispatchNotification } from "@/lib/notificationService";
+import { requireSelfOrHrAdmin } from "@/lib/apiAuth";
 
 export async function POST(request: Request) {
   try {
     const { userId, mood, energy, tag } = await request.json();
+
+    // Identitas dari cookie sesi. Check-in mood adalah data wellbeing pribadi.
+    const access = await requireSelfOrHrAdmin(request, userId);
+    if ("response" in access) return access.response;
 
     if (!userId || !mood) {
       return NextResponse.json({ error: "userId dan mood wajib diisi" }, { status: 400 });

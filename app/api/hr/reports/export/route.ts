@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getRequesterAccess, canManageTeam } from "@/lib/hrAuth";
+import { requireActor } from "@/lib/apiAuth";
 
 // GET: Fetch division report data for export (Logbook, KPI, Weekly target, Monthly summary)
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const requesterId = searchParams.get('adminId') || searchParams.get('requesterId');
+    // Identitas dari cookie sesi; parameter lama diabaikan. Lihat
+    // app/api/hr/users/route.ts.
+    const actor = await requireActor(request);
+    if ("response" in actor) return actor.response;
+    const requesterId = actor.userId;
     const type = searchParams.get('type') || 'logbook'; // 'logbook' | 'kpi' | 'weekly' | 'monthly'
     const department = searchParams.get('department') || 'all';
     const month = Number(searchParams.get('month')) || new Date().getMonth() + 1;

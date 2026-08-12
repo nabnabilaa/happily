@@ -1,14 +1,18 @@
 import { NextResponse } from "next/server";
 import { getRequesterAccess, canManageTeam } from "@/lib/hrAuth";
 import { getStoredNarrative, normScope, periodLabelOf } from "@/lib/reportNarrative";
+import { requireActor } from "@/lib/apiAuth";
 
 // GET: fetch a stored (auto-recap or previously generated) narrative for the dashboard's scope/period.
 // Params: requesterId, month, year, week, department
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const requesterId = searchParams.get('requesterId') || searchParams.get('adminId');
-    if (!requesterId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // Identitas dari cookie sesi; parameter lama diabaikan. Lihat
+    // app/api/hr/users/route.ts.
+    const actor = await requireActor(request);
+    if ("response" in actor) return actor.response;
+    const requesterId = actor.userId;
     const requester = await getRequesterAccess(requesterId);
     if (!canManageTeam(requester.role, requester.hrAccess)) return NextResponse.json({ error: "Unauthorized." }, { status: 403 });
 

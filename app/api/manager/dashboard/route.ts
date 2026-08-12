@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { resolveManagerTeam, placeholdersFor } from '@/lib/managerTeam';
 import { AWAITING_REVIEW_SQL, isAwaitingReview, normalizeTaskStatus } from '@/lib/taskStatus';
-import { sqlWibDate, SQL_WIB_TODAY } from '@/lib/timeUtils';
+import { sqlTaskWibDay, SQL_WIB_TODAY } from '@/lib/timeUtils';
+import { requireSelfOrHrAdmin } from "@/lib/apiAuth";
 
 /** How far back the team task board reaches, in days. */
 const TASK_WINDOW_DAYS = 30;
@@ -11,6 +12,10 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
+
+    // Identitas dari cookie sesi. Dashboard manajer memuat data seluruh timnya.
+    const access = await requireSelfOrHrAdmin(request, userId);
+    if ("response" in access) return access.response;
     const windowDays = Number(searchParams.get('windowDays')) || TASK_WINDOW_DAYS;
 
     if (!userId) return NextResponse.json({ error: 'ManagerId missing' }, { status: 400 });
@@ -28,8 +33,8 @@ export async function GET(request: Request) {
       sql: `SELECT u.id, u.name, u.job_title, u.streak, u.role,
             (SELECT mood_key FROM mood_checkins WHERE user_id = u.id ORDER BY created_at DESC LIMIT 1) as mood,
             (SELECT created_at FROM mood_checkins WHERE user_id = u.id ORDER BY created_at DESC LIMIT 1) as mood_at,
-            (SELECT COUNT(*) FROM daily_priorities WHERE user_id = u.id AND is_done = 1 AND ${sqlWibDate('created_at')} = ${SQL_WIB_TODAY}) as tasks_done,
-            (SELECT COUNT(*) FROM daily_priorities WHERE user_id = u.id AND ${sqlWibDate('created_at')} = ${SQL_WIB_TODAY}) as tasks_total,
+            (SELECT COUNT(*) FROM daily_priorities WHERE user_id = u.id AND is_done = 1 AND ${sqlTaskWibDay()} = ${SQL_WIB_TODAY}) as tasks_done,
+            (SELECT COUNT(*) FROM daily_priorities WHERE user_id = u.id AND ${sqlTaskWibDay()} = ${SQL_WIB_TODAY}) as tasks_total,
             (SELECT COUNT(*) FROM daily_priorities dp WHERE dp.user_id = u.id AND ${AWAITING_REVIEW_SQL}) as tasks_awaiting_review
             FROM users u WHERE u.id IN (${memberPlaceholders})`,
       args: memberIds,

@@ -3,11 +3,15 @@ import { db } from '@/lib/db';
 import { resolveManagerTeam, placeholdersFor } from '@/lib/managerTeam';
 import { reviewTask } from '@/lib/taskReview';
 import { AWAITING_REVIEW_SQL, normalizeReviewAction, normalizeTaskStatus } from '@/lib/taskStatus';
+import { requireActor } from "@/lib/apiAuth";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
+    // Identitas dari cookie sesi. Antrean review berisi pekerjaan anggota tim orang lain.
+    const actor = await requireActor(request);
+    if ("response" in actor) return actor.response;
+    const userId = actor.userId;
 
     if (!userId) return NextResponse.json({ error: 'ManagerId missing' }, { status: 400 });
 
@@ -61,6 +65,30 @@ export async function PUT(request: Request) {
 
     if (!taskId || !status) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
+    }
+
+    /*
+     * `managerId` di sini SENGAJA masih dibaca dari body, berbeda dari GET di
+     * atas yang sudah memakai cookie sesi.
+     *
+     * Pemanggilnya adalah ekstensi Chrome (flowbuddy/js/views/approval.js:163),
+     * dan `fetch`-nya tidak menyertakan `credentials`, jadi tidak ada cookie
+     * yang ikut terkirim. Memaksa sesi di sini akan mematikan tombol ACC di
+     * ekstensi tanpa memperbaiki apa pun yang bisa dipakai dari browser biasa —
+     * layar web memakai /api/manager/verify-task, yang SUDAH dimigrasi.
+     *
+     * Menutupnya butuh ekstensinya lebih dulu punya cara mengautentikasi
+     * (cookie lintas-origin dengan host permission, atau token sendiri). Itu
+     * perubahan pada ekstensi, bukan pada route ini.
+     *
+     * Wajib diisi supaya kegagalan terbaca jelas, bukan berupa 403 tanpa
+     * penjelasan.
+     */
+    if (!managerId) {
+      return NextResponse.json(
+        { error: 'managerId wajib diisi — perbarui ekstensi FlowBuddy ke versi terbaru.' },
+        { status: 400 }
+      );
     }
 
     const action = normalizeReviewAction(status);

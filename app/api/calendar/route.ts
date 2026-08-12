@@ -3,12 +3,17 @@ import { db } from "@/lib/db";
 import { v4 as uuidv4 } from "uuid";
 import { hpEventEmitter } from "@/lib/events";
 import { pushEventToGoogle, deleteGoogleEvent, queueGoogleEventDeletion } from "@/lib/googleCalendar";
+import { requireSelfOrHrAdmin } from "@/lib/apiAuth";
 
 // GET: Fetch calendar events for a user
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
+
+    // Identitas dari cookie sesi. Kalender pribadi. HR-Admin boleh lintas orang.
+    const access = await requireSelfOrHrAdmin(request, userId);
+    if ("response" in access) return access.response;
     if (!userId) return NextResponse.json({ error: "userId required" }, { status: 400 });
 
     const res = await db.execute({

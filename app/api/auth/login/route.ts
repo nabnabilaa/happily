@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { seedDemoData } from "@/lib/demo-data";
 import { createSessionToken, sessionCookieOptions } from "@/lib/authSession";
 import bcrypt from "bcryptjs";
 
@@ -33,8 +32,22 @@ export async function POST(request: Request) {
 
     let fbUserRow = fbRes.rows[0];
 
-    if (fbUserRow && fbUserRow.password_hash) {
-      const isMatch = await bcrypt.compare(password, fbUserRow.password_hash);
+    // Saat mode review menyala, `password_hash` sudah dikosongkan di lapisan
+    // query — lihat catatan di `db.executeUnmasked`. Tanpa pengambilan terpisah
+    // ini, `bcrypt.compare` menerima `null` dan setiap login akun lokal ditolak
+    // dengan gejala yang persis sama seperti password salah. Baris yang dipakai
+    // membangun sesi tetap yang tersamar, jadi nama palsu tetap yang tampil.
+    let passwordHash: string | null = fbUserRow?.password_hash ?? null;
+    if (fbUserRow && !passwordHash) {
+      const secretRes = await db.executeUnmasked({
+        sql: "SELECT password_hash FROM users WHERE id = ?",
+        args: [fbUserRow.id],
+      });
+      passwordHash = secretRes.rows[0]?.password_hash ?? null;
+    }
+
+    if (fbUserRow && passwordHash) {
+      const isMatch = await bcrypt.compare(password, passwordHash);
       if (isMatch) {
         const user = {
           id: fbUserRow.id,
@@ -101,12 +114,19 @@ export async function POST(request: Request) {
         args: [newId, email, lmsUser.name, role, lmsUser.password]
       });
 
-      // Seed data agar dashboard Flowbee tidak kosong
-      try {
-        await seedDemoData(newId, lmsUser.name);
-      } catch (e) {
-        console.error("Demo seed warning:", e);
-      }
+      /*
+       * Tidak ada lagi data contoh yang disuntikkan ke akun baru.
+       *
+       * `seedDemoData` dulu memberi setiap karyawan sungguhan 1500 poin, 1500
+       * koin, level 6, streak 12, tiga task, tiga kebiasaan, tiga goal, empat
+       * skill, catatan, event kalender, bahkan percakapan chat dari manajer
+       * fiktif. Semuanya tidak bisa dibedakan dari data asli begitu masuk:
+       * poinnya ikut leaderboard, task palsunya masuk antrean review manajer,
+       * dan tidak ada satu pun tombol untuk membersihkannya.
+       *
+       * Dashboard yang kosong di hari pertama adalah keadaan yang jujur, dan
+       * onboarding memang sudah menuntun pemakai mengisinya sendiri.
+       */
 
       // Ambil ulang user yang baru di-insert
       const newlyCreatedRes = await db.execute({

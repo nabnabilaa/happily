@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
-import { seedDemoData } from "@/lib/demo-data";
 
 export async function POST(req: Request) {
   try {
@@ -54,12 +53,9 @@ export async function POST(req: Request) {
       args: [newId, email, name, role, hashedPassword]
     });
 
-    // Seed data
-    try {
-      await seedDemoData(newId, name);
-    } catch (e) {
-      console.error("Demo seed error during register:", e);
-    }
+    // Akun baru mulai kosong. Lihat catatan di app/api/auth/login/route.ts:
+    // data contoh yang disuntikkan tidak bisa dibedakan dari data asli dan
+    // tidak punya jalan pembersihan.
 
     return NextResponse.json(
       { message: "Registrasi berhasil! Silakan login." },

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sqlWibDate, SQL_WIB_TODAY } from "@/lib/timeUtils";
 import { awardPoints, refFor } from "@/lib/points";
+import { requireSelfOrHrAdmin } from "@/lib/apiAuth";
 
 /**
  * Bonus "Andalan Tim": +50 kalau bulan ini kamu menerima apresiasi pada 10 hari
@@ -52,6 +53,12 @@ export async function POST(request: Request) {
   try {
     const { senderId, receiverId, senderName, receiverName, valueTag, message } = await request.json();
 
+    // Pengirim apresiasi dipastikan dari cookie: `senderId` dari body berarti
+    // siapa pun bisa memuji atas nama orang lain sekaligus menghabiskan
+    // kuota harian (5 penerima unik) milik orang itu.
+    const access = await requireSelfOrHrAdmin(request, senderId);
+    if ("response" in access) return access.response;
+
     if (!senderId || !receiverId || !message) {
       return NextResponse.json({ error: "senderId, receiverId, dan message wajib diisi" }, { status: 400 });
     }
@@ -101,12 +108,31 @@ export async function POST(request: Request) {
       args: [kudosId, senderId, receiverId, valueTag || null, message]
     });
 
-    // Write to logbook for the sender so "Tebar Kebaikan" mission can check it
+    /*
+     * Catatan aktivitas untuk PENGIRIM.
+     *
+     * Dulu baris ini menulis ke tabel `logbook` dengan kolom `target_id`/`note`
+     * — tabel itu tidak pernah ada di basis data ini, jadi INSERT-nya selalu
+     * gagal dan `catch` di bawah menelannya. Nama tabel yang benar
+     * `logbook_entries`, dan bentuk kolomnya berbeda.
+     *
+     * Komentar lama menyebut tulisan ini dipakai misi "Tebar Kebaikan". Itu
+     * sudah tidak benar: `lib/nudges.ts:108` memverifikasi langsung dari tabel
+     * `kudos`. Jadi yang tersisa di sini murni jejak aktivitas si pengirim, dan
+     * itulah alasannya tetap ditulis — bukan syarat misi.
+     *
+     * `id` dilepas ke AUTO_INCREMENT, sama seperti penulis logbook lainnya.
+     */
     try {
-      const logbookId = "lb_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
       await db.execute({
-        sql: "INSERT INTO logbook (id, user_id, type, target_id, note) VALUES (?, ?, ?, ?, ?)",
-        args: [logbookId, senderId, 'kudos_sent', receiverId, 'Sent appreciation']
+        sql: `INSERT INTO logbook_entries (user_id, type, title, content, metadata_json)
+              VALUES (?, 'kudos_sent', ?, ?, ?)`,
+        args: [
+          senderId,
+          `🌟 Apresiasi untuk ${receiverName || 'rekan'}`,
+          message,
+          JSON.stringify({ receiverId, valueTag: valueTag || null, kudosId }),
+        ]
       });
     } catch(e) {
       console.warn("Failed to create logbook for kudos_sent:", e);

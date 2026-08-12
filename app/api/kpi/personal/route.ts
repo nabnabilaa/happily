@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { awardPoints } from "@/lib/points";
+import { requireSelfOrHrAdmin } from "@/lib/apiAuth";
 
 // ══════════════════════════════════════════════════════════════
 // Personal KPI API — Spec v2: KPI Mandiri
@@ -13,6 +14,10 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
+
+    // Identitas dari cookie sesi. KPI personal. HR-Admin boleh lintas orang.
+    const access = await requireSelfOrHrAdmin(request, userId);
+    if ("response" in access) return access.response;
     const month = parseInt(searchParams.get('month') || String(new Date().getMonth() + 1));
     const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
 

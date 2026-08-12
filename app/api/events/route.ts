@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { hpEventEmitter } from '@/lib/events';
+import { requireActor } from "@/lib/apiAuth";
 
 // Force dynamic so it doesn't cache and works with streaming
 export const dynamic = 'force-dynamic';

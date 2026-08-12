@@ -1,13 +1,18 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getRequesterAccess, canHrAdmin } from '@/lib/hrAuth';
+import { requireActor } from "@/lib/apiAuth";
 
 // GET: Get all responses for a survey (HR only)
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const surveyId = searchParams.get('surveyId');
-    const requesterId = searchParams.get('requesterId');
+    // Identitas dari cookie sesi. Route ini memperlakukan requester sebagai
+    // opsional (hasil ringkas boleh dilihat responden), jadi sesi yang tidak
+    // ada tidak langsung ditolak — tapi id-nya tidak lagi bisa dikarang.
+    const sessionActor = await requireActor(request);
+    const requesterId = "response" in sessionActor ? null : sessionActor.userId;
 
     if (!surveyId) {
       return NextResponse.json({ error: 'surveyId diperlukan' }, { status: 400 });

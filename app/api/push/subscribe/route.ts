@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireSelfOrHrAdmin } from "@/lib/apiAuth";
 
 export async function POST(request: Request) {
   try {
     const { userId, subscription } = await request.json();
+
+    // Identitas dari cookie sesi. Langganan push terikat perangkat pemiliknya.
+    const access = await requireSelfOrHrAdmin(request, userId);
+    if ("response" in access) return access.response;
 
     if (!userId || !subscription || !subscription.endpoint) {
       return NextResponse.json({ error: "userId dan subscription wajib diisi" }, { status: 400 });

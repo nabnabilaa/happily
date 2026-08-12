@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireSelfOrHrAdmin } from "@/lib/apiAuth";
 
 // POST: Send push notification to a specific user (server-to-server)
 // Uses Web Push protocol via fetch (no external lib needed for basic implementation)
 export async function POST(request: Request) {
   try {
     const { userId, title, body, url } = await request.json();
+
+    // Notifikasi hanya boleh dikirim ke diri sendiri; HR-Admin boleh lintas
+    // orang untuk pengumuman. Tanpa ini siapa pun bisa mengirim pesan
+    // sembarang ke perangkat rekan kerjanya.
+    const access = await requireSelfOrHrAdmin(request, userId);
+    if ("response" in access) return access.response;
     if (!userId || !title) {
       return NextResponse.json({ error: "userId and title required" }, { status: 400 });
     }

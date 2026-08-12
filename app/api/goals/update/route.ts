@@ -2,16 +2,10 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { dispatchNotification } from '@/lib/notificationService';
 import { internalHeaders } from '@/lib/authSession';
+import { requireActor } from '@/lib/apiAuth';
+import { getRequesterAccess, canHrAdmin } from '@/lib/hrAuth';
+import { getCorsHeaders } from "@/lib/extCors";
 
-function getCorsHeaders(request: Request) {
-  const origin = request.headers.get("origin") || "*";
-  return {
-    "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Allow-Credentials": "true",
-  };
-}
 
 export async function OPTIONS(request: Request) {
   return new NextResponse(null, {
@@ -31,6 +25,39 @@ export async function POST(request: Request) {
       args: [String(goalId)]
     });
     const goalRow = goalRes.rows[0];
+
+    /*
+     * Endpoint ini sebelumnya tidak memeriksa apa pun: satu `goalId` sudah
+     * cukup untuk mengubah status atau judul goal siapa saja. Header CORS-nya
+     * membuat itu bisa dipanggil dari origin lain pula.
+     *
+     * Yang berhak: pemilik goal, orang yang menugaskannya, dan HR-Admin.
+     * Pemeriksaan dilakukan setelah baris goal diambil — kita perlu tahu dulu
+     * siapa pemiliknya sebelum bisa membandingkan.
+     */
+    if (!goalRow) {
+      return NextResponse.json({ error: 'Goal tidak ditemukan' }, { status: 404, headers: getCorsHeaders(request) });
+    }
+
+    const actor = await requireActor(request);
+    if ("response" in actor) {
+      return NextResponse.json(
+        { error: "Sesi kamu sudah tidak berlaku. Silakan login ulang.", needsReauth: true },
+        { status: 401, headers: getCorsHeaders(request) }
+      );
+    }
+
+    const isOwner = String(goalRow.owner_id) === actor.userId;
+    const isAssigner = goalRow.assigned_by_id && String(goalRow.assigned_by_id) === actor.userId;
+    if (!isOwner && !isAssigner) {
+      const requester = await getRequesterAccess(actor.userId);
+      if (!canHrAdmin(requester.role, requester.hrAccess)) {
+        return NextResponse.json(
+          { error: 'Kamu tidak berhak mengubah goal ini' },
+          { status: 403, headers: getCorsHeaders(request) }
+        );
+      }
+    }
 
     const fields: string[] = [];
     const args: any[] = [];

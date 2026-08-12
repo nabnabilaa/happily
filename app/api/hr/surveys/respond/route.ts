@@ -1,10 +1,17 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireSelfOrHrAdmin } from "@/lib/apiAuth";
 
 // POST: Submit survey response
 export async function POST(request: Request) {
   try {
     const { surveyId, userId, answers } = await request.json();
+
+    // Jawaban survei terikat orangnya. `userId` dari body berarti satu orang
+    // bisa mengisikan jawaban untuk rekan-rekannya dan memiringkan hasil
+    // agregat yang dibaca HR.
+    const access = await requireSelfOrHrAdmin(request, userId);
+    if ("response" in access) return access.response;
 
     if (!surveyId || !userId || !answers) {
       return NextResponse.json({ error: 'surveyId, userId, dan answers diperlukan' }, { status: 400 });

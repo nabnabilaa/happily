@@ -1,12 +1,20 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireActor } from "@/lib/apiAuth";
 import { v4 as uuidv4 } from "uuid";
 
 // POST: Generate AI weekly summary for a team
 export async function POST(request: Request) {
   try {
-    const { managerId } = await request.json();
-    if (!managerId) return NextResponse.json({ error: "managerId required" }, { status: 400 });
+    /*
+     * Manajer diambil dari cookie, bukan dari body. Endpoint ini merangkum
+     * pekerjaan seluruh anggota tim seorang manajer — menyebut id manajer lain
+     * cukup untuk membaca ringkasan timnya. Ia juga memanggil model AI, jadi
+     * lubang yang sama membuat siapa pun bisa membebankan biaya ke akun ini.
+     */
+    const actor = await requireActor(request);
+    if ("response" in actor) return actor.response;
+    const managerId = actor.userId;
 
     const deptRes = await db.execute({ sql: "SELECT department FROM users WHERE id = ?", args: [managerId] });
     const managerDept = (deptRes.rows[0] as any)?.department || "";

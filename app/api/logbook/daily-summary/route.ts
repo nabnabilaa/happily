@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireSelfOrHrAdmin } from "@/lib/apiAuth";
 
 // GET: Aggregate daily data for logbook calendar
 // Params: userId (required), month (1-12), year (2024+)
@@ -8,6 +9,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
+
     const targetUserId = searchParams.get('targetUserId');
     const month = parseInt(searchParams.get('month') || String(new Date().getMonth() + 1));
     const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
@@ -18,6 +20,12 @@ export async function GET(request: Request) {
     }
 
     const viewUserId = targetUserId || userId;
+
+    // Diperiksa pada `viewUserId`: `?targetUserId=` memang dipakai untuk
+    // melihat orang lain, jadi menjaga `userId` saja tidak menutup apa pun.
+    // Logbook berisi rincian pekerjaan pribadi. HR-Admin boleh lintas orang.
+    const access = await requireSelfOrHrAdmin(request, viewUserId);
+    if ("response" in access) return access.response;
 
     // If requesting a specific date detail
     if (specificDate) {

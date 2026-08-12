@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { reviewTask } from '@/lib/taskReview';
 import { normalizeReviewAction, TASK_STATUS } from '@/lib/taskStatus';
+import { requireActor } from "@/lib/apiAuth";
 
 /**
  * Thin alias over the shared review flow, kept because existing clients post
@@ -15,6 +16,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'TaskId and action missing' }, { status: 400 });
     }
 
+    // Peninjau dari cookie, bukan body — lihat catatan lengkap di
+    // app/api/manager/verify-task/route.ts.
+    const actor = await requireActor(request, managerId);
+    if ("response" in actor) return actor.response;
+    const verifiedManagerId = actor.userId;
+
     const reviewAction = normalizeReviewAction(action);
     if (!reviewAction || reviewAction === TASK_STATUS.APPROVED) {
       return NextResponse.json(
@@ -26,7 +33,7 @@ export async function POST(request: Request) {
     const result = await reviewTask({
       taskId,
       action: reviewAction,
-      managerId,
+      managerId: verifiedManagerId,
       goalId,
       reviewNote: note,
       origin: new URL(request.url).origin,

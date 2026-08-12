@@ -8,6 +8,7 @@ import {
   memoryLabel,
   type MemorySource,
 } from "@/lib/aiMemory";
+import { requireSelfOrHrAdmin } from "@/lib/apiAuth";
 
 /**
  * Memori Buddy — milik user, hanya untuk user.
@@ -60,6 +61,10 @@ export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
+
+    // Identitas dari cookie sesi. Memori asisten berisi percakapan pribadi. HR-Admin boleh lintas orang.
+    const access = await requireSelfOrHrAdmin(request, userId);
+    if ("response" in access) return access.response;
     const id = searchParams.get('id');
     const all = searchParams.get('all');
     if (!userId) return NextResponse.json({ error: "userId required" }, { status: 400 });

@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireSelfOrHrAdmin } from "@/lib/apiAuth";
 
 // GET: Mood history for a user (from mood_checkins + attendance mood)
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId");
+
+    // Identitas dipastikan dari cookie sesi. Riwayat mood adalah data wellbeing — kategori paling sensitif di produk ini.
+    // HR-Admin tetap boleh melihat lintas orang.
+    const access = await requireSelfOrHrAdmin(request, userId);
+    if ("response" in access) return access.response;
     const month = searchParams.get("month");
     const year = searchParams.get("year");
 

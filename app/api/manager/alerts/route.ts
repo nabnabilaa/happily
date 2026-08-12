@@ -2,13 +2,18 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { resolveManagerTeam, placeholdersFor } from '@/lib/managerTeam';
 import { AWAITING_REVIEW_SQL } from '@/lib/taskStatus';
+import { requireActor } from "@/lib/apiAuth";
 
 const INACTIVITY_HOURS = 48;
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const managerId = searchParams.get('managerId') || searchParams.get('userId');
+    // Identitas dari cookie sesi. Alert berisi sinyal wellbeing anggota tim; `?managerId=` dulu menentukan
+    // tim siapa yang terlihat.
+    const actor = await requireActor(request);
+    if ("response" in actor) return actor.response;
+    const managerId = actor.userId;
 
     if (!managerId) {
       return NextResponse.json({ error: 'managerId required' }, { status: 400 });
@@ -39,13 +44,18 @@ export async function GET(request: Request) {
     for (const member of membersRes.rows) {
       const mood = member.mood_key as string | null;
 
-      if (mood === 'burnout' || mood === 'stress' || mood === 'sad') {
+      // Nilai mood yang benar-benar bisa ditulis check-in hanya lima:
+      // joy | calm | neutral | tired | stress (lihat HP_MOODS di lib/constants.ts).
+      // Syarat lama juga mencari 'burnout' dan 'sad' — dua ejaan yang tidak
+      // pernah sekali pun masuk ke basis data, jadi cabang `priority: 'high'`
+      // mustahil tercapai dan 'tired' yang nyata justru terlewat.
+      if (mood === 'stress' || mood === 'tired') {
         alerts.push({
           type: 'mood',
           userId: member.id,
           userName: member.name,
           message: `${member.name} melaporkan mood: ${mood}`,
-          priority: mood === 'burnout' ? 'high' : 'medium',
+          priority: mood === 'stress' ? 'high' : 'medium',
         });
       }
 

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireSelfOrHrAdmin } from "@/lib/apiAuth";
 
 /**
  * Direct create/delete for daily tasks.
@@ -26,6 +27,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "id, userId, dan title wajib diisi" }, { status: 400 });
     }
 
+    // Task terikat pemiliknya: tanpa ini siapa pun bisa menambahkan task ke
+    // daftar rekan kerjanya.
+    const access = await requireSelfOrHrAdmin(request, userId);
+    if ("response" in access) return access.response;
+
+    /*
+     * Kolom `title` adalah varchar(500). Menempelkan teks yang lebih panjang —
+     * menyalin satu paragraf ke judul task sudah cukup — membuat MySQL menolak
+     * seluruh INSERT, dan route ini membalas 500 dengan "Gagal menyimpan task".
+     * Task-nya lenyap tanpa petunjuk apa pun tentang penyebabnya.
+     *
+     * Dipotong, bukan ditolak: maksud pemakainya jelas, dan kehilangan ekor
+     * judul jauh lebih ringan daripada kehilangan seluruh task.
+     */
+    const TITLE_MAX = 500;
+    const safeTitle = String(title).trim().slice(0, TITLE_MAX);
+
     await db.execute({
       sql: `INSERT INTO daily_priorities
               (id, user_id, title, description, target_date, goal_title, goal_id, kpi_id,
@@ -37,14 +55,20 @@ export async function POST(request: Request) {
               target_date=VALUES(target_date), goal_title=VALUES(goal_title),
               goal_id=VALUES(goal_id), kpi_id=VALUES(kpi_id),
               energy_level=VALUES(energy_level), est_time=VALUES(est_time),
-              status=VALUES(status), tone=VALUES(tone),
+              -- status sengaja TIDAK ada di sini. Ia bagian dari keadaan
+              -- penyelesaian, yang dimiliki /api/priorities/complete dan
+              -- lib/taskReview.ts, sama seperti is_done dan is_verified yang
+              -- memang sudah dikecualikan. Menulisnya di jalur pembuatan berarti
+              -- satu POST ulang atas task yang sama (retry, tab kedua)
+              -- mengembalikan task "menunggu review" menjadi "todo".
+              tone=VALUES(tone),
               weekly_target_id=VALUES(weekly_target_id),
               weekly_target_title=VALUES(weekly_target_title),
               is_project=VALUES(is_project), due_date=VALUES(due_date)`,
       args: [
         String(id),
         userId,
-        String(title).trim(),
+        safeTitle,
         body.description || null,
         body.targetDate || null,
         body.goal || body.kpi_title || null,
@@ -89,6 +113,12 @@ export async function PATCH(request: Request) {
     if (body.title !== undefined && !String(body.title).trim()) {
       return NextResponse.json({ error: "title tidak boleh kosong" }, { status: 400 });
     }
+
+    // Klausa `AND user_id = ?` di bawah membatasi baris yang tersentuh, tapi
+    // `userId` itu sendiri datang dari body — jadi tanpa pemeriksaan ini
+    // cukup menyebut id orang lain untuk menyunting task miliknya.
+    const access = await requireSelfOrHrAdmin(request, userId);
+    if ("response" in access) return access.response;
 
     const EDITABLE: Record<string, string> = {
       title: "title",
@@ -143,6 +173,12 @@ export async function DELETE(request: Request) {
     if (!id || !userId) {
       return NextResponse.json({ error: "id dan userId wajib diisi" }, { status: 400 });
     }
+
+    // Pemiliknya dipastikan dari cookie. Klausa `AND user_id = ?` saja tidak
+    // cukup: `userId` datang dari query, jadi menyebut id orang lain akan
+    // menghapus task mereka — persis yang ingin dicegah komentar di bawah.
+    const access = await requireSelfOrHrAdmin(request, userId);
+    if ("response" in access) return access.response;
 
     // Scoped to the owner so a guessed id can't delete someone else's task.
     await db.execute({

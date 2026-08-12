@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireActor } from "@/lib/apiAuth";
 
 // ══════════════════════════════════════════════════════════════
 // Manager Weekly Notes API — Spec v2
@@ -10,7 +11,10 @@ import { db } from "@/lib/db";
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const managerId = searchParams.get('managerId');
+    // Identitas dari cookie sesi. Catatan mingguan berisi penilaian manajer atas anggotanya.
+    const actor = await requireActor(request);
+    if ("response" in actor) return actor.response;
+    const managerId = actor.userId;
     const employeeId = searchParams.get('employeeId');
     const weekStart = searchParams.get('weekStart');
 

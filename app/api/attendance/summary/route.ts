@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireSelfOrHrAdmin } from "@/lib/apiAuth";
 
 // GET attendance summary for a user or department
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId");
+
     const targetUserId = searchParams.get("targetUserId");
     const month = searchParams.get("month") || String(new Date().getMonth() + 1);
     const year = searchParams.get("year") || String(new Date().getFullYear());
@@ -15,6 +17,16 @@ export async function GET(request: Request) {
     }
 
     const viewUserId = targetUserId || userId;
+
+    /*
+     * Yang diperiksa adalah `viewUserId`, bukan `userId`.
+     *
+     * `?targetUserId=` justru dirancang untuk melihat orang lain, jadi menjaga
+     * `userId` saja tidak menutup apa pun — cukup kirim id sendiri di `userId`
+     * dan id korban di `targetUserId`. HR-Admin tetap boleh lintas orang.
+     */
+    const access = await requireSelfOrHrAdmin(request, viewUserId);
+    if ("response" in access) return access.response;
 
     // Get attendance records for the month
     const logsRes = await db.execute({

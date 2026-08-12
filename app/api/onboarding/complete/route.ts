@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireSelfOrHrAdmin } from "@/lib/apiAuth";
 
 export async function POST(request: Request) {
   try {
     const { userId, department, departmentId, answers } = await request.json();
+
+    // Identitas dari cookie sesi. Onboarding menentukan divisi dan status akun.
+    const access = await requireSelfOrHrAdmin(request, userId);
+    if ("response" in access) return access.response;
 
     if (!userId) {
       return NextResponse.json({ error: "userId wajib diisi" }, { status: 400 });

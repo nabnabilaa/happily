@@ -1,9 +1,22 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireActor } from "@/lib/apiAuth";
+import { getRequesterAccess, canHrAdmin } from "@/lib/hrAuth";
 
 // GET: Aggregate KPI data by department
 export async function GET(request: Request) {
   try {
+    /*
+     * Agregat KPI seluruh divisi — pandangan manajemen, bukan pandangan
+     * karyawan. Sebelumnya endpoint ini terbuka tanpa pemeriksaan apa pun.
+     */
+    const actor = await requireActor(request);
+    if ("response" in actor) return actor.response;
+    const requester = await getRequesterAccess(actor.userId);
+    if (requester.role !== "manager" && !canHrAdmin(requester.role, requester.hrAccess)) {
+      return NextResponse.json({ error: "Hanya manajer dan HR yang bisa melihat ini" }, { status: 403 });
+    }
+
     const { searchParams } = new URL(request.url);
     const month = searchParams.get("month") || String(new Date().getMonth() + 1);
     const year = searchParams.get("year") || String(new Date().getFullYear());

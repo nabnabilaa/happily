@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getRequesterAccess, canManageTeam } from "@/lib/hrAuth";
 import { aggregateReport } from "@/lib/reportAggregate";
+import { requireActor } from "@/lib/apiAuth";
 
 // GET: Aggregated report metrics for the HR/Manager report dashboard (charts + per-person cards).
 // Scope: HR/hr_access = semua; Manager = otomatis dibatasi ke timnya.
@@ -8,7 +9,11 @@ import { aggregateReport } from "@/lib/reportAggregate";
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const requesterId = searchParams.get('adminId') || searchParams.get('requesterId');
+    // Identitas dari cookie sesi; parameter lama diabaikan. Lihat
+    // app/api/hr/users/route.ts.
+    const actor = await requireActor(request);
+    if ("response" in actor) return actor.response;
+    const requesterId = actor.userId;
     const month = Number(searchParams.get('month')) || new Date().getMonth() + 1;
     const year = Number(searchParams.get('year')) || new Date().getFullYear();
     const week = Number(searchParams.get('week')) || 0;

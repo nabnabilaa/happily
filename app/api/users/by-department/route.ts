@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireActor } from "@/lib/apiAuth";
 
 // GET: Group all users by their department
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const requesterId = searchParams.get("requesterId");
+    // Identitas dari cookie sesi. Lihat app/api/hr/users/route.ts.
+    const sessionActor = await requireActor(request);
+    const requesterId = "response" in sessionActor ? null : sessionActor.userId;
 
     // Verify requester is HR
     if (requesterId) {

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { wibDateString, sqlWibDate } from "@/lib/timeUtils";
+import { getRequesterAccess, canManageTeam } from "@/lib/hrAuth";
+import { requireActor } from "@/lib/apiAuth";
 
 // GET: HR views attendance data for all employees
 export async function GET(request: Request) {
@@ -10,12 +12,30 @@ export async function GET(request: Request) {
     // membuka halaman ini sebelum jam 07:00 WIB melihat data kemarin.
     const date = searchParams.get('date') || wibDateString();
 
-    // Today's attendance with user info
+    // Kehadiran seluruh karyawan — siapa hadir, siapa tidak, jam berapa — bukan
+    // data yang boleh dibaca siapa saja yang menebak alamat endpoint-nya.
+    // Identitas dari cookie sesi; `?requesterId=` lama diabaikan. Lihat
+    // catatan lengkap di app/api/hr/users/route.ts.
+    const actor = await requireActor(request);
+    if ("response" in actor) return actor.response;
+    const requesterId = actor.userId;
+    const requester = await getRequesterAccess(requesterId);
+    if (!canManageTeam(requester.role, requester.hrAccess)) {
+      return NextResponse.json({ error: "Hanya HR dan manajer yang bisa melihat data kehadiran" }, { status: 403 });
+    }
+
+    /*
+     * Kolom "Tim" dibaca dari `users.department`, bukan dari tabel `teams`.
+     *
+     * Join lama `LEFT JOIN teams t ON u.team_id = t.id` mengandalkan kolom
+     * peninggalan yang tinggal dimiliki 6 dari 80 akun, jadi hampir setiap baris
+     * di layar kehadiran HR tertulis "Unassigned" — padahal departemennya
+     * terisi dan tampil benar di layar lain.
+     */
     const attendanceRes = await db.execute({
-      sql: `SELECT a.*, u.name, u.job_title, u.team_id, t.name as team_name
+      sql: `SELECT a.*, u.name, u.job_title, u.department AS team_name
             FROM attendance a
             JOIN users u ON a.user_id = u.id
-            LEFT JOIN teams t ON u.team_id = t.id
             WHERE ${sqlWibDate('a.check_in_at')} = ?
             ORDER BY a.check_in_at ASC`,
       args: [date]
@@ -34,7 +54,7 @@ export async function GET(request: Request) {
     }));
 
     // Users who haven't checked in
-    const allUsersRes = await db.execute("SELECT u.id, u.name, u.job_title, t.name as team_name FROM users u LEFT JOIN teams t ON u.team_id = t.id");
+    const allUsersRes = await db.execute("SELECT u.id, u.name, u.job_title, u.department AS team_name FROM users u");
     const checkedInIds = new Set(checkedIn.map(c => c.userId));
     const notCheckedIn = allUsersRes.rows
       .filter(u => !checkedInIds.has(u.id))

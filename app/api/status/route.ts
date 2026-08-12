@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { hpEventEmitter } from "@/lib/events";
 import { sqlWibDate, SQL_WIB_TODAY } from "@/lib/timeUtils";
+import { requireActor } from "@/lib/apiAuth";
 
 // ══════════════════════════════════════════════════════════════
 // User Status / Presence API — Spec v2
@@ -27,7 +28,10 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const teamId = searchParams.get('teamId');
-    const managerId = searchParams.get('managerId');
+    // Identitas dari cookie sesi. Status kehadiran tim; `?managerId=` dulu menentukan tim siapa yang terlihat.
+    const actor = await requireActor(request);
+    if ("response" in actor) return actor.response;
+    const managerId = actor.userId;
 
     let query = `
       SELECT 

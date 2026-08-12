@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 import { calculateWellbeingScore } from "@/lib/wellbeingEngine";
+import { requireActor } from "@/lib/apiAuth";
 
 export async function POST(req: Request) {
   try {
+    // Endpoint ini murni menghitung dari data yang DIKIRIM pemanggil, jadi ia
+    // tidak membocorkan isi basis data. Sesi tetap diwajibkan supaya ia bukan
+    // mesin hitung gratis yang terbuka untuk siapa saja.
+    const actor = await requireActor(req);
+    if ("response" in actor) return actor.response;
+
     const { users } = await req.json(); // array of users with their state { id, name, department, role, state, userStats }
     
     if (!users || !Array.isArray(users)) {

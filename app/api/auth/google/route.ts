@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { seedDemoData } from "@/lib/demo-data";
 import { createSessionToken, sessionCookieOptions } from "@/lib/authSession";
 import {
   exchangeCodeForTokens,
@@ -93,12 +92,7 @@ export async function POST(request: Request) {
         args: [newId, email, lmsUser.name, role, lmsUser.password, picture || null]
       });
 
-      // Seed data agar dashboard Flowbee tidak kosong
-      try {
-        await seedDemoData(newId, lmsUser.name);
-      } catch (e) {
-        console.error("Demo seed warning:", e);
-      }
+      // Akun baru mulai kosong. Lihat catatan di app/api/auth/login/route.ts.
 
       // Ambil ulang user yang baru di-insert
       const newlyCreatedRes = await db.execute({

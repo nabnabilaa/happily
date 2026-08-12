@@ -2,12 +2,17 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { v4 as uuidv4 } from "uuid";
 import { hpEventEmitter } from "@/lib/events";
+import { requireSelfOrHrAdmin } from "@/lib/apiAuth";
 
 // GET: Fetch notes for a user (own + shared)
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
+
+    // Identitas dari cookie sesi. Catatan pribadi. HR-Admin boleh lintas orang.
+    const access = await requireSelfOrHrAdmin(request, userId);
+    if ("response" in access) return access.response;
     if (!userId) return NextResponse.json({ error: "userId required" }, { status: 400 });
 
     // Get user's department

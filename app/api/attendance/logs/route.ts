@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireSelfOrHrAdmin } from "@/lib/apiAuth";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId");
+
+    // Identitas dari cookie sesi. Riwayat kehadiran pribadi. HR-Admin boleh lintas orang.
+    const access = await requireSelfOrHrAdmin(request, userId);
+    if ("response" in access) return access.response;
     const targetUserId = searchParams.get("targetUserId"); // For HR viewing a specific employee
     const month = searchParams.get("month");
     const year = searchParams.get("year");

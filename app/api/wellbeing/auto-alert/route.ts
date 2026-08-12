@@ -1,14 +1,21 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireActor } from "@/lib/apiAuth";
 import { hpEventEmitter } from "@/lib/events";
 
 // Chat tables are now centrally managed in app/api/migrate-schema/route.ts as message_channels & messages.
 
 export async function POST(req: Request) {
   try {
-    const { userId, userName } = await req.json();
+    const { userName } = await req.json();
 
-    if (!userId || !userName) {
+    // Alert ini membuka DM antara karyawan dan HR atas nama karyawan itu.
+    // `userId` dari body berarti siapa pun bisa memicunya atas nama orang lain.
+    const actor = await requireActor(req);
+    if ("response" in actor) return actor.response;
+    const userId = actor.userId;
+
+    if (!userName) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 

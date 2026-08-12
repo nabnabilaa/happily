@@ -1,7 +1,21 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireActor } from "@/lib/apiAuth";
+import { getRequesterAccess, canHrAdmin } from "@/lib/hrAuth";
 
-export async function GET() {
+/*
+ * Alat diagnosa: ia menyebutkan tabel mana yang ada dan query mana yang gagal.
+ * Itu peta skema yang berguna bagi siapa pun yang sedang mencari celah, jadi
+ * sekarang dikunci — sebelumnya terbuka tanpa pemeriksaan apa pun.
+ */
+export async function GET(request: Request) {
+  const actor = await requireActor(request);
+  if ("response" in actor) return actor.response;
+  const requester = await getRequesterAccess(actor.userId);
+  if (!canHrAdmin(requester.role, requester.hrAccess)) {
+    return NextResponse.json({ error: "Hanya HR-Admin" }, { status: 403 });
+  }
+
   const userId = "user_hr";
   const report: any[] = [];
 

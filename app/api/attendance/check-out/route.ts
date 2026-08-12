@@ -3,10 +3,15 @@ import { db } from "@/lib/db";
 import { hpEventEmitter } from "@/lib/events";
 import { awardPoints, refFor } from "@/lib/points";
 import { wibDateString } from "@/lib/timeUtils";
+import { requireSelfOrHrAdmin } from "@/lib/apiAuth";
 
 export async function POST(request: Request) {
   try {
     const { userId, mood, notes } = await request.json();
+
+    // Identitas dari cookie sesi. Clock-out atas nama orang lain memalsukan catatan kehadiran.
+    const access = await requireSelfOrHrAdmin(request, userId);
+    if ("response" in access) return access.response;
 
     if (!userId) {
       return NextResponse.json({ error: "userId wajib diisi" }, { status: 400 });
@@ -41,8 +46,29 @@ export async function POST(request: Request) {
       args: [record.id]
     });
 
-    const checkOutAtStr = updated.rows[0].check_out_at as string;
-    const checkOutAt = new Date(checkOutAtStr.endsWith('Z') ? checkOutAtStr : checkOutAtStr.replace(' ', 'T') + 'Z');
+    /*
+     * `check_out_at` tidak selalu berupa string.
+     *
+     * Driver mysql2 mengembalikan kolom DATETIME sebagai objek `Date`, jadi
+     * `.endsWith()` melempar "TypeError: o.endsWith is not a function". Karena
+     * lemparan itu terjadi SETELAH UPDATE di atas berhasil, akibatnya paling
+     * membingungkan: jam pulang benar-benar tersimpan, tapi pemakai melihat
+     * "Gagal check-out" — dan seluruh kode di bawah ini, termasuk poin
+     * "tutup hari", tidak pernah dijalankan.
+     *
+     * Ditangani untuk kedua bentuk: string "YYYY-MM-DD HH:MM:SS" dari driver
+     * yang mengembalikan teks diperlakukan sebagai UTC, sesuai UTC_TIMESTAMP()
+     * yang menulisnya.
+     */
+    const rawCheckOut = updated.rows[0].check_out_at as unknown;
+    const checkOutAt =
+      rawCheckOut instanceof Date
+        ? rawCheckOut
+        : new Date(
+            String(rawCheckOut).endsWith('Z')
+              ? String(rawCheckOut)
+              : String(rawCheckOut).replace(' ', 'T') + 'Z'
+          );
     const durationMinutes = Number(updated.rows[0].duration_minutes);
     let status = updated.rows[0].status as string;
 
@@ -92,12 +118,13 @@ export async function POST(request: Request) {
       });
       
       if (existingLog.rows.length === 0) {
-        const logId = "log_" + Date.now().toString(36);
+        // `id` dilepas ke AUTO_INCREMENT: kolomnya INT, dan "log_<base36>" yang
+        // dulu dikirim di sini selalu ditolak. Lihat lib/points.ts.
         await db.execute({
-          sql: `INSERT INTO logbook_entries (id, user_id, type, title, content, metadata_json) 
-                VALUES (?, ?, 'daily_summary', ?, ?, ?)`,
+          sql: `INSERT INTO logbook_entries (user_id, type, title, content, metadata_json)
+                VALUES (?, 'daily_summary', ?, ?, ?)`,
           args: [
-            logId, userId,
+            userId,
             `Ringkasan Hari — ${hours}j ${mins}m kerja`,
             notes || '',
             JSON.stringify({

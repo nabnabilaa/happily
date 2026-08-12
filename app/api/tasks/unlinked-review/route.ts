@@ -5,6 +5,7 @@ import { AWAITING_REVIEW_SQL, normalizeReviewAction } from "@/lib/taskStatus";
 import { authorizeReview } from "@/lib/reviewAuth";
 import { getRequesterAccess, canHrAdmin } from "@/lib/hrAuth";
 import { resolveManagerTeam, placeholdersFor } from "@/lib/managerTeam";
+import { requireActor } from "@/lib/apiAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -63,7 +64,11 @@ async function reviewableMemberIds(reviewerId: string): Promise<string[] | null>
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const reviewerId = searchParams.get("reviewerId");
+    // Identitas dari cookie sesi. Antrean review berisi pekerjaan anggota tim orang lain; `?reviewerId=` dulu
+    // menentukan tim siapa yang ditampilkan.
+    const actor = await requireActor(request);
+    if ("response" in actor) return actor.response;
+    const reviewerId = actor.userId;
     if (!reviewerId) {
       return NextResponse.json({ error: "reviewerId required" }, { status: 400 });
     }
@@ -161,6 +166,10 @@ export async function POST(request: Request) {
           action: reviewAction,
           managerId: String(reviewerId),
           reviewNote: note || null,
+          // `authorizeReview` di atas sudah memutuskan untuk karyawan ini, dan
+          // seluruh task dalam perulangan ini miliknya. Memeriksa ulang per
+          // task hanya menambah query yang jawabannya sudah pasti sama.
+          preauthorized: true,
         });
         if (result.ok) processed++;
         else failedTasks.push(taskId);

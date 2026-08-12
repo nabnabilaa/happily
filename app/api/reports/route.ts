@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { awardPoints } from "@/lib/points";
+import { requireSelfOrHrAdmin } from "@/lib/apiAuth";
 
 // GET: Fetch or auto-generate monthly report for a user
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
+
+    // Identitas dari cookie sesi. Laporan pribadi. HR-Admin boleh lintas orang.
+    const access = await requireSelfOrHrAdmin(request, userId);
+    if ("response" in access) return access.response;
     const month = Number(searchParams.get('month')) || new Date().getMonth() + 1;
     const year = Number(searchParams.get('year')) || new Date().getFullYear();
 

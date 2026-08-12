@@ -15,15 +15,23 @@ import { awardPoints, reversePoints, resolveAction, quotaStatus } from "@/lib/po
  */
 
 /**
- * Aksi yang TIDAK BOLEH diberikan dari klien.
- *
- * Poin sesi fokus dan coworking dihitung server dari menit yang benar-benar
- * terbukti (lihat lib/focusRoom.ts) lalu dibayar sekali lewat lib/points.ts
- * dengan kunci idempoten `focus:<roomId>`. Membiarkan endpoint ini menerimanya
- * berarti membuka kembali jalur "panggil /api/xp/award langsung dan dapat poin
- * gratis" yang persis ingin ditutup.
+ * Aksi yang TIDAK BOLEH diberikan dari klien, dan ke mana pemanggilnya harus
+ * pergi. Semuanya punya syarat yang cuma bisa diperiksa server; menerimanya di
+ * sini berarti membuka kembali jalur "panggil /api/xp/award dari console dan
+ * dapat poin gratis" yang persis ingin ditutup.
  */
-const SERVER_SETTLED_ACTIONS = new Set(["focus_session", "coworking_session"]);
+const SERVER_SETTLED_ACTIONS: Record<string, string> = {
+  // Dihitung dari menit yang benar-benar terbukti (lihat lib/focusRoom.ts) lalu
+  // dibayar sekali dengan kunci idempoten `focus:<roomId>`.
+  focus_session:
+    "Poin sesi fokus dihitung otomatis oleh server saat sesi selesai, bukan dari aplikasi.",
+  coworking_session:
+    "Poin sesi coworking dihitung otomatis oleh server saat sesi selesai, bukan dari aplikasi.",
+  // 500 poin, tanpa kuota harian, dan syaratnya (target hari latihan tercapai)
+  // hanya terbaca dari tabel habits. Klien tidak bisa dipercaya menyatakannya.
+  training_graduated:
+    "Kelulusan training diverifikasi server lewat /api/habits/graduate, bukan dari aplikasi.",
+};
 
 export async function POST(request: Request) {
   try {
@@ -68,17 +76,10 @@ export async function POST(request: Request) {
       }
     }
 
-    // Poin sesi fokus dihitung server dari menit yang terbukti, lalu dibayar
-    // lewat lib/points.ts saat sesi diselesaikan. Klien tidak punya urusan di
-    // sini sama sekali.
-    if (SERVER_SETTLED_ACTIONS.has(action)) {
-      return NextResponse.json(
-        {
-          error:
-            "Poin sesi fokus dihitung otomatis oleh server saat sesi selesai, bukan dari aplikasi.",
-        },
-        { status: 400 }
-      );
+    // Berlaku untuk pemanggil mana pun, termasuk internal: aksi ber-settle di
+    // server punya jalurnya sendiri dan tidak boleh lewat sini.
+    if (SERVER_SETTLED_ACTIONS[action]) {
+      return NextResponse.json({ error: SERVER_SETTLED_ACTIONS[action] }, { status: 400 });
     }
 
     // Hanya panggilan internal yang boleh memberi poin ke orang lain. Dari

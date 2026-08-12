@@ -36,7 +36,9 @@ export async function authorizeReview(
 ): Promise<ReviewAuthResult> {
   const reviewer = reviewerId ? String(reviewerId) : "";
   if (!reviewer) {
-    return { ok: false, status: 400, error: "reviewedBy wajib diisi" };
+    // Sengaja tidak menyebut nama field: penjaga ini dipakai jalur yang
+    // menamainya `reviewedBy` (review KPI) maupun `managerId` (ACC task).
+    return { ok: false, status: 400, error: "Identitas peninjau wajib diisi" };
   }
 
   const { role, hrAccess } = await getRequesterAccess(reviewer);

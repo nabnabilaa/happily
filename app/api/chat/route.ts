@@ -1,5 +1,22 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireActor } from "@/lib/apiAuth";
+
+/**
+ * Apakah `userId` anggota channel ini.
+ *
+ * Dipakai sebagai penjaga baca DAN tulis. Sebelum ada ini, `?channelId=`
+ * dipercaya apa adanya: siapa pun yang menebak atau menyalin satu id channel
+ * bisa membaca seluruh percakapannya, termasuk DM orang lain. Tidak ada satu
+ * pun pemeriksaan antara id di URL dan orang yang memintanya.
+ */
+async function isChannelMember(channelId: string, userId: string): Promise<boolean> {
+  const res = await db.execute({
+    sql: "SELECT 1 FROM message_channel_members WHERE channel_id = ? AND user_id = ? LIMIT 1",
+    args: [channelId, userId],
+  });
+  return res.rows.length > 0;
+}
 
 // ══════════════════════════════════════════════════════════════
 // Chat API — Spec v2 Phase 7
@@ -10,17 +27,23 @@ import { db } from "@/lib/db";
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
     const channelId = searchParams.get('channelId');
     const before = searchParams.get('before'); // pagination cursor
     const limit = parseInt(searchParams.get('limit') || '50');
 
-    if (!userId && !channelId) {
-      return NextResponse.json({ error: "userId or channelId required" }, { status: 400 });
-    }
+    // Identitas dari cookie, bukan dari `?userId=`. Daftar channel seseorang
+    // adalah daftar dengan siapa saja ia bicara — itu sendiri sudah sensitif,
+    // bahkan sebelum isi pesannya.
+    const actor = await requireActor(request);
+    if ("response" in actor) return actor.response;
+    const userId = actor.userId;
 
     // If channelId specified → return messages for that channel
     if (channelId) {
+      // Isi percakapan hanya untuk anggotanya.
+      if (!(await isChannelMember(channelId, userId))) {
+        return NextResponse.json({ error: "Kamu bukan anggota percakapan ini" }, { status: 403 });
+      }
       let msgSql = `SELECT m.*, u.name as sender_name, u.avatar_image as sender_avatar
                      FROM messages m
                      JOIN users u ON m.sender_id = u.id
@@ -116,6 +139,20 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { action } = body;
 
+    /*
+     * Identitas pelaku diambil dari cookie lalu DIPAKSAKAN ke dalam body.
+     *
+     * Semua handler di bawah dulu membaca `senderId`/`userId` dari body apa
+     * adanya — artinya cukup mengganti satu field untuk mengirim pesan atas
+     * nama rekan kerja, atau membuka DM atas namanya. Menimpanya di satu
+     * tempat membuat handler-handler itu tidak perlu diubah satu per satu dan
+     * tidak ada yang bisa terlewat nanti.
+     */
+    const actor = await requireActor(request);
+    if ("response" in actor) return actor.response;
+    body.senderId = actor.userId;
+    body.userId = actor.userId;
+
     if (action === 'create_channel') {
       return await createChannel(body);
     }
@@ -142,6 +179,13 @@ async function sendMessage(body: any) {
 
   if (!channelId || !senderId || !content?.trim()) {
     return NextResponse.json({ error: "channelId, senderId, content required" }, { status: 400 });
+  }
+
+  // `senderId` sudah dipastikan dari cookie di POST, tapi keanggotaannya belum.
+  // Tanpa ini seseorang yang sah tetap bisa menitipkan pesan ke percakapan mana
+  // pun yang id-nya ia ketahui — termasuk DM antara dua orang lain.
+  if (!(await isChannelMember(channelId, senderId))) {
+    return NextResponse.json({ error: "Kamu bukan anggota percakapan ini" }, { status: 403 });
   }
 
   const id = "msg_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);

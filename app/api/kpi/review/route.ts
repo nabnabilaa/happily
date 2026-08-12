@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { reviewTask } from "@/lib/taskReview";
 import { AWAITING_REVIEW_SQL, TASK_STATUS } from "@/lib/taskStatus";
 import { authorizeReview } from "@/lib/reviewAuth";
+import { requireActor } from "@/lib/apiAuth";
 
 // POST: HR/Manager memutuskan sebuah KPI bulanan
 // Body: { kpiId, action: 'approved'|'revision'|'rejected'|'clear', note, penaltyPct, reviewedBy }
@@ -90,6 +91,10 @@ export async function POST(request: Request) {
             action: TASK_STATUS.APPROVED,
             managerId: reviewedBy || null,
             reviewNote: note || null,
+            // Izinnya sudah diputuskan di atas terhadap KPI-nya —
+            // termasuk kasus manajer meng-ACC KPI yang ia tugaskan ke orang di
+            // luar timnya, yang akan ditolak kalau diperiksa ulang per task.
+            preauthorized: true,
           });
           if (result.ok) approvedTasks++;
           else failedTasks.push(taskId);
@@ -168,7 +173,10 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const managerId = searchParams.get('managerId');
+    // Identitas dari cookie sesi. Review KPI menampilkan pekerjaan seluruh anggota tim.
+    const actor = await requireActor(request);
+    if ("response" in actor) return actor.response;
+    const managerId = actor.userId;
     const month = searchParams.get('month') || new Date().getMonth() + 1;
     const year = searchParams.get('year') || new Date().getFullYear();
 
