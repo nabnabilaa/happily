@@ -221,6 +221,14 @@ export default function HRPeopleScreen({ openModal }: Props) {
   };
 
   const managers = dbUsers.filter(u => u.role === 'manager');
+  // Yang boleh dipasang sebagai atasan. Sengaja lebih luas dari kartu statistik
+  // "Manager" di atas: server menerima manager DAN hr (lihat
+  // `validateManagerAssignment`), jadi daftar pilihannya harus sama persis —
+  // kalau tidak, HR melihat pilihan yang ditolak server, atau sebaliknya
+  // kehilangan pilihan yang sebenarnya sah.
+  const assignableManagers = dbUsers.filter(u => u.role === 'manager' || u.role === 'hr');
+  const managerNameById: Record<string, string> = {};
+  dbUsers.forEach(u => { managerNameById[String(u.id)] = u.name; });
 
   // Group users by department
   const usersByDept: Record<string, any[]> = {};
@@ -324,7 +332,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
 
           {/* Action Bar */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-            <button onClick={() => openModal('create_user', { onSave: handleCreateUser })} className="hp-tap" style={{
+            <button onClick={() => openModal('create_user', { managers: assignableManagers, onSave: handleCreateUser })} className="hp-tap" style={{
               flex: 1, padding: '12px', borderRadius: HP_TOKENS.radiusMd, border: 'none',
               background: HP_TOKENS.ink, color: HP_TOKENS.onPrimary,
               fontFamily: HP_FONT, fontWeight: 700, fontSize: 12, cursor: 'pointer',
@@ -627,6 +635,19 @@ export default function HRPeopleScreen({ openModal }: Props) {
                         <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginTop: 3 }}>
                           {u.job_title || 'No Title'} · Lvl {u.level || 1} · {u.points || 0} EXP
                         </div>
+                        {/* Atasan langsung. Ditampilkan karena inilah yang
+                            menentukan apakah pekerjaan orang ini punya penilai —
+                            dan sampai sekarang tidak ada satu layar pun yang
+                            memperlihatkannya, jadi yang kosong tidak pernah
+                            ketahuan. Hanya untuk yang bukan HR: konsol HR tidak
+                            bergantung pada atasan. */}
+                        {u.role !== 'hr' && (
+                          <div style={{ ...HP_TEXT.tiny, fontWeight: 700, marginTop: 3, color: u.manager_id && managerNameById[String(u.manager_id)] ? HP_TOKENS.inkFade : HP_TOKENS.coralInk }}>
+                            {u.manager_id && managerNameById[String(u.manager_id)]
+                              ? `Atasan: ${managerNameById[String(u.manager_id)]}`
+                              : 'Belum punya atasan'}
+                          </div>
+                        )}
                       </div>
                       {/* Kinerja per orang (KPI + task) */}
                       {deptPeopleScores[String(u.id)] && (
@@ -658,7 +679,7 @@ export default function HRPeopleScreen({ openModal }: Props) {
                           }}><HPGlyph name="arrowDown" size={12} color="currentColor" /></button>
                         )}
                         <button onClick={() => openModal('edit_user', {
-                          user: u, managers,
+                          user: u, managers: assignableManagers,
                           onSave: (updates: any) => handleUpdateUser(u.id, updates),
                           onDelete: () => handleDeleteUser(u.id)
                         })} className="hp-tap" style={{

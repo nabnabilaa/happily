@@ -12,10 +12,12 @@ export default function ReviewTaskWidget() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchTasks = async () => {
+  // `silent` menahan spinner saat refresh latar. Tanpa itu antrean berkedip
+  // "Memuat task..." tiap kali ada anggota tim yang mengumpulkan.
+  const fetchTasks = async (silent = false) => {
     if (!user?.id) return;
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const res = await fetch(`/api/manager/tasks/pending?userId=${user.id}`);
       const data = await res.json();
       if (data.tasks) {
@@ -24,12 +26,27 @@ export default function ReviewTaskWidget() {
     } catch (e) {
       console.error(e);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
+  /*
+   * Widget ini dulu hanya mengambil data sekali seumur hidup komponen. Manajer
+   * yang membiarkan halamannya terbuka tidak akan pernah melihat pekerjaan yang
+   * masuk setelahnya — antreannya tetap kosong sementara timnya menunggu ACC.
+   *
+   * `hp_db_update` adalah kanal yang sama yang dipakai komponen lain, dan
+   * sekarang `/api/priorities/complete` benar-benar memancarkannya ke manajer.
+   */
   useEffect(() => {
     fetchTasks();
+    const handleUpdate = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchTasks(true);
+      }
+    };
+    window.addEventListener('hp_db_update', handleUpdate);
+    return () => window.removeEventListener('hp_db_update', handleUpdate);
   }, [user?.id]);
 
   if (!user || user.role !== 'manager') return null;

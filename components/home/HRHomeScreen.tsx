@@ -112,6 +112,7 @@ export default function HRHomeScreen({ openModal }: Props) {
     selectedHabitDay, setSelectedHabitDay,
     habitNote, setHabitNote,
     handleHabitDayClick, handleFinishTraining, saveHabitDay, handleQuickComplete,
+    lastHabitAward,
   } = useHabitManager(updateState, awardXP, notify, setConfetti, setCelebrate);
 
   const yesterdayPlan = useMemo(() => {
@@ -289,9 +290,10 @@ export default function HRHomeScreen({ openModal }: Props) {
         <div id="task-section">
           <TaskHarianWidget
             openModal={openModal}
-            onTaskComplete={(taskName?: string) => {
+            // Angka poinnya dari server — lihat catatan di HomeScreen.
+            onTaskComplete={(taskName?: string, awarded?: number) => {
               setConfetti(true);
-              setCelebrate({show: true, points: 50, message: taskName ? `Selesai: ${taskName}` : "Hebat! Satu langkah lebih dekat."});
+              setCelebrate({show: true, points: awarded ?? 0, message: taskName ? `Selesai: ${taskName}` : "Hebat! Satu langkah lebih dekat."});
               setTimeout(() => setConfetti(false), 1200);
             }}
           />
@@ -326,6 +328,7 @@ export default function HRHomeScreen({ openModal }: Props) {
                 <div key={i} style={{ minWidth: 260, flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
                   <HabitCell
                     h={h}
+                    awardedPoints={lastHabitAward && lastHabitAward.name === h.name ? lastHabitAward.awarded : undefined}
                     onToggle={(date, isToday, done) => handleHabitDayClick(h.name, date, isToday, done)}
                     onQuickComplete={(date, isToday, wasDone, newDone) => handleQuickComplete(h.name, date, isToday, wasDone, newDone)}
                     onFinish={() => handleFinishTraining(h.name)}

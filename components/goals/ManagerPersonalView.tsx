@@ -41,17 +41,15 @@ export default function ManagerPersonalView({
           icon="target"
           label="Target / KPI Saya"
           count={String(combinedMyGoals.length)}
-          action="+ Target/KPI Mandiri"
-          onAction={() => openModal('new_goal', { scope: 'personal' })}
+          action="+ KPI Mandiri"
+          // Dulu menunjuk ke 'new_goal', modal yang tidak pernah didaftarkan di
+          // app/page.tsx — tombolnya ada tapi kliknya tidak melakukan apa pun.
+          onAction={() => openModal('personal_kpi')}
         />
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
           {paginated.map((g: any) => (
-            <div
-              key={g.id}
-              onClick={() => { if (!g.isApiKpi) openModal('new_goal', { goal: g }); }}
-              className={g.isApiKpi ? '' : 'hp-tap'}
-            >
+            <div key={g.id}>
               <GoalCard g={g} isReadOnly={g.isApiKpi} />
             </div>
           ))}

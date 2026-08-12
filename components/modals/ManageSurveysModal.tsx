@@ -63,7 +63,7 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
 
   const fetchSurveys = async () => {
     try {
-      const res = await fetch('/api/hr/surveys');
+      const res = await fetch(`/api/hr/surveys?requesterId=${user?.id}`);
       const data = await res.json();
       setSurveys(data.surveys || []);
     } catch (e) { console.error(e); }
@@ -72,7 +72,7 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
 
   const fetchDepartments = async () => {
     try {
-      const res = await fetch('/api/users');
+      const res = await fetch(`/api/users?requesterId=${user?.id}`);
       const data = await res.json();
       const depts = Array.from(new Set((data.users || []).map((u: any) => u.department).filter(Boolean))) as string[];
       setDepartments(depts);
@@ -159,6 +159,9 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
         target_departments: targetAudience === 'department' ? targetDepts : null,
         questions,
         created_by: user?.id,
+        // Dipakai server untuk memeriksa izin pada penyuntingan (PUT), yang
+        // tidak punya `created_by` milik pembuat aslinya.
+        requesterId: user?.id,
       };
       if (editingId) body.id = editingId;
 
@@ -180,7 +183,7 @@ export default function ManageSurveysModal({ onClose, editId, openModal }: Manag
   const deleteSurvey = async (id: number) => {
     if (!confirm("Hapus survey beserta semua responsnya?")) return;
     try {
-      await fetch(`/api/hr/surveys?id=${id}`, { method: 'DELETE' });
+      await fetch(`/api/hr/surveys?id=${id}&requesterId=${user?.id}`, { method: 'DELETE' });
       await fetchSurveys();
       refreshSurveys();
     } catch (e) { console.error(e); }

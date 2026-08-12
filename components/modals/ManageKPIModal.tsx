@@ -44,7 +44,11 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
   const [currentPage, setCurrentPage] = useState(1);
   const [showMonthDropdown, setShowMonthDropdown] = useState(false);
   const [showYearDropdown, setShowYearDropdown] = useState(false);
-  const [teamId, setTeamId] = useState<string | null>(null);
+  // Sasaran KPI ber-scope tim: NAMA DEPARTEMEN. Dulu di sini disimpan
+  // `users.team_id` — kolom peninggalan yang hampir selalu kosong, sehingga
+  // KPI tim tersimpan menunjuk ke ketiadaan dan tidak pernah muncul di layar
+  // siapa pun. Lihat TEAM_SCOPE_MATCH di app/api/kpi/route.ts.
+  const [teamScopeKey, setTeamScopeKey] = useState<string | null>(null);
   const [scope, setScope] = useState<'assigned' | 'team'>('assigned');
 
   // Form
@@ -144,22 +148,55 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
     setLoading(false);
   };
 
+  /**
+   * Daftar orang yang boleh dititipi KPI oleh pemakai layar ini.
+   *
+   * Dulu diambil dari `/api/users` — seluruh karyawan perusahaan, tanpa
+   * penyaring — sehingga seorang manajer bisa memilih orang dari divisi lain.
+   * Server sekarang menolak penugasan seperti itu, jadi daftarnya harus
+   * mencerminkan aturan yang sama; kalau tidak, pilihan yang tampil justru
+   * yang akan ditolak saat disimpan.
+   *
+   * HR-Admin memang bekerja lintas divisi, jadi ia tetap melihat semua orang.
+   */
   const fetchMembers = async () => {
+    const isHrAdmin = user?.role === 'hr' || !!(user as any)?.hrAccess;
     try {
-      const res = await fetch('/api/users');
-      const data = await res.json();
-      if (data.users) {
-        const currentUserRow = data.users.find((u: any) => String(u.id) === String(user?.id));
-        if (currentUserRow) {
-          setTeamId(currentUserRow.team_id);
+      if (isHrAdmin) {
+        const res = await fetch(`/api/hr/users?adminId=${user?.id}`);
+        const data = await res.json();
+        if (data.users) {
+          setMembers(data.users.filter((u: any) => String(u.id) !== String(user?.id)));
         }
-        setMembers(data.users.filter((u: any) => String(u.id) !== String(user?.id)));
+        // HR tidak terikat satu divisi; "seluruh tim" baginya berarti divisinya
+        // sendiri kalau ada. Tanpa ini tombolnya mengirim sasaran kosong.
+        setTeamScopeKey((user as any)?.department || null);
+        return;
       }
+
+      const res = await fetch(`/api/manager/dashboard?userId=${user?.id}`);
+      const data = await res.json();
+      setMembers(
+        (data.members || []).map((m: any) => ({
+          id: String(m.id),
+          name: m.name,
+          job_title: m.role,
+        }))
+      );
+      setTeamScopeKey(data.department || null);
     } catch (e) { console.error(e); }
   };
 
   const handleCreate = async () => {
-    if (!title || !assignTo) return;
+    if (!title) return;
+    if (scope === 'team' && !assignTo) {
+      // Sasaran KPI tim adalah departemen si pembuat. Kalau akunnya belum punya
+      // departemen, permintaannya akan ditolak server — lebih baik dikatakan di
+      // sini daripada tombolnya diam saja seperti sebelumnya.
+      setError('Akun kamu belum punya departemen, jadi KPI tim belum bisa dibuat. Minta HR mengisinya dulu.');
+      return;
+    }
+    if (!assignTo) return;
     setSaving(true);
     setError(null);
 
@@ -192,7 +229,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
   };
 
   const handleDelete = async (kpiId: string) => {
-    await fetch(`/api/kpi?id=${kpiId}`, { method: 'DELETE' });
+    await fetch(`/api/kpi?id=${kpiId}&requesterId=${user?.id}`, { method: 'DELETE' });
     fetchKPIs();
     updateState((s: any) => ({ ...s, goals: [...(s.goals || [])] })); // trigger refetch
   };
@@ -361,7 +398,7 @@ export default function ManageKPIModal({ onClose, initialShowForm = false }: Man
             </button>
             <button 
               type="button"
-              onClick={() => { setScope('team'); setAssignTo(teamId || 'team_1'); }}
+              onClick={() => { setScope('team'); setAssignTo(teamScopeKey || ''); }}
               style={{
                 flex: 1, padding: '10px', borderRadius: HP_TOKENS.radiusSm, fontSize: 12, fontWeight: 700,
                 background: scope === 'team' ? HP_TOKENS.blue : '#fff',

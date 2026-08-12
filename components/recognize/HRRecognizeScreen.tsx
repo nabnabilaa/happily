@@ -25,7 +25,9 @@ export default function HRRecognizeScreen({ openModal }: Props) {
   const rewards = state.rewards || [];
   const history = state.rewardHistory || [];
   const wishlistId = state.wishlistId || null;
-  const points = state.points ?? state.coins ?? 0;
+  // Saldo belanja adalah `coins`; `points` adalah XP seumur hidup yang tidak
+  // pernah berkurang saat menukar. Lihat catatan di RecognizeScreen.tsx.
+  const points = state.coins ?? state.points ?? 0;
 
   const toggleWishlist = (r: any) =>
     updateState((s: any) => ({ ...s, wishlistId: s.wishlistId === r.id ? null : r.id }));

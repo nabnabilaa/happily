@@ -7,10 +7,12 @@ import HPGlyph from "@/components/ui/HPGlyph";
 
 interface CreateUserModalProps {
   onClose: () => void;
+  /** Akun yang boleh dipilih sebagai atasan (manager & HR). */
+  managers?: any[];
   onSave: (newUser: any) => Promise<void>;
 }
 
-export default function CreateUserModal({ onClose, onSave }: CreateUserModalProps) {
+export default function CreateUserModal({ onClose, managers = [], onSave }: CreateUserModalProps) {
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -18,6 +20,7 @@ export default function CreateUserModal({ onClose, onSave }: CreateUserModalProp
     role: "employee",
     jobTitle: "",
     department: "",
+    managerId: "",
     hrAccess: false
   });
   const [loading, setLoading] = useState(false);
@@ -122,6 +125,24 @@ export default function CreateUserModal({ onClose, onSave }: CreateUserModalProp
               ))}
             </select>
           </div>
+        </div>
+
+        {/* Atasan ditetapkan sejak awal — akun baru tanpa atasan tidak muncul
+            di antrean ACC manajer mana pun. */}
+        <div>
+          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 700, marginBottom: 6, display: 'block' }}>ATASAN LANGSUNG</label>
+          <select
+            value={form.managerId}
+            onChange={e => setForm({ ...form, managerId: e.target.value })}
+            style={selectStyle}
+          >
+            <option value="">Belum ditentukan</option>
+            {managers.map(m => (
+              <option key={m.id} value={m.id}>
+                {m.name}{m.department ? ` — ${m.department}` : ''}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>

@@ -100,6 +100,7 @@ const DepartmentManagerModal = safeDynamic(() => import("@/components/modals/Dep
 const MemberLogbookModal = safeDynamic(() => import("@/components/modals/MemberLogbookModal"));
 const MemberTaskModal = safeDynamic(() => import("@/components/modals/MemberTaskModal"));
 const ManageKPIModal = safeDynamic(() => import("@/components/modals/ManageKPIModal"));
+const PersonalKpiModal = safeDynamic(() => import("@/components/modals/PersonalKpiModal"));
 const KpiReviewModal = safeDynamic(() => import("@/components/modals/KpiReviewModal"));
 const WeeklyReviewModal = safeDynamic(() => import("@/components/modals/WeeklyReviewModal"));
 const MonthlyReportModal = safeDynamic(() => import("@/components/modals/MonthlyReportModal"));
@@ -155,7 +156,7 @@ const headerIconBtn: React.CSSProperties = {
 };
 
 function AppContent() {
-  const { state, loading, user, login, logout, updateState, updateUser } = useHP();
+  const { state, loading, user, login, logout, updateState, updateUser, notify } = useHP();
   const [tab, setTab] = useState('home');
   const [modal, setModal] = useState<{ name: string; props?: any } | null>(null);
   const [coachPos, setCoachPos] = useState({ x: 0, y: 0 });
@@ -196,14 +197,21 @@ function AppContent() {
     const urlParams = new URLSearchParams(window.location.search);
     const action = urlParams.get('action');
     const autoLoginId = urlParams.get('autoLoginId');
+    // Kode ruangan dari QR sesi fokus. Yang dibawa QR adalah KODE, bukan id
+    // ruangan — id tidak boleh beredar di luar (lihat api/focus/rooms/resolve).
+    const focusCode = urlParams.get('focusCode');
 
     // Auto-login from QR code
     if (autoLoginId) {
       const existingUserId = localStorage.getItem("hp_user_id");
       if (existingUserId !== autoLoginId) {
         localStorage.setItem("hp_user_id", autoLoginId);
-        // Clean up the URL but keep the action so it triggers the modal after load
-        window.location.href = `/?action=${action || 'focus'}`;
+        // Clean up the URL but keep the action so it triggers the modal after
+        // load. `focusCode` ikut dibawa: tanpa ini, memindai QR ruangan sambil
+        // berpindah akun akan membuka layar fokus kosong, bukan ruangannya.
+        const carry = new URLSearchParams({ action: action || 'focus' });
+        if (focusCode) carry.set('focusCode', focusCode);
+        window.location.href = `/?${carry.toString()}`;
         return;
       } else {
         // Already logged in as the same user. Just clean the URL parameter.
@@ -215,17 +223,47 @@ function AppContent() {
 
     if (user && state?.onboarded) {
       if (action === 'focus') {
-        // Delay to ensure the UI is fully mounted before popping modal
-        setTimeout(() => openModal('focus'), 500);
-        
-        // Remove param so it doesn't trigger again on refresh
+        // Param dibersihkan LEBIH DULU, bukan setelah modal terbuka. Kalau
+        // kodenya sudah hangus atau user menutup layarnya, refresh tidak boleh
+        // mengulangi percobaan masuk yang sama.
         const url = new URL(window.location.href);
         url.searchParams.delete('action');
+        url.searchParams.delete('focusCode');
         url.searchParams.delete('autoLoginId');
         window.history.replaceState({}, '', url);
+
+        if (focusCode) {
+          void (async () => {
+            try {
+              const res = await fetch('/api/focus/rooms/resolve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ code: focusCode }),
+              });
+              const data = await res.json().catch(() => ({}));
+              if (!res.ok || !data.roomId) {
+                // Ruangan yang sudah selesai adalah hasil yang wajar, bukan
+                // kegagalan: layar fokus tetap dibuka supaya orangnya bisa
+                // membuat sesi sendiri, bukan dibiarkan di halaman kosong.
+                notify('Ruangan tidak ditemukan', data.error || 'Kode di QR itu sudah tidak berlaku.', 'warning');
+                openModal('focus');
+                return;
+              }
+              openModal('focus', { roomId: data.roomId, joinCode: focusCode });
+            } catch {
+              notify('Koneksi bermasalah', 'Tidak bisa memeriksa kode ruangan. Coba lagi.', 'warning');
+              openModal('focus');
+            }
+          })();
+          return;
+        }
+
+        // Delay to ensure the UI is fully mounted before popping modal
+        setTimeout(() => openModal('focus'), 500);
       }
     }
-  }, [user, state?.onboarded, openModal]);
+  }, [user, state?.onboarded, openModal, notify]);
 
   // ── Daily Greeting (once per day for onboarded users) ─────────────────────
   useEffect(() => {
@@ -711,6 +749,7 @@ function AppContent() {
       {modal?.name === 'member_logbook'  && <MemberLogbookModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'member_tasks'    && <MemberTaskModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'manage_kpi'      && <ManageKPIModal onClose={closeModal} {...modal.props} />}
+      {modal?.name === 'personal_kpi'    && <PersonalKpiModal onClose={closeModal} {...modal.props} />}
       {modal?.name === 'kpi_review'      && <KpiReviewModal onClose={closeModal} />}
       {modal?.name === 'weekly_review'    && <WeeklyReviewModal onClose={closeModal} />}
       {modal?.name === 'monthly_report'   && <MonthlyReportModal onClose={closeModal} {...modal.props} />}

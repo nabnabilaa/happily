@@ -125,7 +125,18 @@ export default function HRWellbeingDashboard({ state, openModal, onGoToBurnout }
                   >
                     <div>
                       <div style={{ ...HP_TEXT.body, fontSize: 13, fontWeight: 700 }}>{dept.dept}</div>
-                      <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>{dept.headcount} anggota</div>
+                      <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute }}>
+                        {dept.headcount} anggota
+                        {/* Pekerjaan yang menunggu ACC manajer. Tanpa angka ini,
+                            layar HR hanya bercerita soal yang sudah "selesai"
+                            menurut karyawan, sementara manajernya melihat
+                            tumpukan yang belum ia putuskan. */}
+                        {Number(dept.awaitingReview) > 0 && (
+                          <span style={{ color: HP_TOKENS.yellowInk, fontWeight: 700 }}>
+                            {' · '}{dept.awaitingReview} menunggu ACC
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <div style={{ 

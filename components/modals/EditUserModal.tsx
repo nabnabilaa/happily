@@ -20,6 +20,7 @@ export default function EditUserModal({ onClose, user, managers, onSave, onDelet
     role: user.role || "employee",
     jobTitle: user.job_title || "",
     department: user.department || "",
+    managerId: user.manager_id ? String(user.manager_id) : "",
     hrAccess: Number(user.hr_access) === 1
   });
 
@@ -36,6 +37,7 @@ export default function EditUserModal({ onClose, user, managers, onSave, onDelet
       newRole: form.role,
       jobTitle: form.jobTitle,
       department: form.department,
+      managerId: form.managerId,
       hrAccess: form.role === 'hr' ? false : form.hrAccess
     });
     onClose();
@@ -105,6 +107,33 @@ export default function EditUserModal({ onClose, user, managers, onSave, onDelet
               <option key={d.id} value={d.name}>{d.name}</option>
             ))}
           </select>
+        </div>
+
+        {/* Atasan langsung — penentu isi konsol manajer.
+            Antrean ACC, papan tim, dan peringatan wellbeing semuanya berangkat
+            dari relasi ini; selama kosong, orangnya cuma bisa ditemukan lewat
+            kecocokan nama departemen. */}
+        <div>
+          <label style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkFade, fontWeight: 700, marginBottom: 8, display: 'block' }}>ATASAN LANGSUNG</label>
+          <select
+            value={form.managerId}
+            onChange={e => setForm({ ...form, managerId: e.target.value })}
+            style={selectStyle}
+          >
+            <option value="">Belum ditentukan</option>
+            {managers
+              .filter(m => String(m.id) !== String(user.id))
+              .map(m => (
+                <option key={m.id} value={m.id}>
+                  {m.name}{m.department ? ` — ${m.department}` : ''}
+                </option>
+              ))}
+          </select>
+          {!form.managerId && (
+            <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700, marginTop: 6 }}>
+              Tanpa atasan, task yang diselesaikan orang ini tidak masuk antrean ACC siapa pun.
+            </div>
+          )}
         </div>
 
         <div>
