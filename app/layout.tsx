@@ -67,7 +67,17 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "Flowbuddy by Maxy",
   description: "Human-Centered Productivity Platform",
-  manifest: "/manifest.json",
+  // `app/manifest.ts` disajikan Next di /manifest.webmanifest, bukan
+  // /manifest.json — alamat lama menghasilkan 404 dan browser diam saja
+  // soal itu, jadi PWA-nya tidak pernah punya manifest sama sekali.
+  manifest: "/manifest.webmanifest",
+  // Ikon disebut eksplisit supaya tidak bergantung pada penemuan otomatis:
+  // yang terlihat di tab adalah logogram Maxy, bukan favicon bawaan Next.
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/maxy-icon-180.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
