@@ -59,6 +59,55 @@ export interface PointsAction {
   logbook: { type: string; emoji: string };
 }
 
+/**
+ * ── Kelulusan training dibayar per hari, bukan borongan ─────────────────────
+ *
+ * Kapan sebuah training "tamat" tidak bisa ditebak di depan. Berapa hari yang
+ * pantas untuk "baca buku"? Tergantung bukunya, tergantung ritme orangnya.
+ * Karena itu tidak ada gerbang jumlah hari: tombol "Tamat" ditekan saat orangnya
+ * merasa selesai, dan itu memang keputusan dia.
+ *
+ * Yang menahan penyalahgunaan bukan gerbang, melainkan asal bayarannya. Dulu
+ * kelulusan bernilai 500 poin flat tanpa syarat apa pun — buat habit, tekan
+ * "Tamat", +500, ulangi dengan nama lain, tak terbatas. Sekarang bayarannya
+ * lahir dari hari-hari yang benar-benar dicentang, dan satu hari centang
+ * menuntut satu hari sungguhan (habit_complete berkunci per tanggal dan hanya
+ * berlaku untuk hari ini). Training yang dijalani tiga hari dibayar seperti
+ * tiga hari; yang dijalani dua bulan dibayar penuh.
+ *
+ * Tarifnya sedikit di atas satu centang harian (15). Menuntaskan sesuatu memang
+ * pantas bernilai lebih dari sekadar menjalaninya, tapi bukan puluhan kali
+ * lipat.
+ *
+ * Dideklarasikan sebelum registry karena dipakai di dalamnya.
+ */
+export const TRAINING_POINTS_PER_DAY = 20;
+
+/**
+ * Plafon satu kelulusan, sekaligus plafon HARIAN untuk seluruh kelulusan.
+ *
+ * Dua-duanya perlu. Tanpa plafon per kelulusan, training berumur setahun
+ * bernilai 7.300 poin. Tanpa plafon harian (`dailyPointCap`), menamatkan sepuluh
+ * training sekaligus dalam satu sore tetap menumpuk — persis alasan sesi fokus
+ * punya plafon serupa: kuota membatasi berapa KALI, bukan berapa BESAR.
+ */
+export const TRAINING_GRADUATION_MAX = 500;
+
+/**
+ * Minimal satu hari benar-benar tercatat. Bukan gerbang lama yang menuntut
+ * seminggu — cuma menutup kasus "buat habit, langsung tamatkan" yang tidak
+ * pernah dijalani sehari pun.
+ */
+export const TRAINING_GRADUATION_MIN_DAYS = 1;
+
+/** Bayaran kelulusan untuk sekian hari tercatat. Klien memakainya untuk
+ *  menunjukkan perkiraan; server memakainya sebagai angka sebenarnya. */
+export function trainingGraduationPoints(completedDays: number): number {
+  const days = Math.max(0, Math.floor(completedDays));
+  if (days < TRAINING_GRADUATION_MIN_DAYS) return 0;
+  return Math.min(TRAINING_GRADUATION_MAX, days * TRAINING_POINTS_PER_DAY);
+}
+
 // ── Registry aksi ───────────────────────────────────────────────────────────
 // Angka di sini adalah satu-satunya tempat nilai poin didefinisikan. UI dan
 // guide harus membaca dari sini, jangan menulis ulang angkanya sendiri.
@@ -224,8 +273,13 @@ export const POINTS_ACTIONS: Record<string, PointsAction> = {
     label: "KPI melampaui target",
     logbook: { type: "kpi", emoji: "🚀" },
   },
+  // Aksi bernilai VARIABEL: nilainya dihitung server dari jumlah hari latihan
+  // yang benar-benar tercatat (lihat trainingGraduationPoints di bawah), lalu
+  // dikirim sebagai `overrideValue`. `value` di sini adalah tarif per hari,
+  // bukan bayaran sekali jalan.
   training_graduated: {
-    value: 500, dailyQuota: null, scope: "lifetime",
+    value: TRAINING_POINTS_PER_DAY, dailyQuota: null, scope: "lifetime",
+    dailyPointCap: TRAINING_GRADUATION_MAX,
     label: "Lulus training",
     logbook: { type: "activity", emoji: "🎓" },
   },

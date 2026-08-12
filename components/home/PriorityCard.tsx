@@ -14,6 +14,7 @@ import {
   HPGlyph,
   EmptyState,
 } from "@/components/ui";
+import { SHOW_EMPLOYEE_PENDING_REVIEW, SHOW_EMPLOYEE_REVIEW_OUTCOME } from "@/lib/featureFlags";
 
 /**
  * The small pill that carries a task's metadata (KPI, status, attachments).
@@ -98,9 +99,20 @@ interface PriorityCardProps {
   openModal?: (name: string, props?: any) => void;
   onDelete?: () => void;
   onEdit?: () => void;
+  /**
+   * Poin yang benar-benar dibayar server untuk penyelesaian yang BARU SAJA
+   * terjadi pada kartu ini. Undefined selama tidak ada apa-apa yang baru
+   * diselesaikan; 0 berarti server tidak membayar (kuota penuh, task ini sudah
+   * pernah dibayar) dan tidak ada yang perlu ditampilkan.
+   *
+   * Dulu angkanya diambil dari `p.points`, field yang tidak pernah ada di tabel
+   * `daily_priorities` — jadi SETIAP task jatuh ke fallback dan mengiklankan
+   * "+30 poin" untuk aksi yang bernilai 20.
+   */
+  awardedPoints?: number;
 }
 
-export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit }: PriorityCardProps) {
+export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit, awardedPoints }: PriorityCardProps) {
   const { state, updateState } = useHP();
   const [showPoints, setShowPoints] = useState(false);
   const [showFocusToast, setShowFocusToast] = useState(false);
@@ -160,15 +172,18 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit 
     setShowDeleteModal(false);
   };
 
-  // Show "+X Point" popup only when task actually transitions from not-done to done
+  // Pil poin hanya muncul saat task benar-benar berpindah dari belum ke selesai
+  // DAN server benar-benar membayar. Penyelesaian yang bernilai nol — kuota
+  // harian habis, task ini sudah pernah dibayar — lewat tanpa pil sama sekali;
+  // pesan sebenarnya sudah disampaikan toast kuota dan overlay perayaan.
   const prevDoneRef = React.useRef(p.done);
   React.useEffect(() => {
-    if (!prevDoneRef.current && p.done) {
+    if (!prevDoneRef.current && p.done && (awardedPoints ?? 0) > 0) {
       setShowPoints(true);
       setTimeout(() => setShowPoints(false), 1200);
     }
     prevDoneRef.current = p.done;
-  }, [p.done]);
+  }, [p.done, awardedPoints]);
 
   React.useEffect(() => {
     if (!p.timer_started_at) {
@@ -298,7 +313,7 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit 
           animation: 'hpRise 1.2s var(--hp-ease-out) forwards',
           pointerEvents: 'none', zIndex: 10,
         }}>
-          +{p.points || 30} poin
+          +{awardedPoints} poin
         </div>
       )}
 
@@ -413,18 +428,22 @@ export default function PriorityCard({ p, onToggle, openModal, onDelete, onEdit 
             );
           })()}
 
-          {/* Review state */}
-          {p.status === "pending_review" && (
+          {/* Menunggu keputusan atasan: tidak ada yang bisa dikerjakan karyawan,
+              jadi disembunyikan di alur personal. Lihat SHOW_EMPLOYEE_PENDING_REVIEW. */}
+          {SHOW_EMPLOYEE_PENDING_REVIEW && p.status === "pending_review" && (
             <Tag icon="hourglass" tone={HP_TOKENS.warning} bg={HP_TOKENS.warningWash}>
               Menunggu review
             </Tag>
           )}
-          {p.status === "revision" && (
+          {/* Hasil yang menuntut tindakan tetap tampil — task-nya mundur jadi
+              belum-selesai dan poinnya ditarik, jadi kartunya harus mengatakan
+              kenapa. Lihat SHOW_EMPLOYEE_REVIEW_OUTCOME. */}
+          {SHOW_EMPLOYEE_REVIEW_OUTCOME && p.status === "revision" && (
             <Tag icon="pencil" tone={HP_TOKENS.danger} bg={HP_TOKENS.dangerWash}>
               Revisi
             </Tag>
           )}
-          {p.status === "rejected" && (
+          {SHOW_EMPLOYEE_REVIEW_OUTCOME && p.status === "rejected" && (
             <Tag icon="close" tone={HP_TOKENS.danger} bg={HP_TOKENS.dangerWash}>
               Ditolak
             </Tag>

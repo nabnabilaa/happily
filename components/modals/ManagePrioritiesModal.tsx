@@ -10,6 +10,7 @@ import {
 import HPGlyph from "@/components/ui/HPGlyph";
 import Modal from "@/components/ui/Modal";
 import TaskCompleteModal from "@/components/modals/TaskCompleteModal";
+import { completeTaskRemote } from "@/lib/taskClient";
 
 export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask }: { onClose: () => void; initialGoalId?: string; editTask?: any }) {
   const { state, updateState, user, notify, awardXP, syncSkillProgress } = useHP();
@@ -148,29 +149,41 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
     const progressDelta = newProgress - prevProgress;
 
     // Await PATCH before updating local state — prevents race condition with SSE-triggered fetchData
-    try {
-      await fetch('/api/priorities/complete', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id, done: nowFullyDone,
-          partialProgress: nowFullyDone ? 100 : newProgress,
-          status: nowFullyDone ? 'pending_review' : 'in_progress',
-          proofLinks: data.proofLinks, notes: data.notes,
-          metricValue: data.metricValue, isProject: data.isProject || isPartial,
-          completedAt: data.completedAt || null,
-        }),
-      });
-    } catch (e) {
-      console.error('Task persist failed:', e);
+    //
+    // Berhenti kalau gagal. Melanjutkan berarti membayar poin untuk penyelesaian
+    // yang tidak pernah sampai ke DB — lihat catatan yang sama di
+    // TaskHarianWidget.confirmTaskComplete.
+    const persisted = await completeTaskRemote(id, {
+      done: nowFullyDone,
+      partialProgress: nowFullyDone ? 100 : newProgress,
+      status: nowFullyDone ? 'pending_review' : 'in_progress',
+      proofLinks: data.proofLinks,
+      notes: data.notes,
+      metricValue: data.metricValue,
+      isProject: data.isProject || isPartial,
+      completedAt: data.completedAt || null,
+    });
+
+    if (!persisted) {
+      notify(
+        "Gagal Menyimpan",
+        `"${completingTask.title}" belum tersimpan, jadi poinnya belum dihitung. Coba lagi.`,
+        "error",
+      );
+      setCompletingTask(null);
+      return;
     }
 
     // Kunci `task:<id>` dipegang server, jadi task ini tidak bisa dibayar dua
     // kali walau diselesaikan dari layar yang berbeda. Guard useRef yang lama
     // hilang tiap komponen remount, dan modal ini memang di-unmount tiap ditutup.
-    if (nowFullyDone && !completingTask.done && progressDelta > 0) {
-      awardXP('task_complete', `Selesaikan: ${completingTask.title}`, `task:${id}`);
-    }
+    // Ditunggu: jawabannya membawa poin yang benar-benar dibayar, dan entri
+    // logbook optimistis di bawah harus memakai angka itu. Sebelumnya entri itu
+    // dipatok 50 — angka yang tidak ada di ekonomi mana pun.
+    const outcome = (nowFullyDone && !completingTask.done && progressDelta > 0)
+      ? await awardXP('task_complete', `Selesaikan: ${completingTask.title}`, `task:${id}`)
+      : null;
+    const awarded = outcome?.awarded ?? 0;
 
     // Side effects OUTSIDE updateState (React may call the callback multiple times in StrictMode)
     if (data.metricValue && completingTask.kpi_id && progressDelta > 0) {
@@ -225,7 +238,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
         id: Date.now(),
         type: 'quest_completion',
         title: newPriorities[pIndex].title,
-        points: 50,
+        points: awarded,
         date: now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
         day: now.toLocaleDateString('id-ID', { weekday: 'long' }),
         time: now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
@@ -374,7 +387,11 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
       energy: 'mid',
       est: "30m",
       done: false,
-      points: 15,
+      // `points: 15` dihapus. Nilainya tidak pernah cocok dengan ekonomi mana
+      // pun (task_complete = 20), tidak pernah disimpan (`daily_priorities`
+      // tidak punya kolom itu — yang ada `points_awarded`), dan satu-satunya
+      // pembacanya adalah pil poin di PriorityCard, yang sekarang memakai angka
+      // dari jawaban server.
       tone: 'sage',
       proof_links: [] as string[],
       is_project: false,
@@ -713,7 +730,7 @@ export default function ManagePrioritiesModal({ onClose, initialGoalId, editTask
             padding: 10, borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.sageWash, border: `1px solid ${HP_TOKENS.sage}20`,
             ...HP_TEXT.small, fontSize: 11, color: HP_TOKENS.sageInk, fontWeight: 600,
           }}>
-            💡 Link bukti pengerjaan diisi nanti saat mencentang task selesai. Poin masuk setelah Manager ACC.
+            💡 Link hasil kerja diisi nanti saat mencentang task selesai. Poin masuk begitu task kamu tandai selesai.
           </div>
 
           <button 

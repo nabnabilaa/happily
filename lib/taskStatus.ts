@@ -29,16 +29,24 @@ export const REVIEW_ACTIONS = [
 export type ReviewAction = (typeof REVIEW_ACTIONS)[number];
 
 /**
- * Spellings still sitting in the database from the pre-canonical write paths,
- * plus the short verb forms the older clients posted as `action`.
+ * Ejaan lama dari jalur tulis sebelum kosakata ini dikanonkan, plus bentuk kata
+ * kerja pendek yang dikirim klien versi lama sebagai `action`.
+ *
+ * Kolom `status` di basis data SUDAH dinormalkan (2026-08-10): tinggal lima
+ * nilai kanonik, tidak ada lagi NULL. Jadi peta ini bukan lagi penerjemah untuk
+ * data tersimpan — ia tetap ada semata sebagai penjaga MASUKAN, karena klien
+ * lama dan ekstensi yang belum diperbarui masih bisa mengirim ejaan-ejaan ini.
+ *
+ * Catatan pemetaan: `done` dan `accepted` menjadi PENDING_REVIEW, bukan
+ * APPROVED. Keduanya dulu ditulis oleh jalur penyelesaian milik KARYAWAN —
+ * artinya "saya sudah mengerjakan", bukan "manajer sudah menyetujui". Hanya
+ * `verified` yang benar-benar berasal dari verifikasi manajer.
  */
 const ALIASES: Record<string, TaskStatus> = {
   accepted: TASK_STATUS.PENDING_REVIEW,
   approve: TASK_STATUS.APPROVED,
   reject: TASK_STATUS.REJECTED,
   revise: TASK_STATUS.REVISION,
-  // Counted in the live database: done(238), accepted(64), verified(20),
-  // pending(1), reject(1) — five spellings for three real states.
   done: TASK_STATUS.PENDING_REVIEW,
   verified: TASK_STATUS.APPROVED,
   pending: TASK_STATUS.PENDING_REVIEW,

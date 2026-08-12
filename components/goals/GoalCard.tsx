@@ -8,12 +8,20 @@ import HPChip from "@/components/ui/HPChip";
 import HPBar from "@/components/ui/HPBar";
 import HPGlyph from "@/components/ui/HPGlyph";
 import { isAwaitingReview } from "@/lib/taskStatus";
+import { SHOW_EMPLOYEE_PENDING_REVIEW, SHOW_EMPLOYEE_REVIEW_OUTCOME } from "@/lib/featureFlags";
 
 interface GoalCardProps {
   g: any;
   isReadOnly?: boolean;
   tasks?: any[];
   onEditProgress?: (progress: number) => void;
+  /**
+   * Menyunting progres dalam satuan asli KPI (12 dari 20 buku), bukan persen.
+   * Dipakai KPI mandiri: `target_value` dan `metric_unit`-nya ditulis karyawan
+   * sendiri, jadi slider 0-100% membuang justru angka yang dia pedulikan.
+   * Kalau diisi, `onEditProgress` menerima nilai absolut, bukan persentase.
+   */
+  absoluteProgress?: { current: number; target: number; unit: string } | null;
   /**
    * Menampilkan kartu dari sudut pandang manajer/HR: bukti kerja anggota ikut
    * tampil. Bukan wewenang memutus — ACC diberikan per KPI di Review KPI.
@@ -22,7 +30,7 @@ interface GoalCardProps {
   onViewDetails?: () => void;
 }
 
-export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, managerMode, onViewDetails }: GoalCardProps) {
+export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, absoluteProgress, managerMode, onViewDetails }: GoalCardProps) {
   const { state, updateState, notify } = useHP();
   // Two maps, not one. A tone has to do two jobs with two different contrast
   // duties: tint a fill or a track (3:1 is plenty) and carry a percentage
@@ -42,6 +50,22 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
     yellow: HP_TOKENS.yellowInk,
     coral: HP_TOKENS.coralInk,
   };
+
+  /**
+   * Konsol manager/HR selalu melihat status review — di sana itu memang
+   * pekerjaannya. Di sisi karyawan dibedakan dua hal:
+   *
+   *  - MENUNGGU keputusan: disembunyikan. Tidak ada yang bisa ia kerjakan, dan
+   *    badge "PENDING" membuat KPI yang ia buat sendiri terasa seperti
+   *    pengajuan yang menanti restu.
+   *  - HASIL yang menuntut tindakan (revisi/ditolak, berikut catatannya):
+   *    ditampilkan. Di sinilah ada yang harus ia perbaiki — dan di jalur task,
+   *    di sinilah poinnya ditarik kembali.
+   */
+  const showReviewPending = Boolean(managerMode) || SHOW_EMPLOYEE_PENDING_REVIEW;
+  const showReviewOutcome = Boolean(managerMode) || SHOW_EMPLOYEE_REVIEW_OUTCOME;
+  const statusNeedsAction = g.status === 'rejected' || g.status === 'revision';
+  const showStatusBadge = showReviewPending || (showReviewOutcome && statusNeedsAction);
 
   const [showHistory, setShowHistory] = useState(false);
   const [historyTasks, setHistoryTasks] = useState<any[]>([]);
@@ -143,11 +167,21 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
     : null;
 
   // Final display progress: weekly targets progress (untuk KPI) > task progress > stored progress
-  const displayProgress = g.isApiKpi && weeklyTargetsProgress !== null
+  const rollupFromTargets = g.isApiKpi && weeklyTargetsProgress !== null;
+  const displayProgress = rollupFromTargets
     ? weeklyTargetsProgress
     : hasTodayTasks && taskProgress !== null
       ? taskProgress
       : (g.progress || 0);
+
+  /**
+   * Begitu KPI punya target mingguan, angkanya dihitung naik dari target-target
+   * itu (lihat `displayProgress`) — nilai yang disimpan manual tidak lagi
+   * terpakai. Menyisakan tombol edit di sana berarti menawarkan suntingan yang
+   * diam-diam tidak berpengaruh, jadi editor satuan-asli hanya hidup selama KPI
+   * itu masih berdiri sendiri.
+   */
+  const canEditProgress = Boolean(onEditProgress) && !(absoluteProgress && rollupFromTargets);
 
   const deleteGoal = () => {
     if (isReadOnly) return;
@@ -202,7 +236,7 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-              {g.status && (
+              {showStatusBadge && g.status && (
                 <div style={{
                   padding: '3px 8px', borderRadius: 6,
                   background: g.status === 'approved' ? HP_TOKENS.sageSoft : g.status === 'rejected' ? HP_TOKENS.coralSoft : g.status === 'revision' ? HP_TOKENS.yellowSoft : HP_TOKENS.yellowSoft,
@@ -213,21 +247,21 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
                 </div>
               )}
               {/* Review status badge from HR/Manager */}
-              {g.reviewStatus === 'revision' && (
+              {showReviewOutcome && g.reviewStatus === 'revision' && (
                 <div style={{
                   padding: '3px 8px', borderRadius: 6,
                   background: HP_TOKENS.yellowWash, color: HP_TOKENS.yellowInk,
                   fontSize: 10, fontWeight: 700, letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 3
                 }}>⚠️ PERLU REVISI</div>
               )}
-              {g.reviewStatus === 'rejected' && (
+              {showReviewOutcome && g.reviewStatus === 'rejected' && (
                 <div style={{
                   padding: '3px 8px', borderRadius: 6,
                   background: HP_TOKENS.coralSoft, color: HP_TOKENS.coralInk,
                   fontSize: 10, fontWeight: 700, letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 3
                 }}>❌ DITOLAK</div>
               )}
-              {displayProgress >= 100 && !g.reviewStatus && (
+              {displayProgress >= 100 && (!showReviewOutcome || !g.reviewStatus) && (
                 <div style={{
                   padding: '3px 8px', borderRadius: 6,
                   background: HP_TOKENS.sageSoft, color: HP_TOKENS.sageInk,
@@ -284,21 +318,46 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
                <span style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, fontWeight: 700 }}>PROGRESS</span>
                {editingProgress ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }} onClick={(e) => e.stopPropagation()}>
-                    <input
-                      type="range" min="0" max="100"
-                      value={tempProgress}
-                      onChange={(e) => setTempProgress(e.target.value)}
-                      style={{
-                        flex: 1, accentColor: toneColor, cursor: 'pointer', height: 6
-                      }}
-                    />
-                    <span style={{ fontSize: 13, fontWeight: 700, color: toneInk, minWidth: 35, textAlign: 'right' }}>
-                      {tempProgress}%
-                    </span>
+                    {absoluteProgress ? (
+                      <>
+                        <input
+                          type="number" min="0" max={absoluteProgress.target || undefined} inputMode="decimal"
+                          value={tempProgress}
+                          onChange={(e) => setTempProgress(e.target.value)}
+                          autoFocus
+                          style={{
+                            width: 78, padding: '6px 10px', borderRadius: 8,
+                            border: `1.5px solid ${HP_TOKENS.line}`, background: HP_TOKENS.card,
+                            color: HP_TOKENS.ink, fontFamily: HP_FONT, fontSize: 13, fontWeight: 700,
+                            outline: 'none',
+                          }}
+                        />
+                        <span style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, fontWeight: 700, flex: 1 }}>
+                          dari {absoluteProgress.target} {absoluteProgress.unit}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <input
+                          type="range" min="0" max="100"
+                          value={tempProgress}
+                          onChange={(e) => setTempProgress(e.target.value)}
+                          style={{
+                            flex: 1, accentColor: toneColor, cursor: 'pointer', height: 6
+                          }}
+                        />
+                        <span style={{ fontSize: 13, fontWeight: 700, color: toneInk, minWidth: 35, textAlign: 'right' }}>
+                          {tempProgress}%
+                        </span>
+                      </>
+                    )}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        const val = Math.max(0, Math.min(100, Number(tempProgress)));
+                        const ceiling = absoluteProgress
+                          ? (absoluteProgress.target > 0 ? absoluteProgress.target : Number(tempProgress))
+                          : 100;
+                        const val = Math.max(0, Math.min(ceiling, Number(tempProgress) || 0));
                         onEditProgress?.(val);
                         setEditingProgress(false);
                       }}
@@ -323,17 +382,17 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
                   </div>
                ) : (
                 <div
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: onEditProgress ? 'pointer' : 'default' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: canEditProgress ? 'pointer' : 'default' }}
                   onClick={(e) => {
-                    if (onEditProgress) {
+                    if (canEditProgress) {
                       e.stopPropagation();
-                      setTempProgress(String(displayProgress));
+                      setTempProgress(String(absoluteProgress ? absoluteProgress.current : displayProgress));
                       setEditingProgress(true);
                     }
                   }}
                 >
                   <span style={{ ...HP_TEXT.h, fontSize: 13, color: toneInk }}>{displayProgress}%</span>
-                  {onEditProgress && (
+                  {canEditProgress && (
                     <span style={{
                       fontSize: 10, color: toneInk, opacity: 0.6,
                       padding: '2px 6px', borderRadius: 6, background: `${toneColor}10`,
@@ -349,7 +408,7 @@ export default function GoalCard({ g, isReadOnly, tasks, onEditProgress, manager
       </div>
 
       {/* Review Note Banner — shown to employee when flagged */}
-      {g.reviewStatus && g.reviewNote && (
+      {showReviewOutcome && g.reviewStatus && g.reviewNote && (
         <div style={{
           marginTop: 10, padding: '10px 14px', borderRadius: HP_TOKENS.radiusSm,
           background: g.reviewStatus === 'rejected' ? HP_TOKENS.coralSoft : HP_TOKENS.yellowWash,

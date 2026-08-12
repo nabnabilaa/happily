@@ -18,14 +18,21 @@ import {
 } from "@/components/ui";
 import SectionHeader from "@/components/home/SectionHeader";
 import PriorityCard from "@/components/home/PriorityCard";
-import { deleteTaskRemote } from "@/lib/taskClient";
+import { deleteTaskRemote, completeTaskRemote } from "@/lib/taskClient";
 import TaskCompleteModal from "@/components/modals/TaskCompleteModal";
 import { usePointsQuota, quotaLabel } from "@/hooks/usePointsQuota";
 import { scrollIntoViewSafely } from "@/lib/motion";
 
 interface Props {
   openModal: (name: string, props?: any) => void;
-  onTaskComplete?: (taskName?: string) => void;
+  /**
+   * `awarded` adalah poin yang benar-benar dibayar server untuk penyelesaian
+   * ini, dan 0 adalah nilai yang sah: kuota harian penuh, task yang sama sudah
+   * pernah dibayar, atau penyelesaiannya tidak menambah progres. Ikut dikirim
+   * supaya perayaannya tidak lagi menebak — layar induk dulu memasang angka 50
+   * yang ditulis tangan, padahal task_complete bernilai 20.
+   */
+  onTaskComplete?: (taskName?: string, awarded?: number) => void;
 }
 
 export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
@@ -35,6 +42,9 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
   const quotaFull =
     !!quota.task_complete?.limit && quota.task_complete.used >= quota.task_complete.limit;
   const [completingTask, setCompletingTask] = useState<any>(null);
+  // Poin yang server bayar untuk penyelesaian terakhir, beserta task-nya. Hanya
+  // kartu itu yang boleh menampilkan pil poin, dan hanya dengan angka ini.
+  const [lastAward, setLastAward] = useState<{ id: string | number; awarded: number } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [highlightedTaskId, setHighlightedTaskId] = useState<any>(null);
 
@@ -194,24 +204,31 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
     // Without await, any SSE-triggered fetchData that arrives before the PATCH completes
     // reads stale done=false from DB, then the HPContext debounce timer fires with that
     // stale value and overwrites the completed state.
-    try {
-      await fetch('/api/priorities/complete', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id,
-          done: nowFullyDone,
-          partialProgress: nowFullyDone ? 100 : newProgress,
-          status: nowFullyDone ? 'pending_review' : 'in_progress',
-          proofLinks: data.proofLinks,
-          notes: data.notes,
-          metricValue: data.metricValue,
-          isProject: data.isProject || isPartial,
-          completedAt: data.completedAt || null,
-        }),
-      });
-    } catch (e) {
-      console.error('Task persist failed:', e);
+    //
+    // Kegagalannya MENGHENTIKAN semuanya. Dulu error-nya cuma di-console.error
+    // lalu alurnya lanjut: poin dibayar, state lokal berubah, perayaan jalan —
+    // padahal barisnya tidak pernah selesai di DB. Setelah refresh task-nya
+    // kembali "belum selesai", dan kunci `task:<id>` sudah hangus jadi
+    // menyelesaikannya lagi bernilai nol. Itu persis keluhannya.
+    const persisted = await completeTaskRemote(id, {
+      done: nowFullyDone,
+      partialProgress: nowFullyDone ? 100 : newProgress,
+      status: nowFullyDone ? 'pending_review' : 'in_progress',
+      proofLinks: data.proofLinks,
+      notes: data.notes,
+      metricValue: data.metricValue,
+      isProject: data.isProject || isPartial,
+      completedAt: data.completedAt || null,
+    });
+
+    if (!persisted) {
+      notify(
+        "Gagal Menyimpan",
+        `"${completingTask.title}" belum tersimpan, jadi poinnya belum dihitung. Coba lagi.`,
+        "error",
+      );
+      setCompletingTask(null);
+      return;
     }
 
     // Side effects OUTSIDE updateState — React may invoke updateState callbacks multiple times
@@ -250,9 +267,20 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
     // Penjaga anti-bayar-ganda ada di server lewat kunci `task:<id>`, bukan lagi
     // lewat useRef di sini: ref hilang setiap komponen remount (pindah tab,
     // refresh), sehingga task yang sama bisa dibayar lagi setelah remount.
-    if (nowFullyDone && !completingTask.done && progressDelta > 0) {
-      awardXP('task_complete', `Selesaikan: ${completingTask.title}`, `task:${id}`);
-    }
+    //
+    // Ditunggu, tidak lagi ditembak-lalu-dilupakan. Jawabannya membawa jumlah
+    // poin yang SUNGGUH masuk ke saldo, dan itulah satu-satunya angka yang boleh
+    // ditampilkan setelah ini. Tanpa menunggunya, logbook optimistis dan overlay
+    // perayaan sama-sama harus menebak — dan tebakannya (50) tidak pernah benar.
+    const outcome = (nowFullyDone && !completingTask.done && progressDelta > 0)
+      ? await awardXP('task_complete', `Selesaikan: ${completingTask.title}`, `task:${id}`)
+      : null;
+    const awarded = outcome?.awarded ?? 0;
+
+    // Dipasang SEBELUM updateState supaya kartu yang bersangkutan sudah memegang
+    // angkanya di render yang sama saat `done` berubah — pil poinnya memang
+    // dipicu oleh perpindahan itu.
+    setLastAward({ id, awarded });
 
     updateState((s: any) => {
       const pIndex = s.priorities.findIndex((p: any) => p.id === id);
@@ -280,7 +308,7 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
       const now = new Date();
       const newLog = nowFullyDone ? {
         id: Date.now(), type: 'quest_completion',
-        title: newPriorities[pIndex].title, points: 50,
+        title: newPriorities[pIndex].title, points: awarded,
         date: now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
         day: now.toLocaleDateString('id-ID', { weekday: 'long' }),
         time: now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
@@ -308,7 +336,7 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
       };
     });
 
-    onTaskComplete?.(completingTask.title);
+    onTaskComplete?.(completingTask.title, awarded);
     setCompletingTask(null);
   }, [completingTask, updateState, awardXP, syncSkillProgress, user, onTaskComplete]);
 
@@ -445,6 +473,7 @@ export default function TaskHarianWidget({ openModal, onTaskComplete }: Props) {
               >
                 <PriorityCard
                   p={p}
+                  awardedPoints={String(lastAward?.id) === String(p.id) ? lastAward?.awarded : undefined}
                   onToggle={() => togglePriority(p.id)}
                   onDelete={() => deletePriority(p.id)}
                   onEdit={() => openModal('manage_priorities', { editTask: p })}

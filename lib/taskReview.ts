@@ -4,6 +4,8 @@ import { recalcKpiProgress } from "@/lib/kpiProgress";
 import { triggerRollupForGoal } from "@/lib/rollup";
 import { TASK_STATUS, type ReviewAction } from "@/lib/taskStatus";
 import { awardPoints, reversePoints, refFor, taskReviewRound, taskApprovalRef } from "@/lib/points";
+import { authorizeReview } from "@/lib/reviewAuth";
+import { triggerRealtimeUpdate } from "@/lib/realtime";
 
 const NOTIF_TRIGGER: Record<ReviewAction, string> = {
   [TASK_STATUS.APPROVED]: "task_approved",
@@ -21,6 +23,18 @@ export interface ReviewTaskInput {
   goalId?: string | null;
   /** Base URL used to call the XP service. */
   origin?: string;
+  /**
+   * Lewati pemeriksaan izin karena pemanggil sudah melakukannya di tingkat yang
+   * lebih tinggi — dan hanya untuk itu.
+   *
+   * Dipakai dua tempat. `/api/kpi/review` memutuskan satu KPI lalu mencairkan
+   * semua task di bawahnya; izinnya diperiksa terhadap KPI-nya, termasuk kasus
+   * sah "manajer meng-ACC KPI yang ia tugaskan ke orang di luar timnya" —
+   * memeriksa ulang per task justru akan menolak kasus itu.
+   * `/api/tasks/unlinked-review` memutuskan satu grup milik satu karyawan dan
+   * sudah memanggil `authorizeReview` untuk karyawan tersebut.
+   */
+  preauthorized?: boolean;
 }
 
 export interface ReviewTaskResult {
@@ -57,6 +71,25 @@ export async function reviewTask(input: ReviewTaskInput): Promise<ReviewTaskResu
   const taskTitle = String(taskRow.title ?? "");
   // `goal_id` is the legacy column; KPI-linked tasks carry `kpi_id` instead.
   const goalId = input.goalId || taskRow.goal_id || taskRow.kpi_id || null;
+
+  // ── Izin diperiksa di sini, bukan di masing-masing route ────────────────
+  //
+  // Fungsi ini MENCAIRKAN POIN. Tiga pintu manajer yang bermuara ke sini
+  // (`verify-task`, `reject-task`, `tasks/pending` PUT) dulu hanya menerima
+  // `managerId` dari body dan menuliskannya apa adanya — tidak satu pun
+  // memeriksa apakah pengirimnya benar-benar manajer orang itu. Artinya siapa
+  // pun yang tahu alamat endpoint-nya bisa meng-ACC task miliknya sendiri dan
+  // membayar dirinya sendiri.
+  //
+  // Penjaganya diletakkan di dalam fungsi bersama ini, bukan disalin ke tiap
+  // route, karena persis begitulah tiga pintu tadi bisa berbeda-beda sejak
+  // awal: pintu keempat yang ditulis besok akan otomatis terjaga.
+  if (!input.preauthorized) {
+    const auth = await authorizeReview(managerId, employeeId);
+    if (!auth.ok) {
+      return { ok: false, status: auth.status || 403, error: auth.error };
+    }
+  }
 
   let managerName = "Manager";
   if (managerId) {
@@ -115,6 +148,26 @@ export async function reviewTask(input: ReviewTaskInput): Promise<ReviewTaskResu
     manager_name: managerName,
     ...(reviewNote ? { note: reviewNote } : {}),
   });
+
+  /*
+   * Notifikasi saja tidak menggerakkan layar. Kartu task karyawan masih
+   * menampilkan "menunggu ACC" sampai ia me-refresh, walaupun lonceng
+   * notifikasinya sudah berbunyi — dua sumber kebenaran yang saling
+   * bertentangan di layar yang sama.
+   *
+   * Manajernya ikut diberi sinyal supaya baris yang baru diputuskan hilang dari
+   * antrean review tanpa perlu reload.
+   *
+   * Tidak boleh menggagalkan review: keputusannya sudah tersimpan di atas.
+   */
+  try {
+    await triggerRealtimeUpdate(employeeId, { type: "refresh", slice: "tasks" });
+    if (managerId) {
+      await triggerRealtimeUpdate(String(managerId), { type: "refresh", slice: "tasks" });
+    }
+  } catch (e) {
+    console.warn("[taskReview] Gagal memancarkan sinyal realtime:", e);
+  }
 
   // ── Poin task, tahap kedua ───────────────────────────────────────────────
   //

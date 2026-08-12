@@ -7,16 +7,23 @@ import HPGlyph from "@/components/ui/HPGlyph";
 import HPCard from "@/components/ui/HPCard";
 import Modal from "@/components/ui/Modal";
 import ScreenHeader from "@/components/ui/ScreenHeader";
-import SectionHeader from "@/components/home/SectionHeader";
 import GoalCard from "@/components/goals/GoalCard";
+import HPButton from "@/components/ui/HPButton";
+import EmptyState from "@/components/ui/EmptyState";
 import ReviewTaskWidget from "@/components/manager/ReviewTaskWidget";
 
 interface GoalsScreenProps {
   openModal: (name: string, props?: any) => void;
 }
 
+/** Dari mana KPI ini datang. Ditulis sebagai asal, bukan sebagai atasan. */
+const SOURCE_LABEL: Record<string, string> = {
+  manager: 'Dari tim',
+  personal: 'Milik saya',
+};
+
 // ── Target Tab ──────────────────────────────────────────────────────────────
-function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal: any; kpis: any[]; activeKpiId: string | null; setActiveKpiId: (id: string) => void }) {
+function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId, onCreateKpi }: { openModal: any; kpis: any[]; activeKpiId: string | null; setActiveKpiId: (id: string) => void; onCreateKpi: () => void }) {
   const { state, notify } = useHP();
 
   const [weeklyTargetsByKpi, setWeeklyTargetsByKpi] = useState<Record<string, any[]>>({});
@@ -120,11 +127,14 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
 
   if (kpis.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '60px 20px', background: HP_TOKENS.card, borderRadius: HP_TOKENS.radiusLg, border: `1.5px solid ${HP_TOKENS.lineSoft}` }}>
-        <div style={{ fontSize: 32, marginBottom: 12 }}><HPGlyph name="target" size={27} color="currentColor" /></div>
-        <div style={{ ...HP_TEXT.h, fontSize: 14 }}>Belum ada KPI dari manager.</div>
-        <div style={{ ...HP_TEXT.small, marginTop: 4, color: HP_TOKENS.inkMute }}>Target bisa dibuat setelah KPI diberikan.</div>
-      </div>
+      <HPCard padding={0} style={{ border: `1px solid ${HP_TOKENS.lineSoft}` }}>
+        <EmptyState
+          icon="target"
+          title="Mulai dari satu KPI"
+          description="Target mingguan menggantung pada sebuah KPI. Buat KPI-mu sendiri dulu, lalu pecah jadi target yang bisa dikejar minggu ini."
+          action={<HPButton variant="primary" icon="plus" onClick={onCreateKpi}>Buat KPI Sendiri</HPButton>}
+        />
+      </HPCard>
     );
   }
 
@@ -267,14 +277,21 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
             {kpis.map((kpi: any) => {
               const isActive = activeKpiId === String(kpi.id);
               const targets = weeklyTargetsByKpi[String(kpi.id)] || [];
-              const kpiProgressFromTargets = targets.length > 0 ? Math.round(
+              /**
+               * Aturan yang sama dengan `displayProgress` di GoalCard: selama KPI
+               * punya target mingguan, angkanya naik dari target-target itu;
+               * kalau belum punya, dipakai progres yang tercatat di KPI-nya
+               * sendiri. Sebelumnya cabang kedua jatuh ke 0, jadi satu KPI
+               * mandiri yang sama tampil 60% di tab KPI tapi 0% di daftar ini.
+               */
+              const kpiProgress = targets.length > 0 ? Math.round(
                 targets.reduce((sum: number, t: any) => {
                   const tTasks = tasksByTarget[String(t.id)] || [];
                   return sum + (tTasks.length > 0
                     ? Math.round(tTasks.reduce((s: number, p: any) => s + (p.done ? 100 : (p.partial_progress || 0)), 0) / tTasks.length)
                     : Math.min(100, Math.round((t.currentValue / (t.targetValue || 100)) * 100)));
                 }, 0) / targets.length
-              ) : 0;
+              ) : (Number(kpi.progress) || 0);
 
               return (
                 <div 
@@ -300,16 +317,16 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
                     </div>
                     <div style={{ 
                       fontFamily: HP_FONT, fontWeight: 700, fontSize: 14, 
-                      color: kpiProgressFromTargets >= 100 ? HP_TOKENS.sage : HP_TOKENS.blue 
+                      color: kpiProgress >= 100 ? HP_TOKENS.sage : HP_TOKENS.blue 
                     }}>
-                      {kpiProgressFromTargets}%
+                      {kpiProgress}%
                     </div>
                   </div>
                   {/* KPI Progress Bar */}
                   <div style={{ height: 4, background: HP_TOKENS.lineSoft, borderRadius: 2, overflow: 'hidden', marginTop: 10 }}>
                     <div style={{
-                      height: '100%', width: `${kpiProgressFromTargets}%`,
-                      background: kpiProgressFromTargets >= 100 ? HP_TOKENS.sage : HP_TOKENS.blue,
+                      height: '100%', width: `${kpiProgress}%`,
+                      background: kpiProgress >= 100 ? HP_TOKENS.sage : HP_TOKENS.blue,
                       borderRadius: 2, transition: 'width 0.6s ease',
                     }} />
                   </div>
@@ -336,7 +353,7 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
                     </div>
                   </div>
                   <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute }}>
-                    {activeKpi.source === 'manager' ? 'KPI dari Manager' : 'KPI Personal'}
+                    {SOURCE_LABEL[activeKpi.source] || SOURCE_LABEL.personal}
                   </div>
                 </div>
 
@@ -559,7 +576,7 @@ function TargetTab({ openModal, kpis, activeKpiId, setActiveKpiId }: { openModal
 
 // ── Main GoalsScreen ─────────────────────────────────────────────────────────
 export default function GoalsScreen({ openModal }: GoalsScreenProps) {
-  const { user } = useHP();
+  const { user, notify } = useHP();
   const [tab, setTab] = useState<'target' | 'kpi'>('target');
   const [activeKpiId, setActiveKpiId] = useState<string | null>(null);
 
@@ -567,6 +584,9 @@ export default function GoalsScreen({ openModal }: GoalsScreenProps) {
   const [kpis, setKpis] = useState<any[]>([]);
   const [loadingKpis, setLoadingKpis] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  /** Dinaikkan setelah KPI baru tersimpan supaya daftar dimuat ulang. */
+  const [reloadKey, setReloadKey] = useState(0);
+  const [kpiToRemove, setKpiToRemove] = useState<any | null>(null);
 
   useEffect(() => {
     async function fetchKPIs() {
@@ -584,7 +604,7 @@ export default function GoalsScreen({ openModal }: GoalsScreenProps) {
 
         const managerKpis = (mData.kpis || []).map((k: any) => ({
           id: String(k.id), title: k.title,
-          label: `[Manager] ${k.title}`,
+          label: `${k.title} · ${SOURCE_LABEL.manager}`,
           source: 'manager',
           progress: k.finalScore !== null && k.finalScore !== undefined ? Number(k.finalScore) : 0,
           alignment: k.weight || 0, due: `${m}/${y}`, tone: 'lavender',
@@ -600,13 +620,17 @@ export default function GoalsScreen({ openModal }: GoalsScreenProps) {
 
         const personalKpis = (pData.kpis || []).map((k: any) => ({
           id: String(k.id), title: k.title,
-          label: `[Personal] ${k.title}`,
+          label: `${k.title} · ${SOURCE_LABEL.personal}`,
           source: 'personal',
           progress: k.progress || 0,
           alignment: 0, due: `${m}/${y}`, tone: 'sage',
           metric: k.targetDescription || `${k.currentValue || 0}/${k.targetValue || 0} ${k.metricUnit || ''}`,
           scope: 'personal', owner: user.name || 'You', ownerId: String(user.id),
           status: k.status || 'active', is_kpi: true, isApiKpi: true, subGoals: [],
+          currentValue: Number(k.currentValue) || 0,
+          targetValue: Number(k.targetValue) || 0,
+          metricUnit: k.metricUnit || '',
+          targetDescription: k.targetDescription || '',
         }));
 
         setKpis([...managerKpis, ...personalKpis]);
@@ -617,18 +641,74 @@ export default function GoalsScreen({ openModal }: GoalsScreenProps) {
       }
     }
     fetchKPIs();
-  }, [user?.id]);
+  }, [user?.id, reloadKey]);
 
   useEffect(() => { setCurrentPage(1); }, [tab]);
 
-  const handleEditProgress = async (kpiId: string, progress: number) => {
+  const openKpiComposer = useCallback(() => {
+    openModal('personal_kpi', { onSaved: () => setReloadKey(k => k + 1) });
+  }, [openModal]);
+
+  /**
+   * KPI mandiri diarsipkan, bukan dihapus baris-nya: target mingguan dan task
+   * yang sudah menunjuk ke sana tetap punya induk, sementara GET yang menyaring
+   * `status = 'active'` berhenti menampilkannya.
+   */
+  const removePersonalKpi = async () => {
+    if (!kpiToRemove) return;
+    const removedId = String(kpiToRemove.id);
     try {
-      const res = await fetch('/api/kpi', {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kpiId, finalScore: progress }),
+      const res = await fetch('/api/kpi/personal', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kpiId: removedId, status: 'archived' }),
       });
-      if (res.ok) setKpis(prev => prev.map(k => String(k.id) === String(kpiId) ? { ...k, progress } : k));
-    } catch (e) { console.error(e); }
+      if (!res.ok) throw new Error('archive failed');
+      setKpis(prev => prev.filter(k => String(k.id) !== removedId));
+      if (activeKpiId === removedId) setActiveKpiId(null);
+    } catch (e) {
+      console.error('Failed to archive personal KPI:', e);
+    } finally {
+      setKpiToRemove(null);
+    }
+  };
+
+  /**
+   * Dua asal KPI, dua tabel, dua satuan. KPI dari tim tinggal di `monthly_kpis`
+   * dan dinilai sebagai `finalScore` persen; KPI mandiri tinggal di
+   * `personal_kpis` dan dicatat pemiliknya dalam satuan aslinya
+   * (`current_value`). Sebelumnya keduanya dikirim ke `/api/kpi` — untuk KPI
+   * mandiri itu berarti id dari tabel satu dipakai memutakhirkan tabel lain,
+   * jadi angka yang dicatat karyawan tidak pernah mendarat di mana pun.
+   */
+  const handleEditProgress = async (goal: any, value: number) => {
+    const kpiId = String(goal.id);
+    const isPersonal = goal.source === 'personal';
+    try {
+      const res = await fetch(isPersonal ? '/api/kpi/personal' : '/api/kpi', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        // `requesterId` wajib untuk KPI tim: server memeriksa apakah pengirim
+        // memang berhak menilai KPI ini (KPI mandiri punya jalur sendiri).
+        body: JSON.stringify(isPersonal ? { kpiId, currentValue: value } : { kpiId, finalScore: value, requesterId: user?.id }),
+      });
+      if (!res.ok) throw new Error(`update gagal (${res.status})`);
+
+      setKpis(prev => prev.map(k => {
+        if (String(k.id) !== kpiId) return k;
+        if (!isPersonal) return { ...k, progress: value };
+        const target = Number(k.targetValue) || 0;
+        return {
+          ...k,
+          currentValue: value,
+          progress: target > 0 ? Math.round((value / target) * 100) : 0,
+          metric: k.targetDescription || `${value}/${target} ${k.metricUnit || ''}`.trim(),
+        };
+      }));
+    } catch (e) {
+      console.error('Failed to update KPI progress:', e);
+      notify('Gagal Menyimpan', 'Progres KPI belum tersimpan. Coba lagi sebentar.', 'error');
+    }
   };
 
   const goalsPerPage = 5;
@@ -643,7 +723,10 @@ export default function GoalsScreen({ openModal }: GoalsScreenProps) {
 
   return (
     <div style={{ padding: '0 16px 120px', fontFamily: HP_FONT }}>
-      <ScreenHeader title="Target & KPI" subtitle="Pecah KPI-mu menjadi target mingguan yang terukur" />
+      <ScreenHeader
+        title="Target & KPI"
+        subtitle="Tetapkan sendiri apa yang mau kamu capai, lalu pecah jadi target mingguan yang terukur."
+      />
 
       {user?.role === 'manager' && <ReviewTaskWidget />}
 
@@ -674,34 +757,76 @@ export default function GoalsScreen({ openModal }: GoalsScreenProps) {
       </div>
 
       {/* Target tab — pakai kpis dari parent */}
-      {tab === 'target' && <TargetTab openModal={openModal} kpis={kpis} activeKpiId={activeKpiId} setActiveKpiId={setActiveKpiId} />}
+      {tab === 'target' && <TargetTab openModal={openModal} kpis={kpis} activeKpiId={activeKpiId} setActiveKpiId={setActiveKpiId} onCreateKpi={openKpiComposer} />}
 
       {/* KPI tab — pakai kpis yang sama */}
       {tab === 'kpi' && (
         <>
-          <SectionHeader icon="target" label="KPI BULAN INI" count={String(kpis.length)} />
+          {/* Bentuk dan letaknya sengaja sama persis dengan "Buat Target" di tab
+              sebelah: judul daftar di kiri, tombolnya di kanan, tepat di atas
+              daftar yang akan bertambah. Sebelumnya tombol ini menempel di
+              sebelah judul layar sementara kembarannya duduk di sini juga. */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <div style={{ ...HP_TEXT.h, fontSize: 16 }}>KPI Bulan Ini</div>
+            <button
+              onClick={openKpiComposer}
+              className="hp-tap"
+              style={{
+                padding: '10px 18px', borderRadius: HP_TOKENS.radiusSm, border: 'none',
+                background: HP_TOKENS.ink, color: '#fff',
+                fontFamily: HP_FONT, fontWeight: 700, fontSize: 13, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              }}
+            >
+              <HPGlyph name="plus" size={14} color="#fff" />
+              Buat KPI
+            </button>
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {loadingKpis && kpis.length === 0 && (
               <div style={{ textAlign: 'center', padding: '40px 20px', color: HP_TOKENS.inkMute, fontFamily: HP_FONT }}>Memuat KPI...</div>
             )}
             {!loadingKpis && kpis.length === 0 && (
-              <div style={{ textAlign: 'center', padding: '60px 20px', background: HP_TOKENS.card, borderRadius: HP_TOKENS.radiusLg, border: `1.5px solid ${HP_TOKENS.lineSoft}` }}>
-                <div style={{ fontSize: 32, marginBottom: 12 }}><HPGlyph name="leaf" size={27} color="currentColor" /></div>
-                <div style={{ ...HP_TEXT.h, fontSize: 14 }}>Belum ada KPI bulan ini.</div>
-                <div style={{ ...HP_TEXT.small, marginTop: 4 }}>Hubungi manager untuk mendapatkan KPI.</div>
-              </div>
+              <HPCard padding={0} style={{ border: `1px solid ${HP_TOKENS.lineSoft}` }}>
+                <EmptyState
+                  icon="leaf"
+                  title="Bulan ini masih kosong"
+                  description="Tentukan sendiri apa yang mau kamu capai bulan ini. Kalau timmu menitipkan KPI, itu akan muncul di daftar yang sama."
+                  action={<HPButton variant="primary" icon="plus" onClick={openKpiComposer}>Buat KPI Sendiri</HPButton>}
+                />
+              </HPCard>
             )}
             {paginatedGoals.map((g: any) => (
-              <GoalCard
-                key={g.id}
-                g={g}
-                isReadOnly={g.isApiKpi}
-                onEditProgress={user?.role === 'manager' ? (p) => handleEditProgress(g.id, p) : undefined}
-                onViewDetails={() => {
-                  setActiveKpiId(String(g.id));
-                  setTab('target');
-                }}
-              />
+              <div key={g.id}>
+                {/* KPI mandiri disunting pemiliknya sendiri dalam satuan yang dia
+                    tulis; KPI dari tim tetap dinilai manager dalam persen. */}
+                <GoalCard
+                  g={g}
+                  isReadOnly={g.isApiKpi}
+                  onEditProgress={
+                    g.source === 'personal' || user?.role === 'manager'
+                      ? (v) => handleEditProgress(g, v)
+                      : undefined
+                  }
+                  absoluteProgress={
+                    g.source === 'personal'
+                      ? { current: Number(g.currentValue) || 0, target: Number(g.targetValue) || 0, unit: g.metricUnit || '' }
+                      : null
+                  }
+                  onViewDetails={() => {
+                    setActiveKpiId(String(g.id));
+                    setTab('target');
+                  }}
+                />
+                {/* Hanya KPI yang dibuat sendiri yang boleh dibereskan sendiri. */}
+                {g.source === 'personal' && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
+                    <HPButton size="sm" variant="ghost" icon="trash" onClick={() => setKpiToRemove(g)}>
+                      Hapus KPI
+                    </HPButton>
+                  </div>
+                )}
+              </div>
             ))}
             {totalPages > 1 && (
               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 16 }}>
@@ -720,6 +845,28 @@ export default function GoalsScreen({ openModal }: GoalsScreenProps) {
             )}
           </div>
         </>
+      )}
+
+      {kpiToRemove && (
+        <Modal
+          onClose={() => setKpiToRemove(null)}
+          title="Hapus KPI ini?"
+          description={`"${kpiToRemove.title}" akan hilang dari daftarmu. Target mingguan yang sudah dibuat di bawahnya ikut tidak tampil.`}
+          footer={
+            <div style={{ display: 'flex', gap: 10 }}>
+              <HPButton variant="secondary" onClick={() => setKpiToRemove(null)} style={{ flex: 1 }}>
+                Batal
+              </HPButton>
+              <HPButton variant="danger" icon="trash" onClick={removePersonalKpi} style={{ flex: 1 }}>
+                Hapus
+              </HPButton>
+            </div>
+          }
+        >
+          <div style={{ ...HP_TEXT.small }}>
+            Task harian yang sudah selesai tetap tercatat di logbook-mu.
+          </div>
+        </Modal>
       )}
     </div>
   );

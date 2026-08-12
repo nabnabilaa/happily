@@ -516,12 +516,24 @@ async function writeLogbook(
 ) {
   try {
     const spec = POINTS_ACTIONS[action];
-    const logId = "log_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+    /*
+     * `id` sengaja TIDAK diisi. Kolomnya `INT AUTO_INCREMENT`, sementara dulu
+     * di sini dikirim string "log_<base36>" — MySQL menolaknya dengan
+     * ER_TRUNCATED_WRONG_VALUE_FOR_FIELD, dan `catch` di bawah menelan
+     * kegagalan itu menjadi satu baris warning.
+     *
+     * Akibatnya tidak terlihat sama sekali dari layar: poinnya tetap masuk
+     * (awardPoints sudah commit sebelum baris ini), hanya riwayatnya yang
+     * hilang. Logbook berhenti bertambah sejak 2026-07-13 tanpa ada yang
+     * melapor, karena tidak ada satu pun jalur yang menampilkan error-nya.
+     *
+     * Biarkan MySQL yang memberi id.
+     */
     await db.execute({
-      sql: `INSERT INTO logbook_entries (id, user_id, type, title, description, xp_earned, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, UTC_TIMESTAMP())`,
+      sql: `INSERT INTO logbook_entries (user_id, type, title, description, xp_earned, created_at)
+            VALUES (?, ?, ?, ?, ?, UTC_TIMESTAMP())`,
       args: [
-        logId, userId, spec.logbook.type,
+        userId, spec.logbook.type,
         `${spec.logbook.emoji} ${description || spec.label}`,
         description || spec.label, amount,
       ],
