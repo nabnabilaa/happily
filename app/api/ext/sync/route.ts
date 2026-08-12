@@ -2,18 +2,12 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { hpEventEmitter } from "@/lib/events";
 import { triggerRollupForGoal } from "@/lib/rollup";
-import { sqlWibDate, SQL_WIB_TODAY, SQL_WIB_NOW } from "@/lib/timeUtils";
+import { sqlWibDate, sqlTaskWibDay, SQL_WIB_TODAY, SQL_WIB_NOW } from "@/lib/timeUtils";
 import { resolveManagerTeam, placeholdersFor } from "@/lib/managerTeam";
+import { buildHrDashboard } from "@/lib/hrDashboard";
+import { getCorsHeaders } from "@/lib/extCors";
+import { getAuthUserId } from "@/lib/authSession";
 
-function getCorsHeaders(request: Request) {
-  const origin = request.headers.get("origin") || "*";
-  return {
-    "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Allow-Credentials": "true",
-  };
-}
 
 export async function OPTIONS(request: Request) {
   return new NextResponse(null, {
@@ -25,7 +19,24 @@ export async function OPTIONS(request: Request) {
 // POST: Enhanced 2-way sync between extension and web
 export async function POST(request: Request) {
   try {
-    const { userId, tasks, notes, habits, calendarRequest, chatRequest, deletedTaskIds, deletedNoteIds, focusTaskId, focusProgress, focusIntention, readNotifIds } = await request.json();
+    const body = await request.json();
+    const { tasks, notes, habits, calendarRequest, chatRequest, deletedTaskIds, deletedNoteIds, focusTaskId, focusProgress, focusIntention, readNotifIds } = body;
+
+    /*
+     * Sesi lebih diutamakan daripada `userId` di body.
+     *
+     * Sejak `fbFetchAPI` mengambil jalur se-origin (`flowbuddy/js/sync.js`),
+     * ekstensi mengirim cookie sesi seperti halaman web biasa — jadi endpoint
+     * ini akhirnya punya identitas yang bisa dibuktikan, bukan sekadar diakui.
+     *
+     * Cadangan ke body dipertahankan DENGAN SENGAJA: ekstensi yang belum
+     * diperbarui masih memanggil lewat service worker tanpa cookie, dan
+     * mematikannya sekarang akan membuat sinkronisasi mereka berhenti total.
+     * Begitu versi lama tidak lagi dipakai, baris `|| body.userId` bisa dibuang
+     * dan endpoint ini menjadi tertutup sepenuhnya.
+     */
+    const sessionUserId = getAuthUserId(request);
+    const userId = sessionUserId || body.userId;
     if (!userId) {
       return NextResponse.json(
         { error: "userId required" },
@@ -86,8 +97,29 @@ export async function POST(request: Request) {
           sql: `INSERT INTO daily_priorities (id, user_id, title, description, target_date, kpi_id, goal_id, energy_level, est_time, is_done, tone, source, 
                 proof_link, proof_notes, metric_value, partial_progress, is_project, project_duration_days, project_description, time_tracked, timer_started_at, created_at) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'extension', ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
-                ON DUPLICATE KEY UPDATE 
-                is_done = VALUES(is_done), title = VALUES(title), partial_progress = VALUES(partial_progress),
+                ON DUPLICATE KEY UPDATE
+                -- ── Extension TIDAK BOLEH membatalkan penyelesaian ──
+                --
+                -- Dulu baris ini menulis is_done = VALUES(is_done) apa adanya.
+                -- Extension mengirim SELURUH daftar task hari ini dari cache-nya
+                -- sendiri setiap 30 detik, dan push-nya terjadi SEBELUM merge —
+                -- jadi isinya selalu potret sebelum sinkronisasi terakhir.
+                -- Akibatnya: task yang baru saja diselesaikan di web (poin sudah
+                -- dibayar, kunci task:<id> sudah hangus) dikembalikan ke
+                -- is_done = 0 oleh siklus extension berikutnya. Setelah refresh
+                -- task-nya "belum selesai lagi" dan tidak bisa dibayar ulang.
+                -- Lima baris di produksi persis begitu.
+                --
+                -- GREATEST membuat sinkronisasi ini hanya bisa MENDORONG MAJU:
+                -- extension boleh menyelesaikan task, tidak boleh membatalkannya.
+                -- Konsekuensinya disengaja — membuka centang dari extension tidak
+                -- lagi tersimpan, dan itu jauh lebih murah daripada kehilangan
+                -- penyelesaian yang sudah dibayar. Untuk membatalkan dengan benar,
+                -- payload-nya perlu membawa stempel waktu per task supaya server
+                -- bisa membedakan "belum selesai" dari "basi".
+                is_done = GREATEST(is_done, VALUES(is_done)),
+                title = VALUES(title),
+                partial_progress = GREATEST(partial_progress, VALUES(partial_progress)),
                 description = VALUES(description), target_date = VALUES(target_date),
                 kpi_id = VALUES(kpi_id), goal_id = VALUES(goal_id),
                 proof_link = COALESCE(VALUES(proof_link), proof_link),
@@ -248,10 +280,23 @@ export async function POST(request: Request) {
     
     // Tasks today / active
     const tasksRes = await db.execute({
-      sql: `SELECT id, title, goal_title, is_done, energy_level, est_time, tone, 
-            proof_link, proof_notes, metric_value, progress, is_project, project_duration_days, project_description, goal_id, kpi_id, description, target_date, time_tracked, timer_started_at, created_at
-            FROM daily_priorities 
-            WHERE user_id = ? AND (is_done = 0 OR COALESCE(DATE(target_date), ${sqlWibDate('created_at')}) = ${SQL_WIB_TODAY})
+      /*
+       * `partial_progress`, BUKAN `progress`.
+       *
+       * Kolom `progress` adalah peninggalan yang tidak lagi ditulis siapa pun
+       * dan isinya selalu 0. Kolom yang hidup adalah `partial_progress` — itu
+       * yang ditulis `/api/priorities/complete` dan yang dibaca mapper di bawah
+       * (`Number(r.partial_progress)`).
+       *
+       * Karena yang di-SELECT dulu kolom yang salah, `r.partial_progress`
+       * selalu `undefined` dan extension menampilkan 0% untuk setiap task,
+       * berapa pun progres aslinya. Terukur: baris dengan `partial_progress`
+       * 100 di basis data dilaporkan sebagai 0 oleh endpoint ini.
+       */
+      sql: `SELECT id, title, goal_title, is_done, energy_level, est_time, tone,
+            proof_link, proof_notes, metric_value, partial_progress, is_project, project_duration_days, project_description, goal_id, kpi_id, description, target_date, time_tracked, timer_started_at, created_at
+            FROM daily_priorities
+            WHERE user_id = ? AND (is_done = 0 OR ${sqlTaskWibDay()} = ${SQL_WIB_TODAY})
             ORDER BY is_done ASC, 
                      CASE energy_level WHEN 'high' THEN 1 WHEN 'mid' THEN 2 WHEN 'low' THEN 3 ELSE 2 END ASC, 
                      COALESCE(target_date, created_at) ASC, 
@@ -382,7 +427,27 @@ export async function POST(request: Request) {
     let atRiskEmployees: any[] = [];
     let deptPulse: any[] = [];
 
-    if (userRole === 'manager') {
+    /*
+     * ── Agregat dashboard: mahal, dan tidak perlu tiap 30 detik ─────────────
+     *
+     * Blok di bawah ini (tim manajer, agregat HR, deptPulse) adalah bagian
+     * terberat dari endpoint ini. Ia dulu dijalankan pada SETIAP sinkronisasi —
+     * dan sinkronisasi berjalan tiap 30 detik di tiap tab aplikasi yang
+     * terbuka. Untuk akun HR itu berarti seluruh dashboard perusahaan dihitung
+     * ulang dua kali per menit, per tab, walaupun tidak ada yang melihatnya.
+     *
+     * Sekarang ia hanya berjalan kalau pemanggil memintanya. Ekstensi
+     * mengirim `includeDashboard: false` pada polling interval, dan `true` saat
+     * popup benar-benar dibuka (`flowbuddy/js/sync.js`).
+     *
+     * Default-nya `true` DENGAN SENGAJA: ekstensi versi lama tidak mengirim
+     * field ini sama sekali, dan bagi mereka perilakunya harus tetap seperti
+     * sebelumnya. Yang belum memperbarui ekstensi tidak kehilangan apa pun —
+     * mereka hanya belum mendapat penghematannya.
+     */
+    const wantsDashboard = body.includeDashboard !== false;
+
+    if (wantsDashboard && userRole === 'manager') {
       // Satu resolver untuk "siapa tim saya". Query di sini dulu hanya memakai
       // `department`, sementara web memakai lib/managerTeam — `manager_id` dulu,
       // baru department. Manager yang punya laporan langsung karenanya melihat
@@ -393,10 +458,13 @@ export async function POST(request: Request) {
 
       const membersRes = memberIds.length > 0
         ? await db.execute({
-            sql: `SELECT u.*,
+            // Kolom yang dipakai mapper di bawah saja. `u.*` ikut menarik
+            // `wellbeing_routine`, `avatar_image`, dan sisanya untuk setiap
+            // anggota tim — muatan yang seluruhnya dibuang beberapa baris lagi.
+            sql: `SELECT u.id, u.name, u.job_title,
                   (SELECT mood_key FROM mood_checkins WHERE user_id = u.id ORDER BY created_at DESC LIMIT 1) as mood,
-                  (SELECT COUNT(*) FROM daily_priorities WHERE user_id = u.id AND is_done = 1 AND ${sqlWibDate('created_at')} = ${SQL_WIB_TODAY}) as tasks_done,
-                  (SELECT COUNT(*) FROM daily_priorities WHERE user_id = u.id AND ${sqlWibDate('created_at')} = ${SQL_WIB_TODAY}) as tasks_total
+                  (SELECT COUNT(*) FROM daily_priorities WHERE user_id = u.id AND is_done = 1 AND ${sqlTaskWibDay()} = ${SQL_WIB_TODAY}) as tasks_done,
+                  (SELECT COUNT(*) FROM daily_priorities WHERE user_id = u.id AND ${sqlTaskWibDay()} = ${SQL_WIB_TODAY}) as tasks_total
                   FROM users u WHERE u.id IN (${placeholdersFor(memberIds)})`,
             args: memberIds,
           })
@@ -417,7 +485,7 @@ export async function POST(request: Request) {
         const tasksRes = await db.execute({
           sql: `SELECT dp.*, u.name as user_name FROM daily_priorities dp 
                 JOIN users u ON dp.user_id = u.id
-                WHERE dp.user_id IN (${placeholders}) AND (dp.is_done = 0 OR ${sqlWibDate('dp.created_at')} = ${SQL_WIB_TODAY} OR (dp.is_done = 1 AND dp.is_verified = 0))`,
+                WHERE dp.user_id IN (${placeholders}) AND (dp.is_done = 0 OR ${sqlTaskWibDay('dp')} = ${SQL_WIB_TODAY} OR (dp.is_done = 1 AND dp.is_verified = 0))`,
           args: memberIdsOnly
         });
         teamTasks = tasksRes.rows.map(r => ({
@@ -503,176 +571,24 @@ export async function POST(request: Request) {
           due: a.due_date ? String(a.due_date).split(' ')[0] : ''
         }));
       }
-    } else if (userRole === 'hr') {
-      const MOOD_VALUES: Record<string, number> = { joy: 100, calm: 85, neutral: 65, tired: 40, stress: 20 };
-      
-      const usersRes = await db.execute("SELECT u.*, u.department as team_name FROM users u");
-      const users = usersRes.rows;
-      const totalEmployees = users.length;
-
-      const taskStatsRes = await db.execute(
-        `SELECT 
-          COUNT(*) as total,
-          SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as done
-         FROM daily_priorities 
-         WHERE MONTH(${sqlWibDate('created_at')}) = MONTH(${SQL_WIB_TODAY})
-           AND YEAR(${sqlWibDate('created_at')}) = YEAR(${SQL_WIB_TODAY})`
-      );
-      const totalTasks = Number(taskStatsRes.rows[0]?.total) || 1;
-      const doneTasks = Number(taskStatsRes.rows[0]?.done) || 0;
-      const engagementScore = Math.min(100, Math.round((doneTasks / totalTasks) * 100));
-
-      const moodsRes = await db.execute(
-        `SELECT mood_key FROM mood_checkins
-         WHERE ${sqlWibDate('created_at')} > DATE_SUB(${SQL_WIB_TODAY}, INTERVAL 7 DAY)`
-      );
-      const wellbeingAvg = moodsRes.rows.length > 0 
-        ? Math.round(moodsRes.rows.reduce((acc, m) => acc + (MOOD_VALUES[String(m.mood_key)] || 50), 0) / moodsRes.rows.length)
-        : 0;
-
-      const lastMonthTasksRes = await db.execute(
-        `SELECT COUNT(*) as total, SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as done
-         FROM daily_priorities 
-         WHERE MONTH(${sqlWibDate('created_at')}) = MONTH(DATE_SUB(${SQL_WIB_TODAY}, INTERVAL 1 MONTH))
-           AND YEAR(${sqlWibDate('created_at')}) = YEAR(DATE_SUB(${SQL_WIB_TODAY}, INTERVAL 1 MONTH))`
-      );
-      const lastTotal = Number(lastMonthTasksRes.rows[0]?.total) || 1;
-      const lastDone = Number(lastMonthTasksRes.rows[0]?.done) || 0;
-      const lastEngagement = Math.round((lastDone / lastTotal) * 100);
-      const engagementTrend = engagementScore - lastEngagement;
-
-      const lastMoodsRes = await db.execute(
-        `SELECT mood_key FROM mood_checkins
-         WHERE ${sqlWibDate('created_at')}
-               BETWEEN DATE_SUB(${SQL_WIB_TODAY}, INTERVAL 14 DAY)
-                   AND DATE_SUB(${SQL_WIB_TODAY}, INTERVAL 7 DAY)`
-      );
-      const lastWellbeing = lastMoodsRes.rows.length > 0
-        ? Math.round(lastMoodsRes.rows.reduce((acc, m) => acc + (MOOD_VALUES[String(m.mood_key)] || 50), 0) / lastMoodsRes.rows.length)
-        : 0;
-      const wellbeingTrend = wellbeingAvg - lastWellbeing;
-
-      // Tiga agregat, bukan tiga query per orang. Sebelumnya loop ini menembak
-      // 3 × jumlah karyawan query (≈195 untuk 65 orang) pada setiap sync — dan
-      // sync itu dipanggil tiap 30 detik oleh setiap tab. Dengan pool koneksi
-      // kecil, itulah yang membuat permintaan lain menunggu sampai kehabisan
-      // waktu. Hasilnya identik, dihitung di memori.
-      const latestMoodRes = await db.execute(
-        `SELECT mc.user_id, mc.mood_key
-         FROM mood_checkins mc
-         JOIN (
-           SELECT user_id, MAX(created_at) AS latest
-           FROM mood_checkins GROUP BY user_id
-         ) newest ON newest.user_id = mc.user_id AND newest.latest = mc.created_at`
-      );
-      const moodByUser = new Map<string, string>();
-      for (const r of latestMoodRes.rows) {
-        // Kalau ada dua check-in dengan created_at identik, yang pertama menang —
-        // sama seperti LIMIT 1 sebelumnya.
-        if (!moodByUser.has(String(r.user_id))) {
-          moodByUser.set(String(r.user_id), String(r.mood_key || 'neutral'));
-        }
-      }
-
-      const weekStatsRes = await db.execute(
-        `SELECT user_id, COUNT(*) as total, SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as done
-         FROM daily_priorities
-         WHERE ${sqlWibDate('created_at')} > DATE_SUB(${SQL_WIB_TODAY}, INTERVAL 7 DAY)
-         GROUP BY user_id`
-      );
-      const weekStats = new Map<string, { total: number; done: number }>();
-      for (const r of weekStatsRes.rows) {
-        weekStats.set(String(r.user_id), { total: Number(r.total) || 0, done: Number(r.done) || 0 });
-      }
-
-      const todayStatsRes = await db.execute(
-        `SELECT user_id, COUNT(*) as total, SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as done
-         FROM daily_priorities
-         WHERE ${sqlWibDate('created_at')} = ${SQL_WIB_TODAY}
-         GROUP BY user_id`
-      );
-      const todayStats = new Map<string, { total: number; done: number }>();
-      for (const r of todayStatsRes.rows) {
-        todayStats.set(String(r.user_id), { total: Number(r.total) || 0, done: Number(r.done) || 0 });
-      }
-
-      for (const u of users) {
-        const uid = String(u.id);
-        const mood = moodByUser.get(uid) || 'neutral';
-
-        const week = weekStats.get(uid) || { total: 0, done: 0 };
-        const completionRate = week.total > 0 ? Math.round((week.done / week.total) * 100) : 0;
-
-        if (mood === 'stress' || mood === 'tired' || (week.total > 0 && completionRate < 30)) {
-          atRiskEmployees.push({
-            id: u.id, name: u.name, role: u.job_title,
-            dept: u.team_name || 'Unassigned',
-            wellbeing: MOOD_VALUES[mood] || 50, mood,
-            completionRate,
-            risk: mood === 'stress' ? 'high' : 'medium'
-          });
-        }
-
-        const today = todayStats.get(uid) || { total: 0, done: 0 };
-
-        members.push({
-          id: u.id,
-          name: u.name,
-          role: u.job_title || 'Employee',
-          dept: u.team_name || 'Unassigned',
-          mood,
-          wellbeing: MOOD_VALUES[mood] || 50,
-          tasks: { done: today.done, total: today.total }
-        });
-      }
-
-      const teamsRes = await db.execute("SELECT * FROM departments");
-      deptPulse = await Promise.all(teamsRes.rows.map(async (t) => {
-        const teamUserIds = await db.execute({ sql: "SELECT id FROM users WHERE department = ?", args: [String(t.name)] });
-        const headcount = teamUserIds.rows.length;
-        if (headcount === 0) return { dept: t.name, wellbeing: 0, engagement: 0, headcount: 0, atRisk: 0, tone: 'sage' };
-
-        const ids = teamUserIds.rows.map(r => String(r.id));
-        const placeholders = ids.map(() => '?').join(',');
-
-        const deptTasksRes = await db.execute({
-          sql: `SELECT COUNT(*) as total, SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) as done
-                FROM daily_priorities WHERE user_id IN (${placeholders}) AND MONTH(${sqlWibDate('created_at')}) = MONTH(${SQL_WIB_TODAY})`,
-          args: ids
-        });
-        const dTotal = Number(deptTasksRes.rows[0]?.total) || 1;
-        const dDone = Number(deptTasksRes.rows[0]?.done) || 0;
-        const deptEngagement = Math.round((dDone / dTotal) * 100);
-
-        const deptMoodsRes = await db.execute({
-          sql: `SELECT mood_key FROM mood_checkins WHERE user_id IN (${placeholders}) AND ${sqlWibDate('created_at')} > DATE_SUB(${SQL_WIB_TODAY}, INTERVAL 7 DAY)`,
-          args: ids
-        });
-        const deptWellbeing = deptMoodsRes.rows.length > 0
-          ? Math.round(deptMoodsRes.rows.reduce((acc, m) => acc + (MOOD_VALUES[String(m.mood_key)] || 50), 0) / deptMoodsRes.rows.length)
-          : 0;
-
-        const deptAtRisk = atRiskEmployees.filter(e => ids.includes(String(e.id))).length;
-
-        return {
-          dept: t.name, wellbeing: deptWellbeing, engagement: deptEngagement,
-          headcount, atRisk: deptAtRisk,
-          tone: deptWellbeing > 70 ? 'sage' : deptWellbeing > 40 ? 'yellow' : 'coral'
-        };
-      }));
-
-      hrMetrics = {
-        totalEmployees,
-        engagementScore,
-        engagementTrend: (engagementTrend >= 0 ? '+' : '') + engagementTrend,
-        wellbeingAvg,
-        wellbeingTrend: (wellbeingTrend >= 0 ? '+' : '') + wellbeingTrend,
-        atRisk: atRiskEmployees.length,
-      };
+    } else if (wantsDashboard && userRole === 'hr') {
+      /*
+       * Seluruh agregat HR datang dari `lib/hrDashboard.ts`, modul yang sama
+       * yang dipakai `/api/hr/dashboard`.
+       *
+       * Sebelumnya 166 baris di sini adalah SALINAN dari route itu. Keduanya
+       * sudah pernah menyimpang: `awaitingReview` hanya ada di salah satunya,
+       * dan perbaikan kolom tanggal hitungan task harus ditambal dua kali.
+       */
+      const hr = await buildHrDashboard();
+      atRiskEmployees = hr.atRiskEmployees;
+      members = hr.members;
+      deptPulse = hr.deptPulse;
+      hrMetrics = hr.metrics;
     }
 
     // Employee: lightweight department members for Tim (team) view
-    if (userRole === 'employee' && userDept) {
+    if (wantsDashboard && userRole === 'employee' && userDept) {
       const empMembersRes = await db.execute({
         sql: `SELECT id, name, job_title, department FROM users WHERE department = ? AND id != ? ORDER BY name ASC LIMIT 20`,
         args: [userDept, userId]
@@ -827,13 +743,23 @@ export async function POST(request: Request) {
       })),
       kpis: kpisArr,
       weeklyTargets: weeklyTargetsArr,
+      /*
+       * Saat dashboard dilewati, field-field ini harus BENAR-BENAR hilang dari
+       * balasan — bukan dikirim sebagai `[]` atau `null`.
+       *
+       * Klien menerapkannya dengan penjaga `if (data.x !== undefined)`
+       * (`flowbuddy/js/sync.js:208-214`). Array kosong dan `null` lolos penjaga
+       * itu, jadi mengirimnya akan MENGHAPUS daftar tim dan agregat HR yang
+       * sudah ada di ekstensi setiap 30 detik — persis kelas bug "data hilang"
+       * yang sedang ditutup, hanya dari arah lain.
+       */
       members: members.length > 0 ? members : undefined,
-      teamTasks: userRole === 'manager' ? teamTasks : undefined,
-      teamGoals: userRole === 'manager' ? teamGoals : undefined,
-      teamApprovals: userRole === 'manager' ? teamApprovals : undefined,
-      metrics: (userRole === 'hr') ? hrMetrics : undefined,
-      atRiskEmployees: (userRole === 'hr') ? atRiskEmployees.slice(0, 5) : undefined,
-      deptPulse: (userRole === 'hr') ? deptPulse : undefined,
+      teamTasks: wantsDashboard && userRole === 'manager' ? teamTasks : undefined,
+      teamGoals: wantsDashboard && userRole === 'manager' ? teamGoals : undefined,
+      teamApprovals: wantsDashboard && userRole === 'manager' ? teamApprovals : undefined,
+      metrics: wantsDashboard && userRole === 'hr' ? hrMetrics : undefined,
+      atRiskEmployees: wantsDashboard && userRole === 'hr' ? atRiskEmployees.slice(0, 5) : undefined,
+      deptPulse: wantsDashboard && userRole === 'hr' ? deptPulse : undefined,
     }, {
       headers: getCorsHeaders(request)
     });

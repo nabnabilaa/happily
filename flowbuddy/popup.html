@@ -631,6 +631,15 @@
                 </select>
             </div>
             <div class="settings-divider"></div>
+            <div style="padding: 10px 14px 6px 14px;">
+                <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Blokir saat sesi fokus</div>
+                <div id="fb-blocklist-summary" style="font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px;">Memuat…</div>
+                <div id="fb-blocklist" style="max-height: 168px; overflow-y: auto;"></div>
+                <div style="font-size: 10px; font-weight: 600; color: var(--text-muted); margin-top: 8px; line-height: 1.45;">
+                    Hanya berlaku di Chrome ini, dan hanya selama sesi fokus berjalan. Notifikasi aplikasi di HP tidak ikut terblokir.
+                </div>
+            </div>
+            <div class="settings-divider"></div>
             <button class="settings-dropdown-item" id="btn-switch-role">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6"/><path d="M23 11h-6"/></svg>
                 Ganti Role (Demo)
@@ -783,6 +792,7 @@
     <script src="js/utils/confetti.js"></script>
     <script src="js/rbac.js"></script>
     <script src="js/theme.js"></script>
+    <script src="js/focus-settings.js"></script>
     <script src="js/views/tasks.js"></script>
     <!-- <script src="js/views/notes.js"></script> -->
     <script src="js/views/chat.js"></script>

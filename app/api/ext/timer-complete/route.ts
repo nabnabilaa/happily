@@ -1,16 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { awardPoints } from "@/lib/points";
+import { getCorsHeaders } from "@/lib/extCors";
+import { getAuthUserId } from "@/lib/authSession";
 
-function getCorsHeaders(request: Request) {
-  const origin = request.headers.get("origin") || "*";
-  return {
-    "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Allow-Credentials": "true",
-  };
-}
 
 export async function OPTIONS(request: Request) {
   return new NextResponse(null, {
@@ -22,7 +15,14 @@ export async function OPTIONS(request: Request) {
 // POST: Record a completed focus session from extension
 export async function POST(request: Request) {
   try {
-    const { userId, durationMinutes, label } = await request.json();
+    const timerBody = await request.json();
+    const { durationMinutes, label } = timerBody;
+    /*
+     * Sesi diutamakan, body/query sebagai cadangan — pola yang sama seperti
+     * `/api/ext/sync`. Ekstensi baru mengirim cookie lewat jalur se-origin;
+     * yang lama belum, dan tidak boleh ikut mati sekarang.
+     */
+    const userId = getAuthUserId(request) || timerBody.userId;
     if (!userId) {
       return NextResponse.json(
         { error: "userId required" },

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sedang fokus — Flowbuddy</title>
+  <style>
+    /* Halaman ini sengaja tidak memakai token desain aplikasi: ia dimuat dari
+       extension, tanpa akses ke stylesheet aplikasi, dan harus tetap benar
+       walaupun aplikasinya sedang tidak berjalan. */
+    :root {
+      --ink: #12161C;
+      --ink-mute: #5B6472;
+      --paper: #F4F5F7;
+      --card: #FFFFFF;
+      --line: #E2E5EA;
+      --sage: #17915E;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --ink: #F2F4F7;
+        --ink-mute: #9AA4B2;
+        --paper: #0B0E13;
+        --card: #171B22;
+        --line: #262C36;
+        --sage: #45C48B;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 40px 32px;
+      max-width: 440px;
+      width: 100%;
+      text-align: center;
+    }
+    .mark {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 20px;
+      border-radius: 50%;
+      background: var(--sage);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+    }
+    h1 { font-size: 21px; font-weight: 700; margin: 0 0 10px; letter-spacing: -0.01em; }
+    p { font-size: 15px; line-height: 1.6; color: var(--ink-mute); margin: 0 0 8px; }
+    .fine { font-size: 13px; margin-top: 22px; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="mark" aria-hidden="true">🐝</div>
+    <h1>Kamu sedang dalam sesi fokus</h1>
+    <p>Situs ini ditahan sampai sesimu selesai. Bukan karena situsnya buruk — cuma karena kamu sudah memutuskan sesuatu yang lain lebih penting untuk sekarang.</p>
+    <p class="fine">Blokirnya terbuka sendiri begitu sesimu berakhir. Kalau kamu memang butuh berhenti, akhiri sesinya dari aplikasi Flowbee — menutup tab ini tidak akan membukanya.</p>
+  </main>
+</body>
+</html>

@@ -5,8 +5,37 @@ let todayAttendance = null;
 let extensionEnabled = true;
 let noteAllUsers = [];
 
-// Utility to send message to background to fetch API
+/*
+ * Skrip ini adalah CONTENT SCRIPT — ia berjalan di dalam halaman aplikasi itu
+ * sendiri, dan `FLOWBEE_API` selalu diturunkan dari `location.origin`. Artinya
+ * permintaannya se-origin, dan cookie sesi ikut terkirim dengan sendirinya.
+ *
+ * Selama ini semuanya dititipkan ke service worker lewat `FETCH_API`. Fetch di
+ * sana berasal dari origin `chrome-extension://`, jadi TIDAK membawa cookie —
+ * itulah sebabnya endpoint `/api/ext/*` sampai sekarang terpaksa mempercayai
+ * `userId` dari body, dan kenapa tombol ACC di ekstensi masih mengirim
+ * `managerId` sendiri.
+ *
+ * Dengan mengambil jalur langsung saat memungkinkan, ekstensi akhirnya punya
+ * identitas yang sudah terbukti. Jalur service worker tetap dipertahankan
+ * sebagai cadangan: popup ekstensi berjalan di origin lain dan tidak punya
+ * pilihan itu.
+ */
 window.fbFetchAPI = function(url, options = {}) {
+  try {
+    const sameOrigin = new URL(url, location.href).origin === location.origin;
+    if (sameOrigin && typeof fetch === 'function') {
+      return fetch(url, {
+        method: options.method || 'GET',
+        headers: options.headers || {},
+        body: options.body,
+        credentials: 'same-origin',
+      });
+    }
+  } catch (e) {
+    // URL tidak bisa diurai — jatuh ke jalur service worker di bawah.
+  }
+
   return new Promise((resolve, reject) => {
     chrome.runtime.sendMessage({
       type: 'FETCH_API',
@@ -28,6 +57,35 @@ window.fbFetchAPI = function(url, options = {}) {
     });
   });
 };
+
+
+/*
+ * ── Delta, bukan blob ───────────────────────────────────────────────────────
+ *
+ * Ekstensi dulu mengirim SELURUH daftar task hari ini pada setiap push, dari
+ * cache-nya sendiri. Karena push terjadi sebelum merge, isinya selalu potret
+ * dari sebelum sinkronisasi terakhir — jadi perubahan yang dibuat di web bisa
+ * ditimpa balik oleh salinan basi beberapa detik kemudian. Itulah sumber
+ * gejala "kadang tersimpan, kadang balik lagi".
+ *
+ * Penjaga di server (GREATEST pada is_done dan partial_progress) menahan
+ * kerusakan terburuknya, tapi hanya untuk dua kolom itu, dan hanya satu arah.
+ *
+ * Perbaikan sesungguhnya ada di sini: kirim hanya task yang BERBEDA dari
+ * potret terakhir yang kita terima dari server. Yang tidak disentuh tidak
+ * ikut terkirim, jadi ia tidak mungkin tertimpa — tanpa perlu resolusi konflik
+ * berbasis stempel waktu sama sekali.
+ */
+window.fbTaskFingerprint = function(t) {
+  return JSON.stringify([
+    t.title ?? t.text ?? '', !!t.done, t.progress || 0,
+    t.energy ?? t.priority ?? 'mid', t.description ?? null,
+    t.proofLink ?? null, t.targetDate ?? null, t.date ?? null,
+  ]);
+};
+
+// id task -> sidik jari versi server terakhir yang kita lihat.
+window.fbServerTaskSnapshot = window.fbServerTaskSnapshot || {};
 
 function detectFlowbeeUser() {
   try {
@@ -117,7 +175,7 @@ function isHappilyWebsite() {
   try { return !!localStorage.getItem('hp_user_id'); } catch (e) { return false; }
 }
 
-async function flowbeeSyncAll(pullOnly = false, chatRequest = false) {
+async function flowbeeSyncAll(pullOnly = false, chatRequest = false, includeDashboard = false) {
   if (document.hidden) return;
   if (!flowbeeUserId || !extensionEnabled) return;
   try {
@@ -131,7 +189,12 @@ async function flowbeeSyncAll(pullOnly = false, chatRequest = false) {
     const pendingReads = [...(window.fbCtx.pendingReadNotifIds || [])];
 
     if (!pullOnly) {
-      localTasks = window.fbCtx.tasks.filter(t => t.date === fbToday()).map(t => ({
+      localTasks = window.fbCtx.tasks.filter(t => t.date === fbToday()).filter(t => {
+        // Task yang belum pernah dilihat server selalu ikut (task baru).
+        const seen = window.fbServerTaskSnapshot[String(t.id)];
+        if (seen === undefined) return true;
+        return seen !== window.fbTaskFingerprint(t);
+      }).map(t => ({
         id: String(t.id), title: t.text || t.title || '', done: !!t.done,
         energy: t.priority || 'mid', est: '30m', tone: 'sage',
         proofLink: t.proofLink || null,
@@ -166,6 +229,9 @@ async function flowbeeSyncAll(pullOnly = false, chatRequest = false) {
         deletedTaskIds: localDeletedTaskIds,
         deletedNoteIds: localDeletedNoteIds,
         readNotifIds: pendingReads,
+        // Agregat tim/HR itu bagian termahal dari endpoint sync. Hanya diminta
+        // saat benar-benar akan ditampilkan (popup dibuka), bukan tiap 30 detik.
+        includeDashboard: includeDashboard,
       })
     });
     let data;
@@ -260,6 +326,19 @@ async function flowbeeSyncAll(pullOnly = false, chatRequest = false) {
           }
         });
         
+        // Potret disegarkan dari apa yang BARU SAJA dikirim server, sehingga
+        // push berikutnya hanya membawa yang benar-benar berubah sesudah ini.
+        const freshSnapshot = {};
+        data.tasks.forEach(wt => {
+          freshSnapshot[String(wt.id)] = window.fbTaskFingerprint({
+            title: wt.title, done: wt.done, progress: wt.progress || 0,
+            energy: wt.energy || 'mid', description: wt.description ?? null,
+            proofLink: wt.proofLink ?? null, targetDate: wt.targetDate ?? null,
+            date: wt.date ?? null,
+          });
+        });
+        window.fbServerTaskSnapshot = freshSnapshot;
+
         const webTaskIds = new Set(data.tasks.map(wt => String(wt.id)));
         const oldLen = window.fbCtx.tasks.length;
         window.fbCtx.tasks = window.fbCtx.tasks.filter(lt => {
@@ -299,13 +378,33 @@ async function flowbeeSyncAll(pullOnly = false, chatRequest = false) {
 
 // Global hook to force push from UI
 window.fbForceSync = function() {
-  flowbeeSyncAll(false);
+  flowbeeSyncAll(false, false, true);
 };
 
 // Listen to messages from window (web-to-extension)
 window.addEventListener('message', (event) => {
   if (event.data && (event.data.type === 'FLOWBEE_DB_UPDATE' || event.data.type === 'FLOWBEE_WEBSITE_UPDATE')) {
     flowbeeSyncAll(true);
+  }
+
+  // Keadaan sesi fokus, diteruskan ke service worker. Hanya pesan dari halaman
+  // ini sendiri yang diterima: `window.postMessage` bisa dikirim iframe mana
+  // pun, dan tanpa penjaga ini situs sembarangan bisa menyalakan blokir situs
+  // di browser orang.
+  if (
+    event.source === window &&
+    event.origin === window.location.origin &&
+    event.data && event.data.type === 'FLOWBEE_FOCUS_STATE'
+  ) {
+    try {
+      chrome.runtime.sendMessage({ type: 'FOCUS_STATE', active: !!event.data.active }, () => {
+        // Membaca lastError mencegah "Unchecked runtime.lastError" saat service
+        // worker sedang tidur; pesannya sendiri tetap membangunkannya.
+        void chrome.runtime.lastError;
+      });
+    } catch (e) {
+      /* extension sedang di-reload — sinyal berikutnya akan menyusul 20 detik lagi */
+    }
   }
 });
 
@@ -321,7 +420,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         if (res.fb3.deletedTaskIds !== undefined) window.fbCtx.deletedTaskIds = res.fb3.deletedTaskIds;
         if (res.fb3.deletedNoteIds !== undefined) window.fbCtx.deletedNoteIds = res.fb3.deletedNoteIds;
       }
-      flowbeeSyncAll(false, isChatReq);
+      flowbeeSyncAll(false, isChatReq, true);
     });
     sendResponse({ ok: true });
     return true;
@@ -523,7 +622,7 @@ function fbEscHtml(str) {
 // Initial triggers — only pull after 3s so storage loads first
 setTimeout(() => {
   detectFlowbeeUser();
-  flowbeeSyncAll(true);
+  flowbeeSyncAll(true, false, true);
 }, 3000);
 
 // Pull sync every 30s (was 5s). Only run when tab is visible to avoid ghost requests.

@@ -2,16 +2,9 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sendEmail } from "@/lib/emailService";
 import { isDuplicateNotification, DEFAULT_DEDUPE_WINDOW_MINUTES } from "@/lib/notificationService";
+import { getCorsHeaders } from "@/lib/extCors";
+import { getAuthUserId } from "@/lib/authSession";
 
-function getCorsHeaders(request: Request) {
-  const origin = request.headers.get("origin") || "*";
-  return {
-    "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Allow-Credentials": "true",
-  };
-}
 
 export async function OPTIONS(request: Request) {
   return new NextResponse(null, {
@@ -24,7 +17,28 @@ export async function OPTIONS(request: Request) {
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
+
+    /*
+     * Sesi diutamakan, body/query sebagai cadangan — pola yang sama seperti
+     * `/api/ext/sync`. Ekstensi baru mengirim cookie lewat jalur se-origin;
+     * yang lama belum, dan tidak boleh ikut mati sekarang.
+     */
+    const userId = getAuthUserId(request) || searchParams.get('userId');
+
+    /*
+     * Route ini SENGAJA tidak menuntut cookie sesi.
+     *
+     * Pemanggilnya ekstensi Chrome, dan `fetch`-nya tidak menyertakan
+     * `credentials` (lihat flowbuddy/js/sync.js) — ekstensi mengenali dirinya
+     * lewat `flowbee_user_id` di `chrome.storage`. Pemeriksaan sesi sempat
+     * dipasang di sini dan akibatnya endpoint membalas 401 ke setiap panggilan
+     * ekstensi: notifikasi berhenti muncul tanpa pesan apa pun.
+     *
+     * Menutupnya menuntut ekstensinya lebih dulu punya cara mengautentikasi
+     * (cookie lintas-origin dengan host permission, atau token sendiri). Sampai
+     * itu ada, `/api/ext/*` tetap memakai identitas dari query — dicatat di
+     * audit/findings/LAPORAN.md sebagai utang yang diketahui, bukan kelalaian.
+     */
     const all = searchParams.get('all') === 'true';
 
     if (!userId) {
@@ -75,7 +89,9 @@ export async function GET(request: Request) {
 // POST: Mark notifications as read
 export async function POST(request: Request) {
   try {
-    const { userId, notificationIds } = await request.json();
+    const notifBody = await request.json();
+    const { notificationIds } = notifBody;
+    const userId = getAuthUserId(request) || notifBody.userId;
     if (!userId) {
       return NextResponse.json(
         { error: "userId required" },

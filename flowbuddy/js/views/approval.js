@@ -142,6 +142,50 @@ const ApprovalView = {
         const item = this.teamTasks.find(t => t.id === Number(id) || String(t.id) === String(id));
         if (!item) return;
 
+        // Keputusan dikirim DULU, baru tampilannya berubah.
+        //
+        // Sebelumnya urutannya terbalik: toast "✅ Tugas disetujui!" muncul
+        // lebih dulu, panggilan API menyusul, dan errornya ditelan `catch(err){}`
+        // tanpa jejak. Manajer jadi yakin sudah meng-ACC padahal server tidak
+        // pernah menerimanya — dan sekarang server memang menolak permintaan
+        // tanpa identitas peninjau, jadi diamnya itu akan menyesatkan setiap
+        // kali.
+        const apiStatus = action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'revision';
+
+        if (!this.baseUrl || !this.userId) {
+          FlowBuddyApp.showToast('⚠️ Belum tersambung ke Flowbee. Buka aplikasi web dan login dulu.');
+          return;
+        }
+
+        btn.disabled = true;
+        try {
+          const url = this.baseUrl.replace(/\/$/, '') + '/api/manager/tasks/pending';
+          const res = await fetch(url, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              taskId: item.id,
+              status: apiStatus,
+              // Tanpa ini server menolak: ia perlu tahu SIAPA yang memutuskan
+              // untuk memastikan orangnya memang manajer karyawan tersebut.
+              managerId: this.userId,
+              notes: action === 'revision' ? 'Direvisi dari FlowBuddy' : ''
+            })
+          });
+
+          if (!res.ok) {
+            let msg = 'Gagal menyimpan keputusan.';
+            try { msg = (await res.json()).error || msg; } catch (e) {}
+            FlowBuddyApp.showToast('⚠️ ' + msg);
+            return;
+          }
+        } catch (err) {
+          FlowBuddyApp.showToast('⚠️ Tidak bisa menghubungi server. Coba lagi.');
+          return;
+        } finally {
+          btn.disabled = false;
+        }
+
         item.status = action;
         item.verified = action === 'approve';
         item.done = action !== 'reject' && action !== 'revision';
@@ -154,27 +198,9 @@ const ApprovalView = {
         } else {
           FlowBuddyApp.showToast('↻ Diminta revisi.');
         }
-        
-        // Optimistic UI
+
         this.save();
         setTimeout(() => this.render(container), 400);
-
-        // API Call
-        if (this.baseUrl && this.userId) {
-          try {
-             const url = this.baseUrl.replace(/\/$/, '') + '/api/manager/tasks/pending';
-             const apiStatus = action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'revision';
-             await fetch(url, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                  taskId: item.id, 
-                  status: apiStatus, 
-                  notes: action === 'revision' ? 'Direvisi dari FlowBuddy' : '' 
-                })
-             });
-          } catch(err) {}
-        }
       });
     });
   },

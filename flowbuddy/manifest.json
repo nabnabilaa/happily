@@ -6,7 +6,23 @@
   "permissions": [
     "storage",
     "alarms",
-    "notifications"
+    "notifications",
+    "declarativeNetRequest",
+    "contentSettings"
+  ],
+  "host_permissions": [
+    "*://*.facebook.com/*",
+    "*://*.instagram.com/*",
+    "*://*.twitter.com/*",
+    "*://*.x.com/*",
+    "*://*.tiktok.com/*",
+    "*://*.reddit.com/*",
+    "*://*.pinterest.com/*",
+    "*://*.9gag.com/*",
+    "*://*.netflix.com/*",
+    "*://*.twitch.tv/*",
+    "*://*.shopee.co.id/*",
+    "*://*.tokopedia.com/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -45,7 +61,8 @@
         "css/*",
         "js/*",
         "icons/*",
-        "popup.html"
+        "popup.html",
+        "blocked.html"
       ],
       "matches": [
         "<all_urls>"
