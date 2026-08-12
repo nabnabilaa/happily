@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isAuthorizedCron } from "@/lib/cronAuth";
 import { db } from "@/lib/db";
 import { wibHour, sqlWibDate, SQL_WIB_TODAY } from "@/lib/timeUtils";
 import { isDuplicateNotification } from "@/lib/notificationService";
@@ -8,11 +9,7 @@ import { isDuplicateNotification } from "@/lib/notificationService";
 // Example cron config in vercel.json: { "crons": [{ "path": "/api/cron/checkin-reminder", "schedule": "15 1 * * 1-5" }] }
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const secret = searchParams.get('secret');
-    
-    // Simple auth to prevent abuse (set CRON_SECRET in .env.local)
-    if (process.env.CRON_SECRET && secret !== process.env.CRON_SECRET) {
+    if (!isAuthorizedCron(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

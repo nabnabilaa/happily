@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isAuthorizedCron } from "@/lib/cronAuth";
 import { db } from "@/lib/db";
 import { wibDayOfWeek } from "@/lib/timeUtils";
 
@@ -8,10 +9,7 @@ import { wibDayOfWeek } from "@/lib/timeUtils";
 // Call this Friday at 09:00 via cron
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const secret = searchParams.get('secret');
-
-    if (process.env.CRON_SECRET && secret !== process.env.CRON_SECRET) {
+    if (!isAuthorizedCron(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

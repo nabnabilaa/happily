@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { isAuthorizedCron } from '@/lib/cronAuth';
 import { db } from '@/lib/db';
 import { dispatchNotification } from '@/lib/notificationService';
 import { SQL_WIB_TODAY } from '@/lib/timeUtils';
@@ -37,9 +38,10 @@ const CHALLENGE_TEMPLATES = [
 ];
 
 export async function GET(request: Request) {
-  // Authentication check (e.g. Vercel Cron header or custom secret)
-  const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}` && process.env.NODE_ENV !== 'development') {
+  // Menerima header Bearer dari Vercel Cron maupun ?secret= dari pemanggil
+  // manual — sebelumnya hanya Bearer, jadi menjalankannya dari luar Vercel
+  // mustahil tanpa mengubah kode.
+  if (!isAuthorizedCron(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

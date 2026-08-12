@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isAuthorizedCron } from "@/lib/cronAuth";
 import { db } from "@/lib/db";
 import { isWibWeekend, sqlWibDate, SQL_WIB_TODAY } from "@/lib/timeUtils";
 
@@ -7,10 +8,7 @@ import { isWibWeekend, sqlWibDate, SQL_WIB_TODAY } from "@/lib/timeUtils";
 // Call this every 2-3 hours during work hours (e.g., 11:00, 14:00, 16:00)
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const secret = searchParams.get('secret');
-
-    if (process.env.CRON_SECRET && secret !== process.env.CRON_SECRET) {
+    if (!isAuthorizedCron(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
