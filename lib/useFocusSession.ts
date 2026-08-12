@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PUSHER_CLUSTER, PUSHER_KEY, isPusherConfigured } from "@/lib/realtimeConfig";
+import { setFocusShield } from "@/lib/focusPresence";
 
 /**
  * Klien sesi fokus.
@@ -98,6 +99,9 @@ export function useFocusSession(
     }
     roomRef.current = next;
     setRoom(next);
+    // Satu-satunya tempat keadaan ruangan mendarat di hook ini, jadi juga satu-
+    // satunya tempat yang tidak bisa terlewat saat menaikkan perisai.
+    setFocusShield(next?.status === "running" && next?.viewer?.status === "focusing");
   }, []);
 
   const refresh = useCallback(async () => {

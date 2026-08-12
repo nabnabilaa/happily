@@ -7,6 +7,7 @@ import HPGlyph from "@/components/ui/HPGlyph";
 import HPBar from "@/components/ui/HPBar";
 import BeeMascot from "@/components/ui/BeeMascot";
 import HPAvatar from "@/components/ui/HPAvatar";
+import { QRCodeSVG } from "qrcode.react";
 import { useFocusSession, type FocusParticipant, type FocusRoomState } from "@/lib/useFocusSession";
 
 /**
@@ -38,6 +39,25 @@ interface FocusModalProps {
 type Phase = "setup" | "lobby" | "running" | "away" | "summary" | "loading";
 
 const DURATION_PRESETS = [15, 25, 50, 90];
+
+/**
+ * Batas ini bukan buatan layar ini — ia menyalin penjepitan milik server di
+ * `app/api/focus/rooms/route.ts`. Disalin supaya kolom ketik bisa menolak
+ * angka mustahil sebelum permintaan dikirim; servernya tetap yang memutuskan.
+ */
+const MIN_DURATION_MINS = 5;
+const MAX_DURATION_MINS = 300;
+
+/**
+ * QR harus tetap gelap-di-atas-terang di tema apa pun. `HP_TOKENS.ink`
+ * berbalik jadi terang di mode gelap, dan QR terang di atas latar putih tidak
+ * terbaca pemindai sama sekali — jadi ini satu-satunya tempat di layar ini
+ * yang sengaja mengabaikan token tema. Hitam-putih murni, bukan warna palet:
+ * pemindai kamera HP mengandalkan kontras maksimal, dan ini bukan permukaan
+ * yang boleh diperindah.
+ */
+const QR_LIGHT = "#FFFFFF";
+const QR_DARK = "#000000";
 
 const iconBtnStyle: React.CSSProperties = {
   position: "relative", width: 40, height: 40, borderRadius: "50%", border: "none",
@@ -136,6 +156,7 @@ export default function FocusModal({ onClose, roomId: initialRoomId, joinCode, s
   const [busy, setBusy] = useState(false);
   const [hostOffer, setHostOffer] = useState<{ fromId: string; expiresAt: number } | null>(null);
   const [confirmHide, setConfirmHide] = useState(false);
+  const [showDnd, setShowDnd] = useState(false);
 
   const handleEvent = useCallback((event: any) => {
     if (event?.type === "HOST_OFFER" && String(event.targetId) === String(user?.id)) {
@@ -413,12 +434,39 @@ export default function FocusModal({ onClose, roomId: initialRoomId, joinCode, s
             {busy ? "Menyiapkan…" : isTeam ? "Buka Ruangan" : "Mulai Fokus"}
           </button>
 
+          {/* Ditawarkan SEBELUM sesi mulai, bukan di tengahnya: menyiapkan
+              lingkungan adalah bagian dari memulai, dan orang yang sudah masuk
+              menit ketujuh tidak akan berhenti untuk mengutak-atik Settings.
+
+              Penjelasannya ikut MASUK ke dalam tombol. Sebagai paragraf
+              terpisah di bawah, ia terbaca sebagai keterangan layar — orang
+              tidak menghubungkannya dengan tombol di atasnya, lalu tetap tidak
+              tahu tombol itu sebenarnya untuk apa. Selebihnya di dalam lembar. */}
+          <button
+            onClick={() => setShowDnd(true)}
+            style={{ ...overlayBtn("ghost"), textAlign: "left", padding: "11px 16px" }}
+          >
+            <span style={{ display: "block" }}>Matikan notifikasi lain dulu</span>
+            <span style={{ display: "block", fontWeight: 500, fontSize: 12, opacity: 0.75, marginTop: 2 }}>
+              WhatsApp dan aplikasi HP — cuma perangkatmu yang bisa
+            </span>
+          </button>
+
+          {/* Dua paragraf, dua janji berbeda, dan keduanya harus bisa ditepati.
+              Versi lama menulis "layar ini HARUS tetap di depan" — kata "harus"
+              menyiratkan penegakan yang tidak pernah ada. Yang sebenarnya
+              terjadi: layar ini dipakai sebagai bukti kehadiran, dan menutupnya
+              menghentikan hitungan. Itu deteksi, bukan blokir, dan menyebutnya
+              apa adanya justru membuat konsekuensinya lebih mudah dipahami. */}
           <p style={{ ...HP_TEXT.small, color: HP_TOKENS.onPrimary, opacity: 0.65, textAlign: "center", margin: 0 }}>
             {mode === "hardcore"
-              ? "Hardcore: layar ini harus tetap di depan. Kamu punya jatah interupsi kalau ada hal mendadak."
-              : "Zen: boleh buka aplikasi lain. Fokus pada targetmu, bukan pada layar."}
+              ? "Hardcore: layar ini jadi bukti kamu hadir — menutupnya menjeda timermu. Kamu punya jatah interupsi kalau ada hal mendadak."
+              : "Zen: boleh buka aplikasi lain, timermu tetap jalan. Fokus pada targetmu, bukan pada layar."}
           </p>
+
         </div>
+
+        {showDnd && <DndSheet onClose={() => setShowDnd(false)} />}
       </Shell>
     );
   }
@@ -436,12 +484,7 @@ export default function FocusModal({ onClose, roomId: initialRoomId, joinCode, s
             <div style={{ ...HP_TEXT.body, fontSize: 14, color: HP_TOKENS.onPrimary, opacity: 0.75, textAlign: "center" }}>{room.description}</div>
           )}
 
-          {room.joinCode && (
-            <div style={{ background: "rgba(0,0,0,0.2)", padding: "14px 20px", borderRadius: HP_TOKENS.radiusMd, textAlign: "center" }}>
-              <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.onPrimary, opacity: 0.6 }}>KODE RUANGAN</div>
-              <div style={{ fontFamily: HP_FONT, fontWeight: 700, fontSize: 28, letterSpacing: 6, color: HP_TOKENS.yellowInk }}>{room.joinCode}</div>
-            </div>
-          )}
+          {room.joinCode && <RoomInvite joinCode={room.joinCode} />}
 
           <Roster room={room} viewerId={String(user?.id ?? "")} canModerate={canModerate} onAct={act} />
           <JoinQueue room={room} canModerate={canModerate} onAct={act} />
@@ -544,11 +587,15 @@ export default function FocusModal({ onClose, roomId: initialRoomId, joinCode, s
 
         <div style={{ ...HP_TEXT.small, color: HP_TOKENS.onPrimary, opacity: 0.65, textAlign: "center" }}>
           Jatah interupsi: {usedTurns}/{budget.allowance}
-          {room.mode === "hardcore" && " · layar ini harus tetap di depan"}
+          {room.mode === "hardcore" && " · layar ini jadi bukti kehadiranmu"}
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%", maxWidth: 300 }}>
           <button onClick={stepAway} style={overlayBtn("ghost")}>Saya harus menjauh sebentar</button>
+          {/* Jalan keluar kedua, untuk yang baru sadar HP-nya masih berbunyi.
+              Di sini tanpa baris kedua: layarnya sudah padat, dan orang yang
+              sampai ke sini biasanya sudah tahu tombol ini untuk apa. */}
+          <button onClick={() => setShowDnd(true)} style={overlayBtn("ghost")}>Matikan notifikasi lain</button>
           {/* Memulai sendiri tidak seharusnya berarti terkunci sendirian sampai
               selesai. Timer tidak disentuh — hanya pintunya yang dibuka. */}
           {room.visibility === "solo" && isHost && (
@@ -588,6 +635,8 @@ export default function FocusModal({ onClose, roomId: initialRoomId, joinCode, s
       )}
 
       {hostOffer && <HostOfferPrompt onRespond={(accept) => { setHostOffer(null); void act(accept ? "ACCEPT_HOST" : "DECLINE_HOST"); }} />}
+
+      {showDnd && <DndSheet onClose={() => setShowDnd(false)} />}
 
       {confirmHide && (
         <div style={{
@@ -688,7 +737,47 @@ function ModePicker({ mode, onChange }: { mode: "zen" | "hardcore"; onChange: (m
   );
 }
 
+/**
+ * Durasi: empat pintasan, plus kolom ketik untuk sisanya.
+ *
+ * Presetnya tidak pernah salah — yang salah adalah menjadikannya satu-satunya
+ * jalan. Server sudah menerima 5–300 menit sejak awal, dan `interruptBudget()`
+ * di lib/focusRoom.ts bahkan punya cabang khusus untuk durasi di atas 90 menit.
+ * Jadi empat angka ini murni batasan buatan layar, bukan batasan sistem.
+ *
+ * Kolom ketiknya menyimpan teksnya sendiri, bukan langsung angka milik induk.
+ * Kalau tidak, "1" dalam perjalanan menuju "120" akan dijepit jadi 5 di tengah
+ * ketikan — kolom yang melawan jarinya sendiri lebih buruk daripada tidak ada
+ * kolom sama sekali. Penjepitan baru terjadi saat kolomnya ditinggalkan.
+ */
 function DurationPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  // `null` berarti "ikut angka induk". Kolomnya sengaja tidak menyimpan salinan
+  // dari `value`: salinan menuntut efek penyelaras, dan efek penyelaras adalah
+  // cara paling umum kolom angka mulai berkelahi dengan tombol preset di
+  // sebelahnya. Di sini preset cukup mengosongkan draft.
+  const [draft, setDraft] = useState<string | null>(null);
+  const [focused, setFocused] = useState(false);
+  const isCustom = !DURATION_PRESETS.includes(value);
+  const shown = draft ?? String(value);
+
+  const type = (raw: string) => {
+    const digits = raw.replace(/[^0-9]/g, "").slice(0, 3);
+    setDraft(digits);
+    const n = Number(digits);
+    // Hanya angka yang sudah sah yang diteruskan ke atas. Sisanya menunggu
+    // blur — lihat catatan soal "120" di atas.
+    if (digits !== "" && n >= MIN_DURATION_MINS && n <= MAX_DURATION_MINS) onChange(n);
+  };
+
+  const settle = () => {
+    const n = Math.round(Number(shown));
+    // Apa pun hasilnya, draft dilepas: kolom kembali menampilkan angka yang
+    // benar-benar dipakai, bukan yang sempat diketik.
+    setDraft(null);
+    if (shown === "" || !Number.isFinite(n) || n <= 0) return;
+    onChange(Math.min(MAX_DURATION_MINS, Math.max(MIN_DURATION_MINS, n)));
+  };
+
   return (
     <div style={{ width: "100%" }}>
       <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.onPrimary, opacity: 0.7, marginBottom: 8 }}>DURASI</div>
@@ -696,10 +785,12 @@ function DurationPicker({ value, onChange }: { value: number; onChange: (v: numb
         {DURATION_PRESETS.map((d) => (
           <button
             key={d}
-            onClick={() => onChange(d)}
+            onClick={() => { setDraft(null); onChange(d); }}
+            aria-pressed={value === d}
             style={{
               flex: 1, padding: "12px 8px", borderRadius: HP_TOKENS.radiusSm, cursor: "pointer",
               fontFamily: HP_FONT, fontWeight: 700, fontSize: 15,
+              transition: "background 180ms ease, border-color 180ms ease",
               background: value === d ? HP_TOKENS.yellow : "rgba(255,255,255,0.06)",
               border: `1.5px solid ${value === d ? HP_TOKENS.yellow : "rgba(255,255,255,0.12)"}`,
               color: value === d ? HP_TOKENS.ink : HP_TOKENS.onPrimary,
@@ -708,6 +799,387 @@ function DurationPicker({ value, onChange }: { value: number; onChange: (v: numb
             {d}m
           </button>
         ))}
+      </div>
+
+      <label
+        style={{
+          display: "flex", alignItems: "center", gap: 10, marginTop: 8,
+          padding: "11px 14px", borderRadius: HP_TOKENS.radiusSm, cursor: "text",
+          transition: "background 180ms ease, border-color 180ms ease",
+          background: isCustom ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.06)",
+          border: `1.5px solid ${focused || isCustom ? HP_TOKENS.yellow : "rgba(255,255,255,0.12)"}`,
+          outline: focused ? `2px solid ${HP_TOKENS.onPrimary}` : "none",
+          outlineOffset: 2,
+        }}
+      >
+        <span style={{ ...HP_TEXT.small, color: HP_TOKENS.onPrimary, opacity: 0.75, flexShrink: 0 }}>
+          Atau ketik sendiri
+        </span>
+        <input
+          type="text"
+          inputMode="numeric"
+          value={shown}
+          onChange={(e) => type(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => { setFocused(false); settle(); }}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); settle(); } }}
+          aria-label={`Durasi dalam menit, ${MIN_DURATION_MINS} sampai ${MAX_DURATION_MINS}`}
+          style={{
+            flex: 1, minWidth: 0, border: "none", outline: "none", background: "transparent",
+            fontFamily: HP_FONT, fontWeight: 700, fontSize: 16, textAlign: "right",
+            color: HP_TOKENS.onPrimary,
+          }}
+        />
+        <span style={{ ...HP_TEXT.small, color: HP_TOKENS.onPrimary, opacity: 0.75, flexShrink: 0 }}>menit</span>
+      </label>
+
+      <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.onPrimary, opacity: 0.6, marginTop: 6, textAlign: "left" }}>
+        Bebas antara {MIN_DURATION_MINS} sampai {MAX_DURATION_MINS} menit.
+      </div>
+    </div>
+  );
+}
+
+type Platform = "ios" | "android" | "windows" | "mac" | "other";
+
+function detectPlatform(): Platform {
+  if (typeof navigator === "undefined") return "other";
+  const ua = navigator.userAgent;
+  if (/iPhone|iPod/i.test(ua)) return "ios";
+  // iPadOS 13+ menyamar sebagai Mac. Layar sentuh adalah pembeda yang tersisa.
+  if (/iPad/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1)) return "ios";
+  if (/Android/i.test(ua)) return "android";
+  if (/Windows/i.test(ua)) return "windows";
+  if (/Macintosh|Mac OS X/i.test(ua)) return "mac";
+  return "other";
+}
+
+/** Nama shortcut yang diinstruksikan di panduan iOS; dipakai juga oleh deep link. */
+const IOS_SHORTCUT_NAME = "Flowbee Fokus";
+
+interface DndGuide {
+  label: string;
+  /**
+   * Diatur SEKALI, lalu berjalan sendiri selamanya. Ini yang utama.
+   *
+   * Versi pertama panduan ini hanya punya langkah manual, dan itu keliru:
+   * panduan yang harus dibaca ulang tiap sesi praktis sama dengan tidak ada
+   * fitur. Yang mengubah perilaku orang bukan instruksi yang benar, melainkan
+   * instruksi yang cukup dijalankan sekali.
+   */
+  once: { title: string; steps: string[] } | null;
+  /** Cadangan untuk sekarang, saat setup sekali itu belum dikerjakan. */
+  now: string[];
+  note?: string;
+}
+
+/**
+ * Panduan mendiamkan perangkat.
+ *
+ * Yang bisa kami tahan sendiri sudah ditahan tanpa minta izinmu: notifikasi
+ * Flowbee (server + klien), situs distraksi, dan — sejak ekstensi memakai
+ * `contentSettings` — SELURUH notifikasi web di Chrome. Yang tersisa hanyalah
+ * aplikasi native di HP, dan tidak ada satu pun URL yang bisa menyalakan DND
+ * dari halaman web: `App-Prefs:` API privat, `intent://` butuh aplikasi native.
+ *
+ * Tapi ada jalan yang bukan aplikasi native: mesin otomasi bawaan OS bisa
+ * memicu DND "saat aplikasi dibuka", dan Flowbee memenuhi syarat sebagai
+ * aplikasi begitu dipasang ke home screen (`app/manifest.ts` sudah
+ * `display: standalone`). Itulah yang diinstruksikan `once` di bawah.
+ */
+const DND_STEPS: Record<Platform, DndGuide> = {
+  ios: {
+    // Label pendek: empat tab harus muat sebaris di layar HP 375px.
+    label: "iPhone",
+    once: {
+      title: "Otomatis, atur sekali",
+      steps: [
+        "Pasang Flowbee ke home screen dulu: Share → “Add to Home Screen”. Kalau masih di tab Safari, otomasinya melihat “Safari dibuka”, bukan “Flowbee dibuka”.",
+        "Buka app Shortcuts → tab Automation → “+” → “App”.",
+        "Pilih app Flowbee, centang “Is Opened”, dan pilih “Run Immediately”.",
+        "Tambah aksi “Set Focus” → Do Not Disturb → On. Simpan.",
+      ],
+    },
+    now: [
+      "Usap turun dari pojok kanan atas untuk membuka Control Center.",
+      "Ketuk “Focus”, lalu pilih “Do Not Disturb”.",
+    ],
+    note: `Kalau kamu sudah punya shortcut bernama “${IOS_SHORTCUT_NAME}”, tombol di bawah bisa menjalankannya langsung.`,
+  },
+  android: {
+    label: "Android",
+    once: {
+      title: "Otomatis, atur sekali (Samsung / Xiaomi)",
+      steps: [
+        "Pasang Flowbee ke home screen dulu: menu Chrome → “Install app”.",
+        "Samsung: Settings → Modes and Routines → Routines → “+”. Xiaomi: Settings → Special features → Automation.",
+        "Pemicu: “App opened” → pilih Flowbee.",
+        "Aksi: “Do not disturb” → On. Simpan.",
+      ],
+    },
+    now: [
+      "Usap turun dua kali untuk membuka Quick Settings penuh.",
+      "Ketuk “Jangan Ganggu” / “Do Not Disturb”.",
+      "Tahan lama ikonnya untuk memilih pengecualian — mis. telepon keluarga tetap masuk.",
+    ],
+    note: "Android murni / Pixel belum punya pemicu “aplikasi dibuka”. Di sana pilihannya jadwal DND per jam kerja, atau tetap manual.",
+  },
+  windows: {
+    label: "Windows",
+    once: {
+      title: "Otomatis per jam, atur sekali",
+      steps: [
+        "Settings → System → Notifications → “Turn on do not disturb automatically”.",
+        "Centang “During these times”, lalu isi jam kerjamu.",
+      ],
+    },
+    now: [
+      "Tekan Win + N untuk membuka panel notifikasi.",
+      "Klik “Do not disturb” / “Jangan ganggu”.",
+    ],
+    note: "Notifikasi situs web di Chrome sudah didiamkan otomatis oleh ekstensi FlowBuddy — langkah ini untuk aplikasi desktop seperti Slack atau Teams.",
+  },
+  mac: {
+    label: "Mac",
+    once: {
+      title: "Otomatis per jam, atur sekali",
+      steps: [
+        "System Settings → Focus → Do Not Disturb → “Add Schedule”.",
+        "Pilih “Time” dan isi jam kerjamu.",
+      ],
+    },
+    now: [
+      "Buka Control Center di menu bar kanan atas.",
+      "Klik “Focus” → “Do Not Disturb” → pilih “For 1 hour”.",
+    ],
+    note: "Notifikasi situs web di Chrome sudah didiamkan otomatis oleh ekstensi FlowBuddy — langkah ini untuk aplikasi desktop seperti Slack atau Teams.",
+  },
+  other: {
+    label: "Lainnya",
+    once: null,
+    now: [
+      "Cari pengaturan “Do Not Disturb” atau “Jangan Ganggu” di sistemmu.",
+      "Nyalakan selama sesi fokusmu berjalan.",
+    ],
+  },
+};
+
+/** Urutan tab. `other` sengaja tidak punya tab — ia hanya jaring pengaman deteksi. */
+const DND_TABS: Platform[] = ["ios", "android", "windows", "mac"];
+
+/**
+ * Lembar panduan Jangan Ganggu. Memakai pola bottom-sheet yang sama dengan
+ * konfirmasi tutup layar, supaya tidak ada bahasa visual baru untuk dipelajari.
+ *
+ * Deteksi otomatis dipakai untuk MEMILIH tab awal, bukan untuk mengunci
+ * pilihannya. Bedanya menentukan: orang membuka Flowbee di laptop justru saat
+ * yang berisik adalah HP-nya, dan panduan yang hanya mau menampilkan langkah
+ * perangkat yang sedang dipegang akan menyembunyikan satu-satunya langkah yang
+ * dia butuhkan.
+ */
+function DndSheet({ onClose }: { onClose: () => void }) {
+  const detected = useMemo(() => detectPlatform(), []);
+  const [tab, setTab] = useState<Platform>(() => (detected === "other" ? "android" : detected));
+  const guide = DND_STEPS[tab];
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 70, background: "rgba(0,0,0,0.55)",
+      display: "flex", alignItems: "flex-end", justifyContent: "center", padding: 20,
+    }}>
+      <div style={{
+        background: HP_TOKENS.card, borderRadius: HP_TOKENS.radiusLg, padding: 22,
+        width: "100%", maxWidth: 380, textAlign: "left", maxHeight: "80vh", overflowY: "auto",
+      }}>
+        <div style={{ ...HP_TEXT.h, fontSize: 17, color: HP_TOKENS.ink }}>
+          Matikan notifikasi lain
+        </div>
+        <div style={{ ...HP_TEXT.body, fontSize: 14, color: HP_TOKENS.inkSoft, marginTop: 8 }}>
+          Notifikasi Flowbee sudah ditahan otomatis, dan ekstensi Chrome mendiamkan
+          seluruh notifikasi web di laptop — WhatsApp Web, Gmail, Slack. Yang tersisa
+          cuma aplikasi di HP, dan itu hanya perangkatnya sendiri yang bisa.
+        </div>
+
+        <div
+          role="tablist"
+          aria-label="Pilih perangkat"
+          style={{
+            display: "flex", gap: 4, marginTop: 16, padding: 4,
+            background: HP_TOKENS.sunken, borderRadius: HP_TOKENS.radiusSm,
+          }}
+        >
+          {DND_TABS.map((p) => (
+            <button
+              key={p}
+              role="tab"
+              aria-selected={tab === p}
+              onClick={() => setTab(p)}
+              style={{
+                flex: 1, padding: "8px 4px", borderRadius: HP_TOKENS.radiusXs, border: "none",
+                cursor: "pointer", fontFamily: HP_FONT, fontWeight: 700, fontSize: 12,
+                transition: "background 180ms ease, color 180ms ease",
+                background: tab === p ? HP_TOKENS.card : "transparent",
+                color: tab === p ? HP_TOKENS.ink : HP_TOKENS.inkMute,
+              }}
+            >
+              {DND_STEPS[p].label}
+            </button>
+          ))}
+        </div>
+
+        {tab === detected && (
+          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 8 }}>
+            Ini perangkat yang sedang kamu pakai.
+          </div>
+        )}
+
+        {/* "Atur sekali" ditaruh DULU dan diberi latar, "cara sekarang"
+            menyusul sebagai cadangan. Urutannya bukan selera: yang pertama
+            dibaca orang adalah yang dianggap cara yang dimaksud, dan cara yang
+            kita maksud memang yang dikerjakan sekali lalu berhenti menuntut. */}
+        {guide.once && (
+          <div style={{
+            marginTop: 14, padding: 14, borderRadius: HP_TOKENS.radiusSm,
+            background: HP_TOKENS.sunken,
+          }}>
+            <div style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.ink }}>
+              {guide.once.title}
+            </div>
+            <ol style={{ margin: "10px 0 0", padding: "0 0 0 18px", display: "flex", flexDirection: "column", gap: 7 }}>
+              {guide.once.steps.map((s, i) => (
+                <li key={i} style={{ ...HP_TEXT.body, fontSize: 13, color: HP_TOKENS.ink }}>{s}</li>
+              ))}
+            </ol>
+          </div>
+        )}
+
+        <div style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.ink, marginTop: 16 }}>
+          {guide.once ? "Atau nyalakan manual sekarang" : "Cara menyalakannya"}
+        </div>
+        <ol style={{ margin: "10px 0 0", padding: "0 0 0 18px", display: "flex", flexDirection: "column", gap: 7 }}>
+          {guide.now.map((s, i) => (
+            <li key={i} style={{ ...HP_TEXT.body, fontSize: 13, color: HP_TOKENS.ink }}>{s}</li>
+          ))}
+        </ol>
+
+        {/* Deep link hanya masuk akal di iOS, dan hanya kalau shortcut-nya sudah
+            dibuat. Kalau belum ada, iOS membuka app Shortcuts dan tidak
+            terjadi apa-apa — jadi tombolnya menyebut syaratnya, bukan berjanji. */}
+        {tab === "ios" && (
+          <a
+            href={`shortcuts://run-shortcut?name=${encodeURIComponent(IOS_SHORTCUT_NAME)}`}
+            style={{
+              display: "block", marginTop: 14, padding: "11px 14px", textAlign: "center",
+              borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.primary,
+              color: HP_TOKENS.onPrimary, fontFamily: HP_FONT, fontWeight: 700,
+              fontSize: 13, textDecoration: "none",
+            }}
+          >
+            Jalankan shortcut “{IOS_SHORTCUT_NAME}”
+          </a>
+        )}
+
+        {guide.note && (
+          <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, marginTop: 14 }}>
+            {guide.note}
+          </div>
+        )}
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 20 }}>
+          <button
+            onClick={onClose}
+            style={{ ...overlayBtn("ghost"), background: HP_TOKENS.sunken, color: HP_TOKENS.ink, border: "none" }}
+          >
+            Mengerti
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Undangan ruangan: kode yang bisa dibacakan, dan QR yang bisa dipindai.
+ *
+ * QR-nya membawa KODE, bukan id ruangan. Bedanya bukan kosmetik: id sengaja
+ * berhenti identik dengan kode (lihat app/api/focus/rooms/resolve/route.ts —
+ * endpoint itu ada persis untuk memisahkan keduanya), sementara kode memang
+ * dibuat untuk dibagikan dan hangus begitu ruangannya selesai.
+ *
+ * Angka kodenya memakai `onPrimary`, bukan `yellowInk` seperti sebelumnya.
+ * `yellowInk` adalah langkah warna untuk latar TERANG; di panel gelap ini ia
+ * jatuh ke sekitar 1.6:1 — kode yang tidak terbaca sama saja dengan tidak ada
+ * kode.
+ */
+function RoomInvite({ joinCode }: { joinCode: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const url = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    return `${window.location.origin}/?action=focus&focusCode=${encodeURIComponent(joinCode)}`;
+  }, [joinCode]);
+
+  useEffect(() => {
+    if (!copied) return;
+    const t = setTimeout(() => setCopied(false), 2000);
+    return () => clearTimeout(t);
+  }, [copied]);
+
+  const copy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+    } catch {
+      // Clipboard ditolak (halaman non-HTTPS, izin dicabut). Bukan jalan buntu:
+      // kode di sebelahnya tetap bisa dibaca dan diketik manual.
+    }
+  }, [url]);
+
+  return (
+    <div style={{
+      width: "100%", background: "rgba(0,0,0,0.2)", borderRadius: HP_TOKENS.radiusMd,
+      padding: 16, display: "flex", gap: 16, alignItems: "center",
+    }}>
+      <div style={{ background: QR_LIGHT, padding: 8, borderRadius: HP_TOKENS.radiusSm, lineHeight: 0, flexShrink: 0 }}>
+        {url ? (
+          <QRCodeSVG
+            value={url}
+            size={100}
+            level="M"
+            bgColor={QR_LIGHT}
+            fgColor={QR_DARK}
+            marginSize={0}
+            title={`Pindai untuk masuk ruangan, kode ${joinCode}`}
+          />
+        ) : (
+          <div style={{ width: 100, height: 100 }} />
+        )}
+      </div>
+
+      <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+        <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.onPrimary, opacity: 0.6 }}>KODE RUANGAN</div>
+        <div style={{
+          fontFamily: HP_FONT, fontWeight: 700, fontSize: 24, letterSpacing: 4,
+          color: HP_TOKENS.onPrimary, wordBreak: "break-all",
+        }}>
+          {joinCode}
+        </div>
+        <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.onPrimary, opacity: 0.6, marginTop: 4 }}>
+          Pindai dari HP untuk langsung masuk.
+        </div>
+        <button
+          onClick={copy}
+          style={{
+            marginTop: 10, display: "flex", alignItems: "center", gap: 6,
+            padding: "7px 12px", borderRadius: HP_TOKENS.radiusXs, cursor: "pointer",
+            border: "1px solid rgba(255,255,255,0.25)", background: "transparent",
+            color: HP_TOKENS.onPrimary, fontFamily: HP_FONT, fontWeight: 700, fontSize: 12,
+            transition: "background 180ms ease",
+          }}
+        >
+          <HPGlyph name={copied ? "check" : "link"} size={13} color={HP_TOKENS.onPrimary} />
+          {copied ? "Tautan disalin" : "Salin tautan"}
+        </button>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { HP_TOKENS, HP_TEXT, HP_FONT, Row, HPButton, HPGlyph } from "@/components/ui";
+import { setFocusShield } from "@/lib/focusPresence";
 
 /**
  * Penjaga sesi fokus di level aplikasi.
@@ -69,6 +70,9 @@ export default function FocusSessionKeeper({ suspended, onOpen }: FocusSessionKe
         clockOffsetRef.current = new Date(data.serverNow).getTime() - Date.now();
       }
       setRoom(data.room ?? null);
+      // Perisai notifikasi harus tetap berdiri walau layar fokus ditutup —
+      // di mode Zen sesinya memang sengaja berjalan di belakang layar.
+      setFocusShield(data.room?.status === "running" && data.room?.myStatus === "focusing");
     } catch {
       /* Jaringan putus bukan alasan melupakan sesi yang sedang berjalan. */
     }
@@ -105,6 +109,9 @@ export default function FocusSessionKeeper({ suspended, onOpen }: FocusSessionKe
               ? { ...prev, status: data.room.status, myStatus: data.room.viewer?.status ?? prev.myStatus, endsAt: data.room.endsAt }
               : prev,
           );
+          // Detak datang lebih sering daripada discover, jadi ia yang biasanya
+          // memperpanjang masa berlaku perisai sebelum kedaluwarsa.
+          setFocusShield(data.room.status === "running" && data.room.viewer?.status === "focusing");
         }
       } catch {
         /* detak yang hilang dikejar detak berikutnya */

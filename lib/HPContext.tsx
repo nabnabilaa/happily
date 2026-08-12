@@ -90,6 +90,23 @@ interface HPUser {
   hrAccess?: boolean;
 }
 
+/**
+ * Jawaban server atas permintaan poin, diteruskan apa adanya ke pemanggil.
+ *
+ * Ada supaya perayaan bisa memakai angka yang BENAR-BENAR dibayar. Sebelumnya
+ * `awardXP` mengembalikan `Promise<void>` dan menelan hasilnya, jadi setiap
+ * pemanggil terpaksa menebak — "+500 Poin" tetap tampil walau ledger membayar
+ * nol karena kuota penuh, sesi kedaluwarsa, atau aksinya sudah pernah dibayar.
+ *
+ * `null` berarti tidak ada jawaban sama sekali (offline, atau permintaannya
+ * gagal). Itu berbeda dari `awarded: 0`, dan pemanggil harus membedakannya.
+ */
+export interface XPOutcome {
+  status: string;
+  awarded: number;
+  message?: string;
+}
+
 interface HPContextType {
   state: HPState | null;
   user: HPUser | null;
@@ -102,7 +119,7 @@ interface HPContextType {
   refreshSurveys: () => Promise<void>;
   resetData: () => Promise<void>;
   syncSkillProgress: (source: string, amount: number) => void;
-  awardXP: (actionType: string, description?: string, refId?: string) => Promise<void>;
+  awardXP: (actionType: string, description?: string, refId?: string) => Promise<XPOutcome | null>;
   revokeXP: (actionType: string, refId: string, description?: string) => Promise<void>;
   toasts: any[];
   notify: (title: string, message?: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
@@ -115,7 +132,9 @@ import { calculateLevel, calculateRank, calculateLevelProgress } from "@/lib/xp"
 
 export { calculateLevelProgress }; // Re-export for existing imports that relied on HPContext
 import { isNetworkError } from "@/lib/errorUtils";
+import { queueOfflineXP, flushOfflineXP } from "@/lib/offlineSync";
 import { PUSHER_CLUSTER } from "@/lib/realtimeConfig";
+import { focusShieldUp } from "@/lib/focusPresence";
 
 /**
  * Trims the blob before it goes to POST /api/storage.
@@ -127,6 +146,23 @@ import { PUSHER_CLUSTER } from "@/lib/realtimeConfig";
  * the whole task list — a stale array deleted rows and reverted a manager's ACC.
  * Task writes go through /api/priorities*; the blob must not have an opinion.
  */
+/**
+ * Penanda unik untuk TAB ini, dibuat sekali saat modul dimuat.
+ *
+ * Dikirim bersama setiap POST /api/storage dan dipantulkan server pada event
+ * realtime yang dihasilkannya. Dengan begitu tab bisa membedakan "orang lain
+ * mengubah data" dari "gema penyimpanan saya sendiri" — dan yang kedua tidak
+ * perlu ditanggapi dengan mengambil ulang seluruh state.
+ *
+ * Bukan disimpan di localStorage dengan sengaja: dua tab dari browser yang sama
+ * harus punya nilai BERBEDA, karena justru merekalah yang perlu saling
+ * memberi tahu.
+ */
+const TAB_ORIGIN_ID =
+  typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `tab_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+
 function stripNonSyncedState(state: any, user: any) {
   const out: any = { ...state };
   delete out.hrData;
@@ -238,7 +274,26 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        const res = await fetch(`/api/storage?userId=${userId}&_t=${Date.now()}`, { cache: 'no-store' });
+        /*
+         * Dua permintaan paralel, digabung SEBELUM state dipasang.
+         *
+         * Katalog hadiah, materi belajar, kontak, dan jadwal kerja sama untuk
+         * semua orang dan hampir tidak pernah berubah, tapi dulu ikut terkirim
+         * pada setiap refresh. Sekarang bagian itu punya endpoint sendiri
+         * dengan ETag — permintaan kedua ini biasanya dijawab 304 tanpa badan
+         * pesan.
+         *
+         * Digabung sebelum `setState` dengan sengaja: kalau dipasang terpisah,
+         * ada satu render di mana `state.rewards` belum ada, dan layar Rewards
+         * akan berkedip kosong setiap kali data disegarkan.
+         */
+        const [res, companyRes] = await Promise.all([
+          fetch(`/api/storage?userId=${userId}&includeStatic=0&_t=${Date.now()}`, { cache: 'no-store' }),
+          // Sengaja TANPA `cache: 'no-store'` — justru cache browser-lah yang
+          // membuat ETag di endpoint itu ada gunanya.
+          fetch(`/api/company-data`).catch(() => null),
+        ]);
+
         if (!res.ok) {
           const text = await res.text();
           throw new Error(`Storage fetch failed with status ${res.status}: ${text.slice(0, 100)}`);
@@ -246,8 +301,41 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         const data = await res.json();
         if (data.error) throw new Error(`${data.error}: ${data.details || ''}`);
 
+        if (data.state && companyRes && companyRes.ok) {
+          try {
+            const company = await companyRes.json();
+            /*
+             * Hanya dipasang kalau field-nya benar-benar berbentuk array.
+             *
+             * `|| []` akan berbahaya di sini: `POST /api/storage` menghapus
+             * setiap hadiah yang tidak ada di payload HR, dan `[]` adalah nilai
+             * truthy. Balasan yang cacat sebagian karenanya bisa berubah
+             * menjadi katalog hadiah yang terhapus seluruhnya. Membiarkan
+             * field-nya `undefined` justru aman — cabang rekonsiliasi di server
+             * tidak berjalan sama sekali.
+             */
+            if (Array.isArray(company.rewards)) data.state.rewards = company.rewards;
+            if (Array.isArray(company.learning)) data.state.learning = company.learning;
+            if (Array.isArray(company.contacts)) data.state.contacts = company.contacts;
+            if (company.workSchedule) data.state.workSchedule = company.workSchedule;
+            if (company.onboardingConfig !== undefined) data.state.onboardingConfig = company.onboardingConfig;
+            // Bentuk gabungan ini dipertahankan persis seperti yang dulu
+            // dikirim /api/storage, supaya komponen pembacanya tidak berubah.
+            if (Array.isArray(company.learning)) {
+              data.state.wellbeing = { dims: [], programs: company.learning, dailyPrompt: "" };
+            }
+          } catch (e) {
+            console.warn("Gagal memuat data perusahaan, memakai yang sudah ada:", e);
+          }
+        }
+
         // Cache successfully fetched data
         localStorage.setItem(`hp_cached_state_${userId}`, JSON.stringify(data));
+
+        // Sejak detik ini, tab memegang salinan server yang mutakhir. Server
+        // memakai penanda ini untuk membedakan "pemakai mengubah nilai" dari
+        // "tab ini memegang salinan lama" — lihat POST /api/storage.
+        if (data.state?.stateLoadedAt) stateLoadedAtRef.current = data.state.stateLoadedAt;
 
         if (data.state) {
           // Sanitize habits to ensure 'done' status matches today's date in completedDates
@@ -497,8 +585,12 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
 
   const refreshSurveys = useCallback(async () => {
     if (typeof window !== "undefined" && !navigator.onLine) return;
+    if (!user?.id) return;
     try {
-      const res = await fetch('/api/hr/surveys');
+      // `requesterId` menandai ini permintaan konsol HR (daftar lengkap,
+      // termasuk survei non-aktif). Tanpa identitas, server hanya melayani
+      // pandangan karyawan.
+      const res = await fetch(`/api/hr/surveys?requesterId=${user.id}`);
       if (!res.ok) {
         const text = await res.text();
         throw new Error(`HR Surveys fetch failed: ${res.status} ${text.slice(0, 100)}`);
@@ -514,7 +606,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         console.error("Failed to refresh surveys:", e);
       }
     }
-  }, []);
+  }, [user?.id]);
 
   // ── Auto-refresh via Real-time Engine (Pusher with SSE Fallback) ──
   useEffect(() => {
@@ -531,10 +623,33 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
 
     const handleRealtimeData = (data: any) => {
       if (data.type === 'refresh') {
+        /*
+         * Gema dari tab ini sendiri: tidak ada yang perlu diambil ulang.
+         *
+         * Server memantulkan `originId` yang dikirim tab saat menyimpan. Tanpa
+         * penjaga ini, SETIAP penyimpanan diikuti satu GET /api/storage lengkap
+         * — berisi rewards, learning, dan feed kudos — hanya untuk mengambil
+         * kembali keadaan yang barusan dikirim tab ini juga.
+         */
+        if (data.originId && data.originId === TAB_ORIGIN_ID) return;
+
         // Hanya refresh kalau tab sedang aktif untuk menghemat resource browser
         if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
           fetchData(userId);
-          refreshSurveys();
+
+          /*
+           * `slice` menyebut BAGIAN mana yang berubah. Jalur task mengirim
+           * `slice: 'tasks'`, dan survei tidak mungkin ikut berubah karenanya —
+           * jadi satu permintaan jaringan penuh bisa dilewati.
+           *
+           * Event tanpa `slice` diperlakukan seperti dulu: menyegarkan
+           * semuanya. Itu membuat pemancar yang belum menyebutkan slice-nya
+           * tetap benar, hanya belum hemat.
+           */
+          if (!data.slice || data.slice === 'surveys') {
+            refreshSurveys();
+          }
+
           if (activeRole === 'hr' || activeRole === 'manager' || activeHrAccess) {
             fetchDashboards(userId, activeRole, activeHrAccess);
           }
@@ -547,8 +662,18 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         // If targeted to a specific user, ignore if not us
         if (data.targetUserId && data.targetUserId !== userId) return;
 
+        // Sesi fokus menahan INTERUPSI, bukan data. Jalur ini tidak pernah
+        // lewat server, jadi penjaga di lib/pushService.ts tidak bisa
+        // melihatnya — perisainya harus dipasang di sini juga.
+        //
+        // Garisnya ditarik di "apakah ini merebut perhatian": notifikasi OS,
+        // toast, dan nudge maskot ditahan; sinkronisasi chat di bawah tetap
+        // jalan. Pesannya sendiri tetap tersimpan dan tetap muncul di lonceng —
+        // yang hilang cuma kejutannya.
+        const interrupting = !focusShieldUp();
+
         // Cross-platform notification trigger
-        if (typeof window !== "undefined" && "Notification" in window) {
+        if (interrupting && typeof window !== "undefined" && "Notification" in window) {
           if (Notification.permission === "granted") {
             new Notification(data.title || "Pesan Baru", {
               body: data.text || "Kamu mendapat pesan baru.",
@@ -563,15 +688,19 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
           }
         }
         // Internal UI Notification
-        notify(data.title || "Pesan Baru", data.text, "info");
+        if (interrupting) notify(data.title || "Pesan Baru", data.text, "info");
 
         // Broadcast to extension to trigger Mascot Nudge across tabs
         if (typeof window !== "undefined") {
-          window.postMessage({
-            type: "FLOWBEE_NUDGE",
-            title: data.title,
-            message: data.text
-          }, "*");
+          if (interrupting) {
+            window.postMessage({
+              type: "FLOWBEE_NUDGE",
+              title: data.title,
+              message: data.text
+            }, "*");
+          }
+          // Sinkronisasi daftar chat bukan interupsi: menahannya cuma membuat
+          // extension menampilkan data basi setelah sesi selesai.
           window.postMessage({
             type: "FLOWBEE_CHAT_UPDATE",
             channelId: data.channelId,
@@ -711,12 +840,16 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
     actionType: string,
     description?: string,
     refId?: string,
-  ) => {
+  ): Promise<XPOutcome | null> => {
     const currentUser = userRef.current;
-    if (!currentUser) return;
+    if (!currentUser) return null;
+    // Sebelumnya baris ini hanya MENCATAT bahwa poinnya diantrekan, tanpa
+    // pernah mengantre apa pun — jadi menyelesaikan pekerjaan saat jaringan
+    // putus berarti poinnya hangus, dan log-nya menyesatkan siapa pun yang
+    // menelusuri. `refId` ikut dibawa supaya pengiriman ulang tidak dobel.
     if (typeof window !== "undefined" && !navigator.onLine) {
-      console.warn("Browser is offline, queueing XP award for offline sync.");
-      return;
+      await queueOfflineXP(currentUser.id, actionType, description, refId);
+      return null;
     }
     try {
       const res = await fetch("/api/xp/award", {
@@ -729,7 +862,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
       // bisa diverifikasi server. Diberi tahu terang-terangan, bukan gagal diam.
       if (res.status === 401 && data.needsReauth) {
         notify("Sesi berakhir", "Silakan login ulang untuk melanjutkan.", "warning");
-        return;
+        return null;
       }
 
       // Kuota penuh dirayakan, bukan ditolak. Aksinya tetap tercatat dan tetap
@@ -756,6 +889,12 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("hp_points_changed"));
       }
+
+      return {
+        status: String(data.status ?? (res.ok ? "awarded" : "error")),
+        awarded: Number(data.awarded) || 0,
+        message: data.message ?? data.error,
+      };
     } catch (e: any) {
       const errorMsg = e?.message || String(e);
       if (isNetworkError(e)) {
@@ -763,6 +902,7 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
       } else {
         console.error("Failed to award XP:", e);
       }
+      return null;
     }
   }, [updateUser, updateState, notify]);
 
@@ -849,6 +989,95 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
     }
   }, [fetchData, notify]);
 
+  /*
+   * Satu penangkap sesi kedaluwarsa untuk SELURUH aplikasi.
+   *
+   * Identitas login disimpan di `localStorage.hp_user_id`, sedangkan izin API
+   * bergantung pada cookie sesi yang terpisah dan berumur 30 hari. Keduanya
+   * bisa berbeda nasib: cookie habis, `hp_user_id` tetap ada. Akibatnya
+   * aplikasi TERLIHAT login sementara setiap panggilan terjaga membalas 401 —
+   * dan gejalanya yang paling sering dilaporkan adalah "nambah task tapi tidak
+   * tersimpan", karena penyimpanan task memang menuntut sesi.
+   *
+   * Sebelum ini `needsReauth` hanya ditangani di satu tempat (pemberian poin),
+   * padahal puluhan route bisa mengirimnya. Sisanya gagal diam-diam.
+   *
+   * Dipasang sebagai pembungkus `window.fetch` — bukan ditambahkan satu per
+   * satu ke setiap pemanggil — karena panggilan API tersebar di puluhan
+   * komponen, dan yang terlewat justru akan kembali gagal senyap. Hanya
+   * menyentuh permintaan ke `/api/` di origin yang sama; selebihnya diteruskan
+   * apa adanya.
+   */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const original = window.fetch;
+    let handled = false;
+
+    const patched: typeof window.fetch = async (input, init) => {
+      const res = await original(input, init);
+
+      const url = typeof input === "string" ? input : (input as Request)?.url ?? String(input);
+      const isOwnApi = url.startsWith("/api/") || url.startsWith(window.location.origin + "/api/");
+      if (!isOwnApi || res.status !== 401 || handled) return res;
+
+      // Badan respons hanya boleh dibaca sekali; klon dulu supaya pemanggil
+      // aslinya tetap menerima respons yang utuh.
+      try {
+        const body = await res.clone().json();
+        if (!body?.needsReauth) return res;
+      } catch {
+        return res;
+      }
+
+      handled = true;
+      notify(
+        "Sesi kamu sudah berakhir",
+        "Perubahan terakhir mungkin belum tersimpan. Silakan login ulang.",
+        "warning"
+      );
+      // Identitas lokal dibuang supaya aplikasi berhenti berpura-pura login.
+      localStorage.removeItem("hp_user_id");
+      setTimeout(() => window.location.reload(), 2500);
+      return res;
+    };
+
+    window.fetch = patched;
+    return () => {
+      // Hanya kembalikan kalau belum ditimpa pihak lain, supaya tidak
+      // menghapus pembungkus milik orang lain.
+      if (window.fetch === patched) window.fetch = original;
+    };
+  }, [notify]);
+
+  /*
+   * Kirim poin yang tertunda begitu jaringan kembali.
+   *
+   * Antrean offline sudah ada di lib/offlineSync.ts sejak lama tapi tidak
+   * pernah dikuras oleh siapa pun, jadi isinya menumpuk tanpa pernah sampai ke
+   * server. Dijalankan sekali saat user siap (menangkap sisa dari sesi
+   * sebelumnya) dan setiap kali browser melaporkan `online`.
+   */
+  useEffect(() => {
+    if (!user?.id) return;
+
+    let cancelled = false;
+    const flush = async () => {
+      if (cancelled || !navigator.onLine) return;
+      const { sent } = await flushOfflineXP();
+      // Saldo di layar ikut basi kalau ada yang benar-benar terkirim.
+      if (sent > 0 && !cancelled) {
+        window.dispatchEvent(new CustomEvent("hp_points_changed"));
+      }
+    };
+
+    flush();
+    window.addEventListener("online", flush);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("online", flush);
+    };
+  }, [user?.id]);
+
   useEffect(() => {
     if (user) {
       const activeRole = user.role;
@@ -879,6 +1108,19 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
   // Auto-sync to DB with debounce + keepalive (survives page refresh)
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestSyncRef = useRef<{ state: any; user: any } | null>(null);
+
+  /*
+   * Penanda "kapan tab ini terakhir melihat keadaan server".
+   *
+   * Disimpan di ref, bukan di state React, karena dua alasan. Pertama, menaruh
+   * di state akan memicu siklus sync baru setiap kali diperbarui — dan sync
+   * itulah yang memperbaruinya, jadi loopnya tidak berhenti. Kedua,
+   * `latestSyncRef` ditimpa ulang dari state React setiap ada perubahan, jadi
+   * nilai yang dititipkan di sana akan hilang.
+   *
+   * Diisi dari GET (saat state dimuat) dan dimajukan dari balasan POST.
+   */
+  const stateLoadedAtRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!loading && user && state) {
@@ -924,7 +1166,16 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
           setSyncing(true);
           const finalSyncState = stripNonSyncedState(data.state, data.user);
 
-          const finalPayload = JSON.stringify({ state: finalSyncState, user: data.user, userId: data.user.id });
+          // Penanda disisipkan saat pengiriman, bukan disimpan di state, supaya
+          // nilainya tidak ikut terhitung sebagai "perubahan" yang memicu sync.
+          const finalPayload = JSON.stringify({
+            state: { ...finalSyncState, stateLoadedAt: stateLoadedAtRef.current },
+            user: data.user,
+            userId: data.user.id,
+            // Server memantulkannya kembali pada event realtime, supaya tab ini
+            // bisa mengabaikan gema penyimpanannya sendiri. Lihat TAB_ORIGIN_ID.
+            originId: TAB_ORIGIN_ID,
+          });
           lastSyncedPayloadRef.current = JSON.stringify({ state: finalSyncState, user: data.user }); // Update ref immediately with consistent structure (no userId)
 
           const response = await fetch("/api/storage", {
@@ -934,6 +1185,22 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
           });
 
           if (response.ok) {
+            /*
+             * Majukan penanda "kapan tab ini terakhir melihat server".
+             *
+             * Server memakai `stateLoadedAt` untuk mengabaikan tulisan dari tab
+             * yang memegang salinan basi. Tanpa memajukannya di sini, tulisan
+             * PERTAMA sebuah tab membuat dirinya sendiri terlihat basi, dan
+             * simpanan berikutnya diabaikan diam-diam — persis gejala "diubah
+             * tapi tidak tersimpan" yang justru ingin ditutup.
+             *
+             * Ditulis lewat ref, bukan `updateState`, supaya tidak memicu
+             * siklus sync baru: mengubah state di sini akan menjadwalkan POST
+             * lagi, dan seterusnya tanpa henti.
+             */
+            const okData = await response.json().catch(() => ({}));
+            if (okData?.stateLoadedAt) stateLoadedAtRef.current = okData.stateLoadedAt;
+
             if (typeof window !== "undefined") {
               window.postMessage({ type: "FLOWBEE_WEBSITE_UPDATE" }, "*");
             }
@@ -991,7 +1258,21 @@ export function HPProvider({ children }: { children: React.ReactNode }) {
         const dedupeKey = JSON.stringify({ state: syncState, user: data.user });
         if (lastSyncedPayloadRef.current === dedupeKey) return;
 
-        const payload = JSON.stringify({ state: syncState, user: data.user, userId: data.user.id });
+        /*
+         * Penanda diambil dari ref, BUKAN dari `data.state`.
+         *
+         * `state.stateLoadedAt` hanya berisi waktu pemuatan pertama dan tidak
+         * pernah dimajukan — advance-nya disimpan di ref supaya tidak memicu
+         * siklus sync. Kalau beacon memakai nilai state, ia mengirim penanda
+         * yang sudah tertinggal jauh, server menganggapnya basi, dan simpanan
+         * TERAKHIR saat tab ditutup justru yang paling sering hilang.
+         */
+        const payload = JSON.stringify({
+          state: { ...syncState, stateLoadedAt: stateLoadedAtRef.current },
+          user: data.user,
+          userId: data.user.id,
+          originId: TAB_ORIGIN_ID,
+        });
         // Only send if within beacon limits (usually 64KB)
         if (payload.length < 60000) {
           const blob = new Blob([payload], { type: 'application/json' });

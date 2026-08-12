@@ -684,11 +684,12 @@ async function writeUncreditedLogbook(
 ): Promise<void> {
   try {
     const label = `${isSolo ? "Sesi fokus" : "Coworking"} ${mins} menit — ${room.name}`;
+    // `id` dilepas ke AUTO_INCREMENT — kolomnya INT, dan string "log_<base36>"
+    // yang dulu dikirim di sini selalu ditolak MySQL. Lihat lib/points.ts.
     await db.execute(
-      `INSERT INTO logbook_entries (id, user_id, type, title, description, xp_earned, created_at)
-       VALUES (?, ?, 'activity', ?, ?, 0, UTC_TIMESTAMP())`,
+      `INSERT INTO logbook_entries (user_id, type, title, description, xp_earned, created_at)
+       VALUES (?, 'activity', ?, ?, 0, UTC_TIMESTAMP())`,
       [
-        "log_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6),
         userId,
         `${isSolo ? "⏱️" : "👥"} ${label}`,
         label,
@@ -793,6 +794,61 @@ export async function settleRoom(roomId: string): Promise<void> {
       payload: { outcome, focusedSecs: Number(p.focused_secs) || 0, points },
     });
   }
+
+  // Melaporkan yang tertahan dilakukan SETELAH semua orang dibayar, dan di
+  // dalam penjaganya sendiri. Push adalah urusan sampingan; ia tidak boleh
+  // punya kesempatan menggagalkan pembayaran yang sudah diklaim di atas.
+  const sessionMins = Math.max(
+    1,
+    Math.round((nowMs - (toMs(room.started_at) ?? nowMs - room.duration_mins * 60_000)) / 60_000),
+  );
+  for (const p of settled) {
+    if (!OUTCOME_FACTOR[outcomes.get(String(p.user_id))!]) continue;
+    try {
+      await reportHeldNotifications(String(p.user_id), sessionMins);
+    } catch (e) {
+      console.warn("[FocusRoom] Held-notification report failed:", e);
+    }
+  }
+}
+
+/**
+ * Memberi tahu apa yang menumpuk selama sesi berjalan.
+ *
+ * SATU push berisi hitungan, bukan N push beruntun. Melepaskan lima notifikasi
+ * sekaligus di detik sesi berakhir bukan menahan interupsi — itu menundanya
+ * lalu melipatgandakannya, dan orang yang baru selesai fokus justru dihukum
+ * karena sudah fokus.
+ *
+ * Jendelanya dihitung dengan `LEAST(NOW(), UTC_TIMESTAMP())` seperti pemeriksa
+ * duplikat di lib/notificationService.ts. Kolom `created_at` di tabel itu
+ * ditulis dua gaya zona waktu, dan menciptakan konvensi ketiga di sini akan
+ * membuat hitungannya meleset persis pada selisih zona server.
+ */
+async function reportHeldNotifications(userId: string, sinceMinutes: number): Promise<void> {
+  const res = await db.execute({
+    sql: `SELECT COUNT(*) AS n FROM notifications
+           WHERE user_id = ? AND is_read = 0
+             AND created_at >= LEAST(NOW(), UTC_TIMESTAMP()) - INTERVAL ? MINUTE`,
+    args: [userId, sinceMinutes],
+  });
+
+  const count = Number(res.rows[0]?.n ?? 0);
+  if (count < 1) return;
+
+  const { sendPushNotification } = await import("./pushService");
+  await sendPushNotification(
+    userId,
+    "Sesi fokusmu selesai",
+    count === 1
+      ? "Ada 1 kabar yang menunggu selama kamu fokus."
+      : `Ada ${count} kabar yang menunggu selama kamu fokus.`,
+    "/",
+    // Sesinya sudah berakhir saat baris ini jalan, tapi status peserta di tabel
+    // belum tentu sudah ikut berubah. Tanpa bypass, satu-satunya push yang
+    // dikirim justru karena sesi selesai bisa ditahan oleh sesi itu sendiri.
+    { bypassFocus: true },
+  );
 }
 
 // ── Pemeliharaan ────────────────────────────────────────────────────────────
@@ -846,6 +902,45 @@ export async function findActiveSessionElsewhere(
     [userId, exceptRoomId ?? ""],
   );
   return res.rows[0] ? String(res.rows[0].room_id) : null;
+}
+
+/**
+ * Sedang fokus dalam arti "sedang tidak boleh diinterupsi".
+ *
+ * Bukan sekadar "punya sesi", dan bedanya disengaja:
+ *
+ *   • RUANG TUNGGU belum menghitung apa pun. Menahan kabar di sana berarti
+ *     menahan kabar tanpa melindungi satu menit pun.
+ *   • MENJAUH berarti orangnya sudah terlanjur terganggu. Menahan notifikasi
+ *     justru menyembunyikan alasan dia menjauh — bisa jadi kabar itu sendiri.
+ *
+ * Penjaga `ends_at` di baris terakhir bukan hiasan. Sesi yang lewat waktunya
+ * tapi belum sempat disentuh reaper tetap berstatus `running` di tabel; tanpa
+ * penjaga itu satu sesi macet akan membungkam notifikasi user selamanya, dan
+ * kegagalan seperti itu tidak akan pernah dilaporkan siapa pun karena bentuknya
+ * adalah ketiadaan.
+ */
+export async function isFocusProtected(userId: string): Promise<boolean> {
+  try {
+    const res = await db.execute(
+      `SELECT 1 FROM focus_room_participants fp
+         JOIN focus_rooms fr ON fr.id = fp.room_id
+        WHERE fp.user_id = ?
+          AND fp.status = 'focusing'
+          AND fr.status = 'running'
+          AND (fr.ends_at IS NULL OR fr.ends_at > UTC_TIMESTAMP())
+        LIMIT 1`,
+      [userId],
+    );
+    return res.rows.length > 0;
+  } catch (e) {
+    // Gagal memeriksa harus berarti "kirim saja". Menelan notifikasi karena
+    // query error adalah kegagalan diam-diam; notifikasi yang lolos saat sesi
+    // fokus cuma mengganggu, dan itu keadaan yang sama seperti sebelum fitur
+    // ini ada.
+    console.warn("[FocusRoom] Focus-protection check failed, allowing push:", e);
+    return false;
+  }
 }
 
 /**
