@@ -2,20 +2,42 @@
 
 import React, { useState } from "react";
 import { HP_TOKENS, HP_FONT, HP_TEXT } from "@/lib/constants";
+import { trainingGraduationPoints, TRAINING_GRADUATION_MIN_DAYS } from "@/lib/pointsConfig";
 import HPGlyph from "@/components/ui/HPGlyph";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 interface HabitCellProps {
   h: any;
   onToggle?: (date: Date, isToday: boolean, done: boolean) => void;
   onQuickComplete?: (date: Date, isToday: boolean, wasDone: boolean, newDone: boolean) => void;
-  onFinish?: () => void;
+  /** Menunggu server; resolve `true` kalau training-nya benar-benar tamat. */
+  onFinish?: () => void | Promise<boolean | void>;
+  /**
+   * Poin yang server bayar untuk centang terakhir pada latihan INI. Undefined
+   * kalau yang terakhir dicentang latihan lain; 0 kalau tidak dibayar.
+   *
+   * Dulu pil poinnya berbunyi "+15" dan dinyalakan di `handleCellClick` — yaitu
+   * saat dialognya BARU DIBUKA, sebelum penggunanya menekan apa pun dan jauh
+   * sebelum server menjawab. Kuota latihan cuma 2/hari, jadi angka itu sering
+   * kali memang tidak pernah masuk.
+   */
+  awardedPoints?: number;
 }
 
 const DAY_LABELS = ['S', 'S', 'R', 'K', 'J', 'S', 'M'];
 
-function HabitCell({ h, onToggle, onQuickComplete, onFinish }: HabitCellProps) {
+function HabitCell({ h, onToggle, onQuickComplete, onFinish, awardedPoints }: HabitCellProps) {
   const [showPoints, setShowPoints] = useState(false);
+
+  // Pil poin menyusul jawaban server, bukan mendahuluinya.
+  React.useEffect(() => {
+    if (!awardedPoints || awardedPoints <= 0) return;
+    setShowPoints(true);
+    const t = setTimeout(() => setShowPoints(false), 1200);
+    return () => clearTimeout(t);
+  }, [awardedPoints]);
   const [monthOffset, setMonthOffset] = useState(0); // 0 = current month, 1 = previous month, etc.
+  const [confirming, setConfirming] = useState<null | "graduate" | "undo">(null);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0); // Normalize time
@@ -28,7 +50,21 @@ function HabitCell({ h, onToggle, onQuickComplete, onFinish }: HabitCellProps) {
   const startDay = (new Date(viewYear, viewMonth, 1).getDay() + 6) % 7; // Monday = 0
   
   const streak = h.streak || 0;
-  
+
+  // Kapan sebuah training tamat adalah keputusan yang menjalaninya, jadi tidak
+  // ada gerbang durasi di sini — yang mengikuti hari-hari tercatat adalah
+  // BAYARANNYA. Rumusnya dibagi dengan server (lib/pointsConfig), jadi angka di
+  // dialog konfirmasi sama dengan yang nanti benar-benar dibayar.
+  const completedDays = React.useMemo(() => {
+    // `completedDates` adalah sumber kebenarannya; `streak` cuma jaring
+    // pengaman untuk habit lama yang dibuat sebelum kolom itu ada.
+    if (Array.isArray(h.completedDates)) return new Set(h.completedDates).size;
+    return streak;
+  }, [h.completedDates, streak]);
+  const canGraduate = completedDays >= TRAINING_GRADUATION_MIN_DAYS;
+  const graduationPoints = trainingGraduationPoints(completedDays);
+
+
   const habitCreatedAt = h.created_at ? new Date(h.created_at) : new Date('2020-01-01');
   habitCreatedAt.setHours(0, 0, 0, 0);
 
@@ -82,14 +118,7 @@ function HabitCell({ h, onToggle, onQuickComplete, onFinish }: HabitCellProps) {
 
   const handleCellClick = (cell: any) => {
     if (cell.future) return;
-    
-    if (cell.isToday) {
-      if (!h.done) {
-        setShowPoints(true);
-        setTimeout(() => setShowPoints(false), 1200);
-      }
-    }
-    
+
     // Pass the specific date to onToggle so HomeScreen knows which day was clicked
     onToggle?.(cell.date, cell.isToday, cell.done);
   };
@@ -112,7 +141,7 @@ function HabitCell({ h, onToggle, onQuickComplete, onFinish }: HabitCellProps) {
       }}
     >
 
-      {/* Floating +15 Poin */}
+      {/* Pil poin mengambang — angkanya dari server */}
       {showPoints && (
         <div style={{
           position: 'absolute', top: 10, right: 14,
@@ -122,7 +151,7 @@ function HabitCell({ h, onToggle, onQuickComplete, onFinish }: HabitCellProps) {
           animation: 'hpRise 1.2s ease-out forwards',
           pointerEvents: 'none', zIndex: 10,
         }}>
-          +15
+          +{awardedPoints}
         </div>
       )}
 
@@ -145,20 +174,28 @@ function HabitCell({ h, onToggle, onQuickComplete, onFinish }: HabitCellProps) {
           </div>
         </div>
         
-        {/* Action Button */}
+        {/* Bebas ditekan kapan saja — satu-satunya yang mematikannya adalah
+            training yang belum pernah dicentang sekali pun, karena di situ
+            belum ada hasil apa pun untuk ditamatkan. */}
         <button
           onClick={(e) => {
             e.stopPropagation();
-            if (window.confirm(`Yakin ingin menamatkan training "${h.name}"? Ini akan menghapusnya dari daftar harianmu dan memberikan reward EXP.`)) {
-              onFinish?.();
-            }
+            setConfirming("graduate");
           }}
-          className="hp-tap"
+          disabled={!canGraduate}
+          className={canGraduate ? "hp-tap" : ""}
+          aria-label={
+            canGraduate
+              ? `Tamatkan training ${h.name}, ${completedDays} hari dijalani`
+              : `Tamatkan training ${h.name} — belum dijalani sehari pun`
+          }
+          title={canGraduate ? undefined : 'Jalani minimal satu hari dulu'}
           style={{
             background: HP_TOKENS.lineSoft, border: 'none', padding: '6px 10px', margin: 0,
-            color: HP_TOKENS.blue, fontFamily: HP_FONT, fontWeight: 700, fontSize: 11,
-            cursor: 'pointer', borderRadius: 8, flexShrink: 0,
-            display: 'flex', alignItems: 'center', gap: 4
+            color: canGraduate ? HP_TOKENS.blue : HP_TOKENS.inkFade,
+            fontFamily: HP_FONT, fontWeight: 700, fontSize: 11,
+            cursor: canGraduate ? 'pointer' : 'not-allowed', borderRadius: 8, flexShrink: 0,
+            display: 'flex', alignItems: 'center', gap: 4,
           }}
         >
           <HPGlyph name="medal" size={12} color="currentColor" />
@@ -286,9 +323,7 @@ function HabitCell({ h, onToggle, onQuickComplete, onFinish }: HabitCellProps) {
           const todayCell = calendarCells.find(c => c.isToday);
           if (todayCell) {
             if (todayCell.done) {
-              if (window.confirm("Yakin ingin membatalkan penyelesaian hari ini?")) {
-                onQuickComplete?.(todayCell.date, true, true, false);
-              }
+              setConfirming("undo");
             } else {
               // Instead of instant complete, we open the modal like when clicking a cell
               onToggle?.(todayCell.date, true, false);
@@ -327,6 +362,42 @@ function HabitCell({ h, onToggle, onQuickComplete, onFinish }: HabitCellProps) {
           "Tandai Selesai"
         )}
       </button>
+
+      {confirming === "graduate" && (
+        <ConfirmDialog
+          title={`Tamatkan "${h.name}"?`}
+          // Angka harinya dan poinnya disebut bersama supaya hubungannya
+          // terbaca: hadiahnya lahir dari hari yang dijalani, bukan dari
+          // menekan tombolnya.
+          description={`${completedDays} hari dijalani — kelulusannya bernilai +${graduationPoints} poin. Training ini lalu dihapus dari daftar harianmu, dan itu permanen.`}
+          confirmLabel="Ya, tamatkan"
+          confirmIcon="medal"
+          tone="danger"
+          onCancel={() => setConfirming(null)}
+          // Dialognya baru menutup setelah server menjawab. Kalau ditolak
+          // (mis. targetnya ternyata belum tercapai), ia tetap terbuka dan
+          // toast-nya menjelaskan kenapa.
+          onConfirm={async () => {
+            const done = await onFinish?.();
+            if (done !== false) setConfirming(null);
+          }}
+        />
+      )}
+
+      {confirming === "undo" && (
+        <ConfirmDialog
+          title="Batalkan penyelesaian hari ini?"
+          description="Centang hari ini dilepas dan streak-mu turun satu. Poin yang sudah diberikan tidak kembali."
+          confirmLabel="Ya, batalkan"
+          tone="danger"
+          onCancel={() => setConfirming(null)}
+          onConfirm={() => {
+            const todayCell = calendarCells.find(c => c.isToday);
+            if (todayCell) onQuickComplete?.(todayCell.date, true, true, false);
+            setConfirming(null);
+          }}
+        />
+      )}
     </div>
   );
 }
