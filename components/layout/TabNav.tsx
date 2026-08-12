@@ -5,7 +5,6 @@ import { HP_TOKENS, HP_FONT_DISPLAY } from "@/lib/constants";
 import { UserRole } from "@/lib/HPContext";
 import HPGlyph from "@/components/ui/HPGlyph";
 import DownloadExtensionBtn from "@/components/pwa/DownloadExtensionBtn";
-import FontSelector from "@/components/ui/FontSelector";
 import ThemeSwitcher from "@/components/ui/ThemeSwitcher";
 import { motion, useReducedMotion, SPRING } from "@/components/ui/motion";
 
@@ -181,7 +180,6 @@ export default function TabNav({ tab, setTab, userRole, hrAccess }: TabNavProps)
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <FontSelector />
           <ThemeSwitcher />
         </div>
         <DownloadExtensionBtn />

@@ -4,8 +4,12 @@
    Dark mode via [data-theme="dark"], bukan prefers-color-scheme
    ========================================================================== */
 
-/* ── Google Fonts ── */
-@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Fredoka:wght@500;600;700&family=Inter:wght@400;600;700;800&family=Manrope:wght@400;600;700;800&family=Nunito:wght@400;600;700;800;900&family=Poppins:wght@400;600;700;800;900&display=swap');
+/* ── Google Fonts ──
+   Hanya Nunito. Lima keluarga lain di sini dulu ada semata-mata untuk melayani
+   dropdown "Pilih Font App" di menu pengaturan — enam keluarga penuh ditarik
+   ulang setiap kali popup dibuka, demi sebuah pilihan yang tidak seharusnya
+   ditawarkan. Dropdown-nya sudah dihapus, dan begitu pula unduhannya. */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap');
 
 :root {
   /* ── Netral / Kanvas (60%) ── */
@@ -184,31 +188,36 @@
   --color-bubble-out: rgba(56, 189, 248, 0.2);
 }
 
-/* ── Dynamic Font Selectors ── */
-[data-font="nunito"] {
-  --font-family: 'Nunito', system-ui, -apple-system, sans-serif;
-}
-[data-font="manrope"] {
-  --font-family: 'Manrope', system-ui, -apple-system, sans-serif;
-}
-[data-font="inter"] {
-  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
-}
-[data-font="feather"] {
-  --font-family: 'Feather', 'Nunito', system-ui, -apple-system, sans-serif;
-}
-[data-font="baloo2"] {
-  --font-family: 'Baloo 2', system-ui, -apple-system, sans-serif;
-}
-[data-font="fredoka"] {
-  --font-family: 'Fredoka', system-ui, -apple-system, sans-serif;
-}
-[data-font="poppins"] {
-  --font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+/* ── Tipografi dasar ──
+   Di sini dulu berdiri `* { font-family: … !important; font-weight: 800
+   !important }`. Aturan itu memaksa SETIAP elemen ke ExtraBold — judul, isi,
+   keterangan, label, semuanya satu berat. Hierarki 500/600/700/800 yang sudah
+   ditulis rapi di components.css dan layout.css tidak pernah sempat berlaku
+   sekali pun, karena `!important` pada `*` mengalahkan semuanya.
+
+   Selama fontnya Nunito, keseragaman itu masih terbaca sebagai gaya. Begitu
+   Nunito tidak termuat dan fallback sistem yang tampil, yang tersisa hanyalah
+   dinding teks tebal tanpa susunan — persis rupa halaman yang belum digarap.
+
+   Diganti dengan pewarisan biasa: satu titik penetapan di `body`, dan tiap
+   komponen bebas menyatakan beratnya sendiri. */
+body {
+  font-family: var(--font-family);
+  font-weight: 600;
 }
 
-/* ── Universal Font Rule ── */
-* {
-  font-family: var(--font-family) !important;
-  font-weight: 800 !important;
+/* Kontrol form tidak mewarisi font dari induknya secara bawaan. */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+h1, h2, h3, h4 {
+  font-weight: 800;
+}
+
+strong, b {
+  font-weight: 700;
 }

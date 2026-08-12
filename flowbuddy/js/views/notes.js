@@ -223,7 +223,7 @@ const NotesView = {
             </p>
             <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: #d97706; position: relative; z-index: 1;">
               <span>${dateStr}</span>
-              <span style="color: #64748b;">oleh ${this.esc(note.authorName) || 'Maya'}</span>
+              <span style="color: #64748b;">${note.authorName ? 'oleh ' + this.esc(note.authorName) : ''}</span>
             </div>
           </div>
         `;
@@ -287,11 +287,14 @@ const NotesView = {
     });
 
     container.querySelectorAll('.delete-note-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        if (confirm('Yakin ingin menghapus catatan ini?')) {
-          const id = e.currentTarget.getAttribute('data-id');
-          this.deleteNote(id);
-        }
+      btn.addEventListener('click', async (e) => {
+        const id = e.currentTarget.getAttribute('data-id');
+        const ok = await FlowBuddyDialog.confirm({
+          title: 'Hapus catatan ini?',
+          body: 'Isi catatan akan hilang dan tidak bisa dikembalikan.',
+          confirmLabel: 'Hapus',
+        });
+        if (ok) this.deleteNote(id);
       });
     });
   },

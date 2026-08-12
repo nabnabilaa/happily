@@ -169,7 +169,7 @@ const ContactsView = {
              if (typeof FlowBuddyApp !== 'undefined') {
                 FlowBuddyApp.showToast('Email tidak tersedia untuk kontak ini');
              } else {
-                alert('Email tidak tersedia untuk kontak ini');
+                FlowBuddyDialog.alert('Email tidak tersedia', 'Kontak ini belum punya alamat email tersimpan.');
              }
           }
        });

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Nunito, Manrope, Inter, Baloo_2, Fredoka, Poppins } from "next/font/google";
+import { Manrope } from "next/font/google";
 import "./globals.css";
 import Shell from "@/components/layout/Shell";
 import PWARegistration from "@/components/pwa/PWARegistration";
@@ -15,38 +15,6 @@ const manrope = Manrope({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-manrope",
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-inter",
-});
-
-const nunito = Nunito({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-nunito",
-});
-
-const baloo2 = Baloo_2({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-baloo2",
-});
-
-const fredoka = Fredoka({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-fredoka",
-});
-
-// Poppins has no variable cut on Google Fonts — static weights only.
-const poppins = Poppins({
-  subsets: ["latin"],
-  display: "swap",
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-poppins",
 });
 
 export const viewport: Viewport = {
@@ -98,20 +66,13 @@ export default function RootLayout({
   return (
     <html 
       lang="id" 
-      className={`${nunito.variable} ${manrope.variable} ${inter.variable} ${baloo2.variable} ${fredoka.variable} ${poppins.variable}`} 
+      className={manrope.variable}
+      
       suppressHydrationWarning
     >
       <head>
       </head>
       <body>
-        <Script id="font-loader" strategy="beforeInteractive" dangerouslySetInnerHTML={{
-          __html: `
-            try {
-              var savedFont = localStorage.getItem('hp-font') || 'manrope';
-              document.documentElement.setAttribute('data-font', savedFont);
-            } catch (e) {}
-          `
-        }} />
         <Script id="theme-loader" strategy="beforeInteractive" dangerouslySetInnerHTML={{
           __html: `
             try {

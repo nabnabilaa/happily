@@ -8,6 +8,7 @@ import { Row, Modal, HPButton, HPInput } from "@/components/ui";
 import { useHP } from "@/lib/HPContext";
 import { PUSHER_CLUSTER, PUSHER_KEY, isPusherConfigured } from "@/lib/realtimeConfig";
 import SectionHeader from "./SectionHeader";
+import FocusScanSheet from "@/components/modals/FocusScanSheet";
 
 interface CoworkingWidgetProps {
   openModal: (name: string, props?: any) => void;
@@ -51,6 +52,7 @@ export default function CoworkingWidget({ openModal }: CoworkingWidgetProps) {
   const [codePrompt, setCodePrompt] = useState<LobbyRoom | null>(null);
   const [promptCode, setPromptCode] = useState("");
   const [joining, setJoining] = useState(false);
+  const [scanning, setScanning] = useState(false);
 
   const fetchRooms = useCallback(async () => {
     try {
@@ -195,10 +197,35 @@ export default function CoworkingWidget({ openModal }: CoworkingWidgetProps) {
             style={{ textTransform: "uppercase", letterSpacing: 2 }}
           />
         </div>
+        {/* Pasangan dari QR yang dicetak `RoomInvite`. Tanpa tombol ini, satu-satunya
+            cara memakai QR itu adalah keluar aplikasi dan membuka kamera bawaan. */}
+        <button
+          onClick={() => setScanning(true)}
+          aria-label="Pindai QR ruangan"
+          title="Pindai QR ruangan"
+          className="hp-tap"
+          style={{
+            width: 46, height: 46, flexShrink: 0, borderRadius: HP_TOKENS.radiusMd,
+            border: `1.5px solid ${HP_TOKENS.line}`, background: HP_TOKENS.card,
+            cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+          }}
+        >
+          <HPGlyph name="target" size={20} color={HP_TOKENS.inkSoft} />
+        </button>
         <HPButton variant="primary" onClick={submitCode} disabled={joining || !codeInput.trim()}>
           Gabung
         </HPButton>
       </Row>
+
+      {scanning && (
+        <FocusScanSheet
+          onClose={() => setScanning(false)}
+          onResolved={(roomId, joinCode) => {
+            setScanning(false);
+            openModal("focus", { roomId, joinCode });
+          }}
+        />
+      )}
 
       <div
         className="hide-scroll"

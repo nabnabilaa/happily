@@ -35,6 +35,8 @@
  *   npx tsx scripts/anonymize-verify.ts    → uji kebocoran di query nyata
  */
 
+import { getViewerId } from "@/lib/viewerContext";
+
 type RawExec = (sql: string, args?: unknown[]) => Promise<Record<string, unknown>[]>;
 
 /** Nama depan & belakang dummy. Dikombinasikan jadi 40 × 20 = 800 nama unik. */
@@ -185,6 +187,13 @@ const KEY_ATTACHMENT = /attachment|proof|receipt|document|file_url|upload/i;
 export interface MaskMap {
   /** Nilai persis → dummy. Berlaku di kolom apa pun. */
   exact: Map<string, string>;
+  /**
+   * id user → nilai asli miliknya sendiri (nama, email, dan panggilan yang
+   * dipetakan ke dia). Dipakai mengecualikan identitas PENONTON dari
+   * penyamaran: mode review menyembunyikan orang lain darimu, bukan dirimu
+   * sendiri dari dirimu sendiri. Lihat lib/viewerContext.ts.
+   */
+  ownValues: Map<string, string[]>;
   /** Nama pendek → dummy. Hanya berlaku di kolom yang namanya kolom nama. */
   shortNames: Map<string, string>;
   /** Pola gabungan semua nama, untuk sapuan di dalam kalimat. Tidak peka
@@ -384,6 +393,7 @@ async function buildMap(rawExec: RawExec): Promise<MaskMap> {
   const shortNames = new Map<string, string>();
   const reverse = new Map<string, string>();
   const longNames: string[] = [];
+  const ownValues = new Map<string, string[]>();
 
   const users = await rawExec(
     "SELECT id, name, email, department, job_title, avatar_image FROM users",
@@ -420,8 +430,17 @@ async function buildMap(rawExec: RawExec): Promise<MaskMap> {
     }
     usedEmails.add(dummyEmail);
 
+    const own: string[] = [];
+
+    // Foto sendiri ikut dikecualikan. Tanpa ini penonton melihat namanya sendiri
+    // benar tapi avatarnya kosong — setengah dirinya tersamarkan, yang justru
+    // terbaca sebagai kerusakan, bukan sebagai penyamaran.
+    const ownAvatar = typeof user.avatar_image === "string" ? user.avatar_image.trim() : "";
+    if (ownAvatar.length > 8) own.push(ownAvatar);
+
     const realName = typeof user.name === "string" ? user.name.trim() : "";
     if (realName) {
+      own.push(realName);
       // Tiga tingkat, sesuai risiko masing-masing panjang nama:
       //  • ≥3 karakter → `exact`, dicocokkan sebagai nilai utuh di kolom apa pun
       //  • <3 karakter → `shortNames`, hanya di kolom nama; "HP" sebagai nilai
@@ -438,9 +457,12 @@ async function buildMap(rawExec: RawExec): Promise<MaskMap> {
 
     const realEmail = typeof user.email === "string" ? user.email.trim() : "";
     if (realEmail) {
+      own.push(realEmail);
       exact.set(realEmail, dummyEmail);
       if (!reverse.has(dummyEmail)) reverse.set(dummyEmail, realEmail);
     }
+
+    if (own.length) ownValues.set(id, own);
   }
 
   // Departemen dan jabatan dikumpulkan dari semua tempat yang menyimpannya,
@@ -495,6 +517,17 @@ async function buildMap(rawExec: RawExec): Promise<MaskMap> {
     if (dummy && !exact.has(term)) {
       exact.set(term, dummy);
       longNames.push(term);
+
+      // Panggilan itu juga identitas orangnya. Kalau tidak ikut dikecualikan,
+      // penonton melihat nama lengkapnya sendiri utuh tapi nama panggilannya
+      // di dalam chat berganti jadi nama orang lain.
+      for (const [userId, values] of ownValues) {
+        if (values.some((v) => v.toLowerCase().includes(lower))) {
+          values.push(term);
+          ownValues.set(userId, values);
+          break;
+        }
+      }
     }
   }
 
@@ -517,6 +550,7 @@ async function buildMap(rawExec: RawExec): Promise<MaskMap> {
 
   return {
     exact,
+    ownValues,
     shortNames,
     textPattern,
     sweepLookup,
@@ -573,7 +607,36 @@ export function resetMaskMap(): void {
   building = null;
 }
 
-function maskString(key: string, value: string, map: MaskMap): string | null {
+/**
+ * Nilai milik penonton sendiri, yang tidak boleh disamarkan darinya.
+ *
+ * Dibangun sekali per pemanggilan `maskRows`, bukan per baris: satu respons
+ * bisa berisi ratusan baris, dan penontonnya sama untuk semuanya.
+ *
+ * Set kosong (tidak ada konteks permintaan, atau penonton tidak dikenal)
+ * berarti penyamaran berlaku penuh seperti sebelumnya.
+ */
+function ownExemptions(map: MaskMap): { exact: Set<string>; lower: Set<string> } {
+  const viewerId = getViewerId();
+  const values = viewerId ? map.ownValues.get(viewerId) : undefined;
+  if (!values || !values.length) return { exact: new Set(), lower: new Set() };
+  return {
+    exact: new Set(values),
+    lower: new Set(values.map((v) => v.toLowerCase())),
+  };
+}
+
+type Exempt = ReturnType<typeof ownExemptions>;
+
+const NO_EXEMPTION: Exempt = { exact: new Set(), lower: new Set() };
+
+function maskString(key: string, value: string, map: MaskMap, exempt: Exempt): string | null {
+  // Identitas penonton sendiri lewat tanpa disentuh: nama di sapaan halaman
+  // depan, emailnya di halaman profil, namanya yang menandai barisnya sendiri
+  // di papan peringkat. Orang lain yang melihat baris yang sama tetap melihat
+  // nama palsu, karena pengecualian ini dihitung ulang per permintaan.
+  if (exempt.exact.has(value) || exempt.exact.has(value.trim())) return value;
+
   // Nyaris semua avatar di sini adalah URL foto Google — wajah asli. Dikosongkan
   // supaya UI jatuh ke inisial dari nama palsu (HPAvatar sudah menanganinya).
   //
@@ -616,10 +679,13 @@ function maskString(key: string, value: string, map: MaskMap): string | null {
   // dicocokkan hanya nama utuh ≥5 karakter dengan batas kata — bukan potongan.
   if (map.textPattern) {
     map.textPattern.lastIndex = 0;
-    swept = swept.replace(
-      map.textPattern,
-      (matched) => map.sweepLookup.get(matched.toLowerCase()) ?? matched,
-    );
+    swept = swept.replace(map.textPattern, (matched) => {
+      // Nama penonton di dalam kalimat orang lain tetap namanya sendiri:
+      // notifikasi "Andi memberi apresiasi ke <kamu>" harus menyebutmu dengan
+      // namamu, bukan nama palsu yang tidak kamu kenali sebagai dirimu.
+      if (exempt.lower.has(matched.toLowerCase())) return matched;
+      return map.sweepLookup.get(matched.toLowerCase()) ?? matched;
+    });
   }
 
   // Alamat email juga tidak melihat nama kolom: alamat asli sama membocorkan
@@ -628,6 +694,7 @@ function maskString(key: string, value: string, map: MaskMap): string | null {
   if (swept.includes("@")) {
     swept = swept.replace(EMAIL_IN_TEXT, (address) => {
       if (address.toLowerCase().endsWith(`@${DUMMY_EMAIL_DOMAIN}`)) return address;
+      if (exempt.lower.has(address.toLowerCase())) return address;
       return map.exact.get(address) ?? `pengguna.${hash32(address) % 10000}@${DUMMY_EMAIL_DOMAIN}`;
     });
   }
@@ -643,32 +710,38 @@ function maskString(key: string, value: string, map: MaskMap): string | null {
   return swept;
 }
 
-function maskValue(key: string, value: unknown, map: MaskMap, depth: number): unknown {
+function maskValue(key: string, value: unknown, map: MaskMap, exempt: Exempt, depth: number): unknown {
   if (value === null || value === undefined) return value;
-  if (typeof value === "string") return maskString(key, value, map);
+  if (typeof value === "string") return maskString(key, value, map, exempt);
   if (depth > 4) return value;
   if (Array.isArray(value)) {
-    return value.map((item) => maskValue(key, item, map, depth + 1));
+    return value.map((item) => maskValue(key, item, map, exempt, depth + 1));
   }
   if (typeof value === "object" && !(value instanceof Date) && !Buffer.isBuffer(value)) {
-    maskRow(value as Record<string, unknown>, map, depth + 1);
+    maskRow(value as Record<string, unknown>, map, exempt, depth + 1);
   }
   return value;
 }
 
 /** Menyamarkan satu baris DI TEMPAT. Baris hasil query selalu objek baru milik
  *  pemanggil, jadi tidak ada pihak lain yang memegang versi aslinya. */
-function maskRow(row: Record<string, unknown>, map: MaskMap, depth = 0): Record<string, unknown> {
+function maskRow(
+  row: Record<string, unknown>,
+  map: MaskMap,
+  exempt: Exempt = NO_EXEMPTION,
+  depth = 0,
+): Record<string, unknown> {
   for (const key of Object.keys(row)) {
-    row[key] = maskValue(key, row[key], map, depth);
+    row[key] = maskValue(key, row[key], map, exempt, depth);
   }
   return row;
 }
 
 export function maskRows<T>(rows: T[], map: MaskMap): T[] {
+  const exempt = ownExemptions(map);
   for (const row of rows) {
     if (row && typeof row === "object") {
-      maskRow(row as Record<string, unknown>, map);
+      maskRow(row as Record<string, unknown>, map, exempt);
     }
   }
   return rows;

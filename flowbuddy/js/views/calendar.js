@@ -429,9 +429,14 @@ const CalendarView = {
 
     // Delete event
     container.querySelectorAll('.cal-del-btn').forEach(btn => {
-       btn.addEventListener('click', (e) => {
+       btn.addEventListener('click', async (e) => {
           e.stopPropagation();
-          if (confirm('Yakin ingin menghapus agenda ini?')) {
+          const ok = await FlowBuddyDialog.confirm({
+             title: 'Hapus agenda ini?',
+             body: 'Agenda yang dihapus tidak bisa dikembalikan.',
+             confirmLabel: 'Hapus',
+          });
+          if (ok) {
              this.deleteEvent(btn.getAttribute('data-id'));
              this.render(container);
              if(FlowBuddyApp && FlowBuddyApp.showToast) FlowBuddyApp.showToast('Agenda dihapus');

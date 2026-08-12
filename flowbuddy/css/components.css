@@ -847,7 +847,7 @@
     justify-content: center;
 }
 .fb-modal-content {
-    background: #F8FAFC;
+    background: var(--bg-main);
     width: 100%;
     border-radius: 24px 24px 0 0;
     display: flex;
@@ -882,13 +882,13 @@
 }
 .fb-modal-footer {
     padding: 16px 20px 24px;
-    background: #fff;
+    background: var(--bg-card);
     border-top: 1px solid var(--border-light);
 }
 
 /* Modal Elements */
 .task-summary-card {
-    background: #fff;
+    background: var(--bg-card);
     border: 1px solid #10B981;
     border-radius: 12px;
     padding: 12px;
@@ -966,7 +966,7 @@
 
 .task-progress-bar-small {
     height: 4px;
-    background: #F3F4F6;
+    background: var(--border-light);
     border-radius: 2px;
     width: 100%;
     margin-top: 8px;
@@ -980,7 +980,7 @@
 }
 
 .project-toggle-card {
-    background: #F3F0FF;
+    background: var(--bg-card-hover);
     border-radius: 12px;
     padding: 16px;
     display: flex;

@@ -473,9 +473,9 @@ const BeeMascot = React.memo(function BeeMascot({ mood = 'neutral', size = 80, s
 
       <!-- ZZZ (tidur) -->
       <g className="gelembung-zzz">
-        <text x="138" y="50" fill="white" fontSize="32" fontWeight="900" fontFamily="Nunito,sans-serif" filter="url(#fb-text-shadow)">Z</text>
-        <text x="163" y="28" fill="white" fontSize="22" fontWeight="900" fontFamily="Nunito,sans-serif" filter="url(#fb-text-shadow)">z</text>
-        <text x="178" y="12" fill="white" fontSize="15" fontWeight="900" fontFamily="Nunito,sans-serif" filter="url(#fb-text-shadow)">z</text>
+        <text x="138" y="50" fill="white" fontSize="32" fontWeight="900" fontFamily="var(--hp-font)" filter="url(#fb-text-shadow)">Z</text>
+        <text x="163" y="28" fill="white" fontSize="22" fontWeight="900" fontFamily="var(--hp-font)" filter="url(#fb-text-shadow)">z</text>
+        <text x="178" y="12" fill="white" fontSize="15" fontWeight="900" fontFamily="var(--hp-font)" filter="url(#fb-text-shadow)">z</text>
       </g>
 
     </svg>

@@ -106,7 +106,7 @@ const ChatView = {
 
       return {
         id: ch.id,
-        name: ch.name || 'Unknown',
+        name: ch.name || 'Tanpa nama',
         initials: ch.emoji !== '👤' && ch.emoji !== '💬' ? ch.emoji : initials.toUpperCase(),
         avatar: avatars[i % avatars.length],
         lastMsg: ch.lastMessage ? (ch.lastSenderName ? ch.lastSenderName.split(' ')[0] + ': ' + ch.lastMessage : ch.lastMessage) : 'Mulai percakapan',

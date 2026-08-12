@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { markViewer } from "@/lib/viewerContext";
 
 /**
  * Lapisan sesi server minimal.
@@ -133,9 +134,16 @@ function readCookie(request: Request, name: string): string | null {
 /**
  * Satu-satunya cara sah untuk mengetahui siapa yang memanggil sebuah endpoint.
  * Mengembalikan null kalau tidak ada sesi valid — pemanggil harus membalas 401.
+ *
+ * Sekaligus menandai permintaan ini sebagai milik user tersebut, supaya mode
+ * review bisa mengecualikan identitas penonton dari penyamaran. Ditaruh di sini
+ * karena inilah satu-satunya tempat cookie sesi dibaca — route tidak perlu ingat
+ * melakukannya sendiri. Lihat lib/viewerContext.ts.
  */
 export function getAuthUserId(request: Request): string | null {
-  return verifySessionToken(readCookie(request, COOKIE_NAME))?.uid ?? null;
+  const uid = verifySessionToken(readCookie(request, COOKIE_NAME))?.uid ?? null;
+  markViewer(uid);
+  return uid;
 }
 
 /** Atribut cookie sesi, dipakai lewat `response.cookies.set(...)`. */

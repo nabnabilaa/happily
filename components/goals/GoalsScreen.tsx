@@ -791,7 +791,7 @@ export default function GoalsScreen({ openModal }: GoalsScreenProps) {
                 <EmptyState
                   icon="leaf"
                   title="Bulan ini masih kosong"
-                  description="Tentukan sendiri apa yang mau kamu capai bulan ini. Kalau timmu menitipkan KPI, itu akan muncul di daftar yang sama."
+                  description="Tentukan sendiri apa yang mau kamu capai bulan ini. KPI yang ditugaskan manajermu juga akan muncul di daftar ini."
                   action={<HPButton variant="primary" icon="plus" onClick={openKpiComposer}>Buat KPI Sendiri</HPButton>}
                 />
               </HPCard>

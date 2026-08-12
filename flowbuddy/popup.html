@@ -32,6 +32,14 @@
             <div class="header-left" id="header-default">
                 <div class="mascot-icon hp-buddy-svg-wrap state-idle" id="fb-ext-svg-wrap" style="width: 38px; height: 38px; margin-right: 12px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
                     <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="overflow: hidden;">
+      <defs>
+        <!-- Badan maskot. Tag pembuka <defs> dan gradien ini pernah hilang dari
+             file, menyisakan <stop> menggantung dan </defs> yang menutup sesuatu
+             yang tidak pernah dibuka. Akibatnya fill="url(#fb-grad-badan)" di
+             bawah menunjuk ke gradien yang tidak ada, dan badan maskot tampil
+             tanpa warna sama sekali. Bandingkan dengan mascot-content.js yang
+             versi utuhnya tidak pernah rusak. -->
+        <radialGradient id="fb-grad-badan" cx="40%" cy="30%" r="70%">
           <stop class="stop-1" offset="0%"/>
           <stop class="stop-2" offset="100%"/>
         </radialGradient>
@@ -55,7 +63,7 @@
         </filter>
       </defs>
 
-      <!-- ΓöÇΓöÇ BACKGROUND EFFECTS ΓöÇΓöÇ -->
+      <!-- ── BACKGROUND EFFECTS ── -->
 
       <!-- Api Roket (semangat) -->
       <g class="api-roket">
@@ -137,9 +145,9 @@
           <line x1="93" y1="52" x2="107" y2="52" stroke="#adb5bd" stroke-width="2"/>
         </g>
         <g class="rumus">
-          <text x="5" y="38" fill="#845ef7" font-size="18" font-weight="bold" font-family="monospace">E=mc┬▓</text>
-          <text x="168" y="60" fill="#845ef7" font-size="26" font-weight="bold">Γê₧</text>
-          <text x="172" y="20" fill="#845ef7" font-size="22" font-weight="bold">Γêæ</text>
+          <text x="5" y="38" fill="#845ef7" font-size="18" font-weight="bold" font-family="monospace">E=mc²</text>
+          <text x="168" y="60" fill="#845ef7" font-size="26" font-weight="bold">∞</text>
+          <text x="172" y="20" fill="#845ef7" font-size="22" font-weight="bold">∑</text>
         </g>
       </g>
 
@@ -170,7 +178,7 @@
         <ellipse class="ring-2" cx="100" cy="110" rx="78" ry="24" fill="none" stroke="#845ef7" stroke-width="1.5" opacity="0.4" style="transform-origin:100px 110px"/>
       </g>
 
-      <!-- ΓöÇΓöÇ BADAN UTAMA ΓöÇΓöÇ -->
+      <!-- ── BADAN UTAMA ── -->
       <path d="M100,25 C150,25 190,65 190,110 C190,155 150,190 100,190 C50,190 10,155 10,110 C10,65 50,25 100,25 Z"
             fill="url(#fb-grad-badan)"/>
       <!-- Specular gloss (upper-left) for 3D sphere look -->
@@ -180,7 +188,7 @@
       <path d="M100,25 C150,25 190,65 190,110 C190,155 150,190 100,190 C50,190 10,155 10,110 C10,65 50,25 100,25 Z"
             fill="url(#fb-grad-rim)" pointer-events="none"/>
 
-      <!-- ΓöÇΓöÇ AKSESORI ΓöÇΓöÇ -->
+      <!-- ── AKSESORI ── -->
 
       <!-- Topi Tidur -->
       <g class="topi-tidur">
@@ -217,7 +225,7 @@
         <ellipse class="pipi" cx="156" cy="122" rx="17" ry="10" filter="url(#fb-blur-pipi)" opacity="0.75"/>
       </g>
 
-      <!-- ΓöÇΓöÇ ALIS ΓöÇΓöÇ -->
+      <!-- ── ALIS ── -->
       <g class="alis-group">
         <g class="alis-sedih">
           <path d="M 44 80 Q 60 64 76 75" fill="none" stroke="#212529" stroke-width="5.5" stroke-linecap="round"/>
@@ -233,7 +241,7 @@
         </g>
       </g>
 
-      <!-- ΓöÇΓöÇ MATA (default kedip) ΓöÇΓöÇ -->
+      <!-- ── MATA (default kedip) ── -->
       <g class="mata-bisa-kedip">
         <g class="mata-kiri">
           <circle cx="65" cy="95" r="14" fill="#212529"/>
@@ -251,7 +259,7 @@
         </g>
       </g>
 
-      <!-- ΓöÇΓöÇ MATA KHUSUS ΓöÇΓöÇ -->
+      <!-- ── MATA KHUSUS ── -->
       <g class="mata-khusus">
         <!-- Sedih -->
         <g class="mata-sedih">
@@ -295,11 +303,11 @@
         </g>
       </g>
 
-      <!-- ΓöÇΓöÇ MULUT ΓöÇΓöÇ -->
+      <!-- ── MULUT ── -->
       <path class="mulut" d="M 90 125 Q 100 130 110 125"
             fill="none" stroke="#212529" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
 
-      <!-- ΓöÇΓöÇ PROPERTI DEPAN ΓöÇΓöÇ -->
+      <!-- ── PROPERTI DEPAN ── -->
 
       <!-- Permen Karet (menunggu) -->
       <g class="permen-karet">
@@ -412,7 +420,7 @@
         <ellipse class="pipi" cx="156" cy="122" rx="17" ry="10" filter="url(#fb-blur-pipi)" opacity="0.75"/>
       </g>
 
-      <!-- ΓöÇΓöÇ ALIS ΓöÇΓöÇ -->
+      <!-- ── ALIS ── -->
       <g class="alis-group">
         <g class="alis-sedih">
           <path d="M 44 80 Q 60 64 76 75" fill="none" stroke="#212529" stroke-width="5.5" stroke-linecap="round"/>
@@ -428,7 +436,7 @@
         </g>
       </g>
 
-      <!-- ΓöÇΓöÇ MATA (default kedip) ΓöÇΓöÇ -->
+      <!-- ── MATA (default kedip) ── -->
       <g class="mata-bisa-kedip">
         <g class="mata-kiri">
           <circle cx="65" cy="95" r="14" fill="#212529"/>
@@ -446,7 +454,7 @@
         </g>
       </g>
 
-      <!-- ΓöÇΓöÇ MATA KHUSUS ΓöÇΓöÇ -->
+      <!-- ── MATA KHUSUS ── -->
       <g class="mata-khusus">
         <!-- Sedih -->
         <g class="mata-sedih">
@@ -490,11 +498,11 @@
         </g>
       </g>
 
-      <!-- ΓöÇΓöÇ MULUT ΓöÇΓöÇ -->
+      <!-- ── MULUT ── -->
       <path class="mulut" d="M 90 125 Q 100 130 110 125"
             fill="none" stroke="#212529" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
 
-      <!-- ΓöÇΓöÇ PROPERTI DEPAN ΓöÇΓöÇ -->
+      <!-- ── PROPERTI DEPAN ── -->
 
       <!-- Permen Karet (menunggu) -->
       <g class="permen-karet">
@@ -619,19 +627,6 @@
             </a>
             <div class="settings-divider"></div>
             <div style="padding: 10px 14px 6px 14px;">
-                <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Pilih Font App:</div>
-                <select id="font-select" style="width: 100%; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--border-medium); background: var(--bg-card); color: var(--text-primary); font-size: 13px; font-weight: 800; outline: none; cursor: pointer; font-family: inherit;">
-                    <option value="nunito">Nunito (Default)</option>
-                    <option value="manrope">Manrope (Regular)</option>
-                    <option value="inter">Inter</option>
-                    <option value="feather">Feather Bold</option>
-                    <option value="baloo2">Baloo 2</option>
-                    <option value="fredoka">Fredoka</option>
-                    <option value="poppins">Poppins ExtraBold</option>
-                </select>
-            </div>
-            <div class="settings-divider"></div>
-            <div style="padding: 10px 14px 6px 14px;">
                 <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Blokir saat sesi fokus</div>
                 <div id="fb-blocklist-summary" style="font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px;">Memuat…</div>
                 <div id="fb-blocklist" style="max-height: 168px; overflow-y: auto;"></div>
@@ -646,7 +641,7 @@
             </button>
         </div>
 
-        <!-- â•â•â• Main Content Area â•â•â• -->
+        <!-- ═════════ Main Content Area ═════════ -->
         <main class="app-content" id="main-content">
             <div class="views-container" id="views-container">
 
@@ -699,14 +694,14 @@
             </div>
         </main>
 
-        <!-- â•â•â• Bottom Navigation â•â•â• -->
+        <!-- ═════════ Bottom Navigation ═════════ -->
         <footer class="app-footer" id="footer-tabs">
             <nav class="tabs-container" id="tabs-container" aria-label="Navigasi utama">
                 <!-- Tabs rendered by JS based on role -->
             </nav>
         </footer>
 
-        <!-- â•â•â• Chat Input Footer â•â•â• -->
+        <!-- ═════════ Chat Input Footer ═════════ -->
         <footer class="chat-input-footer" id="footer-chat-input">
             <div class="input-container">
                 <input type="text" placeholder="Ketik pesan..." class="chat-input" id="chat-input-field" aria-label="Ketik pesan" />
@@ -786,9 +781,10 @@
         <div class="toast" id="toast"></div>
     </div>
 
-    <!-- â•â•â• Scripts â•â•â• -->
+    <!-- ═════════ Scripts ═════════ -->
     <script src="js/mascot-state.js"></script>
     <script src="js/utils/greeting.js"></script>
+    <script src="js/utils/dialog.js"></script>
     <script src="js/utils/confetti.js"></script>
     <script src="js/rbac.js"></script>
     <script src="js/theme.js"></script>

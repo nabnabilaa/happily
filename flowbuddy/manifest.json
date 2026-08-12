@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Flowbuddy by Maxy",
-  "version": "1.1.0",
+  "version": "1.1.2",
   "description": "Teman kerja ultra-ringan — tugas cepat, catatan, chat, dan approval. Ekstensi modular berbasis peran.",
   "permissions": [
     "storage",
@@ -29,15 +29,29 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "css": ["css/mascot.css"],
-      "js": ["js/mascot-state.js", "mascot-content.js"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "css": [
+        "css/mascot.css"
+      ],
+      "js": [
+        "js/mascot-state.js",
+        "mascot-content.js"
+      ],
       "run_at": "document_idle",
       "all_frames": false
     },
     {
-      "matches": ["*://flowbuddy.maxy.academy/*", "*://happily-flowbuddy.vercel.app/*", "*://localhost/*"],
-      "js": ["js/sync.js", "content.js"],
+      "matches": [
+        "*://flowbuddy.maxy.academy/*",
+        "*://happily-flowbuddy.vercel.app/*",
+        "*://localhost/*"
+      ],
+      "js": [
+        "js/sync.js",
+        "content.js"
+      ],
       "run_at": "document_idle"
     }
   ],

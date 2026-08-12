@@ -5,6 +5,8 @@
   var r = localStorage.getItem('flowbuddy-role');
   if (r) document.documentElement.setAttribute('data-role', r);
 
-  var f = localStorage.getItem('flowbuddy-font') || 'nunito';
-  document.documentElement.setAttribute('data-font', f);
+  // Pemilih font sudah dihapus; fontnya sekarang tetap Nunito. Preferensi lama
+  // dibuang supaya tidak tertinggal di storage sebagai sampah tanpa pembaca.
+  localStorage.removeItem('flowbuddy-font');
+  document.documentElement.removeAttribute('data-font');
 })();

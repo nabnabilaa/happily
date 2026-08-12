@@ -305,18 +305,19 @@
   --hp-focus-ring: 0 0 0 3px rgba(110, 155, 255, 0.45);
 }
 
-/* ═══ TYPOGRAPHY TOKENS ═══ */
+/* ═══ TYPOGRAPHY TOKENS ═══
+   Satu wajah huruf, tidak bisa diganti dari dalam aplikasi.
+
+   Dulu di bawah sini ada enam aturan `html[data-font="…"]` yang dikemudikan
+   dropdown pemilih font di kaki sidebar. Kontrol seperti itu adalah alat
+   perancang, bukan fitur produk: ia memindahkan keputusan tipografi ke pengguna
+   yang tidak punya alasan mengambilnya, dan kehadirannya di layar membuat
+   aplikasi terbaca seperti purwarupa yang masih dicoba-coba. Manrope memang
+   wajah UI-nya — sekarang itu keputusan, bukan nilai awal sebuah pilihan. */
 :root {
   --hp-font: var(--font-manrope), system-ui, -apple-system, "Segoe UI", sans-serif;
   --hp-font-display: var(--font-manrope), system-ui, -apple-system, "Segoe UI", sans-serif;
 }
-
-html[data-font="manrope"] { --hp-font: var(--font-manrope), system-ui, sans-serif; --hp-font-display: var(--font-manrope), system-ui, sans-serif; }
-html[data-font="inter"]   { --hp-font: var(--font-inter), system-ui, sans-serif;   --hp-font-display: var(--font-inter), system-ui, sans-serif; }
-html[data-font="nunito"]  { --hp-font: var(--font-nunito), system-ui, sans-serif;  --hp-font-display: var(--font-nunito), system-ui, sans-serif; }
-html[data-font="poppins"] { --hp-font: var(--font-poppins), system-ui, sans-serif; --hp-font-display: var(--font-poppins), system-ui, sans-serif; }
-html[data-font="baloo2"]  { --hp-font: var(--font-baloo2), system-ui, sans-serif;  --hp-font-display: var(--font-baloo2), system-ui, sans-serif; }
-html[data-font="fredoka"] { --hp-font: var(--font-fredoka), system-ui, sans-serif; --hp-font-display: var(--font-fredoka), system-ui, sans-serif; }
 
 /* ═══ RESET ═══ */
 * {

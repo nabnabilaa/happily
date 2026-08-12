@@ -509,10 +509,15 @@ const TasksView = {
 
     // Delete Task
     container.querySelectorAll('.task-del-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         const id = btn.getAttribute('data-id');
-        if (confirm('Yakin ingin menghapus task ini?')) {
+        const ok = await FlowBuddyDialog.confirm({
+          title: 'Hapus task ini?',
+          body: 'Task yang dihapus tidak bisa dikembalikan.',
+          confirmLabel: 'Hapus',
+        });
+        if (ok) {
           this.deleteTask(id);
           this.render(container);
           if (FlowBuddyApp && FlowBuddyApp.showToast) FlowBuddyApp.showToast('Task dihapus');

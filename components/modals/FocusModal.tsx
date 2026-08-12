@@ -156,7 +156,6 @@ export default function FocusModal({ onClose, roomId: initialRoomId, joinCode, s
   const [busy, setBusy] = useState(false);
   const [hostOffer, setHostOffer] = useState<{ fromId: string; expiresAt: number } | null>(null);
   const [confirmHide, setConfirmHide] = useState(false);
-  const [showDnd, setShowDnd] = useState(false);
 
   const handleEvent = useCallback((event: any) => {
     if (event?.type === "HOST_OFFER" && String(event.targetId) === String(user?.id)) {
@@ -219,7 +218,19 @@ export default function FocusModal({ onClose, roomId: initialRoomId, joinCode, s
     if (loading && !room) return "loading";
     if (!room) return "loading";
     if (room.status === "finished" || room.status === "aborted") return "summary";
-    if (room.status === "waiting") return "lobby";
+    if (room.status === "waiting") {
+      // Sesi solo dibuat lalu langsung di-START lewat dua permintaan terpisah
+      // (lihat `createRoom`). Di antara keduanya, ruangannya sah berstatus
+      // "waiting" — dan kalau `refresh` menang balapan melawan START, layar
+      // sempat merender RUANG TUNGGU lengkap dengan QR undangannya. Itu asal
+      // kedipan QR yang muncul-hilang: bukan kerusakan render, melainkan
+      // keadaan nyata yang tidak seharusnya punya tampilan.
+      //
+      // Ruang tunggu adalah tempat menunggu ORANG LAIN. Sesi solo tidak punya
+      // siapa pun untuk ditunggu, jadi bagi dia "waiting" hanya berarti
+      // "belum selesai dinyalakan".
+      return room.visibility === "solo" ? "loading" : "lobby";
+    }
     return room.viewer?.status === "interrupted" ? "away" : "running";
   }, [roomId, room, loading]);
 
@@ -355,7 +366,9 @@ export default function FocusModal({ onClose, roomId: initialRoomId, joinCode, s
       <Shell onClose={onClose} label="Sesi Fokus">
         <div style={{ margin: "auto 0", textAlign: "center" }}>
           <div className="hp-spinner" style={{ margin: "0 auto 16px" }} />
-          <div style={{ ...HP_TEXT.body, color: HP_TOKENS.onPrimary }}>Memuat sesi…</div>
+          <div style={{ ...HP_TEXT.body, color: HP_TOKENS.onPrimary }}>
+            {room?.visibility === "solo" ? "Menyalakan sesi…" : "Memuat sesi…"}
+          </div>
         </div>
       </Shell>
     );
@@ -434,39 +447,18 @@ export default function FocusModal({ onClose, roomId: initialRoomId, joinCode, s
             {busy ? "Menyiapkan…" : isTeam ? "Buka Ruangan" : "Mulai Fokus"}
           </button>
 
-          {/* Ditawarkan SEBELUM sesi mulai, bukan di tengahnya: menyiapkan
-              lingkungan adalah bagian dari memulai, dan orang yang sudah masuk
-              menit ketujuh tidak akan berhenti untuk mengutak-atik Settings.
-
-              Penjelasannya ikut MASUK ke dalam tombol. Sebagai paragraf
-              terpisah di bawah, ia terbaca sebagai keterangan layar — orang
-              tidak menghubungkannya dengan tombol di atasnya, lalu tetap tidak
-              tahu tombol itu sebenarnya untuk apa. Selebihnya di dalam lembar. */}
-          <button
-            onClick={() => setShowDnd(true)}
-            style={{ ...overlayBtn("ghost"), textAlign: "left", padding: "11px 16px" }}
-          >
-            <span style={{ display: "block" }}>Matikan notifikasi lain dulu</span>
-            <span style={{ display: "block", fontWeight: 500, fontSize: 12, opacity: 0.75, marginTop: 2 }}>
-              WhatsApp dan aplikasi HP — cuma perangkatmu yang bisa
-            </span>
-          </button>
-
-          {/* Dua paragraf, dua janji berbeda, dan keduanya harus bisa ditepati.
-              Versi lama menulis "layar ini HARUS tetap di depan" — kata "harus"
-              menyiratkan penegakan yang tidak pernah ada. Yang sebenarnya
-              terjadi: layar ini dipakai sebagai bukti kehadiran, dan menutupnya
-              menghentikan hitungan. Itu deteksi, bukan blokir, dan menyebutnya
-              apa adanya justru membuat konsekuensinya lebih mudah dipahami. */}
+          {/* Satu baris, satu janji. Layar ini adalah pintu masuk ke sesi —
+              bukan tempat menjelaskan cara kerja penghitungnya. Penjelasan
+              panjang tentang apa yang ditegakkan dan apa yang tidak justru
+              membuat orang menimbang-nimbang tepat di detik mereka seharusnya
+              mulai. */}
           <p style={{ ...HP_TEXT.small, color: HP_TOKENS.onPrimary, opacity: 0.65, textAlign: "center", margin: 0 }}>
             {mode === "hardcore"
-              ? "Hardcore: layar ini jadi bukti kamu hadir — menutupnya menjeda timermu. Kamu punya jatah interupsi kalau ada hal mendadak."
-              : "Zen: boleh buka aplikasi lain, timermu tetap jalan. Fokus pada targetmu, bukan pada layar."}
+              ? "Layar fokus tetap di depan sepanjang sesi."
+              : "Timer jalan terus, walau kamu berpindah aplikasi."}
           </p>
 
         </div>
-
-        {showDnd && <DndSheet onClose={() => setShowDnd(false)} />}
       </Shell>
     );
   }
@@ -587,15 +579,10 @@ export default function FocusModal({ onClose, roomId: initialRoomId, joinCode, s
 
         <div style={{ ...HP_TEXT.small, color: HP_TOKENS.onPrimary, opacity: 0.65, textAlign: "center" }}>
           Jatah interupsi: {usedTurns}/{budget.allowance}
-          {room.mode === "hardcore" && " · layar ini jadi bukti kehadiranmu"}
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%", maxWidth: 300 }}>
           <button onClick={stepAway} style={overlayBtn("ghost")}>Saya harus menjauh sebentar</button>
-          {/* Jalan keluar kedua, untuk yang baru sadar HP-nya masih berbunyi.
-              Di sini tanpa baris kedua: layarnya sudah padat, dan orang yang
-              sampai ke sini biasanya sudah tahu tombol ini untuk apa. */}
-          <button onClick={() => setShowDnd(true)} style={overlayBtn("ghost")}>Matikan notifikasi lain</button>
           {/* Memulai sendiri tidak seharusnya berarti terkunci sendirian sampai
               selesai. Timer tidak disentuh — hanya pintunya yang dibuka. */}
           {room.visibility === "solo" && isHost && (
@@ -624,7 +611,7 @@ export default function FocusModal({ onClose, roomId: initialRoomId, joinCode, s
         </div>
 
         <p style={{ ...HP_TEXT.small, color: HP_TOKENS.onPrimary, opacity: 0.55, textAlign: "center", maxWidth: 320, margin: 0 }}>
-          Keluar sekarang tetap dihitung: kamu dibayar untuk menit yang sudah kamu jalani.
+          Menit yang sudah kamu jalani tetap tercatat.
         </p>
       </div>
 
@@ -635,8 +622,6 @@ export default function FocusModal({ onClose, roomId: initialRoomId, joinCode, s
       )}
 
       {hostOffer && <HostOfferPrompt onRespond={(accept) => { setHostOffer(null); void act(accept ? "ACCEPT_HOST" : "DECLINE_HOST"); }} />}
-
-      {showDnd && <DndSheet onClose={() => setShowDnd(false)} />}
 
       {confirmHide && (
         <div style={{
@@ -835,264 +820,6 @@ function DurationPicker({ value, onChange }: { value: number; onChange: (v: numb
 
       <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.onPrimary, opacity: 0.6, marginTop: 6, textAlign: "left" }}>
         Bebas antara {MIN_DURATION_MINS} sampai {MAX_DURATION_MINS} menit.
-      </div>
-    </div>
-  );
-}
-
-type Platform = "ios" | "android" | "windows" | "mac" | "other";
-
-function detectPlatform(): Platform {
-  if (typeof navigator === "undefined") return "other";
-  const ua = navigator.userAgent;
-  if (/iPhone|iPod/i.test(ua)) return "ios";
-  // iPadOS 13+ menyamar sebagai Mac. Layar sentuh adalah pembeda yang tersisa.
-  if (/iPad/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1)) return "ios";
-  if (/Android/i.test(ua)) return "android";
-  if (/Windows/i.test(ua)) return "windows";
-  if (/Macintosh|Mac OS X/i.test(ua)) return "mac";
-  return "other";
-}
-
-/** Nama shortcut yang diinstruksikan di panduan iOS; dipakai juga oleh deep link. */
-const IOS_SHORTCUT_NAME = "Flowbee Fokus";
-
-interface DndGuide {
-  label: string;
-  /**
-   * Diatur SEKALI, lalu berjalan sendiri selamanya. Ini yang utama.
-   *
-   * Versi pertama panduan ini hanya punya langkah manual, dan itu keliru:
-   * panduan yang harus dibaca ulang tiap sesi praktis sama dengan tidak ada
-   * fitur. Yang mengubah perilaku orang bukan instruksi yang benar, melainkan
-   * instruksi yang cukup dijalankan sekali.
-   */
-  once: { title: string; steps: string[] } | null;
-  /** Cadangan untuk sekarang, saat setup sekali itu belum dikerjakan. */
-  now: string[];
-  note?: string;
-}
-
-/**
- * Panduan mendiamkan perangkat.
- *
- * Yang bisa kami tahan sendiri sudah ditahan tanpa minta izinmu: notifikasi
- * Flowbee (server + klien), situs distraksi, dan — sejak ekstensi memakai
- * `contentSettings` — SELURUH notifikasi web di Chrome. Yang tersisa hanyalah
- * aplikasi native di HP, dan tidak ada satu pun URL yang bisa menyalakan DND
- * dari halaman web: `App-Prefs:` API privat, `intent://` butuh aplikasi native.
- *
- * Tapi ada jalan yang bukan aplikasi native: mesin otomasi bawaan OS bisa
- * memicu DND "saat aplikasi dibuka", dan Flowbee memenuhi syarat sebagai
- * aplikasi begitu dipasang ke home screen (`app/manifest.ts` sudah
- * `display: standalone`). Itulah yang diinstruksikan `once` di bawah.
- */
-const DND_STEPS: Record<Platform, DndGuide> = {
-  ios: {
-    // Label pendek: empat tab harus muat sebaris di layar HP 375px.
-    label: "iPhone",
-    once: {
-      title: "Otomatis, atur sekali",
-      steps: [
-        "Pasang Flowbee ke home screen dulu: Share → “Add to Home Screen”. Kalau masih di tab Safari, otomasinya melihat “Safari dibuka”, bukan “Flowbee dibuka”.",
-        "Buka app Shortcuts → tab Automation → “+” → “App”.",
-        "Pilih app Flowbee, centang “Is Opened”, dan pilih “Run Immediately”.",
-        "Tambah aksi “Set Focus” → Do Not Disturb → On. Simpan.",
-      ],
-    },
-    now: [
-      "Usap turun dari pojok kanan atas untuk membuka Control Center.",
-      "Ketuk “Focus”, lalu pilih “Do Not Disturb”.",
-    ],
-    note: `Kalau kamu sudah punya shortcut bernama “${IOS_SHORTCUT_NAME}”, tombol di bawah bisa menjalankannya langsung.`,
-  },
-  android: {
-    label: "Android",
-    once: {
-      title: "Otomatis, atur sekali (Samsung / Xiaomi)",
-      steps: [
-        "Pasang Flowbee ke home screen dulu: menu Chrome → “Install app”.",
-        "Samsung: Settings → Modes and Routines → Routines → “+”. Xiaomi: Settings → Special features → Automation.",
-        "Pemicu: “App opened” → pilih Flowbee.",
-        "Aksi: “Do not disturb” → On. Simpan.",
-      ],
-    },
-    now: [
-      "Usap turun dua kali untuk membuka Quick Settings penuh.",
-      "Ketuk “Jangan Ganggu” / “Do Not Disturb”.",
-      "Tahan lama ikonnya untuk memilih pengecualian — mis. telepon keluarga tetap masuk.",
-    ],
-    note: "Android murni / Pixel belum punya pemicu “aplikasi dibuka”. Di sana pilihannya jadwal DND per jam kerja, atau tetap manual.",
-  },
-  windows: {
-    label: "Windows",
-    once: {
-      title: "Otomatis per jam, atur sekali",
-      steps: [
-        "Settings → System → Notifications → “Turn on do not disturb automatically”.",
-        "Centang “During these times”, lalu isi jam kerjamu.",
-      ],
-    },
-    now: [
-      "Tekan Win + N untuk membuka panel notifikasi.",
-      "Klik “Do not disturb” / “Jangan ganggu”.",
-    ],
-    note: "Notifikasi situs web di Chrome sudah didiamkan otomatis oleh ekstensi FlowBuddy — langkah ini untuk aplikasi desktop seperti Slack atau Teams.",
-  },
-  mac: {
-    label: "Mac",
-    once: {
-      title: "Otomatis per jam, atur sekali",
-      steps: [
-        "System Settings → Focus → Do Not Disturb → “Add Schedule”.",
-        "Pilih “Time” dan isi jam kerjamu.",
-      ],
-    },
-    now: [
-      "Buka Control Center di menu bar kanan atas.",
-      "Klik “Focus” → “Do Not Disturb” → pilih “For 1 hour”.",
-    ],
-    note: "Notifikasi situs web di Chrome sudah didiamkan otomatis oleh ekstensi FlowBuddy — langkah ini untuk aplikasi desktop seperti Slack atau Teams.",
-  },
-  other: {
-    label: "Lainnya",
-    once: null,
-    now: [
-      "Cari pengaturan “Do Not Disturb” atau “Jangan Ganggu” di sistemmu.",
-      "Nyalakan selama sesi fokusmu berjalan.",
-    ],
-  },
-};
-
-/** Urutan tab. `other` sengaja tidak punya tab — ia hanya jaring pengaman deteksi. */
-const DND_TABS: Platform[] = ["ios", "android", "windows", "mac"];
-
-/**
- * Lembar panduan Jangan Ganggu. Memakai pola bottom-sheet yang sama dengan
- * konfirmasi tutup layar, supaya tidak ada bahasa visual baru untuk dipelajari.
- *
- * Deteksi otomatis dipakai untuk MEMILIH tab awal, bukan untuk mengunci
- * pilihannya. Bedanya menentukan: orang membuka Flowbee di laptop justru saat
- * yang berisik adalah HP-nya, dan panduan yang hanya mau menampilkan langkah
- * perangkat yang sedang dipegang akan menyembunyikan satu-satunya langkah yang
- * dia butuhkan.
- */
-function DndSheet({ onClose }: { onClose: () => void }) {
-  const detected = useMemo(() => detectPlatform(), []);
-  const [tab, setTab] = useState<Platform>(() => (detected === "other" ? "android" : detected));
-  const guide = DND_STEPS[tab];
-
-  return (
-    <div style={{
-      position: "fixed", inset: 0, zIndex: 70, background: "rgba(0,0,0,0.55)",
-      display: "flex", alignItems: "flex-end", justifyContent: "center", padding: 20,
-    }}>
-      <div style={{
-        background: HP_TOKENS.card, borderRadius: HP_TOKENS.radiusLg, padding: 22,
-        width: "100%", maxWidth: 380, textAlign: "left", maxHeight: "80vh", overflowY: "auto",
-      }}>
-        <div style={{ ...HP_TEXT.h, fontSize: 17, color: HP_TOKENS.ink }}>
-          Matikan notifikasi lain
-        </div>
-        <div style={{ ...HP_TEXT.body, fontSize: 14, color: HP_TOKENS.inkSoft, marginTop: 8 }}>
-          Notifikasi Flowbee sudah ditahan otomatis, dan ekstensi Chrome mendiamkan
-          seluruh notifikasi web di laptop — WhatsApp Web, Gmail, Slack. Yang tersisa
-          cuma aplikasi di HP, dan itu hanya perangkatnya sendiri yang bisa.
-        </div>
-
-        <div
-          role="tablist"
-          aria-label="Pilih perangkat"
-          style={{
-            display: "flex", gap: 4, marginTop: 16, padding: 4,
-            background: HP_TOKENS.sunken, borderRadius: HP_TOKENS.radiusSm,
-          }}
-        >
-          {DND_TABS.map((p) => (
-            <button
-              key={p}
-              role="tab"
-              aria-selected={tab === p}
-              onClick={() => setTab(p)}
-              style={{
-                flex: 1, padding: "8px 4px", borderRadius: HP_TOKENS.radiusXs, border: "none",
-                cursor: "pointer", fontFamily: HP_FONT, fontWeight: 700, fontSize: 12,
-                transition: "background 180ms ease, color 180ms ease",
-                background: tab === p ? HP_TOKENS.card : "transparent",
-                color: tab === p ? HP_TOKENS.ink : HP_TOKENS.inkMute,
-              }}
-            >
-              {DND_STEPS[p].label}
-            </button>
-          ))}
-        </div>
-
-        {tab === detected && (
-          <div style={{ ...HP_TEXT.tiny, color: HP_TOKENS.inkMute, marginTop: 8 }}>
-            Ini perangkat yang sedang kamu pakai.
-          </div>
-        )}
-
-        {/* "Atur sekali" ditaruh DULU dan diberi latar, "cara sekarang"
-            menyusul sebagai cadangan. Urutannya bukan selera: yang pertama
-            dibaca orang adalah yang dianggap cara yang dimaksud, dan cara yang
-            kita maksud memang yang dikerjakan sekali lalu berhenti menuntut. */}
-        {guide.once && (
-          <div style={{
-            marginTop: 14, padding: 14, borderRadius: HP_TOKENS.radiusSm,
-            background: HP_TOKENS.sunken,
-          }}>
-            <div style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.ink }}>
-              {guide.once.title}
-            </div>
-            <ol style={{ margin: "10px 0 0", padding: "0 0 0 18px", display: "flex", flexDirection: "column", gap: 7 }}>
-              {guide.once.steps.map((s, i) => (
-                <li key={i} style={{ ...HP_TEXT.body, fontSize: 13, color: HP_TOKENS.ink }}>{s}</li>
-              ))}
-            </ol>
-          </div>
-        )}
-
-        <div style={{ ...HP_TEXT.small, fontWeight: 700, color: HP_TOKENS.ink, marginTop: 16 }}>
-          {guide.once ? "Atau nyalakan manual sekarang" : "Cara menyalakannya"}
-        </div>
-        <ol style={{ margin: "10px 0 0", padding: "0 0 0 18px", display: "flex", flexDirection: "column", gap: 7 }}>
-          {guide.now.map((s, i) => (
-            <li key={i} style={{ ...HP_TEXT.body, fontSize: 13, color: HP_TOKENS.ink }}>{s}</li>
-          ))}
-        </ol>
-
-        {/* Deep link hanya masuk akal di iOS, dan hanya kalau shortcut-nya sudah
-            dibuat. Kalau belum ada, iOS membuka app Shortcuts dan tidak
-            terjadi apa-apa — jadi tombolnya menyebut syaratnya, bukan berjanji. */}
-        {tab === "ios" && (
-          <a
-            href={`shortcuts://run-shortcut?name=${encodeURIComponent(IOS_SHORTCUT_NAME)}`}
-            style={{
-              display: "block", marginTop: 14, padding: "11px 14px", textAlign: "center",
-              borderRadius: HP_TOKENS.radiusSm, background: HP_TOKENS.primary,
-              color: HP_TOKENS.onPrimary, fontFamily: HP_FONT, fontWeight: 700,
-              fontSize: 13, textDecoration: "none",
-            }}
-          >
-            Jalankan shortcut “{IOS_SHORTCUT_NAME}”
-          </a>
-        )}
-
-        {guide.note && (
-          <div style={{ ...HP_TEXT.small, color: HP_TOKENS.inkMute, marginTop: 14 }}>
-            {guide.note}
-          </div>
-        )}
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 20 }}>
-          <button
-            onClick={onClose}
-            style={{ ...overlayBtn("ghost"), background: HP_TOKENS.sunken, color: HP_TOKENS.ink, border: "none" }}
-          >
-            Mengerti
-          </button>
-        </div>
       </div>
     </div>
   );

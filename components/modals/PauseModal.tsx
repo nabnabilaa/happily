@@ -205,17 +205,29 @@ export default function PauseModal({ onClose }: PauseModalProps) {
   }, [phase]);
 
   return (
+    /* Layar penuh, jadi latarnya harus BURAM. Nada tiap fase (`currentInfo.bg`)
+       adalah token *Wash — alpha 4.5%. Dipakai sendirian sebagai latar layar,
+       ia meneruskan seluruh aplikasi di belakangnya: kartu, nav bar, dan daftar
+       tugas ikut terlihat menembus layar yang seharusnya menenangkan.
+       Kanvas buram di bawah, nada fase sebagai lapisan tipis di atasnya. */
     <div style={{
-      position: 'fixed', 
-      inset: 0, 
+      position: 'fixed',
+      inset: 0,
       zIndex: 9999,
-      background: currentInfo.bg,
-      display: 'flex', 
-      flexDirection: 'column', 
-      fontFamily: HP_FONT, 
+      background: HP_TOKENS.paper,
+      display: 'flex',
+      flexDirection: 'column',
+      fontFamily: HP_FONT,
       animation: 'hpFadeIn 500ms ease-out',
-      transition: 'background 2s ease-in-out',
     }}>
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none',
+          background: currentInfo.bg,
+          transition: 'background 2s ease-in-out',
+        }}
+      />
       <style>{`
         @keyframes blobMorph {
           0%   { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
@@ -228,8 +240,9 @@ export default function PauseModal({ onClose }: PauseModalProps) {
         }
       `}</style>
       {/* Top Header */}
-      <div style={{ 
-        padding: '56px 24px 20px', 
+      <div style={{
+        position: 'relative', zIndex: 1,
+        padding: '56px 24px 20px',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -257,7 +270,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
       </div>
 
       {/* Main Content */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', padding: '20px 24px' }}>
+      <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', padding: '20px 24px' }}>
         
         {phase === 'setup' ? (
           <div style={{ animation: 'hpFadeIn 400ms ease-out' }}>
@@ -463,7 +476,7 @@ export default function PauseModal({ onClose }: PauseModalProps) {
       </div>
 
       {/* Bottom Actions */}
-      <div style={{ padding: '0 24px 40px', display: 'flex', flexDirection: 'column', gap: 12, minHeight: 80 }}>
+      <div style={{ position: 'relative', zIndex: 1, padding: '0 24px 40px', display: 'flex', flexDirection: 'column', gap: 12, minHeight: 80 }}>
         {phase === 'done' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', maxWidth: 320, margin: '0 auto' }}>
             <button 

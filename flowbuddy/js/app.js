@@ -5,7 +5,7 @@
 
 const FlowBuddyApp = {
   currentView: null,
-  userName: 'Budi', // Will be loaded from database/storage
+  userName: '', // Diisi dari hasil sync; sapaan tahan nama kosong.
 
   init() {
     // 1. Init RBAC
@@ -54,7 +54,11 @@ const FlowBuddyApp = {
       if (user || userId) {
         if (loginOverlay) loginOverlay.style.display = 'none';
         const userData = user || {};
-        this.userName = userData.name || 'Budi';
+        // Sengaja tanpa nama cadangan. Dulu di sini tertulis 'Budi': satu kali
+        // sync terlambat saat demo, dan header menyapa orang asing dengan
+        // percaya diri. Sapaan tanpa nama masih benar; sapaan dengan nama
+        // karangan tidak pernah benar.
+        this.userName = userData.name || '';
         this.userLevel = userData.level || 1;
         this.attendanceStreak = userData.streak || 0;
         FlowBuddyRBAC.setRole(userData.role || 'employee');

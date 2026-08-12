@@ -23,25 +23,6 @@ const FlowBuddyTheme = {
       });
     }
 
-    this.initFont();
-  },
-
-  initFont() {
-    const fontSelect = document.getElementById('font-select');
-    const savedFont = localStorage.getItem('flowbuddy-font') || 'nunito';
-    document.documentElement.setAttribute('data-font', savedFont);
-
-    if (fontSelect) {
-      fontSelect.value = savedFont;
-      fontSelect.addEventListener('change', (e) => {
-        const selectedFont = e.target.value;
-        document.documentElement.setAttribute('data-font', selectedFont);
-        localStorage.setItem('flowbuddy-font', selectedFont);
-        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-          chrome.storage.local.set({ 'flowbuddy-font': selectedFont });
-        }
-      });
-    }
   },
 
   updateIcon(btn, theme) {
