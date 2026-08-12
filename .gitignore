@@ -52,3 +52,16 @@ read_priorities.js
 # Markdown notes & audit files (local only)
 *.md
 !README.md
+
+# Hasil audit & probe. Isinya balasan API sungguhan — nama, email, dan agregat
+# karyawan asli — jadi tempatnya bukan di repo yang bisa dibaca siapa pun yang
+# punya akses kode.
+/audit/
+
+# Dump/backup tabel. Sama alasannya: baris di dalamnya milik orang sungguhan.
+backup-*.json
+
+# Harness sekali pakai untuk menguji koneksi DB & jalur login di lokal. Berguna
+# saat menelusuri bug, tapi bukan bagian dari aplikasi yang dijalankan server.
+/test-*.ts
+/scripts-tmp-*.ts
