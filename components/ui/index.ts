@@ -18,6 +18,7 @@ export type { ActionItem } from "./ActionList";
 // Surfaces
 export { default as HPCard } from "./HPCard";
 export { default as Modal } from "./Modal";
+export { default as ConfirmDialog } from "./ConfirmDialog";
 
 // Controls
 export { default as HPButton } from "./HPButton";

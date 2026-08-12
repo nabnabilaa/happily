@@ -411,6 +411,25 @@ export default function HPGlyph({ name, size = 24, color = "currentColor", strok
     ),
   };
 
+  // Chevron vertikal. Dipisah dari daftar di atas karena juga dipanggil dengan
+  // ejaan kebab-case di banyak layar (dropdown Target, Kalender, AI Audit) —
+  // tanpa alias ini semuanya jatuh ke ikon "?" dan tidak ada yang menyadarinya,
+  // karena nama glyph yang salah gagal tanpa suara.
+  icons.chevronDown = (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round">
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+  icons.chevronUp = (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round">
+      <path d="m18 15-6-6-6 6" />
+    </svg>
+  );
+  icons["chevron-down"] = icons.chevronDown;
+  icons["chevron-up"] = icons.chevronUp;
+  icons["chevron-right"] = icons.chevronRight;
+  icons["chevron-left"] = icons.chevronLeft;
+
   return icons[name] || (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" opacity={0.5}>
       <circle cx="12" cy="12" r="10" />

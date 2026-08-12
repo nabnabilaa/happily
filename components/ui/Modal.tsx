@@ -22,6 +22,17 @@ interface ModalProps {
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+/**
+ * Tumpukan sheet yang sedang terbuka, paling atas di posisi terakhir.
+ *
+ * Setiap sheet memasang listener Escape-nya sendiri di `document`, dan
+ * `stopPropagation` tidak menghentikan listener lain di NODE yang sama. Jadi
+ * begitu ada sheet di dalam sheet — konfirmasi hapus di atas "Atur Kebiasaan",
+ * misalnya — satu tekan Escape menutup dua-duanya sekaligus, dan yang terbuang
+ * justru yang tidak dimaksud. Yang paling atas saja yang boleh menjawab.
+ */
+const openSheets: symbol[] = [];
+
 export default function Modal({
   children,
   onClose,
@@ -60,9 +71,23 @@ export default function Modal({
     };
   }, []);
 
+  // Identitas sheet ini di dalam tumpukan. Dibuat sekali per instance.
+  const token = React.useMemo(() => Symbol("sheet"), []);
+  React.useEffect(() => {
+    openSheets.push(token);
+    return () => {
+      const i = openSheets.lastIndexOf(token);
+      if (i !== -1) openSheets.splice(i, 1);
+    };
+  }, [token]);
+
   // Escape closes; Tab cycles inside the sheet instead of escaping to the page.
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Tumpukannya juga menahan Tab: tanpa ini, sheet di bawah ikut menarik
+      // fokus kembali ke dirinya sendiri dan jebakan fokus keduanya bertengkar.
+      if (openSheets[openSheets.length - 1] !== token) return;
+
       if (e.key === "Escape") {
         e.stopPropagation();
         onClose();
@@ -90,7 +115,7 @@ export default function Modal({
 
     document.addEventListener("keydown", onKey, true);
     return () => document.removeEventListener("keydown", onKey, true);
-  }, [onClose]);
+  }, [onClose, token]);
 
   // Move focus into the sheet on open, and hand it back to the trigger on close.
   // Waits for `mounted` because the sheet only exists after the portal renders.
