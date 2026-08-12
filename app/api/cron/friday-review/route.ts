@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAuthorizedCron } from "@/lib/cronAuth";
+import { internalHeaders } from "@/lib/authSession";
 import { db } from "@/lib/db";
 import { wibDayOfWeek } from "@/lib/timeUtils";
 
@@ -39,15 +40,32 @@ export async function GET(request: Request) {
 
       // 2. Auto-trigger AI weekly summary
       try {
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL 
-          ? `https://${process.env.VERCEL_URL}` 
-          : 'http://localhost:3000';
-        
-        await fetch(`${baseUrl}/api/ai/weekly-summary`, {
+        /*
+         * Alamatnya diambil dari permintaan yang sedang berjalan, bukan dari
+         * env. Baris sebelumnya berbunyi:
+         *
+         *   NEXT_PUBLIC_BASE_URL || VERCEL_URL ? `https://${VERCEL_URL}` : ...
+         *
+         * `||` mengikat lebih kuat daripada `?:`, jadi yang diuji adalah "salah
+         * satu env terisi" sementara yang dipakai SELALU `VERCEL_URL`. Di
+         * hosting non-Vercel variabel itu tidak pernah ada, dan alamatnya jadi
+         * "https://undefined" — fetch-nya gagal, tapi kegagalannya ditelan
+         * `catch` di bawah dan cron tetap melaporkan dirinya berhasil.
+         *
+         * Origin permintaan selalu benar karena panggilan ini kembali ke server
+         * yang sama, di port yang sama, apa pun hostingnya.
+         */
+        const baseUrl = new URL(request.url).origin;
+
+        const res = await fetch(`${baseUrl}/api/ai/weekly-summary`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          // Panggilan antar-route tidak membawa cookie siapa pun. Tanpa penanda
+          // internal, endpoint ringkasan menolaknya 401 sejak identitas tidak
+          // lagi boleh datang dari body.
+          headers: { 'Content-Type': 'application/json', ...internalHeaders() },
           body: JSON.stringify({ managerId })
         });
+        if (!res.ok) throw new Error(`weekly-summary balas ${res.status}`);
         aiGenerated++;
       } catch (e) {
         console.warn(`AI summary generation failed for manager ${managerId}:`, e);

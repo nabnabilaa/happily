@@ -12,9 +12,22 @@ export async function POST(request: Request) {
      * cukup untuk membaca ringkasan timnya. Ia juga memanggil model AI, jadi
      * lubang yang sama membuat siapa pun bisa membebankan biaya ke akun ini.
      */
-    const actor = await requireActor(request);
+    /*
+     * Satu pengecualian: cron review Jumat memanggil endpoint ini untuk setiap
+     * manajer, dan panggilan itu tidak membawa cookie siapa pun. Ia dikenali
+     * lewat token internal, dan HANYA dalam keadaan itu `managerId` di body
+     * dipercaya — lihat `requireActor`. Tanpa ini, ringkasan mingguan otomatis
+     * membalas 401 dan cron-nya tercatat "berhasil" tanpa menghasilkan apa pun.
+     */
+    const body = await request.json().catch(() => ({} as any));
+
+    const actor = await requireActor(request, body?.managerId);
     if ("response" in actor) return actor.response;
     const managerId = actor.userId;
+
+    if (!managerId) {
+      return NextResponse.json({ error: "Manajer tidak dikenali" }, { status: 400 });
+    }
 
     const deptRes = await db.execute({ sql: "SELECT department FROM users WHERE id = ?", args: [managerId] });
     const managerDept = (deptRes.rows[0] as any)?.department || "";
